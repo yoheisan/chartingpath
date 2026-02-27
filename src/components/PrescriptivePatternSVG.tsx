@@ -87,25 +87,82 @@ function formatPrice(price: number): string {
   return price.toPrecision(4);
 }
 
+interface FormationLine {
+  points: { x: number; y: number }[];
+  label?: string;
+  role: "upper" | "lower" | "neckline";
+}
+
 /** Derive pivots from PatternCalculator's 'peak' annotations */
 function derivePivots(
-  annotations: { type: string; points: { x: number; y: number }[] }[]
+  annotations: { type: string; points: { x: number; y: number }[]; label?: string }[]
 ): Pivot[] {
   return annotations
     .filter(a => a.type === "peak")
     .map(a => ({
       index: a.points[0].x,
       price: a.points[0].y,
-      type: "high" as const, // will be refined below
+      type: "high" as const,
     }))
     .sort((a, b) => a.index - b.index)
     .map((p, i, arr) => {
-      // Determine high/low by comparing to neighbours
       const prev = arr[i - 1];
       const next = arr[i + 1];
       const isLow = (prev && p.price < prev.price) || (next && p.price < next.price);
       return { ...p, type: isLow ? ("low" as const) : ("high" as const) };
     });
+}
+
+/** Extract formation lines (trendlines, support, resistance) for geometric shape overlays */
+function deriveFormationLines(
+  annotations: { type: string; points: { x: number; y: number }[]; label?: string }[]
+): FormationLine[] {
+  const lines: FormationLine[] = [];
+  for (const a of annotations) {
+    if (a.points.length < 2) continue;
+    if (a.type === "resistance") {
+      lines.push({ points: a.points, label: a.label, role: "upper" });
+    } else if (a.type === "support") {
+      lines.push({ points: a.points, label: a.label, role: "lower" });
+    } else if (a.type === "trendline") {
+      // Classify by label or slope
+      const lbl = (a.label || "").toLowerCase();
+      if (lbl.includes("resist") || lbl.includes("upper") || lbl.includes("descend")) {
+        lines.push({ points: a.points, label: a.label, role: "upper" });
+      } else if (lbl.includes("support") || lbl.includes("lower") || lbl.includes("ascend")) {
+        lines.push({ points: a.points, label: a.label, role: "lower" });
+      } else {
+        // Determine by slope relative to other trendlines
+        const slope = (a.points[a.points.length - 1].y - a.points[0].y) /
+                      (a.points[a.points.length - 1].x - a.points[0].x || 1);
+        lines.push({ points: a.points, label: a.label, role: slope <= 0 ? "upper" : "lower" });
+      }
+    } else if (a.type === "neckline") {
+      lines.push({ points: a.points, label: a.label, role: "neckline" });
+    }
+  }
+  return lines;
+}
+
+/** Interpolate a formation line's price at a given x index */
+function interpolateLine(points: { x: number; y: number }[], atX: number): number {
+  if (points.length === 1) return points[0].y;
+  // Clamp to line extent
+  if (atX <= points[0].x) return points[0].y;
+  if (atX >= points[points.length - 1].x) return points[points.length - 1].y;
+  // Find segment
+  for (let i = 0; i < points.length - 1; i++) {
+    if (atX >= points[i].x && atX <= points[i + 1].x) {
+      const t = (atX - points[i].x) / (points[i + 1].x - points[i].x);
+      return points[i].y + t * (points[i + 1].y - points[i].y);
+    }
+  }
+  return points[points.length - 1].y;
+}
+
+/** Check if pattern is a cup shape */
+function isCupPattern(patternType: string): boolean {
+  return patternType.includes("cup");
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -166,9 +223,107 @@ export const PrescriptivePatternSVG = ({ patternType, className = "" }: Prescrip
     );
   });
 
+  // Formation lines (trendlines, support, resistance) for geometric shapes
+  const formationLines = deriveFormationLines(annotations);
+  const upperLine = formationLines.find(l => l.role === "upper");
+  const lowerLine = formationLines.find(l => l.role === "lower");
+  const necklineLine = formationLines.find(l => l.role === "neckline");
+
   // Pattern zone + zigzag
   const validPivots = pivots.filter(p => p.index >= 0 && p.index < bars.length);
-  let patternOverlay = null;
+
+  // Build formation shape overlay
+  let formationShapeOverlay = null;
+  if (upperLine && lowerLine) {
+    // Determine shared x range for the filled shape
+    const xStart = Math.max(upperLine.points[0].x, lowerLine.points[0].x);
+    const xEnd = Math.min(
+      upperLine.points[upperLine.points.length - 1].x,
+      lowerLine.points[lowerLine.points.length - 1].x
+    );
+    const steps = 20;
+    const dx = (xEnd - xStart) / steps;
+    
+    // Build upper contour left→right, then lower contour right→left
+    const upperPath: string[] = [];
+    const lowerPath: string[] = [];
+    for (let s = 0; s <= steps; s++) {
+      const xi = xStart + s * dx;
+      const uPrice = interpolateLine(upperLine.points, xi);
+      const lPrice = interpolateLine(lowerLine.points, xi);
+      upperPath.push(`${xB(xi).toFixed(1)},${yP(uPrice).toFixed(1)}`);
+      lowerPath.unshift(`${xB(xi).toFixed(1)},${yP(lPrice).toFixed(1)}`);
+    }
+    const shapePath = [...upperPath, ...lowerPath].join(" ");
+
+    // Draw the trendlines themselves
+    const upperLinePath = upperLine.points.map(p => `${xB(p.x).toFixed(1)},${yP(p.y).toFixed(1)}`).join(" ");
+    const lowerLinePath = lowerLine.points.map(p => `${xB(p.x).toFixed(1)},${yP(p.y).toFixed(1)}`).join(" ");
+
+    formationShapeOverlay = (
+      <g>
+        {/* Filled formation zone */}
+        <polygon points={shapePath} fill="#38bdf8" opacity={0.08} />
+        {/* Upper trendline */}
+        <polyline points={upperLinePath} fill="none" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="6,3" opacity={0.6} />
+        {/* Lower trendline */}
+        <polyline points={lowerLinePath} fill="none" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="6,3" opacity={0.6} />
+      </g>
+    );
+  } else if (upperLine && !lowerLine) {
+    // Single horizontal line (e.g. rectangle resistance only, or neckline)
+    const linePath = upperLine.points.map(p => `${xB(p.x).toFixed(1)},${yP(p.y).toFixed(1)}`).join(" ");
+    formationShapeOverlay = (
+      <polyline points={linePath} fill="none" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="6,3" opacity={0.6} />
+    );
+  }
+
+  // Cup curve for cup-and-handle
+  let cupCurveOverlay = null;
+  if (isCupPattern(patternType) && upperLine) {
+    const rimPrice = upperLine.points[0].y;
+    const rimStartX = upperLine.points[0].x;
+    const rimEndX = upperLine.points[upperLine.points.length - 1].x;
+    // Find cup bottom from support annotation or lowest bar in cup range
+    const cupBars = bars.slice(Math.floor(rimStartX), Math.ceil(rimEndX) + 1);
+    const cupBottom = Math.min(...cupBars.map(b => b.low));
+    const midX = (rimStartX + rimEndX) / 2;
+    
+    // Quadratic bezier: start at left rim, curve down to cup bottom, back up to right rim
+    const sx = xB(rimStartX), sy = yP(rimPrice);
+    const ex = xB(rimEndX), ey = yP(rimPrice);
+    const cx = xB(midX), cy = yP(cupBottom);
+    
+    cupCurveOverlay = (
+      <g>
+        <path
+          d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth={2}
+          strokeDasharray="8,4"
+          opacity={0.7}
+        />
+        {/* Cup fill */}
+        <path
+          d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey} L${ex},${sy} L${sx},${sy} Z`}
+          fill="#38bdf8"
+          opacity={0.05}
+        />
+      </g>
+    );
+  }
+
+  // Neckline overlay (H&S patterns)
+  let necklineOverlay = null;
+  if (necklineLine) {
+    const nlPath = necklineLine.points.map(p => `${xB(p.x).toFixed(1)},${yP(p.y).toFixed(1)}`).join(" ");
+    necklineOverlay = (
+      <polyline points={nlPath} fill="none" stroke="#fbbf24" strokeWidth={1.5} strokeDasharray="8,4" opacity={0.7} />
+    );
+  }
+
+  let pivotOverlay = null;
   if (validPivots.length >= 2) {
     const firstIdx = validPivots[0].index;
     const lastIdx = validPivots[validPivots.length - 1].index;
@@ -176,9 +331,12 @@ export const PrescriptivePatternSVG = ({ patternType, className = "" }: Prescrip
     const zoneW = xB(lastIdx) - zoneX + barSpacing / 2;
     const points = validPivots.map(p => `${xB(p.index).toFixed(1)},${yP(p.price).toFixed(1)}`).join(" ");
 
-    patternOverlay = (
+    pivotOverlay = (
       <g>
-        <rect x={zoneX} y={CT} width={zoneW} height={CH} fill="#38bdf8" opacity={0.06} rx={4} />
+        {/* Zone background only if no formation shape already drawn */}
+        {!formationShapeOverlay && !cupCurveOverlay && (
+          <rect x={zoneX} y={CT} width={zoneW} height={CH} fill="#38bdf8" opacity={0.06} rx={4} />
+        )}
         <text x={zoneX + zoneW / 2} y={CT + 16} textAnchor="middle" fill="#38bdf8" fontSize={10} fontFamily="Arial, Helvetica, sans-serif" fontWeight={600} opacity={0.5}>PATTERN</text>
         <polyline points={points} fill="none" stroke="#38bdf8" strokeWidth={2} strokeLinejoin="round" opacity={0.7} />
         {validPivots.map((p, i) => (
@@ -254,8 +412,13 @@ export const PrescriptivePatternSVG = ({ patternType, className = "" }: Prescrip
       <rect x={CL} y={Math.min(entryY, tpY)} width={CW} height={Math.abs(tpY - entryY)} fill="#22c55e" opacity={0.06} />
       <rect x={CL} y={Math.min(entryY, slY)} width={CW} height={Math.abs(slY - entryY)} fill="#ef4444" opacity={0.06} />
 
-      {/* Pattern overlay */}
-      {patternOverlay}
+      {/* Formation shape overlay */}
+      {formationShapeOverlay}
+      {cupCurveOverlay}
+      {necklineOverlay}
+
+      {/* Pivot zigzag overlay */}
+      {pivotOverlay}
 
       {/* Candlesticks */}
       {candleElements}
