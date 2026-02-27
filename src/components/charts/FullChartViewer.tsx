@@ -191,6 +191,7 @@ export default function FullChartViewer({
   const { sharePattern, sharing } = useSharePattern();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
