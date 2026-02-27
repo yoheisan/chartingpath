@@ -262,6 +262,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   // Auto-fetch active live patterns + recent historical for this symbol/timeframe
   useEffect(() => {
+    // Skip pattern fetch for auth-gated timeframes
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
+      setAutoPatterns([]);
+      return;
+    }
+
     const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
       try {
@@ -297,7 +303,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
 
     fetchAutoPatterns();
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, userId]);
 
   // Generate chart markers from auto-detected patterns
   const chartMarkers: ChartMarker[] = useMemo(() => {
