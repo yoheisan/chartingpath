@@ -321,24 +321,22 @@ export const TranslationManagement = () => {
       : languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
-    const BATCH_SIZE = 2; // smaller batch to avoid edge function timeouts
+    const BATCH_SIZE = 5; // larger batch for paid Gemini tier (2000 RPM)
     const MAX_RETRIES = 3;
-    const RETRY_DELAY_MS = 5000; // 5s backoff between retries
+    const RETRY_DELAY_MS = 3000;
+    const CONCURRENCY = 3; // process 3 languages in parallel
 
-    for (let i = 0; i < langs.length; i++) {
-      const langCode = langs[i];
+    // Worker that processes all batches for a single language
+    const processLanguage = async (langCode: string, langIndex: number) => {
       const langName = languages.find(l => l.code === langCode)?.name || langCode;
       let offset = 0;
       let hasMore = true;
       let consecutiveFailures = 0;
+      let langTranslated = 0;
+      let langErrors = 0;
 
       while (hasMore) {
-        setArticleSyncProgress(`Translating articles to ${langName} (${i + 1}/${langs.length}) — batch from ${offset}...`);
-        // Estimate progress: use offset relative to a rough article count
-        const estimatedTotal = articleCoverage?.total_articles || 100;
-        const langProgress = i / langs.length;
-        const batchProgress = Math.min(offset / estimatedTotal, 1) / langs.length;
-        setArticleSyncPercent(Math.round((langProgress + batchProgress) * 100));
+        setArticleSyncProgress(`Translating articles: ${langName} + ${Math.min(CONCURRENCY, langs.length)} languages in parallel — batch from ${offset}...`);
 
         try {
           const { data, error } = await supabase.functions.invoke('translate-articles', {
@@ -355,21 +353,17 @@ export const TranslationManagement = () => {
             consecutiveFailures++;
             console.error(`Article sync error for ${langCode} (attempt ${consecutiveFailures}):`, error);
             if (consecutiveFailures >= MAX_RETRIES) {
-              console.error(`Giving up on ${langCode} after ${MAX_RETRIES} consecutive failures`);
-              totalErrors++;
+              langErrors++;
               hasMore = false;
               continue;
             }
-            // Wait before retrying the same batch
-            setArticleSyncProgress(`Retrying ${langName} batch from ${offset} (attempt ${consecutiveFailures + 1}/${MAX_RETRIES})...`);
             await new Promise(r => setTimeout(r, RETRY_DELAY_MS * consecutiveFailures));
-            continue; // retry same offset
+            continue;
           }
 
-          // Success — reset failure counter
           consecutiveFailures = 0;
-          totalTranslated += data?.translated || 0;
-          totalErrors += data?.errors || 0;
+          langTranslated += data?.translated || 0;
+          langErrors += data?.errors || 0;
 
           if (data?.next_offset != null) {
             offset = data.next_offset;
@@ -377,29 +371,46 @@ export const TranslationManagement = () => {
             hasMore = false;
           }
 
-          // Small delay between successful batches to avoid rate limits
+          // Minimal delay between batches (paid tier can handle it)
           if (hasMore) {
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 200));
           }
         } catch (error) {
           consecutiveFailures++;
           console.error(`Article sync error for ${langCode} (attempt ${consecutiveFailures}):`, error);
           if (consecutiveFailures >= MAX_RETRIES) {
-            console.error(`Giving up on ${langCode} after ${MAX_RETRIES} consecutive failures`);
-            totalErrors++;
+            langErrors++;
             hasMore = false;
             continue;
           }
-          setArticleSyncProgress(`Retrying ${langName} batch from ${offset} (attempt ${consecutiveFailures + 1}/${MAX_RETRIES})...`);
           await new Promise(r => setTimeout(r, RETRY_DELAY_MS * consecutiveFailures));
-          // retry same offset
         }
       }
 
-      // Refresh coverage after each language
+      return { translated: langTranslated, errors: langErrors };
+    };
+
+    // Process languages in parallel chunks of CONCURRENCY
+    for (let i = 0; i < langs.length; i += CONCURRENCY) {
+      const chunk = langs.slice(i, i + CONCURRENCY);
+      const chunkNames = chunk.map(c => languages.find(l => l.code === c)?.name || c).join(', ');
+      setArticleSyncProgress(`Processing: ${chunkNames} (${i + 1}-${Math.min(i + CONCURRENCY, langs.length)} of ${langs.length})...`);
+      setArticleSyncPercent(Math.round((i / langs.length) * 100));
+
+      const results = await Promise.all(
+        chunk.map((langCode, idx) => processLanguage(langCode, i + idx))
+      );
+
+      for (const r of results) {
+        totalTranslated += r.translated;
+        totalErrors += r.errors;
+      }
+
+      // Refresh coverage after each parallel chunk
       await loadArticleCoverage();
     }
 
+    setArticleSyncPercent(100);
     toast({
       title: 'Article Translation Complete',
       description: `Translated ${totalTranslated} articles across ${langs.length} language(s)${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
