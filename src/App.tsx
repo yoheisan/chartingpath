@@ -100,6 +100,7 @@ const SupportPage = lazy(() => import("./pages/SupportPage"));
 const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
+const PatternVisualizationPreview = lazy(() => import("./pages/PatternVisualizationPreview"));
 
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
