@@ -12,6 +12,7 @@ import {
   SeriesMarkerShape,
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
+import { FormationOverlayData } from '@/utils/formationOverlay';
 import {
   calculateEMA,
   calculateSMA,
@@ -134,6 +135,8 @@ interface StudyChartProps {
   hideAnalysisToolbar?: boolean;
   /** External markers to render on the chart (e.g., historical pattern occurrences) */
   chartMarkers?: ChartMarker[];
+  /** Formation overlays (zigzag, trendlines) to render on the chart */
+  formationOverlays?: FormationOverlayData[];
 }
 
 /**
