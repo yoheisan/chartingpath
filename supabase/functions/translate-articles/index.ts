@@ -151,8 +151,8 @@ Deno.serve(async (req) => {
           errors++
         }
 
-        // Rate limit delay
-        await new Promise(r => setTimeout(r, 2000))
+        // Minimal delay to avoid burst throttling (paid tier: 2000 RPM)
+        await new Promise(r => setTimeout(r, 300))
       }
 
       const remaining = needsTranslation.length - offset - batch.length
@@ -246,9 +246,9 @@ Return ONLY the translated Markdown content, no explanation.`
     const translated = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     translatedChunks.push(translated)
 
-    // Rate limit between chunks
+    // Minimal delay between chunks (paid tier)
     if (i < chunks.length - 1) {
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 200))
     }
   }
 
