@@ -295,46 +295,89 @@ export const TranslationManagement = () => {
     setSyncLangResults({});
   };
 
-  const handleSyncArticleTranslations = async () => {
+  const loadArticleCoverage = async () => {
+    setArticleCoverageLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-articles', {
+        body: { action: 'get_status' }
+      });
+      if (error) throw error;
+      setArticleCoverage({
+        total_articles: data.total_articles || 0,
+        language_summary: data.language_summary || {}
+      });
+    } catch (error) {
+      console.error('Error loading article coverage:', error);
+    } finally {
+      setArticleCoverageLoading(false);
+    }
+  };
+
+  const handleSyncArticleTranslations = async (targetLangCode?: string) => {
     setArticleSyncing(true);
-    const langs = languages.filter(l => l.code !== 'en').map(l => l.code);
+    setArticleSyncPercent(0);
+    const langs = targetLangCode
+      ? [targetLangCode]
+      : languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
+    const BATCH_SIZE = 3;
 
     for (let i = 0; i < langs.length; i++) {
       const langCode = langs[i];
       const langName = languages.find(l => l.code === langCode)?.name || langCode;
-      setArticleSyncProgress(`Translating articles to ${langName} (${i + 1}/${langs.length})...`);
+      let offset = 0;
+      let hasMore = true;
 
-      try {
-        const { data, error } = await supabase.functions.invoke('translate-articles', {
-          body: {
-            action: 'translate_all',
-            target_languages: [langCode]
+      while (hasMore) {
+        setArticleSyncProgress(`Translating articles to ${langName} (${i + 1}/${langs.length}) — batch from ${offset}...`);
+        setArticleSyncPercent(Math.round(((i + offset / 100) / langs.length) * 100));
+
+        try {
+          const { data, error } = await supabase.functions.invoke('translate-articles', {
+            body: {
+              action: 'translate_all',
+              language_code: langCode,
+              target_languages: [langCode],
+              batch_size: BATCH_SIZE,
+              offset
+            }
+          });
+
+          if (error) {
+            console.error(`Article sync error for ${langCode}:`, error);
+            totalErrors++;
+            hasMore = false;
+            continue;
           }
-        });
 
-        if (error) {
+          totalTranslated += data?.translated || 0;
+          totalErrors += data?.errors || 0;
+
+          if (data?.next_offset != null) {
+            offset = data.next_offset;
+          } else {
+            hasMore = false;
+          }
+        } catch (error) {
           console.error(`Article sync error for ${langCode}:`, error);
           totalErrors++;
-          continue;
+          hasMore = false;
         }
-
-        totalTranslated += data?.translated || 0;
-        totalErrors += data?.errors || 0;
-      } catch (error) {
-        console.error(`Article sync error for ${langCode}:`, error);
-        totalErrors++;
       }
+
+      // Refresh coverage after each language
+      await loadArticleCoverage();
     }
 
     toast({
       title: 'Article Translation Complete',
-      description: `Translated ${totalTranslated} articles across ${langs.length} languages${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
+      description: `Translated ${totalTranslated} articles across ${langs.length} language(s)${totalErrors > 0 ? ` (${totalErrors} errors)` : ''}`
     });
 
     setArticleSyncing(false);
     setArticleSyncProgress('');
+    setArticleSyncPercent(0);
   };
 
   const handleSyncGaps = async (langCode: string, partialEnContent: Record<string, any>, missingKeys: string[]) => {
