@@ -81,6 +81,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
 }: FullChartPlaybackViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
 
   const playback = useTradePlayback({
     bars,
