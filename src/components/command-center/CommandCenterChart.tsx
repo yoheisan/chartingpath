@@ -428,74 +428,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             </SelectContent>
           </Select>
 
-          {/* Pattern Multi-Toggle */}
-          {!isMobile && (
-            <Popover>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={enabledPatterns.size > 0 ? "secondary" : "outline"}
-                      size="icon"
-                      className={`h-7 w-7 sm:h-8 sm:w-8 relative ${enabledPatterns.size > 0 ? 'border-primary text-primary' : ''}`}
-                    >
-                      {patternLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <MapPin className="h-3.5 w-3.5" />
-                      )}
-                      {enabledPatterns.size > 0 && (
-                        <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] bg-primary text-primary-foreground">
-                          {enabledPatterns.size}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {enabledPatterns.size > 0 ? `${enabledPatterns.size} pattern types enabled` : 'Toggle pattern overlays'}
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent className="w-56 p-2" align="end">
-                <div className="space-y-1">
-                  <Button
-                    variant={enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? "secondary" : "outline"}
-                    size="sm"
-                    className="w-full justify-between text-xs h-7 mb-1"
-                    onClick={toggleAllPatterns}
-                  >
-                    <span className="font-medium">Toggle All</span>
-                    {enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? (
-                      <ToggleRight className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ToggleLeft className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                  </Button>
-                  <div className="border-t border-border my-1" />
-                  {PATTERN_OPTIONS.filter(p => p.value !== 'none').map((p) => {
-                    const isOn = enabledPatterns.has(p.value);
-                    const count = patternOccurrences[p.value]?.length || 0;
-                    return (
-                      <Button
-                        key={p.value}
-                        variant={isOn ? "secondary" : "ghost"}
-                        size="sm"
-                        className={`w-full justify-between text-xs h-7 ${isOn ? 'border border-primary/30' : ''}`}
-                        onClick={() => togglePattern(p.value)}
-                      >
-                        <span>{p.label}</span>
-                        {isOn && count > 0 && (
-                          <Badge variant="outline" className="h-4 px-1 text-[9px]">
-                            {count}
-                          </Badge>
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
+
+
 
           <Button
             variant="ghost"
@@ -555,6 +489,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               autoHeight 
               onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
               chartMarkers={chartMarkers}
+              formationOverlays={formationOverlays}
             />
           </div>
         ) : (
