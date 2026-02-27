@@ -226,15 +226,9 @@ serve(async (req) => {
       ohlcBars = aggregate1hBars(ohlcBars, 8);
       console.log(`Result: ${ohlcBars.length} 8h bars`);
     } else if (needs15mAggregation && actualInterval === '5m' && ohlcBars.length > 0) {
-      // We fetched 5m because native 15m failed — aggregate 5m→15m
       console.log(`Aggregating ${ohlcBars.length} 5m bars into 15m bars`);
-      ohlcBars = aggregate1hBars(ohlcBars, 0.25); // 15min = 0.25h — reuse via minute grouping
-      // Actually need a minute-based aggregation, let's do it inline
-      const grouped = new Map<string, OHLCBar[]>();
-      for (const bar of ohlcBars) {
-        // Reset — we need raw 5m bars, undo the broken aggregate
-      }
-      // Redo properly: re-parse from raw ohlcBars before the bad aggregate
+      ohlcBars = aggregate5mTo15m(ohlcBars);
+      console.log(`Result: ${ohlcBars.length} 15m bars`);
     }
     
     // Format data into PriceFrame format
