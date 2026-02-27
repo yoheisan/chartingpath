@@ -2,25 +2,19 @@ import { PrescriptivePatternSVG } from "@/components/PrescriptivePatternSVG";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-const ALL_PATTERNS = [
+// Patterns currently used in the ChartingPath screener (useScreenerCaps)
+const SCREENER_PATTERNS = [
+  // Breakout
+  "donchian-breakout-long", "donchian-breakout-short",
   // Reversal
-  "head-shoulders", "inverted-head-shoulders", "double-top", "double-bottom",
-  "triple-top", "triple-bottom", "rising-wedge", "falling-wedge",
+  "double-top", "double-bottom",
+  "triple-top", "triple-bottom",
+  "head-shoulders", "inverted-head-shoulders",
+  "rising-wedge", "falling-wedge",
   // Continuation
-  "ascending-triangle", "descending-triangle", "symmetrical-triangle",
-  "bull-flag", "bear-flag", "pennant", "cup-handle", "rectangle",
-  // Candlestick
-  "hammer", "hanging-man", "shooting-star",
-  "doji", "standard-doji", "dragonfly-doji", "gravestone-doji", "long-legged-doji", "four-price-doji",
-  "bullish-harami", "bearish-harami",
-  "bullish-engulfing", "bearish-engulfing",
-  "spinning-top", "morning-star", "evening-star",
-  "three-white-soldiers", "three-black-crows",
-  "piercing-line", "dark-cloud-cover",
-  "tweezer-top", "tweezer-bottom",
-  "kicker-bullish", "kicker-bearish",
-  "marubozu-bullish", "marubozu-bearish",
-  "abandoned-baby-bullish", "abandoned-baby-bearish",
+  "ascending-triangle", "descending-triangle",
+  "bull-flag", "bear-flag",
+  "cup-handle",
 ];
 
 const PatternVisualizationPreview = () => {
