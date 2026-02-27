@@ -73,6 +73,7 @@ import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
+import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -190,6 +191,7 @@ export default function FullChartViewer({
   const { sharePattern, sharing } = useSharePattern();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
@@ -570,6 +572,111 @@ export default function FullChartViewer({
             console.warn('Failed to render markers:', e);
           }
         }
+
+        // ─── Formation Overlay: ZigZag + Trendlines + Shaded Zone ───
+        const formation = deriveFormationOverlay(
+          visualSpec?.pivots,
+          bars,
+          visualSpec?.patternId
+        );
+
+        if (formation && formation.zigzag.length >= 2) {
+          // ZigZag polyline (cyan)
+          const zigzagSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(0, 200, 255, 0.85)',
+            lineWidth: 2,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          zigzagSeries.setData(formation.zigzag);
+
+          // Upper trendline (green, dashed)
+          if (formation.upperTrend.length >= 2) {
+            const upperSeries = chart.addSeries(LineSeries, {
+              color: 'rgba(34, 197, 94, 0.6)',
+              lineWidth: 1,
+              lineStyle: 2,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            });
+            upperSeries.setData(formation.upperTrend);
+          }
+
+          // Lower trendline (red, dashed)
+          if (formation.lowerTrend.length >= 2) {
+            const lowerSeries = chart.addSeries(LineSeries, {
+              color: 'rgba(239, 68, 68, 0.6)',
+              lineWidth: 1,
+              lineStyle: 2,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            });
+            lowerSeries.setData(formation.lowerTrend);
+          }
+
+          // Shaded formation zone (canvas overlay)
+          if (formation.hasZone) {
+            const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
+            if (zonePoints.length >= 2) {
+              const drawZone = () => {
+                const canvas = canvasOverlayRef.current;
+                if (!canvas || !chartRef.current) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                const rect = containerEl.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(rect.width) * dpr;
+                canvas.height = Math.floor(rect.height) * dpr;
+                canvas.style.width = `${Math.floor(rect.width)}px`;
+                canvas.style.height = `${Math.floor(rect.height)}px`;
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, rect.width, rect.height);
+
+                const ts = chartRef.current!.timeScale();
+                const ps = chartRef.current!.priceScale('right');
+
+                const pixelPoints: { x: number; upper: number; lower: number }[] = [];
+                for (const pt of zonePoints) {
+                  try {
+                    const x = (ts as any).timeToCoordinate?.(pt.time as any);
+                    const yUp = (ps as any).priceToCoordinate?.(pt.upper);
+                    const yLo = (ps as any).priceToCoordinate?.(pt.lower);
+                    if (x != null && yUp != null && yLo != null &&
+                        Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
+                      pixelPoints.push({ x, upper: yUp, lower: yLo });
+                    }
+                  } catch { /* coordinate conversion may fail */ }
+                }
+
+                if (pixelPoints.length < 2) return;
+
+                ctx.beginPath();
+                ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
+                for (let i = 1; i < pixelPoints.length; i++) {
+                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
+                }
+                for (let i = pixelPoints.length - 1; i >= 0; i--) {
+                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
+                }
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+              };
+
+              requestAnimationFrame(drawZone);
+              chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
+            }
+          }
+        }
+
         // Calculate optimal price margins based on data volatility
         // Ensures charts never look "flat" regardless of actual price movement
         const hasOverlays = visualSpec?.overlays && visualSpec.overlays.length > 0;
@@ -886,6 +993,11 @@ export default function FullChartViewer({
                   <div
                     ref={setContainerEl}
                     className={`w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50 ${isDragging ? 'cursor-grabbing' : ''}`}
+                  />
+                  {/* Canvas overlay for formation zone shading */}
+                  <canvas
+                    ref={canvasOverlayRef}
+                    className="absolute inset-0 pointer-events-none z-[5]"
                   />
                   
                   {/* Indicator Legend */}
