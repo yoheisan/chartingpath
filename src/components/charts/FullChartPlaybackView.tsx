@@ -312,6 +312,118 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           });
         }
 
+        // ─── Formation Overlay: ZigZag + Trendlines + Shaded Zone ───
+        const formation = deriveFormationOverlay(
+          visualSpec?.pivots,
+          playback.visibleBars,
+          visualSpec?.patternId
+        );
+
+        if (formation && formation.zigzag.length >= 2) {
+          // ZigZag polyline (cyan)
+          const zigzagSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(0, 200, 255, 0.85)',
+            lineWidth: 2,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          zigzagSeries.setData(formation.zigzag);
+
+          // Upper trendline (green, dashed)
+          if (formation.upperTrend.length >= 2) {
+            const upperSeries = chart.addSeries(LineSeries, {
+              color: 'rgba(34, 197, 94, 0.6)',
+              lineWidth: 1,
+              lineStyle: 2, // dashed
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            });
+            upperSeries.setData(formation.upperTrend);
+          }
+
+          // Lower trendline (red, dashed)
+          if (formation.lowerTrend.length >= 2) {
+            const lowerSeries = chart.addSeries(LineSeries, {
+              color: 'rgba(239, 68, 68, 0.6)',
+              lineWidth: 1,
+              lineStyle: 2,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            });
+            lowerSeries.setData(formation.lowerTrend);
+          }
+
+          // Shaded formation zone (canvas overlay)
+          if (formation.hasZone) {
+            const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
+            if (zonePoints.length >= 2) {
+              const drawZone = () => {
+                const canvas = canvasOverlayRef.current;
+                if (!canvas || !chartRef.current) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                const chartEl = containerEl;
+                const rect = chartEl.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(rect.width) * dpr;
+                canvas.height = Math.floor(rect.height) * dpr;
+                canvas.style.width = `${Math.floor(rect.width)}px`;
+                canvas.style.height = `${Math.floor(rect.height)}px`;
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, rect.width, rect.height);
+
+                const ts = chartRef.current.timeScale();
+                const ps = chartRef.current.priceScale('right');
+
+                // Convert data points to pixel coordinates
+                const pixelPoints: { x: number; upper: number; lower: number }[] = [];
+                for (const pt of zonePoints) {
+                  try {
+                    const x = (ts as any).timeToCoordinate?.(pt.time as any);
+                    const yUp = (ps as any).priceToCoordinate?.(pt.upper);
+                    const yLo = (ps as any).priceToCoordinate?.(pt.lower);
+                    if (x != null && yUp != null && yLo != null && 
+                        Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
+                      pixelPoints.push({ x, upper: yUp, lower: yLo });
+                    }
+                  } catch {
+                    // coordinate conversion may fail
+                  }
+                }
+
+                if (pixelPoints.length < 2) return;
+
+                // Draw filled polygon
+                ctx.beginPath();
+                ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
+                for (let i = 1; i < pixelPoints.length; i++) {
+                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
+                }
+                for (let i = pixelPoints.length - 1; i >= 0; i--) {
+                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
+                }
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+                ctx.fill();
+
+                // Subtle border
+                ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+              };
+
+              // Draw initially and on range changes
+              requestAnimationFrame(drawZone);
+              chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
+            }
+          }
+        }
+
         // Trade plan overlays (only show after entry)
         if (playback.isAfterEntry) {
           candleSeries.createPriceLine({
