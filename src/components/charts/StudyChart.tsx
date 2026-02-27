@@ -527,6 +527,47 @@ const StudyChart = memo(({
       }
     }
 
+    // === FORMATION OVERLAYS (auto-detected patterns) ===
+    if (formationOverlays && formationOverlays.length > 0) {
+      for (const formation of formationOverlays) {
+        if (formation.zigzag.length >= 2) {
+          const zigzagSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(0, 200, 255, 0.85)',
+            lineWidth: 2,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          zigzagSeries.setData(formation.zigzag);
+        }
+
+        if (formation.upperTrend.length >= 2) {
+          const upperSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(34, 197, 94, 0.6)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          upperSeries.setData(formation.upperTrend);
+        }
+
+        if (formation.lowerTrend.length >= 2) {
+          const lowerSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(239, 68, 68, 0.6)',
+            lineWidth: 1,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          lowerSeries.setData(formation.lowerTrend);
+        }
+      }
+    }
+
     // Calculate optimal price margins based on data volatility
     // Ensures charts never look "flat" regardless of actual price movement
     // Reserve bottom space for oscillator panes (RSI, MACD)
