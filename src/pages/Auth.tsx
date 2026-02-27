@@ -615,13 +615,13 @@ const Auth = () => {
               // Password Reset Form
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">{t('auth.newPassword')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="newPassword"
                       type="password"
-                      placeholder="Enter your new password"
+                      placeholder={t('auth.newPasswordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10"
@@ -631,13 +631,13 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmNewPassword">{t('auth.confirmNewPassword')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="confirmNewPassword"
                       type="password"
-                      placeholder="Confirm your new password"
+                      placeholder={t('auth.confirmNewPasswordPlaceholder')}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10"
@@ -650,10 +650,10 @@ const Auth = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating Password...
+                      {t('auth.updatingPassword')}
                     </>
                   ) : (
-                    "Update Password"
+                    t('auth.updatePassword')
                   )}
                 </Button>
               </form>
@@ -661,13 +661,13 @@ const Auth = () => {
               // Forgot Password Form
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('auth.email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -680,12 +680,12 @@ const Auth = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Sending Reset Link...
+                      {t('auth.sendingResetLink')}
                     </>
                   ) : resetCooldown > 0 ? (
-                    `Resend in ${resetCooldown}s`
+                    t('auth.resendIn', { seconds: resetCooldown })
                   ) : (
-                    "Send Reset Link"
+                    t('auth.sendResetLink')
                   )}
                 </Button>
 
@@ -695,7 +695,7 @@ const Auth = () => {
                   className="w-full"
                   onClick={() => setIsForgotPassword(false)}
                 >
-                  Back to Sign In
+                  {t('auth.backToSignIn')}
                 </Button>
               </form>
             ) : (
@@ -715,26 +715,26 @@ const Auth = () => {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Continue with Google
+                    {t('auth.continueWithGoogle')}
                   </Button>
 
                   <div className="relative">
                     <Separator />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="bg-card px-2 text-sm text-muted-foreground">Or with email</span>
+                      <span className="bg-card px-2 text-sm text-muted-foreground">{t('auth.orWithEmail')}</span>
                     </div>
                   </div>
                 </div>
 
                 <form onSubmit={handleAuth} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('auth.email')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
-                       placeholder="Enter your email"
+                       placeholder={t('auth.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={handleFormInteraction}
@@ -745,13 +745,13 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('auth.password')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder={t('auth.passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
@@ -762,13 +762,13 @@ const Auth = () => {
 
                   {isSignUp && (
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="confirmPassword"
                           type="password"
-                          placeholder="Confirm your password"
+                          placeholder={t('auth.confirmPasswordPlaceholder')}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="pl-10"
@@ -786,7 +786,7 @@ const Auth = () => {
                         className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
                         onClick={() => setIsForgotPassword(true)}
                       >
-                        Forgot Password?
+                        {t('auth.forgotPassword')}
                       </Button>
                     </div>
                   )}
@@ -795,17 +795,17 @@ const Auth = () => {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        {isSignUp ? "Creating Account..." : "Signing In..."}
+                        {isSignUp ? t('auth.creatingAccount') : t('auth.signingIn')}
                       </>
                     ) : (
-                      isSignUp ? "Create Account" : "Sign In"
+                      isSignUp ? t('auth.createAccount') : t('auth.signIn')
                     )}
                   </Button>
                 </form>
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                    {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
                   </p>
                   <Button
                     variant="link"
@@ -814,7 +814,7 @@ const Auth = () => {
                       setIsForgotPassword(false);
                     }}
                   >
-                    {isSignUp ? "Sign In" : "Create Account"}
+                    {isSignUp ? t('auth.signIn') : t('auth.createAccount')}
                   </Button>
                 </div>
               </>
