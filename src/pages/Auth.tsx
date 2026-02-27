@@ -301,7 +301,7 @@ const Auth = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Authentication Error",
+        title: t('auth.toastAuthError'),
         description: error.message,
         variant: "destructive",
       });
@@ -323,9 +323,8 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset Email Sent",
-        description:
-          "Please check your email for the reset link. Open the MOST RECENT email link once (older links will fail).",
+        title: t('auth.toastResetEmailSent'),
+        description: t('auth.toastCheckResetEmail'),
       });
 
       setResetCooldown(60);
@@ -333,7 +332,7 @@ const Auth = () => {
       setIsForgotPassword(true);
     } catch (error: any) {
       toast({
-        title: "Reset Error",
+        title: t('auth.toastResetError'),
         description: error.message,
         variant: "destructive",
       });
@@ -349,8 +348,8 @@ const Auth = () => {
     try {
       if (password !== confirmPassword) {
         toast({
-          title: "Password Mismatch",
-          description: "Passwords do not match",
+          title: t('auth.toastPasswordMismatch'),
+          description: t('auth.toastPasswordsDoNotMatch'),
           variant: "destructive",
         });
         setLoading(false);
@@ -364,8 +363,8 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Password Updated",
-        description: "Your password has been successfully updated",
+        title: t('auth.toastPasswordUpdated'),
+        description: t('auth.toastPasswordUpdatedDesc'),
       });
 
       // Clear URL params and redirect
@@ -374,7 +373,7 @@ const Auth = () => {
       
     } catch (error: any) {
       toast({
-        title: "Update Error",
+        title: t('auth.toastUpdateError'),
         description: error.message,
         variant: "destructive",
       });
@@ -393,8 +392,8 @@ const Auth = () => {
       if (isSignUp) {
         if (password !== confirmPassword) {
           toast({
-            title: "Password Mismatch",
-            description: "Passwords do not match",
+            title: t('auth.toastPasswordMismatch'),
+            description: t('auth.toastPasswordsDoNotMatch'),
             variant: "destructive",
           });
           setLoading(false);
@@ -428,8 +427,8 @@ const Auth = () => {
         }
 
         toast({
-          title: "Account Created",
-          description: "Please check your email to verify your account",
+          title: t('auth.toastAccountCreated'),
+          description: t('auth.toastCheckEmail'),
         });
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -445,15 +444,15 @@ const Auth = () => {
         trackLoginAttempt({ email, success: true, method: "password", user_id: data.user?.id });
 
         toast({
-          title: "Welcome Back",
-          description: "You have been logged in successfully",
+          title: t('auth.toastWelcomeBack'),
+          description: t('auth.toastSignedIn'),
         });
 
         navigate(redirectPath);
       }
     } catch (error: any) {
       toast({
-        title: "Authentication Error",
+        title: t('auth.toastAuthError'),
         description: error.message,
         variant: "destructive",
       });
