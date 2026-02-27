@@ -562,17 +562,17 @@ const Auth = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <p className="text-2xl font-bold text-foreground">1,100+</p>
-                <p className="text-xs text-muted-foreground">Instruments tracked</p>
+                <p className="text-xs text-muted-foreground">{t('auth.instrumentsTracked')}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <p className="text-2xl font-bold text-foreground">320K+</p>
-                <p className="text-xs text-muted-foreground">Pattern outcomes</p>
+                <p className="text-xs text-muted-foreground">{t('auth.patternOutcomes')}</p>
               </div>
             </div>
 
             {/* Trust signals */}
             <div className="flex flex-wrap gap-3">
-              {["No credit card required", "Free forever tier", "Cancel anytime"].map((text) => (
+              {[t('auth.noCreditCard'), t('auth.freeForever'), t('auth.cancelAnytime')].map((text) => (
                 <div key={text} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                   {text}
