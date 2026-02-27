@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ const trackLoginAttempt = (payload: {
 };
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const rawRedirect = searchParams.get("redirect");
@@ -299,7 +301,7 @@ const Auth = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Authentication Error",
+        title: t('auth.toastAuthError'),
         description: error.message,
         variant: "destructive",
       });
@@ -321,9 +323,8 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset Email Sent",
-        description:
-          "Please check your email for the reset link. Open the MOST RECENT email link once (older links will fail).",
+        title: t('auth.toastResetEmailSent'),
+        description: t('auth.toastCheckResetEmail'),
       });
 
       setResetCooldown(60);
@@ -331,7 +332,7 @@ const Auth = () => {
       setIsForgotPassword(true);
     } catch (error: any) {
       toast({
-        title: "Reset Error",
+        title: t('auth.toastResetError'),
         description: error.message,
         variant: "destructive",
       });
@@ -347,8 +348,8 @@ const Auth = () => {
     try {
       if (password !== confirmPassword) {
         toast({
-          title: "Password Mismatch",
-          description: "Passwords do not match",
+          title: t('auth.toastPasswordMismatch'),
+          description: t('auth.toastPasswordsDoNotMatch'),
           variant: "destructive",
         });
         setLoading(false);
@@ -362,8 +363,8 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Password Updated",
-        description: "Your password has been successfully updated",
+        title: t('auth.toastPasswordUpdated'),
+        description: t('auth.toastPasswordUpdatedDesc'),
       });
 
       // Clear URL params and redirect
@@ -372,7 +373,7 @@ const Auth = () => {
       
     } catch (error: any) {
       toast({
-        title: "Update Error",
+        title: t('auth.toastUpdateError'),
         description: error.message,
         variant: "destructive",
       });
@@ -391,8 +392,8 @@ const Auth = () => {
       if (isSignUp) {
         if (password !== confirmPassword) {
           toast({
-            title: "Password Mismatch",
-            description: "Passwords do not match",
+            title: t('auth.toastPasswordMismatch'),
+            description: t('auth.toastPasswordsDoNotMatch'),
             variant: "destructive",
           });
           setLoading(false);
@@ -426,8 +427,8 @@ const Auth = () => {
         }
 
         toast({
-          title: "Account Created",
-          description: "Please check your email to verify your account",
+          title: t('auth.toastAccountCreated'),
+          description: t('auth.toastCheckEmail'),
         });
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -443,15 +444,15 @@ const Auth = () => {
         trackLoginAttempt({ email, success: true, method: "password", user_id: data.user?.id });
 
         toast({
-          title: "Welcome Back",
-          description: "You have been logged in successfully",
+          title: t('auth.toastWelcomeBack'),
+          description: t('auth.toastSignedIn'),
         });
 
         navigate(redirectPath);
       }
     } catch (error: any) {
       toast({
-        title: "Authentication Error",
+        title: t('auth.toastAuthError'),
         description: error.message,
         variant: "destructive",
       });
@@ -492,15 +493,17 @@ const Auth = () => {
   const contextHeadline = (() => {
     switch (sharedContext) {
       case 'screener':
-        return 'Sign up to access the live pattern screener';
+        return t('auth.contextScreener');
       case 'backtest':
-        return 'Sign up to save your backtest results';
+        return t('auth.contextBacktest');
       case 'shared_backtest':
         return sharedPattern 
-          ? `Sign up to get alerts for ${decodeURIComponent(sharedPattern)}${sharedSymbol ? ` on ${decodeURIComponent(sharedSymbol)}` : ''}`
-          : 'Sign up to create your own alerts';
+          ? (sharedSymbol 
+              ? t('auth.contextSharedBacktestSymbol', { pattern: decodeURIComponent(sharedPattern), symbol: decodeURIComponent(sharedSymbol) })
+              : t('auth.contextSharedBacktest', { pattern: decodeURIComponent(sharedPattern) }))
+          : t('auth.contextCreateAlerts');
       case 'alert':
-        return 'Sign up to start receiving pattern alerts';
+        return t('auth.contextAlert');
       default:
         return null;
     }
@@ -513,7 +516,7 @@ const Auth = () => {
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('auth.backToHome')}
           </Link>
         </div>
 
@@ -530,20 +533,20 @@ const Auth = () => {
             )}
             
             <div>
-              <h2 className="text-2xl font-bold mb-2">Your free trading edge starts here</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('auth.headline')}</h2>
               <p className="text-muted-foreground">
-                Join thousands of instruments tracked daily with pattern recognition powered by 320,000+ historical outcomes.
+                {t('auth.subheadline')}
               </p>
             </div>
 
             {/* Free tier benefits */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Free account includes</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('auth.freeAccountIncludes')}</h3>
               {[
-                { icon: FlaskConical, text: "3 backtests per day" },
-                { icon: Zap, text: "Live screener access" },
-                { icon: Bell, text: "Pattern alert setup" },
-                { icon: BarChart3, text: "Edge Atlas rankings" },
+                { icon: FlaskConical, text: t('auth.backtestsPerDay') },
+                { icon: Zap, text: t('auth.liveScreenerAccess') },
+                { icon: Bell, text: t('auth.patternAlertSetup') },
+                { icon: BarChart3, text: t('auth.edgeAtlasRankings') },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-3">
                   <div className="p-1.5 rounded-md bg-primary/10">
@@ -558,17 +561,17 @@ const Auth = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <p className="text-2xl font-bold text-foreground">1,100+</p>
-                <p className="text-xs text-muted-foreground">Instruments tracked</p>
+                <p className="text-xs text-muted-foreground">{t('auth.instrumentsTracked')}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <p className="text-2xl font-bold text-foreground">320K+</p>
-                <p className="text-xs text-muted-foreground">Pattern outcomes</p>
+                <p className="text-xs text-muted-foreground">{t('auth.patternOutcomes')}</p>
               </div>
             </div>
 
             {/* Trust signals */}
             <div className="flex flex-wrap gap-3">
-              {["No credit card required", "Free forever tier", "Cancel anytime"].map((text) => (
+              {[t('auth.noCreditCard'), t('auth.freeForever'), t('auth.cancelAnytime')].map((text) => (
                 <div key={text} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                   {text}
@@ -586,16 +589,16 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isResetPassword ? "Set New Password" : isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Welcome Back"}
+              {isResetPassword ? t('auth.setNewPassword') : isForgotPassword ? t('auth.resetPassword') : isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
             </CardTitle>
             <CardDescription>
               {isResetPassword
-                ? "Enter your new password below"
+                ? t('auth.enterNewPassword')
                 : isForgotPassword 
-                  ? "Enter your email to receive password reset instructions"
+                  ? t('auth.enterEmailForReset')
                   : isSignUp 
-                    ? "Create your free account in seconds"
-                    : "Sign in to your ChartingPath account"
+                    ? t('auth.createFreeAccount')
+                    : t('auth.signInToAccount')
               }
             </CardDescription>
           </CardHeader>
@@ -611,13 +614,13 @@ const Auth = () => {
               // Password Reset Form
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">{t('auth.newPassword')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="newPassword"
                       type="password"
-                      placeholder="Enter your new password"
+                      placeholder={t('auth.newPasswordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10"
@@ -627,13 +630,13 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmNewPassword">{t('auth.confirmNewPassword')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="confirmNewPassword"
                       type="password"
-                      placeholder="Confirm your new password"
+                      placeholder={t('auth.confirmNewPasswordPlaceholder')}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10"
@@ -646,10 +649,10 @@ const Auth = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating Password...
+                      {t('auth.updatingPassword')}
                     </>
                   ) : (
-                    "Update Password"
+                    t('auth.updatePassword')
                   )}
                 </Button>
               </form>
@@ -657,13 +660,13 @@ const Auth = () => {
               // Forgot Password Form
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('auth.email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -676,12 +679,12 @@ const Auth = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Sending Reset Link...
+                      {t('auth.sendingResetLink')}
                     </>
                   ) : resetCooldown > 0 ? (
-                    `Resend in ${resetCooldown}s`
+                    t('auth.resendIn', { seconds: resetCooldown })
                   ) : (
-                    "Send Reset Link"
+                    t('auth.sendResetLink')
                   )}
                 </Button>
 
@@ -691,7 +694,7 @@ const Auth = () => {
                   className="w-full"
                   onClick={() => setIsForgotPassword(false)}
                 >
-                  Back to Sign In
+                  {t('auth.backToSignIn')}
                 </Button>
               </form>
             ) : (
@@ -711,26 +714,26 @@ const Auth = () => {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Continue with Google
+                    {t('auth.continueWithGoogle')}
                   </Button>
 
                   <div className="relative">
                     <Separator />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="bg-card px-2 text-sm text-muted-foreground">Or with email</span>
+                      <span className="bg-card px-2 text-sm text-muted-foreground">{t('auth.orWithEmail')}</span>
                     </div>
                   </div>
                 </div>
 
                 <form onSubmit={handleAuth} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('auth.email')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
-                       placeholder="Enter your email"
+                       placeholder={t('auth.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={handleFormInteraction}
@@ -741,13 +744,13 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('auth.password')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder={t('auth.passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
@@ -758,13 +761,13 @@ const Auth = () => {
 
                   {isSignUp && (
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="confirmPassword"
                           type="password"
-                          placeholder="Confirm your password"
+                          placeholder={t('auth.confirmPasswordPlaceholder')}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="pl-10"
@@ -782,7 +785,7 @@ const Auth = () => {
                         className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
                         onClick={() => setIsForgotPassword(true)}
                       >
-                        Forgot Password?
+                        {t('auth.forgotPassword')}
                       </Button>
                     </div>
                   )}
@@ -791,17 +794,17 @@ const Auth = () => {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        {isSignUp ? "Creating Account..." : "Signing In..."}
+                        {isSignUp ? t('auth.creatingAccount') : t('auth.signingIn')}
                       </>
                     ) : (
-                      isSignUp ? "Create Account" : "Sign In"
+                      isSignUp ? t('auth.createAccount') : t('auth.signIn')
                     )}
                   </Button>
                 </form>
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                    {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
                   </p>
                   <Button
                     variant="link"
@@ -810,7 +813,7 @@ const Auth = () => {
                       setIsForgotPassword(false);
                     }}
                   >
-                    {isSignUp ? "Sign In" : "Create Account"}
+                    {isSignUp ? t('auth.signIn') : t('auth.createAccount')}
                   </Button>
                 </div>
               </>
