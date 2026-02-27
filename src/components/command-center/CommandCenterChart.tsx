@@ -9,13 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
@@ -27,6 +22,7 @@ import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTradingCopilotContext } from '@/components/copilot';
+import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
 
 interface CommandCenterChartProps {
   symbol: string;
@@ -43,25 +39,6 @@ const TIMEFRAMES = [
   { value: '8h', label: '8H' },
   { value: '1d', label: '1D' },
   { value: '1wk', label: '1W' },
-];
-
-const PATTERN_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'double-top', label: 'Double Top' },
-  { value: 'double-bottom', label: 'Double Bottom' },
-  { value: 'head-and-shoulders', label: 'Head & Shoulders' },
-  { value: 'inverse-head-and-shoulders', label: 'Inv. H&S' },
-  { value: 'ascending-triangle', label: 'Asc. Triangle' },
-  { value: 'descending-triangle', label: 'Desc. Triangle' },
-  { value: 'rising-wedge', label: 'Rising Wedge' },
-  { value: 'falling-wedge', label: 'Falling Wedge' },
-  { value: 'bull-flag', label: 'Bull Flag' },
-  { value: 'bear-flag', label: 'Bear Flag' },
-  { value: 'cup-and-handle', label: 'Cup & Handle' },
-  { value: 'triple-top', label: 'Triple Top' },
-  { value: 'triple-bottom', label: 'Triple Bottom' },
-  { value: 'donchian-breakout-long', label: 'Donchian Long' },
-  { value: 'donchian-breakout-short', label: 'Donchian Short' },
 ];
 
 export const CommandCenterChart = memo(function CommandCenterChart({
@@ -81,9 +58,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [priceData, setPriceData] = useState<{ current: number; change: number; changePct: number } | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
-  const [enabledPatterns, setEnabledPatterns] = useState<Set<string>>(new Set());
-  const [patternOccurrences, setPatternOccurrences] = useState<Record<string, any[]>>({});
-  const [patternLoading, setPatternLoading] = useState(false);
+  const [autoPatterns, setAutoPatterns] = useState<any[]>([]);
 
   // Check if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
@@ -268,112 +243,75 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     fetchChartData();
   }, [fetchChartData]);
 
-  // Toggle a single pattern on/off
-  const togglePattern = useCallback((patternId: string) => {
-    setEnabledPatterns(prev => {
-      const next = new Set(prev);
-      if (next.has(patternId)) {
-        next.delete(patternId);
-      } else {
-        next.add(patternId);
-      }
-      return next;
-    });
-  }, []);
-
-  // Toggle all patterns
-  const toggleAllPatterns = useCallback(() => {
-    setEnabledPatterns(prev => {
-      const allIds = PATTERN_OPTIONS.filter(p => p.value !== 'none').map(p => p.value);
-      if (prev.size === allIds.length) {
-        return new Set(); // turn all off
-      }
-      return new Set(allIds); // turn all on
-    });
-  }, []);
-
-  // Fetch historical pattern occurrences for all enabled patterns
+  // Auto-fetch active live patterns + recent historical for this symbol/timeframe
   useEffect(() => {
-    if (enabledPatterns.size === 0) {
-      setPatternOccurrences({});
-      return;
-    }
-
-    const fetchPatterns = async () => {
-      setPatternLoading(true);
+    const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
-      const results: Record<string, any[]> = {};
-
       try {
-        // Fetch all enabled patterns in parallel
-        const promises = Array.from(enabledPatterns).map(async (patternId) => {
-          const { data, error } = await supabase
-            .from('historical_pattern_occurrences')
-            .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
-            .eq('symbol', upperSymbol)
-            .eq('pattern_id', patternId)
-            .order('detected_at', { ascending: true })
-            .limit(100);
+        // Fetch active live patterns
+        const { data: liveData } = await supabase
+          .from('live_pattern_detections')
+          .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars')
+          .eq('instrument', upperSymbol)
+          .eq('timeframe', timeframe)
+          .eq('status', 'active')
+          .limit(20);
 
-          if (error) throw error;
-          results[patternId] = data || [];
-        });
+        // Fetch recent historical (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const { data: historicalData } = await supabase
+          .from('historical_pattern_occurrences')
+          .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
+          .eq('symbol', upperSymbol)
+          .eq('timeframe', timeframe)
+          .gte('detected_at', thirtyDaysAgo.toISOString())
+          .order('detected_at', { ascending: false })
+          .limit(50);
 
-        await Promise.all(promises);
-        setPatternOccurrences(results);
+        setAutoPatterns([
+          ...(liveData || []).map(p => ({ ...p, isActive: true })),
+          ...(historicalData || []).map(p => ({ ...p, isActive: false })),
+        ]);
       } catch (err) {
-        console.error('[CommandCenterChart] pattern fetch error:', err);
-        setPatternOccurrences({});
-      } finally {
-        setPatternLoading(false);
+        console.error('[CommandCenterChart] auto-pattern fetch error:', err);
+        setAutoPatterns([]);
       }
     };
 
-    fetchPatterns();
-  }, [enabledPatterns, symbol]);
+    fetchAutoPatterns();
+  }, [symbol, timeframe]);
 
-  // Generate chart markers from all enabled pattern occurrences
+  // Generate chart markers from auto-detected patterns
   const chartMarkers: ChartMarker[] = useMemo(() => {
-    if (enabledPatterns.size === 0) return [];
+    if (autoPatterns.length === 0) return [];
     
     const markers: ChartMarker[] = [];
-    const patternColors: Record<string, string> = {};
-    const colorPalette = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899', '#22c55e', '#3b82f6', '#ef4444'];
-    let colorIdx = 0;
 
-    for (const [patternId, occurrences] of Object.entries(patternOccurrences)) {
-      if (!enabledPatterns.has(patternId)) continue;
-      if (!patternColors[patternId]) {
-        patternColors[patternId] = colorPalette[colorIdx % colorPalette.length];
-        colorIdx++;
-      }
-      const color = patternColors[patternId];
+    for (const p of autoPatterns) {
+      const vs = p.visual_spec as any;
+      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+      const color = p.isActive ? '#f97316' : '#6b7280';
       
-      occurrences.forEach((p: any) => {
-        const vs = p.visual_spec as any;
-        const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
-        
-        if (pivots && pivots.length > 0) {
-          pivots.forEach((pivot) => {
-            if (!pivot?.timestamp || !pivot?.type) return;
-            const isHigh = pivot.type === 'high';
-            const shortLabel = (pivot.label ?? '')
-              .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
-              .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
-              .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
-            markers.push({
-              time: pivot.timestamp,
-              position: isHigh ? 'aboveBar' : 'belowBar',
-              color,
-              shape: isHigh ? 'arrowDown' : 'arrowUp',
-              text: shortLabel || pivot.label,
-            });
+      if (pivots && pivots.length > 0) {
+        pivots.forEach((pivot: any) => {
+          if (!pivot?.timestamp || !pivot?.type) return;
+          const isHigh = pivot.type === 'high';
+          const shortLabel = (pivot.label ?? '')
+            .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
+            .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
+            .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
+          markers.push({
+            time: pivot.timestamp,
+            position: isHigh ? 'aboveBar' : 'belowBar',
+            color,
+            shape: isHigh ? 'arrowDown' : 'arrowUp',
+            text: shortLabel || pivot.label,
           });
-        }
-      });
+        });
+      }
     }
     
-    // Deduplicate markers by time + text
     const seen = new Set<string>();
     return markers.filter((m) => {
       const key = `${m.time}|${m.text}`;
@@ -381,7 +319,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [enabledPatterns, patternOccurrences]);
+  }, [autoPatterns]);
+
+  // Derive formation overlays from auto-detected patterns
+  const formationOverlays: FormationOverlayData[] = useMemo(() => {
+    if (autoPatterns.length === 0 || bars.length === 0) return [];
+    
+    const overlays: FormationOverlayData[] = [];
+    for (const p of autoPatterns) {
+      const vs = p.visual_spec as any;
+      const patternBars = p.bars as CompressedBar[] | undefined;
+      const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
+      const formation = deriveFormationOverlay(vs?.pivots, barsToUse, vs?.patternId || p.pattern_id);
+      if (formation) {
+        overlays.push(formation);
+      }
+    }
+    return overlays;
+  }, [autoPatterns, bars]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -473,74 +428,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             </SelectContent>
           </Select>
 
-          {/* Pattern Multi-Toggle */}
-          {!isMobile && (
-            <Popover>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={enabledPatterns.size > 0 ? "secondary" : "outline"}
-                      size="icon"
-                      className={`h-7 w-7 sm:h-8 sm:w-8 relative ${enabledPatterns.size > 0 ? 'border-primary text-primary' : ''}`}
-                    >
-                      {patternLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <MapPin className="h-3.5 w-3.5" />
-                      )}
-                      {enabledPatterns.size > 0 && (
-                        <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] bg-primary text-primary-foreground">
-                          {enabledPatterns.size}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {enabledPatterns.size > 0 ? `${enabledPatterns.size} pattern types enabled` : 'Toggle pattern overlays'}
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent className="w-56 p-2" align="end">
-                <div className="space-y-1">
-                  <Button
-                    variant={enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? "secondary" : "outline"}
-                    size="sm"
-                    className="w-full justify-between text-xs h-7 mb-1"
-                    onClick={toggleAllPatterns}
-                  >
-                    <span className="font-medium">Toggle All</span>
-                    {enabledPatterns.size === PATTERN_OPTIONS.filter(p => p.value !== 'none').length ? (
-                      <ToggleRight className="h-3.5 w-3.5 text-primary" />
-                    ) : (
-                      <ToggleLeft className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                  </Button>
-                  <div className="border-t border-border my-1" />
-                  {PATTERN_OPTIONS.filter(p => p.value !== 'none').map((p) => {
-                    const isOn = enabledPatterns.has(p.value);
-                    const count = patternOccurrences[p.value]?.length || 0;
-                    return (
-                      <Button
-                        key={p.value}
-                        variant={isOn ? "secondary" : "ghost"}
-                        size="sm"
-                        className={`w-full justify-between text-xs h-7 ${isOn ? 'border border-primary/30' : ''}`}
-                        onClick={() => togglePattern(p.value)}
-                      >
-                        <span>{p.label}</span>
-                        {isOn && count > 0 && (
-                          <Badge variant="outline" className="h-4 px-1 text-[9px]">
-                            {count}
-                          </Badge>
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
+
+
 
           <Button
             variant="ghost"
@@ -600,6 +489,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               autoHeight 
               onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
               chartMarkers={chartMarkers}
+              formationOverlays={formationOverlays}
             />
           </div>
         ) : (
