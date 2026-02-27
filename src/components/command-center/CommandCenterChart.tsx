@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTradingCopilotContext } from '@/components/copilot';
 import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
 
 interface CommandCenterChartProps {
   symbol: string;
@@ -33,12 +35,12 @@ interface CommandCenterChartProps {
 }
 
 const TIMEFRAMES = [
-  { value: '15m', label: '15m' },
-  { value: '1h', label: '1H' },
-  { value: '4h', label: '4H' },
-  { value: '8h', label: '8H' },
-  { value: '1d', label: '1D' },
-  { value: '1wk', label: '1W' },
+  { value: '15m', label: '15m', requiresAuth: true },
+  { value: '1h', label: '1H', requiresAuth: true },
+  { value: '4h', label: '4H', requiresAuth: false },
+  { value: '8h', label: '8H', requiresAuth: false },
+  { value: '1d', label: '1D', requiresAuth: false },
+  { value: '1wk', label: '1W', requiresAuth: false },
 ];
 
 export const CommandCenterChart = memo(function CommandCenterChart({
@@ -51,6 +53,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const { profile, user } = useUserProfile();
   const isMobile = useIsMobile();
   const copilot = useTradingCopilotContext();
+  const { showAuthDialog, setShowAuthDialog, requireAuth } = useAuthGate("intraday charts");
   const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -415,14 +418,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </Tooltip>
 
           {/* Timeframe Selector */}
-          <Select value={timeframe} onValueChange={onTimeframeChange}>
+          <Select value={timeframe} onValueChange={(val) => {
+            const tf = TIMEFRAMES.find(t => t.value === val);
+            if (tf?.requiresAuth && !userId) {
+              requireAuth(() => onTimeframeChange(val));
+            } else {
+              onTimeframeChange(val);
+            }
+          }}>
             <SelectTrigger className="w-16 sm:w-20 h-7 sm:h-8 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {TIMEFRAMES.map((tf) => (
                 <SelectItem key={tf.value} value={tf.value}>
-                  {tf.label}
+                  <span className="flex items-center gap-1">
+                    {tf.label}
+                    {tf.requiresAuth && !userId && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -498,6 +511,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           </div>
         )}
       </div>
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="intraday charts" />
     </div>
   );
 });
