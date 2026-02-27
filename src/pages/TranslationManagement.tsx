@@ -321,17 +321,24 @@ export const TranslationManagement = () => {
       : languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 2; // smaller batch to avoid edge function timeouts
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 5000; // 5s backoff between retries
 
     for (let i = 0; i < langs.length; i++) {
       const langCode = langs[i];
       const langName = languages.find(l => l.code === langCode)?.name || langCode;
       let offset = 0;
       let hasMore = true;
+      let consecutiveFailures = 0;
 
       while (hasMore) {
         setArticleSyncProgress(`Translating articles to ${langName} (${i + 1}/${langs.length}) — batch from ${offset}...`);
-        setArticleSyncPercent(Math.round(((i + offset / 100) / langs.length) * 100));
+        // Estimate progress: use offset relative to a rough article count
+        const estimatedTotal = articleCoverage?.total_articles || 100;
+        const langProgress = i / langs.length;
+        const batchProgress = Math.min(offset / estimatedTotal, 1) / langs.length;
+        setArticleSyncPercent(Math.round((langProgress + batchProgress) * 100));
 
         try {
           const { data, error } = await supabase.functions.invoke('translate-articles', {
@@ -345,12 +352,22 @@ export const TranslationManagement = () => {
           });
 
           if (error) {
-            console.error(`Article sync error for ${langCode}:`, error);
-            totalErrors++;
-            hasMore = false;
-            continue;
+            consecutiveFailures++;
+            console.error(`Article sync error for ${langCode} (attempt ${consecutiveFailures}):`, error);
+            if (consecutiveFailures >= MAX_RETRIES) {
+              console.error(`Giving up on ${langCode} after ${MAX_RETRIES} consecutive failures`);
+              totalErrors++;
+              hasMore = false;
+              continue;
+            }
+            // Wait before retrying the same batch
+            setArticleSyncProgress(`Retrying ${langName} batch from ${offset} (attempt ${consecutiveFailures + 1}/${MAX_RETRIES})...`);
+            await new Promise(r => setTimeout(r, RETRY_DELAY_MS * consecutiveFailures));
+            continue; // retry same offset
           }
 
+          // Success — reset failure counter
+          consecutiveFailures = 0;
           totalTranslated += data?.translated || 0;
           totalErrors += data?.errors || 0;
 
@@ -359,10 +376,23 @@ export const TranslationManagement = () => {
           } else {
             hasMore = false;
           }
+
+          // Small delay between successful batches to avoid rate limits
+          if (hasMore) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
         } catch (error) {
-          console.error(`Article sync error for ${langCode}:`, error);
-          totalErrors++;
-          hasMore = false;
+          consecutiveFailures++;
+          console.error(`Article sync error for ${langCode} (attempt ${consecutiveFailures}):`, error);
+          if (consecutiveFailures >= MAX_RETRIES) {
+            console.error(`Giving up on ${langCode} after ${MAX_RETRIES} consecutive failures`);
+            totalErrors++;
+            hasMore = false;
+            continue;
+          }
+          setArticleSyncProgress(`Retrying ${langName} batch from ${offset} (attempt ${consecutiveFailures + 1}/${MAX_RETRIES})...`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS * consecutiveFailures));
+          // retry same offset
         }
       }
 
