@@ -9,13 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, MapPin, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
@@ -27,42 +22,7 @@ import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTradingCopilotContext } from '@/components/copilot';
-
-interface CommandCenterChartProps {
-  symbol: string;
-  timeframe: string;
-  onTimeframeChange: (tf: string) => void;
-  onSymbolChange?: (symbol: string) => void;
-  onWatchlistChange?: () => void;
-}
-
-const TIMEFRAMES = [
-  { value: '15m', label: '15m' },
-  { value: '1h', label: '1H' },
-  { value: '4h', label: '4H' },
-  { value: '8h', label: '8H' },
-  { value: '1d', label: '1D' },
-  { value: '1wk', label: '1W' },
-];
-
-const PATTERN_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'double-top', label: 'Double Top' },
-  { value: 'double-bottom', label: 'Double Bottom' },
-  { value: 'head-and-shoulders', label: 'Head & Shoulders' },
-  { value: 'inverse-head-and-shoulders', label: 'Inv. H&S' },
-  { value: 'ascending-triangle', label: 'Asc. Triangle' },
-  { value: 'descending-triangle', label: 'Desc. Triangle' },
-  { value: 'rising-wedge', label: 'Rising Wedge' },
-  { value: 'falling-wedge', label: 'Falling Wedge' },
-  { value: 'bull-flag', label: 'Bull Flag' },
-  { value: 'bear-flag', label: 'Bear Flag' },
-  { value: 'cup-and-handle', label: 'Cup & Handle' },
-  { value: 'triple-top', label: 'Triple Top' },
-  { value: 'triple-bottom', label: 'Triple Bottom' },
-  { value: 'donchian-breakout-long', label: 'Donchian Long' },
-  { value: 'donchian-breakout-short', label: 'Donchian Short' },
-];
+import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
 
 export const CommandCenterChart = memo(function CommandCenterChart({
   symbol,
