@@ -994,6 +994,11 @@ export default function FullChartViewer({
                     ref={setContainerEl}
                     className={`w-full h-[350px] lg:h-[420px] rounded-lg overflow-hidden border border-border/50 ${isDragging ? 'cursor-grabbing' : ''}`}
                   />
+                  {/* Canvas overlay for formation zone shading */}
+                  <canvas
+                    ref={canvasOverlayRef}
+                    className="absolute inset-0 pointer-events-none z-[5]"
+                  />
                   
                   {/* Indicator Legend */}
                   <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none z-10">
