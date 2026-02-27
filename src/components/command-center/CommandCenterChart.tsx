@@ -243,112 +243,75 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     fetchChartData();
   }, [fetchChartData]);
 
-  // Toggle a single pattern on/off
-  const togglePattern = useCallback((patternId: string) => {
-    setEnabledPatterns(prev => {
-      const next = new Set(prev);
-      if (next.has(patternId)) {
-        next.delete(patternId);
-      } else {
-        next.add(patternId);
-      }
-      return next;
-    });
-  }, []);
-
-  // Toggle all patterns
-  const toggleAllPatterns = useCallback(() => {
-    setEnabledPatterns(prev => {
-      const allIds = PATTERN_OPTIONS.filter(p => p.value !== 'none').map(p => p.value);
-      if (prev.size === allIds.length) {
-        return new Set(); // turn all off
-      }
-      return new Set(allIds); // turn all on
-    });
-  }, []);
-
-  // Fetch historical pattern occurrences for all enabled patterns
+  // Auto-fetch active live patterns + recent historical for this symbol/timeframe
   useEffect(() => {
-    if (enabledPatterns.size === 0) {
-      setPatternOccurrences({});
-      return;
-    }
-
-    const fetchPatterns = async () => {
-      setPatternLoading(true);
+    const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
-      const results: Record<string, any[]> = {};
-
       try {
-        // Fetch all enabled patterns in parallel
-        const promises = Array.from(enabledPatterns).map(async (patternId) => {
-          const { data, error } = await supabase
-            .from('historical_pattern_occurrences')
-            .select('pattern_name, detected_at, direction, outcome, outcome_pnl_percent, quality_score, entry_price, visual_spec')
-            .eq('symbol', upperSymbol)
-            .eq('pattern_id', patternId)
-            .order('detected_at', { ascending: true })
-            .limit(100);
+        // Fetch active live patterns
+        const { data: liveData } = await supabase
+          .from('live_pattern_detections')
+          .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars')
+          .eq('instrument', upperSymbol)
+          .eq('timeframe', timeframe)
+          .eq('status', 'active')
+          .limit(20);
 
-          if (error) throw error;
-          results[patternId] = data || [];
-        });
+        // Fetch recent historical (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const { data: historicalData } = await supabase
+          .from('historical_pattern_occurrences')
+          .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
+          .eq('symbol', upperSymbol)
+          .eq('timeframe', timeframe)
+          .gte('detected_at', thirtyDaysAgo.toISOString())
+          .order('detected_at', { ascending: false })
+          .limit(50);
 
-        await Promise.all(promises);
-        setPatternOccurrences(results);
+        setAutoPatterns([
+          ...(liveData || []).map(p => ({ ...p, isActive: true })),
+          ...(historicalData || []).map(p => ({ ...p, isActive: false })),
+        ]);
       } catch (err) {
-        console.error('[CommandCenterChart] pattern fetch error:', err);
-        setPatternOccurrences({});
-      } finally {
-        setPatternLoading(false);
+        console.error('[CommandCenterChart] auto-pattern fetch error:', err);
+        setAutoPatterns([]);
       }
     };
 
-    fetchPatterns();
-  }, [enabledPatterns, symbol]);
+    fetchAutoPatterns();
+  }, [symbol, timeframe]);
 
-  // Generate chart markers from all enabled pattern occurrences
+  // Generate chart markers from auto-detected patterns
   const chartMarkers: ChartMarker[] = useMemo(() => {
-    if (enabledPatterns.size === 0) return [];
+    if (autoPatterns.length === 0) return [];
     
     const markers: ChartMarker[] = [];
-    const patternColors: Record<string, string> = {};
-    const colorPalette = ['#f97316', '#a855f7', '#06b6d4', '#eab308', '#ec4899', '#22c55e', '#3b82f6', '#ef4444'];
-    let colorIdx = 0;
 
-    for (const [patternId, occurrences] of Object.entries(patternOccurrences)) {
-      if (!enabledPatterns.has(patternId)) continue;
-      if (!patternColors[patternId]) {
-        patternColors[patternId] = colorPalette[colorIdx % colorPalette.length];
-        colorIdx++;
-      }
-      const color = patternColors[patternId];
+    for (const p of autoPatterns) {
+      const vs = p.visual_spec as any;
+      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+      const color = p.isActive ? '#f97316' : '#6b7280';
       
-      occurrences.forEach((p: any) => {
-        const vs = p.visual_spec as any;
-        const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
-        
-        if (pivots && pivots.length > 0) {
-          pivots.forEach((pivot) => {
-            if (!pivot?.timestamp || !pivot?.type) return;
-            const isHigh = pivot.type === 'high';
-            const shortLabel = (pivot.label ?? '')
-              .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
-              .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
-              .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
-            markers.push({
-              time: pivot.timestamp,
-              position: isHigh ? 'aboveBar' : 'belowBar',
-              color,
-              shape: isHigh ? 'arrowDown' : 'arrowUp',
-              text: shortLabel || pivot.label,
-            });
+      if (pivots && pivots.length > 0) {
+        pivots.forEach((pivot: any) => {
+          if (!pivot?.timestamp || !pivot?.type) return;
+          const isHigh = pivot.type === 'high';
+          const shortLabel = (pivot.label ?? '')
+            .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
+            .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
+            .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
+          markers.push({
+            time: pivot.timestamp,
+            position: isHigh ? 'aboveBar' : 'belowBar',
+            color,
+            shape: isHigh ? 'arrowDown' : 'arrowUp',
+            text: shortLabel || pivot.label,
           });
-        }
-      });
+        });
+      }
     }
     
-    // Deduplicate markers by time + text
     const seen = new Set<string>();
     return markers.filter((m) => {
       const key = `${m.time}|${m.text}`;
@@ -356,7 +319,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [enabledPatterns, patternOccurrences]);
+  }, [autoPatterns]);
+
+  // Derive formation overlays from auto-detected patterns
+  const formationOverlays: FormationOverlayData[] = useMemo(() => {
+    if (autoPatterns.length === 0 || bars.length === 0) return [];
+    
+    const overlays: FormationOverlayData[] = [];
+    for (const p of autoPatterns) {
+      const vs = p.visual_spec as any;
+      const patternBars = p.bars as CompressedBar[] | undefined;
+      const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
+      const formation = deriveFormationOverlay(vs?.pivots, barsToUse, vs?.patternId || p.pattern_id);
+      if (formation) {
+        overlays.push(formation);
+      }
+    }
+    return overlays;
+  }, [autoPatterns, bars]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
