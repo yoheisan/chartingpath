@@ -96,7 +96,24 @@ const PATTERN_LIBRARY: Pattern[] = [
     successRate: 59,
     chartKey: "island-reversal"
   },
-  
+  // Breakout Patterns
+  {
+    name: "Donchian Breakout (Long)",
+    type: "continuation",
+    description: "Bullish breakout above the 20-period high Donchian channel",
+    difficulty: "Beginner",
+    successRate: 55,
+    chartKey: "donchian-breakout-long"
+  },
+  {
+    name: "Donchian Breakout (Short)",
+    type: "continuation",
+    description: "Bearish breakdown below the 20-period low Donchian channel",
+    difficulty: "Beginner",
+    successRate: 55,
+    chartKey: "donchian-breakout-short"
+  },
+
   // Continuation Patterns
   {
     name: "Ascending Triangle",
