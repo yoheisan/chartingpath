@@ -33,6 +33,8 @@ interface TranslateRequest {
   article_id?: string
   language_code?: string  // single language for translate_article
   target_languages?: string[]  // for translate_all, defaults to all
+  batch_size?: number  // max articles per call (default 10)
+  offset?: number  // skip first N untranslated articles
 }
 
 Deno.serve(async (req) => {
