@@ -890,27 +890,91 @@ export const TranslationManagement = () => {
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5" />
                     Blog Article Translations
+                    {articleCoverage && (
+                      <Badge variant="secondary" className="ml-2">
+                        {articleCoverage.total_articles} articles
+                      </Badge>
+                    )}
                   </CardTitle>
-                  <Button
-                    onClick={handleSyncArticleTranslations}
-                    disabled={articleSyncing}
-                    size="sm"
-                  >
-                    <Zap className="h-4 w-4 mr-1" />
-                    {articleSyncing ? 'Translating...' : 'Translate All Articles'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => loadArticleCoverage()}
+                      variant="outline"
+                      size="sm"
+                      disabled={articleCoverageLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-1 ${articleCoverageLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                    <Button
+                      onClick={() => handleSyncArticleTranslations()}
+                      disabled={articleSyncing}
+                      size="sm"
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      {articleSyncing ? 'Translating...' : 'Translate All'}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {articleSyncProgress && (
-                  <div className="mb-4 p-3 bg-muted rounded-lg text-sm">
-                    {articleSyncProgress}
+                  <div className="mb-4 p-4 bg-muted rounded-lg space-y-2">
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span>{articleSyncProgress}</span>
+                      <span className="text-primary">{articleSyncPercent}%</span>
+                    </div>
+                    <Progress value={articleSyncPercent} className="h-3" />
                   </div>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  Auto-translate all published blog articles to all supported languages using Gemini. 
-                  Each language is processed separately to avoid timeouts. Articles with existing translations are skipped unless the English content has changed.
-                </p>
+                {articleCoverage && Object.keys(articleCoverage.language_summary).length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {languages.filter(l => l.code !== 'en').map(lang => {
+                      const stats = articleCoverage.language_summary[lang.code];
+                      const translated = stats?.translated || 0;
+                      const total = articleCoverage.total_articles;
+                      const pct = total > 0 ? Math.round((translated / total) * 100) : 0;
+                      const missing = total - translated;
+                      return (
+                        <Card key={lang.code} className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-sm">
+                              {lang.flag} {lang.name}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {translated}/{total}
+                            </span>
+                          </div>
+                          <Progress value={pct} className="h-2 mb-2" />
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{pct}% complete</span>
+                            {missing > 0 && (
+                              <Badge variant="destructive" className="text-xs px-1 py-0">
+                                {missing} missing
+                              </Badge>
+                            )}
+                          </div>
+                          {missing > 0 && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-2 text-xs"
+                              onClick={() => handleSyncArticleTranslations(lang.code)}
+                              disabled={articleSyncing}
+                            >
+                              <Zap className="h-3 w-3 mr-1" />
+                              Translate {missing} articles
+                            </Button>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {articleCoverageLoading ? 'Loading coverage...' : 'Click "Refresh" to load blog article translation coverage per language.'}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
