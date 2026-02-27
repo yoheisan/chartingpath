@@ -92,10 +92,12 @@ serve(async (req) => {
       includeOhlc = false,
     }: YahooFinanceRequest = await req.json();
     
-    // Determine if we need to aggregate from 1h data
+    // Determine if we need to aggregate from smaller timeframe data
     const needs4hAggregation = interval === '4h';
     const needs8hAggregation = interval === '8h';
+    const needs15mAggregation = interval === '15m';
     const needsAggregation = needs4hAggregation || needs8hAggregation;
+    // For 15m we try native first, fallback to 5m aggregation if it fails
     const yahooInterval = needsAggregation ? '1h' : interval;
     
     console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}${needsAggregation ? ` (fetching 1h for ${interval} aggregation)` : ''}`);
@@ -110,9 +112,15 @@ serve(async (req) => {
     let lastError: Error | null = null;
     let usedSymbol = symbol;
 
+    // Try symbol variants with the requested interval
+    let response: Response | null = null;
+    let lastError: Error | null = null;
+    let usedSymbol = symbol;
+    let actualInterval = yahooInterval;
+
     for (const variant of symbolVariants) {
       const encodedSymbol = encodeURIComponent(variant);
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${actualInterval}&events=history`;
 
       console.log(`Trying Yahoo Finance URL: ${yahooUrl}`);
 
@@ -130,6 +138,33 @@ serve(async (req) => {
       } else {
         lastError = new Error(`Yahoo Finance API error for ${variant}: ${resp.status} ${resp.statusText}`);
         console.log(`Failed with ${variant}: ${resp.status}`);
+      }
+    }
+
+    // If 15m failed, retry with 5m and aggregate
+    if (!response && needs15mAggregation) {
+      console.log(`15m interval failed for ${symbol}, retrying with 5m for aggregation`);
+      actualInterval = '5m';
+      for (const variant of symbolVariants) {
+        const encodedSymbol = encodeURIComponent(variant);
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=5m&events=history`;
+
+        console.log(`Trying Yahoo Finance 5m fallback URL: ${yahooUrl}`);
+
+        const resp = await fetch(yahooUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (resp.ok) {
+          response = resp;
+          usedSymbol = variant;
+          console.log(`Success with 5m fallback for ${variant}`);
+          break;
+        } else {
+          console.log(`5m fallback also failed for ${variant}: ${resp.status}`);
+        }
       }
     }
 
