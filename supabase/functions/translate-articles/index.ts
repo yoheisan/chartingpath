@@ -71,7 +71,17 @@ Deno.serve(async (req) => {
         statusMap[t.article_id][t.language_code] = t.status
       })
 
+      // Build per-language summary
+      const langSummary: Record<string, { translated: number; total: number }> = {}
+      const totalArticles = articles?.length || 0
+      translations?.forEach(t => {
+        if (!langSummary[t.language_code]) langSummary[t.language_code] = { translated: 0, total: totalArticles }
+        langSummary[t.language_code].translated++
+      })
+
       return new Response(JSON.stringify({
+        total_articles: totalArticles,
+        language_summary: langSummary,
         articles: articles?.map(a => ({
           ...a,
           translations: statusMap[a.id] || {}
