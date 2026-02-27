@@ -78,6 +78,47 @@ function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   return aggregatedBars;
 }
 
+/**
+ * Aggregate 5m bars into 15m bars
+ */
+function aggregate5mTo15m(bars: OHLCBar[]): OHLCBar[] {
+  if (!bars || bars.length === 0) return [];
+  
+  const grouped = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const date = new Date(bar.t);
+    const minutes = date.getUTCMinutes();
+    const windowStart = Math.floor(minutes / 15) * 15;
+    
+    const windowDate = new Date(date);
+    windowDate.setUTCMinutes(windowStart, 0, 0);
+    const key = windowDate.toISOString();
+    
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(bar);
+  }
+  
+  const result: OHLCBar[] = [];
+  for (const [windowKey, windowBars] of grouped) {
+    if (windowBars.length === 0) continue;
+    windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+    result.push({
+      t: windowKey,
+      o: windowBars[0].o,
+      h: Math.max(...windowBars.map(b => b.h)),
+      l: Math.min(...windowBars.map(b => b.l)),
+      c: windowBars[windowBars.length - 1].c,
+      v: windowBars.reduce((sum, b) => sum + b.v, 0),
+    });
+  }
+  
+  result.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -92,10 +133,12 @@ serve(async (req) => {
       includeOhlc = false,
     }: YahooFinanceRequest = await req.json();
     
-    // Determine if we need to aggregate from 1h data
+    // Determine if we need to aggregate from smaller timeframe data
     const needs4hAggregation = interval === '4h';
     const needs8hAggregation = interval === '8h';
+    const needs15mAggregation = interval === '15m';
     const needsAggregation = needs4hAggregation || needs8hAggregation;
+    // For 15m we try native first, fallback to 5m aggregation if it fails
     const yahooInterval = needsAggregation ? '1h' : interval;
     
     console.log(`Fetching Yahoo Finance data for ${symbol} from ${startDate} to ${endDate} with interval ${interval}${needsAggregation ? ` (fetching 1h for ${interval} aggregation)` : ''}`);
@@ -109,10 +152,11 @@ serve(async (req) => {
     let response: Response | null = null;
     let lastError: Error | null = null;
     let usedSymbol = symbol;
+    let actualInterval = yahooInterval;
 
     for (const variant of symbolVariants) {
       const encodedSymbol = encodeURIComponent(variant);
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${actualInterval}&events=history`;
 
       console.log(`Trying Yahoo Finance URL: ${yahooUrl}`);
 
@@ -130,6 +174,33 @@ serve(async (req) => {
       } else {
         lastError = new Error(`Yahoo Finance API error for ${variant}: ${resp.status} ${resp.statusText}`);
         console.log(`Failed with ${variant}: ${resp.status}`);
+      }
+    }
+
+    // If 15m failed, retry with 5m and aggregate
+    if (!response && needs15mAggregation) {
+      console.log(`15m interval failed for ${symbol}, retrying with 5m for aggregation`);
+      actualInterval = '5m';
+      for (const variant of symbolVariants) {
+        const encodedSymbol = encodeURIComponent(variant);
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=5m&events=history`;
+
+        console.log(`Trying Yahoo Finance 5m fallback URL: ${yahooUrl}`);
+
+        const resp = await fetch(yahooUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (resp.ok) {
+          response = resp;
+          usedSymbol = variant;
+          console.log(`Success with 5m fallback for ${variant}`);
+          break;
+        } else {
+          console.log(`5m fallback also failed for ${variant}: ${resp.status}`);
+        }
       }
     }
 
@@ -181,7 +252,7 @@ serve(async (req) => {
       })
       .filter((bar): bar is OHLCBar => bar !== null);
     
-    // Aggregate to 4h or 8h if needed
+    // Aggregate to target timeframe if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 4h bars`);
       ohlcBars = aggregate1hBars(ohlcBars, 4);
@@ -190,6 +261,10 @@ serve(async (req) => {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 8h bars`);
       ohlcBars = aggregate1hBars(ohlcBars, 8);
       console.log(`Result: ${ohlcBars.length} 8h bars`);
+    } else if (needs15mAggregation && actualInterval === '5m' && ohlcBars.length > 0) {
+      console.log(`Aggregating ${ohlcBars.length} 5m bars into 15m bars`);
+      ohlcBars = aggregate5mTo15m(ohlcBars);
+      console.log(`Result: ${ohlcBars.length} 15m bars`);
     }
     
     // Format data into PriceFrame format
