@@ -4548,6 +4548,8 @@
     "generateScriptPrompt": "Generate a Pine Script strategy for trading ascending triangles on BTCUSD",
     "learnPatterns": "Learn patterns",
     "learnPatternsPrompt": "Explain how to identify and trade a head and shoulders pattern",
+    "marketBreadth": "Market breadth",
+    "marketBreadthPrompt": "What is the current market breadth? Show me the advance/decline ratio and sentiment",
     "placeholder": "Ask about patterns, alerts, or scripts...",
     "disclaimer": "For educational purposes only. Not financial advice.",
     "moreBelow": "More below",
