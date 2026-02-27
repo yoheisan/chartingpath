@@ -157,6 +157,7 @@ const StudyChart = memo(({
   onSendToCopilot,
   hideAnalysisToolbar = false,
   chartMarkers,
+  formationOverlays,
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
