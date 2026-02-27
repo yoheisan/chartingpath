@@ -30,11 +30,11 @@ const PatternVisualizationPreview = () => {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Prescriptive Pattern Visualization Preview</h1>
-          <p className="text-muted-foreground">All {ALL_PATTERNS.length} patterns rendered in the prescriptive SVG style</p>
+          <p className="text-muted-foreground">All {SCREENER_PATTERNS.length} screener patterns rendered in the prescriptive SVG style</p>
         </div>
 
         <div className="space-y-8">
-          {ALL_PATTERNS.map(pattern => (
+          {SCREENER_PATTERNS.map(pattern => (
             <div key={pattern} className="rounded-xl overflow-hidden border border-border/50">
               <PrescriptivePatternSVG patternType={pattern} />
             </div>
