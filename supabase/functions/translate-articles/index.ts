@@ -119,14 +119,20 @@ Deno.serve(async (req) => {
 
       let translated = 0, skipped = 0, errors = 0
 
+      // Filter to only articles needing translation
+      const needsTranslation: typeof articles = []
       for (const article of (articles || [])) {
         const contentHash = simpleHash(article.content)
         const ex = existingMap.get(article.id)
-
-        // Skip if manual override or up-to-date
         if (ex?.is_manual_override) { skipped++; continue }
         if (ex?.source_hash === contentHash) { skipped++; continue }
+        needsTranslation.push(article)
+      }
 
+      // Apply offset and batch_size
+      const batch = needsTranslation.slice(offset, offset + batch_size)
+
+      for (const article of batch) {
         try {
           await translateSingleArticle(supabase, GEMINI_API_KEY, article.id, langCode, article)
           translated++
@@ -139,13 +145,18 @@ Deno.serve(async (req) => {
         await new Promise(r => setTimeout(r, 2000))
       }
 
+      const remaining = needsTranslation.length - offset - batch.length
+
       return new Response(JSON.stringify({
         success: true,
         language: langCode,
         translated,
         skipped,
         errors,
-        total: articles?.length || 0
+        total: articles?.length || 0,
+        needs_translation: needsTranslation.length,
+        remaining,
+        next_offset: remaining > 0 ? offset + batch_size : null
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
