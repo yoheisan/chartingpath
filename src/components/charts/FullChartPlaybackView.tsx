@@ -34,6 +34,7 @@ import {
 } from './chartConstants';
 import { IndicatorSettings } from './FullChartViewer';
 import { VisualSpec } from '@/types/VisualSpec';
+import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
 
 interface FullChartPlaybackViewProps {
   bars: CompressedBar[];
