@@ -31,6 +31,7 @@ function toEODHDInterval(interval: string): string {
     '1m': '1m',
     '5m': '5m',
     '15m': '5m', // EODHD doesn't have 15m, aggregate from 5m
+    '30m': '5m', // Aggregate from 5m
     '1h': '1h',
     '4h': '1h', // Aggregate from 1h
     '1d': 'd',
@@ -41,6 +42,49 @@ function toEODHDInterval(interval: string): string {
     'm': 'm'
   };
   return mapping[interval] || 'd';
+}
+
+/**
+ * Aggregate 5m bars into 15m or 30m bars
+ */
+function aggregate5mBars(bars: OHLCBar[], targetMinutes: number): OHLCBar[] {
+  if (!bars || bars.length === 0) return [];
+  
+  const groupedBars = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const date = new Date(bar.t);
+    const minutes = date.getUTCHours() * 60 + date.getUTCMinutes();
+    const windowStart = Math.floor(minutes / targetMinutes) * targetMinutes;
+    
+    const windowDate = new Date(date);
+    windowDate.setUTCHours(Math.floor(windowStart / 60), windowStart % 60, 0, 0);
+    const key = windowDate.toISOString();
+    
+    if (!groupedBars.has(key)) {
+      groupedBars.set(key, []);
+    }
+    groupedBars.get(key)!.push(bar);
+  }
+  
+  const aggregatedBars: OHLCBar[] = [];
+  
+  for (const [windowKey, windowBars] of groupedBars) {
+    if (windowBars.length === 0) continue;
+    windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+    
+    aggregatedBars.push({
+      t: windowKey,
+      o: windowBars[0].o,
+      h: Math.max(...windowBars.map(b => b.h)),
+      l: Math.min(...windowBars.map(b => b.l)),
+      c: windowBars[windowBars.length - 1].c,
+      v: windowBars.reduce((sum, b) => sum + b.v, 0),
+    });
+  }
+  
+  aggregatedBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+  return aggregatedBars;
 }
 
 /**
@@ -188,6 +232,8 @@ serve(async (req) => {
     }: EODHDRequest = await req.json();
     
     const needs4hAggregation = interval === '4h';
+    const needs15mAggregation = interval === '15m';
+    const needs30mAggregation = interval === '30m';
     const eodhInterval = toEODHDInterval(interval);
     const { eodhSymbol, exchange } = toEODHDSymbol(symbol);
 
@@ -219,7 +265,10 @@ serve(async (req) => {
 
     let eodhUrl: string;
     if (isIntraday) {
-      eodhUrl = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${effectiveStartDate}&to=${endDate}&fmt=json`;
+      // EODHD intraday API requires Unix timestamps (numbers) for from/to
+      const fromTs = Math.floor(new Date(effectiveStartDate).getTime() / 1000);
+      const toTs = Math.floor(new Date(endDate).getTime() / 1000);
+      eodhUrl = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${fromTs}&to=${toTs}&fmt=json`;
     } else {
       eodhUrl = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${effectiveStartDate}&to=${endDate}&period=${eodhInterval}&fmt=json`;
     }
@@ -275,11 +324,19 @@ serve(async (req) => {
         }));
     }
     
-    // Aggregate to 4h if needed
+    // Aggregate if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 1h bars to 4h`);
       ohlcBars = aggregate1hTo4h(ohlcBars);
       console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 4h bars`);
+    } else if (needs15mAggregation && ohlcBars.length > 0) {
+      console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 5m bars to 15m`);
+      ohlcBars = aggregate5mBars(ohlcBars, 15);
+      console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 15m bars`);
+    } else if (needs30mAggregation && ohlcBars.length > 0) {
+      console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 5m bars to 30m`);
+      ohlcBars = aggregate5mBars(ohlcBars, 30);
+      console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 30m bars`);
     }
     
     // Format response compatible with Yahoo Finance format
