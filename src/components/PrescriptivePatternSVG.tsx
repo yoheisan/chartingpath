@@ -48,6 +48,8 @@ const PATTERN_META: Record<string, { name: string; direction: "bullish" | "beari
   "cup-handle":              { name: "Cup with Handle",           direction: "bullish", category: "C" },
   "cup-and-handle":          { name: "Cup with Handle",           direction: "bullish", category: "C" },
   "rectangle":               { name: "Rectangle",                 direction: "bullish", category: "C" },
+  "donchian-breakout-long":  { name: "Donchian Breakout (Long)",   direction: "bullish", category: "B" },
+  "donchian-breakout-short": { name: "Donchian Breakout (Short)",  direction: "bearish", category: "B" },
   // Candlestick patterns
   "hammer":                  { name: "Hammer",                    direction: "bullish", category: "K" },
   "hanging-man":             { name: "Hanging Man",               direction: "bearish", category: "K" },
