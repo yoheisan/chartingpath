@@ -496,7 +496,28 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       {/* Chart Content */}
       <div className="flex-1 min-h-0">
-        {loading ? (
+        {isTimeframeGated ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center space-y-4 max-w-sm mx-auto">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-foreground">Sign in to access {timeframe} charts</p>
+                <p className="text-sm text-muted-foreground">
+                  Intraday timeframes (15m, 1H) are available to registered users. Create a free account to unlock them.
+                </p>
+              </div>
+              <Button 
+                variant="default" 
+                onClick={() => setShowAuthDialog(true)}
+                className="mt-2"
+              >
+                Sign in to unlock
+              </Button>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-4">
               <Skeleton className="h-8 w-32 mx-auto" />
