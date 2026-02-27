@@ -412,8 +412,13 @@ export const PrescriptivePatternSVG = ({ patternType, className = "" }: Prescrip
       <rect x={CL} y={Math.min(entryY, tpY)} width={CW} height={Math.abs(tpY - entryY)} fill="#22c55e" opacity={0.06} />
       <rect x={CL} y={Math.min(entryY, slY)} width={CW} height={Math.abs(slY - entryY)} fill="#ef4444" opacity={0.06} />
 
-      {/* Pattern overlay */}
-      {patternOverlay}
+      {/* Formation shape overlay */}
+      {formationShapeOverlay}
+      {cupCurveOverlay}
+      {necklineOverlay}
+
+      {/* Pivot zigzag overlay */}
+      {pivotOverlay}
 
       {/* Candlesticks */}
       {candleElements}
