@@ -78,6 +78,47 @@ function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   return aggregatedBars;
 }
 
+/**
+ * Aggregate 5m bars into 15m bars
+ */
+function aggregate5mTo15m(bars: OHLCBar[]): OHLCBar[] {
+  if (!bars || bars.length === 0) return [];
+  
+  const grouped = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const date = new Date(bar.t);
+    const minutes = date.getUTCMinutes();
+    const windowStart = Math.floor(minutes / 15) * 15;
+    
+    const windowDate = new Date(date);
+    windowDate.setUTCMinutes(windowStart, 0, 0);
+    const key = windowDate.toISOString();
+    
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(bar);
+  }
+  
+  const result: OHLCBar[] = [];
+  for (const [windowKey, windowBars] of grouped) {
+    if (windowBars.length === 0) continue;
+    windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+    result.push({
+      t: windowKey,
+      o: windowBars[0].o,
+      h: Math.max(...windowBars.map(b => b.h)),
+      l: Math.min(...windowBars.map(b => b.l)),
+      c: windowBars[windowBars.length - 1].c,
+      v: windowBars.reduce((sum, b) => sum + b.v, 0),
+    });
+  }
+  
+  result.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
