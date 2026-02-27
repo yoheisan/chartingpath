@@ -837,23 +837,37 @@ async function executeGetMarketBreadth() {
       throw new Error(`Market breadth fetch failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const result = await response.json();
+    const breadth = result?.data || {};
+    const meta = result?.meta || {};
     
     return {
       advanceDecline: {
-        advancing: data.advancing || 0,
-        declining: data.declining || 0,
-        ratio: data.adRatio || 0,
-        netAdvances: data.netAdvances || 0
+        advancing: breadth.advances || 0,
+        declining: breadth.declines || 0,
+        unchanged: breadth.unchanged || 0,
+        ratio: breadth.advanceDeclineRatio || 0,
+        adLine: breadth.advanceDeclineLine || 0,
+        exchange: breadth.exchange || 'NYSE'
       },
-      sentiment: data.sentiment || 'Neutral',
-      marketStatus: data.marketStatus || 'unknown',
-      description: data.sentiment === 'Bullish' 
-        ? 'More stocks are advancing than declining, indicating positive market breadth.'
-        : data.sentiment === 'Bearish'
-        ? 'More stocks are declining than advancing, indicating negative market breadth.'
-        : 'Market breadth is relatively balanced.',
-      dashboardUrl: '/dashboard'
+      sentiment: meta.sentiment || 'unknown',
+      advancePercent: meta.advancePercent || 0,
+      declinePercent: meta.declinePercent || 0,
+      timestamp: breadth.timestamp || new Date().toISOString(),
+      description: meta.sentiment === 'bullish'
+        ? 'More stocks are advancing than declining, indicating positive market breadth and broad-based buying.'
+        : meta.sentiment === 'bearish'
+        ? 'More stocks are declining than advancing, indicating negative market breadth and broad-based selling pressure.'
+        : meta.sentiment === 'neutral-bullish'
+        ? 'Slightly more stocks advancing than declining — mildly positive breadth.'
+        : 'Market breadth is relatively balanced between advancers and decliners.',
+      interpretation: `A/D Ratio of ${breadth.advanceDeclineRatio || 0}: ${
+        (breadth.advanceDeclineRatio || 0) >= 2.0 ? 'Very strong buying pressure across the market.' :
+        (breadth.advanceDeclineRatio || 0) >= 1.5 ? 'Healthy breadth — rally is broad-based.' :
+        (breadth.advanceDeclineRatio || 0) >= 1.0 ? 'Breadth is neutral to slightly positive.' :
+        (breadth.advanceDeclineRatio || 0) >= 0.67 ? 'Breadth is weakening — fewer stocks participating in any rally.' :
+        'Broad-based selling — majority of stocks declining.'
+      }`
     };
   } catch (error) {
     console.error('[trading-copilot] Market breadth error:', error);
