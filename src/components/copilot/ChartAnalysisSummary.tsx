@@ -56,11 +56,47 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
     return t('chartAnalysisDialog.neutral');
   };
 
+  const translateInterpretation = (interp: string) => {
+    const lower = interp.toLowerCase();
+    if (lower.includes('bullish momentum')) return t('chartAnalysisDialog.bullishMomentum');
+    if (lower.includes('bearish momentum')) return t('chartAnalysisDialog.bearishMomentum');
+    if (lower.includes('overbought')) return t('chartAnalysisDialog.overbought');
+    if (lower.includes('oversold')) return t('chartAnalysisDialog.oversold');
+    if (lower.includes('neutral')) return t('chartAnalysisDialog.neutral');
+    if (lower.includes('weak trend')) return t('chartAnalysisDialog.weakTrend');
+    if (lower.includes('strong trend')) return t('chartAnalysisDialog.strongTrend');
+    return interp;
+  };
+
+  const translateStrength = (strength: string) => {
+    const lower = strength.toLowerCase();
+    if (lower.includes('strong')) return t('chartAnalysisDialog.strongStrength');
+    if (lower.includes('weak')) return t('chartAnalysisDialog.weakStrength');
+    if (lower.includes('moderate')) return t('chartAnalysisDialog.moderateStrength');
+    return strength;
+  };
+
+  const translateRisk = (risk: string) => {
+    const lower = risk.toLowerCase();
+    if (lower.includes('elevated')) return t('chartAnalysisDialog.elevatedRisk');
+    if (lower.includes('high')) return t('chartAnalysisDialog.highRisk');
+    if (lower.includes('low')) return t('chartAnalysisDialog.lowRisk');
+    return risk;
+  };
+
   const translateVolumeTrend = (trend: string) => {
     const lower = trend.toLowerCase();
     if (lower.includes('increas')) return t('chartAnalysisDialog.increasing');
     if (lower.includes('decreas')) return t('chartAnalysisDialog.decreasing');
     return t('chartAnalysisDialog.stable');
+  };
+
+  const translateVolatilityLevel = (level: string) => {
+    const lower = level.toLowerCase();
+    if (lower.includes('high')) return t('chartAnalysisDialog.high');
+    if (lower.includes('low')) return t('chartAnalysisDialog.low');
+    if (lower.includes('moderate')) return t('chartAnalysisDialog.moderate');
+    return level;
   };
 
   const formatPrice = (price: number) => {
@@ -80,11 +116,11 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
             {priceAnalysis.priceChangePercent >= 0 ? '+' : ''}{priceAnalysis.priceChangePercent.toFixed(1)}%
           </span>
           <Badge variant="outline" className={cn("text-xs", getRiskColor(riskAssessment.overallRisk))}>
-            {riskAssessment.overallRisk}
+            {translateRisk(riskAssessment.overallRisk)}
           </Badge>
         </div>
         <div className="text-xs text-muted-foreground">
-          RSI {indicators.rsi.current.toFixed(0)} · {indicators.macd.interpretation} · {translateVolumeTrend(volumeAnalysis.volumeTrend)} {t('chartAnalysisDialog.volume').toLowerCase()}
+          RSI {indicators.rsi.current.toFixed(0)} · {translateInterpretation(indicators.macd.interpretation)} · {translateVolumeTrend(volumeAnalysis.volumeTrend)} {t('chartAnalysisDialog.volume').toLowerCase()}
         </div>
       </div>
     );
@@ -99,7 +135,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           <Badge variant="secondary" className="text-xs">{analysis.timeframe}</Badge>
         </div>
         <Badge variant="outline" className={cn("text-xs", getRiskColor(riskAssessment.overallRisk))}>
-          {riskAssessment.overallRisk} {t('chartAnalysisDialog.risk')}
+          {translateRisk(riskAssessment.overallRisk)} {t('chartAnalysisDialog.risk')}
         </Badge>
       </div>
 
@@ -115,7 +151,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
                 {translateTrend(priceAnalysis.trend)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {priceAnalysis.trendStrength} {t('chartAnalysisDialog.strength')}
+                {translateStrength(priceAnalysis.trendStrength)} {t('chartAnalysisDialog.strength')}
               </div>
             </div>
           </div>
@@ -149,23 +185,23 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
           label="RSI" 
           value={indicators.rsi.current.toFixed(0)}
           status={getIndicatorStatus(indicators.rsi.interpretation)}
-          detail={indicators.rsi.interpretation}
+          detail={translateInterpretation(indicators.rsi.interpretation)}
         />
         <IndicatorItem 
           label="MACD" 
           value={indicators.macd.histogram > 0 ? '+' : '-'}
           status={getIndicatorStatus(indicators.macd.interpretation)}
-          detail={indicators.macd.interpretation}
+          detail={translateInterpretation(indicators.macd.interpretation)}
         />
         <IndicatorItem 
           label="ADX" 
           value={indicators.adx?.adx.toFixed(0) || 'N/A'}
           status={indicators.adx && indicators.adx.adx > 25 ? 'bullish' : 'neutral'}
-          detail={indicators.adx?.interpretation || t('chartAnalysisDialog.trendStrength')}
+          detail={indicators.adx ? translateInterpretation(indicators.adx.interpretation) : t('chartAnalysisDialog.trendStrength')}
         />
         <IndicatorItem 
           label="ATR" 
-          value={indicators.atr.volatilityLevel}
+          value={translateVolatilityLevel(indicators.atr.volatilityLevel)}
           status="neutral"
           detail={t('chartAnalysisDialog.volatility')}
         />
@@ -179,7 +215,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
               divergences.rsi === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
             )}>
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              <span>RSI {divergences.rsi} divergence — potential reversal signal</span>
+              <span>{t('chartAnalysisDialog.divergenceRsi', { direction: translateTrend(divergences.rsi) })}</span>
             </div>
           )}
           {divergences.macd !== 'none' && (
@@ -187,7 +223,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
               divergences.macd === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
             )}>
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              <span>MACD {divergences.macd} divergence detected</span>
+              <span>{t('chartAnalysisDialog.divergenceMacd', { direction: translateTrend(divergences.macd) })}</span>
             </div>
           )}
           {divergences.obv !== 'none' && (
@@ -195,7 +231,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
               divergences.obv === 'bearish' ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
             )}>
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              <span>OBV {divergences.obv} divergence — volume not confirming price</span>
+              <span>{t('chartAnalysisDialog.divergenceObv', { direction: translateTrend(divergences.obv) })}</span>
             </div>
           )}
         </div>
@@ -205,9 +241,9 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
       {confluence && confluence.totalScore > 0 && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-emerald-500 font-medium">Bull {confluence.bullishPct}%</span>
-            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Confluence</span>
-            <span className="text-red-500 font-medium">Bear {confluence.bearishPct}%</span>
+            <span className="text-emerald-500 font-medium">{t('chartAnalysisDialog.bull')} {confluence.bullishPct}%</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('chartAnalysisDialog.confluence')}</span>
+            <span className="text-red-500 font-medium">{t('chartAnalysisDialog.bear')} {confluence.bearishPct}%</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden flex">
             <div 
@@ -227,7 +263,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
         <BarChart3 className="h-4 w-4 text-muted-foreground" />
         <span className="text-muted-foreground">{t('chartAnalysisDialog.volume')}:</span>
         <span className="font-medium">{translateVolumeTrend(volumeAnalysis.volumeTrend)}</span>
-        <span className="text-muted-foreground">({volumeAnalysis.volumeRatio.toFixed(2)}x avg)</span>
+        <span className="text-muted-foreground">({volumeAnalysis.volumeRatio.toFixed(2)}x {t('chartAnalysisDialog.avg')})</span>
       </div>
 
       {/* Active Patterns */}

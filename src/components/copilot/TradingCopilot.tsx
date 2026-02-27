@@ -502,7 +502,7 @@ export function TradingCopilot({
                       {message.role === "assistant" ? (
                         <CopilotRichMessage content={message.content || "..."} />
                       ) : message.analysisData ? (
-                        <span className="text-xs opacity-80">Analyze {message.analysisData.symbol} ({message.analysisData.timeframe})</span>
+                        <span className="text-xs opacity-80">{t('chartAnalysisDialog.analyzeSymbol', { symbol: message.analysisData.symbol, timeframe: message.analysisData.timeframe })}</span>
                       ) : (
                         message.content
                       )}
