@@ -132,7 +132,7 @@ export const TranslationManagement = () => {
 
       setIsAdmin(true);
       await loadPendingTranslations();
-      await loadCoverageStats();
+      await Promise.all([loadCoverageStats(), loadArticleCoverage()]);
     } catch (error) {
       console.error('Auth error:', error);
       navigate('/auth');
