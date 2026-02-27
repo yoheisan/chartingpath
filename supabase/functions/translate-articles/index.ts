@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
 
-    const { action, article_id, language_code, target_languages }: TranslateRequest = await req.json()
+    const { action, article_id, language_code, target_languages, batch_size = 10, offset = 0 }: TranslateRequest = await req.json()
 
     if (action === 'get_status') {
       // Return translation status for all articles
