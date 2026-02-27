@@ -1,97 +1,61 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Future Feature Scope: Harmonic Patterns + Elliott Wave Detection
 
-## Data Summary
-
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+This plan creates two scope specification files that document everything needed to implement these features later. No detection logic, no DB changes, no edge functions — just comprehensive blueprints stored in the codebase.
 
 ---
 
-## Priority 1: Auth Page (75 views, 0 signups)
+## What Gets Created
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+### 1. `src/specs/harmonic-patterns-scope.md`
+A markdown specification covering:
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+- **Patterns in scope**: Bat, Gartley, Butterfly, Crab (the 4 core harmonics)
+- **Detection methodology**: Fibonacci ratio tables for each pattern (e.g., Bat: XA to B = 0.382-0.50, BC to D = 1.618-2.618, D completion = 0.886 of XA)
+- **How it differs from current engine**: Current engine uses structural pivot detection with close-based confirmation; harmonics require Fibonacci swing measurement between XABCD legs
+- **Entry logic**: Limit order at projected D-point (not close-based breakout), with optional close-confirmation filter
+- **Required infrastructure**:
+  - New `harmonicDetectors.ts` shared module (parallel to `patternDetectors.ts`)
+  - New DB columns on `live_pattern_detections` for Fib ratios and XABCD coordinates
+  - New SVG renderer for XABCD leg visualization
+  - Integration point in `scan-live-patterns` edge function
+- **Quality scoring**: How to score harmonic completions (ratio precision, volume at D, trend context)
+- **Asset/timeframe suitability**: Forex and Stocks on 1H/4H/1D (not suitable for 5M due to noise)
+- **Estimated complexity**: High — new detection paradigm, new visualization, new DB schema
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+### 2. `src/specs/elliott-wave-scope.md`
+A markdown specification covering:
 
----
-
-## Priority 2: Screener (101 views, 18s avg dwell)
-
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
-
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
-
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
-
----
-
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
-
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
-
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
-
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+- **Scope**: 5-wave impulse detection + ABC corrective identification
+- **Core rules**: Wave 2 cannot retrace more than 100% of Wave 1, Wave 3 cannot be the shortest impulse wave, Wave 4 cannot overlap Wave 1 price territory
+- **Detection approach**: State machine using zigzag pivots (reusing existing pivot infrastructure) with rule validation at each step
+- **Key challenge**: Ambiguity — multiple valid wave counts can exist simultaneously; specification documents how to handle this (confidence ranking of competing counts)
+- **Entry logic**: Wave 3 breakout (close-based, compatible with current engine) or Wave 5 exhaustion (limit-based, like harmonics)
+- **Required infrastructure**:
+  - New `elliottWaveDetector.ts` shared module
+  - New DB table or columns for wave count state (current wave number, pivot coordinates, confidence)
+  - New SVG renderer for wave labels (1-2-3-4-5 / A-B-C)
+  - Potentially a separate scan cadence (wave counting is computationally heavier)
+- **Quality scoring**: Based on rule adherence, Fibonacci relationships between waves, volume profile
+- **Estimated complexity**: Very high — subjective pattern, competing interpretations, heavy compute
+- **Recommendation**: Implement as confluence overlay first (flag when existing pattern aligns with a Wave 3/5 zone) before standalone scanning
 
 ---
 
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+## Technical Details
 
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+### File locations
+Both specs go in a new `src/specs/` directory, keeping them close to the codebase but clearly separated as planning documents.
 
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+### Integration points documented
+Each spec will reference the exact files that would need modification:
+- `supabase/functions/_shared/patternDetectors.ts` — where new detectors plug in
+- `supabase/functions/scan-live-patterns/index.ts` — main scan orchestrator
+- `src/types/VisualSpec.ts` — visual spec extensions needed
+- `src/types/screener.ts` — LiveSetup type extensions
+- `src/components/PrescriptivePatternSVG.tsx` — new SVG renderers
 
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
-
----
-
-## Priority 5: Shared Links (8 views, 7 pattern views)
-
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
-
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
-
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
-
----
-
-## Implementation Sequence
-
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+### No code changes
+This plan only creates two markdown specification files. No detection logic, no database migrations, no edge function changes.
 
