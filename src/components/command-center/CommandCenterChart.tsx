@@ -53,6 +53,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const { profile, user } = useUserProfile();
   const isMobile = useIsMobile();
   const copilot = useTradingCopilotContext();
+  const { showAuthDialog, setShowAuthDialog, requireAuth } = useAuthGate("intraday charts");
   const userId = user?.id;
   const [bars, setBars] = useState<CompressedBar[]>([]);
   const [loading, setLoading] = useState(true);
