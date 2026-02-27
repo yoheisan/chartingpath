@@ -34,6 +34,9 @@ interface CommandCenterChartProps {
   onWatchlistChange?: () => void;
 }
 
+/** Timeframes that require authentication to access */
+export const AUTH_REQUIRED_TIMEFRAMES = new Set(['15m', '1h']);
+
 const TIMEFRAMES = [
   { value: '15m', label: '15m', requiresAuth: true },
   { value: '1h', label: '1H', requiresAuth: true },
@@ -156,7 +159,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     }
   };
 
+  // Whether current timeframe is gated and user is not authenticated
+  const isTimeframeGated = AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId;
+
   const fetchChartData = useCallback(async () => {
+    // Don't fetch data for auth-gated timeframes
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
+      setLoading(false);
+      setError(null);
+      setBars([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -225,7 +239,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     } finally {
       setLoading(false);
     }
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, userId]);
 
   const updatePriceData = (chartBars: CompressedBar[]) => {
     if (chartBars.length < 2) return;
