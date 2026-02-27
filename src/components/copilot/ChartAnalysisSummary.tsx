@@ -56,11 +56,47 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
     return t('chartAnalysisDialog.neutral');
   };
 
+  const translateInterpretation = (interp: string) => {
+    const lower = interp.toLowerCase();
+    if (lower.includes('bullish momentum')) return t('chartAnalysisDialog.bullishMomentum');
+    if (lower.includes('bearish momentum')) return t('chartAnalysisDialog.bearishMomentum');
+    if (lower.includes('overbought')) return t('chartAnalysisDialog.overbought');
+    if (lower.includes('oversold')) return t('chartAnalysisDialog.oversold');
+    if (lower.includes('neutral')) return t('chartAnalysisDialog.neutral');
+    if (lower.includes('weak trend')) return t('chartAnalysisDialog.weakTrend');
+    if (lower.includes('strong trend')) return t('chartAnalysisDialog.strongTrend');
+    return interp;
+  };
+
+  const translateStrength = (strength: string) => {
+    const lower = strength.toLowerCase();
+    if (lower.includes('strong')) return t('chartAnalysisDialog.strongStrength');
+    if (lower.includes('weak')) return t('chartAnalysisDialog.weakStrength');
+    if (lower.includes('moderate')) return t('chartAnalysisDialog.moderateStrength');
+    return strength;
+  };
+
+  const translateRisk = (risk: string) => {
+    const lower = risk.toLowerCase();
+    if (lower.includes('elevated')) return t('chartAnalysisDialog.elevatedRisk');
+    if (lower.includes('high')) return t('chartAnalysisDialog.highRisk');
+    if (lower.includes('low')) return t('chartAnalysisDialog.lowRisk');
+    return risk;
+  };
+
   const translateVolumeTrend = (trend: string) => {
     const lower = trend.toLowerCase();
     if (lower.includes('increas')) return t('chartAnalysisDialog.increasing');
     if (lower.includes('decreas')) return t('chartAnalysisDialog.decreasing');
     return t('chartAnalysisDialog.stable');
+  };
+
+  const translateVolatilityLevel = (level: string) => {
+    const lower = level.toLowerCase();
+    if (lower.includes('high')) return t('chartAnalysisDialog.high');
+    if (lower.includes('low')) return t('chartAnalysisDialog.low');
+    if (lower.includes('moderate')) return t('chartAnalysisDialog.moderate');
+    return level;
   };
 
   const formatPrice = (price: number) => {
