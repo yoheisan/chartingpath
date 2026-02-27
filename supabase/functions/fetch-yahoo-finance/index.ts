@@ -111,11 +111,6 @@ serve(async (req) => {
     let response: Response | null = null;
     let lastError: Error | null = null;
     let usedSymbol = symbol;
-
-    // Try symbol variants with the requested interval
-    let response: Response | null = null;
-    let lastError: Error | null = null;
-    let usedSymbol = symbol;
     let actualInterval = yahooInterval;
 
     for (const variant of symbolVariants) {
