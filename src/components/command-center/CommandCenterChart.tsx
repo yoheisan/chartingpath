@@ -24,6 +24,23 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useTradingCopilotContext } from '@/components/copilot';
 import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
 
+interface CommandCenterChartProps {
+  symbol: string;
+  timeframe: string;
+  onTimeframeChange: (tf: string) => void;
+  onSymbolChange?: (symbol: string) => void;
+  onWatchlistChange?: () => void;
+}
+
+const TIMEFRAMES = [
+  { value: '15m', label: '15m' },
+  { value: '1h', label: '1H' },
+  { value: '4h', label: '4H' },
+  { value: '8h', label: '8H' },
+  { value: '1d', label: '1D' },
+  { value: '1wk', label: '1W' },
+];
+
 export const CommandCenterChart = memo(function CommandCenterChart({
   symbol,
   timeframe,
@@ -41,9 +58,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [priceData, setPriceData] = useState<{ current: number; change: number; changePct: number } | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
-  const [enabledPatterns, setEnabledPatterns] = useState<Set<string>>(new Set());
-  const [patternOccurrences, setPatternOccurrences] = useState<Record<string, any[]>>({});
-  const [patternLoading, setPatternLoading] = useState(false);
+  const [autoPatterns, setAutoPatterns] = useState<any[]>([]);
 
   // Check if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
