@@ -2542,8 +2542,88 @@ export class PatternCalculator {
         return this.generateAbandonedBabyBullish();
       case 'abandoned-baby-bearish':
         return this.generateAbandonedBabyBearish();
+      case 'donchian-breakout-long':
+        return this.generateDonchianBreakoutLong();
+      case 'donchian-breakout-short':
+        return this.generateDonchianBreakoutShort();
       default:
         return this.generateHeadAndShoulders();
     }
+  }
+
+  static generateDonchianBreakoutLong(): PatternData {
+    const basePrice = 100;
+    const channelHigh = basePrice + 12;
+    const channelLow = basePrice - 8;
+
+    const candles: CandlestickData[] = [
+      { open: basePrice - 2, high: basePrice + 4, low: basePrice - 6, close: basePrice + 2, volume: 900 },
+      { open: basePrice + 2, high: channelHigh, low: basePrice, close: channelHigh - 2, volume: 1100 },
+      { open: channelHigh - 2, high: channelHigh, low: basePrice + 2, close: basePrice + 4, volume: 1000 },
+      { open: basePrice + 4, high: basePrice + 8, low: channelLow + 2, close: channelLow + 4, volume: 950 },
+      { open: channelLow + 4, high: basePrice + 2, low: channelLow, close: basePrice - 2, volume: 1050 },
+      { open: basePrice - 2, high: basePrice + 6, low: basePrice - 4, close: basePrice + 4, volume: 800 },
+      { open: basePrice + 4, high: channelHigh - 1, low: basePrice + 1, close: channelHigh - 3, volume: 900 },
+      { open: channelHigh - 3, high: channelHigh, low: basePrice + 3, close: basePrice + 5, volume: 850 },
+      { open: basePrice + 5, high: basePrice + 8, low: channelLow + 3, close: channelLow + 5, volume: 800 },
+      { open: channelLow + 5, high: basePrice + 4, low: channelLow + 1, close: basePrice + 2, volume: 900 },
+      { open: basePrice + 2, high: basePrice + 8, low: basePrice, close: basePrice + 6, volume: 1000 },
+      { open: basePrice + 6, high: channelHigh - 1, low: basePrice + 4, close: channelHigh - 2, volume: 1200 },
+      { open: channelHigh - 2, high: channelHigh, low: channelHigh - 4, close: channelHigh - 1, volume: 1300 },
+      { open: channelHigh - 1, high: channelHigh + 8, low: channelHigh - 2, close: channelHigh + 6, volume: 2200 },
+      { open: channelHigh + 6, high: channelHigh + 12, low: channelHigh + 4, close: channelHigh + 10, volume: 1800 },
+      { open: channelHigh + 10, high: channelHigh + 15, low: channelHigh + 8, close: channelHigh + 13, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      { type: 'resistance', points: [{ x: 1, y: channelHigh }, { x: 12, y: channelHigh }], label: 'Donchian Upper', color: '#22c55e', style: 'solid' },
+      { type: 'support', points: [{ x: 4, y: channelLow }, { x: 12, y: channelLow }], label: 'Donchian Lower', color: '#ef4444', style: 'solid' },
+      { type: 'peak', points: [{ x: 13, y: channelHigh + 6 }], label: 'Breakout', color: '#22c55e', style: 'solid' },
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: 'Donchian Channel Breakout (Long) – price closes above the 20-period high, signaling bullish momentum.',
+      keyLevels: { entry: channelHigh + 1, stopLoss: channelLow, target: channelHigh + (channelHigh - channelLow), breakout: channelHigh },
+    };
+  }
+
+  static generateDonchianBreakoutShort(): PatternData {
+    const basePrice = 120;
+    const channelHigh = basePrice + 8;
+    const channelLow = basePrice - 12;
+
+    const candles: CandlestickData[] = [
+      { open: basePrice + 2, high: basePrice + 6, low: basePrice - 4, close: basePrice - 2, volume: 900 },
+      { open: basePrice - 2, high: basePrice + 4, low: channelLow + 2, close: channelLow + 4, volume: 1100 },
+      { open: channelLow + 4, high: basePrice, low: channelLow, close: basePrice - 4, volume: 1000 },
+      { open: basePrice - 4, high: channelHigh - 2, low: basePrice - 6, close: channelHigh - 4, volume: 950 },
+      { open: channelHigh - 4, high: channelHigh, low: basePrice, close: basePrice + 2, volume: 1050 },
+      { open: basePrice + 2, high: basePrice + 6, low: basePrice - 4, close: basePrice - 2, volume: 800 },
+      { open: basePrice - 2, high: basePrice + 2, low: channelLow + 4, close: channelLow + 6, volume: 900 },
+      { open: channelLow + 6, high: basePrice, low: channelLow + 2, close: basePrice - 3, volume: 850 },
+      { open: basePrice - 3, high: channelHigh - 3, low: basePrice - 6, close: basePrice - 4, volume: 800 },
+      { open: basePrice - 4, high: basePrice, low: channelLow + 3, close: channelLow + 5, volume: 900 },
+      { open: channelLow + 5, high: basePrice - 2, low: channelLow + 2, close: channelLow + 3, volume: 1000 },
+      { open: channelLow + 3, high: channelLow + 6, low: channelLow + 1, close: channelLow + 2, volume: 1200 },
+      { open: channelLow + 2, high: channelLow + 4, low: channelLow, close: channelLow + 1, volume: 1300 },
+      { open: channelLow + 1, high: channelLow + 2, low: channelLow - 8, close: channelLow - 6, volume: 2200 },
+      { open: channelLow - 6, high: channelLow - 4, low: channelLow - 12, close: channelLow - 10, volume: 1800 },
+      { open: channelLow - 10, high: channelLow - 8, low: channelLow - 15, close: channelLow - 13, volume: 1600 },
+    ];
+
+    const annotations: PatternAnnotation[] = [
+      { type: 'resistance', points: [{ x: 4, y: channelHigh }, { x: 12, y: channelHigh }], label: 'Donchian Upper', color: '#22c55e', style: 'solid' },
+      { type: 'support', points: [{ x: 2, y: channelLow }, { x: 12, y: channelLow }], label: 'Donchian Lower', color: '#ef4444', style: 'solid' },
+      { type: 'peak', points: [{ x: 13, y: channelLow - 6 }], label: 'Breakdown', color: '#ef4444', style: 'solid' },
+    ];
+
+    return {
+      candles,
+      annotations,
+      description: 'Donchian Channel Breakout (Short) – price closes below the 20-period low, signaling bearish momentum.',
+      keyLevels: { entry: channelLow - 1, stopLoss: channelHigh, target: channelLow - (channelHigh - channelLow), breakout: channelLow },
+    };
   }
 }
