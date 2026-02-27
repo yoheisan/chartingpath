@@ -87,25 +87,82 @@ function formatPrice(price: number): string {
   return price.toPrecision(4);
 }
 
+interface FormationLine {
+  points: { x: number; y: number }[];
+  label?: string;
+  role: "upper" | "lower" | "neckline";
+}
+
 /** Derive pivots from PatternCalculator's 'peak' annotations */
 function derivePivots(
-  annotations: { type: string; points: { x: number; y: number }[] }[]
+  annotations: { type: string; points: { x: number; y: number }[]; label?: string }[]
 ): Pivot[] {
   return annotations
     .filter(a => a.type === "peak")
     .map(a => ({
       index: a.points[0].x,
       price: a.points[0].y,
-      type: "high" as const, // will be refined below
+      type: "high" as const,
     }))
     .sort((a, b) => a.index - b.index)
     .map((p, i, arr) => {
-      // Determine high/low by comparing to neighbours
       const prev = arr[i - 1];
       const next = arr[i + 1];
       const isLow = (prev && p.price < prev.price) || (next && p.price < next.price);
       return { ...p, type: isLow ? ("low" as const) : ("high" as const) };
     });
+}
+
+/** Extract formation lines (trendlines, support, resistance) for geometric shape overlays */
+function deriveFormationLines(
+  annotations: { type: string; points: { x: number; y: number }[]; label?: string }[]
+): FormationLine[] {
+  const lines: FormationLine[] = [];
+  for (const a of annotations) {
+    if (a.points.length < 2) continue;
+    if (a.type === "resistance") {
+      lines.push({ points: a.points, label: a.label, role: "upper" });
+    } else if (a.type === "support") {
+      lines.push({ points: a.points, label: a.label, role: "lower" });
+    } else if (a.type === "trendline") {
+      // Classify by label or slope
+      const lbl = (a.label || "").toLowerCase();
+      if (lbl.includes("resist") || lbl.includes("upper") || lbl.includes("descend")) {
+        lines.push({ points: a.points, label: a.label, role: "upper" });
+      } else if (lbl.includes("support") || lbl.includes("lower") || lbl.includes("ascend")) {
+        lines.push({ points: a.points, label: a.label, role: "lower" });
+      } else {
+        // Determine by slope relative to other trendlines
+        const slope = (a.points[a.points.length - 1].y - a.points[0].y) /
+                      (a.points[a.points.length - 1].x - a.points[0].x || 1);
+        lines.push({ points: a.points, label: a.label, role: slope <= 0 ? "upper" : "lower" });
+      }
+    } else if (a.type === "neckline") {
+      lines.push({ points: a.points, label: a.label, role: "neckline" });
+    }
+  }
+  return lines;
+}
+
+/** Interpolate a formation line's price at a given x index */
+function interpolateLine(points: { x: number; y: number }[], atX: number): number {
+  if (points.length === 1) return points[0].y;
+  // Clamp to line extent
+  if (atX <= points[0].x) return points[0].y;
+  if (atX >= points[points.length - 1].x) return points[points.length - 1].y;
+  // Find segment
+  for (let i = 0; i < points.length - 1; i++) {
+    if (atX >= points[i].x && atX <= points[i + 1].x) {
+      const t = (atX - points[i].x) / (points[i + 1].x - points[i].x);
+      return points[i].y + t * (points[i + 1].y - points[i].y);
+    }
+  }
+  return points[points.length - 1].y;
+}
+
+/** Check if pattern is a cup shape */
+function isCupPattern(patternType: string): boolean {
+  return patternType.includes("cup");
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
