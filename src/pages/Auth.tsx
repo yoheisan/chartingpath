@@ -28,6 +28,7 @@ const trackLoginAttempt = (payload: {
 };
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const rawRedirect = searchParams.get("redirect");
