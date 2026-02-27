@@ -590,16 +590,16 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isResetPassword ? "Set New Password" : isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Welcome Back"}
+              {isResetPassword ? t('auth.setNewPassword') : isForgotPassword ? t('auth.resetPassword') : isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
             </CardTitle>
             <CardDescription>
               {isResetPassword
-                ? "Enter your new password below"
+                ? t('auth.enterNewPassword')
                 : isForgotPassword 
-                  ? "Enter your email to receive password reset instructions"
+                  ? t('auth.enterEmailForReset')
                   : isSignUp 
-                    ? "Create your free account in seconds"
-                    : "Sign in to your ChartingPath account"
+                    ? t('auth.createFreeAccount')
+                    : t('auth.signInToAccount')
               }
             </CardDescription>
           </CardHeader>
