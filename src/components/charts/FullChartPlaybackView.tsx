@@ -594,11 +594,18 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
 
   return (
     <div className="flex flex-col h-full">
-      <div
-        ref={containerRef}
-        className="flex-1 min-h-[250px] w-full rounded-t-lg overflow-hidden border border-border/50"
-        style={height ? { height } : undefined}
-      />
+      <div className="relative flex-1 min-h-[250px] w-full rounded-t-lg overflow-hidden border border-border/50">
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+          style={height ? { height } : undefined}
+        />
+        <canvas
+          ref={canvasOverlayRef}
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 10 }}
+        />
+      </div>
       <TradePlaybackControls
         isPlaying={playback.isPlaying}
         progress={playback.progress}
