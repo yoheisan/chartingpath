@@ -33,6 +33,8 @@ interface TranslateRequest {
   article_id?: string
   language_code?: string  // single language for translate_article
   target_languages?: string[]  // for translate_all, defaults to all
+  batch_size?: number  // max articles per call (default 10)
+  offset?: number  // skip first N untranslated articles
 }
 
 Deno.serve(async (req) => {
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
 
-    const { action, article_id, language_code, target_languages }: TranslateRequest = await req.json()
+    const { action, article_id, language_code, target_languages, batch_size = 10, offset = 0 }: TranslateRequest = await req.json()
 
     if (action === 'get_status') {
       // Return translation status for all articles
@@ -117,14 +119,20 @@ Deno.serve(async (req) => {
 
       let translated = 0, skipped = 0, errors = 0
 
+      // Filter to only articles needing translation
+      const needsTranslation: typeof articles = []
       for (const article of (articles || [])) {
         const contentHash = simpleHash(article.content)
         const ex = existingMap.get(article.id)
-
-        // Skip if manual override or up-to-date
         if (ex?.is_manual_override) { skipped++; continue }
         if (ex?.source_hash === contentHash) { skipped++; continue }
+        needsTranslation.push(article)
+      }
 
+      // Apply offset and batch_size
+      const batch = needsTranslation.slice(offset, offset + batch_size)
+
+      for (const article of batch) {
         try {
           await translateSingleArticle(supabase, GEMINI_API_KEY, article.id, langCode, article)
           translated++
@@ -137,13 +145,18 @@ Deno.serve(async (req) => {
         await new Promise(r => setTimeout(r, 2000))
       }
 
+      const remaining = needsTranslation.length - offset - batch.length
+
       return new Response(JSON.stringify({
         success: true,
         language: langCode,
         translated,
         skipped,
         errors,
-        total: articles?.length || 0
+        total: articles?.length || 0,
+        needs_translation: needsTranslation.length,
+        remaining,
+        next_offset: remaining > 0 ? offset + batch_size : null
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
