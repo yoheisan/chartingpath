@@ -83,6 +83,9 @@ export const TranslationManagement = () => {
   const [syncLangResults, setSyncLangResults] = useState<Record<string, { translated: number; errors: number; status: 'pending' | 'syncing' | 'done' | 'error' }>>({}); 
   const [articleSyncing, setArticleSyncing] = useState(false);
   const [articleSyncProgress, setArticleSyncProgress] = useState<string>('');
+  const [articleSyncPercent, setArticleSyncPercent] = useState<number>(0);
+  const [articleCoverage, setArticleCoverage] = useState<{ total_articles: number; language_summary: Record<string, { translated: number; total: number }> } | null>(null);
+  const [articleCoverageLoading, setArticleCoverageLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
