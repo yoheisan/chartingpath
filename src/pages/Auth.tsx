@@ -494,15 +494,17 @@ const Auth = () => {
   const contextHeadline = (() => {
     switch (sharedContext) {
       case 'screener':
-        return 'Sign up to access the live pattern screener';
+        return t('auth.contextScreener');
       case 'backtest':
-        return 'Sign up to save your backtest results';
+        return t('auth.contextBacktest');
       case 'shared_backtest':
         return sharedPattern 
-          ? `Sign up to get alerts for ${decodeURIComponent(sharedPattern)}${sharedSymbol ? ` on ${decodeURIComponent(sharedSymbol)}` : ''}`
-          : 'Sign up to create your own alerts';
+          ? (sharedSymbol 
+              ? t('auth.contextSharedBacktestSymbol', { pattern: decodeURIComponent(sharedPattern), symbol: decodeURIComponent(sharedSymbol) })
+              : t('auth.contextSharedBacktest', { pattern: decodeURIComponent(sharedPattern) }))
+          : t('auth.contextCreateAlerts');
       case 'alert':
-        return 'Sign up to start receiving pattern alerts';
+        return t('auth.contextAlert');
       default:
         return null;
     }
@@ -515,7 +517,7 @@ const Auth = () => {
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t('auth.backToHome')}
           </Link>
         </div>
 
@@ -532,20 +534,20 @@ const Auth = () => {
             )}
             
             <div>
-              <h2 className="text-2xl font-bold mb-2">Your free trading edge starts here</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('auth.headline')}</h2>
               <p className="text-muted-foreground">
-                Join thousands of instruments tracked daily with pattern recognition powered by 320,000+ historical outcomes.
+                {t('auth.subheadline')}
               </p>
             </div>
 
             {/* Free tier benefits */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Free account includes</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('auth.freeAccountIncludes')}</h3>
               {[
-                { icon: FlaskConical, text: "3 backtests per day" },
-                { icon: Zap, text: "Live screener access" },
-                { icon: Bell, text: "Pattern alert setup" },
-                { icon: BarChart3, text: "Edge Atlas rankings" },
+                { icon: FlaskConical, text: t('auth.backtestsPerDay') },
+                { icon: Zap, text: t('auth.liveScreenerAccess') },
+                { icon: Bell, text: t('auth.patternAlertSetup') },
+                { icon: BarChart3, text: t('auth.edgeAtlasRankings') },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-3">
                   <div className="p-1.5 rounded-md bg-primary/10">
