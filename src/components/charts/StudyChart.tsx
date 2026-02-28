@@ -619,9 +619,11 @@ const StudyChart = memo(({
                 } catch { /* coordinate conversion may fail */ }
               }
 
-              if (pixelPoints.length < 2) return;
-
-              ctx.beginPath();
+              if (pixelPoints.length < 2) {
+                console.log('[StudyChart] drawZone: insufficient pixel points:', pixelPoints.length, 'from', zonePoints.length, 'zone points');
+                return;
+              }
+              console.log('[StudyChart] drawZone: drawing', pixelPoints.length, 'points, canvas:', canvas.width, 'x', canvas.height);
               ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
               for (let i = 1; i < pixelPoints.length; i++) {
                 ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
