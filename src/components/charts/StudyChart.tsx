@@ -1266,6 +1266,7 @@ const StudyChart = memo(({
           </PopoverContent>
         </Popover>
       </div>
+      )}
       </div>
 
       {/* RSI Oscillator Pane */}
