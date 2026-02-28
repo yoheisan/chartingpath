@@ -12,7 +12,7 @@ import {
   SeriesMarkerShape,
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
-import { FormationOverlayData } from '@/utils/formationOverlay';
+import { FormationOverlayData, buildZonePoints } from '@/utils/formationOverlay';
 import {
   calculateEMA,
   calculateSMA,
@@ -168,6 +168,7 @@ const StudyChart = memo(({
   const macdChartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const rsiSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
+  const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const macdHistSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null);
   const syncingRangeRef = useRef(false);
   const syncingCrosshairRef = useRef(false);
@@ -578,6 +579,66 @@ const StudyChart = memo(({
           });
           lowerSeries.setData(formation.lowerTrend);
         }
+
+        // Shaded formation zone (canvas overlay)
+        if (formation.hasZone) {
+          const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
+          if (zonePoints.length >= 2) {
+            const drawZone = () => {
+              const canvas = canvasOverlayRef.current;
+              if (!canvas || !chartRef.current) return;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return;
+
+              const chartEl = containerRef.current;
+              if (!chartEl) return;
+              const rect = chartEl.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              canvas.width = Math.floor(rect.width) * dpr;
+              canvas.height = Math.floor(rect.height) * dpr;
+              canvas.style.width = `${Math.floor(rect.width)}px`;
+              canvas.style.height = `${Math.floor(rect.height)}px`;
+              ctx.scale(dpr, dpr);
+              ctx.clearRect(0, 0, rect.width, rect.height);
+
+              const ts = chartRef.current.timeScale();
+              const ps = chartRef.current.priceScale('right');
+
+              const pixelPoints: { x: number; upper: number; lower: number }[] = [];
+              for (const pt of zonePoints) {
+                try {
+                  const x = (ts as any).timeToCoordinate?.(pt.time as any);
+                  const yUp = (ps as any).priceToCoordinate?.(pt.upper);
+                  const yLo = (ps as any).priceToCoordinate?.(pt.lower);
+                  if (x != null && yUp != null && yLo != null &&
+                      Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
+                    pixelPoints.push({ x, upper: yUp, lower: yLo });
+                  }
+                } catch { /* coordinate conversion may fail */ }
+              }
+
+              if (pixelPoints.length < 2) return;
+
+              ctx.beginPath();
+              ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
+              for (let i = 1; i < pixelPoints.length; i++) {
+                ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
+              }
+              for (let i = pixelPoints.length - 1; i >= 0; i--) {
+                ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
+              }
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+              ctx.fill();
+              ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+              ctx.lineWidth = 1;
+              ctx.stroke();
+            };
+
+            requestAnimationFrame(drawZone);
+            chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
+          }
+        }
       }
     }
 
@@ -958,6 +1019,11 @@ const StudyChart = memo(({
       <div
         ref={containerRef}
         className="w-full h-full overflow-hidden"
+      />
+      {/* Canvas overlay for formation zone shading */}
+      <canvas
+        ref={canvasOverlayRef}
+        className="absolute inset-0 pointer-events-none z-[5]"
       />
 
       {/* Chart Analysis Toolbar */}
