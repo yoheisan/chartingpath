@@ -17,7 +17,7 @@ import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
 import { MarketOverviewPanel } from './MarketOverviewPanel';
-import FullChartViewer from '@/components/charts/FullChartViewer';
+const FullChartViewer = lazy(() => import('@/components/charts/FullChartViewer'));
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
