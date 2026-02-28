@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       let langErrors = 0
       let remaining = 0
       let offset = 0
-      const batchSize = 5 // conservative to avoid timeouts in sub-function
+      const batchSize = 2 // small batch — each article requires multiple Gemini API calls
 
       // Loop through batches for this language
       while (true) {
