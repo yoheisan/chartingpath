@@ -602,14 +602,15 @@ const StudyChart = memo(({
               ctx.clearRect(0, 0, rect.width, rect.height);
 
               const ts = chartRef.current.timeScale();
-              const ps = chartRef.current.priceScale('right');
+              const series = candleSeriesRef.current;
+              if (!series) return;
 
               const pixelPoints: { x: number; upper: number; lower: number }[] = [];
               for (const pt of zonePoints) {
                 try {
-                  const x = (ts as any).timeToCoordinate?.(pt.time as any);
-                  const yUp = (ps as any).priceToCoordinate?.(pt.upper);
-                  const yLo = (ps as any).priceToCoordinate?.(pt.lower);
+                  const x = ts.timeToCoordinate(pt.time as unknown as Time);
+                  const yUp = (series as any).priceToCoordinate(pt.upper);
+                  const yLo = (series as any).priceToCoordinate(pt.lower);
                   if (x != null && yUp != null && yLo != null &&
                       Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
                     pixelPoints.push({ x, upper: yUp, lower: yLo });
@@ -618,8 +619,6 @@ const StudyChart = memo(({
               }
 
               if (pixelPoints.length < 2) return;
-
-              ctx.beginPath();
               ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
               for (let i = 1; i < pixelPoints.length; i++) {
                 ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
@@ -628,14 +627,17 @@ const StudyChart = memo(({
                 ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
               }
               ctx.closePath();
-              ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+              ctx.fillStyle = 'rgba(0, 200, 255, 0.12)';
               ctx.fill();
-              ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+              ctx.strokeStyle = 'rgba(0, 200, 255, 0.25)';
               ctx.lineWidth = 1;
               ctx.stroke();
             };
 
-            requestAnimationFrame(drawZone);
+            // Draw with delay to ensure chart coordinates are ready
+            setTimeout(() => {
+              requestAnimationFrame(drawZone);
+            }, 200);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
           }
         }
@@ -1023,7 +1025,8 @@ const StudyChart = memo(({
       {/* Canvas overlay for formation zone shading */}
       <canvas
         ref={canvasOverlayRef}
-        className="absolute inset-0 pointer-events-none z-[5]"
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 10 }}
       />
 
       {/* Chart Analysis Toolbar */}
@@ -1105,6 +1108,7 @@ const StudyChart = memo(({
           </span>
         </div>
       )}
+      {!hideAnalysisToolbar && (
       <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-[10px] text-muted-foreground/70 pointer-events-none">
         <TooltipProvider>
           <Tooltip>
@@ -1120,8 +1124,10 @@ const StudyChart = memo(({
           </Tooltip>
         </TooltipProvider>
       </div>
+      )}
 
       {/* Reset Button */}
+      {!hideAnalysisToolbar && (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1139,8 +1145,8 @@ const StudyChart = memo(({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-
-      {/* Settings Button */}
+      )}
+      {!hideAnalysisToolbar && (
       <div className="absolute top-2 left-2 z-20">
         <Popover>
           <PopoverTrigger asChild>
@@ -1264,6 +1270,7 @@ const StudyChart = memo(({
           </PopoverContent>
         </Popover>
       </div>
+      )}
       </div>
 
       {/* RSI Oscillator Pane */}
