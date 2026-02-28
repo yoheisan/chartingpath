@@ -182,13 +182,15 @@ export default function SharedPattern() {
             <div className="h-[340px] bg-card">
               <StudyChart
                 bars={pattern.bars}
-                visualSpec={pattern.visual_spec}
+                symbol={pattern.instrument}
                 height={340}
-                instrument={pattern.instrument}
-                entryPrice={pattern.entry_price}
-                stopLossPrice={pattern.stop_loss_price}
-                takeProfitPrice={pattern.take_profit_price}
-                direction={pattern.direction as 'long' | 'short'}
+                timeframe={pattern.timeframe}
+                tradePlan={{
+                  entryPrice: pattern.entry_price,
+                  stopLoss: pattern.stop_loss_price,
+                  takeProfit: pattern.take_profit_price,
+                  direction: pattern.direction as 'long' | 'short',
+                }}
                 formationOverlays={(() => {
                   const formation = deriveFormationOverlay(
                     pattern.visual_spec?.pivots,
