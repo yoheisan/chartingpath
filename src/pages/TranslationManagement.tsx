@@ -321,7 +321,7 @@ export const TranslationManagement = () => {
       : languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
-    const BATCH_SIZE = 2; // small batch to avoid edge function timeouts (each article = multiple Gemini calls)
+    const BATCH_SIZE = 1; // 1 article per call to stay within edge function 50s timeout
     const MAX_RETRIES = 3;
     const RETRY_DELAY_MS = 5000;
     const CONCURRENCY = 1; // process 1 language at a time to avoid overwhelming Gemini + edge function timeouts

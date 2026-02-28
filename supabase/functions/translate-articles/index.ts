@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -101,6 +101,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'translate_all') {
+      const startTime = Date.now()
+      console.log('[translate-articles] translate_all called, batch_size:', batch_size, 'offset:', offset)
       // Translate all published articles for one language at a time
       // Client should call this per-language to avoid timeouts
       const langs = target_languages || [language_code]
@@ -143,9 +145,17 @@ Deno.serve(async (req) => {
       const batch = needsTranslation.slice(offset, offset + batch_size)
 
       for (const article of batch) {
+        // Check time budget - abort if approaching 45s timeout
+        if (Date.now() - startTime > 40_000) {
+          console.log(`[translate-articles] Time limit approaching, stopping after ${translated} articles`)
+          break
+        }
+
         try {
+          console.log(`[translate-articles] Translating "${article.slug}" → ${langCode}`)
           await translateSingleArticle(supabase, GEMINI_API_KEY, article.id, langCode, article)
           translated++
+          console.log(`[translate-articles] ✅ Done "${article.slug}" → ${langCode}`)
         } catch (e) {
           console.error(`Error translating ${article.slug} to ${langCode}:`, e)
           errors++
