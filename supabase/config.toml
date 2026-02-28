@@ -242,3 +242,9 @@ verify_jwt = false
 
 [functions.submit-support-ticket]
 verify_jwt = false
+
+[functions.build-copilot-context]
+verify_jwt = false
+
+[functions.copilot-learn]
+verify_jwt = false
