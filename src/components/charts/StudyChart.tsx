@@ -779,6 +779,40 @@ const StudyChart = memo(({
     if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
 
+    // Draw TP/SL shaded zones even without formation overlays
+    if (tradePlan && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
+      const drawStandaloneTradePlanZones = () => {
+        const canvas = canvasOverlayRef.current;
+        if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const chartEl = containerRef.current;
+        if (!chartEl) return;
+        const rect = chartEl.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(rect.width) * dpr;
+        canvas.height = Math.floor(rect.height) * dpr;
+        canvas.style.width = `${Math.floor(rect.width)}px`;
+        canvas.style.height = `${Math.floor(rect.height)}px`;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        const series = candleSeriesRef.current;
+        const entryY = (series as any).priceToCoordinate(tradePlan.entry);
+        const tpY = (series as any).priceToCoordinate(tradePlan.takeProfit);
+        const slY = (series as any).priceToCoordinate(tradePlan.stopLoss);
+        if (entryY == null || tpY == null || slY == null) return;
+
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+        ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+        ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+      };
+
+      setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+    }
 
     allCharts.forEach((src) => {
       src.subscribeCrosshairMove((param) => {
