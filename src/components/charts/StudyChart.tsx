@@ -384,7 +384,8 @@ const StudyChart = memo(({
       volumeSeries.setData(volumeData);
     }
 
-    // === TECHNICAL INDICATORS ===
+    // === TECHNICAL INDICATORS (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar) {
 
     // EMA 20 (fast)
     if (indicators.ema20) {
@@ -465,6 +466,8 @@ const StudyChart = memo(({
         vwapSeries.setData(vwapData.map((p) => ({ time: p.time as Time, value: p.value })));
       }
     }
+
+    } // end !hideAnalysisToolbar
 
 
     if (tradePlan) {
