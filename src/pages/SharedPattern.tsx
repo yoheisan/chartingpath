@@ -176,15 +176,28 @@ export default function SharedPattern() {
           </p>
         </div>
 
-        {/* Chart Preview */}
+        {/* Chart Preview with Formation Overlays */}
         {pattern.bars && pattern.bars.length > 0 && (
           <Card className="mb-8 overflow-hidden">
-            <div className="h-64 bg-card">
-              <ThumbnailChart
+            <div className="h-[340px] bg-card">
+              <StudyChart
                 bars={pattern.bars}
                 visualSpec={pattern.visual_spec}
-                height={256}
+                height={340}
                 instrument={pattern.instrument}
+                entryPrice={pattern.entry_price}
+                stopLossPrice={pattern.stop_loss_price}
+                takeProfitPrice={pattern.take_profit_price}
+                direction={pattern.direction as 'long' | 'short'}
+                formationOverlays={(() => {
+                  const formation = deriveFormationOverlay(
+                    pattern.visual_spec?.pivots,
+                    pattern.bars,
+                    pattern.visual_spec?.patternId || pattern.pattern_id
+                  );
+                  return formation ? [formation] : [];
+                })()}
+                hideAnalysisToolbar
               />
             </div>
           </Card>
