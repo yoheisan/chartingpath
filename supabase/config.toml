@@ -248,3 +248,6 @@ verify_jwt = false
 
 [functions.copilot-learn]
 verify_jwt = false
+
+[functions.auto-translate-articles]
+verify_jwt = false
