@@ -1023,7 +1023,8 @@ const StudyChart = memo(({
       {/* Canvas overlay for formation zone shading */}
       <canvas
         ref={canvasOverlayRef}
-        className="absolute inset-0 pointer-events-none z-[5]"
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 10 }}
       />
 
       {/* Chart Analysis Toolbar */}
