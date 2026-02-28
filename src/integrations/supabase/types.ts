@@ -480,6 +480,7 @@ export type Database = {
           id: string
           initial_capital: number
           instrument: string
+          is_community_shared: boolean | null
           is_shared: boolean | null
           is_starred: boolean | null
           max_drawdown: number | null
@@ -531,6 +532,7 @@ export type Database = {
           id?: string
           initial_capital?: number
           instrument: string
+          is_community_shared?: boolean | null
           is_shared?: boolean | null
           is_starred?: boolean | null
           max_drawdown?: number | null
@@ -582,6 +584,7 @@ export type Database = {
           id?: string
           initial_capital?: number
           instrument?: string
+          is_community_shared?: boolean | null
           is_shared?: boolean | null
           is_starred?: boolean | null
           max_drawdown?: number | null
@@ -772,6 +775,54 @@ export type Database = {
           total_messages?: number
           total_questions?: number
           user_responses?: number
+        }
+        Relationships: []
+      }
+      community_bookmarks: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_likes: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }

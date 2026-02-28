@@ -64,6 +64,7 @@ const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"))
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 
 
+const CommunityFeed = lazy(() => import("./pages/CommunityFeed"));
 const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
 const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
@@ -169,6 +170,7 @@ const App = () => (
           <Route path="/learn/fear-and-greed" element={<Navigate to="/blog/fear-and-greed" replace />} />
           <Route path="/learn/trading-journal" element={<Navigate to="/blog/trading-journal" replace />} />
           <Route path="/learn/trading-strategies-guide" element={<Navigate to="/blog/trading-strategies-guide" replace />} />
+          <Route path="/community" element={withSuspense(<CommunityFeed />)} />
           <Route path="/strategy-workspace" element={withSuspense(<StrategyWorkspace />)} />
           <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
           <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />

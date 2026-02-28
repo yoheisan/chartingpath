@@ -88,6 +88,8 @@ interface BacktestResultSummaryProps {
   onShareBacktest: () => void;
   isSharing: boolean;
   linkCopied: boolean;
+  shareToCommunity?: boolean;
+  onShareToCommunityChange?: (value: boolean) => void;
 }
 
 // Generate one-sentence interpretation based on metrics
@@ -130,6 +132,8 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   onShareBacktest,
   isSharing,
   linkCopied,
+  shareToCommunity,
+  onShareToCommunityChange,
 }) => {
   const isLowSample = results.totalTrades < MIN_TRADES_THRESHOLD;
   const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
@@ -450,6 +454,22 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             {linkCopied ? 'Link Copied!' : 'Share This Result'}
           </Button>
         </div>
+
+        {/* Share to Community toggle */}
+        {onShareToCommunityChange && (
+          <div className="flex items-center gap-2 px-1">
+            <input
+              type="checkbox"
+              id="share-to-community"
+              checked={shareToCommunity ?? true}
+              onChange={(e) => onShareToCommunityChange(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-primary"
+            />
+            <label htmlFor="share-to-community" className="text-xs text-muted-foreground cursor-pointer">
+              Also post to Community Feed (public, verified stats only)
+            </label>
+          </div>
+        )}
 
         {/* Conversion micro-copy */}
         <p className="text-xs text-muted-foreground text-center pt-1">
