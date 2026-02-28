@@ -186,7 +186,7 @@ export default function SharedPattern() {
                 height={340}
                 timeframe={pattern.timeframe}
                 tradePlan={{
-                  entryPrice: pattern.entry_price,
+                  entry: pattern.entry_price,
                   stopLoss: pattern.stop_loss_price,
                   takeProfit: pattern.take_profit_price,
                   direction: pattern.direction as 'long' | 'short',
