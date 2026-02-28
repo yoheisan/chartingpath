@@ -210,11 +210,11 @@ export function DailyReportPanel() {
 
       // ── Auth funnel ──
       const authViews = pageViews.filter(e => (e.properties as any)?.path === "/auth").length;
-      const authFormStarts = events.filter(e => e.event_name === "auth.form_start").length;
+      const authFormStarts = events.filter(e => e.event_name === "auth.form_start" || e.event_name === "auth_page.form_start").length;
       const authSubmissions = events.filter(e =>
-        e.event_name === "auth.submit" || e.event_name === "auth.signup"
+        e.event_name === "auth.submit" || e.event_name === "auth.signup" || e.event_name === "auth_page.submitted"
       ).length;
-      const authAbandon = events.filter(e => e.event_name === "auth.abandon").length;
+      const authAbandon = events.filter(e => e.event_name === "auth.abandon" || e.event_name === "auth_page.abandoned").length;
       const authFunnel: FunnelStep[] = [
         { label: "Auth Page Views", count: authViews, pct: 100 },
         { label: "Form Started", count: authFormStarts, pct: authViews > 0 ? Math.round((authFormStarts / authViews) * 100) : 0 },
