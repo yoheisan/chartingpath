@@ -10,7 +10,9 @@ import {
   RefreshCw, Users, AlertTriangle, TrendingUp, TrendingDown,
   Globe, Search, Eye, MousePointerClick, ArrowDown, ArrowUp,
   Lightbulb, BarChart3, Zap, BookOpen, Bell, Mail, Brain,
+  FileText, LayoutDashboard,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, startOfDay, isSameDay, parseISO } from "date-fns";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -44,6 +46,11 @@ interface Insight {
   type: "critical" | "warning" | "positive" | "info";
   title: string;
   detail: string;
+}
+
+interface CopilotQuestion {
+  question: string;
+  helpful: boolean | null;
 }
 
 interface ReportData {
@@ -80,6 +87,7 @@ interface ReportData {
   copilotUnhelpful: number;
   copilotSatisfactionPct: number;
   topCopilotTopics: { topic: string; count: number }[];
+  copilotSampleQuestions: CopilotQuestion[];
 
   // System health
   alertsTriggered: number;
@@ -91,6 +99,11 @@ interface ReportData {
 
   // Auto insights
   insights: Insight[];
+
+  // Engagement extras
+  backtestRuns: number;
+  communityMessages: number;
+  totalEvents: number;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -99,6 +112,7 @@ export function DailyReportPanel() {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
   const [daysBack, setDaysBack] = useState("7");
+  const [showNarrative, setShowNarrative] = useState(true);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -114,6 +128,7 @@ export function DailyReportPanel() {
         copilotRes,
         profilesRes,
         backtestRes,
+        communityRes,
       ] = await Promise.all([
         supabase
           .from("analytics_events")
@@ -126,6 +141,7 @@ export function DailyReportPanel() {
         supabase.from("copilot_feedback").select("response_helpful, topics, question").gte("created_at", since),
         supabase.from("profiles").select("user_id, created_at").gte("created_at", since),
         supabase.from("backtest_runs").select("id, user_id").gte("created_at", since),
+        supabase.from("community_messages").select("id").gte("created_at", since),
       ]);
 
       const events = analyticsRes.data || [];
@@ -135,6 +151,7 @@ export function DailyReportPanel() {
       const feedback = copilotRes.data || [];
       const newUsers = profilesRes.data || [];
       const backtestRuns = backtestRes.data || [];
+      const communityMsgs = communityRes.data || [];
 
       const pageViews = events.filter(e => e.event_name === "page.view");
       const pageLeaves = events.filter(e => e.event_name === "page.leave");
@@ -324,6 +341,12 @@ export function DailyReportPanel() {
         .slice(0, 8)
         .map(([topic, count]) => ({ topic, count }));
 
+      // Sample copilot questions
+      const copilotSampleQuestions: CopilotQuestion[] = feedback
+        .filter(f => f.question)
+        .slice(0, 10)
+        .map(f => ({ question: f.question as string, helpful: f.response_helpful as boolean | null }));
+
       // ── System health ──
       const emailsSent = alertLogs.filter(l => l.email_sent).length;
       const emailFailures = alertLogs.filter(l => !l.email_sent).length;
@@ -468,11 +491,15 @@ export function DailyReportPanel() {
         copilotUnhelpful,
         copilotSatisfactionPct,
         topCopilotTopics,
+        copilotSampleQuestions,
         alertsTriggered: alerts.length,
         emailsSent,
         emailFailures,
         trafficSources,
         insights,
+        backtestRuns: backtestRuns.length,
+        communityMessages: communityMsgs.length,
+        totalEvents: events.length,
       });
     } catch (err) {
       console.error("Failed to fetch daily report:", err);
@@ -527,7 +554,23 @@ export function DailyReportPanel() {
         </div>
       </div>
 
-      {/* ── Auto Insights ── */}
+      {/* ── View Toggle ── */}
+      <Tabs value={showNarrative ? "narrative" : "dashboard"} onValueChange={(v) => setShowNarrative(v === "narrative")}>
+        <TabsList>
+          <TabsTrigger value="narrative" className="flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5" /> Full Report
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="flex items-center gap-1.5">
+            <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* ── Narrative Report ── */}
+      {showNarrative && <NarrativeReport report={report} reportDate={reportDate} days={days} />}
+
+      {!showNarrative && (<>
+
       {report.insights.length > 0 && (
         <Card className="border-l-4 border-l-primary">
           <CardHeader className="pb-2">
@@ -873,7 +916,247 @@ export function DailyReportPanel() {
           </CardContent>
         </Card>
       )}
+      </>)}
     </div>
+  );
+}
+
+// ─── Narrative Report ────────────────────────────────────────────────────────
+
+function NarrativeReport({ report, reportDate, days }: { report: ReportData; reportDate: string; days: number }) {
+  const peakDay = report.dailyTrend.reduce((max, d) => d.sessions > max.sessions ? d : max, report.dailyTrend[0]);
+  const totalCtaClicks = report.landingCtaClicks.reduce((s, c) => s + c.count, 0);
+  const authAbandonPct = report.authFunnel[0]?.count > 0
+    ? Math.round(((report.authFunnel[0].count - (report.authFunnel[2]?.count || 0)) / report.authFunnel[0].count) * 100)
+    : 0;
+
+  const criticalIssues = report.insights.filter(i => i.type === "critical");
+  const warnings = report.insights.filter(i => i.type === "warning");
+  const positives = report.insights.filter(i => i.type === "positive");
+
+  return (
+    <Card>
+      <CardContent className="pt-6 pb-6 prose prose-sm dark:prose-invert max-w-none">
+        {/* Traffic Overview */}
+        <h3 className="text-lg font-bold mb-3">📊 Traffic Overview ({reportDate})</h3>
+        <div className="overflow-x-auto mb-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-1.5 font-medium">Day</th>
+                <th className="text-right py-1.5 font-medium">Events</th>
+                <th className="text-right py-1.5 font-medium">Sessions</th>
+                <th className="text-right py-1.5 font-medium">Sign-ups</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.dailyTrend.map((d) => (
+                <tr key={d.date} className="border-b border-border/30">
+                  <td className="py-1.5">{format(parseISO(d.date), "MMM d")}</td>
+                  <td className="text-right py-1.5">{d.pageViews}</td>
+                  <td className="text-right py-1.5 font-medium">{d.sessions}</td>
+                  <td className="text-right py-1.5">{d.signups > 0 ? <Badge variant="default" className="text-xs">{d.signups}</Badge> : "0"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          <strong>Trend:</strong> Sessions peaked on {peakDay ? format(parseISO(peakDay.date), "MMM d") : "N/A"} ({peakDay?.sessions || 0}).
+          {report.newSignups === 0 && report.totalVisitors > 10
+            ? ` Only ${report.newSignups} registered users, so all ${report.totalVisitors} sessions are anonymous visitors.`
+            : ` ${report.newSignups} new sign-ups from ${report.totalVisitors} sessions.`
+          }
+          {` Bounce rate: ${report.bounceRate}%. Avg ${report.pagesPerSession} pages/session, ${report.avgSessionDurationSec}s avg duration.`}
+        </p>
+
+        {/* Critical Issues */}
+        {criticalIssues.length > 0 && (
+          <>
+            <h3 className="text-lg font-bold mb-3">🚨 Critical Issues</h3>
+            <ul className="space-y-2 mb-6 list-none pl-0">
+              {criticalIssues.map((issue, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-destructive font-bold shrink-0">•</span>
+                  <span><strong>{issue.title}</strong> — {issue.detail}</span>
+                </li>
+              ))}
+              {report.backtestRuns === 0 && (
+                <li className="flex items-start gap-2 text-sm">
+                  <span className="text-destructive font-bold shrink-0">•</span>
+                  <span><strong>No backtest runs</strong> — Zero engagement with the backtester, suggesting visitors aren't discovering it or the auth wall blocks them.</span>
+                </li>
+              )}
+              {report.communityMessages === 0 && (
+                <li className="flex items-start gap-2 text-sm">
+                  <span className="text-destructive font-bold shrink-0">•</span>
+                  <span><strong>No community messages</strong> — Zero community engagement in this period.</span>
+                </li>
+              )}
+            </ul>
+          </>
+        )}
+
+        {/* Landing Page Performance */}
+        <h3 className="text-lg font-bold mb-3">🏠 Landing Page Performance</h3>
+        
+        {report.landingScrollDepth.length > 0 && (
+          <>
+            <p className="text-sm font-medium mb-2">Section scroll depth:</p>
+            <ul className="space-y-1 mb-4 list-none pl-0">
+              {report.landingScrollDepth.map((s, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm">
+                  <span className="font-medium w-40">{s.section}:</span>
+                  <span>{s.views} views</span>
+                  <span className="text-muted-foreground">({s.pctOfHero}%)</span>
+                  <span>{s.pctOfHero >= 70 ? "✅" : s.pctOfHero >= 25 ? "⚠️" : "🔴"}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {report.landingCtaClicks.length > 0 && (
+          <>
+            <p className="text-sm font-medium mb-2">CTA Clicks ({totalCtaClicks} total):</p>
+            <ul className="space-y-1 mb-4 list-none pl-0">
+              {report.landingCtaClicks.map((c, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm">
+                  <span className="font-medium w-48">{c.button}:</span>
+                  <span>{c.count} clicks</span>
+                  <Badge variant={c.ctr >= 5 ? "default" : "outline"} className="text-xs">{c.ctr}% CTR</Badge>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {report.heroCtrPct > 0 && (
+          <p className="text-sm text-muted-foreground mb-6">
+            <strong>Insight:</strong> Hero CTA at {report.heroCtrPct}% CTR.
+            {report.landingScrollDepth.length >= 3 && report.landingScrollDepth[2].pctOfHero < 30
+              ? ` Most visitors drop off before reaching ${report.landingScrollDepth[2].section} (${report.landingScrollDepth[2].pctOfHero}% retention).`
+              : ""}
+          </p>
+        )}
+
+        {/* Top Pages */}
+        <h3 className="text-lg font-bold mb-3">📄 Top Pages Visited</h3>
+        <ul className="space-y-1 mb-6 list-none pl-0">
+          {report.topPages.slice(0, 10).map((p, i) => (
+            <li key={i} className="flex items-center justify-between text-sm border-b border-border/30 py-1">
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.path}</code>
+              <span className="font-medium">{p.views} views</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Content Performance */}
+        {report.topContent.length > 0 && (
+          <>
+            <h3 className="text-lg font-bold mb-3">📚 Content Performance</h3>
+            <ul className="space-y-1 mb-6 list-none pl-0">
+              {report.topContent.map((c, i) => (
+                <li key={i} className="flex items-center justify-between text-sm border-b border-border/30 py-1">
+                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{c.path}</code>
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">{c.views} views</span>
+                    {c.avgDuration > 0 && <span className="text-muted-foreground">({c.avgDuration}s avg read)</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-muted-foreground mb-6">
+              <strong>Positive:</strong> Blog and educational content are getting organic traffic.
+            </p>
+          </>
+        )}
+
+        {/* Copilot */}
+        <h3 className="text-lg font-bold mb-3">🤖 Copilot Usage</h3>
+        <p className="text-sm mb-2">
+          {report.copilotQuestions} questions asked.
+          {report.copilotSatisfactionPct > 0 && ` Quality satisfaction: ${report.copilotSatisfactionPct}% (${report.copilotHelpful} helpful / ${report.copilotUnhelpful} unhelpful).`}
+        </p>
+        {report.copilotSampleQuestions.length > 0 && (
+          <ul className="space-y-1 mb-4 list-none pl-0">
+            {report.copilotSampleQuestions.slice(0, 5).map((q, i) => (
+              <li key={i} className="text-sm flex items-start gap-2">
+                <span className="shrink-0">{q.helpful === true ? "👍" : q.helpful === false ? "👎" : "💬"}</span>
+                <span className="text-muted-foreground italic">"{q.question.substring(0, 120)}{q.question.length > 120 ? "..." : ""}"</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {report.topCopilotTopics.length > 0 && (
+          <p className="text-sm text-muted-foreground mb-6">
+            <strong>Top topics:</strong> {report.topCopilotTopics.map(t => `${t.topic} (${t.count})`).join(", ")}
+          </p>
+        )}
+
+        {/* System Health */}
+        <h3 className="text-lg font-bold mb-3">⚙️ System Health</h3>
+        <ul className="space-y-1 mb-6 list-none pl-0">
+          <li className="text-sm">Alerts triggered: <strong>{report.alertsTriggered}</strong></li>
+          <li className="text-sm">Emails sent: <strong>{report.emailsSent}</strong>{report.emailFailures > 0 && <Badge variant="destructive" className="ml-2 text-xs">{report.emailFailures} failures</Badge>}</li>
+          <li className="text-sm">Backtest runs: <strong>{report.backtestRuns}</strong></li>
+          <li className="text-sm">Community messages: <strong>{report.communityMessages}</strong></li>
+        </ul>
+
+        {/* Recommended Improvements */}
+        {(criticalIssues.length > 0 || warnings.length > 0 || positives.length > 0) && (
+          <>
+            <h3 className="text-lg font-bold mb-3">🔧 Recommended Improvements</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-1.5 font-medium w-20">Priority</th>
+                    <th className="text-left py-1.5 font-medium">Issue</th>
+                    <th className="text-left py-1.5 font-medium">Suggested Fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {criticalIssues.map((issue, i) => (
+                    <tr key={`c-${i}`} className="border-b border-border/30">
+                      <td className="py-2"><Badge variant="destructive" className="text-xs">P0</Badge></td>
+                      <td className="py-2 font-medium">{issue.title}</td>
+                      <td className="py-2 text-muted-foreground">{issue.detail}</td>
+                    </tr>
+                  ))}
+                  {warnings.map((issue, i) => (
+                    <tr key={`w-${i}`} className="border-b border-border/30">
+                      <td className="py-2"><Badge variant="secondary" className="text-xs">P1</Badge></td>
+                      <td className="py-2 font-medium">{issue.title}</td>
+                      <td className="py-2 text-muted-foreground">{issue.detail}</td>
+                    </tr>
+                  ))}
+                  {positives.map((issue, i) => (
+                    <tr key={`p-${i}`} className="border-b border-border/30">
+                      <td className="py-2"><Badge variant="outline" className="text-xs">P2</Badge></td>
+                      <td className="py-2 font-medium">{issue.title}</td>
+                      <td className="py-2 text-muted-foreground">{issue.detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {/* Traffic Sources */}
+        {report.trafficSources.length > 0 && (
+          <>
+            <h3 className="text-lg font-bold mt-6 mb-3">🌐 Traffic Sources</h3>
+            <div className="flex flex-wrap gap-2">
+              {report.trafficSources.map((s, i) => (
+                <Badge key={i} variant="secondary" className="text-xs">{s.source} ({s.count})</Badge>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
