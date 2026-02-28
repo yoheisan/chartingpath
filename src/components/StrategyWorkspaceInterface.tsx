@@ -1029,6 +1029,8 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
                 onShareBacktest={handleShareBacktest}
                 isSharing={isSharing}
                 linkCopied={linkCopied}
+                shareToCommunity={shareToCommunity}
+                onShareToCommunityChange={setShareToCommunity}
               />
             </div>
           )}
