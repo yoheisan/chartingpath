@@ -657,8 +657,8 @@ const StudyChart = memo(({
       scaleMargins: optimalMargins,
     });
 
-    // === RSI as separate chart ===
-    if (indicators.rsi && rsiContainerRef.current) {
+    // === RSI as separate chart (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar && indicators.rsi && rsiContainerRef.current) {
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       const rsiData = calculateRSI(bars, 14);
       if (rsiData.length > 0) {
