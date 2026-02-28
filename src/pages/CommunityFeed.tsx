@@ -86,7 +86,6 @@ const CommunityFeed = () => {
           </aside>
         </div>
       </div>
-    </div>
   );
 };
 
