@@ -485,7 +485,7 @@ const StudyChart = memo(({
       candleSeries.createPriceLine({
         price: tradePlan.stopLoss,
         color: '#ef4444',
-        lineWidth: 1.5,
+        lineWidth: 2,
         lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'SL',
@@ -495,7 +495,7 @@ const StudyChart = memo(({
       candleSeries.createPriceLine({
         price: tradePlan.takeProfit,
         color: '#22c55e',
-        lineWidth: 1.5,
+        lineWidth: 2,
         lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'TP',
