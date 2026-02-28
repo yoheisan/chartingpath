@@ -58,9 +58,10 @@ export function useCopilotConversations() {
     setIsLoadingHistory(true);
     const { data } = await supabase
       .from('copilot_messages')
-      .select('*')
+      .select('id, conversation_id, role, content, created_at')
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(200);
     setIsLoadingHistory(false);
     return (data as CopilotMessage[]) || [];
   }, []);
