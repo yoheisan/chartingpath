@@ -349,11 +349,13 @@ export function DashboardPatternStudy({
                           <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} />
                         </div>
                         <div className="h-24">
-                          <ThumbnailChart
-                            bars={pattern.bars}
-                            visualSpec={pattern.visual_spec}
-                            height={96}
-                          />
+                          <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                            <ThumbnailChart
+                              bars={pattern.bars}
+                              visualSpec={pattern.visual_spec}
+                              height={96}
+                            />
+                          </Suspense>
                         </div>
                           <div className="grid grid-cols-3 gap-2 text-xs">
                           <div>
