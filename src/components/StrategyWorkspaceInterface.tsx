@@ -695,6 +695,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [shareToCommunity, setShareToCommunity] = useState(true);
 
   // Handle share backtest
   const handleShareBacktest = async () => {
@@ -728,7 +729,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           avg_loss: backtestResults.avgLoss,
           is_shared: true,
           share_token: newToken,
-        });
+          is_community_shared: shareToCommunity,
 
       if (error) throw error;
 
