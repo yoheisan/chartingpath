@@ -1850,21 +1850,30 @@ serve(async (req) => {
     }
 
     // ============================================
-    // PHASE 1: Fetch learned rules + RAG context in parallel
+    // PHASE 1: Fetch all context layers in parallel
     // ============================================
-    console.log('[trading-copilot] Fetching learned rules + RAG context...');
-    const [learnedRulesPrompt, ragContext] = await Promise.all([
+    console.log('[trading-copilot] Fetching all context layers...');
+    const [learnedRulesPrompt, ragContext, platformContext, userBehavior] = await Promise.all([
       fetchLearnedRules(supabase),
       fetchRAGContext(supabase, messages),
+      fetchPlatformContext(supabase),
+      fetchUserBehavior(supabase, userId),
     ]);
+    const temporalContext = computeTemporalContext();
     const langCode = (language || "en").toLowerCase();
     console.log(`[trading-copilot] Language requested: ${langCode}`);
     const langInstruction = langCode !== "en"
       ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
       : "";
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + langInstruction + learnedRulesPrompt;
+    
+    // Assemble enhanced system prompt with all context layers
+    const contextLayers = [temporalContext, platformContext, userBehavior].filter(Boolean).join('\n\n');
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
+      + (contextLayers ? '\n\n' + contextLayers : '')
+      + langInstruction 
+      + learnedRulesPrompt;
     console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
-    console.log(`[trading-copilot] Learned rules injected: ${learnedRulesPrompt.length > 0 ? 'yes' : 'none'}`);
+    console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
 
     // Track tool calls/results for RLVR logging
     const allToolCalls: any[] = [];
