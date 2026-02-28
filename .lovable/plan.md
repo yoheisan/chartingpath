@@ -1,97 +1,101 @@
 
+# Phase 1: Proof-of-Edge Social Layer
 
-# Multi-Page Funnel Analysis and Improvement Plan
+## Overview
+Build a public community feed where users share verified backtest results and live pattern detections as "Edge Cards" -- each card shows auto-attached, platform-verified stats (win rate, expectancy, R:R, sample size) that cannot be faked. This creates a unique differentiator vs traditional trading forums full of unverified claims.
 
-## Data Summary
+## What Gets Built
 
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+### 1. Community Feed Page (`/community`)
+A public-facing feed (no auth required to browse) showing Edge Cards sorted by recency, with filters for asset type, pattern, and direction. Think of it as a curated, data-verified Twitter feed for trading setups.
 
----
+- **Edge Cards** come in two flavors:
+  - **Backtest Cards** -- sourced from `backtest_runs` where `is_shared = true`. Shows instrument, pattern, timeframe, win rate, profit factor, Sharpe, total trades, and a mini equity curve sparkline.
+  - **Live Detection Cards** -- sourced from `live_pattern_detections` where `share_token IS NOT NULL`. Shows instrument, pattern, direction, entry/SL/TP, quality score, R:R, and a mini candlestick thumbnail.
 
-## Priority 1: Auth Page (75 views, 0 signups)
+- Each card has a "Verified by ChartingPath" badge indicating the stats are platform-computed, not self-reported.
+- Cards link to the full shared view (`/share/:token` or `/s/:token`).
+- Anonymous visitors can browse freely; auth is only needed to like/bookmark.
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+### 2. Engagement Layer (Auth Required)
+- **Like** (heart icon) -- uses the existing `strategy_likes` table pattern
+- **Bookmark** (save for later) -- new lightweight table
+- Like counts displayed on each card
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+### 3. Leaderboard Sidebar
+A "Top Edges This Week" sidebar/section ranking shared setups by:
+- Highest expectancy (R)
+- Best win rate (min 30 trades)
+- Most liked
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+### 4. "Share to Community" Integration
+Add a toggle/button to the existing share flows:
+- In `StrategyWorkspaceInterface.tsx` (backtest sharing) -- add "Also post to Community Feed" checkbox
+- In `useSharePattern.ts` (pattern sharing) -- same toggle
+- When enabled, a flag is set (`is_community_shared = true`) so the feed query picks it up
 
----
+## Database Changes
 
-## Priority 2: Screener (101 views, 18s avg dwell)
+### New columns (migration):
+```sql
+-- Add community visibility flag to backtest_runs
+ALTER TABLE backtest_runs ADD COLUMN IF NOT EXISTS is_community_shared boolean DEFAULT false;
 
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+-- Add community visibility flag to live_pattern_detections  
+ALTER TABLE live_pattern_detections ADD COLUMN IF NOT EXISTS is_community_shared boolean DEFAULT false;
 
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+-- Community bookmarks table
+CREATE TABLE IF NOT EXISTS community_bookmarks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content_type text NOT NULL CHECK (content_type IN ('backtest', 'detection')),
+  content_id uuid NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, content_type, content_id)
+);
 
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+-- Community likes table (generic, replaces strategy_likes for this context)
+CREATE TABLE IF NOT EXISTS community_likes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content_type text NOT NULL CHECK (content_type IN ('backtest', 'detection')),
+  content_id uuid NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, content_type, content_id)
+);
 
----
+-- RLS: anyone can read, only authenticated users can insert/delete their own
+ALTER TABLE community_bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE community_likes ENABLE ROW LEVEL SECURITY;
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+CREATE POLICY "Anyone can read likes" ON community_likes FOR SELECT USING (true);
+CREATE POLICY "Auth users manage own likes" ON community_likes FOR ALL USING (auth.uid() = user_id);
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+CREATE POLICY "Anyone can read bookmarks" ON community_bookmarks FOR SELECT USING (true);
+CREATE POLICY "Auth users manage own bookmarks" ON community_bookmarks FOR ALL USING (auth.uid() = user_id);
+```
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+## New Files
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+| File | Purpose |
+|------|---------|
+| `src/pages/CommunityFeed.tsx` | Main feed page with filters, card grid, leaderboard sidebar |
+| `src/components/community/EdgeCard.tsx` | Reusable card component for both backtest and detection edges |
+| `src/components/community/LeaderboardSidebar.tsx` | Top edges ranking widget |
+| `src/components/community/CommunityFilters.tsx` | Asset type, pattern, direction filter bar |
+| `src/hooks/useCommunityFeed.ts` | Data fetching hook -- queries `backtest_runs` and `live_pattern_detections` where `is_community_shared = true` |
+| `src/hooks/useCommunityEngagement.ts` | Like/bookmark mutations |
 
----
+## Modified Files
 
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Add `/community` route |
+| `src/components/StrategyWorkspaceInterface.tsx` | Add "Share to Community" toggle in share flow |
+| `src/hooks/useSharePattern.ts` | Add `is_community_shared` flag update |
 
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
-
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
-
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
-
----
-
-## Priority 5: Shared Links (8 views, 7 pattern views)
-
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
-
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
-
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
-
----
-
-## Implementation Sequence
-
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
-
+## Technical Notes
+- The feed query unions `backtest_runs` and `live_pattern_detections` on the client side (two parallel queries, merged and sorted by date).
+- Like counts are fetched via a count query grouped by `content_id` -- no denormalized counter needed initially.
+- The feed is publicly accessible (no auth wall), which directly addresses the "auth wall blocks discovery" issue from the behavior report.
+- Mini charts reuse existing `ThumbnailChart` component for detection cards, and a simple Recharts sparkline for backtest equity curves.
