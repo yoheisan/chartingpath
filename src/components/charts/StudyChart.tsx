@@ -1105,7 +1105,7 @@ const StudyChart = memo(({
           </span>
         </div>
       )}
-      <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-[10px] text-muted-foreground/70 pointer-events-none">
+      {!hideAnalysisToolbar && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1119,9 +1119,10 @@ const StudyChart = memo(({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </div>
+      )}
 
       {/* Reset Button */}
+      {!hideAnalysisToolbar && (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1138,9 +1139,10 @@ const StudyChart = memo(({
             Reset chart (fit content &amp; auto-scale)
           </TooltipContent>
         </Tooltip>
-      </TooltipProvider>
+      )}
 
       {/* Settings Button */}
+      {!hideAnalysisToolbar && (
       <div className="absolute top-2 left-2 z-20">
         <Popover>
           <PopoverTrigger asChild>
