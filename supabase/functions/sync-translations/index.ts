@@ -151,12 +151,12 @@ Deno.serve(async (req) => {
     const totalKeys = Object.keys(flatEnglish).length
     console.log(`Processing ${totalKeys} English keys`)
 
+    // Paginate to avoid 1000-row default limit
+    const existingKeySet = new Set<string>()
+
     // Ensure all keys exist in translation_keys table (FK requirement)
     if (!skip_key_creation) {
       const allKeys = Object.keys(flatEnglish)
-      
-      // Paginate to avoid 1000-row default limit
-      const existingKeySet = new Set<string>()
       let from = 0
       const PAGE_SIZE = 1000
       while (true) {
