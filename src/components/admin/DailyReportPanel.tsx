@@ -554,7 +554,23 @@ export function DailyReportPanel() {
         </div>
       </div>
 
-      {/* ── Auto Insights ── */}
+      {/* ── View Toggle ── */}
+      <Tabs value={showNarrative ? "narrative" : "dashboard"} onValueChange={(v) => setShowNarrative(v === "narrative")}>
+        <TabsList>
+          <TabsTrigger value="narrative" className="flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5" /> Full Report
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="flex items-center gap-1.5">
+            <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* ── Narrative Report ── */}
+      {showNarrative && <NarrativeReport report={report} reportDate={reportDate} days={days} />}
+
+      {!showNarrative && (<>
+
       {report.insights.length > 0 && (
         <Card className="border-l-4 border-l-primary">
           <CardHeader className="pb-2">
