@@ -476,7 +476,7 @@ const StudyChart = memo(({
         price: tradePlan.entry,
         color: '#f59e0b', // Amber for entry
         lineWidth: 2,
-        lineStyle: 0, // Solid
+        lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'Entry',
       });
