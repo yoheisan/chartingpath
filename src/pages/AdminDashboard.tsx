@@ -14,6 +14,7 @@ import { ServiceHealthDashboard } from "@/components/admin/ServiceHealthDashboar
 import { PipelineHealthDashboard } from "@/components/admin/PipelineHealthDashboard";
 import { LoginAttemptsPanel } from "@/components/admin/LoginAttemptsPanel";
 import { GA4Panel } from "@/components/admin/GA4Panel";
+import { DailyReportPanel } from "@/components/admin/DailyReportPanel";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
