@@ -46,6 +46,11 @@ interface Insight {
   detail: string;
 }
 
+interface CopilotQuestion {
+  question: string;
+  helpful: boolean | null;
+}
+
 interface ReportData {
   // KPIs
   totalVisitors: number;
@@ -80,6 +85,7 @@ interface ReportData {
   copilotUnhelpful: number;
   copilotSatisfactionPct: number;
   topCopilotTopics: { topic: string; count: number }[];
+  copilotSampleQuestions: CopilotQuestion[];
 
   // System health
   alertsTriggered: number;
@@ -91,6 +97,11 @@ interface ReportData {
 
   // Auto insights
   insights: Insight[];
+
+  // Engagement extras
+  backtestRuns: number;
+  communityMessages: number;
+  totalEvents: number;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
