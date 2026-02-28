@@ -471,37 +471,37 @@ const StudyChart = memo(({
 
 
     if (tradePlan) {
-      // Entry line (amber/primary)
+      // Entry line — solid blue (matches X post SVG style)
       candleSeries.createPriceLine({
         price: tradePlan.entry,
-        color: '#f59e0b', // Amber for entry
+        color: '#3b82f6',
         lineWidth: 2,
-        lineStyle: 2, // Dashed
+        lineStyle: 0, // Solid
         axisLabelVisible: true,
-        title: 'Entry',
+        title: 'ENTRY',
       });
 
-      // Stop Loss line (red/destructive)
+      // Stop Loss line — dashed red
       candleSeries.createPriceLine({
         price: tradePlan.stopLoss,
-        color: '#ef4444', // Red for SL
-        lineWidth: 2,
+        color: '#ef4444',
+        lineWidth: 1.5,
         lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'SL',
       });
 
-      // Take Profit line (green/positive)
+      // Take Profit line — dashed green
       candleSeries.createPriceLine({
         price: tradePlan.takeProfit,
-        color: '#22c55e', // Green for TP
-        lineWidth: 2,
+        color: '#22c55e',
+        lineWidth: 1.5,
         lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'TP',
       });
 
-      // Add Entry marker on the last bar
+      // Add Entry triangle marker on the last bar
       if (chartData.length > 0) {
         const lastBar = chartData[chartData.length - 1];
         const isLong = tradePlan.direction === 'long';
@@ -510,9 +510,9 @@ const StudyChart = memo(({
           createSeriesMarkers(candleSeries, [{
             time: lastBar.time,
             position: isLong ? 'belowBar' : 'aboveBar',
-            color: '#f59e0b',
+            color: isLong ? '#22c55e' : '#ef4444',
             shape: markerShape,
-            text: 'Entry',
+            text: '',
           }]);
         } catch {
           // Ignore marker errors
@@ -637,11 +637,42 @@ const StudyChart = memo(({
               ctx.stroke();
             };
 
+            // Draw TP/SL shaded zones on the same canvas (matches X post SVG)
+            const drawTradePlanZones = () => {
+              if (!tradePlan || !candleSeriesRef.current || !chartRef.current) return;
+              const canvas = canvasOverlayRef.current;
+              if (!canvas) return;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return;
+
+              const series = candleSeriesRef.current;
+              const chartEl = containerRef.current;
+              if (!chartEl) return;
+              const rect = chartEl.getBoundingClientRect();
+
+              const entryY = (series as any).priceToCoordinate(tradePlan.entry);
+              const tpY = (series as any).priceToCoordinate(tradePlan.takeProfit);
+              const slY = (series as any).priceToCoordinate(tradePlan.stopLoss);
+              if (entryY == null || tpY == null || slY == null) return;
+
+              // TP zone (green)
+              ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+              ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+              // SL zone (red)
+              ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+              ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+            };
+
+            const drawAll = () => {
+              drawZone();
+              drawTradePlanZones();
+            };
+
             // Draw with delay to ensure chart coordinates are ready
             setTimeout(() => {
-              requestAnimationFrame(drawZone);
+              requestAnimationFrame(drawAll);
             }, 200);
-            chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
+            chart.timeScale().subscribeVisibleLogicalRangeChange(drawAll);
           }
         }
       }
