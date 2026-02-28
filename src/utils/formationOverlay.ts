@@ -7,6 +7,7 @@
 
 import { ZigZagPivot, CompressedBar } from '@/types/VisualSpec';
 import { Time } from 'lightweight-charts';
+import { calculateDonchianChannels } from '@/utils/chartIndicators';
 
 export interface FormationLineData {
   time: Time;
@@ -63,16 +64,26 @@ export function deriveFormationOverlay(
     if (time !== null) lowerTrend.push({ time, value: p.price });
   }
 
-  // For donchian patterns, trendlines are horizontal channel lines (already in overlays)
-  // so we only need the zigzag
+  // For donchian patterns, compute the 20-period channel as upper/lower zone
   const isDonchian = patternId?.includes('donchian');
 
-  const hasZone = !isDonchian && upperTrend.length >= 2 && lowerTrend.length >= 2;
+  let finalUpper = upperTrend;
+  let finalLower = lowerTrend;
+  let hasZone = false;
+
+  if (isDonchian && bars.length >= 20) {
+    const channel = calculateDonchianChannels(bars, 20);
+    finalUpper = channel.map(p => ({ time: p.time as unknown as Time, value: p.upper }));
+    finalLower = channel.map(p => ({ time: p.time as unknown as Time, value: p.lower }));
+    hasZone = finalUpper.length >= 2 && finalLower.length >= 2;
+  } else {
+    hasZone = upperTrend.length >= 2 && lowerTrend.length >= 2;
+  }
 
   return {
     zigzag,
-    upperTrend: isDonchian ? [] : upperTrend,
-    lowerTrend: isDonchian ? [] : lowerTrend,
+    upperTrend: finalUpper,
+    lowerTrend: finalLower,
     hasZone,
   };
 }
