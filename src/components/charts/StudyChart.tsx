@@ -639,7 +639,10 @@ const StudyChart = memo(({
               ctx.stroke();
             };
 
-            requestAnimationFrame(drawZone);
+            // Draw with delay to ensure chart coordinates are ready
+            setTimeout(() => {
+              requestAnimationFrame(drawZone);
+            }, 200);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
           }
         }
