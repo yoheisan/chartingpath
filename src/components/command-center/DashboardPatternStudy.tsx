@@ -40,7 +40,7 @@ import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
-import ThumbnailChart from '@/components/charts/ThumbnailChart';
+const ThumbnailChart = lazy(() => import('@/components/charts/ThumbnailChart'));
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 
 interface HistoricalPattern {
