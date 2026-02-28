@@ -103,6 +103,7 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
         body: JSON.stringify({
           messages: [...messages, userMsg]
             .filter((m) => m.role === "user" || m.content.trim().length > 0)
+            .slice(-20)
             .map((m) => ({
               role: m.role,
               content: m.content,
