@@ -127,7 +127,6 @@ export function DailyReportPanel() {
         profilesRes,
         backtestRes,
         communityRes,
-        backtestRes,
       ] = await Promise.all([
         supabase
           .from("analytics_events")
@@ -151,7 +150,6 @@ export function DailyReportPanel() {
       const newUsers = profilesRes.data || [];
       const backtestRuns = backtestRes.data || [];
       const communityMsgs = communityRes.data || [];
-      const backtestRuns = backtestRes.data || [];
 
       const pageViews = events.filter(e => e.event_name === "page.view");
       const pageLeaves = events.filter(e => e.event_name === "page.leave");
