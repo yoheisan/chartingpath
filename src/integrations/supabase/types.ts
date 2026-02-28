@@ -1041,6 +1041,7 @@ export type Database = {
       }
       copilot_learned_rules: {
         Row: {
+          auto_expires_at: string | null
           confidence: number | null
           created_at: string
           id: string
@@ -1053,6 +1054,7 @@ export type Database = {
           usage_count: number | null
         }
         Insert: {
+          auto_expires_at?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
@@ -1065,6 +1067,7 @@ export type Database = {
           usage_count?: number | null
         }
         Update: {
+          auto_expires_at?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
@@ -1109,6 +1112,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      copilot_platform_context: {
+        Row: {
+          computed_at: string
+          context_data: Json
+          context_type: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          computed_at?: string
+          context_data?: Json
+          context_type: string
+          expires_at?: string
+          id?: string
+        }
+        Update: {
+          computed_at?: string
+          context_data?: Json
+          context_type?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: []
       }
       copilot_training_pairs: {
         Row: {
