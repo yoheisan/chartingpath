@@ -371,9 +371,9 @@ export const TranslationManagement = () => {
             hasMore = false;
           }
 
-          // Minimal delay between batches (paid tier can handle it)
+          // Delay between batches to let edge function cool down
           if (hasMore) {
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 2000));
           }
         } catch (error) {
           consecutiveFailures++;
