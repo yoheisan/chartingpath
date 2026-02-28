@@ -321,10 +321,10 @@ export const TranslationManagement = () => {
       : languages.filter(l => l.code !== 'en').map(l => l.code);
     let totalTranslated = 0;
     let totalErrors = 0;
-    const BATCH_SIZE = 5; // larger batch for paid Gemini tier (2000 RPM)
+    const BATCH_SIZE = 2; // small batch to avoid edge function timeouts (each article = multiple Gemini calls)
     const MAX_RETRIES = 3;
-    const RETRY_DELAY_MS = 3000;
-    const CONCURRENCY = 3; // process 3 languages in parallel
+    const RETRY_DELAY_MS = 5000;
+    const CONCURRENCY = 1; // process 1 language at a time to avoid overwhelming Gemini + edge function timeouts
 
     // Worker that processes all batches for a single language
     const processLanguage = async (langCode: string, langIndex: number) => {
