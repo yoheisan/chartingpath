@@ -11,9 +11,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
-import ThumbnailChart from '@/components/charts/ThumbnailChart';
+import StudyChart from '@/components/charts/StudyChart';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { CompressedBar, VisualSpec } from '@/types/VisualSpec';
+import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
 
 interface SharedPatternData {
   id: string;
@@ -175,15 +176,30 @@ export default function SharedPattern() {
           </p>
         </div>
 
-        {/* Chart Preview */}
+        {/* Chart Preview with Formation Overlays */}
         {pattern.bars && pattern.bars.length > 0 && (
           <Card className="mb-8 overflow-hidden">
-            <div className="h-64 bg-card">
-              <ThumbnailChart
+            <div className="h-[340px] bg-card">
+              <StudyChart
                 bars={pattern.bars}
-                visualSpec={pattern.visual_spec}
-                height={256}
-                instrument={pattern.instrument}
+                symbol={pattern.instrument}
+                height={340}
+                timeframe={pattern.timeframe}
+                tradePlan={{
+                  entry: pattern.entry_price,
+                  stopLoss: pattern.stop_loss_price,
+                  takeProfit: pattern.take_profit_price,
+                  direction: pattern.direction as 'long' | 'short',
+                }}
+                formationOverlays={(() => {
+                  const formation = deriveFormationOverlay(
+                    pattern.visual_spec?.pivots,
+                    pattern.bars,
+                    pattern.visual_spec?.patternId || pattern.pattern_id
+                  );
+                  return formation ? [formation] : [];
+                })()}
+                hideAnalysisToolbar
               />
             </div>
           </Card>
