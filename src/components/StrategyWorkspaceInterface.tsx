@@ -730,7 +730,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
           is_shared: true,
           share_token: newToken,
           is_community_shared: shareToCommunity,
-
+        });
       if (error) throw error;
 
       setShareToken(newToken);
