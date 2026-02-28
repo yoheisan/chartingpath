@@ -377,7 +377,11 @@ export default function FullChartViewer({
               Number.isFinite(d.close)
           );
 
-        candleSeries.setData(chartData);
+        // Dedupe + sort timestamps to prevent "data must be asc ordered" crashes
+        const seen = new Map<number, CandlestickData>();
+        for (const d of chartData) seen.set(d.time as number, d);
+        const safeChartData = [...seen.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+        candleSeries.setData(safeChartData);
 
         // Add volume histogram if volume data is available
         const hasVolume = bars.some(bar => bar.v && bar.v > 0);
@@ -393,7 +397,7 @@ export default function FullChartViewer({
             borderVisible: false,
           });
 
-          const volumeData = chartData.map((d) => {
+          const volumeData = safeChartData.map((d) => {
             const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
             const isUp = bar ? bar.c >= bar.o : true;
             return {
@@ -489,17 +493,40 @@ export default function FullChartViewer({
           }
         }
 
-        // Pattern overlays (entry, SL, TP lines)
+        // Pattern overlays — standardized prescriptive style:
+        // Entry = solid blue, SL = dashed red, TP = dashed green
         if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
+              const isEntry = overlay.id === 'entry' || (overlay.label || '').toLowerCase().includes('entry');
+              const isSL = overlay.id === 'sl' || (overlay.label || '').toLowerCase().includes('stop') || (overlay.label || '').toLowerCase() === 'sl';
+              const isTP = overlay.id === 'tp' || (overlay.label || '').toLowerCase().includes('target') || (overlay.label || '').toLowerCase() === 'tp';
+
+              let color = getOverlayColor(overlay.style);
+              let lineStyle = 2; // dashed by default
+              let title = overlay.label || '';
+
+              if (isEntry) {
+                color = '#3b82f6';
+                lineStyle = 0; // solid
+                title = 'ENTRY';
+              } else if (isSL) {
+                color = '#ef4444';
+                lineStyle = 2;
+                title = 'SL';
+              } else if (isTP) {
+                color = '#22c55e';
+                lineStyle = 2;
+                title = 'TP';
+              }
+
               candleSeries.createPriceLine({
                 price: overlay.price,
-                color: getOverlayColor(overlay.style),
+                color,
                 lineWidth: 2,
-                lineStyle: overlay.id === 'entry' ? 0 : 2,
+                lineStyle,
                 axisLabelVisible: true,
-                title: overlay.label,
+                title,
               });
             }
           });
@@ -555,9 +582,9 @@ export default function FullChartViewer({
           allMarkers.push({
             time: lastBar.time,
             position: entryMarkerPosition,
-            color: '#f59e0b', // Amber/orange for entry - stands out from green/red
+            color: '#3b82f6', // Blue to match prescriptive standard
             shape: entryMarkerShape,
-            text: 'Entry',
+            text: '',
           });
         }
 
