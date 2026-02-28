@@ -103,13 +103,48 @@ function saveIndicatorSettings(settings: IndicatorSettings) {
   }
 }
 
+type TimeLike = Time | string | number | { year: number; month: number; day: number };
+
+function toUnixTimeKey(time: TimeLike): number | null {
+  if (typeof time === 'number') {
+    return Number.isFinite(time) ? time : null;
+  }
+
+  if (typeof time === 'string') {
+    const parsed = Date.parse(time.includes('T') ? time : `${time}T00:00:00Z`);
+    return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
+  }
+
+  if (time && typeof time === 'object' && 'year' in time && 'month' in time && 'day' in time) {
+    const ts = Date.UTC(time.year, time.month - 1, time.day);
+    return Number.isFinite(ts) ? Math.floor(ts / 1000) : null;
+  }
+
+  return null;
+}
+
+function sanitizeSeriesData<T extends { time: Time }>(data: T[]): T[] {
+  const byTime = new Map<number, T>();
+
+  for (const point of data) {
+    const timeKey = toUnixTimeKey(point.time as TimeLike);
+    if (timeKey == null) continue;
+
+    // Keep the latest point for duplicated timestamps.
+    byTime.set(timeKey, point);
+  }
+
+  return [...byTime.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, value]) => value);
+}
+
 interface TradePlanOverlay {
   entry: number;
   stopLoss: number;
   takeProfit: number;
   direction?: 'long' | 'short';
 }
-
 /** External marker to render on the chart */
 export interface ChartMarker {
   time: string; // ISO date string
@@ -355,7 +390,8 @@ const StudyChart = memo(({
           Number.isFinite(d.close)
       );
 
-    candleSeries.setData(chartData);
+    const safeChartData = sanitizeSeriesData(chartData);
+    candleSeries.setData(safeChartData);
 
     // Add volume histogram if volume data is available
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
@@ -371,7 +407,7 @@ const StudyChart = memo(({
         borderVisible: false,
       });
 
-      const volumeData = chartData.map((d) => {
+      const volumeData = safeChartData.map((d) => {
         const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
         const isUp = bar ? bar.c >= bar.o : true;
         return {
@@ -381,7 +417,7 @@ const StudyChart = memo(({
         };
       });
 
-      volumeSeries.setData(volumeData);
+      volumeSeries.setData(sanitizeSeriesData(volumeData));
     }
 
     // === TECHNICAL INDICATORS (skip on shared/clean views) ===
@@ -397,7 +433,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        ema20Series.setData(ema20Data.map((p) => ({ time: p.time as Time, value: p.value })));
+        ema20Series.setData(sanitizeSeriesData(ema20Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
     }
 
@@ -411,7 +447,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        ema50Series.setData(ema50Data.map((p) => ({ time: p.time as Time, value: p.value })));
+        ema50Series.setData(sanitizeSeriesData(ema50Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
     }
 
@@ -426,7 +462,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        sma200Series.setData(sma200Data.map((p) => ({ time: p.time as Time, value: p.value })));
+        sma200Series.setData(sanitizeSeriesData(sma200Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
     }
 
@@ -440,7 +476,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        bbUpperSeries.setData(bbData.map((p) => ({ time: p.time as Time, value: p.upper })));
+        bbUpperSeries.setData(sanitizeSeriesData(bbData.map((p) => ({ time: p.time as Time, value: p.upper }))));
 
         const bbLowerSeries = chart.addSeries(LineSeries, {
           color: INDICATOR_COLORS.bollingerBands,
@@ -448,7 +484,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        bbLowerSeries.setData(bbData.map((p) => ({ time: p.time as Time, value: p.lower })));
+        bbLowerSeries.setData(sanitizeSeriesData(bbData.map((p) => ({ time: p.time as Time, value: p.lower }))));
       }
     }
 
@@ -463,7 +499,7 @@ const StudyChart = memo(({
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        vwapSeries.setData(vwapData.map((p) => ({ time: p.time as Time, value: p.value })));
+        vwapSeries.setData(sanitizeSeriesData(vwapData.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
     }
 
@@ -502,8 +538,8 @@ const StudyChart = memo(({
       });
 
       // Add Entry triangle marker on the last bar
-      if (chartData.length > 0) {
-        const lastBar = chartData[chartData.length - 1];
+      if (safeChartData.length > 0) {
+        const lastBar = safeChartData[safeChartData.length - 1];
         const isLong = tradePlan.direction === 'long';
         const markerShape: SeriesMarkerShape = isLong ? 'arrowUp' : 'arrowDown';
         try {
@@ -521,7 +557,7 @@ const StudyChart = memo(({
     }
 
     // Render external chart markers (e.g., historical pattern occurrences)
-    if (chartMarkers && chartMarkers.length > 0 && chartData.length > 0) {
+    if (chartMarkers && chartMarkers.length > 0 && safeChartData.length > 0) {
       try {
         const validMarkers = chartMarkers
           .map(m => {
@@ -556,7 +592,7 @@ const StudyChart = memo(({
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           });
-          zigzagSeries.setData(formation.zigzag);
+          zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
         }
 
         if (formation.upperTrend.length >= 2) {
@@ -568,7 +604,7 @@ const StudyChart = memo(({
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           });
-          upperSeries.setData(formation.upperTrend);
+          upperSeries.setData(sanitizeSeriesData(formation.upperTrend as Array<{ time: Time; value: number }>));
         }
 
         if (formation.lowerTrend.length >= 2) {
@@ -580,7 +616,7 @@ const StudyChart = memo(({
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           });
-          lowerSeries.setData(formation.lowerTrend);
+          lowerSeries.setData(sanitizeSeriesData(formation.lowerTrend as Array<{ time: Time; value: number }>));
         }
 
         // Shaded formation zone (canvas overlay)
@@ -708,7 +744,7 @@ const StudyChart = memo(({
           color: INDICATOR_COLORS.rsi, lineWidth: 1, priceLineVisible: false, lastValueVisible: true,
           priceFormat: { type: 'price', precision: 1, minMove: 0.1 },
         });
-        rsiSeries.setData(rsiData.map(p => ({ time: p.time as Time, value: p.value })));
+        rsiSeries.setData(sanitizeSeriesData(rsiData.map(p => ({ time: p.time as Time, value: p.value }))));
         rsiSeriesRef.current = rsiSeries;
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
         rsiSeries.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' });
@@ -735,17 +771,17 @@ const StudyChart = memo(({
         macdChartRef.current = macdChart;
 
         const macdHistSeries = macdChart.addSeries(HistogramSeries, { priceLineVisible: false, lastValueVisible: false });
-        macdHistSeries.setData(macdData.map(p => ({
+        macdHistSeries.setData(sanitizeSeriesData(macdData.map(p => ({
           time: p.time as Time, value: p.histogram,
           color: p.histogram >= 0 ? INDICATOR_COLORS.macdHistogramUp : INDICATOR_COLORS.macdHistogramDown,
-        })));
+        }))));
         macdHistSeriesRef.current = macdHistSeries;
 
         const macdLineSeries = macdChart.addSeries(LineSeries, { color: INDICATOR_COLORS.macdLine, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-        macdLineSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.macd })));
+        macdLineSeries.setData(sanitizeSeriesData(macdData.map(p => ({ time: p.time as Time, value: p.macd }))));
 
         const macdSignalSeries = macdChart.addSeries(LineSeries, { color: INDICATOR_COLORS.macdSignal, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-        macdSignalSeries.setData(macdData.map(p => ({ time: p.time as Time, value: p.signal })));
+        macdSignalSeries.setData(sanitizeSeriesData(macdData.map(p => ({ time: p.time as Time, value: p.signal }))));
 
         macdHistSeries.createPriceLine({ price: 0, color: 'rgba(156,163,175,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
         macdChart.timeScale().fitContent();
