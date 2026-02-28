@@ -88,11 +88,18 @@ i18n
     missingKeyHandler: missingKeyCollector.handler,
   });
 
-// Trigger async DB overlay after init (non-blocking).
-// This loads canonical translations from Supabase on top of static fallbacks.
-import('./dbTranslationLoader').then(({ loadAllTranslationsFromDB }) => {
-  loadAllTranslationsFromDB().catch(err => {
+// Load ONLY the current language from DB at startup (not all 14).
+// Other languages load on-demand when user switches.
+import('./dbTranslationLoader').then(({ loadCurrentLanguageFromDB, loadLanguageFromDB }) => {
+  loadCurrentLanguageFromDB().catch(err => {
     console.warn('[i18n] DB translation overlay failed, using static fallback:', err);
+  });
+
+  // Lazy-load translations when user switches language
+  i18n.on('languageChanged', (lng: string) => {
+    loadLanguageFromDB(lng).catch(err => {
+      console.warn(`[i18n] Failed to load ${lng} from DB:`, err);
+    });
   });
 });
 

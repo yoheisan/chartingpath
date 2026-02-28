@@ -1,19 +1,17 @@
 /**
  * DB-First Translation Loader
  * 
- * Fetches translations from the Supabase `translations` table at runtime,
- * making the DB the single canonical source of truth.
- * Static JSON locale files serve only as offline/build-time fallback.
+ * Fetches translations for a SINGLE language at a time from the Supabase
+ * `translations` table. Only the user's active language is loaded at startup;
+ * additional languages are loaded on-demand when the user switches.
  * 
- * Performance: Uses a SINGLE batched query for all languages instead of
- * 14 separate queries, reducing network waterfall from ~1.2s×14 to ~1.5s total.
+ * This avoids fetching 30,000+ rows across 14 languages on every page load.
  */
 import { supabase } from '@/integrations/supabase/client';
 import i18n from './config';
 
-const SUPPORTED_LANGUAGES = [
-  'es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr'
-];
+/** Cache to avoid re-fetching languages already loaded from DB */
+const loadedLanguages = new Set<string>();
 
 /** Convert flat dot-key translations into nested object */
 function buildNestedObject(flatEntries: Array<{ key: string; value: string }>): Record<string, any> {
@@ -32,77 +30,74 @@ function buildNestedObject(flatEntries: Array<{ key: string; value: string }>): 
   return nested;
 }
 
-/** Fetch ALL non-English translations in a single paginated query */
-async function fetchAllTranslationsFromDB(): Promise<Map<string, Array<{ key: string; value: string }>>> {
-  const langMap = new Map<string, Array<{ key: string; value: string }>>();
-  let from = 0;
-  const PAGE_SIZE = 1000;
-
+/** Fetch translations for a single language from DB (paginated) */
+async function fetchLanguageFromDB(langCode: string): Promise<Record<string, any> | null> {
   try {
+    const allRows: Array<{ key: string; value: string }> = [];
+    let from = 0;
+    const PAGE_SIZE = 1000;
+
     while (true) {
       const { data, error } = await supabase
         .from('translations')
-        .select('language_code, key, value')
-        .in('language_code', SUPPORTED_LANGUAGES)
+        .select('key, value')
+        .eq('language_code', langCode)
         .in('status', ['approved', 'auto_translated'])
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) {
-        console.error('[i18n-loader] Batch fetch error:', error.message);
-        return langMap;
+        console.error(`[i18n-loader] Error fetching ${langCode}:`, error.message);
+        return null;
       }
       if (!data || data.length === 0) break;
-
-      for (const row of data) {
-        if (!langMap.has(row.language_code)) {
-          langMap.set(row.language_code, []);
-        }
-        langMap.get(row.language_code)!.push({ key: row.key, value: row.value });
-      }
-
+      allRows.push(...data);
       if (data.length < PAGE_SIZE) break;
       from += PAGE_SIZE;
     }
-  } catch (err) {
-    console.error('[i18n-loader] Failed batch fetch:', err);
-  }
 
-  return langMap;
+    if (allRows.length === 0) return null;
+    return buildNestedObject(allRows);
+  } catch (err) {
+    console.error(`[i18n-loader] Failed to load ${langCode} from DB:`, err);
+    return null;
+  }
 }
 
-/** Load a single language from DB and merge into i18n runtime */
+/** 
+ * Load a single language from DB and merge into i18n runtime.
+ * Skips if already loaded or if language is English (static source).
+ */
 export async function loadLanguageFromDB(langCode: string): Promise<boolean> {
   if (langCode === 'en') return true;
-  const allLangs = await fetchAllTranslationsFromDB();
-  const entries = allLangs.get(langCode);
-  if (!entries || entries.length === 0) return false;
-  const bundle = buildNestedObject(entries);
+  if (loadedLanguages.has(langCode)) return true;
+
+  const bundle = await fetchLanguageFromDB(langCode);
+  if (!bundle) return false;
+
   i18n.addResourceBundle(langCode, 'translation', bundle, true, true);
+  loadedLanguages.add(langCode);
+  console.log(`[i18n-loader] Loaded ${langCode} from DB`);
   return true;
 }
 
 /** 
- * Load ALL supported languages from DB into i18n runtime.
- * Uses a SINGLE batched query instead of 14 separate ones.
- * Called once at app startup.
+ * Load ONLY the current language from DB at startup.
+ * Other languages load on-demand via the languageChanged listener.
  */
+export async function loadCurrentLanguageFromDB(): Promise<boolean> {
+  const lang = i18n.language || 'en';
+  if (lang === 'en') return true;
+  return loadLanguageFromDB(lang);
+}
+
+// Keep backward compat export name
 export async function loadAllTranslationsFromDB(): Promise<{ loaded: string[]; failed: string[] }> {
-  const loaded: string[] = [];
-  const failed: string[] = [];
-
-  const langMap = await fetchAllTranslationsFromDB();
-
-  for (const lang of SUPPORTED_LANGUAGES) {
-    const entries = langMap.get(lang);
-    if (entries && entries.length > 0) {
-      const bundle = buildNestedObject(entries);
-      i18n.addResourceBundle(lang, 'translation', bundle, true, true);
-      loaded.push(lang);
-    } else {
-      failed.push(lang);
-    }
-  }
-
-  console.log(`[i18n-loader] DB load complete (single query): ${loaded.length} loaded, ${failed.length} using static fallback`);
-  return { loaded, failed };
+  const lang = i18n.language || 'en';
+  if (lang === 'en') return { loaded: ['en'], failed: [] };
+  
+  const success = await loadLanguageFromDB(lang);
+  return {
+    loaded: success ? [lang] : [],
+    failed: success ? [] : [lang],
+  };
 }
