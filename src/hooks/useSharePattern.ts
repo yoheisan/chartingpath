@@ -52,6 +52,7 @@ export function useSharePattern() {
     method: ShareMethod = 'clipboard',
     tradePlan?: ShareTradePlan,
     direction?: string,
+    shareToCommunity?: boolean,
   ) => {
     const shareUrl = await getShareUrl(dbId);
     if (!shareUrl) return;
