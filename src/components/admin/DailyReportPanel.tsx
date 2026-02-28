@@ -10,7 +10,9 @@ import {
   RefreshCw, Users, AlertTriangle, TrendingUp, TrendingDown,
   Globe, Search, Eye, MousePointerClick, ArrowDown, ArrowUp,
   Lightbulb, BarChart3, Zap, BookOpen, Bell, Mail, Brain,
+  FileText, LayoutDashboard,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, startOfDay, isSameDay, parseISO } from "date-fns";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
