@@ -604,14 +604,15 @@ const StudyChart = memo(({
               ctx.clearRect(0, 0, rect.width, rect.height);
 
               const ts = chartRef.current.timeScale();
-              const ps = chartRef.current.priceScale('right');
+              const series = candleSeriesRef.current;
+              if (!series) return;
 
               const pixelPoints: { x: number; upper: number; lower: number }[] = [];
               for (const pt of zonePoints) {
                 try {
                   const x = ts.timeToCoordinate(pt.time as unknown as Time);
-                  const yUp = ps.priceToCoordinate(pt.upper);
-                  const yLo = ps.priceToCoordinate(pt.lower);
+                  const yUp = (series as any).priceToCoordinate(pt.upper);
+                  const yLo = (series as any).priceToCoordinate(pt.lower);
                   if (x != null && yUp != null && yLo != null &&
                       Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
                     pixelPoints.push({ x, upper: yUp, lower: yLo });
