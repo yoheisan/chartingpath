@@ -581,9 +581,10 @@ const StudyChart = memo(({
         }
 
         // Shaded formation zone (canvas overlay)
+        console.log('[StudyChart] formation.hasZone:', formation.hasZone, 'upper:', formation.upperTrend.length, 'lower:', formation.lowerTrend.length);
         if (formation.hasZone) {
           const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
-          if (zonePoints.length >= 2) {
+          console.log('[StudyChart] zonePoints count:', zonePoints.length);
             const drawZone = () => {
               const canvas = canvasOverlayRef.current;
               if (!canvas || !chartRef.current) return;
