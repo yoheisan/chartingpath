@@ -628,9 +628,9 @@ const StudyChart = memo(({
                 ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
               }
               ctx.closePath();
-              ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+              ctx.fillStyle = 'rgba(0, 200, 255, 0.12)';
               ctx.fill();
-              ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+              ctx.strokeStyle = 'rgba(0, 200, 255, 0.25)';
               ctx.lineWidth = 1;
               ctx.stroke();
             };
