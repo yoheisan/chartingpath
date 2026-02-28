@@ -201,12 +201,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Prune orphan keys that no longer exist in en.json
+    const enKeySet = new Set(Object.keys(flatEnglish))
+    const orphanKeys: string[] = []
+    for (const k of existingKeySet) {
+      if (!enKeySet.has(k)) orphanKeys.push(k)
+    }
+    if (orphanKeys.length > 0) {
+      console.log(`Pruning ${orphanKeys.length} orphan keys no longer in en.json`)
+      // Delete from translations first (FK), then translation_keys
+      const PRUNE_BATCH = 100
+      for (let i = 0; i < orphanKeys.length; i += PRUNE_BATCH) {
+        const batch = orphanKeys.slice(i, i + PRUNE_BATCH)
+        await supabase.from('translations').delete().in('key', batch)
+        await supabase.from('translation_keys').delete().in('key', batch)
+      }
+    }
+
     // If only preparing keys, return early
     if (prepare_keys_only) {
       return new Response(JSON.stringify({
         success: true,
         total_english_keys: totalKeys,
-        keys_prepared: true
+        keys_prepared: true,
+        orphan_keys_pruned: orphanKeys.length
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
