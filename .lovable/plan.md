@@ -1,139 +1,97 @@
 
 
-# Autonomous Learning Copilot: Close the Feedback Loop
+# Multi-Page Funnel Analysis and Improvement Plan
 
-## Summary
+## Data Summary
 
-The Trading Copilot currently logs data to `copilot_training_pairs` and `copilot_feedback` but **never reads it back** to improve itself. This plan implements the missing automated pipeline: a scheduled function that analyzes failures and generates corrective rules, a platform knowledge snapshot for data-lake awareness, and temporal/user context injection into the system prompt.
+| Page | Views | Avg Time on Page | Key Issue |
+|------|-------|-----------------|-----------|
+| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
+| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
+| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
+| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
+| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
+| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
+| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
 
-## What Gets Built
+---
 
-### 1. New Edge Function: `build-copilot-context`
-**Purpose:** Pre-compute a "platform knowledge snapshot" every 6 hours so the Copilot knows what data exists.
+## Priority 1: Auth Page (75 views, 0 signups)
 
-**What it computes:**
-- Total active patterns by asset class and timeframe
-- Data freshness timestamps (last pattern scan, last market report, last price update)
-- Market session status (weekend, holiday, open/closed per region)
-- Top queried symbols from `copilot_feedback`
-- Coverage stats (total historical trades, instruments covered)
+**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
 
-**Storage:** New `copilot_platform_context` table with `context_type`, `context_data` (JSONB), `computed_at`, and `expires_at` columns.
+**Improvements**:
+1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
+2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
+3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
+4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
 
-**Schedule:** Cron job every 6 hours.
+### Files to modify
+- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
+- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
 
-### 2. New Edge Function: `copilot-learn`
-**Purpose:** Daily automated feedback-to-rules pipeline. This is the missing link.
+---
 
-**Process:**
-1. Query `copilot_training_pairs` from the last 7 days where `reward_score < 0` (failed interactions)
-2. Query `copilot_feedback` entries where `content_gap_identified = true`
-3. Batch these to Gemini with a meta-prompt: "Analyze these failed interactions and extract corrective rules"
-4. Parse the AI output into structured rules
-5. Insert validated rules into `copilot_learned_rules` with `source = 'auto_feedback_loop'`
-6. Deactivate stale auto-generated rules (no usage in 30 days)
+## Priority 2: Screener (101 views, 18s avg dwell)
 
-**Schedule:** Daily cron job.
+**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
 
-### 3. Modify `trading-copilot/index.ts` -- Inject Context Layers
+**Improvements**:
+1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
+2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
+3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
 
-**a) Temporal Context (inline computation, no external call):**
-```text
-Current time: 2026-02-28T14:30:00Z (Saturday)
-Market status: Weekend -- all major markets closed
-Last trading session: Friday Feb 27, 2026
-Next open: Monday Mar 2, 2026
-```
-This is computed at request time using simple day-of-week and hour-of-day logic for US, EU, and APAC sessions.
+### Files to modify
+- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
 
-**b) Platform Knowledge Snapshot (from `copilot_platform_context`):**
-```text
-Active patterns: 342 (stocks: 180, crypto: 85, fx: 52, indices: 25)
-Last scan: 2h ago | Last market report: Friday 16:30 UTC
-Data coverage: 8,500 instruments, 380,000+ historical trades
-```
+---
 
-**c) User Behavioral Context (for authenticated users):**
-- Fetch last 5 queries from `copilot_feedback` for the same user
-- Extract preferred symbols and timeframes
-- Inject as: "User recently asked about BTCUSD, AAPL; prefers 4h and 1d timeframes"
+## Priority 3: Pattern Lab (71 views, 0 backtests completed)
 
-**d) Intent Disambiguation Rules (from learned rules + hardcoded fallbacks):**
-- "How did the market end?" on weekends -> use Friday's report
-- Price queries outside hours -> show last close + note market is closed
-- Empty pattern results -> retry with broader filters before responding
+**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
 
-### 4. Database Changes
+**Improvements**:
+1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
+2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
+3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
 
-**New table: `copilot_platform_context`**
+### Files to modify
+- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| id | uuid (PK) | Primary key |
-| context_type | text | e.g. 'platform_snapshot', 'market_session' |
-| context_data | jsonb | The computed snapshot |
-| computed_at | timestamptz | When refreshed |
-| expires_at | timestamptz | When to consider stale |
+---
 
-**Modify `copilot_learned_rules`:** Add a `source` column (text, default 'manual') to distinguish manual rules from auto-generated ones, and an `auto_expires_at` column for auto-cleanup.
+## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
 
-### 5. Config Updates
+**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
 
-Register both new functions in `supabase/config.toml`:
-- `build-copilot-context` (verify_jwt = false)
-- `copilot-learn` (verify_jwt = false)
+**Improvements**:
+1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
+2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
 
-Set up two cron jobs (via SQL insert):
-- `build-copilot-context`: every 6 hours
-- `copilot-learn`: daily at 06:00 UTC
+### Files to modify
+- Blog/Learn page components (investigate rendering issue first)
 
-## Technical Details
+---
 
-### `build-copilot-context` Logic
-```text
-1. Query live_pattern_detections: COUNT(*) GROUP BY asset_type, timeframe WHERE status='active'
-2. Query cached_market_reports: MAX(generated_at)
-3. Query historical_pattern_occurrences: COUNT(*)
-4. Query copilot_feedback: top 10 symbols by frequency (last 7 days)
-5. Compute market session status from current UTC time
-6. Upsert into copilot_platform_context
-```
+## Priority 5: Shared Links (8 views, 7 pattern views)
 
-### `copilot-learn` Logic
-```text
-1. SELECT * FROM copilot_training_pairs WHERE reward_score < 0 AND created_at > now() - '7 days'
-2. SELECT * FROM copilot_feedback WHERE content_gap_identified = true AND created_at > now() - '7 days'
-3. Batch into groups of 10, send to Gemini with extraction prompt
-4. Parse returned rules, validate format
-5. INSERT INTO copilot_learned_rules (source='auto_feedback_loop', confidence=0.7)
-6. UPDATE copilot_learned_rules SET is_active=false WHERE source='auto_feedback_loop' AND usage_count=0 AND created_at < now() - '30 days'
-```
+**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
 
-### System Prompt Enhancement in `trading-copilot`
-The existing `fetchLearnedRules()` and `fetchRAGContext()` calls remain. Three new fetches are added in parallel before the Gemini call:
-1. `fetchPlatformContext(supabase)` -- reads latest `copilot_platform_context`
-2. `computeTemporalContext()` -- pure function, no DB call
-3. `fetchUserBehavior(supabase, userId)` -- reads last 5 entries from `copilot_feedback`
+**Improvements**:
+1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
+2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
 
-These are appended to the system prompt before the Gemini API call.
+### Files to modify
+- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
+- `src/pages/SharedPattern.tsx` -- Verify tracking fires
 
-## Expected Outcomes
+---
 
-- **Weekend queries**: Copilot automatically knows markets are closed and references Friday's data
-- **Data awareness**: Copilot knows which instruments have data, preventing dead-end responses
-- **Self-improving**: Failed interactions automatically generate corrective rules within 24 hours
-- **Personalized**: Authenticated users get responses informed by their recent query history
-- **Zero manual maintenance**: The rules pipeline runs autonomously
+## Implementation Sequence
 
-## File Changes Summary
-
-| Action | File | Description |
-|--------|------|-------------|
-| Create | `supabase/functions/build-copilot-context/index.ts` | Platform knowledge snapshot builder |
-| Create | `supabase/functions/copilot-learn/index.ts` | Automated feedback-to-rules pipeline |
-| Modify | `supabase/functions/trading-copilot/index.ts` | Inject temporal, platform, and user context |
-| Modify | `supabase/config.toml` | Register new functions |
-| Migration | New table `copilot_platform_context` | Store platform snapshots |
-| Migration | Alter `copilot_learned_rules` | Add `source` and `auto_expires_at` columns |
-| SQL Insert | Cron jobs | Schedule both new functions |
+1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
+2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
+3. **Screener** (first-visit guidance + top setup highlight)
+4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
+5. **Shared links** (add try-it-yourself CTA)
 

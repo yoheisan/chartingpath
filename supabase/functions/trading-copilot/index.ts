@@ -1382,6 +1382,164 @@ async function fetchLearnedRules(supabase: any): Promise<string> {
 }
 
 // ============================================
+// CONTEXT LAYER 1: Temporal Awareness
+// ============================================
+
+function computeTemporalContext(): string {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const utcDay = now.getUTCDay();
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const isWeekend = utcDay === 0 || utcDay === 6;
+
+  // Market session status
+  const sessions: string[] = [];
+  
+  // US Markets (NYSE/NASDAQ): Mon-Fri 14:30-21:00 UTC
+  const usOpen = utcDay >= 1 && utcDay <= 5 && utcHour >= 14 && utcHour < 21;
+  sessions.push(`US (NYSE/NASDAQ): ${usOpen ? '🟢 OPEN' : '🔴 CLOSED'}`);
+  
+  // EU Markets: Mon-Fri 08:00-16:30 UTC
+  const euOpen = utcDay >= 1 && utcDay <= 5 && utcHour >= 8 && utcHour < 17;
+  sessions.push(`Europe (LSE/Euronext): ${euOpen ? '🟢 OPEN' : '🔴 CLOSED'}`);
+  
+  // APAC Markets: Mon-Fri 00:00-08:00 UTC
+  const apacOpen = utcDay >= 1 && utcDay <= 5 && utcHour >= 0 && utcHour < 8;
+  sessions.push(`Asia-Pacific: ${apacOpen ? '🟢 OPEN' : '🔴 CLOSED'}`);
+  
+  sessions.push(`Crypto: 🟢 24/7`);
+
+  // Calculate last/next trading day
+  let lastTradingDay = new Date(now);
+  if (utcDay === 0) lastTradingDay.setUTCDate(lastTradingDay.getUTCDate() - 2);
+  else if (utcDay === 6) lastTradingDay.setUTCDate(lastTradingDay.getUTCDate() - 1);
+  else if (utcDay === 1) lastTradingDay.setUTCDate(lastTradingDay.getUTCDate() - 3);
+  else lastTradingDay.setUTCDate(lastTradingDay.getUTCDate() - 1);
+
+  let nextTradingDay = new Date(now);
+  if (utcDay === 5) nextTradingDay.setUTCDate(nextTradingDay.getUTCDate() + 3);
+  else if (utcDay === 6) nextTradingDay.setUTCDate(nextTradingDay.getUTCDate() + 2);
+  else if (utcDay === 0) nextTradingDay.setUTCDate(nextTradingDay.getUTCDate() + 1);
+  else nextTradingDay.setUTCDate(nextTradingDay.getUTCDate() + 1);
+
+  return `## Temporal Context
+Current time: ${now.toISOString()} (${dayNames[utcDay]})
+${isWeekend ? '⚠️ WEEKEND — Traditional markets are closed. Use Friday\'s data for "how did the market end" questions.' : ''}
+Market Sessions:
+${sessions.map(s => `  • ${s}`).join('\n')}
+Last trading session: ${lastTradingDay.toISOString().split('T')[0]}
+Next trading session: ${nextTradingDay.toISOString().split('T')[0]}
+
+**Temporal Rules:**
+- "How did the market end?" → Use the latest market report (which reflects the most recent trading session)
+- Price queries when markets are closed → Show last close price and note the market is currently closed
+- Weekend pattern searches → Show patterns detected on Friday, note they may have evolved by Monday open`;
+}
+
+// ============================================
+// CONTEXT LAYER 2: Platform Knowledge Snapshot
+// ============================================
+
+async function fetchPlatformContext(supabase: any): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('copilot_platform_context')
+      .select('context_data, computed_at')
+      .eq('context_type', 'platform_snapshot')
+      .maybeSingle();
+
+    if (error || !data) {
+      console.log('[PlatformContext] No snapshot available');
+      return '';
+    }
+
+    const snapshot = data.context_data;
+    const computedAt = new Date(data.computed_at);
+    const hoursAgo = Math.round((Date.now() - computedAt.getTime()) / (1000 * 60 * 60));
+
+    const assetBreakdown = Object.entries(snapshot.active_patterns?.by_asset || {})
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(', ');
+
+    return `## Platform Data Awareness (snapshot ${hoursAgo}h ago)
+Active live patterns: ${snapshot.active_patterns?.total || 0} (${assetBreakdown || 'none'})
+Historical database: ${(snapshot.historical_data?.total_pattern_occurrences || 0).toLocaleString()} pattern occurrences across ${(snapshot.historical_data?.total_instruments || 0).toLocaleString()} instruments
+Last pattern scan: ${snapshot.data_freshness?.last_pattern_scan ? new Date(snapshot.data_freshness.last_pattern_scan).toISOString() : 'unknown'}
+Last market report: ${snapshot.data_freshness?.last_market_report ? new Date(snapshot.data_freshness.last_market_report).toISOString() : 'unknown'}
+${snapshot.top_queried_symbols?.length > 0 ? `Trending symbols (user queries): ${snapshot.top_queried_symbols.map((s: any) => s.symbol).join(', ')}` : ''}
+
+**Data Awareness Rules:**
+- If a user asks about an instrument, our database likely has data for it (${(snapshot.historical_data?.total_instruments || 0).toLocaleString()} instruments covered)
+- If search returns empty, try broader filters before saying "no data"
+- Reference the total historical sample size when discussing statistical confidence`;
+  } catch (err) {
+    console.error('[PlatformContext] Failed to fetch:', err);
+    return '';
+  }
+}
+
+// ============================================
+// CONTEXT LAYER 3: User Behavioral Context
+// ============================================
+
+async function fetchUserBehavior(supabase: any, userId: string | null): Promise<string> {
+  if (!userId) return '';
+
+  try {
+    const { data, error } = await supabase
+      .from('copilot_feedback')
+      .select('question, topics, intent_category')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error || !data?.length) return '';
+
+    // Extract preferred symbols and topics
+    const symbolFreq: Record<string, number> = {};
+    const intentFreq: Record<string, number> = {};
+
+    for (const row of data) {
+      if (Array.isArray(row.topics)) {
+        for (const topic of row.topics) {
+          const upper = String(topic).toUpperCase();
+          if (/^[A-Z]{2,6}(USD|USDT|BTC|ETH)?$/.test(upper)) {
+            symbolFreq[upper] = (symbolFreq[upper] || 0) + 1;
+          }
+        }
+      }
+      if (row.intent_category) {
+        intentFreq[row.intent_category] = (intentFreq[row.intent_category] || 0) + 1;
+      }
+    }
+
+    const topSymbols = Object.entries(symbolFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([s]) => s);
+
+    const topIntents = Object.entries(intentFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([i]) => i);
+
+    if (topSymbols.length === 0 && topIntents.length === 0) return '';
+
+    const recentQuestions = data.slice(0, 3).map((d: any) => `"${d.question?.substring(0, 80)}"`).join(', ');
+
+    return `## User Context (Personalization)
+${topSymbols.length > 0 ? `Preferred instruments: ${topSymbols.join(', ')}` : ''}
+${topIntents.length > 0 ? `Common query types: ${topIntents.join(', ')}` : ''}
+Recent questions: ${recentQuestions}
+
+When this user asks broad questions, prioritize their preferred instruments and query patterns.`;
+  } catch (err) {
+    console.error('[UserBehavior] Failed to fetch:', err);
+    return '';
+  }
+}
+
+// ============================================
 // RLVR TRAINING PAIR LOGGER
 // ============================================
 
@@ -1692,21 +1850,30 @@ serve(async (req) => {
     }
 
     // ============================================
-    // PHASE 1: Fetch learned rules + RAG context in parallel
+    // PHASE 1: Fetch all context layers in parallel
     // ============================================
-    console.log('[trading-copilot] Fetching learned rules + RAG context...');
-    const [learnedRulesPrompt, ragContext] = await Promise.all([
+    console.log('[trading-copilot] Fetching all context layers...');
+    const [learnedRulesPrompt, ragContext, platformContext, userBehavior] = await Promise.all([
       fetchLearnedRules(supabase),
       fetchRAGContext(supabase, messages),
+      fetchPlatformContext(supabase),
+      fetchUserBehavior(supabase, userId),
     ]);
+    const temporalContext = computeTemporalContext();
     const langCode = (language || "en").toLowerCase();
     console.log(`[trading-copilot] Language requested: ${langCode}`);
     const langInstruction = langCode !== "en"
       ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
       : "";
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) + langInstruction + learnedRulesPrompt;
+    
+    // Assemble enhanced system prompt with all context layers
+    const contextLayers = [temporalContext, platformContext, userBehavior].filter(Boolean).join('\n\n');
+    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
+      + (contextLayers ? '\n\n' + contextLayers : '')
+      + langInstruction 
+      + learnedRulesPrompt;
     console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
-    console.log(`[trading-copilot] Learned rules injected: ${learnedRulesPrompt.length > 0 ? 'yes' : 'none'}`);
+    console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
 
     // Track tool calls/results for RLVR logging
     const allToolCalls: any[] = [];
