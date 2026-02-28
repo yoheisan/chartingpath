@@ -11,9 +11,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
-import ThumbnailChart from '@/components/charts/ThumbnailChart';
+import StudyChart from '@/components/charts/StudyChart';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { CompressedBar, VisualSpec } from '@/types/VisualSpec';
+import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
 
 interface SharedPatternData {
   id: string;
