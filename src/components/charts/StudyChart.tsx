@@ -581,10 +581,8 @@ const StudyChart = memo(({
         }
 
         // Shaded formation zone (canvas overlay)
-        console.log('[StudyChart] formation.hasZone:', formation.hasZone, 'upper:', formation.upperTrend.length, 'lower:', formation.lowerTrend.length);
         if (formation.hasZone) {
           const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
-          console.log('[StudyChart] zonePoints count:', zonePoints.length);
           if (zonePoints.length >= 2) {
             const drawZone = () => {
               const canvas = canvasOverlayRef.current;
@@ -620,11 +618,7 @@ const StudyChart = memo(({
                 } catch { /* coordinate conversion may fail */ }
               }
 
-              if (pixelPoints.length < 2) {
-                console.log('[StudyChart] drawZone: insufficient pixel points:', pixelPoints.length, 'from', zonePoints.length, 'zone points');
-                return;
-              }
-              console.log('[StudyChart] drawZone: drawing', pixelPoints.length, 'points, canvas:', canvas.width, 'x', canvas.height);
+              if (pixelPoints.length < 2) return;
               ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
               for (let i = 1; i < pixelPoints.length; i++) {
                 ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
