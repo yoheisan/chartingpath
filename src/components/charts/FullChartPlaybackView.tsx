@@ -339,7 +339,13 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           });
-          zigzagSeries.setData(formation.zigzag);
+          // Dedupe formation line data to prevent timestamp crashes
+          const dedupeLineData = (data: typeof formation.zigzag) => {
+            const m = new Map<number, typeof data[0]>();
+            for (const d of data) m.set(d.time as number, d);
+            return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+          };
+          zigzagSeries.setData(dedupeLineData(formation.zigzag));
 
           // Upper trendline (green, dashed)
           if (formation.upperTrend.length >= 2) {
@@ -351,7 +357,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               lastValueVisible: false,
               crosshairMarkerVisible: false,
             });
-            upperSeries.setData(formation.upperTrend);
+            upperSeries.setData(dedupeLineData(formation.upperTrend));
           }
 
           // Lower trendline (red, dashed)
@@ -364,7 +370,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               lastValueVisible: false,
               crosshairMarkerVisible: false,
             });
-            lowerSeries.setData(formation.lowerTrend);
+            lowerSeries.setData(dedupeLineData(formation.lowerTrend));
           }
 
           // Shaded formation zone (canvas overlay)
