@@ -153,87 +153,108 @@ serve(async (req) => {
       matchCount++;
       console.log(`[check-alert-matches] MATCH: Alert ${alert.id} → ${alert.symbol} ${alert.pattern} ${alert.timeframe}`);
 
-      // 6. Log the detection in alerts_log
-      const logPromise = supabase
-        .from("alerts_log")
-        .insert({
-          alert_id: alert.id,
-          pattern_data: {
-            pattern: alert.pattern,
-            pattern_name: matchedDetection.pattern_name,
-            confidence: matchedDetection.quality_score === 'A' ? 0.95 : 
-                       matchedDetection.quality_score === 'B' ? 0.85 :
-                       matchedDetection.quality_score === 'C' ? 0.7 : 0.6,
-            description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
-            detection_id: matchedDetection.id,
-          },
-          price_data: {
-            symbol: alert.symbol,
-            timeframe: alert.timeframe,
-            current_price: matchedDetection.current_price || matchedDetection.entry_price,
-          },
-          entry_price: matchedDetection.entry_price,
-          stop_loss_price: matchedDetection.stop_loss_price,
-          take_profit_price: matchedDetection.take_profit_price,
-          outcome_status: 'pending',
-        });
+      // 6. Log the detection in alerts_log first, then send notification, then update email_sent
+      const processAlert = async () => {
+        try {
+          // Insert log entry first to get the ID
+          const { data: logData, error: logError } = await supabase
+            .from("alerts_log")
+            .insert({
+              alert_id: alert.id,
+              pattern_data: {
+                pattern: alert.pattern,
+                pattern_name: matchedDetection.pattern_name,
+                confidence: matchedDetection.quality_score === 'A' ? 0.95 : 
+                           matchedDetection.quality_score === 'B' ? 0.85 :
+                           matchedDetection.quality_score === 'C' ? 0.7 : 0.6,
+                description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
+                detection_id: matchedDetection.id,
+              },
+              price_data: {
+                symbol: alert.symbol,
+                timeframe: alert.timeframe,
+                current_price: matchedDetection.current_price || matchedDetection.entry_price,
+              },
+              entry_price: matchedDetection.entry_price,
+              stop_loss_price: matchedDetection.stop_loss_price,
+              take_profit_price: matchedDetection.take_profit_price,
+              outcome_status: 'pending',
+              email_sent: false,
+            })
+            .select('id')
+            .single();
 
-      // 7. Send notification via send-pattern-alert
-      const confidence = matchedDetection.quality_score === 'A' ? 0.95 : 
-                         matchedDetection.quality_score === 'B' ? 0.85 :
-                         matchedDetection.quality_score === 'C' ? 0.7 : 0.6;
+          if (logError) {
+            console.error(`[check-alert-matches] Log error for alert ${alert.id}:`, logError);
+            return;
+          }
 
-      const notifyPromise = supabase.functions.invoke('send-pattern-alert', {
-        body: {
-          alert: {
-            id: alert.id,
-            symbol: alert.symbol,
-            timeframe: alert.timeframe,
-            pattern: alert.pattern,
-            user_id: alert.user_id,
-            profiles: {
-              email: profileMap.get(alert.user_id)?.email,
-              email_notifications_enabled: profileMap.get(alert.user_id)?.email_notifications_enabled,
-              push_notifications_enabled: profileMap.get(alert.user_id)?.push_notifications_enabled,
+          // 7. Send notification via send-pattern-alert
+          const confidence = matchedDetection.quality_score === 'A' ? 0.95 : 
+                             matchedDetection.quality_score === 'B' ? 0.85 :
+                             matchedDetection.quality_score === 'C' ? 0.7 : 0.6;
+
+          const { data: notifyData, error: notifyError } = await supabase.functions.invoke('send-pattern-alert', {
+            body: {
+              alert: {
+                id: alert.id,
+                symbol: alert.symbol,
+                timeframe: alert.timeframe,
+                pattern: alert.pattern,
+                user_id: alert.user_id,
+                profiles: {
+                  email: profileMap.get(alert.user_id)?.email,
+                  email_notifications_enabled: profileMap.get(alert.user_id)?.email_notifications_enabled,
+                  push_notifications_enabled: profileMap.get(alert.user_id)?.push_notifications_enabled,
+                },
+              },
+              patternResult: {
+                confidence,
+                description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+              },
+              marketData: [{
+                o: matchedDetection.entry_price,
+                h: matchedDetection.entry_price,
+                l: matchedDetection.entry_price,
+                c: matchedDetection.current_price || matchedDetection.entry_price,
+                t: Math.floor(Date.now() / 1000),
+              }],
+              bracketLevels: {
+                direction: matchedDetection.direction === 'long' ? 'long' : 'short',
+                entryPrice: matchedDetection.entry_price,
+                stopLossPrice: matchedDetection.stop_loss_price,
+                takeProfitPrice: matchedDetection.take_profit_price,
+                riskRewardRatio: matchedDetection.risk_reward_ratio,
+                stopLossMethod: 'pattern-based',
+                takeProfitMethod: 'pattern-based',
+              },
             },
-          },
-          patternResult: {
-            confidence,
-            description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
-          },
-          marketData: [{
-            o: matchedDetection.entry_price,
-            h: matchedDetection.entry_price,
-            l: matchedDetection.entry_price,
-            c: matchedDetection.current_price || matchedDetection.entry_price,
-            t: Math.floor(Date.now() / 1000),
-          }],
-          bracketLevels: {
-            direction: matchedDetection.direction === 'long' ? 'long' : 'short',
-            entryPrice: matchedDetection.entry_price,
-            stopLossPrice: matchedDetection.stop_loss_price,
-            takeProfitPrice: matchedDetection.take_profit_price,
-            riskRewardRatio: matchedDetection.risk_reward_ratio,
-            stopLossMethod: 'pattern-based',
-            takeProfitMethod: 'pattern-based',
-          },
-        },
-      });
+          });
 
-      notifications.push(
-        Promise.all([logPromise, notifyPromise]).then(([logRes, notifyRes]) => {
-          if (logRes.error) {
-            console.error(`[check-alert-matches] Log error for alert ${alert.id}:`, logRes.error);
-          }
-          if (notifyRes.error) {
-            console.error(`[check-alert-matches] Notify error for alert ${alert.id}:`, notifyRes.error);
+          if (notifyError) {
+            console.error(`[check-alert-matches] Notify error for alert ${alert.id}:`, notifyError);
           } else {
-            console.log(`[check-alert-matches] Notification sent for alert ${alert.id}`);
+            // Parse the response to check email success
+            const emailSuccess = notifyData?.channels?.email?.success === true;
+            if (emailSuccess && logData?.id) {
+              await supabase
+                .from("alerts_log")
+                .update({ 
+                  email_sent: true, 
+                  email_sent_at: new Date().toISOString() 
+                })
+                .eq("id", logData.id);
+              console.log(`[check-alert-matches] Email sent and logged for alert ${alert.id}`);
+            } else {
+              console.warn(`[check-alert-matches] Notification sent but email not confirmed for alert ${alert.id}:`, notifyData);
+            }
           }
-        }).catch(err => {
+        } catch (err) {
           console.error(`[check-alert-matches] Error processing alert ${alert.id}:`, err);
-        })
-      );
+        }
+      };
+
+      notifications.push(processAlert());
     }
 
     // Wait for all notifications to complete
