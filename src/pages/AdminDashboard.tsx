@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database, KeyRound, Clock } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database, KeyRound, Clock, ClipboardList } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -260,6 +260,14 @@ const AdminDashboard = () => {
             <BarChart3 className="h-4 w-4" />
             Google Analytics
           </Button>
+          <Button
+            variant={activeTab === "daily-report" ? "default" : "outline"}
+            onClick={() => setActiveTab("daily-report")}
+            className="flex items-center gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Daily Report
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -294,6 +302,8 @@ const AdminDashboard = () => {
         {activeTab === "login-attempts" && <LoginAttemptsPanel />}
 
         {activeTab === "ga4" && <GA4Panel />}
+
+        {activeTab === "daily-report" && <DailyReportPanel />}
       </div>
     </div>
   );
