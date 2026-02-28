@@ -312,6 +312,19 @@ const StudyChart = memo(({
         precision,
         minMove,
       },
+      // Extend autoscale to include trade plan price levels (Entry, SL, TP)
+      ...(tradePlan ? {
+        autoscaleInfoProvider: () => {
+          const prices = [tradePlan.entry, tradePlan.stopLoss, tradePlan.takeProfit].filter(Number.isFinite);
+          if (prices.length === 0) return null;
+          return {
+            priceRange: {
+              minValue: Math.min(...prices),
+              maxValue: Math.max(...prices),
+            },
+          };
+        },
+      } : {}),
     });
     
     // Store reference for price lines
