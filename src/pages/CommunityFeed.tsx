@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useCommunityFeed, type CommunityFilters } from '@/hooks/useCommunityFeed';
 import { useCommunityEngagement } from '@/hooks/useCommunityEngagement';
 import { EdgeCard } from '@/components/community/EdgeCard';
@@ -14,13 +13,7 @@ const CommunityFeed = () => {
   const { toggleLike, toggleBookmark } = useCommunityEngagement(refetch);
 
   return (
-    <>
-      <Helmet>
-        <title>Community Edge Feed | ChartingPath</title>
-        <meta name="description" content="Browse verified trading setups shared by ChartingPath users. Every stat is platform-verified — no fake screenshots." />
-      </Helmet>
-
-      <div className="container mx-auto max-w-7xl px-4 md:px-6 py-8">
+    <div className="container mx-auto max-w-7xl px-4 md:px-6 py-8">
         {/* Hero */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
