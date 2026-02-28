@@ -384,7 +384,8 @@ const StudyChart = memo(({
       volumeSeries.setData(volumeData);
     }
 
-    // === TECHNICAL INDICATORS ===
+    // === TECHNICAL INDICATORS (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar) {
 
     // EMA 20 (fast)
     if (indicators.ema20) {
@@ -466,6 +467,8 @@ const StudyChart = memo(({
       }
     }
 
+    } // end !hideAnalysisToolbar
+
 
     if (tradePlan) {
       // Entry line (amber/primary)
@@ -473,7 +476,7 @@ const StudyChart = memo(({
         price: tradePlan.entry,
         color: '#f59e0b', // Amber for entry
         lineWidth: 2,
-        lineStyle: 0, // Solid
+        lineStyle: 2, // Dashed
         axisLabelVisible: true,
         title: 'Entry',
       });
@@ -654,8 +657,8 @@ const StudyChart = memo(({
       scaleMargins: optimalMargins,
     });
 
-    // === RSI as separate chart ===
-    if (indicators.rsi && rsiContainerRef.current) {
+    // === RSI as separate chart (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar && indicators.rsi && rsiContainerRef.current) {
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       const rsiData = calculateRSI(bars, 14);
       if (rsiData.length > 0) {
@@ -683,8 +686,8 @@ const StudyChart = memo(({
       }
     }
 
-    // === MACD as separate chart ===
-    if (indicators.macd && macdContainerRef.current) {
+    // === MACD as separate chart (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar && indicators.macd && macdContainerRef.current) {
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
       const macdData = calculateMACD(bars, 12, 26, 9);
       if (macdData.length > 0) {
