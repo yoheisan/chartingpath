@@ -194,7 +194,14 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               Number.isFinite(d.close)
           );
 
-        candleSeries.setData(chartData);
+        // Dedupe + sort timestamps to prevent "data must be asc ordered" crashes
+        const seen = new Map<number, CandlestickData>();
+        for (const d of chartData) {
+          seen.set(d.time as number, d);
+        }
+        const safeChartData = [...seen.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+
+        candleSeries.setData(safeChartData);
 
         // Volume
         const hasVolume = playback.visibleBars.some(bar => bar.v && bar.v > 0);
@@ -208,7 +215,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             scaleMargins: VOLUME_SCALE_MARGINS.standard,
             borderVisible: false,
           });
-          const volumeData = chartData.map((d) => {
+          const volumeData = safeChartData.map((d) => {
             const bar = playback.visibleBars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
             const isUp = bar ? bar.c >= bar.o : true;
             return {
@@ -217,7 +224,10 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               color: getVolumeColor(isUp),
             };
           });
-          volumeSeries.setData(volumeData);
+          // Dedupe volume data
+          const seenVol = new Map<number, typeof volumeData[0]>();
+          for (const v of volumeData) seenVol.set(v.time as number, v);
+          volumeSeries.setData([...seenVol.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v));
         }
 
         // Indicators (only add if enabled)
@@ -329,7 +339,13 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           });
-          zigzagSeries.setData(formation.zigzag);
+          // Dedupe formation line data to prevent timestamp crashes
+          const dedupeLineData = (data: typeof formation.zigzag) => {
+            const m = new Map<number, typeof data[0]>();
+            for (const d of data) m.set(d.time as number, d);
+            return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+          };
+          zigzagSeries.setData(dedupeLineData(formation.zigzag));
 
           // Upper trendline (green, dashed)
           if (formation.upperTrend.length >= 2) {
@@ -341,7 +357,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               lastValueVisible: false,
               crosshairMarkerVisible: false,
             });
-            upperSeries.setData(formation.upperTrend);
+            upperSeries.setData(dedupeLineData(formation.upperTrend));
           }
 
           // Lower trendline (red, dashed)
@@ -354,7 +370,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               lastValueVisible: false,
               crosshairMarkerVisible: false,
             });
-            lowerSeries.setData(formation.lowerTrend);
+            lowerSeries.setData(dedupeLineData(formation.lowerTrend));
           }
 
           // Shaded formation zone (canvas overlay)
@@ -424,29 +440,32 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           }
         }
 
-        // Trade plan overlays (only show after entry)
+        // Trade plan overlays (only show after entry) — matches prescriptive standard
         if (playback.isAfterEntry) {
+          // Entry line — solid blue
           candleSeries.createPriceLine({
             price: tradePlan.entry,
-            color: '#f59e0b',
+            color: '#3b82f6',
             lineWidth: 2,
-            lineStyle: 0,
+            lineStyle: 0, // Solid
             axisLabelVisible: true,
-            title: 'Entry',
+            title: 'ENTRY',
           });
+          // Stop Loss — dashed red
           candleSeries.createPriceLine({
             price: tradePlan.stopLoss,
             color: '#ef4444',
             lineWidth: 2,
-            lineStyle: 2,
+            lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'Stop',
+            title: 'SL',
           });
+          // Take Profit — dashed green
           candleSeries.createPriceLine({
             price: tradePlan.takeProfit,
             color: '#22c55e',
             lineWidth: 2,
-            lineStyle: 2,
+            lineStyle: 2, // Dashed
             axisLabelVisible: true,
             title: 'TP',
           });
@@ -519,9 +538,9 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               allMarkers.push({
                 time: entryTime as Time,
                 position: direction === 'long' ? 'belowBar' : 'aboveBar',
-                color: '#f59e0b',
+                color: '#3b82f6', // Blue to match prescriptive standard
                 shape: direction === 'long' ? 'arrowUp' : 'arrowDown',
-                text: 'Entry',
+                text: '',
               });
             }
           }
