@@ -64,6 +64,7 @@ const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"))
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 
 
+const CommunityFeed = lazy(() => import("./pages/CommunityFeed"));
 const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
 const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
