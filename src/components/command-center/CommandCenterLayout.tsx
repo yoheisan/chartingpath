@@ -17,7 +17,7 @@ import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
 import { MarketOverviewPanel } from './MarketOverviewPanel';
-import FullChartViewer from '@/components/charts/FullChartViewer';
+const FullChartViewer = lazy(() => import('@/components/charts/FullChartViewer'));
 import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -707,14 +707,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         </div>
 
       {/* Full Chart Viewer Modal for Pattern Details */}
-      <FullChartViewer
-        open={chartOpen}
-        onOpenChange={setChartOpen}
-        setup={selectedSetup}
-         loading={loadingChartDetails}
-         onCreateAlert={handleCreateAlert}
-        isCreatingAlert={isCreatingAlert}
-      />
+      <Suspense fallback={null}>
+        <FullChartViewer
+          open={chartOpen}
+          onOpenChange={setChartOpen}
+          setup={selectedSetup}
+           loading={loadingChartDetails}
+           onCreateAlert={handleCreateAlert}
+          isCreatingAlert={isCreatingAlert}
+        />
+      </Suspense>
     </div>
     </div>
   );

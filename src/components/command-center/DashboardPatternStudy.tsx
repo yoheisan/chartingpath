@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { AUTH_REQUIRED_TIMEFRAMES } from './CommandCenterChart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
-import ThumbnailChart from '@/components/charts/ThumbnailChart';
+const ThumbnailChart = lazy(() => import('@/components/charts/ThumbnailChart'));
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 
 interface HistoricalPattern {
@@ -349,11 +349,13 @@ export function DashboardPatternStudy({
                           <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} />
                         </div>
                         <div className="h-24">
-                          <ThumbnailChart
-                            bars={pattern.bars}
-                            visualSpec={pattern.visual_spec}
-                            height={96}
-                          />
+                          <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                            <ThumbnailChart
+                              bars={pattern.bars}
+                              visualSpec={pattern.visual_spec}
+                              height={96}
+                            />
+                          </Suspense>
                         </div>
                           <div className="grid grid-cols-3 gap-2 text-xs">
                           <div>
