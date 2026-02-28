@@ -686,8 +686,8 @@ const StudyChart = memo(({
       }
     }
 
-    // === MACD as separate chart ===
-    if (indicators.macd && macdContainerRef.current) {
+    // === MACD as separate chart (skip on shared/clean views) ===
+    if (!hideAnalysisToolbar && indicators.macd && macdContainerRef.current) {
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
       const macdData = calculateMACD(bars, 12, 26, 9);
       if (macdData.length > 0) {
