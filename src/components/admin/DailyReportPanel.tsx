@@ -110,6 +110,7 @@ export function DailyReportPanel() {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
   const [daysBack, setDaysBack] = useState("7");
+  const [showNarrative, setShowNarrative] = useState(true);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -125,6 +126,8 @@ export function DailyReportPanel() {
         copilotRes,
         profilesRes,
         backtestRes,
+        communityRes,
+        backtestRes,
       ] = await Promise.all([
         supabase
           .from("analytics_events")
@@ -137,6 +140,7 @@ export function DailyReportPanel() {
         supabase.from("copilot_feedback").select("response_helpful, topics, question").gte("created_at", since),
         supabase.from("profiles").select("user_id, created_at").gte("created_at", since),
         supabase.from("backtest_runs").select("id, user_id").gte("created_at", since),
+        supabase.from("community_messages").select("id").gte("created_at", since),
       ]);
 
       const events = analyticsRes.data || [];
@@ -145,6 +149,8 @@ export function DailyReportPanel() {
       const alertLogs = alertsLogRes.data || [];
       const feedback = copilotRes.data || [];
       const newUsers = profilesRes.data || [];
+      const backtestRuns = backtestRes.data || [];
+      const communityMsgs = communityRes.data || [];
       const backtestRuns = backtestRes.data || [];
 
       const pageViews = events.filter(e => e.event_name === "page.view");
@@ -335,6 +341,12 @@ export function DailyReportPanel() {
         .slice(0, 8)
         .map(([topic, count]) => ({ topic, count }));
 
+      // Sample copilot questions
+      const copilotSampleQuestions: CopilotQuestion[] = feedback
+        .filter(f => f.question)
+        .slice(0, 10)
+        .map(f => ({ question: f.question as string, helpful: f.response_helpful as boolean | null }));
+
       // ── System health ──
       const emailsSent = alertLogs.filter(l => l.email_sent).length;
       const emailFailures = alertLogs.filter(l => !l.email_sent).length;
@@ -479,11 +491,15 @@ export function DailyReportPanel() {
         copilotUnhelpful,
         copilotSatisfactionPct,
         topCopilotTopics,
+        copilotSampleQuestions,
         alertsTriggered: alerts.length,
         emailsSent,
         emailFailures,
         trafficSources,
         insights,
+        backtestRuns: backtestRuns.length,
+        communityMessages: communityMsgs.length,
+        totalEvents: events.length,
       });
     } catch (err) {
       console.error("Failed to fetch daily report:", err);
