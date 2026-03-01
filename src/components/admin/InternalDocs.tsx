@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3 } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -102,7 +102,10 @@ historical_pattern_occurrences (status: validated / rejected)
 [scan-live-patterns] ──► live_pattern_detections (active signals shown to users)
         │
         ▼
-[send-pattern-alert] ──► Email (Resend) + Web Push (VAPID)`}</CodeBlock>
+[check-alert-matches] ──► alerts_log + send-pattern-alert (Email + Push)
+        │
+        ├─► [auto-paper-trade] ──► paper_trades (if enabled)
+        └─► [fire-signal-webhook] ──► External platforms (if configured)`}</CodeBlock>
       </CardContent>
     </Card>
   </div>
@@ -851,6 +854,154 @@ toEODHDSymbol(symbol):
   </div>
 );
 
+// ─── Tab: Automation (Auto Paper Trading + Webhooks) ──────────────────────────
+
+const AutomationTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Automation Layer — Auto Paper Trading & Signal Webhooks</CardTitle>
+        <CardDescription>
+          Two-layer execution system closing the loop between detection and action. Added 2026-03-01.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Activity} title="Architecture Overview" />
+        <CodeBlock>{`scan-live-patterns (every 15 min)
+  │
+  ▼
+check-alert-matches
+  │
+  ├─► alerts_log (notification record)
+  │
+  ├─► send-pattern-alert (Email + Push)
+  │
+  ├─► auto-paper-trade (if alert.auto_paper_trade = true)
+  │     └──► paper_trades (status: open)
+  │           └──► paper_portfolios (balance updated via trigger)
+  │
+  └─► fire-signal-webhook (if alert.webhook_url set)
+        └──► HTTPS POST with HMAC-SHA256 signature
+              └──► signal_webhook_log (delivery tracking)`}</CodeBlock>
+
+        <SectionHeader icon={Wallet} title="Auto Paper Trading — Edge Function" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Parameter", "Value", "Notes"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Function", "auto-paper-trade", "Deno edge function"],
+                ["Triggered by", "check-alert-matches", "When auto_paper_trade = true"],
+                ["Position sizing", "Risk-based", "qty = (balance × risk%) / |entry − SL|"],
+                ["Max risk %", "5%", "Capped regardless of user setting"],
+                ["Max position", "50% of portfolio", "Prevents over-concentration"],
+                ["Duplicate guard", "One open per symbol", "Skips if existing open trade"],
+                ["Initial balance", "$100,000", "Default paper portfolio"],
+                ["Trade tag", "[auto-trade]", "In notes field for UI badge identification"],
+              ].map(([p, v, n]) => (
+                <tr key={p}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{p}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{v}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Shield} title="Signal Webhook — Edge Function" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Parameter", "Value", "Notes"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Function", "fire-signal-webhook", "Deno edge function"],
+                ["Auth", "HMAC-SHA256", "X-Signature header, user-supplied secret"],
+                ["Protocol", "HTTPS only", "HTTP endpoints rejected"],
+                ["Rate limit", "10 signals/hr/user", "Prevents execution storms"],
+                ["Payload", "JSON", "symbol, direction, entry, SL, TP, pattern, grade"],
+                ["Logging", "signal_webhook_log", "Status, latency, response body"],
+                ["Timeout", "10 seconds", "Delivery timeout per request"],
+              ].map(([p, v, n]) => (
+                <tr key={p}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{p}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{v}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Database} title="Paper Trading UI — Dashboard Integration" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Component", "Location", "Data Source"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["PaperTradingPanel", "Right sidebar → 'Paper' tab", "paper_portfolios + paper_trades"],
+                ["Portfolio summary", "Top of panel", "Balance, P&L, Win Rate"],
+                ["Open positions", "Middle section", "paper_trades WHERE status='open'"],
+                ["Closed trades", "Accordion", "paper_trades WHERE status='closed'"],
+                ["[Auto] badge", "On each trade card", "notes LIKE '%[auto-trade]%'"],
+                ["Symbol click", "Navigates main chart", "onSymbolSelect callback"],
+                ["Real-time sync", "Supabase subscription", "INSERT/UPDATE on paper_trades"],
+              ].map(([comp, loc, src]) => (
+                <tr key={comp}>
+                  <td className="px-4 py-2 border-b font-mono text-xs">{comp}</td>
+                  <td className="px-4 py-2 border-b text-xs">{loc}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{src}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={TrendingUp} title="Database Tables Involved" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              title: "paper_portfolios",
+              desc: "Per-user portfolio with initial_balance ($100k), current_balance, total_pnl. Auto-created via initialize_paper_portfolio trigger on profile insert.",
+            },
+            {
+              title: "paper_trades",
+              desc: "Individual trades: symbol, trade_type, entry_price, stop_loss, take_profit, quantity, status, pnl. Balance updated via update_portfolio_balance trigger.",
+            },
+            {
+              title: "signal_webhook_log",
+              desc: "Delivery audit trail: user_id, alert_id, webhook_url, status_code, latency_ms, response_body, delivered_at.",
+            },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1 font-mono">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Tab: Internal Analytics ───────────────────────────────────────────────────
 
 const AnalyticsTab = () => (
@@ -1007,6 +1158,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="automation">Automation</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
@@ -1016,10 +1168,11 @@ export const InternalDocs = () => {
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
         <TabsContent value="analytics" className="mt-4"><AnalyticsTab /></TabsContent>
+        <TabsContent value="automation" className="mt-4"><AutomationTab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-26 · Version 2.4
+        Last updated: 2026-03-01 · Version 2.5
       </p>
     </div>
   );
