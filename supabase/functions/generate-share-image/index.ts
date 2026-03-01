@@ -213,6 +213,8 @@ function renderCandlestickSVG(opts: {
   <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
   ${zoneSvg}
+  ${ema200Svg}
+  ${ema50Svg}
   ${patternOverlaySvg}
   ${candleSvg}
   ${signalArrowSvg}
