@@ -515,6 +515,11 @@ export default function FullChartViewer({
 
         // Pattern overlays — standardized prescriptive style:
         // Entry = solid blue, SL = dashed red, TP = dashed green
+        // Track actual overlay prices to use for shaded zones (ensures alignment)
+        let overlayEntryPrice = tradePlan?.entry;
+        let overlaySlPrice = tradePlan?.stopLoss;
+        let overlayTpPrice = tradePlan?.takeProfit;
+
         if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
@@ -530,14 +535,17 @@ export default function FullChartViewer({
                 color = '#3b82f6';
                 lineStyle = 0; // solid
                 title = 'ENTRY';
+                overlayEntryPrice = overlay.price;
               } else if (isSL) {
                 color = '#ef4444';
                 lineStyle = 2;
                 title = 'SL';
+                overlaySlPrice = overlay.price;
               } else if (isTP) {
                 color = '#22c55e';
                 lineStyle = 2;
                 title = 'TP';
+                overlayTpPrice = overlay.price;
               }
 
               candleSeries.createPriceLine({
@@ -719,11 +727,11 @@ export default function FullChartViewer({
               }
             }
 
-            // 2) TP/SL shaded zones (matches X post SVG standard)
-            if (tradePlan) {
-              const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
-              const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
-              const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+            // 2) TP/SL shaded zones — use overlay prices for exact alignment with dotted lines
+            if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+              const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+              const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+              const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
               if (entryY != null && tpY != null && slY != null) {
                 ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
                 ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
@@ -738,7 +746,7 @@ export default function FullChartViewer({
         }
 
         // TP/SL shaded zones standalone (when no formation overlay exists)
-        if (tradePlan && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
+        if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
           const drawStandaloneTradePlanZones = () => {
             const canvas = canvasOverlayRef.current;
             if (!canvas || !chartRef.current) return;
@@ -754,9 +762,9 @@ export default function FullChartViewer({
             ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, rect.width, rect.height);
 
-            const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
-            const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
-            const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+            const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+            const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+            const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
             if (entryY == null || tpY == null || slY == null) return;
 
             ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
