@@ -123,6 +123,7 @@ const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-v
 const ChartTypeDemos = lazy(() => import('@/components/blog/ChartTypeDemos'));
 const CommandCenterDemo = lazy(() => import('@/components/blog/CommandCenterDemo'));
 const TradingStyleCards = lazy(() => import('@/components/blog/TradingStyleCards'));
+const TechVsFundamentalComparison = lazy(() => import('@/components/blog/TechVsFundamentalComparison'));
 
 // Algorithmic Trading Visualizers
 const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
