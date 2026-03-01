@@ -13,6 +13,7 @@ import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
+import { PaperTradingPanel } from './PaperTradingPanel';
 
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
@@ -28,7 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
