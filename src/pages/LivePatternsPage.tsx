@@ -1306,7 +1306,7 @@ export default function LivePatternsPage() {
                             <Info className="h-3 w-3 opacity-50" />
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
+                        <TooltipContent side="top" className="max-w-[300px]">
                           <p className="text-xs">{t('screener.expectancyTooltip')}</p>
                         </TooltipContent>
                       </Tooltip>
