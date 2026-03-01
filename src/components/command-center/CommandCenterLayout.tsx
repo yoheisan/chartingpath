@@ -13,6 +13,7 @@ import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
+import { PaperTradingPanel } from './PaperTradingPanel';
 
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
@@ -28,7 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
@@ -502,7 +503,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   // Right panel tab state
   const [rightPanelTab, setRightPanelTab] = useState<string>(
-    settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
+    settings.watchlistTab === 'alerts' ? 'alerts' : settings.watchlistTab === 'paper' ? 'paper' : 'watchlist'
   );
 
   // Right sidebar collapsed state
@@ -634,6 +635,15 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               >
                 <Bell className="h-4 w-4" />
               </Button>
+              <Button
+                variant={rightPanelTab === 'paper' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setRightPanelTab('paper'); toggleSidebar(false); }}
+                title="Paper Trading"
+              >
+                <Wallet className="h-4 w-4" />
+              </Button>
               <div className="flex-1" />
               <Button
                 variant="ghost"
@@ -673,6 +683,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
+                      <TabsTrigger value="paper" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                        Paper
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
                       <WatchlistPanel
@@ -687,6 +700,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
                       <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                    </TabsContent>
+                    <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
+                      <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
                     </TabsContent>
                   </Tabs>
                 </ResizablePanel>
