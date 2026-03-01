@@ -24,16 +24,17 @@ const corsHeaders = {
 // ============================================================
 
 // Asset class shards — mirrors the seeding pipeline partitions
-export const ASSET_SHARDS = ["stocks", "etf", "crypto", "forex", "indices"] as const;
+export const ASSET_SHARDS = ["stocks", "etf", "crypto", "forex", "indices", "commodities"] as const;
 type AssetShard = typeof ASSET_SHARDS[number];
 
 // Asset type values stored in historical_pattern_occurrences.asset_type
 const SHARD_ASSET_TYPES: Record<AssetShard, string[]> = {
-  stocks:  ["stocks", "stock", "equity"],
-  etf:     ["etf", "ETF"],
-  crypto:  ["crypto", "cryptocurrency"],
-  forex:   ["forex", "fx", "currency"],
-  indices: ["indices", "index", "indice"],
+  stocks:      ["stocks", "stock", "equity"],
+  etf:         ["etf", "ETF", "etfs"],
+  crypto:      ["crypto", "cryptocurrency"],
+  forex:       ["forex", "fx", "currency"],
+  indices:     ["indices", "index", "indice"],
+  commodities: ["commodities", "commodity"],
 };
 
 const BASE_WORKER_NAME = "backfill-validation";
