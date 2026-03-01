@@ -635,7 +635,7 @@ export default function FullChartViewer({
             time: lastBar.time as number,
             price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
-            color: '#22c55e',
+            color: '#3b82f6',
             label: 'Entry',
           });
         }
