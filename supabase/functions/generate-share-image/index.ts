@@ -21,6 +21,26 @@ interface Pivot {
   type: 'high' | 'low';
 }
 
+// ─── EMA Calculation ────────────────────────────────────────────────────────
+
+function calculateEMA(closes: number[], period: number): (number | null)[] {
+  const result: (number | null)[] = [];
+  if (closes.length < period) return closes.map(() => null);
+  const multiplier = 2 / (period + 1);
+  let ema = closes.slice(0, period).reduce((s, v) => s + v, 0) / period;
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      result.push(null);
+    } else if (i === period - 1) {
+      result.push(ema);
+    } else {
+      ema = (closes[i] - ema) * multiplier + ema;
+      result.push(ema);
+    }
+  }
+  return result;
+}
+
 // ─── SVG Rendering ──────────────────────────────────────────────────────────
 
 function renderCandlestickSVG(opts: {
@@ -103,6 +123,32 @@ function renderCandlestickSVG(opts: {
   const arrowPath = isBullish
     ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
     : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
+  // ── EMA 50 & EMA 200 Lines ──
+  const closes = bars.map(b => b.close);
+  const ema50Values = calculateEMA(closes, 50);
+  const ema200Values = calculateEMA(closes, 200);
+
+  const renderEmaLine = (values: (number | null)[], color: string) => {
+    const points: string[] = [];
+    values.forEach((val, i) => {
+      if (val !== null) {
+        points.push(`${xForBar(i).toFixed(1)},${yForPrice(val).toFixed(1)}`);
+      }
+    });
+    if (points.length < 2) return '';
+    return `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"/>`;
+  };
+
+  const ema50Svg = renderEmaLine(ema50Values, '#f59e0b');  // Amber for EMA 50
+  const ema200Svg = renderEmaLine(ema200Values, '#a855f7'); // Purple for EMA 200
+
+  // ── Signal arrow at last bar ──
+  const lastBarX = xForBar(barCount - 1);
+  const arrowColor = isBullish ? '#22c55e' : '#ef4444';
+  const arrowY = isBullish ? yForPrice(bars[barCount - 1]?.low ?? entry) + 18 : yForPrice(bars[barCount - 1]?.high ?? entry) - 18;
+  const arrowPath = isBullish
+    ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
+    : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
   const signalArrowSvg = `<path d="${arrowPath}" fill="${arrowColor}" opacity="0.9"/>`;
 
   // ── Candlesticks ──
@@ -167,6 +213,8 @@ function renderCandlestickSVG(opts: {
   <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
   ${zoneSvg}
+  ${ema200Svg}
+  ${ema50Svg}
   ${patternOverlaySvg}
   ${candleSvg}
   ${signalArrowSvg}
@@ -174,9 +222,13 @@ function renderCandlestickSVG(opts: {
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
   ${levelLine(tp, '#22c55e', 'TP', '6,4')}
   <rect x="0" y="${H - 50}" width="${W}" height="50" fill="#0a0e14" opacity="0.8"/>
-  <text x="40" y="${H - 20}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
-  <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
-  <text x="${W - 40}" y="${H - 20}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
+  <line x1="40" y1="${H - 38}" x2="60" y2="${H - 38}" stroke="#f59e0b" stroke-width="1.5" opacity="0.7"/>
+  <text x="64" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 50</text>
+  <line x1="110" y1="${H - 38}" x2="130" y2="${H - 38}" stroke="#a855f7" stroke-width="1.5" opacity="0.7"/>
+  <text x="134" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 200</text>
+  <text x="40" y="${H - 16}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
+  <text x="200" y="${H - 16}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
+  <text x="${W - 40}" y="${H - 16}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
 }
 
