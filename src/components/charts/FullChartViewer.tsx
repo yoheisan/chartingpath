@@ -703,6 +703,45 @@ export default function FullChartViewer({
           // Combined canvas overlay: formation zone + TP/SL shaded zones
           const formationZonePoints = formation.hasZone ? buildZonePoints(formation.upperTrend, formation.lowerTrend) : [];
 
+          // Helper: draw filled triangle markers on canvas
+          const drawCanvasTriangles = (ctx: CanvasRenderingContext2D) => {
+            if (canvasTriangleMarkers.length === 0 || !chartRef.current) return;
+            const ts = chartRef.current.timeScale();
+            canvasTriangleMarkers.forEach((marker) => {
+              try {
+                const x = (ts as any).timeToCoordinate?.(marker.time);
+                const y = (candleSeries as any).priceToCoordinate?.(marker.price);
+                if (x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y)) return;
+
+                const size = 10;
+                ctx.beginPath();
+                if (marker.direction === 'up') {
+                  // Triangle pointing up (below bar)
+                  ctx.moveTo(x, y - size * 0.2);
+                  ctx.lineTo(x - size * 0.7, y + size);
+                  ctx.lineTo(x + size * 0.7, y + size);
+                } else {
+                  // Triangle pointing down (above bar)
+                  ctx.moveTo(x, y + size * 0.2);
+                  ctx.lineTo(x - size * 0.7, y - size);
+                  ctx.lineTo(x + size * 0.7, y - size);
+                }
+                ctx.closePath();
+                ctx.fillStyle = marker.color;
+                ctx.fill();
+
+                // Draw label if present
+                if (marker.label) {
+                  ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+                  ctx.textAlign = 'center';
+                  ctx.fillStyle = marker.color;
+                  const labelY = marker.direction === 'up' ? y + size + 14 : y - size - 6;
+                  ctx.fillText(marker.label, x, labelY);
+                }
+              } catch { /* ignore */ }
+            });
+          };
+
           const drawAllCanvasOverlays = () => {
             const canvas = canvasOverlayRef.current;
             if (!canvas || !chartRef.current) return;
@@ -760,6 +799,9 @@ export default function FullChartViewer({
                 ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
               }
             }
+
+            // 3) Triangle markers
+            drawCanvasTriangles(ctx);
           };
 
           setTimeout(() => requestAnimationFrame(drawAllCanvasOverlays), 200);
