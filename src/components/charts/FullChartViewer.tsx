@@ -808,36 +808,43 @@ export default function FullChartViewer({
           chart.timeScale().subscribeVisibleLogicalRangeChange(drawAllCanvasOverlays);
         }
 
-        // TP/SL shaded zones standalone (when no formation overlay exists)
-        if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
-          const drawStandaloneTradePlanZones = () => {
-            const canvas = canvasOverlayRef.current;
-            if (!canvas || !chartRef.current) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+        // TP/SL shaded zones standalone + triangles (when no formation overlay exists)
+        if (!(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
+          const needsStandalone = (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) || canvasTriangleMarkers.length > 0;
+          if (needsStandalone) {
+            const drawStandaloneTradePlanZones = () => {
+              const canvas = canvasOverlayRef.current;
+              if (!canvas || !chartRef.current) return;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return;
 
-            const rect = containerEl.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(rect.width) * dpr;
-            canvas.height = Math.floor(rect.height) * dpr;
-            canvas.style.width = `${Math.floor(rect.width)}px`;
-            canvas.style.height = `${Math.floor(rect.height)}px`;
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, rect.width, rect.height);
+              const rect = containerEl.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              canvas.width = Math.floor(rect.width) * dpr;
+              canvas.height = Math.floor(rect.height) * dpr;
+              canvas.style.width = `${Math.floor(rect.width)}px`;
+              canvas.style.height = `${Math.floor(rect.height)}px`;
+              ctx.scale(dpr, dpr);
+              ctx.clearRect(0, 0, rect.width, rect.height);
 
-            const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
-            const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
-            const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
-            if (entryY == null || tpY == null || slY == null) return;
+              if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+                const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+                const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+                const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
+                if (entryY != null && tpY != null && slY != null) {
+                  ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+                  ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+                  ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+                  ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+                }
+              }
 
-            ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
-            ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
-            ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
-          };
+              drawCanvasTriangles(ctx);
+            };
 
-          setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
-          chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+            setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+            chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+          }
         }
 
         // Calculate optimal price margins based on data volatility
