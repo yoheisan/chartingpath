@@ -1147,6 +1147,170 @@ const FAQ = () => {
           ]
         }
       ]
+    },
+    "automation": {
+      title: t('faq.tabs.automation', 'Automation'),
+      icon: <Wallet className="h-5 w-5 text-orange-500" />,
+      description: t('faq.tabs.automationDesc', 'Auto Paper Trading, Signal Webhooks, and trade execution automation'),
+      sections: [
+        {
+          category: ap('catAutoPaper'),
+          questions: [
+            {
+              question: ap('q_whatIsAutoPaper'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_whatIsAutoPaperIntro')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">{ap('a_howItWorksTitle')}</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">1</Badge>
+                        <span>{ap('a_step1')}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">2</Badge>
+                        <span>{ap('a_step2')}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">3</Badge>
+                        <span>{ap('a_step3')}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">4</Badge>
+                        <span>{ap('a_step4')}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">5</Badge>
+                        <span>{ap('a_step5')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-4 border-primary p-3 bg-muted/30 text-sm">
+                    <p><strong>{ap('a_noRealMoney')}</strong> {ap('a_noRealMoneyDesc')}</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: ap('q_howToEnable'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_howToEnableIntro')}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">1</Badge>
+                      <span>{ap('a_enable1')}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">2</Badge>
+                      <span>{ap('a_enable2')}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">3</Badge>
+                      <span>{ap('a_enable3')}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">4</Badge>
+                      <span>{ap('a_enable4')}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{ap('a_enableNote')}</p>
+                </div>
+              )
+            },
+            {
+              question: ap('q_positionSizing'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_positionSizingIntro')}</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">{ap('a_sizingFormula')}</h4>
+                    <div className="bg-muted p-3 rounded font-mono text-xs">
+                      {ap('a_formula')}
+                    </div>
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <div>• {ap('a_sizing1')}</div>
+                    <div>• {ap('a_sizing2')}</div>
+                    <div>• {ap('a_sizing3')}</div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: ap('q_whereToTrack'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_whereToTrackIntro')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">{ap('a_panelFeatures')}</h4>
+                    <ul className="space-y-1 text-sm">
+                      <li>• {ap('a_track1')}</li>
+                      <li>• {ap('a_track2')}</li>
+                      <li>• {ap('a_track3')}</li>
+                      <li>• {ap('a_track4')}</li>
+                    </ul>
+                  </div>
+                </div>
+              )
+            },
+            {
+              question: ap('q_duplicateTrades'),
+              answer: (
+                <div className="space-y-2 text-muted-foreground">
+                  <p>{ap('a_duplicateTradesDesc')}</p>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          category: ap('catWebhook'),
+          questions: [
+            {
+              question: ap('q_whatIsWebhook'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_webhookIntro')}</p>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">{ap('a_webhookPayload')}</h4>
+                    <div className="text-sm space-y-1">
+                      <div>• {ap('a_payload1')}</div>
+                      <div>• {ap('a_payload2')}</div>
+                      <div>• {ap('a_payload3')}</div>
+                      <div>• {ap('a_payload4')}</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{ap('a_webhookSecurity')}</p>
+                </div>
+              )
+            },
+            {
+              question: ap('q_webhookSetup'),
+              answer: (
+                <div className="space-y-3">
+                  <p>{ap('a_webhookSetupIntro')}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">1</Badge>
+                      <span>{ap('a_setup1')}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">2</Badge>
+                      <span>{ap('a_setup2')}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline">3</Badge>
+                      <span>{ap('a_setup3')}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
     }
   };
 
