@@ -465,10 +465,7 @@ const PatternLabWizard = () => {
         throw new Error(data.error || 'Failed to start run');
       }
       
-      // Track anonymous usage
-      if (!session) {
-        sessionStorage.setItem('anonymous_runs_count', String(anonRunCount + 1));
-      }
+      
       
       toast.success('Pattern Lab backtest started!');
       // Forward mode to results page so it can render mode-aware UI
