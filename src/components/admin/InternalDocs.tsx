@@ -102,7 +102,10 @@ historical_pattern_occurrences (status: validated / rejected)
 [scan-live-patterns] ──► live_pattern_detections (active signals shown to users)
         │
         ▼
-[send-pattern-alert] ──► Email (Resend) + Web Push (VAPID)`}</CodeBlock>
+[check-alert-matches] ──► alerts_log + send-pattern-alert (Email + Push)
+        │
+        ├─► [auto-paper-trade] ──► paper_trades (if enabled)
+        └─► [fire-signal-webhook] ──► External platforms (if configured)`}</CodeBlock>
       </CardContent>
     </Card>
   </div>
