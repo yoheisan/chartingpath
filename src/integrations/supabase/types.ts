@@ -3254,6 +3254,63 @@ export type Database = {
           },
         ]
       }
+      quiz_question_translations: {
+        Row: {
+          explanation: string
+          id: string
+          is_manual_override: boolean
+          language_code: string
+          options: Json
+          question_id: string
+          question_text: string
+          source_hash: string | null
+          status: string
+          translated_at: string
+          updated_at: string
+        }
+        Insert: {
+          explanation: string
+          id?: string
+          is_manual_override?: boolean
+          language_code: string
+          options: Json
+          question_id: string
+          question_text: string
+          source_hash?: string | null
+          status?: string
+          translated_at?: string
+          updated_at?: string
+        }
+        Update: {
+          explanation?: string
+          id?: string
+          is_manual_override?: boolean
+          language_code?: string
+          options?: Json
+          question_id?: string
+          question_text?: string
+          source_hash?: string | null
+          status?: string
+          translated_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_question_translations_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_question_translations_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           category: Database["public"]["Enums"]["quiz_category"]

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,13 @@ interface ProcessedQuestion extends Omit<QuizQuestion, 'options'> {
   options: string[];
 }
 
+interface QuizTranslation {
+  question_id: string;
+  question_text: string;
+  options: string[];
+  explanation: string;
+}
+
 interface DatabaseQuizProps {
   category?: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | 'stock_market' | 'forex' | 'cryptocurrency' | 'commodities' | null;
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
@@ -43,8 +50,10 @@ export const DatabaseQuiz = ({
   limit = 10,
   title = "Pattern Recognition Quiz"
 }: DatabaseQuizProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language?.split('-')[0] || 'en';
   const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
+  const [translations, setTranslations] = useState<Map<string, QuizTranslation>>(new Map());
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -78,6 +87,30 @@ export const DatabaseQuiz = ({
       }));
 
       setQuestions(processedQuestions);
+
+      // Fetch translations for non-English users
+      if (currentLang !== 'en') {
+        const questionIds = processedQuestions.map(q => q.id);
+        const { data: trData } = await supabase
+          .from('quiz_question_translations')
+          .select('question_id, question_text, options, explanation')
+          .eq('language_code', currentLang)
+          .in('status', ['approved', 'auto_translated'])
+          .in('question_id', questionIds);
+
+        if (trData && trData.length > 0) {
+          const trMap = new Map<string, QuizTranslation>();
+          for (const tr of trData) {
+            trMap.set(tr.question_id, {
+              question_id: tr.question_id,
+              question_text: tr.question_text,
+              options: Array.isArray(tr.options) ? (tr.options as unknown as string[]) : [],
+              explanation: tr.explanation,
+            });
+          }
+          setTranslations(trMap);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading questions:', error);
       toast.error(t('databaseQuiz.noQuestions'));
@@ -108,6 +141,18 @@ export const DatabaseQuiz = ({
 
   const currentQuestion = questions[currentQuestionIndex];
   const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
+
+  // Get translated content for current question (falls back to English)
+  const getTranslated = (q: ProcessedQuestion) => {
+    const tr = translations.get(q.id);
+    if (!tr) return q;
+    return {
+      ...q,
+      question_text: tr.question_text || q.question_text,
+      options: tr.options.length === q.options.length ? tr.options : q.options,
+      explanation: tr.explanation || q.explanation,
+    };
+  };
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showExplanation) return;
@@ -218,7 +263,7 @@ export const DatabaseQuiz = ({
             </div>
           </div>
 
-          <p className="text-lg mb-6">{currentQuestion.question_text}</p>
+          <p className="text-lg mb-6">{getTranslated(currentQuestion).question_text}</p>
 
           {/* Image Display */}
           {currentQuestion.image_url && !currentQuestion.pattern_key && !currentQuestion.pattern_name && (
@@ -245,7 +290,7 @@ export const DatabaseQuiz = ({
 
           {/* Answer Options */}
           <div className="grid grid-cols-1 gap-3">
-            {currentQuestion.options.map((option, index) => {
+            {getTranslated(currentQuestion).options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrect = index === currentQuestion.correct_answer;
               const showResult = showExplanation;
@@ -292,7 +337,7 @@ export const DatabaseQuiz = ({
                 <p className="font-semibold mb-2">
                   {selectedAnswer === currentQuestion.correct_answer ? t('databaseQuiz.correct') : t('databaseQuiz.incorrect')}
                 </p>
-                <p className="text-sm">{currentQuestion.explanation}</p>
+                <p className="text-sm">{getTranslated(currentQuestion).explanation}</p>
               </div>
 
               {/* Pattern Details */}
@@ -306,7 +351,9 @@ export const DatabaseQuiz = ({
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                         <span className="text-primary">📋</span> {t('databaseQuiz.howItForms')}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{patternDetails.formation}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t(`patternEducation.${patternKey}.formation`, patternDetails.formation)}
+                      </p>
                     </div>
                     
                     <div>
@@ -317,7 +364,7 @@ export const DatabaseQuiz = ({
                         {patternDetails.characteristics.map((char, idx) => (
                           <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
                             <span className="text-primary mt-0.5">•</span>
-                            <span>{char}</span>
+                            <span>{t(`patternEducation.${patternKey}.characteristics.${idx}`, char)}</span>
                           </li>
                         ))}
                       </ul>
@@ -328,7 +375,9 @@ export const DatabaseQuiz = ({
                         <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                           <span className="text-primary">✓</span> {t('databaseQuiz.confirmation')}
                         </h4>
-                        <p className="text-sm text-muted-foreground">{patternDetails.confirmation}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t(`patternEducation.${patternKey}.confirmation`, patternDetails.confirmation)}
+                        </p>
                       </div>
                     )}
                   </div>
