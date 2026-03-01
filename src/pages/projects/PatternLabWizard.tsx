@@ -564,7 +564,7 @@ const PatternLabWizard = () => {
                       }}
                       className="group text-left p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
                     >
-                      <div className="text-lg mb-1">{example.emoji}</div>
+                      <div className="mb-1"><InstrumentLogo instrument={example.instrument} size="sm" /></div>
                       <p className="text-sm font-medium">{example.label}</p>
                       <p className="text-xs text-muted-foreground mt-1">Daily • 3 year lookback</p>
                       <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
