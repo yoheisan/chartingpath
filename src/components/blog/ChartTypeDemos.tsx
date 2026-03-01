@@ -90,7 +90,7 @@ const ChartDemoCard = memo(function ChartDemoCard({ title, description, chartTyp
                 bars={bars}
                 symbol="AAPL"
                 height={300}
-                showToolbar={false}
+                hideAnalysisToolbar
               />
             ) : chartType === 'thumbnail' ? (
               <div className="p-4">
@@ -107,11 +107,11 @@ const ChartDemoCard = memo(function ChartDemoCard({ title, description, chartTyp
                 bars={bars}
                 symbol="AAPL"
                 height={300}
-                showToolbar={false}
-                tradeOverlay={{
-                  entryPrice: visualSpec.entry?.price,
-                  stopLossPrice: visualSpec.stopLoss?.price,
-                  takeProfitPrice: visualSpec.takeProfit?.price,
+                hideAnalysisToolbar
+                tradePlan={{
+                  entryPrice: visualSpec.entry?.price || 0,
+                  stopLossPrice: visualSpec.stopLoss?.price || 0,
+                  takeProfitPrice: visualSpec.takeProfit?.price || 0,
                 }}
               />
             )}
