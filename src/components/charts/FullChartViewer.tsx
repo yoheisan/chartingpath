@@ -588,7 +588,8 @@ export default function FullChartViewer({
             if ((pivot.label || '').toLowerCase().includes('entry')) return;
 
             const isHigh = pivot.type === 'high';
-            const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
+            const isBreakout = (pivot.label || '').toLowerCase().includes('breakout') || (pivot.label || '').toLowerCase().includes('breakdown');
+            const isBreakdown = (pivot.label || '').toLowerCase().includes('breakdown');
 
             let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
             if (
@@ -602,15 +603,16 @@ export default function FullChartViewer({
             if (!timeSet.has(t)) return;
 
             if (isBreakout) {
-              // Breakout Level → canvas triangle
+              // Breakout → triangle up from below; Breakdown → triangle down from above
               const barIdx = bars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
-              const price = barIdx >= 0 ? (isLongPattern ? bars[barIdx].l : bars[barIdx].h) : pivot.price;
+              const pointUp = !isBreakdown;
+              const price = barIdx >= 0 ? (pointUp ? bars[barIdx].l : bars[barIdx].h) : pivot.price;
               canvasTriangleMarkers.push({
                 time: t,
                 price,
-                direction: isLongPattern ? 'up' : 'down',
+                direction: pointUp ? 'up' : 'down',
                 color: '#f97316',
-                label: pivot.label || 'Breakout Level',
+                label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
               });
             } else {
               allMarkers.push({
@@ -633,7 +635,7 @@ export default function FullChartViewer({
             time: lastBar.time as number,
             price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
-            color: '#3b82f6',
+            color: '#22c55e',
             label: 'Entry',
           });
         }
