@@ -1196,6 +1196,13 @@ const DynamicArticle = () => {
               .map((section, index) => renderSection(section, index))}
           </div>
 
+          {/* CHART TYPES EXPLAINED: Live interactive chart demos */}
+          {slug === 'chart-types-explained' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ChartTypeDemos />
+            </Suspense>
+          )}
+
           {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsPayoffVisualization slug={slug} />
