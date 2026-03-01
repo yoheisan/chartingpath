@@ -63,7 +63,7 @@ import { cn } from '@/lib/utils';
 export interface IndicatorSettings {
   ema20: boolean;
   ema50: boolean;
-  sma200: boolean;
+  ema200: boolean;
   bollingerBands: boolean;
   vwap: boolean;
   rsi: boolean;
@@ -73,7 +73,7 @@ export interface IndicatorSettings {
 const DEFAULT_INDICATORS: IndicatorSettings = {
   ema20: true,
   ema50: true,
-  sma200: true,
+  ema200: true,
   bollingerBands: true,
   vwap: true,
   rsi: false,
