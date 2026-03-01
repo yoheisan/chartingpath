@@ -251,7 +251,7 @@ export default function LivePatternsPage() {
   
   
   // Sorting for list view
-  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate';
+  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate' | 'expectancy';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(true);
   
@@ -636,12 +636,22 @@ export default function LivePatternsPage() {
           const gradeB = GRADE_ORDER[b.quality?.grade || b.quality?.score || 'C'] || 3;
           cmp = gradeA - gradeB; // Lower number = higher grade (A=1, F=5)
           break;
-        case 'winRate':
-          // Patterns without win rate go to bottom
+        case 'winRate': {
           const winA = a.historicalPerformance?.winRate ?? -1;
           const winB = b.historicalPerformance?.winRate ?? -1;
-          cmp = winB - winA; // Higher win rate first by default
+          cmp = winB - winA;
           break;
+        }
+        case 'expectancy': {
+          const expA = a.historicalPerformance?.winRate != null
+            ? calculateProjectedExpectancy(a.historicalPerformance.winRate, DEFAULT_RR)
+            : -999;
+          const expB = b.historicalPerformance?.winRate != null
+            ? calculateProjectedExpectancy(b.historicalPerformance.winRate, DEFAULT_RR)
+            : -999;
+          cmp = expB - expA;
+          break;
+        }
       }
       return sortAsc ? cmp : -cmp;
     });
@@ -1297,13 +1307,17 @@ export default function LivePatternsPage() {
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="text-right whitespace-nowrap">
+                  <TableHead 
+                    className="cursor-pointer select-none text-right whitespace-nowrap"
+                    onClick={() => handleSort('expectancy')}
+                  >
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="flex items-center justify-end gap-1 cursor-help text-xs">
                             {t('screener.expectancy')}
                             <Info className="h-3 w-3 opacity-50" />
+                            <SortIcon columnKey="expectancy" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="end" className="max-w-[360px] whitespace-normal break-words text-left">
