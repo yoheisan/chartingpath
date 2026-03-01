@@ -1825,8 +1825,8 @@ serve(async (req) => {
           fromTimestamp = now - (lookbackDays * 24 * 60 * 60 * 1000);
         }
         
-        console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (EODHD primary, Yahoo fallback)...`);
-        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp);
+        console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (DB-first, then providers)...`);
+        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType);
         
         if (bars.length < 50) {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
