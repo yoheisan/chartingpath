@@ -730,6 +730,42 @@ export default function FullChartViewer({
           }
         }
 
+        // ─── TP/SL Shaded Zones (always draw, matching X post SVG standard) ───
+        if (tradePlan) {
+          const drawTradePlanZones = () => {
+            const canvas = canvasOverlayRef.current;
+            if (!canvas || !chartRef.current) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const rect = containerEl.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(rect.width) * dpr;
+            canvas.height = Math.floor(rect.height) * dpr;
+            canvas.style.width = `${Math.floor(rect.width)}px`;
+            canvas.style.height = `${Math.floor(rect.height)}px`;
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            // Re-draw formation zone first if it exists (canvas was cleared)
+            // Then draw TP/SL zones on top
+            const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
+            const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
+            const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+            if (entryY == null || tpY == null || slY == null) return;
+
+            // TP zone (green)
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+            ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+            // SL zone (red)
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+            ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+          };
+
+          setTimeout(() => requestAnimationFrame(drawTradePlanZones), 200);
+          chart.timeScale().subscribeVisibleLogicalRangeChange(drawTradePlanZones);
+        }
+
         // Calculate optimal price margins based on data volatility
         // Ensures charts never look "flat" regardless of actual price movement
         const hasOverlays = visualSpec?.overlays && visualSpec.overlays.length > 0;
