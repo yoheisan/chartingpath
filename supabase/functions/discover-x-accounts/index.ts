@@ -19,7 +19,7 @@ async function fetchFollowing(
   userId: string,
   paginationToken?: string
 ): Promise<{ users: any[]; nextToken?: string }> {
-  const bearerToken = await getBearerToken();
+  const bearerToken = getBearerToken();
   const baseUrl = `https://api.x.com/2/users/${userId}/following`;
   const params = new URLSearchParams({
     max_results: "100",
@@ -36,21 +36,6 @@ async function fetchFollowing(
   if (res.status === 429) {
     const resetAt = res.headers.get("x-rate-limit-reset");
     throw new Error(`rate_limited:${resetAt || ""}`);
-  }
-
-  if (res.status === 401) {
-    // Token may have expired, clear cache and retry once
-    cachedBearerToken = null;
-    const newToken = await getBearerToken();
-    const retryRes = await fetch(fullUrl, {
-      headers: { Authorization: `Bearer ${newToken}` },
-    });
-    if (!retryRes.ok) {
-      const txt = await retryRes.text();
-      throw new Error(`API error ${retryRes.status}: ${txt}`);
-    }
-    const retryBody = await retryRes.json();
-    return { users: retryBody.data || [], nextToken: retryBody.meta?.next_token };
   }
 
   if (!res.ok) {
