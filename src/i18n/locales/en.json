@@ -1623,7 +1623,9 @@
       "Bearish Harami": "Small candle inside previous large bullish candle",
       "Bullish Engulfing": "Large bullish candle engulfing previous bearish candle",
       "Bearish Engulfing": "Large bearish candle engulfing previous bullish candle",
-      "Spinning Top": "Small body with long shadows indicating indecision"
+      "Spinning Top": "Small body with long shadows indicating indecision",
+      "Donchian Breakout (Long)": "Bullish breakout above the 20-period high Donchian channel",
+      "Donchian Breakout (Short)": "Bearish breakdown below the 20-period low Donchian channel"
     }
   },
   "patternDetailModal": {
