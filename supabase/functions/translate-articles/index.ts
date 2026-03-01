@@ -55,26 +55,47 @@ Deno.serve(async (req) => {
 
     if (action === 'get_status') {
       // Return translation status for all articles
-      const { data: articles } = await supabase
-        .from('learning_articles')
-        .select('id, title, slug')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
+      // Paginate articles (default limit is 1000)
+      const allArticles: any[] = []
+      let artFrom = 0
+      const PAGE = 1000
+      while (true) {
+        const { data, error } = await supabase
+          .from('learning_articles')
+          .select('id, title, slug')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false })
+          .range(artFrom, artFrom + PAGE - 1)
+        if (error || !data || data.length === 0) break
+        allArticles.push(...data)
+        if (data.length < PAGE) break
+        artFrom += PAGE
+      }
 
-      const { data: translations } = await supabase
-        .from('learning_article_translations')
-        .select('article_id, language_code, status')
+      // Paginate translations (critical: can exceed 1000 rows)
+      const allTranslations: any[] = []
+      let trFrom = 0
+      while (true) {
+        const { data, error } = await supabase
+          .from('learning_article_translations')
+          .select('article_id, language_code, status')
+          .range(trFrom, trFrom + PAGE - 1)
+        if (error || !data || data.length === 0) break
+        allTranslations.push(...data)
+        if (data.length < PAGE) break
+        trFrom += PAGE
+      }
 
       const statusMap: Record<string, Record<string, string>> = {}
-      translations?.forEach(t => {
+      allTranslations.forEach(t => {
         if (!statusMap[t.article_id]) statusMap[t.article_id] = {}
         statusMap[t.article_id][t.language_code] = t.status
       })
 
       // Build per-language summary
       const langSummary: Record<string, { translated: number; total: number }> = {}
-      const totalArticles = articles?.length || 0
-      translations?.forEach(t => {
+      const totalArticles = allArticles.length
+      allTranslations.forEach(t => {
         if (!langSummary[t.language_code]) langSummary[t.language_code] = { translated: 0, total: totalArticles }
         langSummary[t.language_code].translated++
       })
@@ -82,7 +103,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         total_articles: totalArticles,
         language_summary: langSummary,
-        articles: articles?.map(a => ({
+        articles: allArticles.map(a => ({
           ...a,
           translations: statusMap[a.id] || {}
         }))
