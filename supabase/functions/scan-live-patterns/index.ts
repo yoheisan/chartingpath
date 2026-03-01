@@ -111,18 +111,17 @@ const patternSymbolStatsCache = new Map<string, { stats: PatternStats; ts: numbe
 const PATTERN_STATS_TTL_MS = 10 * 60 * 1000;
 
 // Minimum sample size threshold - below this we consider stats unreliable
-const MIN_SAMPLE_SIZE = 5;
+const MIN_SAMPLE_SIZE = 3;
 // Maximum sample size that could reasonably be per-symbol (catches pattern-level fallbacks)
-const MAX_REALISTIC_PER_SYMBOL_SAMPLE = 200;
+const MAX_REALISTIC_PER_SYMBOL_SAMPLE = 500;
 
 function isStatsSuspect(hp: any): boolean {
-  // Treat missing, very small samples, or suspiciously large samples (pattern-level fallback) as stale.
-  // Pattern-level aggregates typically have 300-500+ samples, while per-symbol rarely exceeds 100-150.
+  // Only treat truly missing or empty data as suspect.
+  // Pattern-level aggregates are now considered valid — they provide the best available signal.
   const n = hp?.sampleSize;
   if (typeof n !== 'number') return true;
   if (n < MIN_SAMPLE_SIZE) return true;
-  // Flag large sample sizes as likely pattern-level fallbacks that need re-computing
-  if (n > MAX_REALISTIC_PER_SYMBOL_SAMPLE) return true;
+  // Removed: MAX_REALISTIC_PER_SYMBOL_SAMPLE check — pattern-level fallbacks are valid and should not be wiped.
   return false;
 }
 
@@ -390,11 +389,11 @@ async function fetchPatternSymbolStats(
 // Timeframe proximity order for cross-timeframe fallback.
 // When exact timeframe has no data, try the closest alternative.
 const TIMEFRAME_FALLBACK_ORDER: Record<string, string[]> = {
-  '1h':  ['4h', '8h', '1d'],
-  '4h':  ['8h', '1h', '1d'],
-  '8h':  ['4h', '1d', '1h'],
-  '1d':  ['8h', '4h', '1wk'],
-  '1wk': ['1d', '8h'],
+  '1h':  ['4h', '8h', '1d', '1wk'],
+  '4h':  ['8h', '1h', '1d', '1wk'],
+  '8h':  ['4h', '1d', '1h', '1wk'],
+  '1d':  ['8h', '4h', '1wk', '1h'],
+  '1wk': ['1d', '8h', '4h'],
 };
 
 async function fetchCrossTimeframeFallback(
