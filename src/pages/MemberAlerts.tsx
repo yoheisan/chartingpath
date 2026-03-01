@@ -4,12 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2, Bot, Webhook, Copy, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
@@ -37,6 +40,8 @@ interface Alert {
   pattern: string;
   status: string;
   created_at: string;
+  auto_paper_trade?: boolean;
+  webhook_url?: string | null;
 }
 
 const MemberAlerts = () => {
@@ -63,6 +68,12 @@ const MemberAlerts = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastCreatedSymbol, setLastCreatedSymbol] = useState("");
   const [lastCreatedPatterns, setLastCreatedPatterns] = useState<string[]>([]);
+
+  // Automation state
+  const [autoPaperTrade, setAutoPaperTrade] = useState(false);
+  const [riskPercent, setRiskPercent] = useState(1.0);
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -239,7 +250,11 @@ const MemberAlerts = () => {
           symbol: symbol.toUpperCase(),
           patterns: selectedPatterns,
           timeframe,
-          action: 'create'
+          action: 'create',
+          auto_paper_trade: autoPaperTrade,
+          webhook_url: webhookUrl || null,
+          webhook_secret: webhookSecret || null,
+          risk_percent: riskPercent,
         }
       });
 
@@ -696,6 +711,84 @@ const MemberAlerts = () => {
               )}
             </div>
 
+            {/* Automation Settings */}
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                {t('alerts.automation', 'Automation')}
+              </Label>
+              
+              {/* Auto Paper Trade */}
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">{t('alerts.autoPaperTrade', 'Auto Paper Trade')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('alerts.autoPaperTradeDesc', 'Auto-open paper trades when pattern triggers')}</p>
+                </div>
+                <Switch checked={autoPaperTrade} onCheckedChange={setAutoPaperTrade} />
+              </div>
+
+              {autoPaperTrade && (
+                <div className="space-y-2 pl-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">{t('alerts.riskPercent', 'Risk per trade')}</Label>
+                    <span className="text-sm font-medium">{riskPercent.toFixed(1)}%</span>
+                  </div>
+                  <Slider
+                    value={[riskPercent]}
+                    onValueChange={([v]) => setRiskPercent(v)}
+                    min={0.5}
+                    max={5}
+                    step={0.5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('alerts.riskPercentDesc', 'Percentage of paper portfolio to risk per trade (0.5-5%)')}</p>
+                </div>
+              )}
+
+              {/* Webhook */}
+              <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <Webhook className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">{t('alerts.webhookRelay', 'Signal Webhook')}</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">{t('alerts.webhookDesc', 'Send signals to TradingView, 3Commas, MT4/MT5 bridges, or your own bot')}</p>
+                <Input
+                  placeholder="https://your-endpoint.com/webhook"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  className="text-sm"
+                />
+                {webhookUrl && !webhookUrl.startsWith('https://') && (
+                  <p className="text-xs text-destructive">{t('alerts.webhookHttpsRequired', 'URL must start with https://')}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder={t('alerts.webhookSecretPlaceholder', 'HMAC secret (optional)')}
+                    value={webhookSecret}
+                    onChange={(e) => setWebhookSecret(e.target.value)}
+                    className="text-sm flex-1"
+                    type="password"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const secret = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+                      setWebhookSecret(secret);
+                      navigator.clipboard.writeText(secret);
+                      toast({ title: t('alerts.secretGenerated', 'Secret generated & copied') });
+                    }}
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                    {t('alerts.generate', 'Generate')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {!canCreateMore ? (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -771,6 +864,18 @@ const MemberAlerts = () => {
                           <Badge variant={alert.status === 'active' ? 'default' : 'secondary'}>
                             {alert.status === 'active' ? t('alerts.statusActive') : t('alerts.statusPaused')}
                           </Badge>
+                          {alert.auto_paper_trade && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Bot className="h-3 w-3" />
+                              Auto
+                            </Badge>
+                          )}
+                          {alert.webhook_url && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Webhook className="h-3 w-3" />
+                              Webhook
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {alert.pattern} • {alert.timeframe}

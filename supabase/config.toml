@@ -257,3 +257,9 @@ verify_jwt = false
 
 [functions.discover-x-accounts]
 verify_jwt = false
+
+[functions.auto-paper-trade]
+verify_jwt = false
+
+[functions.fire-signal-webhook]
+verify_jwt = false
