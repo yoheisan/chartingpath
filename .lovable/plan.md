@@ -1,97 +1,147 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Auto Paper Trading + Signal Webhook Relay
 
-## Data Summary
-
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+## Overview
+Add two automation layers to `check-alert-matches`: when a pattern matches a user alert, optionally (1) auto-open a paper trade and (2) fire a webhook to an external platform.
 
 ---
 
-## Priority 1: Auth Page (75 views, 0 signups)
+## 1. Database Migration
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+### Add columns to `alerts` table
+- `auto_paper_trade` (boolean, default false) -- enable auto paper trading for this alert
+- `webhook_url` (text, nullable) -- user's webhook endpoint URL
+- `webhook_secret` (text, nullable) -- HMAC-SHA256 signing secret
+- `risk_percent` (numeric, default 1.0) -- position size as % of paper portfolio
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+### Create `signal_webhook_log` table
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| alert_id | uuid FK -> alerts | which alert triggered it |
+| detection_id | uuid | live_pattern_detections reference |
+| user_id | uuid | alert owner |
+| payload | jsonb | full JSON sent |
+| response_status | integer | HTTP status returned |
+| response_body | text | truncated response |
+| latency_ms | integer | round-trip time |
+| created_at | timestamptz | default now() |
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
-
----
-
-## Priority 2: Screener (101 views, 18s avg dwell)
-
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
-
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
-
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+RLS: users can SELECT their own rows; service_role can INSERT.
 
 ---
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+## 2. New Edge Function: `auto-paper-trade`
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+Called from `check-alert-matches` when `alert.auto_paper_trade = true`.
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
-
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
-
----
-
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
-
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
-
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
-
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
+Logic:
+1. Look up user's paper portfolio (from `paper_portfolios`)
+2. Check no existing open trade for same symbol (prevent duplicates)
+3. Calculate position size: `(current_balance * risk_percent / 100) / abs(entry - stop_loss)` = quantity
+4. Insert into `paper_trades` with status='open', entry_price, stop_loss, take_profit, trade_type (long/short)
+5. Return success/skip status
 
 ---
 
-## Priority 5: Shared Links (8 views, 7 pattern views)
+## 3. New Edge Function: `fire-signal-webhook`
 
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+Called from `check-alert-matches` when `alert.webhook_url` is set.
 
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+Logic:
+1. Build standardized JSON payload:
+```text
+{
+  "signal": "entry",
+  "symbol": "BTCUSDT",
+  "direction": "long",
+  "timeframe": "4h",
+  "entry_price": 67250.00,
+  "stop_loss": 65800.00,
+  "take_profit": 70150.00,
+  "risk_reward": 2.0,
+  "pattern": "ascending-triangle",
+  "quality_grade": "A",
+  "timestamp": "2026-03-01T14:30:00Z"
+}
+```
+2. Sign with HMAC-SHA256 using `webhook_secret` (header: `X-Signature`)
+3. POST to `webhook_url` with 5s timeout
+4. Log result to `signal_webhook_log` (status, latency, truncated response)
 
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+Safeguards:
+- URL must start with `https://`
+- Max 10 webhook fires per user per hour (checked via count on `signal_webhook_log`)
 
 ---
 
-## Implementation Sequence
+## 4. Update `check-alert-matches`
 
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+After the existing notification dispatch, add two new calls inside `processAlert()`:
+
+```text
+// After send-pattern-alert...
+
+if (alert.auto_paper_trade) {
+  await supabase.functions.invoke('auto-paper-trade', { body: { ... } });
+}
+
+if (alert.webhook_url) {
+  await supabase.functions.invoke('fire-signal-webhook', { body: { ... } });
+}
+```
+
+The alert SELECT query updated to also fetch `auto_paper_trade, webhook_url, webhook_secret, risk_percent`.
+
+---
+
+## 5. Frontend: Alert Configuration UI
+
+### MemberAlerts.tsx -- Alert Creation Form
+Add below existing form fields:
+- **Auto Paper Trade** toggle (Switch component) + risk % slider (1-5%, default 1%)
+- **Webhook URL** text input with validation (must be https://)
+- **Webhook Secret** field with "Generate" button (creates random 32-char hex string)
+- **Test Webhook** button that fires a test payload to the URL
+
+Pass these new fields through the `create-alert` edge function body.
+
+### MemberAlerts.tsx -- Active Alerts List
+- Show "Auto-Trade" and "Webhook" badges on alerts that have these enabled
+- Add webhook delivery log viewer (expandable section showing recent `signal_webhook_log` entries)
+
+### Paper Trading Dashboard
+- Add "Auto" badge on trades where `notes` contains `[auto-trade]` marker
+
+---
+
+## 6. Update `create-alert` Edge Function
+
+Accept new optional fields: `auto_paper_trade`, `webhook_url`, `webhook_secret`, `risk_percent` and pass them through to the `alerts` table insert.
+
+---
+
+## 7. Config Updates
+
+Add to `supabase/config.toml`:
+```text
+[functions.auto-paper-trade]
+verify_jwt = false
+
+[functions.fire-signal-webhook]
+verify_jwt = false
+```
+
+---
+
+## Implementation Order
+
+1. Database migration (add columns + new table + RLS)
+2. `auto-paper-trade` edge function
+3. `fire-signal-webhook` edge function
+4. Update `check-alert-matches` to call both
+5. Update `create-alert` to accept new fields
+6. Frontend: alert form + badges + webhook log viewer
+7. Config.toml entries
 
