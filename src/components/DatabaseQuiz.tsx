@@ -142,6 +142,18 @@ export const DatabaseQuiz = ({
   const currentQuestion = questions[currentQuestionIndex];
   const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
+  // Get translated content for current question (falls back to English)
+  const getTranslated = (q: ProcessedQuestion) => {
+    const tr = translations.get(q.id);
+    if (!tr) return q;
+    return {
+      ...q,
+      question_text: tr.question_text || q.question_text,
+      options: tr.options.length === q.options.length ? tr.options : q.options,
+      explanation: tr.explanation || q.explanation,
+    };
+  };
+
   const handleAnswerSelect = (answerIndex: number) => {
     if (showExplanation) return;
     
