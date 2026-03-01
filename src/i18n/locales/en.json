@@ -2592,7 +2592,8 @@
     "exportPineScript": "Export Pine Script",
     "chatgptFootnote": "💬 ChatGPT would say: \"I don't have access to real-time market data.\"",
     "learnMore": "Learn More About the Copilot",
-    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now"
+    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now",
+    "tryNow": "Try Copilot Now"
   },
   "pricingTeaser": {
     "title": "Simple, Credit-Based Pricing",
