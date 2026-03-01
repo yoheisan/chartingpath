@@ -68,7 +68,7 @@ async function fetchFollowing(
 ): Promise<{ users: any[]; nextToken?: string }> {
   const baseUrl = `https://api.x.com/2/users/${userId}/following`;
   const params = new URLSearchParams({
-    max_results: "1000",
+    max_results: "100",
     "user.fields": "public_metrics,username,name",
   });
   if (paginationToken) params.set("pagination_token", paginationToken);
