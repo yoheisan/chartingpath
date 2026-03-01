@@ -727,11 +727,11 @@ export default function FullChartViewer({
               }
             }
 
-            // 2) TP/SL shaded zones (matches X post SVG standard)
-            if (tradePlan) {
-              const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
-              const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
-              const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+            // 2) TP/SL shaded zones — use overlay prices for exact alignment with dotted lines
+            if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+              const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+              const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+              const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
               if (entryY != null && tpY != null && slY != null) {
                 ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
                 ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
