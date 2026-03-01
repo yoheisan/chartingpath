@@ -118,8 +118,10 @@ const CorrelationVisualizer = lazy(() => import('@/components/blog/risk-manageme
 const ScalingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/ScalingVisualizer'));
 const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MaxLossVisualizer'));
 
+// Chart Type Demos (live interactive chart examples for chart-types-explained article)
+const ChartTypeDemos = lazy(() => import('@/components/blog/ChartTypeDemos'));
+
 // Algorithmic Trading Visualizers
-const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
 const MachineLearningVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MachineLearningVisualizer'));
 const PineScriptVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/PineScriptVisualizer'));
 const AlgorithmicTradingVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/AlgorithmicTradingVisualizer'));
