@@ -120,6 +120,7 @@ const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-v
 
 // Chart Type Demos (live interactive chart examples for chart-types-explained article)
 const ChartTypeDemos = lazy(() => import('@/components/blog/ChartTypeDemos'));
+const CommandCenterDemo = lazy(() => import('@/components/blog/CommandCenterDemo'));
 
 // Algorithmic Trading Visualizers
 const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
