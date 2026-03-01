@@ -193,19 +193,22 @@ export const DynamicPatternChart = ({
     // Draw pattern annotations with label collision avoidance
     const placedLabels: { x: number; y: number; w: number; h: number }[] = [];
     
-    const findNonOverlappingY = (cx: number, cy: number, labelW: number, labelH: number): number => {
-      const padding = 4;
+    const findNonOverlappingY = (cx: number, cy: number, labelW: number, labelH: number, preferDown = false): number => {
+      const padding = 6;
       let bestY = cy;
       let attempts = 0;
-      while (attempts < 10) {
+      const direction = preferDown ? 1 : -1;
+      while (attempts < 15) {
         const overlaps = placedLabels.some(placed => 
           Math.abs(cx - placed.x) < (labelW + placed.w) / 2 + padding &&
           Math.abs(bestY - placed.y) < (labelH + placed.h) / 2 + padding
         );
         if (!overlaps) break;
-        bestY -= (labelH + padding);
+        bestY += direction * (labelH + padding);
         attempts++;
       }
+      // Clamp within chart bounds
+      bestY = Math.max(chartTop + labelH / 2, Math.min(chartTop + chartHeight - labelH / 2, bestY));
       placedLabels.push({ x: cx, y: bestY, w: labelW, h: labelH });
       return bestY;
     };
@@ -304,26 +307,33 @@ export const DynamicPatternChart = ({
     ctx.textAlign = "left";
     ctx.fillText("Volume", chartLeft, volumeTop - 5);
 
-    // Key levels display
+    // Key levels display - positioned top-right with collision avoidance
     if (keyLevels.entry || keyLevels.target || keyLevels.stopLoss) {
-      ctx.fillStyle = "hsl(210, 40%, 98%)";
-      ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "left";
-      let labelY = chartTop + 20;
+      ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "right";
+      const levelX = chartLeft + chartWidth - 10;
+      let levelY = chartTop + 18;
+      const lineHeight = 18;
       
-      if (keyLevels.entry) {
-        ctx.fillText(`Entry: ${keyLevels.entry.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
-        labelY += 15;
-      }
-      if (keyLevels.target) {
-        ctx.fillStyle = "#22c55e"; // Unified green
-        ctx.fillText(`Target: ${keyLevels.target.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
-        labelY += 15;
-      }
-      if (keyLevels.stopLoss) {
-        ctx.fillStyle = "#ef4444"; // Unified red
-        ctx.fillText(`Stop Loss: ${keyLevels.stopLoss.toFixed(2)}`, chartLeft + chartWidth - 150, labelY);
-      }
+      const drawLevel = (label: string, value: number, color: string) => {
+        const text = `${label}: ${value.toFixed(2)}`;
+        const tw = ctx.measureText(text).width + 12;
+        const th = 16;
+        const adjustedY = findNonOverlappingY(levelX - tw / 2, levelY, tw, th);
+        
+        // Background pill
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        drawRoundedRect(levelX - tw, adjustedY - th / 2, tw, th, 4);
+        ctx.fill();
+        
+        ctx.fillStyle = color;
+        ctx.fillText(text, levelX - 4, adjustedY + 4);
+        levelY = adjustedY + lineHeight;
+      };
+      
+      if (keyLevels.entry) drawLevel("Entry", keyLevels.entry, "hsl(210, 40%, 98%)");
+      if (keyLevels.target) drawLevel("Target", keyLevels.target, "#22c55e");
+      if (keyLevels.stopLoss) drawLevel("Stop Loss", keyLevels.stopLoss, "#ef4444");
     }
 
     if (showTitle) {
