@@ -8,7 +8,8 @@ import { SocialAccountsManager } from "@/components/cms/SocialAccountsManager";
 import { PostAnalytics } from "@/components/cms/PostAnalytics";
 import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
 import { EducationalContentManager } from "@/components/cms/EducationalContentManager";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap } from "lucide-react";
+import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("schedule");
