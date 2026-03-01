@@ -1,97 +1,72 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+## Auto-Follow X Users -- Steady Drip System
 
-## Data Summary
+### Overview
+Build an edge function + cron job that follows X users from a queue at a safe, steady pace to avoid hitting Twitter/X API rate limits.
 
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+### X API Rate Limits
+- **Follow endpoint** (`POST /2/users/:id/following`): 5 requests per 15 minutes (free tier), up to 15/15min on Basic tier
+- Safe approach: **1 follow every 5 minutes** (12/hour, ~288/day) stays well within limits
 
----
+### Architecture
 
-## Priority 1: Auth Page (75 views, 0 signups)
+```text
+[Admin provides user IDs]
+        |
+        v
+  x_follow_queue (DB table)
+        |
+  [cron: every 5 min]
+        |
+        v
+  auto-follow-x (edge function)
+   - picks 1 pending user
+   - calls POST /2/users/:id/following
+   - marks as followed or failed
+```
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+### Step 1: Database table for the follow queue
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+Create `x_follow_queue` with columns:
+- `id` (UUID, PK)
+- `target_user_id` (TEXT) -- the X user ID to follow
+- `target_username` (TEXT, nullable) -- optional for reference
+- `status` (TEXT: pending / followed / failed / skipped)
+- `error_message` (TEXT, nullable)
+- `attempted_at` (TIMESTAMPTZ, nullable)
+- `created_at` (TIMESTAMPTZ)
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+RLS: admin-only access via `is_admin()`.
 
----
+### Step 2: Edge function `auto-follow-x`
 
-## Priority 2: Screener (101 views, 18s avg dwell)
+Two actions:
+1. **`follow_next`** (called by cron): picks the oldest `pending` row, calls the X API follow endpoint using existing OAuth credentials, updates status
+2. **`add_users`** (called manually): accepts a JSON array of `{ user_id, username? }` objects and bulk-inserts them into the queue
 
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+The X API call:
+```
+POST https://api.x.com/2/users/:authenticated_user_id/following
+Body: { "target_user_id": "..." }
+```
 
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+Uses the same OAuth 1.0a signature generation already in `post-to-social-media`.
 
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+### Step 3: Cron job
 
----
+Schedule via `pg_cron` + `pg_net`: run `auto-follow-x` every 5 minutes. At that rate, a list of 500 users would complete in ~42 hours (~1.7 days).
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+### Step 4: Admin UI (optional)
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+A simple section in the existing admin area to:
+- Paste a list of user IDs (one per line)
+- See queue progress (pending / followed / failed counts)
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+### Technical Details
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
-
----
-
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
-
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
-
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
-
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
-
----
-
-## Priority 5: Shared Links (8 views, 7 pattern views)
-
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
-
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
-
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
-
----
-
-## Implementation Sequence
-
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+- **Getting the authenticated user ID**: The function will call `GET /2/users/me` once (cached) to get the source user ID for the follow call
+- **Error handling**: If rate-limited (429), mark row as pending (retry next cycle). If user not found or already followed, mark as skipped.
+- **Duplicate prevention**: UNIQUE constraint on `target_user_id` to avoid re-following
+- **Config in `supabase/config.toml`**: `[functions.auto-follow-x] verify_jwt = false`
 
