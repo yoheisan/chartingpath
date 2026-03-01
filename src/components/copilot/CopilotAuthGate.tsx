@@ -1,6 +1,7 @@
 import { Lock, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 interface CopilotAuthGateProps {
   messagesUsed: number;
@@ -24,6 +25,21 @@ export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGatePr
             Sign in for unlimited access to the Trading Copilot
           </p>
         </div>
+        
+        {/* Google sign-in */}
+        <div className="w-full max-w-xs">
+          <GoogleSignInButton size="sm" className="w-full" />
+        </div>
+
+        <div className="relative w-full max-w-xs">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
         <div className="flex gap-2 w-full max-w-xs">
           <Button asChild size="sm" className="flex-1">
             <Link to={`/auth?redirect=${redirectPath}`}>
