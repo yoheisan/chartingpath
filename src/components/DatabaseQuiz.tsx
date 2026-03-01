@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,13 @@ interface ProcessedQuestion extends Omit<QuizQuestion, 'options'> {
   options: string[];
 }
 
+interface QuizTranslation {
+  question_id: string;
+  question_text: string;
+  options: string[];
+  explanation: string;
+}
+
 interface DatabaseQuizProps {
   category?: 'visual_recognition' | 'characteristics' | 'statistics' | 'risk_management' | 'professional_practices' | 'stock_market' | 'forex' | 'cryptocurrency' | 'commodities' | null;
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
@@ -43,8 +50,10 @@ export const DatabaseQuiz = ({
   limit = 10,
   title = "Pattern Recognition Quiz"
 }: DatabaseQuizProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language?.split('-')[0] || 'en';
   const [questions, setQuestions] = useState<ProcessedQuestion[]>([]);
+  const [translations, setTranslations] = useState<Map<string, QuizTranslation>>(new Map());
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -78,6 +87,30 @@ export const DatabaseQuiz = ({
       }));
 
       setQuestions(processedQuestions);
+
+      // Fetch translations for non-English users
+      if (currentLang !== 'en') {
+        const questionIds = processedQuestions.map(q => q.id);
+        const { data: trData } = await supabase
+          .from('quiz_question_translations')
+          .select('question_id, question_text, options, explanation')
+          .eq('language_code', currentLang)
+          .in('status', ['approved', 'auto_translated'])
+          .in('question_id', questionIds);
+
+        if (trData && trData.length > 0) {
+          const trMap = new Map<string, QuizTranslation>();
+          for (const tr of trData) {
+            trMap.set(tr.question_id, {
+              question_id: tr.question_id,
+              question_text: tr.question_text,
+              options: Array.isArray(tr.options) ? tr.options : [],
+              explanation: tr.explanation,
+            });
+          }
+          setTranslations(trMap);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading questions:', error);
       toast.error(t('databaseQuiz.noQuestions'));
