@@ -57,14 +57,7 @@ serve(async (req) => {
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
     const tomorrowDate = tomorrow.toISOString().split('T')[0];
     
-    // Skip weekends
-    const dayOfWeek = tomorrow.getUTCDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return new Response(
-        JSON.stringify({ message: 'Skipping weekend', day: dayOfWeek }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Educational content posts every day including weekends
 
     // Check if posts already scheduled for tomorrow (only count non-failed ones)
     const tomorrowStart = `${tomorrowDate}T00:00:00Z`;
