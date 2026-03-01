@@ -138,34 +138,46 @@ export type Database = {
       }
       alerts: {
         Row: {
+          auto_paper_trade: boolean
           created_at: string | null
           id: string
           pattern: Database["public"]["Enums"]["chart_pattern"]
+          risk_percent: number
           status: Database["public"]["Enums"]["alert_status"] | null
           symbol: string
           timeframe: Database["public"]["Enums"]["timeframe"]
           updated_at: string | null
           user_id: string
+          webhook_secret: string | null
+          webhook_url: string | null
         }
         Insert: {
+          auto_paper_trade?: boolean
           created_at?: string | null
           id?: string
           pattern: Database["public"]["Enums"]["chart_pattern"]
+          risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
           symbol: string
           timeframe: Database["public"]["Enums"]["timeframe"]
           updated_at?: string | null
           user_id: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Update: {
+          auto_paper_trade?: boolean
           created_at?: string | null
           id?: string
           pattern?: Database["public"]["Enums"]["chart_pattern"]
+          risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
           symbol?: string
           timeframe?: Database["public"]["Enums"]["timeframe"]
           updated_at?: string | null
           user_id?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -3633,6 +3645,50 @@ export type Database = {
           service_name?: string
         }
         Relationships: []
+      }
+      signal_webhook_log: {
+        Row: {
+          alert_id: string
+          created_at: string
+          detection_id: string | null
+          id: string
+          latency_ms: number | null
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          detection_id?: string | null
+          id?: string
+          latency_ms?: number | null
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          detection_id?: string | null
+          id?: string
+          latency_ms?: number | null
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_webhook_log_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_scan_sessions: {
         Row: {
