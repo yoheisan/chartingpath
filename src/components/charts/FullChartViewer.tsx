@@ -572,18 +572,25 @@ export default function FullChartViewer({
           text: string;
         }> = [];
 
-        // Add pivot markers (skip "Entry" label — redundant with blue entry marker)
+        // Collect canvas triangle markers (drawn on overlay instead of native markers)
+        const canvasTriangleMarkers: Array<{
+          time: number;
+          price: number;
+          direction: 'up' | 'down';
+          color: string;
+          label?: string;
+        }> = [];
+
+        // Add pivot markers (skip "Entry" — redundant; "Breakout Level" → canvas triangle)
         if (visualSpec.pivots && visualSpec.pivots.length > 0) {
           const isLongPattern = setup.direction === 'long';
           visualSpec.pivots.forEach((pivot) => {
-            // Skip "Entry" pivots — entry is already shown by the blue triangle marker
             if ((pivot.label || '').toLowerCase().includes('entry')) return;
 
             const isHigh = pivot.type === 'high';
             const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
 
             let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-
             if (
               !timeSet.has(t) &&
               Number.isInteger(pivot.index) &&
@@ -592,17 +599,18 @@ export default function FullChartViewer({
             ) {
               t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
             }
-
             if (!timeSet.has(t)) return;
 
-            // For "Breakout Level" pivots: triangle pointing in trade direction
             if (isBreakout) {
-              allMarkers.push({
-                time: t as Time,
-                position: isLongPattern ? 'belowBar' : 'aboveBar',
-                color: '#3b82f6',
-                shape: isLongPattern ? 'arrowUp' : 'arrowDown',
-                text: pivot.label || 'Breakout Level',
+              // Breakout Level → canvas triangle
+              const barIdx = bars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
+              const price = barIdx >= 0 ? (isLongPattern ? bars[barIdx].l : bars[barIdx].h) : pivot.price;
+              canvasTriangleMarkers.push({
+                time: t,
+                price,
+                direction: isLongPattern ? 'up' : 'down',
+                color: '#f97316',
+                label: pivot.label || 'Breakout Level',
               });
             } else {
               allMarkers.push({
@@ -616,19 +624,16 @@ export default function FullChartViewer({
           });
         }
 
-        // Add Entry Point marker on the last (signal) bar
-        // This makes the entry point visually prominent on the chart
+        // Entry Point → canvas triangle on last bar
         if (chartData.length > 0 && tradePlan?.entry) {
           const lastBar = chartData[chartData.length - 1];
-          const entryMarkerPosition = setup.direction === 'long' ? 'belowBar' : 'aboveBar';
-          const entryMarkerShape: SeriesMarkerShape = setup.direction === 'long' ? 'arrowUp' : 'arrowDown';
-          
-          allMarkers.push({
-            time: lastBar.time,
-            position: entryMarkerPosition,
-            color: '#3b82f6', // Blue to match prescriptive standard
-            shape: entryMarkerShape,
-            text: '',
+          const lastBarData = bars[bars.length - 1];
+          const isLong = setup.direction === 'long';
+          canvasTriangleMarkers.push({
+            time: lastBar.time as number,
+            price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
+            direction: isLong ? 'up' : 'down',
+            color: '#3b82f6',
           });
         }
 
@@ -643,6 +648,42 @@ export default function FullChartViewer({
             console.warn('Failed to render markers:', e);
           }
         }
+
+        // Helper: draw filled triangle markers on canvas
+        const drawCanvasTriangles = (ctx: CanvasRenderingContext2D) => {
+          if (canvasTriangleMarkers.length === 0 || !chartRef.current) return;
+          const ts = chartRef.current.timeScale();
+          canvasTriangleMarkers.forEach((marker) => {
+            try {
+              const x = (ts as any).timeToCoordinate?.(marker.time);
+              const y = (candleSeries as any).priceToCoordinate?.(marker.price);
+              if (x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y)) return;
+
+              const size = 10;
+              ctx.beginPath();
+              if (marker.direction === 'up') {
+                ctx.moveTo(x, y - size * 0.2);
+                ctx.lineTo(x - size * 0.7, y + size);
+                ctx.lineTo(x + size * 0.7, y + size);
+              } else {
+                ctx.moveTo(x, y + size * 0.2);
+                ctx.lineTo(x - size * 0.7, y - size);
+                ctx.lineTo(x + size * 0.7, y - size);
+              }
+              ctx.closePath();
+              ctx.fillStyle = marker.color;
+              ctx.fill();
+
+              if (marker.label) {
+                ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = marker.color;
+                const labelY = marker.direction === 'up' ? y + size + 14 : y - size - 6;
+                ctx.fillText(marker.label, x, labelY);
+              }
+            } catch { /* ignore */ }
+          });
+        };
 
         // ─── Formation Overlay: ZigZag + Trendlines + Shaded Zone ───
         const formation = deriveFormationOverlay(
@@ -755,42 +796,52 @@ export default function FullChartViewer({
                 ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
               }
             }
+
+            // 3) Triangle markers
+            drawCanvasTriangles(ctx);
           };
 
           setTimeout(() => requestAnimationFrame(drawAllCanvasOverlays), 200);
           chart.timeScale().subscribeVisibleLogicalRangeChange(drawAllCanvasOverlays);
         }
 
-        // TP/SL shaded zones standalone (when no formation overlay exists)
-        if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
-          const drawStandaloneTradePlanZones = () => {
-            const canvas = canvasOverlayRef.current;
-            if (!canvas || !chartRef.current) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+        // TP/SL shaded zones standalone + triangles (when no formation overlay exists)
+        if (!(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
+          const needsStandalone = (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) || canvasTriangleMarkers.length > 0;
+          if (needsStandalone) {
+            const drawStandaloneTradePlanZones = () => {
+              const canvas = canvasOverlayRef.current;
+              if (!canvas || !chartRef.current) return;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return;
 
-            const rect = containerEl.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(rect.width) * dpr;
-            canvas.height = Math.floor(rect.height) * dpr;
-            canvas.style.width = `${Math.floor(rect.width)}px`;
-            canvas.style.height = `${Math.floor(rect.height)}px`;
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, rect.width, rect.height);
+              const rect = containerEl.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              canvas.width = Math.floor(rect.width) * dpr;
+              canvas.height = Math.floor(rect.height) * dpr;
+              canvas.style.width = `${Math.floor(rect.width)}px`;
+              canvas.style.height = `${Math.floor(rect.height)}px`;
+              ctx.scale(dpr, dpr);
+              ctx.clearRect(0, 0, rect.width, rect.height);
 
-            const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
-            const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
-            const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
-            if (entryY == null || tpY == null || slY == null) return;
+              if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+                const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+                const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+                const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
+                if (entryY != null && tpY != null && slY != null) {
+                  ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+                  ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+                  ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+                  ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+                }
+              }
 
-            ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
-            ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
-            ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
-          };
+              drawCanvasTriangles(ctx);
+            };
 
-          setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
-          chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+            setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+            chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+          }
         }
 
         // Calculate optimal price margins based on data volatility
