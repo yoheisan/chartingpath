@@ -116,13 +116,6 @@ function renderCandlestickSVG(opts: {
     }
   }
 
-  // ── Signal arrow at last bar ──
-  const lastBarX = xForBar(barCount - 1);
-  const arrowColor = isBullish ? '#22c55e' : '#ef4444';
-  const arrowY = isBullish ? yForPrice(bars[barCount - 1]?.low ?? entry) + 18 : yForPrice(bars[barCount - 1]?.high ?? entry) - 18;
-  const arrowPath = isBullish
-    ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
-    : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
   // ── EMA 50 & EMA 200 Lines ──
   const closes = bars.map(b => b.close);
   const ema50Values = calculateEMA(closes, 50);
