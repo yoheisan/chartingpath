@@ -481,28 +481,39 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           text: string;
         }> = [];
 
-        // Add pattern pivot markers from visualSpec (same as audit page)
-        // These show the structural points of the pattern (highs/lows)
+        // Add pattern pivot markers (skip "Entry" — redundant with blue entry marker)
         if (visualSpec?.pivots && visualSpec.pivots.length > 0) {
           visualSpec.pivots.forEach((pivot) => {
+            // Skip "Entry" pivots — entry is already shown by the blue triangle marker
+            if ((pivot.label || '').toLowerCase().includes('entry')) return;
+
             const isHigh = pivot.type === 'high';
+            const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
             
-            // Try to match pivot to a bar time
             let pivotTime = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
             
-            // If timestamp doesn't match, try using the index
             if (!timeSet.has(pivotTime) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < playback.visibleBars.length) {
               pivotTime = Math.floor(new Date(playback.visibleBars[pivot.index].t).getTime() / 1000);
             }
             
             if (timeSet.has(pivotTime)) {
-              allMarkers.push({
-                time: pivotTime as Time,
-                position: isHigh ? 'aboveBar' : 'belowBar',
-                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
-                shape: isHigh ? 'arrowDown' : 'arrowUp',
-                text: pivot.label || '',
-              });
+              if (isBreakout) {
+                allMarkers.push({
+                  time: pivotTime as Time,
+                  position: direction === 'long' ? 'belowBar' : 'aboveBar',
+                  color: '#3b82f6',
+                  shape: direction === 'long' ? 'arrowUp' : 'arrowDown',
+                  text: pivot.label || 'Breakout Level',
+                });
+              } else {
+                allMarkers.push({
+                  time: pivotTime as Time,
+                  position: isHigh ? 'aboveBar' : 'belowBar',
+                  color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
+                  shape: isHigh ? 'arrowDown' : 'arrowUp',
+                  text: pivot.label || '',
+                });
+              }
             }
           });
         }

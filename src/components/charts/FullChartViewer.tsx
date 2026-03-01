@@ -572,10 +572,15 @@ export default function FullChartViewer({
           text: string;
         }> = [];
 
-        // Add pivot markers
+        // Add pivot markers (skip "Entry" label — redundant with blue entry marker)
         if (visualSpec.pivots && visualSpec.pivots.length > 0) {
+          const isLongPattern = setup.direction === 'long';
           visualSpec.pivots.forEach((pivot) => {
+            // Skip "Entry" pivots — entry is already shown by the blue triangle marker
+            if ((pivot.label || '').toLowerCase().includes('entry')) return;
+
             const isHigh = pivot.type === 'high';
+            const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
 
             let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
 
@@ -590,13 +595,24 @@ export default function FullChartViewer({
 
             if (!timeSet.has(t)) return;
 
-            allMarkers.push({
-              time: t as Time,
-              position: isHigh ? 'aboveBar' : 'belowBar',
-              color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
-              shape: isHigh ? 'arrowDown' : 'arrowUp',
-              text: pivot.label || (isHigh ? 'H' : 'L'),
-            });
+            // For "Breakout Level" pivots: triangle pointing in trade direction
+            if (isBreakout) {
+              allMarkers.push({
+                time: t as Time,
+                position: isLongPattern ? 'belowBar' : 'aboveBar',
+                color: '#3b82f6',
+                shape: isLongPattern ? 'arrowUp' : 'arrowDown',
+                text: pivot.label || 'Breakout Level',
+              });
+            } else {
+              allMarkers.push({
+                time: t as Time,
+                position: isHigh ? 'aboveBar' : 'belowBar',
+                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
+                shape: isHigh ? 'arrowDown' : 'arrowUp',
+                text: pivot.label || (isHigh ? 'H' : 'L'),
+              });
+            }
           });
         }
 
