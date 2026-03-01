@@ -2991,7 +2991,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_color: string | null
           created_at: string | null
+          display_alias: string | null
           email: string | null
           email_notifications_enabled: boolean | null
           id: string
@@ -3004,7 +3006,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_color?: string | null
           created_at?: string | null
+          display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
           id?: string
@@ -3017,7 +3021,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_color?: string | null
           created_at?: string | null
+          display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
           id?: string
