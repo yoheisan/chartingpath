@@ -530,6 +530,9 @@ async function processMTFValidations(
       if (verdict.verdict === "rejected") {
         // Override to rejected — this is the final gate
         updatePayload.validation_status = "rejected";
+      } else if (verdict.verdict === "confirmed") {
+        // Final layer passed — mark as confirmed (this is the terminal state)
+        updatePayload.validation_status = "confirmed";
       }
 
       // Append layer to passed layers
