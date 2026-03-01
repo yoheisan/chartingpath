@@ -2097,7 +2097,9 @@
       "Bearish Harami": "前の大きな強気ローソク足の中にある小さなローソク足",
       "Bullish Engulfing": "前の弱気ローソク足を包み込む大きな強気ローソク足",
       "Bearish Engulfing": "前の強気ローソク足を包み込む大きな弱気ローソク足",
-      "Spinning Top": "長いヒゲと小さな実体で迷いを示す"
+      "Spinning Top": "長いヒゲと小さな実体で迷いを示す",
+      "Donchian Breakout (Long)": "20期間ドンチャンチャネル高値を上抜ける強気ブレイクアウト",
+      "Donchian Breakout (Short)": "20期間ドンチャンチャネル安値を下抜ける弱気ブレイクダウン"
     }
   },
   "patternDetailModal": {
