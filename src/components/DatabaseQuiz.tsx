@@ -314,7 +314,6 @@ export const DatabaseQuiz = ({
                     <span className="font-medium">
                       {currentQuestion.category === 'visual_recognition' ? translatePatternName(option) : option}
                     </span>
-                    </span>
                     {showResult && isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     )}
