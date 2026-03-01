@@ -402,15 +402,13 @@ const PatternLabWizard = () => {
   };
   
   const handleRun = async () => {
-    // Allow first anonymous run — gate on second run or save/export actions
-    const anonRunCount = parseInt(sessionStorage.getItem('anonymous_runs_count') || '0', 10);
-    
-    if (!session && anonRunCount >= 1) {
+    // Gate: non-authenticated users must sign in first
+    if (!session) {
       setShowAuthDialog(true);
       return;
     }
     
-    if (!isEnabled && session) {
+    if (!isEnabled) {
       toast.error('Pattern Lab requires Plus plan or higher');
       navigate('/pricing');
       return;
@@ -1161,10 +1159,10 @@ const PatternLabWizard = () => {
                   disabled={
                     isRunning || 
                     isAuthLoading ||
-                    !isEnabled ||
                     selectedInstruments.length === 0 || 
                     selectedPatterns.length === 0 ||
-                    (estimate && !estimate.allowed)
+                    (isAuthenticated && !isEnabled) ||
+                    (isAuthenticated && estimate && !estimate.allowed)
                   }
                 >
                   {isRunning ? (
