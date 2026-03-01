@@ -150,7 +150,7 @@ export function calculatePricePrecision(price: number): { precision: number; min
 export const INDICATOR_COLORS = {
   ema20: 'rgba(249, 115, 22, 0.8)',    // Orange
   ema50: 'rgba(59, 130, 246, 0.8)',    // Blue  
-  sma200: 'rgba(139, 92, 246, 0.8)',   // Purple
+  ema200: 'rgba(139, 92, 246, 0.8)',   // Purple
   bollingerBands: 'rgba(156, 163, 175, 0.4)', // Gray translucent
   vwap: 'rgba(6, 182, 212, 0.8)',      // Cyan
   rsi: 'rgba(234, 179, 8, 0.8)',       // Yellow

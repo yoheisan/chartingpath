@@ -93,7 +93,7 @@ import {
 export interface IndicatorSettings {
   ema20: boolean;
   ema50: boolean;
-  sma200: boolean;
+  ema200: boolean;
   bollingerBands: boolean;
   vwap: boolean;
 }
@@ -101,7 +101,7 @@ export interface IndicatorSettings {
 const DEFAULT_INDICATORS: IndicatorSettings = {
   ema20: true,
   ema50: true,
-  sma200: true,
+  ema200: true,
   bollingerBands: true,
   vwap: true,
 };
@@ -461,18 +461,18 @@ export default function FullChartViewer({
           }
         }
 
-        // SMA 200 (trend)
-        if (currentIndicators.sma200) {
-          const sma200Data = calculateSMA(bars, 200);
-          if (sma200Data.length > 0) {
-            const sma200Series = chart.addSeries(LineSeries, {
-              color: INDICATOR_COLORS.sma200,
+        // EMA 200 (trend)
+        if (currentIndicators.ema200) {
+          const ema200Data = calculateEMA(bars, 200);
+          if (ema200Data.length > 0) {
+            const ema200Series = chart.addSeries(LineSeries, {
+              color: INDICATOR_COLORS.ema200,
               lineWidth: 1,
               lineStyle: 2,
               priceLineVisible: false,
               lastValueVisible: false,
             });
-            sma200Series.setData(sma200Data.map(p => ({ time: p.time as Time, value: p.value })));
+            ema200Series.setData(ema200Data.map(p => ({ time: p.time as Time, value: p.value })));
           }
         }
 
@@ -1065,9 +1065,9 @@ export default function FullChartViewer({
                         EMA 50
                       </span>
                     )}
-                    {indicators.sma200 && (
+                    {indicators.ema200 && (
                       <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-purple-500">
-                        SMA 200
+                        EMA 200
                       </span>
                     )}
                     {indicators.bollingerBands && (
@@ -1167,14 +1167,14 @@ export default function FullChartViewer({
                             </div>
 
                             <div className="flex items-center justify-between">
-                              <Label htmlFor="fc-sma200" className="text-sm flex items-center gap-2">
+                              <Label htmlFor="fc-ema200" className="text-sm flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-purple-500" />
-                                SMA 200
+                                EMA 200
                               </Label>
                               <Switch
-                                id="fc-sma200"
-                                checked={indicators.sma200}
-                                onCheckedChange={() => handleToggle('sma200')}
+                                id="fc-ema200"
+                                checked={indicators.ema200}
+                                onCheckedChange={() => handleToggle('ema200')}
                               />
                             </div>
 

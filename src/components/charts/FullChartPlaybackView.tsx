@@ -57,8 +57,8 @@ interface FullChartPlaybackViewProps {
 // Default indicators for standalone usage
 const DEFAULT_INDICATORS: IndicatorSettings = {
   ema20: false,
-  ema50: false,
-  sma200: false,
+  ema50: true,
+  ema200: true,
   bollingerBands: false,
   vwap: false,
 };
@@ -257,17 +257,17 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
           }
         }
 
-        if (indicators.sma200) {
-          const sma200Data = calculateSMA(playback.visibleBars, 200);
-          if (sma200Data.length > 0) {
+        if (indicators.ema200) {
+          const ema200Data = calculateEMA(playback.visibleBars, 200);
+          if (ema200Data.length > 0) {
             const series = chart.addSeries(LineSeries, {
-              color: INDICATOR_COLORS.sma200,
+              color: INDICATOR_COLORS.ema200,
               lineWidth: 1,
               lineStyle: 2,
               priceLineVisible: false,
               lastValueVisible: false,
             });
-            series.setData(sma200Data.map(p => ({ time: p.time as Time, value: p.value })));
+            series.setData(ema200Data.map(p => ({ time: p.time as Time, value: p.value })));
           }
         }
 
