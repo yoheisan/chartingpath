@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackPageLeave } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { PageMeta } from "@/components/PageMeta";
 import { ArticleJsonLd } from "@/components/JsonLd";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
@@ -566,12 +567,29 @@ function renderSection(section: ParsedSection, index: number) {
         <section key={index} id={sectionId} className="mb-8">
           <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               p: ({ children }) => <p className="text-muted-foreground leading-relaxed mb-4">{children}</p>,
               strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
               ul: ({ children }) => <ul className="list-disc list-inside space-y-2 mb-4">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 mb-4">{children}</ol>,
-              li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
+              li: ({ children, ...props }) => {
+                const className = (props as any).className;
+                if (className === 'task-list-item') {
+                  return <li className="text-muted-foreground list-none flex items-center gap-2">{children}</li>;
+                }
+                return <li className="text-muted-foreground">{children}</li>;
+              },
+              input: ({ type, checked }) => {
+                if (type === 'checkbox') {
+                  return (
+                    <span className={`inline-flex items-center justify-center w-4 h-4 rounded border ${checked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                      {checked && <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </span>
+                  );
+                }
+                return null;
+              },
               h3: ({ children }) => <h3 className="text-xl font-semibold mt-6 mb-3">{children}</h3>,
               a: ({ href, children }) => {
                 if (href?.startsWith('/')) {
@@ -590,7 +608,6 @@ function renderSection(section: ParsedSection, index: number) {
               th: ({ children }) => <th className="text-left py-2 px-3 font-semibold text-foreground">{children}</th>,
               td: ({ children }) => <td className="py-2 px-3 text-muted-foreground">{children}</td>,
               img: ({ src, alt }) => {
-                // Skip broken /src/assets/docs/ references
                 if (src?.includes('/src/assets/docs/')) return null;
                 return <img src={src} alt={alt || ''} className="rounded-lg max-w-full my-4" loading="lazy" />;
               },
