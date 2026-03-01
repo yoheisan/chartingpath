@@ -26,34 +26,35 @@ function generateOAuthSignature(
   return createHmac("sha1", key).update(baseStr).digest("base64");
 }
 
-function oauthHeader(method: string, url: string, extraParams: Record<string, string> = {}): string {
+function oauthHeader(method: string, url: string, queryParams: Record<string, string> = {}): string {
   const apiKey = Deno.env.get("TWITTER_API_KEY")!;
   const apiSecret = Deno.env.get("TWITTER_API_SECRET")!;
   const accessToken = Deno.env.get("TWITTER_ACCESS_TOKEN")!;
   const accessTokenSecret = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")!;
 
-  const params: Record<string, string> = {
+  const oauthParams: Record<string, string> = {
     oauth_consumer_key: apiKey,
     oauth_nonce: Math.random().toString(36).substring(2),
     oauth_signature_method: "HMAC-SHA1",
     oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
     oauth_token: accessToken,
     oauth_version: "1.0",
-    ...extraParams,
   };
 
-  params.oauth_signature = generateOAuthSignature(
+  // Signature base includes BOTH oauth params AND query params
+  const allParams: Record<string, string> = { ...oauthParams, ...queryParams };
+
+  oauthParams.oauth_signature = generateOAuthSignature(
     method,
     url,
-    params,
+    allParams,
     apiSecret,
     accessTokenSecret
   );
 
   return (
     "OAuth " +
-    Object.entries(params)
-      .filter(([k]) => k.startsWith("oauth_"))
+    Object.entries(oauthParams)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([k, v]) => `${encodeURIComponent(k)}="${encodeURIComponent(v)}"`)
       .join(", ")
@@ -67,7 +68,7 @@ async function fetchFollowing(
 ): Promise<{ users: any[]; nextToken?: string }> {
   const baseUrl = `https://api.x.com/2/users/${userId}/following`;
   const params = new URLSearchParams({
-    max_results: "1000",
+    max_results: "100",
     "user.fields": "public_metrics,username,name",
   });
   if (paginationToken) params.set("pagination_token", paginationToken);
