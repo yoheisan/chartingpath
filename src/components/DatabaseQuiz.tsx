@@ -263,7 +263,7 @@ export const DatabaseQuiz = ({
             </div>
           </div>
 
-          <p className="text-lg mb-6">{currentQuestion.question_text}</p>
+          <p className="text-lg mb-6">{getTranslated(currentQuestion).question_text}</p>
 
           {/* Image Display */}
           {currentQuestion.image_url && !currentQuestion.pattern_key && !currentQuestion.pattern_name && (
@@ -290,7 +290,7 @@ export const DatabaseQuiz = ({
 
           {/* Answer Options */}
           <div className="grid grid-cols-1 gap-3">
-            {currentQuestion.options.map((option, index) => {
+            {getTranslated(currentQuestion).options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrect = index === currentQuestion.correct_answer;
               const showResult = showExplanation;
@@ -313,6 +313,7 @@ export const DatabaseQuiz = ({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">
                       {currentQuestion.category === 'visual_recognition' ? translatePatternName(option) : option}
+                    </span>
                     </span>
                     {showResult && isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -337,7 +338,7 @@ export const DatabaseQuiz = ({
                 <p className="font-semibold mb-2">
                   {selectedAnswer === currentQuestion.correct_answer ? t('databaseQuiz.correct') : t('databaseQuiz.incorrect')}
                 </p>
-                <p className="text-sm">{currentQuestion.explanation}</p>
+                <p className="text-sm">{getTranslated(currentQuestion).explanation}</p>
               </div>
 
               {/* Pattern Details */}
