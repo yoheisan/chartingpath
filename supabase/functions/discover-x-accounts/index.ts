@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { createHmac } from "node:crypto";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,57 +7,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ── OAuth 1.0a helpers ─────────────────────────────────────────────────
-function generateOAuthSignature(
-  method: string,
-  url: string,
-  params: Record<string, string>,
-  consumerSecret: string,
-  tokenSecret: string
-): string {
-  const baseStr = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(
-    Object.entries(params)
-      .sort()
-      .map(([k, v]) => `${k}=${v}`)
-      .join("&")
-  )}`;
-  const key = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(tokenSecret)}`;
-  return createHmac("sha1", key).update(baseStr).digest("base64");
-}
+// ── OAuth 2.0 Client Credentials (App-Only Bearer Token) ──────────────
+let cachedBearerToken: string | null = null;
 
-function oauthHeader(method: string, url: string, queryParams: Record<string, string> = {}): string {
-  const apiKey = Deno.env.get("TWITTER_API_KEY")!;
-  const apiSecret = Deno.env.get("TWITTER_API_SECRET")!;
-  const accessToken = Deno.env.get("TWITTER_ACCESS_TOKEN")!;
-  const accessTokenSecret = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")!;
+async function getBearerToken(): Promise<string> {
+  if (cachedBearerToken) return cachedBearerToken;
 
-  const oauthParams: Record<string, string> = {
-    oauth_consumer_key: apiKey,
-    oauth_nonce: Math.random().toString(36).substring(2),
-    oauth_signature_method: "HMAC-SHA1",
-    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-    oauth_token: accessToken,
-    oauth_version: "1.0",
-  };
+  const clientId = Deno.env.get("TWITTER_OAUTH2_CLIENT_ID")!;
+  const clientSecret = Deno.env.get("TWITTER_OAUTH2_CLIENT_SECRET")!;
+  const credentials = btoa(`${clientId}:${clientSecret}`);
 
-  // Signature base includes BOTH oauth params AND query params
-  const allParams: Record<string, string> = { ...oauthParams, ...queryParams };
+  const res = await fetch("https://api.x.com/oauth2/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
 
-  oauthParams.oauth_signature = generateOAuthSignature(
-    method,
-    url,
-    allParams,
-    apiSecret,
-    accessTokenSecret
-  );
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Bearer token error ${res.status}: ${txt}`);
+  }
 
-  return (
-    "OAuth " +
-    Object.entries(oauthParams)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([k, v]) => `${encodeURIComponent(k)}="${encodeURIComponent(v)}"`)
-      .join(", ")
-  );
+  const data = await res.json();
+  cachedBearerToken = data.access_token;
+  return cachedBearerToken!;
 }
 
 // ── Fetch following list for a user ────────────────────────────────────
@@ -66,6 +41,7 @@ async function fetchFollowing(
   userId: string,
   paginationToken?: string
 ): Promise<{ users: any[]; nextToken?: string }> {
+  const bearerToken = await getBearerToken();
   const baseUrl = `https://api.x.com/2/users/${userId}/following`;
   const params = new URLSearchParams({
     max_results: "100",
@@ -74,17 +50,29 @@ async function fetchFollowing(
   if (paginationToken) params.set("pagination_token", paginationToken);
 
   const fullUrl = `${baseUrl}?${params.toString()}`;
-  // For GET requests with query params, include them in signature
-  const signatureParams: Record<string, string> = {};
-  params.forEach((v, k) => { signatureParams[k] = v; });
 
   const res = await fetch(fullUrl, {
-    headers: { Authorization: oauthHeader("GET", baseUrl, signatureParams) },
+    headers: { Authorization: `Bearer ${bearerToken}` },
   });
 
   if (res.status === 429) {
     const resetAt = res.headers.get("x-rate-limit-reset");
     throw new Error(`rate_limited:${resetAt || ""}`);
+  }
+
+  if (res.status === 401) {
+    // Token may have expired, clear cache and retry once
+    cachedBearerToken = null;
+    const newToken = await getBearerToken();
+    const retryRes = await fetch(fullUrl, {
+      headers: { Authorization: `Bearer ${newToken}` },
+    });
+    if (!retryRes.ok) {
+      const txt = await retryRes.text();
+      throw new Error(`API error ${retryRes.status}: ${txt}`);
+    }
+    const retryBody = await retryRes.json();
+    return { users: retryBody.data || [], nextToken: retryBody.meta?.next_token };
   }
 
   if (!res.ok) {
