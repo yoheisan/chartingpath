@@ -36,7 +36,7 @@ const OverviewTab = () => (
       <CardHeader>
         <CardTitle className="text-base">Platform Architecture — Executive Summary</CardTitle>
         <CardDescription>
-          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-02-20.
+          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-01.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -990,12 +990,51 @@ check-alert-matches
               title: "signal_webhook_log",
               desc: "Delivery audit trail: user_id, alert_id, webhook_url, status_code, latency_ms, response_body, delivered_at.",
             },
-          ].map(({ title, desc }) => (
+           ].map(({ title, desc }) => (
             <div key={title} className="p-3 border rounded-lg bg-card">
               <p className="font-semibold text-sm mb-1 font-mono">{title}</p>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
           ))}
+        </div>
+
+        <SectionHeader icon={Activity} title="Public-Facing Documentation" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Asset", "Location", "Content", "i18n"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["FAQ — Automation tab", "/faq → Automation", "7 Q&As: how auto-trading works, position sizing, webhook setup, security, risk controls", "✅ faq.automation.*"],
+                ["FAQ — How to use guide", "/faq → Automation", "Step-by-step: enable auto_paper_trade on alerts, configure webhook URLs", "✅ faq.automation.*"],
+                ["Paper Trading Panel", "Dashboard → Right sidebar → Paper tab", "Portfolio summary, open positions, closed trades, [Auto] badge", "Component-level (English)"],
+                ["Alert creation form", "Dashboard → Alerts", "auto_paper_trade toggle, webhook_url, webhook_secret, risk_percent fields", "✅ alerts.*"],
+              ].map(([asset, loc, content, i18n]) => (
+                <tr key={asset}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{asset}</td>
+                  <td className="px-4 py-2 border-b text-xs">{loc}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{content}</td>
+                  <td className="px-4 py-2 border-b text-xs">{i18n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Shield} title="i18n Translation Keys Added" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p><strong>Namespace:</strong> <code className="text-xs bg-background px-1 rounded">faq.automation.*</code></p>
+          <p><strong>Keys added:</strong> 55+ (questions, answers, tab label)</p>
+          <p><strong>Source file:</strong> <code className="text-xs bg-background px-1 rounded">src/i18n/locales/en.json</code></p>
+          <p><strong>Coverage:</strong> All FAQ automation content is translatable via react-i18next</p>
+          <p className="text-muted-foreground text-xs pt-2 border-t mt-2">
+            Non-English translations pending — keys exist in English, awaiting translation pipeline processing.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -1172,7 +1211,7 @@ export const InternalDocs = () => {
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-03-01 · Version 2.5
+        Last updated: 2026-03-01 · Version 2.6
       </p>
     </div>
   );
