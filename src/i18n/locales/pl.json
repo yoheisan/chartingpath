@@ -1,1 +1,26 @@
-{}
+{
+  "auth": {
+    "backToHome": "Powrót do strony głównej",
+    "headline": "Twoja darmowa przewaga w handlu zaczyna się tutaj",
+    "subheadline": "Dołącz do tysięcy instrumentów śledzonych codziennie z rozpoznawaniem wzorców opartym na ponad 320 000 historycznych wyników.",
+    "freeAccountIncludes": "Darmowe konto zawiera",
+    "backtestsPerDay": "3 backtesty dziennie",
+    "liveScreenerAccess": "Dostęp do screenera na żywo",
+    "patternAlertSetup": "Konfiguracja alertów wzorców",
+    "edgeAtlasRankings": "Rankingi Edge Atlas",
+    "instrumentsTracked": "Śledzone instrumenty",
+    "patternOutcomes": "Wyniki wzorców",
+    "noCreditCard": "Nie wymagamy karty kredytowej",
+    "freeForever": "Darmowy plan na zawsze",
+    "cancelAnytime": "Możesz zrezygnować w każdej chwili",
+    "createAccount": "Utwórz konto",
+    "welcomeBack": "Witamy ponownie",
+    "continueWithGoogle": "Kontynuuj z Google",
+    "signIn": "Zaloguj się",
+    "signingIn": "Logowanie...",
+    "toastAccountCreated": "Konto utworzone",
+    "toastAuthError": "Błąd autoryzacji",
+    "toastSignedIn": "Zalogowano pomyślnie",
+    "toastWelcomeBack": "Witamy ponownie"
+  }
+}

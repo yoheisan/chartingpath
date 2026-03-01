@@ -1,4 +1,28 @@
 {
+  "auth": {
+    "backToHome": "Terug na Tuisblad",
+    "headline": "Jou gratis handelsvoordeel begin hier",
+    "subheadline": "Sluit aan by duisende instrumente wat daagliks nagespoor word met patroonherkenning aangedryf deur 320,000+ historiese uitkomste.",
+    "freeAccountIncludes": "Gratis rekening sluit in",
+    "backtestsPerDay": "3 terugtoetse per dag",
+    "liveScreenerAccess": "Lewendige skermtoegang",
+    "patternAlertSetup": "Patroonwaarskuwing opstelling",
+    "edgeAtlasRankings": "Edge Atlas ranglys",
+    "instrumentsTracked": "Instrumente nagespoor",
+    "patternOutcomes": "Patroonuitkomste",
+    "noCreditCard": "Geen kredietkaart benodig nie",
+    "freeForever": "Gratis vir ewig vlak",
+    "cancelAnytime": "Kanselleer enige tyd",
+    "createAccount": "Skep Rekening",
+    "welcomeBack": "Welkom Terug",
+    "continueWithGoogle": "Gaan voort met Google",
+    "signIn": "Meld aan",
+    "signingIn": "Meld aan...",
+    "toastAccountCreated": "Rekening Geskep",
+    "toastAuthError": "Verifikasie Fout",
+    "toastSignedIn": "Jy is suksesvol aangemeld",
+    "toastWelcomeBack": "Welkom Terug"
+  },
   "pricing": {
     "plans": {
       "pro": {
