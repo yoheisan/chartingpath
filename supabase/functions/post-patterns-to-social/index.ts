@@ -296,7 +296,7 @@ serve(async (req) => {
     // ── Fetch A/B grade active patterns ───────────────────────────────────
     const { data: patterns, error: pErr } = await supabase
       .from('live_pattern_detections')
-      .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, share_token, share_image_url, status')
+      .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, share_token, share_image_url, status, trend_alignment')
       .in('quality_score', ALLOWED_GRADES)
       .in('status', ['active', 'pending'])
       .order('last_confirmed_at', { ascending: false })
@@ -311,8 +311,27 @@ serve(async (req) => {
       });
     }
 
+    // Filter for contextually-aligned patterns only:
+    // Bullish setups should be with_trend or neutral (not counter_trend)
+    // Bearish setups should be with_trend or neutral (not counter_trend)
+    // Patterns without trend data are excluded to maintain quality
+    const contextFiltered = patterns.filter((p: any) => {
+      const alignment = p.trend_alignment?.toLowerCase();
+      if (!alignment) {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — no trend data`);
+        return false;
+      }
+      if (alignment === 'counter_trend') {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — counter-trend`);
+        return false;
+      }
+      return true; // 'with_trend' or 'neutral'/'sideways'
+    });
+
+    console.log(`[pattern-poster] ${patterns.length} A/B patterns → ${contextFiltered.length} after trend filter`);
+
     // Prefer patterns WITH images, then without
-    const unposted = patterns.filter((p: any) => !postedPatternIds.has(p.id));
+    const unposted = contextFiltered.filter((p: any) => !postedPatternIds.has(p.id));
     const withImage = unposted.filter((p: any) => p.share_image_url);
     const toPost = (withImage.length > 0 ? withImage : unposted).slice(0, 1);
 
