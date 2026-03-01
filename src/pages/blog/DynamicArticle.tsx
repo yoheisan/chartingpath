@@ -1219,6 +1219,13 @@ const DynamicArticle = () => {
             </Suspense>
           )}
 
+          {/* COMMAND CENTER GUIDE: Visual demo of the Command Center UI */}
+          {slug === 'command-center-guide' && (
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <CommandCenterDemo />
+            </Suspense>
+          )}
+
           {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsPayoffVisualization slug={slug} />
