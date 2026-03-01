@@ -746,7 +746,7 @@ export default function FullChartViewer({
         }
 
         // TP/SL shaded zones standalone (when no formation overlay exists)
-        if (tradePlan && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
+        if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
           const drawStandaloneTradePlanZones = () => {
             const canvas = canvasOverlayRef.current;
             if (!canvas || !chartRef.current) return;
@@ -762,9 +762,9 @@ export default function FullChartViewer({
             ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, rect.width, rect.height);
 
-            const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
-            const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
-            const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+            const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
+            const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
+            const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
             if (entryY == null || tpY == null || slY == null) return;
 
             ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
