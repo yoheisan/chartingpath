@@ -351,7 +351,9 @@ export const DatabaseQuiz = ({
                       <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                         <span className="text-primary">📋</span> {t('databaseQuiz.howItForms')}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{patternDetails.formation}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t(`patternEducation.${patternKey}.formation`, patternDetails.formation)}
+                      </p>
                     </div>
                     
                     <div>
@@ -362,7 +364,7 @@ export const DatabaseQuiz = ({
                         {patternDetails.characteristics.map((char, idx) => (
                           <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
                             <span className="text-primary mt-0.5">•</span>
-                            <span>{char}</span>
+                            <span>{t(`patternEducation.${patternKey}.characteristics.${idx}`, char)}</span>
                           </li>
                         ))}
                       </ul>
@@ -373,7 +375,9 @@ export const DatabaseQuiz = ({
                         <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                           <span className="text-primary">✓</span> {t('databaseQuiz.confirmation')}
                         </h4>
-                        <p className="text-sm text-muted-foreground">{patternDetails.confirmation}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t(`patternEducation.${patternKey}.confirmation`, patternDetails.confirmation)}
+                        </p>
                       </div>
                     )}
                   </div>
