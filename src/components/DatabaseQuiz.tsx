@@ -104,7 +104,7 @@ export const DatabaseQuiz = ({
             trMap.set(tr.question_id, {
               question_id: tr.question_id,
               question_text: tr.question_text,
-              options: Array.isArray(tr.options) ? tr.options : [],
+              options: Array.isArray(tr.options) ? (tr.options as unknown as string[]) : [],
               explanation: tr.explanation,
             });
           }
