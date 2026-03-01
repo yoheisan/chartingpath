@@ -265,7 +265,7 @@ export default function SharedPattern() {
                     {pattern.quality_reasons.map((reason, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-green-500 mt-0.5">✓</span>
-                        {reason}
+                        {translateQualityReason(reason, t)}
                       </li>
                     ))}
                   </ul>
