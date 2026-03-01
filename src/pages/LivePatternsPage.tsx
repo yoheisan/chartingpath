@@ -1388,20 +1388,22 @@ export default function LivePatternsPage() {
                             {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant="outline"
-                                    className={`ml-1.5 text-[10px] px-1.5 py-0 cursor-help ${
-                                      setup.trendAlignment === 'with_trend' 
-                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                                    }`}
-                                  >
-                                    {setup.trendAlignment === 'with_trend' ? (
-                                      <ArrowUpRight className="h-2.5 w-2.5" />
-                                    ) : (
-                                      <ArrowDownRight className="h-2.5 w-2.5" />
-                                    )}
-                                  </Badge>
+                                  <span className="inline-flex align-middle">
+                                    <Badge 
+                                      variant="outline"
+                                      className={`ml-1.5 text-[10px] px-1.5 py-0 cursor-help ${
+                                        setup.trendAlignment === 'with_trend' 
+                                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
+                                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                      }`}
+                                    >
+                                      {setup.trendAlignment === 'with_trend' ? (
+                                        <ArrowUpRight className="h-2.5 w-2.5" />
+                                      ) : (
+                                        <ArrowDownRight className="h-2.5 w-2.5" />
+                                      )}
+                                    </Badge>
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-[220px] text-xs">
                                   {setup.trendAlignment === 'with_trend' 
