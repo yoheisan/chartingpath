@@ -123,6 +123,32 @@ function renderCandlestickSVG(opts: {
   const arrowPath = isBullish
     ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
     : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
+  // ── EMA 50 & EMA 200 Lines ──
+  const closes = bars.map(b => b.close);
+  const ema50Values = calculateEMA(closes, 50);
+  const ema200Values = calculateEMA(closes, 200);
+
+  const renderEmaLine = (values: (number | null)[], color: string) => {
+    const points: string[] = [];
+    values.forEach((val, i) => {
+      if (val !== null) {
+        points.push(`${xForBar(i).toFixed(1)},${yForPrice(val).toFixed(1)}`);
+      }
+    });
+    if (points.length < 2) return '';
+    return `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"/>`;
+  };
+
+  const ema50Svg = renderEmaLine(ema50Values, '#f59e0b');  // Amber for EMA 50
+  const ema200Svg = renderEmaLine(ema200Values, '#a855f7'); // Purple for EMA 200
+
+  // ── Signal arrow at last bar ──
+  const lastBarX = xForBar(barCount - 1);
+  const arrowColor = isBullish ? '#22c55e' : '#ef4444';
+  const arrowY = isBullish ? yForPrice(bars[barCount - 1]?.low ?? entry) + 18 : yForPrice(bars[barCount - 1]?.high ?? entry) - 18;
+  const arrowPath = isBullish
+    ? `M${lastBarX - 8},${arrowY + 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY + 12} Z`
+    : `M${lastBarX - 8},${arrowY - 12} L${lastBarX},${arrowY} L${lastBarX + 8},${arrowY - 12} Z`;
   const signalArrowSvg = `<path d="${arrowPath}" fill="${arrowColor}" opacity="0.9"/>`;
 
   // ── Candlesticks ──
