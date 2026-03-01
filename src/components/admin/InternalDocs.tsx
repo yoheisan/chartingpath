@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2 } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -1041,6 +1041,302 @@ check-alert-matches
   </div>
 );
 
+// ─── Tab: Social Media CMS & Auto-Posting ──────────────────────────────────────
+
+const SocialCMSTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Social Media CMS — Auto-Posting Pipeline</CardTitle>
+        <CardDescription>
+          Fully automated content distribution across X (Twitter) and Instagram. Covers pattern alerts, market reports, educational micro-posts, and growth automation. Updated 2026-03-01.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Activity} title="Pipeline Architecture" />
+        <CodeBlock>{`┌─────────────────────────────────────────────────────────────────┐
+│                     CONTENT GENERATION                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [post-patterns-to-social]     ← cron: every 60 min             │
+│     └─► A/B grade detections → tweet with chart image            │
+│                                                                 │
+│  [schedule-market-reports]     ← cron: daily                    │
+│     └─► 6 regional market reports → scheduled_posts              │
+│                                                                 │
+│  [schedule-educational-posts]  ← cron: 21:00 UTC daily          │
+│     └─► educational_content_pieces → scheduled_posts             │
+│                                                                 │
+│  [seed-qa-content]             ← on-demand                      │
+│     └─► quiz_questions → content_library                         │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                     DELIVERY ENGINE                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [social-media-scheduler]      ← cron: every 5 min              │
+│     └─► scheduled_posts (status=scheduled, due now)              │
+│           └─► [post-to-social-media]                             │
+│                 ├─► Twitter (OAuth 1.0a, HMAC-SHA1)              │
+│                 └─► Instagram (Graph API v18.0)                  │
+│                                                                 │
+│  [post-patterns-to-social]     ← direct posting (no scheduler)   │
+│     └─► Twitter v2 API + media upload v1.1                       │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                     GROWTH AUTOMATION                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [discover-x-accounts]         ← cron: every 5 min              │
+│     └─► Snowball discovery from seed influencers                 │
+│                                                                 │
+│  [auto-follow-x]               ← cron: every 5 min              │
+│     └─► Drip-follow from follow_queue                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘`}</CodeBlock>
+
+        <SectionHeader icon={Share2} title="Edge Functions — Content Generation" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Function", "Trigger", "Input", "Output", "Status"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["post-patterns-to-social", "Cron: every 60 min", "live_pattern_detections (A/B grade, with_trend)", "Tweet + optional chart PNG", "active"],
+                ["schedule-market-reports", "Cron: daily", "6 regional configs (US, EU, Tokyo, etc.)", "scheduled_posts rows", "active"],
+                ["schedule-regional-reports", "Cron: daily", "Regional report batch configs", "scheduled_posts rows", "active"],
+                ["generate-social-market-teaser", "Invoked by scheduler", "cached_market_reports + Gemini 2.0 Flash", "240-char tweet with market data", "active"],
+                ["schedule-educational-posts", "Cron: 21:00 UTC daily", "educational_content_pieces (global_order queue)", "scheduled_posts for next day", "active"],
+                ["generate-educational-posts", "On-demand (admin)", "learning_articles → AI chunking", "educational_content_pieces", "active"],
+                ["seed-qa-content", "On-demand (admin)", "quiz_questions with images", "content_library items", "active"],
+                ["pre-generate-pattern-images", "Cron: every 2 hours", "A/B grade live detections", "SVG charts in Supabase storage", "active"],
+              ].map(([fn, trigger, input, output, status]) => (
+                <tr key={fn}>
+                  <td className="px-3 py-2 border-b font-mono text-xs text-primary">{fn}</td>
+                  <td className="px-3 py-2 border-b text-xs">{trigger}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground">{input}</td>
+                  <td className="px-3 py-2 border-b text-xs">{output}</td>
+                  <td className="px-3 py-2 border-b"><StatusBadge status={status as "active"} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Share2} title="Edge Functions — Delivery & Growth" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Function", "Trigger", "Key Logic", "Status"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["social-media-scheduler", "Cron: every 5 min", "Batch 5 due posts, 3 retries, 48h stale cleanup, recurrence auto-schedule", "active"],
+                ["post-to-social-media", "Invoked by scheduler", "OAuth 1.0a Twitter + Instagram Graph API, self-healing AI teaser fallback", "active"],
+                ["discover-x-accounts", "Cron: every 5 min", "Snowball crawl seed influencer 'following' lists, overlap scoring, 100+ follower filter", "active"],
+                ["auto-follow-x", "Cron: every 5 min", "Drip-follow from follow_queue, rate limit aware, 429 auto-retry", "active"],
+              ].map(([fn, trigger, logic, status]) => (
+                <tr key={fn}>
+                  <td className="px-3 py-2 border-b font-mono text-xs text-primary">{fn}</td>
+                  <td className="px-3 py-2 border-b text-xs">{trigger}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground">{logic}</td>
+                  <td className="px-3 py-2 border-b"><StatusBadge status={status as "active"} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Cpu} title="post-patterns-to-social — Deep Dive" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Feature", "Implementation"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Quality filter", "Only A/B grade patterns from live_pattern_detections"],
+                ["Trend filter", "Excludes counter_trend — only with_trend, neutral, sideways"],
+                ["Budget control", "social_post_budget table: 25 posts/day max (configurable)"],
+                ["Session awareness", "Posts tagged by market session (tokyo/london/newyork)"],
+                ["Duplicate prevention", "Checks post_history for same pattern_id within session"],
+                ["Image pipeline", "SVG → PNG via images.weserv.nl proxy → Twitter v1.1 media upload"],
+                ["Share tokens", "Auto-generates share_token for deep-link URLs"],
+                ["Tweet format", "Emoji + pattern name + instrument + grade + R:R + entry/SL/TP + CTA link"],
+                ["Rate limiting", "Catches 429, breaks loop, retries on next invocation"],
+              ].map(([feat, impl]) => (
+                <tr key={feat}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{feat}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{impl}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Cpu} title="social-media-scheduler — Deep Dive" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Feature", "Implementation"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Batch size", "5 posts per invocation"],
+                ["Retry logic", "3 max retries, 2s delay between retries"],
+                ["Stale cleanup", "Posts older than 48h auto-marked as 'missed'"],
+                ["Content generation", "AI teaser via generate-social-market-teaser for market_report type"],
+                ["Q&A content", "Pulls from content_library for qa_content post type"],
+                ["Link injection", "Appends link_back_url if not already in content"],
+                ["Recurrence", "daily / weekdays / weekly — auto-creates next occurrence after posting"],
+                ["Status flow", "scheduled → posting → posted (or failed after 3 retries)"],
+                ["Fallback content", "Generates safe fallback tweet if AI teaser fails"],
+              ].map(([feat, impl]) => (
+                <tr key={feat}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{feat}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{impl}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Cpu} title="schedule-educational-posts — Deep Dive" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Feature", "Implementation"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Frequency", "Daily (7 days/week including weekends)"],
+                ["Run time", "21:00 UTC — schedules for next day"],
+                ["Queue model", "global_order on educational_content_pieces, wraps around"],
+                ["Multi-region", "One piece per market region per day (via educational_schedule_state)"],
+                ["State management", "Atomic: only advances position AFTER successful DB insert"],
+                ["Content validation", "Minimum 10 chars, skips empty pieces"],
+                ["Duplicate guard", "Checks existing scheduled/posted for same date, ignores failed"],
+                ["Hashtags", "Appends up to 3 hashtags from piece metadata"],
+                ["CTA link", "Pre-baked in content from generate-educational-posts"],
+              ].map(([feat, impl]) => (
+                <tr key={feat}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{feat}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{impl}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Database} title="Database Tables" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            {
+              title: "scheduled_posts",
+              desc: "Central queue for all scheduled content. Fields: account_id, post_type (market_report/qa_content/educational), content, scheduled_time, status (scheduled/posting/posted/failed), retry_count, recurrence_pattern, report_config, content_library_id.",
+            },
+            {
+              title: "post_history",
+              desc: "Audit trail for posted content. Fields: scheduled_post_id, account_id, platform, content, platform_post_id, platform_response, pattern_id, session_window, posted_at.",
+            },
+            {
+              title: "social_media_accounts",
+              desc: "Platform credentials. Fields: platform (twitter/instagram), account_name, credentials (encrypted JSON), is_active. Currently 1 active Twitter account.",
+            },
+            {
+              title: "content_library",
+              desc: "Reusable Q&A content pool. Fields: content_type, title, content, image_url, link_back_url, tags, post_count, last_posted_at.",
+            },
+            {
+              title: "educational_content_pieces",
+              desc: "Micro-posts chunked from learning articles. Fields: article_id, content, piece_type, sequence_number, global_order, hashtags, posted_count.",
+            },
+            {
+              title: "educational_schedule_state",
+              desc: "Per-region queue cursor. Fields: market_region, current_position, optimal_post_time_utc, timezone, last_scheduled_at.",
+            },
+            {
+              title: "social_post_budget",
+              desc: "Daily budget enforcement. Fields: platform, post_date, post_count, max_posts (25). Prevents over-posting.",
+            },
+            {
+              title: "follow_queue",
+              desc: "Drip-follow execution queue. Fields: x_user_id, username, source, status (pending/followed/skipped), followed_at.",
+            },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1 font-mono">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Server} title="Admin CMS UI — /admin/social-cms" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Tab", "Component", "Purpose"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Schedule", "MarketReportScheduler + ScheduledPostsManager", "Configure regional market reports, view/manage scheduled post queue, run scheduler manually"],
+                ["Educational", "EducationalContentManager", "Generate educational micro-posts from articles, view piece inventory"],
+                ["Follow Queue", "AutoFollowQueueManager", "Monitor drip-follow execution, view queue status and follow rates"],
+                ["Discovery", "DiscoveryManager", "Manage seed influencers, review discovered candidates, set overlap thresholds"],
+                ["Library", "ContentLibraryManager", "CRUD for reusable Q&A content, seed from quiz questions"],
+                ["Accounts", "SocialAccountsManager", "Manage Twitter/Instagram account credentials and active status"],
+                ["Analytics", "PostAnalytics", "View post performance, engagement metrics, posting frequency"],
+              ].map(([tab, comp, purpose]) => (
+                <tr key={tab}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{tab}</td>
+                  <td className="px-4 py-2 border-b font-mono text-xs text-primary">{comp}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{purpose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Shield} title="Security & Credentials" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p>• <strong>Twitter OAuth 1.0a:</strong> TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET</p>
+          <p>• <strong>Twitter OAuth 2.0 (Discovery):</strong> TWITTER_BEARER_TOKEN (App-Only for read operations)</p>
+          <p>• <strong>Tweet posting:</strong> HMAC-SHA1 signature, POST to api.x.com/2/tweets</p>
+          <p>• <strong>Media upload:</strong> Twitter v1.1 upload.twitter.com/1.1/media/upload.json (base64 encoding)</p>
+          <p>• <strong>Instagram:</strong> Graph API v18.0 with access_token stored in social_media_accounts.credentials</p>
+          <p>• <strong>AI content:</strong> GEMINI_API_KEY for market teaser generation (Gemini 2.0 Flash)</p>
+          <p>• <strong>Account ID:</strong> X account 1987443987419127809</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Tab: Internal Analytics ───────────────────────────────────────────────────
 
 const AnalyticsTab = () => (
@@ -1198,6 +1494,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="automation">Automation</TabsTrigger>
+          <TabsTrigger value="social-cms">Social CMS</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
@@ -1208,10 +1505,11 @@ export const InternalDocs = () => {
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
         <TabsContent value="analytics" className="mt-4"><AnalyticsTab /></TabsContent>
         <TabsContent value="automation" className="mt-4"><AutomationTab /></TabsContent>
+        <TabsContent value="social-cms" className="mt-4"><SocialCMSTab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-03-01 · Version 2.6
+        Last updated: 2026-03-01 · Version 2.7
       </p>
     </div>
   );
