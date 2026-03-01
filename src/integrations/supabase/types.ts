@@ -4591,6 +4591,84 @@ export type Database = {
         }
         Relationships: []
       }
+      x_discovered_accounts: {
+        Row: {
+          created_at: string
+          discovered_via: string[]
+          discovery_count: number
+          followers_count: number | null
+          following_count: number | null
+          id: string
+          name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          discovered_via?: string[]
+          discovery_count?: number
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          name?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          discovered_via?: string[]
+          discovery_count?: number
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      x_discovery_seeds: {
+        Row: {
+          accounts_found: number | null
+          crawled_at: string | null
+          created_at: string
+          following_count: number | null
+          id: string
+          pagination_token: string | null
+          seed_user_id: string
+          seed_username: string | null
+          status: string
+        }
+        Insert: {
+          accounts_found?: number | null
+          crawled_at?: string | null
+          created_at?: string
+          following_count?: number | null
+          id?: string
+          pagination_token?: string | null
+          seed_user_id: string
+          seed_username?: string | null
+          status?: string
+        }
+        Update: {
+          accounts_found?: number | null
+          crawled_at?: string | null
+          created_at?: string
+          following_count?: number | null
+          id?: string
+          pagination_token?: string | null
+          seed_user_id?: string
+          seed_username?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       x_follow_queue: {
         Row: {
           attempted_at: string | null
