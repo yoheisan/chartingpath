@@ -301,11 +301,14 @@ function renderSection(section: ParsedSection, index: number) {
             <AlertTitle className="text-lg font-semibold">{section.title}</AlertTitle>
             <AlertDescription className="mt-2">
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
+                  ...markdownTableComponents,
                   p: ({ children }) => <p className="text-muted-foreground mb-2 last:mb-0">{children}</p>,
                   strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
                   ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mt-2">{children}</ul>,
                   li: ({ children }) => <li className="text-muted-foreground text-sm">{children}</li>,
+                  h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2">{children}</h3>,
                 }}
               >
                 {section.content}
