@@ -1155,6 +1155,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="automation">Automation</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4"><OverviewTab /></TabsContent>
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
@@ -1164,10 +1165,11 @@ export const InternalDocs = () => {
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
         <TabsContent value="analytics" className="mt-4"><AnalyticsTab /></TabsContent>
+        <TabsContent value="automation" className="mt-4"><AutomationTab /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-02-26 · Version 2.4
+        Last updated: 2026-03-01 · Version 2.5
       </p>
     </div>
   );
