@@ -324,6 +324,13 @@ const PatternLabWizard = () => {
     let cancelled = false;
     
     const fetchEstimate = async () => {
+      // Skip estimate for anonymous users — the endpoint requires auth
+      if (!session) {
+        setEstimate(null);
+        setEstimateError(null);
+        return;
+      }
+      
       if (selectedPatterns.length === 0 || selectedInstruments.length === 0 || selectedGrades.length === 0) {
         setEstimate(null);
         setEstimateError(null);
