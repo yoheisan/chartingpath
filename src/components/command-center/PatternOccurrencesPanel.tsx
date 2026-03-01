@@ -281,10 +281,10 @@ export function PatternOccurrencesPanel({
         // Fetch historical patterns
         const { data: historicalData } = await supabase
           .from('historical_pattern_occurrences')
-          .select('id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_pnl_percent')
+          .select('id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_pnl_percent, validation_status')
           .eq('symbol', symbol)
           .eq('timeframe', timeframe)
-          .eq('validation_status', 'confirmed')
+          .in('validation_status', ['confirmed', 'pending'])
           .order('detected_at', { ascending: false })
           .limit(30);
 

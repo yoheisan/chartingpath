@@ -126,10 +126,10 @@ export function DashboardPatternStudy({
             .limit(10),
           supabase
             .from('historical_pattern_occurrences')
-            .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, quality_reasons, outcome, outcome_pnl_percent, bars_to_outcome, visual_spec, bars')
+            .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, quality_reasons, outcome, outcome_pnl_percent, bars_to_outcome, visual_spec, bars, validation_status')
             .eq('symbol', symbol)
             .eq('timeframe', timeframe)
-            .eq('validation_status', 'confirmed')
+            .in('validation_status', ['confirmed', 'pending'])
             .order('detected_at', { ascending: false })
             .limit(50),
         ]);
