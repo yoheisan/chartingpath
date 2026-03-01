@@ -122,6 +122,7 @@ const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-v
 // Chart Type Demos (live interactive chart examples for chart-types-explained article)
 const ChartTypeDemos = lazy(() => import('@/components/blog/ChartTypeDemos'));
 const CommandCenterDemo = lazy(() => import('@/components/blog/CommandCenterDemo'));
+const TradingStyleCards = lazy(() => import('@/components/blog/TradingStyleCards'));
 
 // Algorithmic Trading Visualizers
 const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
@@ -1240,6 +1241,13 @@ const DynamicArticle = () => {
           {slug === 'command-center-guide' && (
             <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
               <CommandCenterDemo />
+            </Suspense>
+          )}
+
+          {/* TRADING STYLES: Visual profile cards and comparison matrix */}
+          {slug === 'trading-styles-timeframes' && (
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <TradingStyleCards />
             </Suspense>
           )}
 
