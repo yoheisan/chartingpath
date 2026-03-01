@@ -572,18 +572,25 @@ export default function FullChartViewer({
           text: string;
         }> = [];
 
-        // Add pivot markers (skip "Entry" label — redundant with blue entry marker)
+        // Collect canvas triangle markers (drawn on overlay instead of native markers)
+        const canvasTriangleMarkers: Array<{
+          time: number;
+          price: number;
+          direction: 'up' | 'down';
+          color: string;
+          label?: string;
+        }> = [];
+
+        // Add pivot markers (skip "Entry" — redundant; "Breakout Level" → canvas triangle)
         if (visualSpec.pivots && visualSpec.pivots.length > 0) {
           const isLongPattern = setup.direction === 'long';
           visualSpec.pivots.forEach((pivot) => {
-            // Skip "Entry" pivots — entry is already shown by the blue triangle marker
             if ((pivot.label || '').toLowerCase().includes('entry')) return;
 
             const isHigh = pivot.type === 'high';
             const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
 
             let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-
             if (
               !timeSet.has(t) &&
               Number.isInteger(pivot.index) &&
@@ -592,17 +599,18 @@ export default function FullChartViewer({
             ) {
               t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
             }
-
             if (!timeSet.has(t)) return;
 
-            // For "Breakout Level" pivots: triangle pointing in trade direction
             if (isBreakout) {
-              allMarkers.push({
-                time: t as Time,
-                position: isLongPattern ? 'belowBar' : 'aboveBar',
-                color: '#3b82f6',
-                shape: isLongPattern ? 'arrowUp' : 'arrowDown',
-                text: pivot.label || 'Breakout Level',
+              // Breakout Level → canvas triangle
+              const barIdx = bars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
+              const price = barIdx >= 0 ? (isLongPattern ? bars[barIdx].l : bars[barIdx].h) : pivot.price;
+              canvasTriangleMarkers.push({
+                time: t,
+                price,
+                direction: isLongPattern ? 'up' : 'down',
+                color: '#f97316',
+                label: pivot.label || 'Breakout Level',
               });
             } else {
               allMarkers.push({
@@ -616,19 +624,16 @@ export default function FullChartViewer({
           });
         }
 
-        // Add Entry Point marker on the last (signal) bar
-        // This makes the entry point visually prominent on the chart
+        // Entry Point → canvas triangle on last bar
         if (chartData.length > 0 && tradePlan?.entry) {
           const lastBar = chartData[chartData.length - 1];
-          const entryMarkerPosition = setup.direction === 'long' ? 'belowBar' : 'aboveBar';
-          const entryMarkerShape: SeriesMarkerShape = setup.direction === 'long' ? 'arrowUp' : 'arrowDown';
-          
-          allMarkers.push({
-            time: lastBar.time,
-            position: entryMarkerPosition,
-            color: '#3b82f6', // Blue to match prescriptive standard
-            shape: entryMarkerShape,
-            text: '',
+          const lastBarData = bars[bars.length - 1];
+          const isLong = setup.direction === 'long';
+          canvasTriangleMarkers.push({
+            time: lastBar.time as number,
+            price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
+            direction: isLong ? 'up' : 'down',
+            color: '#3b82f6',
           });
         }
 
