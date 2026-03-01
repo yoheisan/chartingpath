@@ -1150,12 +1150,12 @@ async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?:
 
 /**
  * Fetch data from Yahoo Finance (fallback provider)
+ * FIXED: 1h/4h limits corrected to 729 days (Yahoo supports up to 730 days for hourly)
  */
 async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
-  // Yahoo has stricter limits for intraday
   const yahooLimits: Record<string, { rangeDays: number }> = {
-    '1h': { rangeDays: 30 },
-    '4h': { rangeDays: 60 },
+    '1h': { rangeDays: 729 },   // Yahoo supports up to 730 days for hourly
+    '4h': { rangeDays: 729 },   // Aggregated from 1h, same limit
     '1d': { rangeDays: 365 * 5 },
     '1wk': { rangeDays: 365 * 5 }
   };
@@ -1214,16 +1214,233 @@ async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?:
 }
 
 /**
- * Fetch data with EODHD as primary, Yahoo as fallback
+ * Fetch data from Binance (primary provider for crypto - FREE, no API key needed)
+ * Supports 1000+ days of 1h/4h kline data for all major pairs
  */
-async function fetchMarketData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
-  // Try EODHD first (100k calls/day limit)
-  let bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+async function fetchBinanceData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+  // Convert symbol: BTC-USD → BTCUSDT
+  const binanceSymbol = symbol.replace('-USD', 'USDT');
   
-  // Fallback to Yahoo if EODHD fails
-  if (bars.length === 0) {
-    console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
-    bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+  const binanceInterval: Record<string, string> = {
+    '1h': '1h',
+    '4h': '4h',   // Binance supports 4h natively - no aggregation needed!
+    '8h': '8h',
+    '1d': '1d',
+    '1wk': '1w',
+  };
+  
+  const interval = binanceInterval[timeframe];
+  if (!interval) {
+    console.log(`[Binance] Unsupported timeframe ${timeframe} for ${symbol}`);
+    return [];
+  }
+  
+  const endMs = Date.now();
+  const startMs = fromTimestamp || (endMs - 730 * 24 * 60 * 60 * 1000); // Default 2 years
+  
+  const allBars: OHLCBar[] = [];
+  let currentStart = startMs;
+  const limit = 1000; // Binance max per request
+  
+  try {
+    // Paginate through all available data
+    while (currentStart < endMs) {
+      const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&startTime=${currentStart}&endTime=${endMs}&limit=${limit}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errText = await response.text();
+        console.log(`[Binance] Error for ${binanceSymbol}: ${response.status} - ${errText}`);
+        return allBars; // Return what we have so far
+      }
+      
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+      
+      for (const kline of data) {
+        allBars.push({
+          date: new Date(kline[0]).toISOString(),
+          open: Number(kline[1]),
+          high: Number(kline[2]),
+          low: Number(kline[3]),
+          close: Number(kline[4]),
+          volume: Number(kline[5]),
+        });
+      }
+      
+      // Move start forward past the last candle
+      currentStart = data[data.length - 1][0] + 1;
+      
+      // If we got less than limit, we've reached the end
+      if (data.length < limit) break;
+      
+      // Small delay between pages to be respectful
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log(`[Binance] Fetched ${allBars.length} bars for ${binanceSymbol}@${timeframe}`);
+    return allBars;
+  } catch (error) {
+    console.error(`[Binance] Error fetching ${binanceSymbol}:`, error);
+    return [];
+  }
+}
+
+// ============= READ-FROM-DB-FIRST LOGIC =============
+
+/**
+ * Check historical_prices table for existing OHLCV data before calling external APIs.
+ * Returns bars from DB if sufficient coverage exists, otherwise returns empty array.
+ */
+async function readBarsFromDB(
+  supabase: any,
+  symbol: string,
+  timeframe: string,
+  fromDate: string,
+  toDate: string,
+  minBarsRequired: number = 50
+): Promise<OHLCBar[]> {
+  try {
+    const { data, error } = await supabase
+      .from('historical_prices')
+      .select('date, open, high, low, close, volume')
+      .eq('symbol', symbol)
+      .eq('timeframe', timeframe)
+      .gte('date', fromDate)
+      .lte('date', toDate)
+      .order('date', { ascending: true });
+    
+    if (error || !data || data.length < minBarsRequired) {
+      return [];
+    }
+    
+    console.log(`[DB-Cache] Found ${data.length} cached bars for ${symbol}@${timeframe}`);
+    return data.map((row: any) => ({
+      date: row.date,
+      open: Number(row.open),
+      high: Number(row.high),
+      low: Number(row.low),
+      close: Number(row.close),
+      volume: Number(row.volume || 0),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ============= OHLCV PERSISTENCE =============
+
+/**
+ * Persist raw OHLCV bars to historical_prices table for permanent local archive.
+ * Uses upsert to avoid duplicates. Runs in background (non-blocking).
+ */
+async function persistBarsToHistoricalPrices(
+  supabase: any,
+  symbol: string,
+  timeframe: string,
+  assetType: string,
+  bars: OHLCBar[]
+): Promise<void> {
+  if (bars.length === 0) return;
+  
+  const CHUNK = 500;
+  let persisted = 0;
+  
+  try {
+    for (let i = 0; i < bars.length; i += CHUNK) {
+      const chunk = bars.slice(i, i + CHUNK);
+      const rows = chunk.map(bar => ({
+        symbol,
+        timeframe,
+        instrument_type: assetType,
+        date: bar.date,
+        open: bar.open,
+        high: bar.high,
+        low: bar.low,
+        close: bar.close,
+        volume: bar.volume || 0,
+      }));
+      
+      const { error } = await supabase
+        .from('historical_prices')
+        .upsert(rows, {
+          onConflict: 'symbol,timeframe,date',
+          ignoreDuplicates: true
+        });
+      
+      if (error) {
+        console.warn(`[OHLCV-Persist] Upsert error for ${symbol}@${timeframe}: ${error.message}`);
+      } else {
+        persisted += chunk.length;
+      }
+    }
+    
+    if (persisted > 0) {
+      console.log(`[OHLCV-Persist] Saved ${persisted} bars for ${symbol}@${timeframe}`);
+    }
+  } catch (err) {
+    console.warn(`[OHLCV-Persist] Error for ${symbol}:`, err);
+  }
+}
+
+/**
+ * Fetch data with smart provider routing:
+ * 1. Read-from-DB-first (if cached bars exist)
+ * 2. Crypto: Binance (primary) → EODHD → Yahoo
+ * 3. Non-crypto: EODHD (primary) → Yahoo (fallback)
+ */
+async function fetchMarketData(
+  symbol: string, 
+  timeframe: string, 
+  fromTimestamp?: number,
+  supabase?: any,
+  assetType?: string
+): Promise<OHLCBar[]> {
+  const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
+  const resolvedAssetType = assetType || getAssetType(symbol);
+  
+  // Step 1: Try reading from DB cache first
+  if (supabase && fromTimestamp) {
+    const fromDate = new Date(fromTimestamp).toISOString().split('T')[0];
+    const toDate = new Date().toISOString().split('T')[0];
+    const cachedBars = await readBarsFromDB(supabase, symbol, timeframe, fromDate, toDate);
+    if (cachedBars.length >= 50) {
+      console.log(`[Provider] Using ${cachedBars.length} cached bars from DB for ${symbol}@${timeframe}`);
+      return cachedBars;
+    }
+  }
+  
+  let bars: OHLCBar[] = [];
+  
+  // Step 2: Fetch from external providers
+  if (isCrypto) {
+    // Crypto: Binance first (free, deep history, native 4h support)
+    bars = await fetchBinanceData(symbol, timeframe, fromTimestamp);
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] Binance failed for ${symbol}, trying EODHD`);
+      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    }
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
+      bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    }
+  } else {
+    // Non-crypto: EODHD first
+    bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
+      bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    }
+  }
+  
+  // Step 3: Persist fetched bars to DB for future reads (non-blocking)
+  if (bars.length > 0 && supabase) {
+    // Fire-and-forget persistence
+    persistBarsToHistoricalPrices(supabase, symbol, timeframe, resolvedAssetType, bars)
+      .catch(err => console.warn(`[OHLCV-Persist] Background error:`, err));
   }
   
   return bars;
