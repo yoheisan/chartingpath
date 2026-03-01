@@ -183,7 +183,34 @@ interface Article {
   like_count: number;
 }
 
-interface ParsedSection {
+// Shared table components for ReactMarkdown - used across all section renderers
+const markdownTableComponents = {
+  table: ({ children }: any) => (
+    <div className="overflow-x-auto mb-4">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }: any) => <thead className="border-b border-border">{children}</thead>,
+  tbody: ({ children }: any) => <tbody>{children}</tbody>,
+  tr: ({ children }: any) => <tr className="border-b border-border/50">{children}</tr>,
+  th: ({ children }: any) => <th className="text-left py-2 px-3 font-semibold text-foreground">{children}</th>,
+  td: ({ children }: any) => <td className="py-2 px-3 text-muted-foreground">{children}</td>,
+};
+
+// Shared checkbox/task-list components
+const markdownCheckboxComponents = {
+  input: ({ type, checked }: any) => {
+    if (type === 'checkbox') {
+      return (
+        <span className={`inline-flex items-center justify-center w-4 h-4 rounded border ${checked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+          {checked && <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+        </span>
+      );
+    }
+    return null;
+  },
+};
+
   title: string;
   content: string;
   type: 'overview' | 'execution' | 'entry' | 'exit' | 'risk' | 'practitioners' | 'pros-cons' | 'example' | 'chart' | 'default';
