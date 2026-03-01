@@ -515,6 +515,11 @@ export default function FullChartViewer({
 
         // Pattern overlays — standardized prescriptive style:
         // Entry = solid blue, SL = dashed red, TP = dashed green
+        // Track actual overlay prices to use for shaded zones (ensures alignment)
+        let overlayEntryPrice = tradePlan?.entry;
+        let overlaySlPrice = tradePlan?.stopLoss;
+        let overlayTpPrice = tradePlan?.takeProfit;
+
         if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
@@ -530,14 +535,17 @@ export default function FullChartViewer({
                 color = '#3b82f6';
                 lineStyle = 0; // solid
                 title = 'ENTRY';
+                overlayEntryPrice = overlay.price;
               } else if (isSL) {
                 color = '#ef4444';
                 lineStyle = 2;
                 title = 'SL';
+                overlaySlPrice = overlay.price;
               } else if (isTP) {
                 color = '#22c55e';
                 lineStyle = 2;
                 title = 'TP';
+                overlayTpPrice = overlay.price;
               }
 
               candleSeries.createPriceLine({
