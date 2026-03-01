@@ -1,4 +1,28 @@
 {
+  "auth": {
+    "backToHome": "Ana Sayfaya Dön",
+    "headline": "Ücretsiz ticaret avantajınız burada başlıyor",
+    "subheadline": "320.000'den fazla geçmiş sonuçla desteklenen örüntü tanıma ile günlük olarak izlenen binlerce enstrümana katılın.",
+    "freeAccountIncludes": "Ücretsiz hesap şunları içerir",
+    "backtestsPerDay": "Günde 3 backtest",
+    "liveScreenerAccess": "Canlı tarayıcı erişimi",
+    "patternAlertSetup": "Örüntü uyarı kurulumu",
+    "edgeAtlasRankings": "Edge Atlas sıralamaları",
+    "instrumentsTracked": "İzlenen enstrümanlar",
+    "patternOutcomes": "Örüntü sonuçları",
+    "noCreditCard": "Kredi kartı gerekmez",
+    "freeForever": "Sonsuza kadar ücretsiz katman",
+    "cancelAnytime": "İstediğiniz zaman iptal edin",
+    "createAccount": "Hesap Oluştur",
+    "welcomeBack": "Tekrar Hoş Geldiniz",
+    "continueWithGoogle": "Google ile devam et",
+    "signIn": "Giriş Yap",
+    "signingIn": "Giriş Yapılıyor...",
+    "toastAccountCreated": "Hesap Oluşturuldu",
+    "toastAuthError": "Kimlik Doğrulama Hatası",
+    "toastSignedIn": "Başarıyla giriş yaptınız",
+    "toastWelcomeBack": "Tekrar Hoş Geldiniz"
+  },
   "projects": {
     "pricing": {
       "subheadline": "Piyasayı tarayın. Kurulumları tespit edin. Kesin girişler, stop-loss ve take-profit ile tekrarlanabilir bir ticaret planı edinin.",

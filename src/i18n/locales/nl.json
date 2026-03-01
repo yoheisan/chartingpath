@@ -1,1 +1,26 @@
-{}
+{
+  "auth": {
+    "backToHome": "Terug naar Home",
+    "headline": "Jouw gratis tradingvoordeel begint hier",
+    "subheadline": "Sluit je aan bij duizenden instrumenten die dagelijks worden gevolgd met patroonherkenning, aangedreven door meer dan 320.000 historische resultaten.",
+    "freeAccountIncludes": "Gratis account bevat",
+    "backtestsPerDay": "3 backtests per dag",
+    "liveScreenerAccess": "Live screener toegang",
+    "patternAlertSetup": "Patroon alert instellingen",
+    "edgeAtlasRankings": "Edge Atlas rankings",
+    "instrumentsTracked": "Instrumenten gevolgd",
+    "patternOutcomes": "Patroon resultaten",
+    "noCreditCard": "Geen creditcard vereist",
+    "freeForever": "Gratis voor altijd abonnement",
+    "cancelAnytime": "Annuleer op elk moment",
+    "createAccount": "Account aanmaken",
+    "welcomeBack": "Welkom terug",
+    "continueWithGoogle": "Doorgaan met Google",
+    "signIn": "Inloggen",
+    "signingIn": "Inloggen...",
+    "toastAccountCreated": "Account aangemaakt",
+    "toastAuthError": "Authenticatiefout",
+    "toastSignedIn": "Je bent succesvol ingelogd",
+    "toastWelcomeBack": "Welkom terug"
+  }
+}
