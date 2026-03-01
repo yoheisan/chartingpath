@@ -1397,6 +1397,8 @@ async function fetchMarketData(
   assetType?: string
 ): Promise<OHLCBar[]> {
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
+  const isFX = symbol.includes('=X');
+  const isIntraday = ['1h', '4h', '8h'].includes(timeframe);
   const resolvedAssetType = assetType || getAssetType(symbol);
   
   // Step 1: Try reading from DB cache first
@@ -1412,7 +1414,7 @@ async function fetchMarketData(
   
   let bars: OHLCBar[] = [];
   
-  // Step 2: Fetch from external providers
+  // Step 2: Fetch from external providers with smart routing
   if (isCrypto) {
     // Crypto: Binance first (free, deep history, native 4h support)
     bars = await fetchBinanceData(symbol, timeframe, fromTimestamp);
@@ -1426,8 +1428,17 @@ async function fetchMarketData(
       console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
+  } else if (isFX && isIntraday) {
+    // FX Intraday: Yahoo FIRST (729 days) > EODHD (only 120 days)
+    // This maximizes historical pattern depth for FX pairs
+    bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] Yahoo failed for FX ${symbol}, trying EODHD fallback`);
+      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    }
   } else {
-    // Non-crypto: EODHD first
+    // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
     bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
     
     if (bars.length === 0) {
