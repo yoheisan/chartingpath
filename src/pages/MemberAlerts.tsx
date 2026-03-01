@@ -4,12 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2, Bot, Webhook, Copy, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
@@ -63,6 +66,12 @@ const MemberAlerts = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastCreatedSymbol, setLastCreatedSymbol] = useState("");
   const [lastCreatedPatterns, setLastCreatedPatterns] = useState<string[]>([]);
+
+  // Automation state
+  const [autoPaperTrade, setAutoPaperTrade] = useState(false);
+  const [riskPercent, setRiskPercent] = useState(1.0);
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -239,7 +248,11 @@ const MemberAlerts = () => {
           symbol: symbol.toUpperCase(),
           patterns: selectedPatterns,
           timeframe,
-          action: 'create'
+          action: 'create',
+          auto_paper_trade: autoPaperTrade,
+          webhook_url: webhookUrl || null,
+          webhook_secret: webhookSecret || null,
+          risk_percent: riskPercent,
         }
       });
 
