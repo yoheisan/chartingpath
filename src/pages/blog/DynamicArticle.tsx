@@ -1244,6 +1244,13 @@ const DynamicArticle = () => {
             </Suspense>
           )}
 
+          {/* TRADING STYLES: Visual profile cards and comparison matrix */}
+          {slug === 'trading-styles-timeframes' && (
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <TradingStyleCards />
+            </Suspense>
+          )}
+
           {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsPayoffVisualization slug={slug} />
