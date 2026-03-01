@@ -1252,6 +1252,13 @@ const DynamicArticle = () => {
             </Suspense>
           )}
 
+          {/* TECH VS FUNDAMENTAL: Visual comparison table */}
+          {slug === 'technical-vs-fundamental-analysis' && (
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <TechVsFundamentalComparison />
+            </Suspense>
+          )}
+
           {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
             <OptionsPayoffVisualization slug={slug} />
