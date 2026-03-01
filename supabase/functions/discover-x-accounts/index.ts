@@ -7,43 +7,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ── OAuth 2.0 Client Credentials (App-Only Bearer Token) ──────────────
-let cachedBearerToken: string | null = null;
-
-async function getBearerToken(): Promise<string> {
-  if (cachedBearerToken) return cachedBearerToken;
-
-  const clientId = Deno.env.get("TWITTER_OAUTH2_CLIENT_ID");
-  const clientSecret = Deno.env.get("TWITTER_OAUTH2_CLIENT_SECRET");
-  
-  console.log(`[discover-x] OAuth2 Client ID present: ${!!clientId}, length: ${clientId?.length || 0}`);
-  console.log(`[discover-x] OAuth2 Client Secret present: ${!!clientSecret}, length: ${clientSecret?.length || 0}`);
-
-  if (!clientId || !clientSecret) {
-    throw new Error("TWITTER_OAUTH2_CLIENT_ID or TWITTER_OAUTH2_CLIENT_SECRET not set");
-  }
-
-  const credentials = btoa(`${clientId}:${clientSecret}`);
-
-  const res = await fetch("https://api.x.com/oauth2/token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
-
-  const txt = await res.text();
-  console.log(`[discover-x] Bearer token response: ${res.status} - ${txt.substring(0, 200)}`);
-
-  if (!res.ok) {
-    throw new Error(`Bearer token error ${res.status}: ${txt}`);
-  }
-
-  const data = JSON.parse(txt);
-  cachedBearerToken = data.access_token;
-  return cachedBearerToken!;
+// ── Bearer Token auth ──────────────────────────────────────────────────
+function getBearerToken(): string {
+  const token = Deno.env.get("TWITTER_BEARER_TOKEN");
+  if (!token) throw new Error("TWITTER_BEARER_TOKEN not set");
+  return token;
 }
 
 // ── Fetch following list for a user ────────────────────────────────────
