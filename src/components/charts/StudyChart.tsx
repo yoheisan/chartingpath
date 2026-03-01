@@ -178,7 +178,7 @@ interface StudyChartProps {
  * StudyChart - Full-featured chart for study pages with toggleable indicators:
  * - Price ruler (right axis)
  * - Time series (bottom axis)
- * - EMA 20, EMA 50, SMA 200
+ * - EMA 20, EMA 50, EMA 200
  * - Bollinger Bands
  * - VWAP
  */
