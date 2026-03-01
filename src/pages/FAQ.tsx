@@ -1359,7 +1359,7 @@ const FAQ = () => {
 
         {/* FAQ Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-8">
+          <TabsList className="grid w-full grid-cols-8 mb-8">
             {Object.entries(faqData).map(([key, data]) => (
               <TabsTrigger key={key} value={key} className="flex items-center gap-2">
                 {data.icon}
