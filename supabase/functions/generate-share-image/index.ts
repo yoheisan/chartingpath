@@ -222,9 +222,13 @@ function renderCandlestickSVG(opts: {
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
   ${levelLine(tp, '#22c55e', 'TP', '6,4')}
   <rect x="0" y="${H - 50}" width="${W}" height="50" fill="#0a0e14" opacity="0.8"/>
-  <text x="40" y="${H - 20}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
-  <text x="200" y="${H - 20}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
-  <text x="${W - 40}" y="${H - 20}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
+  <line x1="40" y1="${H - 38}" x2="60" y2="${H - 38}" stroke="#f59e0b" stroke-width="1.5" opacity="0.7"/>
+  <text x="64" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 50</text>
+  <line x1="110" y1="${H - 38}" x2="130" y2="${H - 38}" stroke="#a855f7" stroke-width="1.5" opacity="0.7"/>
+  <text x="134" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 200</text>
+  <text x="40" y="${H - 16}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
+  <text x="200" y="${H - 16}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
+  <text x="${W - 40}" y="${H - 16}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
 }
 
