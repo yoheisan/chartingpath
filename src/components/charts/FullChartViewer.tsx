@@ -671,68 +671,10 @@ export default function FullChartViewer({
             lowerSeries.setData(dedupeLineData(formation.lowerTrend));
           }
 
-          // Shaded formation zone (canvas overlay)
-          if (formation.hasZone) {
-            const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
-            if (zonePoints.length >= 2) {
-              const drawZone = () => {
-                const canvas = canvasOverlayRef.current;
-                if (!canvas || !chartRef.current) return;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
+          // Combined canvas overlay: formation zone + TP/SL shaded zones
+          const formationZonePoints = formation.hasZone ? buildZonePoints(formation.upperTrend, formation.lowerTrend) : [];
 
-                const rect = containerEl.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                canvas.width = Math.floor(rect.width) * dpr;
-                canvas.height = Math.floor(rect.height) * dpr;
-                canvas.style.width = `${Math.floor(rect.width)}px`;
-                canvas.style.height = `${Math.floor(rect.height)}px`;
-                ctx.scale(dpr, dpr);
-                ctx.clearRect(0, 0, rect.width, rect.height);
-
-                const ts = chartRef.current!.timeScale();
-                const ps = chartRef.current!.priceScale('right');
-
-                const pixelPoints: { x: number; upper: number; lower: number }[] = [];
-                for (const pt of zonePoints) {
-                  try {
-                    const x = (ts as any).timeToCoordinate?.(pt.time as any);
-                    const yUp = (ps as any).priceToCoordinate?.(pt.upper);
-                    const yLo = (ps as any).priceToCoordinate?.(pt.lower);
-                    if (x != null && yUp != null && yLo != null &&
-                        Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
-                      pixelPoints.push({ x, upper: yUp, lower: yLo });
-                    }
-                  } catch { /* coordinate conversion may fail */ }
-                }
-
-                if (pixelPoints.length < 2) return;
-
-                ctx.beginPath();
-                ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
-                for (let i = 1; i < pixelPoints.length; i++) {
-                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
-                }
-                for (let i = pixelPoints.length - 1; i >= 0; i--) {
-                  ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
-                }
-                ctx.closePath();
-                ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-              };
-
-              requestAnimationFrame(drawZone);
-              chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
-            }
-          }
-        }
-
-        // ─── TP/SL Shaded Zones (always draw, matching X post SVG standard) ───
-        if (tradePlan) {
-          const drawTradePlanZones = () => {
+          const drawAllCanvasOverlays = () => {
             const canvas = canvasOverlayRef.current;
             if (!canvas || !chartRef.current) return;
             const ctx = canvas.getContext('2d');
@@ -747,23 +689,84 @@ export default function FullChartViewer({
             ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, rect.width, rect.height);
 
-            // Re-draw formation zone first if it exists (canvas was cleared)
-            // Then draw TP/SL zones on top
+            // 1) Formation zone (cyan polygon)
+            if (formationZonePoints.length >= 2) {
+              const ts = chartRef.current!.timeScale();
+              const ps = chartRef.current!.priceScale('right');
+              const pixelPoints: { x: number; upper: number; lower: number }[] = [];
+              for (const pt of formationZonePoints) {
+                try {
+                  const x = (ts as any).timeToCoordinate?.(pt.time as any);
+                  const yUp = (ps as any).priceToCoordinate?.(pt.upper);
+                  const yLo = (ps as any).priceToCoordinate?.(pt.lower);
+                  if (x != null && yUp != null && yLo != null &&
+                      Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
+                    pixelPoints.push({ x, upper: yUp, lower: yLo });
+                  }
+                } catch { /* coordinate conversion may fail */ }
+              }
+              if (pixelPoints.length >= 2) {
+                ctx.beginPath();
+                ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
+                for (let i = 1; i < pixelPoints.length; i++) ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
+                for (let i = pixelPoints.length - 1; i >= 0; i--) ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0, 200, 255, 0.06)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+              }
+            }
+
+            // 2) TP/SL shaded zones (matches X post SVG standard)
+            if (tradePlan) {
+              const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
+              const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
+              const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
+              if (entryY != null && tpY != null && slY != null) {
+                ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+                ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+                ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
+              }
+            }
+          };
+
+          setTimeout(() => requestAnimationFrame(drawAllCanvasOverlays), 200);
+          chart.timeScale().subscribeVisibleLogicalRangeChange(drawAllCanvasOverlays);
+        }
+
+        // TP/SL shaded zones standalone (when no formation overlay exists)
+        if (tradePlan && !(visualSpec?.pivots && visualSpec.pivots.length >= 2)) {
+          const drawStandaloneTradePlanZones = () => {
+            const canvas = canvasOverlayRef.current;
+            if (!canvas || !chartRef.current) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const rect = containerEl.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(rect.width) * dpr;
+            canvas.height = Math.floor(rect.height) * dpr;
+            canvas.style.width = `${Math.floor(rect.width)}px`;
+            canvas.style.height = `${Math.floor(rect.height)}px`;
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
             const entryY = (candleSeries as any).priceToCoordinate(tradePlan.entry);
             const tpY = (candleSeries as any).priceToCoordinate(tradePlan.takeProfit);
             const slY = (candleSeries as any).priceToCoordinate(tradePlan.stopLoss);
             if (entryY == null || tpY == null || slY == null) return;
 
-            // TP zone (green)
             ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
             ctx.fillRect(0, Math.min(entryY, tpY), rect.width, Math.abs(tpY - entryY));
-            // SL zone (red)
             ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
             ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
           };
 
-          setTimeout(() => requestAnimationFrame(drawTradePlanZones), 200);
-          chart.timeScale().subscribeVisibleLogicalRangeChange(drawTradePlanZones);
+          setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+          chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
         }
 
         // Calculate optimal price margins based on data volatility
