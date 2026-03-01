@@ -66,7 +66,7 @@ serve(async (req) => {
       );
     }
 
-    // Check if posts already scheduled for tomorrow
+    // Check if posts already scheduled for tomorrow (only count non-failed ones)
     const tomorrowStart = `${tomorrowDate}T00:00:00Z`;
     const tomorrowEnd = `${tomorrowDate}T23:59:59Z`;
     
@@ -74,6 +74,7 @@ serve(async (req) => {
       .from('scheduled_posts')
       .select('id')
       .eq('post_type', 'educational')
+      .in('status', ['scheduled', 'posted'])
       .gte('scheduled_time', tomorrowStart)
       .lte('scheduled_time', tomorrowEnd);
     
@@ -85,31 +86,44 @@ serve(async (req) => {
     }
 
     const scheduledPosts: any[] = [];
+    const stateUpdates: { marketId: string; nextPosition: number; pieceId: string; postedCount: number }[] = [];
 
     for (const market of markets) {
       // Get the piece at the current position (with wraparound)
       const position = market.current_position % totalPieces;
       
-      const { data: piece } = await supabase
+      const { data: piece, error: pieceError } = await supabase
         .from('educational_content_pieces')
         .select('*')
         .eq('global_order', position)
         .eq('is_active', true)
         .single();
       
-      if (!piece) {
-        console.warn(`No piece found at position ${position} for ${market.market_region}`);
+      if (pieceError || !piece) {
+        console.warn(`No piece found at position ${position} for ${market.market_region}:`, pieceError?.message);
+        continue;
+      }
+
+      // Validate piece has actual content
+      if (!piece.content || piece.content.trim().length < 10) {
+        console.warn(`Piece at position ${position} has empty/short content, skipping ${market.market_region}`);
         continue;
       }
 
       // Build the scheduled time: tomorrow at the optimal time
-      // optimal_post_time_utc is already HH:MM:SS, so just append Z
       const timeStr = market.optimal_post_time_utc;
       const scheduledTime = `${tomorrowDate}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}Z`;
       
-      // Build tweet content with hashtags and link
+      // piece.content already contains the CTA link from generation
+      // Just append hashtags
       const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
-      const fullContent = `${piece.content}\n\nLearn more → ${piece.link_back_url}\n\n${hashtags}`;
+      const fullContent = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
+
+      // Final safety check: tweet must have content
+      if (!fullContent || fullContent.trim().length === 0) {
+        console.error(`Built empty content for position ${position}, market ${market.market_region}`);
+        continue;
+      }
 
       scheduledPosts.push({
         account_id: account.id,
@@ -131,35 +145,42 @@ serve(async (req) => {
         },
       });
 
-      // Advance market position by number of markets (so each market gets unique content)
-      // US=0, EU=1, Tokyo=2, Shanghai=3 → next round: US=4, EU=5, Tokyo=6, Shanghai=7
+      // Queue state updates (apply AFTER successful insert)
       const nextPosition = market.current_position + markets.length;
-      
-      await supabase
-        .from('educational_schedule_state')
-        .update({ 
-          current_position: nextPosition,
-          last_scheduled_at: new Date().toISOString(),
-        })
-        .eq('id', market.id);
-
-      // Update piece posted count
-      await supabase
-        .from('educational_content_pieces')
-        .update({ 
-          posted_count: piece.posted_count + 1,
-          last_posted_at: new Date().toISOString(),
-        })
-        .eq('id', piece.id);
+      stateUpdates.push({
+        marketId: market.id,
+        nextPosition,
+        pieceId: piece.id,
+        postedCount: piece.posted_count,
+      });
     }
 
-    // Insert all scheduled posts
+    // Insert all scheduled posts FIRST
     if (scheduledPosts.length > 0) {
       const { error: insertError } = await supabase
         .from('scheduled_posts')
         .insert(scheduledPosts);
       
       if (insertError) throw insertError;
+
+      // Only update state AFTER successful insert
+      for (const update of stateUpdates) {
+        await supabase
+          .from('educational_schedule_state')
+          .update({ 
+            current_position: update.nextPosition,
+            last_scheduled_at: new Date().toISOString(),
+          })
+          .eq('id', update.marketId);
+
+        await supabase
+          .from('educational_content_pieces')
+          .update({ 
+            posted_count: update.postedCount + 1,
+            last_posted_at: new Date().toISOString(),
+          })
+          .eq('id', update.pieceId);
+      }
     }
 
     console.log(`Scheduled ${scheduledPosts.length} educational posts for ${tomorrowDate}`);

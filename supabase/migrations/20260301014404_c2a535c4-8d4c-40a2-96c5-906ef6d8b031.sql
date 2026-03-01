@@ -1,0 +1,1 @@
+DELETE FROM public.scheduled_posts WHERE post_type = 'educational' AND status = 'failed' AND scheduled_time >= '2026-02-25T00:00:00Z' AND scheduled_time <= '2026-02-27T23:59:59Z';
