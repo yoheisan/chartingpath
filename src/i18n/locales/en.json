@@ -396,7 +396,9 @@
       "screener": "Screener",
       "screenerDesc": "Live pattern detection across markets",
       "scripts": "Scripts",
-      "scriptsDesc": "Export trading scripts for TradingView and MetaTrader"
+      "scriptsDesc": "Export trading scripts for TradingView and MetaTrader",
+      "automation": "Automation",
+      "automationDesc": "Auto Paper Trading, Signal Webhooks, and trade execution automation"
     },
     "title": "Frequently Asked Questions",
     "viewPlansSupport": "View Plans & Support",
