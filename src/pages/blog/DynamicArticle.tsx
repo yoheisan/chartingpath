@@ -578,6 +578,21 @@ function renderSection(section: ParsedSection, index: number) {
                 }
                 return <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>;
               },
+              table: ({ children }) => (
+                <div className="overflow-x-auto mb-6">
+                  <table className="w-full border-collapse text-sm">{children}</table>
+                </div>
+              ),
+              thead: ({ children }) => <thead className="border-b border-border">{children}</thead>,
+              tbody: ({ children }) => <tbody>{children}</tbody>,
+              tr: ({ children }) => <tr className="border-b border-border/50">{children}</tr>,
+              th: ({ children }) => <th className="text-left py-2 px-3 font-semibold text-foreground">{children}</th>,
+              td: ({ children }) => <td className="py-2 px-3 text-muted-foreground">{children}</td>,
+              img: ({ src, alt }) => {
+                // Skip broken /src/assets/docs/ references
+                if (src?.includes('/src/assets/docs/')) return null;
+                return <img src={src} alt={alt || ''} className="rounded-lg max-w-full my-4" loading="lazy" />;
+              },
             }}
           >
             {injectPatternLinks(section.content)}
