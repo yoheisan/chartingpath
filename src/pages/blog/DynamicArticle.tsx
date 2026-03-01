@@ -511,7 +511,9 @@ function renderSection(section: ParsedSection, index: number) {
               </CardHeader>
               <CardContent>
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
+                    ...markdownTableComponents,
                     p: ({ children }) => <p className="text-muted-foreground text-sm mb-2">{children}</p>,
                     ul: ({ children }) => <ul className="space-y-1">{children}</ul>,
                     li: ({ children }) => (
@@ -535,7 +537,9 @@ function renderSection(section: ParsedSection, index: number) {
               </CardHeader>
               <CardContent>
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
+                    ...markdownTableComponents,
                     p: ({ children }) => <p className="text-muted-foreground text-sm mb-2">{children}</p>,
                     ul: ({ children }) => <ul className="space-y-1">{children}</ul>,
                     li: ({ children }) => (
@@ -566,7 +570,9 @@ function renderSection(section: ParsedSection, index: number) {
             </CardHeader>
             <CardContent>
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
+                  ...markdownTableComponents,
                   p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
                   strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
                   ul: ({ children }) => <ul className="space-y-2">{children}</ul>,
@@ -593,7 +599,9 @@ function renderSection(section: ParsedSection, index: number) {
             </CardHeader>
             <CardContent>
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
+                  ...markdownTableComponents,
                   p: ({ children }) => <p className="text-muted-foreground mb-3 last:mb-0">{children}</p>,
                   strong: ({ children }) => <strong className="text-foreground font-semibold">{children}</strong>,
                 }}
