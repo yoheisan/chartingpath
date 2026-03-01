@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { LogIn, UserPlus, Lock } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 interface AuthGateDialogProps {
   open: boolean;
@@ -37,6 +38,18 @@ export function AuthGateDialog({ open, onOpenChange, featureLabel = "this featur
         </div>
 
         <div className="flex flex-col gap-3">
+          {/* Google sign-in - primary CTA */}
+          <GoogleSignInButton />
+
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
           <Button asChild size="lg" className="w-full">
             <Link to={`/auth?redirect=${redirectPath}`} onClick={() => onOpenChange(false)}>
               <LogIn className="h-4 w-4 mr-2" />

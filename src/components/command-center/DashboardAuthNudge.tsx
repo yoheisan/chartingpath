@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 const DISMISS_KEY = 'dashboard_auth_nudge_dismissed';
 
@@ -20,13 +21,14 @@ export function DashboardAuthNudge() {
   const redirectPath = encodeURIComponent('/members/dashboard');
 
   return (
-    <div className="relative flex items-center justify-center gap-3 px-4 py-2 bg-primary/10 border-b border-primary/20 text-sm shrink-0">
+    <div className="relative flex items-center justify-center gap-3 px-4 py-2 bg-primary/10 border-b border-primary/20 text-sm shrink-0 flex-wrap">
       <LogIn className="h-4 w-4 text-primary shrink-0" />
       <span className="text-foreground/80">
         Sign in to save your watchlist, create alerts, and unlock playback.
       </span>
+      <GoogleSignInButton size="sm" className="h-7 text-xs px-3" />
       <Button asChild size="sm" variant="default" className="h-7 text-xs px-3">
-        <Link to={`/auth?redirect=${redirectPath}`}>Sign In</Link>
+        <Link to={`/auth?redirect=${redirectPath}`}>Email Sign In</Link>
       </Button>
       <button
         onClick={handleDismiss}
