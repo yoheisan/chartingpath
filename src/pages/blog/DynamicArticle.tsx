@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackPageLeave } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { PageMeta } from "@/components/PageMeta";
 import { ArticleJsonLd } from "@/components/JsonLd";
 import { getStrategyCharts, hasStrategyCharts } from "@/utils/strategyChartMapping";
