@@ -74,6 +74,7 @@ import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
 import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
+import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
   getThemeColors, 
   CANDLE_COLORS, 
@@ -1435,7 +1436,7 @@ export default function FullChartViewer({
                     qualityReasons.map((reason, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-green-500 mt-0.5">✓</span>
-                        <span className="text-muted-foreground">{fc(`qualityReasons.${reason}`, { defaultValue: reason })}</span>
+                        <span className="text-muted-foreground">{translateQualityReason(reason, t)}</span>
                       </li>
                     ))
                   ) : (

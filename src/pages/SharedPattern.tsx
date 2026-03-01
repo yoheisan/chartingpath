@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { translateQualityReason } from '@/utils/translateQualityReason';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -265,7 +266,7 @@ export default function SharedPattern() {
                     {pattern.quality_reasons.map((reason, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-green-500 mt-0.5">✓</span>
-                        {reason}
+                        {translateQualityReason(reason, t)}
                       </li>
                     ))}
                   </ul>
