@@ -181,11 +181,8 @@ serve(async (req) => {
         let newFound = 0;
         for (const u of users) {
           const metrics = u.public_metrics || {};
-          const { error: upsertErr } = await supabase.rpc("discover_x_account_upsert", {
-            // We'll use raw SQL instead since RPC doesn't exist yet
-          });
 
-          // Use upsert with raw insert + on conflict
+          // Upsert discovered account
           const { error: insertErr } = await supabase
             .from("x_discovered_accounts")
             .upsert(
