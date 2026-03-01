@@ -709,6 +709,84 @@ const MemberAlerts = () => {
               )}
             </div>
 
+            {/* Automation Settings */}
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                {t('alerts.automation', 'Automation')}
+              </Label>
+              
+              {/* Auto Paper Trade */}
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">{t('alerts.autoPaperTrade', 'Auto Paper Trade')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('alerts.autoPaperTradeDesc', 'Auto-open paper trades when pattern triggers')}</p>
+                </div>
+                <Switch checked={autoPaperTrade} onCheckedChange={setAutoPaperTrade} />
+              </div>
+
+              {autoPaperTrade && (
+                <div className="space-y-2 pl-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">{t('alerts.riskPercent', 'Risk per trade')}</Label>
+                    <span className="text-sm font-medium">{riskPercent.toFixed(1)}%</span>
+                  </div>
+                  <Slider
+                    value={[riskPercent]}
+                    onValueChange={([v]) => setRiskPercent(v)}
+                    min={0.5}
+                    max={5}
+                    step={0.5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('alerts.riskPercentDesc', 'Percentage of paper portfolio to risk per trade (0.5-5%)')}</p>
+                </div>
+              )}
+
+              {/* Webhook */}
+              <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <Webhook className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">{t('alerts.webhookRelay', 'Signal Webhook')}</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">{t('alerts.webhookDesc', 'Send signals to TradingView, 3Commas, MT4/MT5 bridges, or your own bot')}</p>
+                <Input
+                  placeholder="https://your-endpoint.com/webhook"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  className="text-sm"
+                />
+                {webhookUrl && !webhookUrl.startsWith('https://') && (
+                  <p className="text-xs text-destructive">{t('alerts.webhookHttpsRequired', 'URL must start with https://')}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder={t('alerts.webhookSecretPlaceholder', 'HMAC secret (optional)')}
+                    value={webhookSecret}
+                    onChange={(e) => setWebhookSecret(e.target.value)}
+                    className="text-sm flex-1"
+                    type="password"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const secret = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+                      setWebhookSecret(secret);
+                      navigator.clipboard.writeText(secret);
+                      toast({ title: t('alerts.secretGenerated', 'Secret generated & copied') });
+                    }}
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                    {t('alerts.generate', 'Generate')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {!canCreateMore ? (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
