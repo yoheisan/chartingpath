@@ -1,72 +1,97 @@
 
 
-# Auto-Discover 10,000 Finance/Trading X Accounts
+# Multi-Page Funnel Analysis and Improvement Plan
 
-## Strategy: "Snowball Discovery"
+## Data Summary
 
-Start with your 60 known trading influencers as **seed accounts**, then automatically crawl who they follow and who follows them. Finance/trading accounts cluster together -- people who follow 3+ of your seeds are very likely in the same niche.
+| Page | Views | Avg Time on Page | Key Issue |
+|------|-------|-----------------|-----------|
+| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
+| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
+| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
+| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
+| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
+| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
+| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
 
-## How It Works
+---
 
-1. **Seed accounts** -- your existing 60 handles
-2. **Crawl "following" lists** -- the X API endpoint `GET /2/users/:id/following` returns up to 1000 accounts per call (15 calls per 15 min)
-3. **Score candidates** -- if a discovered account appears in multiple seed "following" lists, it's likely a legit finance account
-4. **Auto-enqueue** -- accounts above a threshold get added to `x_follow_queue` automatically
+## Priority 1: Auth Page (75 views, 0 signups)
 
-At ~60 seeds x ~1000 following each = up to 60,000 candidate accounts. After deduplication and scoring, 10,000+ quality accounts is very achievable.
+**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
 
-## What I'll Build
+**Improvements**:
+1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
+2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
+3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
+4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
 
-### 1. New Edge Function: `discover-x-accounts`
+### Files to modify
+- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
+- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
 
-- **Action: `crawl_following`** -- Takes a seed user ID, calls the X API to fetch their "following" list (paginated, up to 1000), and stores results in a new `x_discovered_accounts` table
-- **Action: `score_and_enqueue`** -- Queries discovered accounts, scores them by how many seeds follow them, and bulk-inserts top candidates into `x_follow_queue`
-- Uses the same OAuth 1.0a auth already configured
+---
 
-### 2. New Database Table: `x_discovered_accounts`
+## Priority 2: Screener (101 views, 18s avg dwell)
 
-```text
-id               UUID (PK)
-user_id          TEXT (unique) -- X user ID
-username         TEXT
-name             TEXT
-followers_count  INT
-following_count  INT
-discovered_via   TEXT[] -- array of seed user IDs that follow this account
-discovery_count  INT -- how many seeds follow them (score)
-status           TEXT -- 'discovered', 'approved', 'rejected', 'enqueued'
-created_at       TIMESTAMPTZ
-```
+**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
 
-### 3. Cron Job for Gradual Crawling
+**Improvements**:
+1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
+2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
+3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
 
-A pg_cron job runs every 5 minutes, picks the next seed account that hasn't been crawled yet, and fetches their following list. This stays within rate limits (15 req/15 min) and completes all 60 seeds in about 5 hours.
+### Files to modify
+- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
 
-### 4. CMS UI: "Discovery" Tab
+---
 
-A new tab in the Social Media CMS with:
-- **Seed Management** -- view/add seed accounts to crawl
-- **Discovery Progress** -- how many seeds crawled, total accounts found
-- **Candidate Review** -- table of discovered accounts sorted by score, with bulk "Approve and Enqueue" button
-- **Filters** -- minimum score threshold, minimum follower count
+## Priority 3: Pattern Lab (71 views, 0 backtests completed)
 
-## Rate Limit Math
+**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
 
-- X API allows 15 "following" lookups per 15 minutes
-- Each returns up to 1,000 accounts
-- 60 seeds = ~4-5 hours to fully crawl
-- Result: 10,000-30,000 unique candidate accounts after dedup
+**Improvements**:
+1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
+2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
+3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
 
-## Technical Details
+### Files to modify
+- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
 
-### Files to Create
-- `supabase/functions/discover-x-accounts/index.ts` -- edge function for crawling and scoring
-- `src/components/cms/DiscoveryManager.tsx` -- CMS UI component
+---
 
-### Files to Modify
-- `src/pages/SocialMediaCMS.tsx` -- add "Discovery" tab
-- Database migration -- create `x_discovered_accounts` table and cron job
+## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
 
-### Dependencies
-- No new packages needed
-- Reuses existing Twitter OAuth 1.0a helpers from `auto-follow-x`
+**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+
+**Improvements**:
+1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
+2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+
+### Files to modify
+- Blog/Learn page components (investigate rendering issue first)
+
+---
+
+## Priority 5: Shared Links (8 views, 7 pattern views)
+
+**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+
+**Improvements**:
+1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
+2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+
+### Files to modify
+- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
+- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+
+---
+
+## Implementation Sequence
+
+1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
+2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
+3. **Screener** (first-visit guidance + top setup highlight)
+4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
+5. **Shared links** (add try-it-yourself CTA)
+

@@ -9,7 +9,8 @@ import { PostAnalytics } from "@/components/cms/PostAnalytics";
 import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
 import { EducationalContentManager } from "@/components/cms/EducationalContentManager";
 import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus } from "lucide-react";
+import { DiscoveryManager } from "@/components/cms/DiscoveryManager";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -27,7 +28,7 @@ export default function SocialMediaCMS() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="schedule" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Schedule</span>
@@ -39,6 +40,10 @@ export default function SocialMediaCMS() {
           <TabsTrigger value="follow-queue" className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">Follow Queue</span>
+          </TabsTrigger>
+          <TabsTrigger value="discovery" className="flex items-center gap-2">
+            <Radar className="h-4 w-4" />
+            <span className="hidden sm:inline">Discovery</span>
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <Library className="h-4 w-4" />
@@ -69,6 +74,10 @@ export default function SocialMediaCMS() {
 
         <TabsContent value="follow-queue" className="space-y-4">
           <AutoFollowQueueManager />
+        </TabsContent>
+
+        <TabsContent value="discovery" className="space-y-4">
+          <DiscoveryManager />
         </TabsContent>
 
         <TabsContent value="library" className="space-y-4">
