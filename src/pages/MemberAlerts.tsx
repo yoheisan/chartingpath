@@ -40,6 +40,8 @@ interface Alert {
   pattern: string;
   status: string;
   created_at: string;
+  auto_paper_trade?: boolean;
+  webhook_url?: string | null;
 }
 
 const MemberAlerts = () => {
@@ -862,6 +864,18 @@ const MemberAlerts = () => {
                           <Badge variant={alert.status === 'active' ? 'default' : 'secondary'}>
                             {alert.status === 'active' ? t('alerts.statusActive') : t('alerts.statusPaused')}
                           </Badge>
+                          {alert.auto_paper_trade && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Bot className="h-3 w-3" />
+                              Auto
+                            </Badge>
+                          )}
+                          {alert.webhook_url && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Webhook className="h-3 w-3" />
+                              Webhook
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {alert.pattern} • {alert.timeframe}
