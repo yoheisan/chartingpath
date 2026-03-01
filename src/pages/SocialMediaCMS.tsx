@@ -67,6 +67,10 @@ export default function SocialMediaCMS() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="follow-queue" className="space-y-4">
+          <AutoFollowQueueManager />
+        </TabsContent>
+
         <TabsContent value="library" className="space-y-4">
           <Card className="p-6">
             <ContentLibraryManager />
