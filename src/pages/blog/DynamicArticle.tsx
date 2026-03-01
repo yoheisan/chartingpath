@@ -1109,8 +1109,10 @@ const DynamicArticle = () => {
   }
 
   // Localize service names in article content, then parse into structured sections
-  const localizedContent = localizeServiceNames(article.content, t, i18n.language);
-  const sections = parseContentSections(localizedContent, t('learn.introduction'));
+  let processedContent = localizeServiceNames(article.content, t, i18n.language);
+  // Strip broken static image references (e.g., ![alt](/src/assets/docs/...))
+  processedContent = processedContent.replace(/!\[[^\]]*\]\([^)]*\/src\/assets\/docs\/[^)]*\)\n*/g, '');
+  const sections = parseContentSections(processedContent, t('learn.introduction'));
 
   return (
     <div className="min-h-screen bg-background">
