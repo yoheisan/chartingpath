@@ -347,6 +347,16 @@ export default function FullChartViewer({
         const representativePrice = normalizedBars.length > 0 ? normalizedBars[normalizedBars.length - 1].c : 1;
         const { precision, minMove } = calculatePricePrecision(representativePrice);
 
+        // Collect trade plan prices from overlays for autoscale
+        const tradePlanPrices: number[] = [];
+        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+          for (const ov of visualSpec.overlays) {
+            if (ov.type === 'hline' && Number.isFinite(ov.price)) {
+              tradePlanPrices.push(ov.price);
+            }
+          }
+        }
+
         // Use unified candlestick colors with dynamic price format
         const candleSeries = chart.addSeries(CandlestickSeries, {
           ...CANDLE_COLORS,
@@ -355,6 +365,15 @@ export default function FullChartViewer({
             precision: precision,
             minMove: minMove,
           },
+          // Extend autoscale to include trade plan price levels (Entry, SL, TP)
+          ...(tradePlanPrices.length > 0 ? {
+            autoscaleInfoProvider: () => ({
+              priceRange: {
+                minValue: Math.min(...tradePlanPrices),
+                maxValue: Math.max(...tradePlanPrices),
+              },
+            }),
+          } : {}),
         });
 
         const chartData: CandlestickData[] = normalizedBars
