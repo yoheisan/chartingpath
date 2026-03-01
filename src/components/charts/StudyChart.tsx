@@ -63,7 +63,7 @@ import { cn } from '@/lib/utils';
 export interface IndicatorSettings {
   ema20: boolean;
   ema50: boolean;
-  sma200: boolean;
+  ema200: boolean;
   bollingerBands: boolean;
   vwap: boolean;
   rsi: boolean;
@@ -73,7 +73,7 @@ export interface IndicatorSettings {
 const DEFAULT_INDICATORS: IndicatorSettings = {
   ema20: true,
   ema50: true,
-  sma200: true,
+  ema200: true,
   bollingerBands: true,
   vwap: true,
   rsi: false,
@@ -178,7 +178,7 @@ interface StudyChartProps {
  * StudyChart - Full-featured chart for study pages with toggleable indicators:
  * - Price ruler (right axis)
  * - Time series (bottom axis)
- * - EMA 20, EMA 50, SMA 200
+ * - EMA 20, EMA 50, EMA 200
  * - Bollinger Bands
  * - VWAP
  */
@@ -451,18 +451,18 @@ const StudyChart = memo(({
       }
     }
 
-    // SMA 200 (trend)
-    if (indicators.sma200) {
-      const sma200Data = calculateSMA(bars, 200);
-      if (sma200Data.length > 0) {
-        const sma200Series = chart.addSeries(LineSeries, {
-          color: INDICATOR_COLORS.sma200,
+    // EMA 200 (trend)
+    if (indicators.ema200) {
+      const ema200Data = calculateEMA(bars, 200);
+      if (ema200Data.length > 0) {
+        const ema200Series = chart.addSeries(LineSeries, {
+          color: INDICATOR_COLORS.ema200,
           lineWidth: 1,
           lineStyle: 2,
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        sma200Series.setData(sanitizeSeriesData(sma200Data.map((p) => ({ time: p.time as Time, value: p.value }))));
+        ema200Series.setData(sanitizeSeriesData(ema200Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
     }
 
@@ -995,7 +995,7 @@ const StudyChart = memo(({
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
     };
-  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.sma200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
+  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.ema200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
 
 
   useEffect(() => {
@@ -1171,9 +1171,9 @@ const StudyChart = memo(({
             EMA 50
           </span>
         )}
-        {indicators.sma200 && (
+        {indicators.ema200 && (
           <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-purple-500">
-            SMA 200
+            EMA 200
           </span>
         )}
         {indicators.bollingerBands && (
@@ -1299,14 +1299,14 @@ const StudyChart = memo(({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="sma200" className="text-sm flex items-center gap-2">
+                  <Label htmlFor="ema200" className="text-sm flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-purple-500" />
-                    SMA 200
+                    EMA 200
                   </Label>
                   <Switch
-                    id="sma200"
-                    checked={indicators.sma200}
-                    onCheckedChange={() => handleToggle('sma200')}
+                    id="ema200"
+                    checked={indicators.ema200}
+                    onCheckedChange={() => handleToggle('ema200')}
                   />
                 </div>
 
