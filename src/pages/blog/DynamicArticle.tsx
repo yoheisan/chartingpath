@@ -211,6 +211,7 @@ const markdownCheckboxComponents = {
   },
 };
 
+interface ParsedSection {
   title: string;
   content: string;
   type: 'overview' | 'execution' | 'entry' | 'exit' | 'risk' | 'practitioners' | 'pros-cons' | 'example' | 'chart' | 'default';
