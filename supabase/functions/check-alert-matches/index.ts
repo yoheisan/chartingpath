@@ -56,7 +56,7 @@ serve(async (req) => {
     // 1. Fetch all active user alerts
     const { data: alerts, error: alertsErr } = await supabase
       .from("alerts")
-      .select("id, user_id, symbol, pattern, timeframe, status")
+      .select("id, user_id, symbol, pattern, timeframe, status, auto_paper_trade, webhook_url, webhook_secret, risk_percent")
       .eq("status", "active");
 
     if (alertsErr) {
@@ -249,6 +249,65 @@ serve(async (req) => {
               console.warn(`[check-alert-matches] Notification sent but email not confirmed for alert ${alert.id}:`, notifyData);
             }
           }
+
+          // 8. Auto Paper Trade (if enabled)
+          if (alert.auto_paper_trade) {
+            try {
+              const { error: paperErr } = await supabase.functions.invoke('auto-paper-trade', {
+                body: {
+                  user_id: alert.user_id,
+                  symbol: alert.symbol,
+                  direction: matchedDetection.direction || 'long',
+                  entry_price: matchedDetection.entry_price,
+                  stop_loss_price: matchedDetection.stop_loss_price,
+                  take_profit_price: matchedDetection.take_profit_price,
+                  risk_percent: alert.risk_percent || 1.0,
+                  pattern: alert.pattern,
+                  timeframe: alert.timeframe,
+                  detection_id: matchedDetection.id,
+                },
+              });
+              if (paperErr) {
+                console.error(`[check-alert-matches] Auto paper trade error for alert ${alert.id}:`, paperErr);
+              } else {
+                console.log(`[check-alert-matches] Auto paper trade opened for alert ${alert.id}`);
+              }
+            } catch (paperCatch) {
+              console.error(`[check-alert-matches] Auto paper trade exception for alert ${alert.id}:`, paperCatch);
+            }
+          }
+
+          // 9. Fire Signal Webhook (if configured)
+          if (alert.webhook_url) {
+            try {
+              const { error: webhookErr } = await supabase.functions.invoke('fire-signal-webhook', {
+                body: {
+                  user_id: alert.user_id,
+                  alert_id: alert.id,
+                  webhook_url: alert.webhook_url,
+                  webhook_secret: alert.webhook_secret,
+                  symbol: alert.symbol,
+                  direction: matchedDetection.direction || 'long',
+                  timeframe: alert.timeframe,
+                  entry_price: matchedDetection.entry_price,
+                  stop_loss_price: matchedDetection.stop_loss_price,
+                  take_profit_price: matchedDetection.take_profit_price,
+                  risk_reward_ratio: matchedDetection.risk_reward_ratio,
+                  pattern: alert.pattern,
+                  quality_grade: matchedDetection.quality_score || 'C',
+                  detection_id: matchedDetection.id,
+                },
+              });
+              if (webhookErr) {
+                console.error(`[check-alert-matches] Webhook error for alert ${alert.id}:`, webhookErr);
+              } else {
+                console.log(`[check-alert-matches] Webhook fired for alert ${alert.id}`);
+              }
+            } catch (webhookCatch) {
+              console.error(`[check-alert-matches] Webhook exception for alert ${alert.id}:`, webhookCatch);
+            }
+          }
+
         } catch (err) {
           console.error(`[check-alert-matches] Error processing alert ${alert.id}:`, err);
         }
