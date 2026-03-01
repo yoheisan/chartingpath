@@ -21,6 +21,26 @@ interface Pivot {
   type: 'high' | 'low';
 }
 
+// ─── EMA Calculation ────────────────────────────────────────────────────────
+
+function calculateEMA(closes: number[], period: number): (number | null)[] {
+  const result: (number | null)[] = [];
+  if (closes.length < period) return closes.map(() => null);
+  const multiplier = 2 / (period + 1);
+  let ema = closes.slice(0, period).reduce((s, v) => s + v, 0) / period;
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      result.push(null);
+    } else if (i === period - 1) {
+      result.push(ema);
+    } else {
+      ema = (closes[i] - ema) * multiplier + ema;
+      result.push(ema);
+    }
+  }
+  return result;
+}
+
 // ─── SVG Rendering ──────────────────────────────────────────────────────────
 
 function renderCandlestickSVG(opts: {
