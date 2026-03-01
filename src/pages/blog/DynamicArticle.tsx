@@ -987,7 +987,13 @@ const DynamicArticle = () => {
         return;
       }
 
-      
+
+          {/* CHART TYPES EXPLAINED: Live interactive chart demos */}
+          {slug === 'chart-types-explained' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ChartTypeDemos />
+            </Suspense>
+          )}
 
       try {
         const timeoutPromise = new Promise((_, reject) => 
