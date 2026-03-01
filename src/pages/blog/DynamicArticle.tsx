@@ -118,6 +118,9 @@ const CorrelationVisualizer = lazy(() => import('@/components/blog/risk-manageme
 const ScalingVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/ScalingVisualizer'));
 const MaxLossVisualizer = lazy(() => import('@/components/blog/risk-management-visualizers/MaxLossVisualizer'));
 
+// Chart Type Demos (live interactive chart examples for chart-types-explained article)
+const ChartTypeDemos = lazy(() => import('@/components/blog/ChartTypeDemos'));
+
 // Algorithmic Trading Visualizers
 const SentimentAnalysisVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/SentimentAnalysisVisualizer'));
 const MachineLearningVisualizer = lazy(() => import('@/components/blog/algo-trading-visualizers/MachineLearningVisualizer'));
@@ -984,8 +987,6 @@ const DynamicArticle = () => {
         return;
       }
 
-      
-
       try {
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Request timed out')), 15000)
@@ -1106,8 +1107,10 @@ const DynamicArticle = () => {
   }
 
   // Localize service names in article content, then parse into structured sections
-  const localizedContent = localizeServiceNames(article.content, t, i18n.language);
-  const sections = parseContentSections(localizedContent, t('learn.introduction'));
+  let processedContent = localizeServiceNames(article.content, t, i18n.language);
+  // Strip broken static image references (e.g., ![alt](/src/assets/docs/...))
+  processedContent = processedContent.replace(/!\[[^\]]*\]\([^)]*\/src\/assets\/docs\/[^)]*\)\n*/g, '');
+  const sections = parseContentSections(processedContent, t('learn.introduction'));
 
   return (
     <div className="min-h-screen bg-background">
@@ -1192,6 +1195,13 @@ const DynamicArticle = () => {
               .filter(section => section.type === 'overview')
               .map((section, index) => renderSection(section, index))}
           </div>
+
+          {/* CHART TYPES EXPLAINED: Live interactive chart demos */}
+          {slug === 'chart-types-explained' && (
+            <Suspense fallback={<Skeleton className="w-full h-[600px]" />}>
+              <ChartTypeDemos />
+            </Suspense>
+          )}
 
           {/* OPTIONS ARTICLES: Payoff Visualization after overview */}
           {slug && hasOptionsPayoffChart(slug) && (
