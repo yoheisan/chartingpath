@@ -109,9 +109,9 @@ const ChartDemoCard = memo(function ChartDemoCard({ title, description, chartTyp
                 height={300}
                 hideAnalysisToolbar
                 tradePlan={{
-                  entryPrice: visualSpec.entry?.price || 0,
-                  stopLossPrice: visualSpec.stopLoss?.price || 0,
-                  takeProfitPrice: visualSpec.takeProfit?.price || 0,
+                  entry: visualSpec.entry?.price || 0,
+                  stopLoss: visualSpec.stopLoss?.price || 0,
+                  takeProfit: visualSpec.takeProfit?.price || 0,
                 }}
               />
             )}
