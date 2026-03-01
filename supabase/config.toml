@@ -251,3 +251,6 @@ verify_jwt = false
 
 [functions.auto-translate-articles]
 verify_jwt = false
+
+[functions.auto-follow-x]
+verify_jwt = false

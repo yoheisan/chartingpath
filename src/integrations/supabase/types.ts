@@ -4591,6 +4591,36 @@ export type Database = {
         }
         Relationships: []
       }
+      x_follow_queue: {
+        Row: {
+          attempted_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          status: string
+          target_user_id: string
+          target_username: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          target_user_id: string
+          target_username?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          target_user_id?: string
+          target_username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       article_analytics: {
