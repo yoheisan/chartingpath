@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
 import { symbolDataCache } from '@/lib/symbolDataCache';
 import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
+import type { HistoricalPatternOverlay } from '@/components/charts/PatternOverlayRenderer';
+import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { useUserProfile } from '@/hooks/useUserProfile';
