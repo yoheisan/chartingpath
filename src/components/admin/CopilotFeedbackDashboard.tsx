@@ -34,7 +34,8 @@ interface FeedbackItem {
 export function CopilotFeedbackDashboard() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'gaps' | 'high-priority'>('gaps');
+  const [filter, setFilter] = useState<'all' | 'gaps' | 'high-priority' | 'resolved'>('gaps');
+  const [resolvedCount, setResolvedCount] = useState(0);
   const [sortBy, setSortBy] = useState<'recent' | 'priority' | 'quality'>('recent');
 
   useEffect(() => {
