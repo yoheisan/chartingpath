@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield, ChevronDown } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield, ChevronDown, Globe } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
@@ -504,12 +504,15 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-4xl">
-        {/* Back Navigation */}
-        <div className="mb-6">
+        {/* Top bar: Back + Language switcher for guests */}
+        <div className="flex items-center justify-between mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             {t('auth.backToHome')}
           </Link>
+          {!authUser && (
+            <LanguageSwitcher />
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 items-start">
