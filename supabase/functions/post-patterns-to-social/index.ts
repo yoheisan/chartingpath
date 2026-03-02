@@ -60,6 +60,39 @@ function buildTweet(pattern: any): string {
   ).slice(0, 280);
 }
 
+/** Build a consolidated tweet for multiple patterns sharing the same trade levels */
+function buildConsolidatedTweet(group: any[]): string {
+  const first = group[0];
+  const emoji = ASSET_EMOJI[first.asset_type?.toLowerCase()] ?? '📉';
+  const dir = directionEmoji(first.direction);
+  const tf = first.timeframe?.toUpperCase() ?? '';
+  const grade = first.quality_score?.toUpperCase() ?? '?';
+  const rr = Number(first.risk_reward_ratio).toFixed(1);
+  const entry = Number(first.entry_price).toPrecision(5);
+  const sl = Number(first.stop_loss_price).toPrecision(5);
+  const tp = Number(first.take_profit_price).toPrecision(5);
+
+  const patternNames = group.map((p: any) => formatPatternName(p.pattern_name)).join(' + ');
+
+  return (
+    `${emoji} ${dir} ${patternNames} — ${first.instrument} (${tf})\n\n` +
+    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
+    `Free alerts at chartingpath.com`
+  ).slice(0, 280);
+}
+
+/** Group patterns by instrument + entry/SL/TP key */
+function groupByTradeLevels(patterns: any[]): Map<string, any[]> {
+  const groups = new Map<string, any[]>();
+  for (const p of patterns) {
+    const key = `${p.instrument}|${Number(p.entry_price).toPrecision(5)}|${Number(p.stop_loss_price).toPrecision(5)}|${Number(p.take_profit_price).toPrecision(5)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(p);
+  }
+  return groups;
+}
+
 // ─── Twitter OAuth ──────────────────────────────────────────────────────────
 
 function generateOAuthSignature(
