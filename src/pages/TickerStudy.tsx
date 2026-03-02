@@ -44,6 +44,7 @@ import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
 import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
+import type { HistoricalPatternOverlay } from '@/components/charts/PatternOverlayRenderer';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { TimeframeSelector, useStudyTimeframes, STUDY_TIMEFRAMES } from '@/components/charts/TimeframeSelector';
