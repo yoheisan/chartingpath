@@ -200,7 +200,7 @@ export function WatchlistPanel({
             <Eye className="h-4 w-4" />
             {t('commandCenter.watchlist')}
             {isPaidUser && (
-              <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">
+              <Badge variant="secondary" className="text-[11px] px-1 py-0 ml-1">
                 <Crown className="h-2.5 w-2.5 mr-0.5" />
                 {t('commandCenter.custom')}
               </Badge>
@@ -223,7 +223,7 @@ export function WatchlistPanel({
             }
           />
         ) : (
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
             <Lock className="h-3 w-3" />
             <span>{t('commandCenter.upgradeToAdd')}</span>
           </div>
@@ -241,7 +241,7 @@ export function WatchlistPanel({
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.active')}
             {activePatterns.length > 0 && (
-              <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">
+              <Badge variant="secondary" className="ml-1 text-[11px] px-1 py-0">
                 {activePatterns.length}
               </Badge>
             )}
@@ -254,7 +254,7 @@ export function WatchlistPanel({
             <div className="p-1">
               {!isPaidUser && (
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Lock className="h-3 w-3" />
                     <span>{t('commandCenter.upgradeToMonitor')}</span>
                   </div>
@@ -276,7 +276,7 @@ export function WatchlistPanel({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{item.symbol}</div>
                       {'name' in item && item.name && (
-                        <div className="text-[11px] text-muted-foreground truncate">{String(item.name)}</div>
+                        <div className="text-xs text-muted-foreground truncate">{String(item.name)}</div>
                       )}
                     </div>
                   </button>
