@@ -14,6 +14,8 @@ const BASE_URL = 'https://chartingpath.com';
  * Lightweight component that dynamically updates document.title,
  * meta description, OG tags, and canonical URL.
  */
+const DEFAULT_OG_IMAGE = 'https://dgznlsckoamseqcpzfqm.supabase.co/storage/v1/object/public/share-images/default-og.png';
+
 export function PageMeta({ title, description, canonicalPath, ogType = 'website', ogImage }: PageMetaProps) {
   useEffect(() => {
     // Title
@@ -42,10 +44,9 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
     setMeta('meta[name="twitter:title"]', 'content', title);
     setMeta('meta[name="twitter:description"]', 'content', description);
 
-    if (ogImage) {
-      setMeta('meta[property="og:image"]', 'content', ogImage);
-      setMeta('meta[name="twitter:image"]', 'content', ogImage);
-    }
+    const resolvedImage = ogImage || DEFAULT_OG_IMAGE;
+    setMeta('meta[property="og:image"]', 'content', resolvedImage);
+    setMeta('meta[name="twitter:image"]', 'content', resolvedImage);
 
     // Canonical URL
     if (canonicalPath) {
