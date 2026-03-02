@@ -12,6 +12,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
 import { symbolDataCache } from '@/lib/symbolDataCache';
