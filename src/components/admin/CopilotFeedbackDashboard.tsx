@@ -87,16 +87,19 @@ export function CopilotFeedbackDashboard() {
     }
   };
 
-  const markResolved = async (id: string) => {
+  const toggleResolved = async (id: string, currentlyResolved: boolean) => {
     const { error } = await supabase
       .from('copilot_feedback')
-      .update({ resolved: true })
+      .update({ resolved: !currentlyResolved })
       .eq('id', id);
 
     if (!error) {
       setFeedback(prev => prev.filter(f => f.id !== id));
+      setResolvedCount(prev => currentlyResolved ? prev - 1 : prev + 1);
     }
   };
+
+  const markResolved = async (id: string) => toggleResolved(id, false);
 
   const getPriorityColor = (score: number) => {
     if (score >= 80) return 'bg-destructive text-destructive-foreground';
