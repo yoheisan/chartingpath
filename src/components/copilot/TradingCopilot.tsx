@@ -34,6 +34,7 @@ import { CopilotAuthGate } from "./CopilotAuthGate";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
 import {
   Drawer,
