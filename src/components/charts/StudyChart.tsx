@@ -885,8 +885,14 @@ const StudyChart = memo(({
       });
     });
 
-    // Fit content on main chart first
-    chart.timeScale().fitContent();
+    // Show last ~80 bars by default (zoomed-in like TradingView) instead of fitting all content
+    if (safeChartData.length > 80) {
+      const fromBar = safeChartData[safeChartData.length - 80];
+      const toBar = safeChartData[safeChartData.length - 1];
+      chart.timeScale().setVisibleRange({ from: fromBar.time, to: toBar.time });
+    } else {
+      chart.timeScale().fitContent();
+    }
     
     // Force-sync oscillator charts to the main chart's visible range.
     // This overrides their independent fitContent() ranges to match the main chart,
