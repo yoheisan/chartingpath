@@ -334,7 +334,8 @@ const StudyChart = memo(({
         fixRightEdge: false,
         shiftVisibleRangeOnNewBar: true,
         allowShiftVisibleRangeOnWhitespaceReplacement: true,
-      },
+        barSpacing: 12,
+        minBarSpacing: 2,
       localization: {
         locale: getChartLocale(i18n.language),
       },
@@ -810,7 +811,7 @@ const StudyChart = memo(({
     const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
     allCharts.forEach((src) => {
       src.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (!range) return;
+        if (syncingRangeRef.current || !range) return;
         persistedVisibleRangeRef.current = range;
         syncingRangeRef.current = true;
         allCharts.forEach((dst) => {
