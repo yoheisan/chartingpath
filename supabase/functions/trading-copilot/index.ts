@@ -155,7 +155,59 @@ const tools = [
       }
     }
   },
-  // ===== NEW TOOLS: Full Data Integration =====
+  // ===== ENHANCED INTELLIGENCE TOOLS =====
+  {
+    type: "function",
+    function: {
+      name: "get_instrument_stats",
+      description: "Get instrument-specific pattern performance statistics from the materialized view. Shows how each pattern performs ON THIS SPECIFIC TICKER (not just overall averages). Use when users ask about a specific symbol's pattern history, e.g. 'How do bull flags perform on AAPL?'",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Instrument symbol like AAPL, BTCUSD, EURUSD." },
+          pattern_name: { type: "string", description: "Optional pattern name filter." },
+          min_trades: { type: "number", description: "Minimum sample size. Default 10." }
+        },
+        required: ["symbol"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "compare_pattern_performance",
+      description: "Compare a pattern's performance on a specific instrument vs the overall market average. Shows whether the pattern works BETTER or WORSE on this ticker compared to all instruments. Use when users ask 'How does X compare?' or 'Is this pattern good for AAPL?'",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Instrument symbol to compare." },
+          pattern_name: { type: "string", description: "Pattern name like 'Bull Flag'." },
+          timeframe: { type: "string", enum: ["1h", "4h", "8h", "1d", "1wk"], description: "Timeframe. Default '1d'." }
+        },
+        required: ["symbol", "pattern_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_decision_confidence",
+      description: "Calculate a composite Decision Confidence Score (0-100) for a potential trade setup. Combines pattern quality grade, trend alignment, historical hit rate, sample size, and current market conditions into a single actionable score. Use when users ask 'Should I take this trade?', 'How confident is this setup?', or 'Is this a good entry?'",
+      parameters: {
+        type: "object",
+        properties: {
+          symbol: { type: "string", description: "Instrument symbol." },
+          pattern_name: { type: "string", description: "Pattern name detected." },
+          timeframe: { type: "string", description: "Timeframe of the pattern." },
+          quality_grade: { type: "string", enum: ["A", "B", "C"], description: "Quality grade of the detection." },
+          direction: { type: "string", enum: ["long", "short"], description: "Trade direction." },
+          trend_alignment: { type: "string", enum: ["with_trend", "counter_trend", "neutral"], description: "Whether the pattern aligns with the broader trend." }
+        },
+        required: ["symbol", "pattern_name"]
+      }
+    }
+  },
+  // ===== DATA INTEGRATION TOOLS =====
   {
     type: "function",
     function: {
