@@ -31,6 +31,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
 import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
+import { MorningBriefing } from './MorningBriefing';
 
 // Lazy load mobile layout for code splitting
 const MobileCommandCenter = lazy(() => 
@@ -547,6 +548,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
     <div className="h-[calc(100vh-4rem)] w-full flex flex-col">
       {/* Auth nudge for anonymous users */}
       {!userId && <DashboardAuthNudge />}
+      
+      {/* Morning Briefing — top setups for today */}
+      <MorningBriefing userId={userId} onSymbolSelect={handleSymbolSelect} />
       
       {/* Auth gate dialog */}
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="dashboard features" />
