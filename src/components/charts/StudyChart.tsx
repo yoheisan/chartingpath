@@ -215,6 +215,7 @@ const StudyChart = memo(({
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
   const analysisLinesRef = useRef<any[]>([]);
+  const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
 
   const fixedHeight = height ?? 350;
 
@@ -329,13 +330,14 @@ const StudyChart = memo(({
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 10,
+        rightBarStaysOnScroll: false,
+        fixRightEdge: false,
         shiftVisibleRangeOnNewBar: true,
         allowShiftVisibleRangeOnWhitespaceReplacement: true,
         barSpacing: 12,
         minBarSpacing: 2,
       },
       localization: {
-        locale: getChartLocale(i18n.language),
       },
       crosshair: {
         mode: 0,
@@ -810,6 +812,7 @@ const StudyChart = memo(({
     allCharts.forEach((src) => {
       src.timeScale().subscribeVisibleTimeRangeChange((range) => {
         if (syncingRangeRef.current || !range) return;
+        persistedVisibleRangeRef.current = range;
         syncingRangeRef.current = true;
         allCharts.forEach((dst) => {
           if (dst !== src) {
@@ -885,8 +888,10 @@ const StudyChart = memo(({
       });
     });
 
-    // Show last ~80 bars by default (zoomed-in like TradingView) instead of fitting all content
-    if (safeChartData.length > 80) {
+    // Preserve user's manually dragged range across chart re-renders (TradingView-like behavior)
+    if (persistedVisibleRangeRef.current) {
+      chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
+    } else if (safeChartData.length > 80) {
       const fromBar = safeChartData[safeChartData.length - 80];
       const toBar = safeChartData[safeChartData.length - 1];
       chart.timeScale().setVisibleRange({ from: fromBar.time, to: toBar.time });
@@ -955,7 +960,10 @@ const StudyChart = memo(({
         // Resize oscillator charts to the SAME width as main chart
         rsiChartRef.current?.applyOptions({ width: nextWidth });
         macdChartRef.current?.applyOptions({ width: nextWidth });
-        chartRef.current.timeScale().fitContent();
+        // Keep current user-selected horizontal range on resize (do not auto-fit)
+        if (persistedVisibleRangeRef.current) {
+          chartRef.current.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
+        }
         // Delay sync so labels re-render at new width first
         setTimeout(syncPriceScaleWidths, 100);
       } catch {
@@ -1002,6 +1010,12 @@ const StudyChart = memo(({
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      try {
+        const range = chart.timeScale().getVisibleRange();
+        if (range) persistedVisibleRangeRef.current = range;
+      } catch {
+        // ignore
+      }
       clearTimeout(syncTimer1);
       clearTimeout(syncTimer2);
       clearTimeout(syncTimer3);
