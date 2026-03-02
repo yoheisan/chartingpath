@@ -14,6 +14,7 @@ import { trackSignupCompleted } from "@/services/analytics";
 import { getCanonicalAppOrigin, redirectToCanonicalOriginIfNeeded } from "@/utils/canonicalOrigin";
 import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase as sbClient } from "@/integrations/supabase/client";
 
 // Fire-and-forget login attempt tracker
