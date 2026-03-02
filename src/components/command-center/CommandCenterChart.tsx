@@ -356,16 +356,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         pivots.forEach((pivot: any) => {
           if (!pivot?.timestamp || !pivot?.type) return;
           const isHigh = pivot.type === 'high';
-          const shortLabel = (pivot.label ?? '')
-            .replace(/^Top\s+/i, 'T').replace(/^Bottom\s+/i, 'B')
-            .replace(/^Neckline$/i, 'NL').replace(/^Head$/i, 'H')
-            .replace(/^Shoulder\s*/i, 'S').replace(/^Breakout$/i, 'BO');
           markers.push({
             time: pivot.timestamp,
             position: isHigh ? 'aboveBar' : 'belowBar',
             color,
             shape: isHigh ? 'arrowDown' : 'arrowUp',
-            text: shortLabel || pivot.label,
+            text: pivot.label || '',
           });
         });
       }
