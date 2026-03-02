@@ -161,7 +161,7 @@ export function DailyReportPanel() {
         supabase.from("community_messages").select("id").gte("created_at", since),
       ]);
 
-      const events = analyticsRes.data || [];
+      const events = analyticsEvents || [];
       const searches = searchRes.data || [];
       const alerts = alertsRes.data || [];
       const alertLogs = alertsLogRes.data || [];
