@@ -791,6 +791,90 @@ const StudyChart = memo(({
       scaleMargins: optimalMargins,
     });
 
+    // === HISTORICAL PATTERN OVERLAYS ===
+    // Clean up previous pattern line cleanups
+    patternLinesCleanupsRef.current.forEach(cleanup => cleanup());
+    patternLinesCleanupsRef.current = [];
+
+    if (historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns) {
+      // Render price lines (Entry/SL/TP) for each pattern
+      for (const pattern of historicalPatterns) {
+        const cleanup = renderPatternPriceLines(candleSeries, pattern, patternToggles);
+        patternLinesCleanupsRef.current.push(cleanup);
+      }
+
+      // Render pattern markers (name labels + direction arrows)
+      const patternMarkerData = generatePatternMarkers(historicalPatterns, bars, patternToggles);
+      if (patternMarkerData.length > 0) {
+        // Merge with existing external markers
+        const allMarkers = [
+          ...(chartMarkers || []).map(m => ({
+            time: m.time.split('T')[0] as Time,
+            position: m.position,
+            color: m.color,
+            shape: m.shape as SeriesMarkerShape,
+            text: m.text,
+          })),
+          ...patternMarkerData,
+        ].sort((a, b) => (a.time as string).localeCompare(b.time as string));
+
+        try {
+          createSeriesMarkers(candleSeries, allMarkers);
+        } catch { /* ignore marker errors */ }
+      }
+
+      // Render zigzag polylines for patterns with pivots
+      if (patternToggles.showZigzag) {
+        for (const pattern of historicalPatterns) {
+          if (!pattern.pivots || pattern.pivots.length < 2) continue;
+          const patternBars = pattern.bars && pattern.bars.length > 0 ? pattern.bars : bars;
+          const formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          if (formation && formation.zigzag.length >= 2) {
+            const zigzagSeries = chart.addSeries(LineSeries, {
+              color: PATTERN_OVERLAY_COLORS.zigzag,
+              lineWidth: 2,
+              lineStyle: 0,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+              autoscaleInfoProvider: () => null,
+            });
+            zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
+          }
+        }
+      }
+
+      // Draw trade zones on canvas (TP/SL shading)
+      if (patternToggles.showTradeZones) {
+        const drawHistoricalPatternZones = () => {
+          const canvas = canvasOverlayRef.current;
+          if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          const chartEl = containerRef.current;
+          if (!chartEl) return;
+          const rect = chartEl.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(rect.width) * dpr;
+          canvas.height = Math.floor(rect.height) * dpr;
+          canvas.style.width = `${Math.floor(rect.width)}px`;
+          canvas.style.height = `${Math.floor(rect.height)}px`;
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, rect.width, rect.height);
+
+          drawPatternZones(
+            ctx, chartRef.current, candleSeriesRef.current,
+            historicalPatterns, patternToggles,
+            rect.width, rect.height
+          );
+        };
+
+        setTimeout(() => requestAnimationFrame(drawHistoricalPatternZones), 200);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternZones);
+      }
+    }
+
     // === RSI as separate chart (skip on shared/clean views) ===
     if (!hideAnalysisToolbar && indicators.rsi && rsiContainerRef.current) {
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
