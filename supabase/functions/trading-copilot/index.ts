@@ -353,11 +353,46 @@ For a single pattern, you may use this inline format:
 ## When No A-Quality Patterns Exist
 Don't apologize! Instead say something like:
 "No A-quality patterns are active right now, but here are the strongest B-quality setups forming..."
+If the fallbackApplied flag is true in pattern results, acknowledge it naturally and present the alternatives.
 
-## Pine Script Output
-When generate_pine_script returns, you MUST:
-1. Include the FULL code in a \`\`\`pine code block
-2. Add the setup instructions after
+## Pine Script Generation
+When users ask for **alerts** specifically:
+- Generate an **indicator** with alertcondition() calls, NOT a strategy
+- When users ask for a **strategy** or **backtest**, generate a strategy
+- ALWAYS include the full code — never truncate
+
+## Education & Beginner Questions
+When users ask "Where should I start?" or "Which pattern to learn first?":
+- Recommend **Bull Flag** as the #1 beginner pattern (simple structure, clear rules)
+- Follow up with **Double Bottom** and **Head and Shoulders** 
+- Explain WHY each is good for beginners (visual clarity, clear entry/stop/target rules)
+- Link to relevant articles using find_article
+- Always include: stop loss placement, take profit calculation (measured move), and the inverse variant if applicable
+
+## Quality Grades Explained
+When users ask about quality grades (A/B/C):
+- **A (High Confluence)**: Pattern + trend alignment + volume confirmation + multi-timeframe support. Rare (~5% of detections)
+- **B (Standard Detection)**: Pattern confirmed with trend alignment. Most common high-quality signal (~25%)
+- **C (Early Detection)**: Pattern identified but lacking full confluence. Good for watchlist building (~70%)
+- Explain that B and C grades have statistically similar performance, and sample size matters more than grade
+
+## Market Close / "How did the market end?"
+When users ask about market close or end-of-day performance:
+→ Call get_market_report + get_market_breadth together to provide a synthesis
+→ Include key index moves, breadth data, and notable sector shifts
+
+## Exotic / Illiquid Instruments (USDARS, USDTRY, etc.)
+When analyzing exotic FX pairs or illiquid instruments:
+- Warn about wide spreads and potential gaps
+- Note that standard technical stop-losses may be unreliable
+- Mention that some pairs may have controlled/managed exchange rates
+- Suggest wider stops or reduced position sizing
+
+## Response Completeness (CRITICAL)
+- NEVER cut off mid-sentence. If approaching length limits, wrap up with a concise summary.
+- For multi-scenario analyses, use bullet points instead of long paragraphs to fit more content.
+- If listing items (top 10, etc.), always complete the full list. Use compact table format to save space.
+- Avoid duplicate entries in pattern lists — deduplicate by symbol+pattern.
 
 ## Formatting Icons
 📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish | 📅 economic events | 📰 market report | 💼 portfolio
@@ -444,27 +479,82 @@ async function executeSearchPatterns(supabase: any, args: any) {
     return { error: 'Failed to search patterns', patterns: [] };
   }
 
+  // Auto-fallback: if no results and quality filter was strict, broaden to B/C
+  if ((!data || data.length === 0) && args.min_quality === 'A') {
+    console.log('[trading-copilot] No A-quality results, falling back to B+C quality');
+    let fallbackQuery = supabase
+      .from('live_pattern_detections')
+      .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
+      .eq('status', 'active')
+      .in('quality_score', ['B', 'C'])
+      .order('first_detected_at', { ascending: false })
+      .limit(args.limit || 10);
+
+    if (args.symbol) fallbackQuery = fallbackQuery.ilike('instrument', `%${args.symbol}%`);
+    if (args.pattern_type) fallbackQuery = fallbackQuery.ilike('pattern_name', `%${args.pattern_type}%`);
+    if (args.timeframe) fallbackQuery = fallbackQuery.eq('timeframe', args.timeframe);
+    if (args.direction && args.direction !== 'any') fallbackQuery = fallbackQuery.eq('direction', args.direction);
+
+    const { data: fallbackData } = await fallbackQuery;
+    
+    return {
+      count: fallbackData?.length || 0,
+      fallbackApplied: true,
+      fallbackReason: 'No A-quality patterns found. Showing best available B/C-quality setups instead.',
+      patterns: formatPatterns(fallbackData)
+    };
+  }
+
+  // Auto-fallback: if no results at all, try without symbol/timeframe filters
+  if ((!data || data.length === 0) && (args.symbol || args.timeframe)) {
+    console.log('[trading-copilot] No results with filters, trying broader search');
+    let broadQuery = supabase
+      .from('live_pattern_detections')
+      .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
+      .eq('status', 'active')
+      .order('first_detected_at', { ascending: false })
+      .limit(args.limit || 10);
+
+    if (args.pattern_type) broadQuery = broadQuery.ilike('pattern_name', `%${args.pattern_type}%`);
+    if (args.direction && args.direction !== 'any') broadQuery = broadQuery.eq('direction', args.direction);
+
+    const { data: broadData } = await broadQuery;
+    
+    if (broadData?.length) {
+      return {
+        count: broadData.length,
+        fallbackApplied: true,
+        fallbackReason: `No patterns found for the exact criteria. Here are the best available setups across the market.`,
+        patterns: formatPatterns(broadData)
+      };
+    }
+  }
+
   return {
     count: data?.length || 0,
-    patterns: data?.map((p: any) => ({
-      id: p.id,
-      symbol: p.instrument,
-      pattern: p.pattern_name,
-      direction: p.direction,
-      timeframe: p.timeframe,
-      quality: p.quality_score,
-      entry: p.entry_price,
-      stopLoss: p.stop_loss_price,
-      takeProfit: p.take_profit_price,
-      riskReward: p.risk_reward_ratio,
-      trendAlignment: p.trend_alignment,
-      currentPrice: p.current_price,
-      changePercent: p.change_percent,
-      detectedAt: p.first_detected_at,
-      studyUrl: `/study/${encodeURIComponent(p.instrument)}`,
-      patternsListUrl: `/patterns/live`
-    })) || []
+    patterns: formatPatterns(data)
   };
+}
+
+function formatPatterns(data: any[]) {
+  return (data || []).map((p: any) => ({
+    id: p.id,
+    symbol: p.instrument,
+    pattern: p.pattern_name,
+    direction: p.direction,
+    timeframe: p.timeframe,
+    quality: p.quality_score,
+    entry: p.entry_price,
+    stopLoss: p.stop_loss_price,
+    takeProfit: p.take_profit_price,
+    riskReward: p.risk_reward_ratio,
+    trendAlignment: p.trend_alignment,
+    currentPrice: p.current_price,
+    changePercent: p.change_percent,
+    detectedAt: p.first_detected_at,
+    studyUrl: `/study/${encodeURIComponent(p.instrument)}`,
+    patternsListUrl: `/patterns/live`
+  }));
 }
 
 async function executeGetPatternStats(supabase: any, args: any) {
@@ -1932,7 +2022,7 @@ serve(async (req) => {
             tools,
             tool_choice: "auto",
             stream: false,
-            max_tokens: 4096,
+            max_tokens: 8192,
           }),
         });
 
