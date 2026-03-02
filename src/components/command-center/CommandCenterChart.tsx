@@ -338,7 +338,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           .limit(50);
 
         const combinedPatterns = [
-          ...(liveData || []).map(p => ({ ...p, isActive: p.status === 'active' })),
+          ...(liveData || []).map(p => ({ ...p, outcome: null, isActive: p.status === 'active' })),
           ...(historicalData || []).map(p => ({ ...p, isActive: false })),
         ];
 
