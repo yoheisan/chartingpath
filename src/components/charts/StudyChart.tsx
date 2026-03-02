@@ -1440,6 +1440,7 @@ const StudyChart = memo(({
           />
         )}
         {/* Indicator Toggles */}
+        <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
