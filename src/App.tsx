@@ -86,6 +86,7 @@ const TranslationManagement = lazy(() =>
 
 const Terms = lazy(() => import("./pages/Terms"));
 const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
+const EdgeAtlasIndexPage = lazy(() => import("./pages/EdgeAtlasIndexPage"));
 const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage"));
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
