@@ -65,6 +65,22 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action || "crawl_next";
 
+    // ── ACTION: reset_seeds ─────────────────────────────────────────
+    if (action === "reset_seeds") {
+      const { data, error } = await supabase
+        .from("x_discovery_seeds")
+        .update({ status: "pending", pagination_token: null, crawled_at: null, accounts_found: 0 })
+        .eq("status", "completed")
+        .select("id");
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ reset: data?.length || 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // ── ACTION: add_seeds ──────────────────────────────────────────
     if (action === "add_seeds") {
       const seeds: { user_id: string; username?: string }[] = body.seeds || [];
