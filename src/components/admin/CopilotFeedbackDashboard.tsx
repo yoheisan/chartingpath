@@ -40,7 +40,16 @@ export function CopilotFeedbackDashboard() {
 
   useEffect(() => {
     loadFeedback();
+    loadResolvedCount();
   }, [filter, sortBy]);
+
+  const loadResolvedCount = async () => {
+    const { count } = await supabase
+      .from('copilot_feedback')
+      .select('*', { count: 'exact', head: true })
+      .eq('resolved', true);
+    setResolvedCount(count || 0);
+  };
 
   const loadFeedback = async () => {
     setLoading(true);
@@ -63,6 +72,8 @@ export function CopilotFeedbackDashboard() {
         query = query.eq('content_gap_identified', true).eq('resolved', false);
       } else if (filter === 'high-priority') {
         query = query.gte('priority_score', 60).eq('resolved', false);
+      } else if (filter === 'resolved') {
+        query = query.eq('resolved', true);
       }
 
       const { data, error } = await query;
