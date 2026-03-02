@@ -54,6 +54,27 @@
       "validatePatternLab": "Zweryfikuj w Pattern Lab",
       "findActiveSignals": "Znajdź aktywne sygnały",
       "exportScript": "Eksportuj skrypt"
-    }
+    },
+    "instrumentStats": "Statystyki instrumentu",
+    "instrumentStatsDesc": "Zobacz jak ta formacja wypada na tym konkretnym instrumencie",
+    "comparePerformance": "Porównaj wyniki",
+    "comparePerformanceDesc": "Porównaj wyniki formacji ze średnią rynkową",
+    "decisionConfidence": "Pewność decyzji",
+    "decisionConfidenceDesc": "Uzyskaj złożony wynik pewności dla tego setupu",
+    "highConfidence": "Wysoka pewność",
+    "moderateConfidence": "Umiarkowana pewność",
+    "lowConfidence": "Niska pewność",
+    "veryLowConfidence": "Bardzo niska pewność",
+    "outperforms": "Przewyższa średnią rynkową",
+    "underperforms": "Poniżej średniej rynkowej",
+    "inLine": "Zgodnie ze średnią rynkową",
+    "concentrationRisk": "Wykryto ryzyko koncentracji",
+    "directionalRisk": "Wykryto ryzyko kierunkowe",
+    "portfolioAware": "Analiza uwzględniająca portfel",
+    "tickerSpecific": "Dane specyficzne dla instrumentu",
+    "vsMarketAvg": "vs średnia rynkowa",
+    "confidenceScore": "Wynik pewności",
+    "sampleSize": "Wielkość próby",
+    "notEnoughData": "Niewystarczająca ilość danych historycznych dla tego instrumentu"
   }
 }
