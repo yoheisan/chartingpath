@@ -221,7 +221,7 @@ export function CopilotFeedbackDashboard() {
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base font-medium truncate">
+                          <CardTitle className="text-base font-medium break-words">
                             {item.question}
                           </CardTitle>
                           <CardDescription className="mt-1">
