@@ -336,8 +336,8 @@ const StudyChart = memo(({
         allowShiftVisibleRangeOnWhitespaceReplacement: true,
         barSpacing: 12,
         minBarSpacing: 2,
+      },
       localization: {
-        locale: getChartLocale(i18n.language),
       },
       crosshair: {
         mode: 0,
