@@ -583,7 +583,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
             {/* Minimal study panel toggle — TradingView-style thin divider */}
             <button
               onClick={() => setStudyPanelCollapsed(prev => !prev)}
-              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/40 hover:bg-muted/30 transition-colors text-[11px] text-muted-foreground/70 hover:text-muted-foreground shrink-0"
+              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/60 hover:bg-muted/30 transition-colors text-[11px] font-medium text-muted-foreground/70 hover:text-muted-foreground shrink-0"
             >
               {studyPanelCollapsed ? (
                 <>
@@ -600,7 +600,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
             {/* Study panel — kept mounted to avoid refetch */}
             <div className={cn(
-              "flex-1 min-h-0 overflow-auto border-t border-border/40",
+              "flex-1 min-h-0 overflow-auto border-t border-border/60",
               studyPanelCollapsed && "hidden"
             )}>
               <DashboardPatternStudy
@@ -615,7 +615,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
         {/* Right Sidebar — auto-collapse on smaller screens, TradingView-style icon strip */}
         <div className={cn(
-          "flex h-full border-l border-border/40 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
+          "flex h-full border-l border-border/60 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
           rightSidebarCollapsed ? "w-10" : "w-[280px]"
         )}>
           {rightSidebarCollapsed ? (
@@ -671,7 +671,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
           ) : (
             <div className="flex flex-col h-full w-full">
               {/* Sidebar header with collapse */}
-              <div className="flex items-center justify-start px-1 py-0.5 border-b border-border/40 shrink-0">
+              <div className="flex items-center justify-start px-1 py-0.5 border-b border-border/60 shrink-0">
                 <button
                   className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground"
                   onClick={() => toggleSidebar(true)}
@@ -687,14 +687,14 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     setRightPanelTab(tab);
                     updateSettings({ watchlistTab: tab });
                   }} className="h-full flex flex-col">
-                    <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent h-8 px-1.5">
-                      <TabsTrigger value="watchlist" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                    <TabsList className="w-full justify-start rounded-none border-b border-border/60 bg-transparent h-8 px-1.5">
+                      <TabsTrigger value="watchlist" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.watchlist')}
                       </TabsTrigger>
-                      <TabsTrigger value="alerts" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="alerts" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="paper" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="paper" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Paper
                       </TabsTrigger>
                     </TabsList>

@@ -10,12 +10,12 @@ export const CHART_THEME = {
   dark: {
     background: '#0f0f0f',
     text: '#a1a1a1',
-    grid: 'rgba(255,255,255,0.05)',
+    grid: 'rgba(255,255,255,0.12)',
   },
   light: {
     background: '#ffffff',
     text: '#666666',
-    grid: 'rgba(0,0,0,0.05)',
+    grid: 'rgba(0,0,0,0.10)',
   },
 } as const;
 
