@@ -117,7 +117,7 @@ serve(async (req) => {
       fetchYahooQuote("^DECL"),
       fetchYahooQuote("^UNCH"),
       fetchYahooQuote("^VIX"),
-      fetchYahooQuote("^CPC"),  // CBOE Total Put/Call Ratio
+      fetchYahooQuote("^PCSP"),  // S&P 500 Put/Call Ratio (fallback: try ^CPC, ^CPCE)
     ]);
 
     let advances = advResult || 0;
