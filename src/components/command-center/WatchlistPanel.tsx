@@ -200,7 +200,7 @@ export function WatchlistPanel({
             <Eye className="h-4 w-4" />
             {t('commandCenter.watchlist')}
             {isPaidUser && (
-              <Badge variant="secondary" className="text-[11px] px-1 py-0 ml-1">
+              <Badge variant="secondary" className="text-xs px-1 py-0 ml-1">
                 <Crown className="h-2.5 w-2.5 mr-0.5" />
                 {t('commandCenter.custom')}
               </Badge>
@@ -233,15 +233,15 @@ export function WatchlistPanel({
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
-          <TabsTrigger value="watchlist" className="text-xs h-6 px-2">
+          <TabsTrigger value="watchlist" className="text-[13px] h-6 px-2">
             <Star className="h-3 w-3 mr-1" />
             {isPaidUser ? t('commandCenter.myList') : t('commandCenter.universe')}
           </TabsTrigger>
-          <TabsTrigger value="patterns" className="text-xs h-6 px-2">
+          <TabsTrigger value="patterns" className="text-[13px] h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.active')}
             {activePatterns.length > 0 && (
-              <Badge variant="secondary" className="ml-1 text-[11px] px-1 py-0">
+              <Badge variant="secondary" className="ml-1 text-xs px-1 py-0">
                 {activePatterns.length}
               </Badge>
             )}
@@ -274,7 +274,7 @@ export function WatchlistPanel({
                   >
                     <InstrumentLogo instrument={item.symbol} size="sm" showName={false} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium truncate">{item.symbol}</div>
+                      <div className="text-[13px] font-medium truncate">{item.symbol}</div>
                       {'name' in item && item.name && (
                         <div className="text-xs text-muted-foreground truncate">{String(item.name)}</div>
                       )}
@@ -337,11 +337,11 @@ export function WatchlistPanel({
                   >
                     <div className="flex items-center gap-2">
                       <InstrumentLogo instrument={pattern.instrument} size="sm" showName={false} />
-                      <span className="text-xs font-medium">{pattern.instrument}</span>
+                      <span className="text-[13px] font-medium">{pattern.instrument}</span>
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[11px] px-1 py-0',
+                          'text-xs px-1 py-0',
                           pattern.direction === 'bullish'
                             ? 'border-emerald-500/50 text-emerald-600'
                             : 'border-red-500/50 text-red-600'
@@ -359,7 +359,7 @@ export function WatchlistPanel({
                       <span className="text-muted-foreground">
                         {formatPatternName(pattern.pattern_name)}
                       </span>
-                      <Badge variant="secondary" className="text-[11px] px-1 py-0">
+                      <Badge variant="secondary" className="text-xs px-1 py-0">
                         {pattern.timeframe}
                       </Badge>
                     </div>

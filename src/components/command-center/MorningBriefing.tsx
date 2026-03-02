@@ -184,20 +184,20 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-xs font-medium">{setup.instrument}</span>
+                  <span className="text-[13px] font-medium">{setup.instrument}</span>
                   {setup.direction === 'long' ? (
                     <TrendingUp className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
                   ) : (
                     <TrendingDown className="h-2.5 w-2.5 text-red-500 shrink-0" />
                   )}
                   <span className={cn(
-                    "text-[11px] font-mono",
+                    "text-xs font-mono",
                     setup.quality_score === 'A' ? "text-emerald-500" : "text-blue-500",
                   )}>
                     {setup.quality_score}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground/60 truncate max-w-[120px]">
+                <p className="text-xs text-muted-foreground/60 truncate max-w-[120px]">
                   {setup.pattern_name.replace(/-/g, ' ')} · {setup.timeframe}
                 </p>
               </div>

@@ -287,19 +287,19 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
-          <TabsTrigger value="indices" className="text-xs h-6 px-2">
+          <TabsTrigger value="indices" className="text-[13px] h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.indices')}
           </TabsTrigger>
-          <TabsTrigger value="breadth" className="text-xs h-6 px-2">
+          <TabsTrigger value="breadth" className="text-[13px] h-6 px-2">
             <BarChart3 className="h-3 w-3 mr-1" />
             {t('commandCenter.breadth')}
           </TabsTrigger>
-          <TabsTrigger value="movers" className="text-xs h-6 px-2">
+          <TabsTrigger value="movers" className="text-[13px] h-6 px-2">
             <TrendingUp className="h-3 w-3 mr-1" />
             {t('commandCenter.movers')}
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="text-xs h-6 px-2">
+          <TabsTrigger value="calendar" className="text-[13px] h-6 px-2">
             <Calendar className="h-3 w-3 mr-1" />
             {t('commandCenter.calendar')}
           </TabsTrigger>
@@ -317,18 +317,18 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                 >
                   <InstrumentLogo instrument={index.symbol} size="sm" showName={false} />
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-xs font-medium">{index.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{index.symbol}</div>
+                    <div className="text-[13px] font-medium">{index.name}</div>
+                    <div className="text-xs text-muted-foreground">{index.symbol}</div>
                   </div>
                   <div className="text-right">
                     {indicesData[index.symbol] ? (
                       <>
-                        <div className="text-xs font-medium">
+                        <div className="text-[13px] font-medium">
                           {formatPrice(indicesData[index.symbol].price)}
                         </div>
                         <div
                           className={cn(
-                            'text-[11px]',
+                            'text-xs',
                             indicesData[index.symbol].change >= 0
                               ? 'text-bullish'
                               : 'text-bearish'
@@ -339,7 +339,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         </div>
                       </>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">--</span>
+                      <span className="text-xs text-muted-foreground">--</span>
                     )}
                   </div>
                 </button>
@@ -360,10 +360,10 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                 <>
                   {/* Sentiment Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
+                    <span className="text-[13px] font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
                     <Badge 
                       className={cn(
-                        'text-[11px] border-0',
+                        'text-xs border-0',
                         breadthMeta?.sentiment === 'bullish' && 'bg-bullish/10 text-bullish',
                         breadthMeta?.sentiment === 'neutral-bullish' && 'bg-bullish/10 text-bullish',
                         breadthMeta?.sentiment === 'neutral-bearish' && 'bg-bearish/10 text-bearish',
@@ -380,7 +380,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* A/D Ratio Display */}
                   <div className="rounded-lg border border-border p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">{t('commandCenter.advanceDeclineRatio')}</span>
+                      <span className="text-[13px] font-medium">{t('commandCenter.advanceDeclineRatio')}</span>
                       <span className={cn(
                         'text-lg font-bold',
                         breadthData.advanceDeclineRatio >= 1 ? 'text-bullish' : 'text-bearish'
@@ -391,7 +391,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
 
                     {/* Visual Bar */}
                     <div className="space-y-1">
-                       <div className="flex justify-between text-[11px] text-muted-foreground">
+                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span className="text-bullish">Advancing: {breadthData.advances.toLocaleString()}</span>
                         <span className="text-bearish">Declining: {breadthData.declines.toLocaleString()}</span>
                       </div>
@@ -405,7 +405,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                           style={{ width: `${breadthMeta?.declinePercent || 50}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                      <div className="flex justify-between text-xs text-muted-foreground">
                         <span>{breadthMeta?.advancePercent}%</span>
                         <span>{breadthMeta?.declinePercent}%</span>
                       </div>
@@ -415,7 +415,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[11px] text-muted-foreground mb-1">{t('commandCenter.adLine')}</div>
+                      <div className="text-xs text-muted-foreground mb-1">{t('commandCenter.adLine')}</div>
                       <div className={cn(
                         'text-sm font-semibold',
                         breadthData.advanceDeclineLine >= 0 ? 'text-bullish' : 'text-bearish'
@@ -425,7 +425,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       </div>
                     </div>
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[11px] text-muted-foreground mb-1">{t('commandCenter.unchanged')}</div>
+                      <div className="text-xs text-muted-foreground mb-1">{t('commandCenter.unchanged')}</div>
                       <div className="text-sm font-semibold text-muted-foreground">
                         {breadthData.unchanged.toLocaleString()}
                       </div>
@@ -434,7 +434,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
 
                   {/* Interpretation */}
                   <div className="rounded-lg bg-muted/50 p-2.5">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       {breadthData.advanceDeclineRatio >= 2 && 
                         "Strong bullish breadth — broad participation confirms uptrend strength."}
                       {breadthData.advanceDeclineRatio >= 1.5 && breadthData.advanceDeclineRatio < 2 && 
@@ -449,12 +449,12 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   </div>
 
                   {/* Last Updated */}
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Exchange: {breadthData.exchange}</span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 px-2 text-[11px]"
+                      className="h-5 px-2 text-xs"
                       onClick={refreshBreadth}
                       disabled={breadthLoading}
                     >
@@ -492,7 +492,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {t('commandCenter.topGainers')}
                 </h4>
                 {topGainers.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
+                  <p className="text-[11px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topGainers.map((mover) => (
@@ -502,8 +502,8 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
-                        <span className="text-xs font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-bullish/10 text-bullish border-0 text-[10px]">
+                        <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
+                        <Badge className="bg-bullish/10 text-bullish border-0 text-[11px]">
                           +{mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>
@@ -519,7 +519,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {t('commandCenter.topLosers')}
                 </h4>
                 {topLosers.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
+                  <p className="text-[11px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topLosers.map((mover) => (
@@ -529,8 +529,8 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
-                        <span className="text-xs font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-bearish/10 text-bearish border-0 text-[10px]">
+                        <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
+                        <Badge className="bg-bearish/10 text-bearish border-0 text-[11px]">
                           {mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>
