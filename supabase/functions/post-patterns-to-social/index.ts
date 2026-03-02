@@ -60,6 +60,39 @@ function buildTweet(pattern: any): string {
   ).slice(0, 280);
 }
 
+/** Build a consolidated tweet for multiple patterns sharing the same trade levels */
+function buildConsolidatedTweet(group: any[]): string {
+  const first = group[0];
+  const emoji = ASSET_EMOJI[first.asset_type?.toLowerCase()] ?? '📉';
+  const dir = directionEmoji(first.direction);
+  const tf = first.timeframe?.toUpperCase() ?? '';
+  const grade = first.quality_score?.toUpperCase() ?? '?';
+  const rr = Number(first.risk_reward_ratio).toFixed(1);
+  const entry = Number(first.entry_price).toPrecision(5);
+  const sl = Number(first.stop_loss_price).toPrecision(5);
+  const tp = Number(first.take_profit_price).toPrecision(5);
+
+  const patternNames = group.map((p: any) => formatPatternName(p.pattern_name)).join(' + ');
+
+  return (
+    `${emoji} ${dir} ${patternNames} — ${first.instrument} (${tf})\n\n` +
+    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
+    `Free alerts at chartingpath.com`
+  ).slice(0, 280);
+}
+
+/** Group patterns by instrument + entry/SL/TP key */
+function groupByTradeLevels(patterns: any[]): Map<string, any[]> {
+  const groups = new Map<string, any[]>();
+  for (const p of patterns) {
+    const key = `${p.instrument}|${Number(p.entry_price).toPrecision(5)}|${Number(p.stop_loss_price).toPrecision(5)}|${Number(p.take_profit_price).toPrecision(5)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(p);
+  }
+  return groups;
+}
+
 // ─── Twitter OAuth ──────────────────────────────────────────────────────────
 
 function generateOAuthSignature(
@@ -332,8 +365,22 @@ serve(async (req) => {
 
     // Prefer patterns WITH images, then without
     const unposted = contextFiltered.filter((p: any) => !postedPatternIds.has(p.id));
-    const withImage = unposted.filter((p: any) => p.share_image_url);
-    const toPost = (withImage.length > 0 ? withImage : unposted).slice(0, 1);
+
+    // Consolidate patterns with identical instrument + trade levels into one tweet
+    const groups = groupByTradeLevels(unposted);
+    console.log(`[pattern-poster] ${unposted.length} unposted patterns → ${groups.size} unique trade-level groups`);
+
+    // Pick the best group to post (prefer groups with images)
+    let bestGroup: any[] | null = null;
+    for (const group of groups.values()) {
+      const hasImage = group.some((p: any) => p.share_image_url);
+      if (!bestGroup || (hasImage && !bestGroup.some((p: any) => p.share_image_url))) {
+        bestGroup = group;
+        if (hasImage) break; // Found one with image, use it
+      }
+    }
+
+    const toPost = bestGroup ? [bestGroup] : [];
 
     // ── Get active Twitter account ────────────────────────────────────────
     const { data: accounts } = await supabase
@@ -354,55 +401,69 @@ serve(async (req) => {
     // ── Post ──────────────────────────────────────────────────────────────
     const results: any[] = [];
 
-    for (const pattern of toPost) {
+    for (const group of toPost) {
+      const primary = group.find((p: any) => p.share_image_url) || group[0];
       try {
-        const token = await ensureShareToken(supabase, pattern.id);
+        const token = await ensureShareToken(supabase, primary.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
-        const tweet = buildTweet(pattern);
+        const tweet = group.length > 1
+          ? buildConsolidatedTweet(group)
+          : buildTweet(primary);
 
-        // Try to attach pre-generated image
+        // Try to attach pre-generated image (from any pattern in the group)
         let mediaId: string | undefined;
-        if (pattern.share_image_url) {
+        const imagePattern = group.find((p: any) => p.share_image_url);
+        if (imagePattern?.share_image_url) {
           try {
-            const imageBytes = await downloadImageAsBytes(pattern.share_image_url);
+            const imageBytes = await downloadImageAsBytes(imagePattern.share_image_url);
             if (imageBytes && imageBytes.length > 0) {
               mediaId = await uploadMediaToTwitter(imageBytes);
-              console.log(`[pattern-poster] 🖼️ Image attached for ${pattern.instrument}`);
+              console.log(`[pattern-poster] 🖼️ Image attached for ${primary.instrument}`);
             }
           } catch (imgErr: any) {
             console.warn(`[pattern-poster] Image attach failed, posting text-only: ${imgErr.message}`);
           }
         } else {
-          console.log(`[pattern-poster] No pre-generated image for ${pattern.instrument}, posting text-only`);
+          console.log(`[pattern-poster] No pre-generated image for ${primary.instrument}, posting text-only`);
         }
 
-        console.log(`[pattern-poster] Posting: ${pattern.instrument} ${pattern.pattern_name} (${pattern.quality_score})${mediaId ? ' [with image]' : ''}`);
+        const patternNames = group.map((p: any) => p.pattern_name).join(' + ');
+        console.log(`[pattern-poster] Posting: ${primary.instrument} [${patternNames}] (${primary.quality_score})${mediaId ? ' [with image]' : ''} — ${group.length} pattern(s) consolidated`);
         const twitterResponse = await postToTwitter(tweet, mediaId);
 
-        await supabase.from('post_history').insert({
-          account_id: twitterAccount.id,
-          platform: 'twitter',
-          post_type: 'pattern_alert',
-          content: tweet,
-          link_back_url: shareUrl,
-          platform_post_id: twitterResponse?.id,
-          platform_response: twitterResponse,
-          pattern_id: pattern.id,
-          session_window: session,
-          posted_at: nowUtc.toISOString(),
-        });
+        // Record post_history for ALL patterns in the group to prevent re-posting
+        for (const p of group) {
+          await supabase.from('post_history').insert({
+            account_id: twitterAccount.id,
+            platform: 'twitter',
+            post_type: 'pattern_alert',
+            content: tweet,
+            link_back_url: shareUrl,
+            platform_post_id: twitterResponse?.id,
+            platform_response: twitterResponse,
+            pattern_id: p.id,
+            session_window: session,
+            posted_at: nowUtc.toISOString(),
+          });
+        }
 
-        results.push({ pattern_id: pattern.id, instrument: pattern.instrument, tweet_id: twitterResponse?.id, has_image: !!mediaId });
-        console.log(`[pattern-poster] ✅ Posted ${pattern.instrument} — tweet ${twitterResponse?.id}${mediaId ? ' (with image)' : ''}`);
+        results.push({
+          pattern_ids: group.map((p: any) => p.id),
+          instrument: primary.instrument,
+          tweet_id: twitterResponse?.id,
+          has_image: !!mediaId,
+          consolidated: group.length,
+        });
+        console.log(`[pattern-poster] ✅ Posted ${primary.instrument} — tweet ${twitterResponse?.id}${mediaId ? ' (with image)' : ''} — ${group.length} signal(s)`);
 
       } catch (err: any) {
         if (err.name === 'RateLimitError') {
           console.warn('[pattern-poster] ⏳ Rate limited — will retry next invocation');
-          results.push({ pattern_id: pattern.id, instrument: pattern.instrument, error: 'rate_limited' });
+          results.push({ pattern_id: primary.id, instrument: primary.instrument, error: 'rate_limited' });
           break;
         }
-        console.error(`[pattern-poster] ❌ Failed to post ${pattern.instrument}:`, err.message);
-        results.push({ pattern_id: pattern.id, instrument: pattern.instrument, error: err.message });
+        console.error(`[pattern-poster] ❌ Failed to post ${primary.instrument}:`, err.message);
+        results.push({ pattern_id: primary.id, instrument: primary.instrument, error: err.message });
       }
     }
 
