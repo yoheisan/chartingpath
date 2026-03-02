@@ -450,6 +450,7 @@ const StudyChart = memo(({
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         ema20Series.setData(sanitizeSeriesData(ema20Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
@@ -464,6 +465,7 @@ const StudyChart = memo(({
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         ema50Series.setData(sanitizeSeriesData(ema50Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
@@ -479,6 +481,7 @@ const StudyChart = memo(({
           lineStyle: 2,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         ema200Series.setData(sanitizeSeriesData(ema200Data.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
@@ -493,6 +496,7 @@ const StudyChart = memo(({
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         bbUpperSeries.setData(sanitizeSeriesData(bbData.map((p) => ({ time: p.time as Time, value: p.upper }))));
 
@@ -501,6 +505,7 @@ const StudyChart = memo(({
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         bbLowerSeries.setData(sanitizeSeriesData(bbData.map((p) => ({ time: p.time as Time, value: p.lower }))));
       }
@@ -516,6 +521,7 @@ const StudyChart = memo(({
           lineStyle: 2,
           priceLineVisible: false,
           lastValueVisible: false,
+          autoscaleInfoProvider: () => null,
         });
         vwapSeries.setData(sanitizeSeriesData(vwapData.map((p) => ({ time: p.time as Time, value: p.value }))));
       }
