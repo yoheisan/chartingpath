@@ -197,16 +197,45 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[auto-follow-x] Processing: ${next.target_user_id} (@${next.target_username || "?"})`);
+    let targetUserId = next.target_user_id;
+
+    // If target_user_id is not numeric, resolve it to a numeric ID
+    if (!/^\d+$/.test(targetUserId)) {
+      console.log(`[auto-follow-x] Resolving non-numeric ID: ${targetUserId}`);
+      const resolvedId = await resolveUsernameToId(targetUserId);
+      if (!resolvedId) {
+        console.log(`[auto-follow-x] Could not resolve ${targetUserId}, skipping.`);
+        await supabase
+          .from("x_follow_queue")
+          .update({
+            status: "skipped",
+            error_message: `Could not resolve username: ${targetUserId}`,
+            attempted_at: new Date().toISOString(),
+          })
+          .eq("id", next.id);
+        return new Response(
+          JSON.stringify({ target: targetUserId, status: "skipped", reason: "unresolvable_username" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Update the queue row with the resolved numeric ID
+      targetUserId = resolvedId;
+      await supabase
+        .from("x_follow_queue")
+        .update({ target_user_id: resolvedId, target_username: next.target_user_id.replace(/^@/, "") })
+        .eq("id", next.id);
+      console.log(`[auto-follow-x] Resolved to numeric ID: ${resolvedId}`);
+    }
+
+    console.log(`[auto-follow-x] Processing: ${targetUserId} (@${next.target_username || "?"})`);
 
     const myId = await getMyUserId();
-    const result = await followUser(myId, next.target_user_id);
+    const result = await followUser(myId, targetUserId);
 
     if (result.error === "rate_limited") {
-      // Don't update status — retry next cycle
       console.log("[auto-follow-x] Rate limited, will retry next cycle.");
       return new Response(
-        JSON.stringify({ message: "Rate limited, retrying later", target: next.target_user_id }),
+        JSON.stringify({ message: "Rate limited, retrying later", target: targetUserId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
