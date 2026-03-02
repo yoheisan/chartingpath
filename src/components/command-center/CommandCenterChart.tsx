@@ -415,17 +415,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Chart Header — TradingView-style: compact, information-dense */}
-      <div className="flex items-center justify-between px-3 py-1 border-b border-border/40">
+      <div className="flex items-center justify-between px-3 py-1 border-b border-border/60">
         <div className="flex items-center gap-2 min-w-0">
           <InstrumentLogo instrument={symbol} size="sm" showName={false} />
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold tracking-tight">{symbol}</span>
+            <span className="text-sm font-bold tracking-tight">{symbol}</span>
             {priceData && (
               <div className="flex items-baseline gap-2">
-                <span className="text-base font-semibold font-mono tabular-nums tracking-tight">
+                <span className="text-base font-bold font-mono tabular-nums tracking-tight">
                   {formatPrice(priceData.current)}
                 </span>
-                <span className={`text-xs font-mono tabular-nums ${getChangeColor()}`}>
+                <span className={`text-xs font-bold font-mono tabular-nums ${getChangeColor()}`}>
                   {priceData.change >= 0 ? '+' : ''}{priceData.changePct.toFixed(2)}%
                 </span>
               </div>
@@ -458,7 +458,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                   }
                 }}
                 className={cn(
-                  "h-6 px-2 text-[11px] font-medium rounded transition-colors relative",
+                  "h-6 px-2 text-[11px] font-semibold rounded transition-colors relative",
                   timeframe === tf.value
                     ? "text-foreground bg-muted"
                     : "text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/30"
