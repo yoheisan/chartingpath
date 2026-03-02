@@ -59,6 +59,19 @@ import {
 import { ChartAnalysisToolbar } from './ChartAnalysisToolbar';
 import { useChartAnalysis } from '@/hooks/useChartAnalysis';
 import { cn } from '@/lib/utils';
+import {
+  HistoricalPatternOverlay,
+  PatternOverlayToggles,
+  DEFAULT_PATTERN_OVERLAY_TOGGLES,
+  loadPatternOverlayToggles,
+  savePatternOverlayToggles,
+  renderPatternPriceLines,
+  generatePatternMarkers,
+  drawPatternZones,
+  PATTERN_OVERLAY_COLORS,
+} from './PatternOverlayRenderer';
+import { PatternOverlayTogglePanel } from './PatternOverlayTogglePanel';
+import { deriveFormationOverlay } from '@/utils/formationOverlay';
 
 export interface IndicatorSettings {
   ema20: boolean;
