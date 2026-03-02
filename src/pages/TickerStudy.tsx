@@ -623,6 +623,25 @@ export default function TickerStudy() {
     return markers;
   }, [showPatternsOnChart, livePatterns, filteredHistoricalPatterns]);
 
+  // Convert historical patterns to overlay format for StudyChart
+  const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
+    if (!showPatternsOnChart) return [];
+    return filteredHistoricalPatterns.map(p => ({
+      id: p.id,
+      patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
+      patternId: p.pattern_id,
+      direction: p.direction === 'bullish' ? 'long' as const : 'short' as const,
+      detectedAt: p.detected_at,
+      entryPrice: p.entry_price,
+      stopLossPrice: p.stop_loss_price,
+      takeProfitPrice: p.take_profit_price,
+      outcome: p.outcome as any,
+      outcomePnlPercent: p.outcome_pnl_percent,
+      pivots: p.visual_spec?.pivots,
+      bars: p.bars,
+    }));
+  }, [showPatternsOnChart, filteredHistoricalPatterns]);
+
   // Unique pattern types for filter
   const patternTypes = useMemo(() => {
     const types = new Set(historicalPatterns.map(p => p.pattern_id));
