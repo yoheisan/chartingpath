@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield, ChevronDown } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
