@@ -308,6 +308,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
+      const isResolvedOutcome = (outcome?: string | null) =>
+        ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
+      const getDetectedAt = (pattern: any) => pattern.first_detected_at || pattern.detected_at || '';
+
       try {
         // Fetch recent live patterns (active + expired within last 90 days)
         const ninetyDaysAgo = new Date();
@@ -333,10 +337,35 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           .order('detected_at', { ascending: false })
           .limit(50);
 
-        setAutoPatterns([
+        const combinedPatterns = [
           ...(liveData || []).map(p => ({ ...p, isActive: p.status === 'active' })),
           ...(historicalData || []).map(p => ({ ...p, isActive: false })),
-        ]);
+        ];
+
+        // Deduplicate same occurrence across live/historical datasets.
+        // Prefer resolved historical records when both variants exist.
+        const bySignature = new Map<string, any>();
+        for (const pattern of combinedPatterns) {
+          const detectedAt = getDetectedAt(pattern);
+          const dayKey = detectedAt ? detectedAt.split('T')[0] : 'unknown';
+          const key = `${pattern.pattern_id}|${pattern.direction}|${dayKey}`;
+          const existing = bySignature.get(key);
+
+          if (!existing) {
+            bySignature.set(key, pattern);
+            continue;
+          }
+
+          if (isResolvedOutcome(pattern.outcome) && !isResolvedOutcome(existing.outcome)) {
+            bySignature.set(key, pattern);
+          }
+        }
+
+        const deduped = [...bySignature.values()].sort(
+          (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
+        );
+
+        setAutoPatterns(deduped);
       } catch (err) {
         console.error('[CommandCenterChart] auto-pattern fetch error:', err);
         setAutoPatterns([]);
@@ -412,19 +441,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
-  // Derive trade plan from the LATEST pattern (active first, then most recent by date)
+  // Derive trade plan from the latest unresolved pattern only
   const tradePlan = useMemo(() => {
     if (autoPatterns.length === 0) return undefined;
-    // Prefer active pattern, fall back to most recent
-    const activePattern = autoPatterns.find(p => p.isActive);
-    const latestPattern = activePattern || autoPatterns.sort((a, b) => {
-      const dateA = a.isActive ? a.first_detected_at : a.detected_at;
-      const dateB = b.isActive ? b.first_detected_at : b.detected_at;
-      return new Date(dateB).getTime() - new Date(dateA).getTime();
-    })[0];
-    if (!latestPattern) return undefined;
-    const { entry_price, stop_loss_price, take_profit_price, direction } = latestPattern;
+
+    const isResolvedOutcome = (outcome?: string | null) =>
+      ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
+    const getDetectedAt = (pattern: any) => pattern.first_detected_at || pattern.detected_at || '';
+
+    const sortedPatterns = [...autoPatterns]
+      .filter(p => !!getDetectedAt(p))
+      .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
+
+    const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
+    if (!latestUnresolvedPattern) return undefined;
+
+    const { entry_price, stop_loss_price, take_profit_price, direction } = latestUnresolvedPattern;
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
+
     return {
       entry: entry_price,
       stopLoss: stop_loss_price,
