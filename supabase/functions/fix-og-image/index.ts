@@ -7,34 +7,30 @@ serve(async () => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch the PNG from the public directory of the deployed site
-    // Try multiple URLs
-    const urls = [
-      'https://chartingpath.lovable.app/images/default-og.png',
-      'https://chartingpath.com/images/default-og.png',
-      'https://id-preview--c36c7d47-0b2b-4bf9-835b-9393a929a85f.lovable.app/images/default-og.png',
-    ];
-    let imgRes: Response | null = null;
-    for (const u of urls) {
-      console.log(`Trying: ${u}`);
-      const r = await fetch(u);
-      if (r.ok) { imgRes = r; console.log(`Success: ${u}`); break; }
-      console.log(`Failed: ${u} -> ${r.status}`);
-    }
-    if (!imgRes) {
-      return new Response(JSON.stringify({ error: 'Could not fetch image from any URL' }), { status: 500 });
-    }
+    const url = 'https://id-preview--c36c7d47-0b2b-4bf9-835b-9393a929a85f.lovable.app/images/og-upload.png';
+    console.log(`Fetching: ${url}`);
+    const r = await fetch(url);
+    console.log(`Status: ${r.status}, Content-Type: ${r.headers.get('content-type')}`);
     
-    const imgBlob = await imgRes.blob();
-    console.log(`Fetched image: ${imgBlob.size} bytes, type: ${imgBlob.type}`);
+    // Get raw bytes regardless of what content-type the server reports
+    const arrayBuf = await r.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuf);
+    console.log(`Got ${bytes.length} bytes, first 4: ${bytes[0]} ${bytes[1]} ${bytes[2]} ${bytes[3]}`);
+    
+    // Verify PNG magic bytes: 137 80 78 71
+    const isPng = bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71;
+    console.log(`Is PNG: ${isPng}`);
+    
+    if (!isPng) {
+      return new Response(JSON.stringify({ error: 'Not a valid PNG file', firstBytes: Array.from(bytes.slice(0, 20)) }), { status: 400 });
+    }
 
-    // Delete existing broken file first
+    // Delete then re-upload to force content type
     await supabase.storage.from('share-images').remove(['default-og.png']);
-
-    // Upload with correct content type
+    
     const { error } = await supabase.storage
       .from('share-images')
-      .upload('default-og.png', imgBlob, {
+      .upload('default-og.png', bytes.buffer, {
         contentType: 'image/png',
         cacheControl: '31536000',
         upsert: true,
@@ -44,7 +40,7 @@ serve(async () => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
-    return new Response(JSON.stringify({ success: true, size: imgBlob.size }), {
+    return new Response(JSON.stringify({ success: true, size: bytes.length, isPng }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
