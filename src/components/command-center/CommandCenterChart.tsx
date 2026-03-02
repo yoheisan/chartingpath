@@ -403,12 +403,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return price.toFixed(6);
   };
 
-  const getTrendIcon = () => {
-    if (!priceData) return <Minus className="h-4 w-4 text-muted-foreground" />;
-    if (priceData.change > 0) return <TrendingUp className="h-4 w-4 text-emerald-500" />;
-    if (priceData.change < 0) return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <Minus className="h-4 w-4 text-muted-foreground" />;
-  };
+  // getTrendIcon removed — no longer shown in compact header
 
   const getChangeColor = () => {
     if (!priceData) return 'text-muted-foreground';
