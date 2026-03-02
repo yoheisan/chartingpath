@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { withTimeout } from '@/utils/withTimeout';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
+import { useDashboardPrefetch } from '@/hooks/useDashboardPrefetch';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
