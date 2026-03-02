@@ -134,7 +134,7 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
       >
         <Sparkles className="h-2.5 w-2.5" />
         <span>{t('dashboard.showBriefing', 'Show briefing')}</span>
-        <span className="text-[11px] ml-auto tabular-nums">{setups.length}</span>
+        <span className="text-xs ml-auto tabular-nums">{setups.length}</span>
       </button>
     );
   }
@@ -191,13 +191,13 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
                     <TrendingDown className="h-2.5 w-2.5 text-red-500 shrink-0" />
                   )}
                   <span className={cn(
-                    "text-[10px] font-mono",
+                    "text-[11px] font-mono",
                     setup.quality_score === 'A' ? "text-emerald-500" : "text-blue-500",
                   )}>
                     {setup.quality_score}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground/60 truncate max-w-[120px]">
+                <p className="text-[11px] text-muted-foreground/60 truncate max-w-[120px]">
                   {setup.pattern_name.replace(/-/g, ' ')} · {setup.timeframe}
                 </p>
               </div>

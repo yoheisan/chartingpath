@@ -318,7 +318,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   <InstrumentLogo instrument={index.symbol} size="sm" showName={false} />
                   <div className="flex-1 min-w-0 text-left">
                     <div className="text-xs font-medium">{index.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{index.symbol}</div>
+                    <div className="text-[11px] text-muted-foreground">{index.symbol}</div>
                   </div>
                   <div className="text-right">
                     {indicesData[index.symbol] ? (
@@ -328,7 +328,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         </div>
                         <div
                           className={cn(
-                            'text-[10px]',
+                            'text-[11px]',
                             indicesData[index.symbol].change >= 0
                               ? 'text-bullish'
                               : 'text-bearish'
@@ -339,7 +339,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         </div>
                       </>
                     ) : (
-                      <span className="text-[10px] text-muted-foreground">--</span>
+                      <span className="text-[11px] text-muted-foreground">--</span>
                     )}
                   </div>
                 </button>
@@ -363,7 +363,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                     <span className="text-xs font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
                     <Badge 
                       className={cn(
-                        'text-[10px] border-0',
+                        'text-[11px] border-0',
                         breadthMeta?.sentiment === 'bullish' && 'bg-bullish/10 text-bullish',
                         breadthMeta?.sentiment === 'neutral-bullish' && 'bg-bullish/10 text-bullish',
                         breadthMeta?.sentiment === 'neutral-bearish' && 'bg-bearish/10 text-bearish',
@@ -391,7 +391,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
 
                     {/* Visual Bar */}
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                       <div className="flex justify-between text-[11px] text-muted-foreground">
                         <span className="text-bullish">Advancing: {breadthData.advances.toLocaleString()}</span>
                         <span className="text-bearish">Declining: {breadthData.declines.toLocaleString()}</span>
                       </div>
@@ -405,7 +405,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                           style={{ width: `${breadthMeta?.declinePercent || 50}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
                         <span>{breadthMeta?.advancePercent}%</span>
                         <span>{breadthMeta?.declinePercent}%</span>
                       </div>
@@ -415,7 +415,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground mb-1">{t('commandCenter.adLine')}</div>
+                      <div className="text-[11px] text-muted-foreground mb-1">{t('commandCenter.adLine')}</div>
                       <div className={cn(
                         'text-sm font-semibold',
                         breadthData.advanceDeclineLine >= 0 ? 'text-bullish' : 'text-bearish'
@@ -425,7 +425,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       </div>
                     </div>
                     <div className="rounded-lg border border-border p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground mb-1">{t('commandCenter.unchanged')}</div>
+                      <div className="text-[11px] text-muted-foreground mb-1">{t('commandCenter.unchanged')}</div>
                       <div className="text-sm font-semibold text-muted-foreground">
                         {breadthData.unchanged.toLocaleString()}
                       </div>
@@ -434,7 +434,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
 
                   {/* Interpretation */}
                   <div className="rounded-lg bg-muted/50 p-2.5">
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
                       {breadthData.advanceDeclineRatio >= 2 && 
                         "Strong bullish breadth — broad participation confirms uptrend strength."}
                       {breadthData.advanceDeclineRatio >= 1.5 && breadthData.advanceDeclineRatio < 2 && 
@@ -449,12 +449,12 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   </div>
 
                   {/* Last Updated */}
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>Exchange: {breadthData.exchange}</span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 px-2 text-[10px]"
+                      className="h-5 px-2 text-[11px]"
                       onClick={refreshBreadth}
                       disabled={breadthLoading}
                     >
