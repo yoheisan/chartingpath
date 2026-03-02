@@ -44,10 +44,9 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
     setMeta('meta[name="twitter:title"]', 'content', title);
     setMeta('meta[name="twitter:description"]', 'content', description);
 
-    if (ogImage) {
-      setMeta('meta[property="og:image"]', 'content', ogImage);
-      setMeta('meta[name="twitter:image"]', 'content', ogImage);
-    }
+    const resolvedImage = ogImage || DEFAULT_OG_IMAGE;
+    setMeta('meta[property="og:image"]', 'content', resolvedImage);
+    setMeta('meta[name="twitter:image"]', 'content', resolvedImage);
 
     // Canonical URL
     if (canonicalPath) {
