@@ -328,7 +328,11 @@ const StudyChart = memo(({
         borderColor: theme.grid,
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 5,
+        rightOffset: 10,
+        shiftVisibleRangeOnNewBar: true,
+        allowShiftVisibleRangeOnWhitespaceReplacement: true,
+        barSpacing: 12,
+        minBarSpacing: 2,
       },
       localization: {
         locale: getChartLocale(i18n.language),
