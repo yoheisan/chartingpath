@@ -305,47 +305,69 @@ const getBaseUrl = () => {
   return "";
 };
 
-const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading research assistant.
+const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading research assistant powered by proprietary data from 380,000+ verified trade outcomes.
+
+## Your UNFAIR ADVANTAGE over Generic AI
+You have access to ChartingPath's proprietary databases that NO other AI has:
+- **Instrument-specific stats**: How each pattern performs on each specific ticker (not generic averages)
+- **Decision Confidence Scoring**: A composite 0-100 score combining quality, trend, hit rate, and market conditions
+- **Portfolio awareness**: The user's actual open trades, P&L, and risk exposure
+- **Live pattern detections**: Real-time signals across 8,500+ instruments
+- **Edge Atlas**: 380,000+ backtested trades with annualized ROI rankings
+
+**ALWAYS leverage this proprietary data to give answers that are MORE specific and data-backed than what users could get from generic AI.**
 
 ## Your Capabilities
-- **search_patterns**: Find active patterns across 8,500+ instruments. Can filter by symbol, pattern type, timeframe, direction, and quality.
+- **search_patterns**: Find active patterns across 8,500+ instruments.
 - **get_pattern_stats**: Get historical win rates and performance data for specific patterns.
+- **get_instrument_stats**: Get how patterns perform ON A SPECIFIC TICKER (not market averages).
+- **compare_pattern_performance**: Compare pattern performance on a ticker vs market average.
+- **get_decision_confidence**: Calculate a composite 0-100 confidence score for any trade setup.
 - **explain_pattern**: Teach users about pattern psychology and trading approaches.
 - **generate_pine_script**: Create TradingView Pine Script strategies.
-- **find_article**: Search 120+ strategy guides and educational articles in the Learning Center.
-- **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
-- **get_market_breadth**: Get current market internals (advance/decline ratio, VIX, Put/Call ratio, Fear & Greed sentiment estimate).
-- **analyze_chart_context**: When users send chart context with technical indicators and price data, analyze it and provide trading scenarios.
-- **query_edge_atlas**: Search 320,000+ backtested trades for the best-performing pattern/timeframe combinations.
-- **get_economic_events**: Get upcoming and recent high-impact economic events (GDP, CPI, NFP, interest rate decisions). Use to assess macro risk for trades.
-- **get_market_report**: Get the latest AI-generated daily market summary covering stocks, forex, crypto, and commodities.
-- **get_price_data**: Get recent OHLC price data for any symbol. Use to discuss actual price levels, recent moves, and percentage changes.
-- **get_user_backtests**: Get the user's personal backtest results to compare with Edge Atlas averages.
-- **get_user_alerts**: Get the user's active pattern alerts to reference what they're monitoring.
-- **get_paper_portfolio**: Get the user's paper trading portfolio (balance, P&L, open trades) for portfolio-aware recommendations.
+- **find_article**: Search 120+ strategy guides and educational articles.
+- **add_to_watchlist**: Add symbols to the user's watchlist.
+- **get_market_breadth**: Market internals (A/D ratio, VIX, Put/Call, Fear & Greed).
+- **analyze_chart_context**: Analyze captured chart context with indicators.
+- **query_edge_atlas**: Search 380,000+ backtested trades for best setups.
+- **get_economic_events**: Upcoming macro events (GDP, CPI, NFP, rates).
+- **get_market_report**: Latest AI-generated daily market summary.
+- **get_price_data**: Recent OHLC price data for any symbol.
+- **get_user_backtests**: User's personal backtest results.
+- **get_user_alerts**: User's active pattern alerts.
+- **get_paper_portfolio**: User's paper trading portfolio (balance, P&L, open trades).
 
-## Combined Analysis Strategy
-When answering broad questions, PROACTIVELY combine multiple tools for richer insights:
+## ENHANCED Analysis Strategy — Always Combine Tools
+When answering, PROACTIVELY combine multiple tools for insights NO generic AI can provide:
 
-**\"What does the market look like today?\" / \"Market overview\":**
+**"Is AAPL a good buy?" / "Should I trade X?":**
+→ Call get_instrument_stats(AAPL) + search_patterns(AAPL) + get_decision_confidence(AAPL, pattern, ...) + get_price_data(AAPL) + get_economic_events
+→ Compare instrument-specific win rate vs market average. Calculate decision confidence. Reference user's portfolio exposure if logged in.
+
+**"What does the market look like today?" / "Market overview":**
 → Call get_market_report + get_market_breadth + get_economic_events together
 
-**\"What is the current sentiment?\" / \"Fear and greed\" / \"Market breadth\":**
-→ Call get_market_breadth. Present results with: 1) A/D Ratio section with advancing vs declining counts, 2) VIX level with interpretation, 3) Put/Call ratio with interpretation, 4) Overall Fear & Greed score. Use 🟢🟡🔴 indicators and markdown tables for visual clarity. ALWAYS include timestamp/data source attribution.
+**"What is the current sentiment?" / "Fear and greed" / "Market breadth":**
+→ Call get_market_breadth. Present with 🟢🟡🔴 indicators and markdown tables.
 
-**\"Is it a good time to trade X?\" / \"Should I go long on EURUSD?\":**
-→ Call search_patterns (for X) + get_price_data (for X) + get_economic_events (relevant region) + query_edge_atlas (for the pattern found)
+**"What should I trade?" / "Best setups right now":**
+→ Call search_patterns (quality A/B) + query_edge_atlas (top setups) + get_economic_events + get_market_breadth
+→ If user is authenticated, cross-reference with their portfolio to avoid over-concentration.
 
-**\"What should I trade?\" / \"Best setups right now\":**
-→ Call search_patterns (quality A/B) + query_edge_atlas (top setups) + get_economic_events (high impact) + get_market_breadth
+**"How does this pattern perform on X?" / "Compare performance":**
+→ Call compare_pattern_performance + get_instrument_stats to show ticker-specific vs market-wide stats.
 
-**\"How did my backtest do?\" / \"Compare my results\":**
-→ Call get_user_backtests + query_edge_atlas (same pattern/timeframe for comparison)
+**"Should I take this trade?" / "How confident is this setup?":**
+→ Call get_decision_confidence to compute the composite score. Present the score breakdown.
 
-**\"Show my portfolio\" / \"How's my portfolio doing?\":**
+**"Show my portfolio" / "How's my portfolio doing?":**
 → Call get_paper_portfolio + search_patterns (for symbols in portfolio) + get_economic_events
+→ Warn about correlated positions or macro risk to open trades.
 
-**When user is authenticated**, proactively reference their alerts, backtests, and portfolio when relevant to the conversation.
+**When user is authenticated**, PROACTIVELY:
+1. Reference their open trades when discussing related symbols
+2. Warn about over-concentration (multiple positions in same direction/sector)
+3. Factor portfolio P&L into risk recommendations
 
 ## Your Personality
 - Be warm, helpful, and conversational—not robotic
@@ -1136,7 +1158,272 @@ async function executeQueryEdgeAtlas(supabase: any, args: any) {
   };
 }
 
-// ===== NEW TOOL EXECUTION FUNCTIONS =====
+// ===== ENHANCED INTELLIGENCE TOOL FUNCTIONS =====
+
+async function executeGetInstrumentStats(supabase: any, args: any) {
+  console.log('[trading-copilot] Fetching instrument stats for:', args.symbol);
+  const minTrades = args.min_trades || 10;
+
+  // Query the materialized view for this specific instrument
+  let query = supabase
+    .from('instrument_pattern_stats_mv')
+    .select('*')
+    .ilike('symbol', `%${args.symbol}%`)
+    .gte('total_trades', minTrades)
+    .order('total_trades', { ascending: false })
+    .limit(20);
+
+  if (args.pattern_name) {
+    query = query.ilike('pattern_name', `%${args.pattern_name}%`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[trading-copilot] Instrument stats error:', error);
+    // Fallback to historical_pattern_occurrences aggregation
+    const { data: fallbackData } = await supabase
+      .from('historical_pattern_occurrences')
+      .select('pattern_name, timeframe, outcome, risk_reward_ratio, bars_to_outcome')
+      .ilike('symbol', `%${args.symbol}%`)
+      .in('outcome', ['hit_tp', 'hit_sl'])
+      .limit(500);
+
+    if (!fallbackData?.length) {
+      return { error: `No historical data found for ${args.symbol}. Try a major instrument.`, stats: [] };
+    }
+
+    // Manual aggregation
+    const grouped: Record<string, any> = {};
+    for (const row of fallbackData) {
+      const key = `${row.pattern_name}|${row.timeframe}`;
+      if (!grouped[key]) {
+        grouped[key] = { pattern: row.pattern_name, timeframe: row.timeframe, wins: 0, losses: 0, total: 0, rrSum: 0 };
+      }
+      grouped[key].total++;
+      if (row.outcome === 'hit_tp') grouped[key].wins++;
+      else grouped[key].losses++;
+      grouped[key].rrSum += row.risk_reward_ratio || 2;
+    }
+
+    const stats = Object.values(grouped)
+      .filter((g: any) => g.total >= minTrades)
+      .map((g: any) => ({
+        symbol: args.symbol,
+        pattern: g.pattern,
+        timeframe: g.timeframe,
+        totalTrades: g.total,
+        winRate: Math.round((g.wins / g.total) * 1000) / 10,
+        avgRR: Math.round((g.rrSum / g.total) * 100) / 100,
+        expectancy: Math.round(((g.wins / g.total) * (g.rrSum / g.total) - (g.losses / g.total)) * 1000) / 1000,
+      }))
+      .sort((a: any, b: any) => b.totalTrades - a.totalTrades);
+
+    return { count: stats.length, stats, source: 'historical_aggregation' };
+  }
+
+  return {
+    count: data?.length || 0,
+    stats: (data || []).map((s: any) => ({
+      symbol: s.symbol,
+      pattern: s.pattern_name,
+      timeframe: s.timeframe,
+      totalTrades: s.total_trades,
+      winRate: s.win_rate_pct,
+      expectancy: s.expectancy_r,
+      avgRR: s.avg_rr,
+      avgBars: s.avg_bars,
+    })),
+    source: 'materialized_view',
+    instrumentStatsUrl: `/patterns/${encodeURIComponent(args.symbol)}/statistics`
+  };
+}
+
+async function executeComparePatternPerformance(supabase: any, args: any) {
+  console.log('[trading-copilot] Comparing pattern performance:', args);
+  const timeframe = args.timeframe || '1d';
+
+  // Fetch instrument-specific stats
+  const { data: instrumentData } = await supabase
+    .from('historical_pattern_occurrences')
+    .select('outcome, risk_reward_ratio, bars_to_outcome')
+    .ilike('symbol', `%${args.symbol}%`)
+    .ilike('pattern_name', `%${args.pattern_name}%`)
+    .eq('timeframe', timeframe)
+    .in('outcome', ['hit_tp', 'hit_sl']);
+
+  // Fetch market-wide stats for same pattern+timeframe
+  const { data: marketData } = await supabase
+    .from('historical_pattern_occurrences')
+    .select('outcome, risk_reward_ratio, bars_to_outcome')
+    .ilike('pattern_name', `%${args.pattern_name}%`)
+    .eq('timeframe', timeframe)
+    .in('outcome', ['hit_tp', 'hit_sl']);
+
+  const calcStats = (rows: any[]) => {
+    if (!rows?.length) return null;
+    const wins = rows.filter(r => r.outcome === 'hit_tp').length;
+    const total = rows.length;
+    const avgRR = rows.reduce((s, r) => s + (r.risk_reward_ratio || 2), 0) / total;
+    const winRate = Math.round((wins / total) * 1000) / 10;
+    const expectancy = Math.round(((wins / total) * avgRR - ((total - wins) / total)) * 1000) / 1000;
+    const avgBars = Math.round(rows.reduce((s, r) => s + (r.bars_to_outcome || 0), 0) / total);
+    return { totalTrades: total, winRate, expectancy, avgRR: Math.round(avgRR * 100) / 100, avgBars };
+  };
+
+  const instrumentStats = calcStats(instrumentData);
+  const marketStats = calcStats(marketData);
+
+  if (!instrumentStats && !marketStats) {
+    return { error: `No data found for ${args.pattern_name} on ${args.symbol} (${timeframe}).` };
+  }
+
+  const comparison: any = {
+    symbol: args.symbol,
+    pattern: args.pattern_name,
+    timeframe,
+    instrumentSpecific: instrumentStats || { message: 'No instrument-specific data available' },
+    marketAverage: marketStats || { message: 'No market average data available' },
+  };
+
+  if (instrumentStats && marketStats) {
+    const winRateDiff = instrumentStats.winRate - marketStats.winRate;
+    const expectancyDiff = instrumentStats.expectancy - marketStats.expectancy;
+    comparison.verdict = {
+      winRateDelta: Math.round(winRateDiff * 10) / 10,
+      expectancyDelta: Math.round(expectancyDiff * 1000) / 1000,
+      assessment: winRateDiff > 3 ? 'OUTPERFORMS' : winRateDiff < -3 ? 'UNDERPERFORMS' : 'IN LINE',
+      summary: winRateDiff > 3
+        ? `${args.pattern_name} performs ${Math.abs(winRateDiff).toFixed(1)}% BETTER on ${args.symbol} than the market average.`
+        : winRateDiff < -3
+        ? `${args.pattern_name} performs ${Math.abs(winRateDiff).toFixed(1)}% WORSE on ${args.symbol} than the market average.`
+        : `${args.pattern_name} performs similarly on ${args.symbol} as the market average.`,
+      sampleSizeWarning: instrumentStats.totalTrades < 30
+        ? `⚠️ Low sample size (${instrumentStats.totalTrades} trades). Results may not be statistically reliable.`
+        : null,
+    };
+  }
+
+  return comparison;
+}
+
+async function executeGetDecisionConfidence(supabase: any, args: any) {
+  console.log('[trading-copilot] Calculating decision confidence:', args);
+
+  const scores: Record<string, { score: number, max: number, detail: string }> = {};
+
+  // 1. Quality Grade Score (0-25)
+  const qualityScores: Record<string, number> = { 'A': 25, 'B': 18, 'C': 10 };
+  const qualityGrade = args.quality_grade || 'C';
+  scores.patternQuality = {
+    score: qualityScores[qualityGrade] || 10,
+    max: 25,
+    detail: `Quality ${qualityGrade}: ${qualityGrade === 'A' ? 'High confluence (trend+volume+MTF)' : qualityGrade === 'B' ? 'Standard detection with trend alignment' : 'Early detection, lacks full confluence'}`
+  };
+
+  // 2. Trend Alignment Score (0-20)
+  const trendMap: Record<string, number> = { 'with_trend': 20, 'neutral': 10, 'counter_trend': 5 };
+  const trend = args.trend_alignment || 'neutral';
+  scores.trendAlignment = {
+    score: trendMap[trend] || 10,
+    max: 20,
+    detail: `${trend === 'with_trend' ? 'Pattern aligns with broader trend ✅' : trend === 'counter_trend' ? 'Counter-trend setup — higher risk ⚠️' : 'No clear trend alignment'}`
+  };
+
+  // 3. Historical Hit Rate Score (0-30) — from actual data
+  let hitRateScore = 15; // default if no data
+  let hitRateDetail = 'No historical data available for this combination';
+  try {
+    const { data: hitData } = await supabase
+      .from('historical_pattern_occurrences')
+      .select('outcome')
+      .ilike('symbol', `%${args.symbol}%`)
+      .ilike('pattern_name', `%${args.pattern_name}%`)
+      .in('outcome', ['hit_tp', 'hit_sl'])
+      .limit(200);
+
+    if (hitData?.length >= 10) {
+      const wins = hitData.filter((r: any) => r.outcome === 'hit_tp').length;
+      const winRate = wins / hitData.length;
+      hitRateScore = Math.round(winRate * 30);
+      hitRateDetail = `${args.symbol}-specific win rate: ${(winRate * 100).toFixed(1)}% (n=${hitData.length})`;
+    } else {
+      // Fallback to pattern-wide stats
+      const { data: patternData } = await supabase
+        .from('pattern_hit_rates')
+        .select('win_rate, total_signals')
+        .ilike('pattern_name', `%${args.pattern_name}%`)
+        .limit(5);
+
+      if (patternData?.length) {
+        const avgWinRate = patternData.reduce((s: number, p: any) => s + (p.win_rate || 0), 0) / patternData.length;
+        hitRateScore = Math.round(avgWinRate * 30);
+        hitRateDetail = `Market-wide win rate: ${(avgWinRate * 100).toFixed(1)}% (instrument-specific data insufficient)`;
+      }
+    }
+  } catch (e) {
+    console.error('[trading-copilot] Hit rate lookup error:', e);
+  }
+  scores.historicalHitRate = { score: hitRateScore, max: 30, detail: hitRateDetail };
+
+  // 4. Sample Size Confidence (0-15)
+  let sampleScore = 5;
+  let sampleDetail = 'Unknown sample size';
+  try {
+    const { count } = await supabase
+      .from('historical_pattern_occurrences')
+      .select('id', { count: 'exact', head: true })
+      .ilike('symbol', `%${args.symbol}%`)
+      .ilike('pattern_name', `%${args.pattern_name}%`)
+      .in('outcome', ['hit_tp', 'hit_sl']);
+
+    if (count !== null) {
+      if (count >= 100) { sampleScore = 15; sampleDetail = `Very high confidence: ${count} historical trades`; }
+      else if (count >= 50) { sampleScore = 12; sampleDetail = `High confidence: ${count} historical trades`; }
+      else if (count >= 20) { sampleScore = 8; sampleDetail = `Medium confidence: ${count} trades (more data needed)`; }
+      else if (count >= 10) { sampleScore = 5; sampleDetail = `Low confidence: only ${count} trades. Treat with caution.`; }
+      else { sampleScore = 2; sampleDetail = `Very low confidence: ${count} trades. Insufficient data.`; }
+    }
+  } catch {}
+  scores.sampleSize = { score: sampleScore, max: 15, detail: sampleDetail };
+
+  // 5. Risk Environment (0-10)
+  let riskScore = 5;
+  let riskDetail = 'Standard risk environment';
+  // Simple heuristic based on timeframe
+  const tf = args.timeframe || '1d';
+  if (tf === '1d' || tf === '1wk') { riskScore = 8; riskDetail = 'Higher timeframe = more reliable signals'; }
+  else if (tf === '4h' || tf === '8h') { riskScore = 6; riskDetail = 'Medium timeframe — decent reliability'; }
+  else { riskScore = 4; riskDetail = 'Lower timeframe — more noise, faster invalidation'; }
+  scores.riskEnvironment = { score: riskScore, max: 10, detail: riskDetail };
+
+  // Composite score
+  const totalScore = Object.values(scores).reduce((s, v) => s + v.score, 0);
+  const maxScore = Object.values(scores).reduce((s, v) => s + v.max, 0);
+  const confidencePercent = Math.round((totalScore / maxScore) * 100);
+
+  const rating = confidencePercent >= 75 ? '🟢 HIGH CONFIDENCE'
+    : confidencePercent >= 50 ? '🟡 MODERATE CONFIDENCE'
+    : '🔴 LOW CONFIDENCE';
+
+  return {
+    symbol: args.symbol,
+    pattern: args.pattern_name,
+    timeframe: tf,
+    confidenceScore: confidencePercent,
+    rating,
+    breakdown: scores,
+    recommendation: confidencePercent >= 75
+      ? 'This setup shows strong confluence. Consider standard position sizing.'
+      : confidencePercent >= 50
+      ? 'Setup has moderate backing. Consider reduced position size or wait for additional confirmation.'
+      : 'Setup lacks sufficient backing. Consider passing or using minimal size as a speculative trade.',
+    disclaimer: 'This score is algorithmic and for educational purposes only — not financial advice.'
+  };
+}
+
+// ===== ORIGINAL TOOL EXECUTION FUNCTIONS =====
+
 
 async function executeGetEconomicEvents(supabase: any, args: any) {
   console.log('[trading-copilot] Fetching economic events:', args);
@@ -1970,7 +2257,14 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return executeAnalyzeChartContext(args, messages || []);
     case 'query_edge_atlas':
       return await executeQueryEdgeAtlas(supabase, args);
-    // ===== NEW TOOLS =====
+    // ===== ENHANCED INTELLIGENCE TOOLS =====
+    case 'get_instrument_stats':
+      return await executeGetInstrumentStats(supabase, args);
+    case 'compare_pattern_performance':
+      return await executeComparePatternPerformance(supabase, args);
+    case 'get_decision_confidence':
+      return await executeGetDecisionConfidence(supabase, args);
+    // ===== DATA INTEGRATION TOOLS =====
     case 'get_economic_events':
       return await executeGetEconomicEvents(supabase, args);
     case 'get_market_report':
