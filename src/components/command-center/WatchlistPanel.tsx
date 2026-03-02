@@ -309,7 +309,7 @@ export function WatchlistPanel({
             <div className="p-1">
               {!isPaidUser && (
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Activity className="h-3 w-3" />
                     <span>{t('commandCenter.showingDefault')}</span>
                   </div>
@@ -341,7 +341,7 @@ export function WatchlistPanel({
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[10px] px-1 py-0',
+                          'text-[11px] px-1 py-0',
                           pattern.direction === 'bullish'
                             ? 'border-emerald-500/50 text-emerald-600'
                             : 'border-red-500/50 text-red-600'
@@ -355,16 +355,16 @@ export function WatchlistPanel({
                         {pattern.direction}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
                         {formatPatternName(pattern.pattern_name)}
                       </span>
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                      <Badge variant="secondary" className="text-[11px] px-1 py-0">
                         {pattern.timeframe}
                       </Badge>
                     </div>
                     {pattern.current_price && (
-                      <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span>${pattern.current_price.toFixed(2)}</span>
                         {pattern.change_percent !== null && (
                           <span
