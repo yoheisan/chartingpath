@@ -14,6 +14,7 @@ import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMarketBars } from '@/lib/fetchMarketBars';
+import { symbolDataCache } from '@/lib/symbolDataCache';
 import StudyChart, { ChartMarker } from '@/components/charts/StudyChart';
 import { CompressedBar } from '@/types/VisualSpec';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
@@ -171,6 +172,44 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       return;
     }
 
+    const cacheKey = `${symbol}:${timeframe}`;
+    
+    // 1. Check in-memory LRU cache first — instant switch
+    const cached = symbolDataCache.get(cacheKey);
+    if (cached && cached.length > 0) {
+      console.log(`[CommandCenterChart] Cache HIT for ${cacheKey} (${cached.length} bars)`);
+      setBars(cached);
+      updatePriceData(cached);
+      setLoading(false);
+      setError(null);
+      
+      // Background revalidate after showing cached data
+      setTimeout(async () => {
+        try {
+          const { barLimit } = getChartDataLimits(timeframe as Timeframe);
+          const { data } = await supabase
+            .from('historical_prices')
+            .select('date, open, high, low, close, volume')
+            .eq('symbol', symbol)
+            .eq('timeframe', timeframe)
+            .order('date', { ascending: true })
+            .limit(barLimit);
+          
+          if (data && data.length > cached.length) {
+            const freshBars = data.map(row => ({
+              t: row.date, o: row.open, h: row.high, l: row.low, c: row.close, v: row.volume || 0,
+            }));
+            symbolDataCache.set(cacheKey, freshBars);
+            setBars(freshBars);
+            updatePriceData(freshBars);
+            console.debug(`[CommandCenterChart] Background revalidated ${cacheKey}: ${freshBars.length} bars`);
+          }
+        } catch {}
+      }, 1000);
+      return;
+    }
+
+    console.log(`[CommandCenterChart] Cache MISS for ${cacheKey}`);
     setLoading(true);
     setError(null);
 
@@ -218,10 +257,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           throw new Error('No data available for this symbol/timeframe');
         }
 
+        // Cache the result
+        symbolDataCache.set(cacheKey, fetchedBars);
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
       } else {
-        const mapped: CompressedBar[] = data.map((row) => ({
+        const mapped = data.map((row) => ({
           t: row.date,
           o: row.open,
           h: row.high,
@@ -230,6 +271,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           v: row.volume || 0,
         }));
 
+        // Cache the result
+        symbolDataCache.set(cacheKey, mapped);
         setBars(mapped);
         updatePriceData(mapped);
       }
