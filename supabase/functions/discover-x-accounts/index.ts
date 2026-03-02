@@ -14,6 +14,32 @@ function getBearerToken(): string {
   return token;
 }
 
+// ── Resolve username to numeric user ID ────────────────────────────────
+async function resolveUsernameToId(username: string): Promise<{ id: string; name: string } | null> {
+  const bearerToken = getBearerToken();
+  const cleanUsername = username.replace(/^@/, "");
+  const url = `https://api.x.com/2/users/by/username/${cleanUsername}?user.fields=public_metrics`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${bearerToken}` },
+  });
+
+  if (res.status === 429) {
+    const resetAt = res.headers.get("x-rate-limit-reset");
+    throw new Error(`rate_limited:${resetAt || ""}`);
+  }
+
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error(`[discover-x] Failed to resolve @${cleanUsername}: ${res.status} ${txt}`);
+    return null;
+  }
+
+  const body = await res.json();
+  if (!body.data) return null;
+  return { id: body.data.id, name: body.data.name };
+}
+
 // ── Fetch following list for a user ────────────────────────────────────
 async function fetchFollowing(
   userId: string,
