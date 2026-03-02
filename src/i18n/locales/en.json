@@ -4814,5 +4814,23 @@
     "submitRequest": "Submit a Request",
     "submitDescription": "Tell us about your issue, feedback, or feature request. We'll respond directly to your email.",
     "openForm": "Open Support Form"
+  },
+  "authNudge": {
+    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
+    "emailSignIn": "Email Sign In",
+    "continueWithGoogle": "Continue with Google",
+    "connecting": "Connecting…"
+  },
+  "chartToolbar": {
+    "analyze": "Analyze",
+    "reAnalyze": "Re-analyze",
+    "analyzing": "Analyzing...",
+    "aiAnalysis": "AI analysis of visible chart",
+    "showLevels": "Show levels on chart",
+    "hideLevels": "Hide levels on chart",
+    "askCopilot": "Ask Copilot",
+    "discussAnalysis": "Discuss analysis with Trading Copilot",
+    "clearAnalysis": "Clear analysis",
+    "indicators": "Indicators"
   }
 }

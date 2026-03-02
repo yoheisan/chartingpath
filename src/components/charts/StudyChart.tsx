@@ -1260,7 +1260,7 @@ const StudyChart = memo(({
               className="h-7 px-2 bg-background/90 border-border/50 hover:bg-background"
             >
               <Settings2 className="h-3.5 w-3.5 mr-1" />
-              <span className="text-xs">Indicators</span>
+              <span className="text-xs">{t('chartToolbar.indicators')}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent 

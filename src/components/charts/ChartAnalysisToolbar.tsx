@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -50,6 +51,7 @@ const ChartAnalysisToolbar = memo(({
   onClear,
   className
 }: ChartAnalysisToolbarProps) => {
+  const { t } = useTranslation();
   return (
     <TooltipProvider delayDuration={300}>
       <div className={cn(
@@ -72,12 +74,12 @@ const ChartAnalysisToolbar = memo(({
                 <Sparkles className="h-4 w-4" />
               )}
               <span className="text-xs sm:text-sm">
-                {isAnalyzing ? 'Analyzing...' : hasAnalysis ? 'Re-analyze' : 'Analyze'}
+                {isAnalyzing ? t('chartToolbar.analyzing') : hasAnalysis ? t('chartToolbar.reAnalyze') : t('chartToolbar.analyze')}
               </span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>AI analysis of visible chart</p>
+            <p>{t('chartToolbar.aiAnalysis')}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -95,7 +97,7 @@ const ChartAnalysisToolbar = memo(({
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p>{showOverlay ? 'Hide' : 'Show'} levels on chart</p>
+              <p>{showOverlay ? t('chartToolbar.hideLevels') : t('chartToolbar.showLevels')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -112,11 +114,11 @@ const ChartAnalysisToolbar = memo(({
                 className="gap-1.5"
               >
                 <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline text-xs sm:text-sm">Ask Copilot</span>
+                <span className="hidden sm:inline text-xs sm:text-sm">{t('chartToolbar.askCopilot')}</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p>Discuss analysis with Trading Copilot</p>
+              <p>{t('chartToolbar.discussAnalysis')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -135,7 +137,7 @@ const ChartAnalysisToolbar = memo(({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p>Clear analysis</p>
+              <p>{t('chartToolbar.clearAnalysis')}</p>
             </TooltipContent>
           </Tooltip>
         )}
