@@ -64,12 +64,22 @@ const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
 const GUEST_MSG_KEY = "copilot_guest_msgs";
 const GUEST_MSG_LIMIT = 3;
 
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
 function getGuestMsgCount(): number {
-  try { return parseInt(sessionStorage.getItem(GUEST_MSG_KEY) || "0", 10); } catch { return 0; }
+  try {
+    const raw = localStorage.getItem(GUEST_MSG_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (parsed.date !== getTodayKey()) return 0; // reset for new day
+    return parsed.count || 0;
+  } catch { return 0; }
 }
 function incrementGuestMsgCount(): number {
   const next = getGuestMsgCount() + 1;
-  try { sessionStorage.setItem(GUEST_MSG_KEY, String(next)); } catch {}
+  try { localStorage.setItem(GUEST_MSG_KEY, JSON.stringify({ date: getTodayKey(), count: next })); } catch {}
   return next;
 }
 
