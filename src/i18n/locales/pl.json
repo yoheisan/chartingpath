@@ -22,5 +22,38 @@
     "toastAuthError": "Błąd autoryzacji",
     "toastSignedIn": "Zalogowano pomyślnie",
     "toastWelcomeBack": "Witamy ponownie"
+  },
+  "copilot": {
+    "title": "Copilot handlowy",
+    "subtitle": "Asystent badawczy oparty na AI",
+    "welcome": "Jak mogę pomóc Ci handlować mądrzej?",
+    "welcomeDesc": "Znajdź formacje, analizuj statystyki, twórz alerty lub generuj skrypty.",
+    "quickActions": "Szybkie akcje",
+    "findPatterns": "Znajdź formacje",
+    "findPatternsPrompt": "Pokaż mi najwyższej jakości formacje tworzące się teraz w głównych akcjach technologicznych",
+    "createAlert": "Utwórz alert",
+    "createAlertPrompt": "Chcę ustawić alert na bycze flagi na AAPL",
+    "generateScript": "Generuj skrypt",
+    "generateScriptPrompt": "Wygeneruj strategię Pine Script do handlu trójkątami rosnącymi na BTCUSD",
+    "learnPatterns": "Ucz się formacji",
+    "learnPatternsPrompt": "Wyjaśnij jak identyfikować i handlować formację głowy i ramion",
+    "marketBreadth": "Szerokość rynku",
+    "marketBreadthPrompt": "Jaka jest obecna szerokość rynku? Pokaż mi stosunek wzrostów do spadków i nastroje",
+    "placeholder": "Zapytaj o formacje, alerty lub skrypty...",
+    "disclaimer": "Wyłącznie w celach edukacyjnych. To nie jest porada finansowa.",
+    "moreBelow": "Więcej poniżej",
+    "chartAnalysis": "Analiza wykresu",
+    "rateLimited": "AI przetwarza inne żądania. Poczekaj 10 sekund i spróbuj ponownie.",
+    "creditsDepleted": "Kredyty AI wyczerpane. Dodaj kredyty, aby kontynuować.",
+    "errorResponse": "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.",
+    "rateLimitedMsg": "⚠️ Limit żądań — poczekaj kilka sekund i spróbuj ponownie.",
+    "errorMsg": "⚠️ Coś poszło nie tak. Spróbuj ponownie.",
+    "contactSupport": "Skontaktuj się z pomocą",
+    "home": "Strona główna",
+    "actions": {
+      "validatePatternLab": "Zweryfikuj w Pattern Lab",
+      "findActiveSignals": "Znajdź aktywne sygnały",
+      "exportScript": "Eksportuj skrypt"
+    }
   }
 }

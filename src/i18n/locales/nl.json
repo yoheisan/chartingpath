@@ -22,5 +22,38 @@
     "toastAuthError": "Authenticatiefout",
     "toastSignedIn": "Je bent succesvol ingelogd",
     "toastWelcomeBack": "Welkom terug"
+  },
+  "copilot": {
+    "title": "Handels-copiloot",
+    "subtitle": "AI-aangedreven onderzoeksassistent",
+    "welcome": "Hoe kan ik je helpen slimmer te handelen?",
+    "welcomeDesc": "Vind patronen, analyseer statistieken, maak waarschuwingen aan of genereer scripts.",
+    "quickActions": "Snelle acties",
+    "findPatterns": "Patronen zoeken",
+    "findPatternsPrompt": "Toon me de patronen van de beste kwaliteit die zich nu vormen bij grote techaandelen",
+    "createAlert": "Waarschuwing aanmaken",
+    "createAlertPrompt": "Ik wil een waarschuwing instellen voor bull flags bij AAPL",
+    "generateScript": "Script genereren",
+    "generateScriptPrompt": "Genereer een Pine Script-strategie voor het handelen van stijgende driehoeken op BTCUSD",
+    "learnPatterns": "Patronen leren",
+    "learnPatternsPrompt": "Leg uit hoe je een hoofd-en-schouders patroon herkent en verhandelt",
+    "marketBreadth": "Marktbreedte",
+    "marketBreadthPrompt": "Wat is de huidige marktbreedte? Toon me de stijg/daal-ratio en het sentiment",
+    "placeholder": "Vraag over patronen, waarschuwingen of scripts...",
+    "disclaimer": "Alleen voor educatieve doeleinden. Geen financieel advies.",
+    "moreBelow": "Meer hieronder",
+    "chartAnalysis": "Grafiekanalyse",
+    "rateLimited": "AI verwerkt andere verzoeken. Wacht 10 seconden en probeer opnieuw.",
+    "creditsDepleted": "AI-tegoed op. Voeg tegoed toe om door te gaan.",
+    "errorResponse": "Kon geen antwoord krijgen. Probeer opnieuw.",
+    "rateLimitedMsg": "⚠️ Verzoeklimiet bereikt — wacht een paar seconden en probeer opnieuw.",
+    "errorMsg": "⚠️ Er ging iets mis. Probeer opnieuw.",
+    "contactSupport": "Contact opnemen met support",
+    "home": "Home",
+    "actions": {
+      "validatePatternLab": "Valideren in Pattern Lab",
+      "findActiveSignals": "Actieve signalen zoeken",
+      "exportScript": "Script exporteren"
+    }
   }
 }
