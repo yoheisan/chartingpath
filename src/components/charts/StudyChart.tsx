@@ -367,14 +367,31 @@ const StudyChart = memo(({
         minMove,
       },
       // Extend autoscale to include trade plan price levels (Entry, SL, TP)
+      // while preserving the base candle autoscale range for visible bars.
       ...(tradePlan ? {
-        autoscaleInfoProvider: () => {
+        autoscaleInfoProvider: (baseImplementation) => {
+          const baseInfo = baseImplementation();
           const prices = [tradePlan.entry, tradePlan.stopLoss, tradePlan.takeProfit].filter(Number.isFinite);
-          if (prices.length === 0) return null;
+
+          if (prices.length === 0) return baseInfo;
+
+          const minTrade = Math.min(...prices);
+          const maxTrade = Math.max(...prices);
+
+          if (!baseInfo?.priceRange) {
+            return {
+              priceRange: {
+                minValue: minTrade,
+                maxValue: maxTrade,
+              },
+            };
+          }
+
           return {
+            ...baseInfo,
             priceRange: {
-              minValue: Math.min(...prices),
-              maxValue: Math.max(...prices),
+              minValue: Math.min(baseInfo.priceRange.minValue, minTrade),
+              maxValue: Math.max(baseInfo.priceRange.maxValue, maxTrade),
             },
           };
         },
