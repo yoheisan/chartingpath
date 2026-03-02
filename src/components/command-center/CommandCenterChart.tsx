@@ -353,7 +353,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const vs = p.visual_spec as any;
       const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
       const color = p.isActive ? '#f97316' : '#6b7280';
+      const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
+      const detectedAt = p.isActive ? p.first_detected_at : p.detected_at;
+      const isLong = p.direction === 'long' || p.direction === 'bullish';
       
+      // Add pattern name marker at detection time
+      if (detectedAt) {
+        markers.push({
+          time: detectedAt,
+          position: isLong ? 'belowBar' : 'aboveBar',
+          color: '#f97316',
+          shape: isLong ? 'arrowUp' : 'arrowDown',
+          text: patternName,
+        });
+      }
+
       if (pivots && pivots.length > 0) {
         pivots.forEach((pivot: any) => {
           if (!pivot?.timestamp || !pivot?.type) return;
@@ -395,8 +409,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
-  // Derive trade plan from most recent active pattern for Entry/SL/TP price lines
+  // Derive trade plan from the LATEST active pattern (sorted by first_detected_at desc)
   const tradePlan = useMemo(() => {
+    // Active patterns are already sorted desc by first_detected_at from the query
     const activePattern = autoPatterns.find(p => p.isActive);
     if (!activePattern) return undefined;
     const { entry_price, stop_loss_price, take_profit_price, direction } = activePattern;
@@ -407,6 +422,25 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' ? 'short' : 'long') as 'long' | 'short',
     };
+  }, [autoPatterns]);
+
+  // Convert autoPatterns to HistoricalPatternOverlay format for the overlay system
+  const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
+    if (autoPatterns.length === 0) return [];
+    return autoPatterns.map(p => ({
+      id: p.id,
+      patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
+      patternId: p.pattern_id,
+      direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
+      detectedAt: p.isActive ? p.first_detected_at : p.detected_at,
+      entryPrice: p.entry_price,
+      stopLossPrice: p.stop_loss_price,
+      takeProfitPrice: p.take_profit_price,
+      outcome: p.outcome ?? null,
+      outcomePnlPercent: p.outcome_pnl_percent ?? null,
+      pivots: (p.visual_spec as any)?.pivots,
+      bars: p.bars,
+    }));
   }, [autoPatterns]);
 
   const formatPrice = (price: number) => {
