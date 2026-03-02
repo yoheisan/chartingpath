@@ -934,11 +934,11 @@ export default function LivePatternsPage() {
           >
             ✕
           </button>
-          <h3 className="font-semibold text-sm mb-1">👋 Welcome to the Live Pattern Screener</h3>
+          <h3 className="font-semibold text-sm mb-1">{t('screener.welcomeTitle')}</h3>
           <p className="text-sm text-muted-foreground">
-            These are real chart patterns detected right now across {totalInUniverse || instrumentsScanned} instruments. 
-            <strong className="text-foreground"> Click any row</strong> to see the pattern on a chart. 
-            Look for <strong className="text-foreground">Grade A or B</strong> setups for the highest-quality signals.
+            {t('screener.welcomeBody', { count: totalInUniverse || instrumentsScanned })}
+            {' '}<strong className="text-foreground">{t('screener.welcomeClickRow')}</strong> {t('screener.welcomeClickRowSuffix')}
+            {' '}{t('screener.welcomeLookFor')} <strong className="text-foreground">{t('screener.welcomeGrade')}</strong> {t('screener.welcomeGradeSuffix')}
           </p>
         </div>
       )}
