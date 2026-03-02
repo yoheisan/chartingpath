@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
 
@@ -7,6 +8,7 @@ interface GoogleSignInButtonProps {
 }
 
 export function GoogleSignInButton({ size = 'lg', className = 'w-full' }: GoogleSignInButtonProps) {
+  const { t } = useTranslation();
   const { signInWithGoogle, googleLoading } = useGoogleSignIn();
 
   return (
@@ -35,7 +37,7 @@ export function GoogleSignInButton({ size = 'lg', className = 'w-full' }: Google
           fill="#EA4335"
         />
       </svg>
-      {googleLoading ? 'Connecting…' : 'Continue with Google'}
+      {googleLoading ? t('authNudge.connecting') : t('authNudge.continueWithGoogle')}
     </Button>
   );
 }
