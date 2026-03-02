@@ -262,11 +262,12 @@ export function CopilotFeedbackDashboard() {
                         </span>
                         <Button 
                           size="sm" 
-                          variant={item.resolved ? "secondary" : "outline"}
+                          variant={item.resolved ? "secondary" : "default"}
                           onClick={() => toggleResolved(item.id, item.resolved)}
+                          className="shrink-0"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {item.resolved ? 'Reopen' : 'Mark Resolved'}
+                          {item.resolved ? 'Reopen' : '✅ Mark Resolved'}
                         </Button>
                       </div>
                     </CardContent>
