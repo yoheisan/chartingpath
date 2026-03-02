@@ -54,15 +54,14 @@ Deno.serve(async (req) => {
     const { action, article_id, language_code, target_languages, batch_size = 10, offset = 0 }: TranslateRequest = await req.json()
 
     if (action === 'get_status') {
-      // Return translation status for all articles
-      // Paginate articles (default limit is 1000)
+      // Return translation status for all articles with staleness detection
       const allArticles: any[] = []
       let artFrom = 0
       const PAGE = 1000
       while (true) {
         const { data, error } = await supabase
           .from('learning_articles')
-          .select('id, title, slug')
+          .select('id, title, slug, content')
           .eq('status', 'published')
           .order('published_at', { ascending: false })
           .range(artFrom, artFrom + PAGE - 1)
@@ -72,13 +71,21 @@ Deno.serve(async (req) => {
         artFrom += PAGE
       }
 
+      // Build a hash map for each article's current content
+      const articleHashes: Record<string, string> = {}
+      for (const a of allArticles) {
+        articleHashes[a.id] = simpleHash(a.content)
+      }
+      // Strip content from response to keep payload small
+      const articlesLite = allArticles.map(({ content, ...rest }) => rest)
+
       // Paginate translations (critical: can exceed 1000 rows)
       const allTranslations: any[] = []
       let trFrom = 0
       while (true) {
         const { data, error } = await supabase
           .from('learning_article_translations')
-          .select('article_id, language_code, status')
+          .select('article_id, language_code, status, source_hash')
           .range(trFrom, trFrom + PAGE - 1)
         if (error || !data || data.length === 0) break
         allTranslations.push(...data)
@@ -86,24 +93,41 @@ Deno.serve(async (req) => {
         trFrom += PAGE
       }
 
+      // Build article ID set for quick lookup (only published articles)
+      const publishedIds = new Set(allArticles.map(a => a.id))
+
       const statusMap: Record<string, Record<string, string>> = {}
       allTranslations.forEach(t => {
+        if (!publishedIds.has(t.article_id)) return // skip translations for unpublished/deleted articles
         if (!statusMap[t.article_id]) statusMap[t.article_id] = {}
-        statusMap[t.article_id][t.language_code] = t.status
+        // Check if translation is stale (source content changed since translation)
+        const currentHash = articleHashes[t.article_id]
+        const isStale = currentHash && t.source_hash && currentHash !== t.source_hash
+        statusMap[t.article_id][t.language_code] = isStale ? 'stale' : t.status
       })
 
-      // Build per-language summary
-      const langSummary: Record<string, { translated: number; total: number }> = {}
+      // Build per-language summary with accurate counts
       const totalArticles = allArticles.length
+      const langSummary: Record<string, { translated: number; stale: number; total: number }> = {}
+      
       allTranslations.forEach(t => {
-        if (!langSummary[t.language_code]) langSummary[t.language_code] = { translated: 0, total: totalArticles }
-        langSummary[t.language_code].translated++
+        if (!publishedIds.has(t.article_id)) return
+        if (!langSummary[t.language_code]) langSummary[t.language_code] = { translated: 0, stale: 0, total: totalArticles }
+        
+        const currentHash = articleHashes[t.article_id]
+        const isStale = currentHash && t.source_hash && currentHash !== t.source_hash
+        
+        if (isStale) {
+          langSummary[t.language_code].stale++
+        } else {
+          langSummary[t.language_code].translated++
+        }
       })
 
       return new Response(JSON.stringify({
         total_articles: totalArticles,
         language_summary: langSummary,
-        articles: allArticles.map(a => ({
+        articles: articlesLite.map(a => ({
           ...a,
           translations: statusMap[a.id] || {}
         }))
