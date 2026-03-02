@@ -53,6 +53,8 @@ export interface HistoricalPatternOverlay {
   takeProfitPrice: number;
   outcome?: 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | 'win' | 'loss' | null;
   outcomePnlPercent?: number | null;
+  isActive?: boolean;
+  status?: string | null;
   /** Pivots from visual_spec for zigzag rendering */
   pivots?: ZigZagPivot[];
   /** Pattern's own bars for pivot-to-time resolution */
