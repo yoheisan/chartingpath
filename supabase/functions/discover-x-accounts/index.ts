@@ -59,7 +59,7 @@ async function fetchFollowing(
     headers: { Authorization: `Bearer ${bearerToken}` },
   });
 
-  if (res.status === 429) {
+  if (res.status === 429 || res.status === 402) {
     const resetAt = res.headers.get("x-rate-limit-reset");
     throw new Error(`rate_limited:${resetAt || ""}`);
   }
