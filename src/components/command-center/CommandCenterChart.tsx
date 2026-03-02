@@ -426,19 +426,20 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Chart Header */}
-      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2 border-b border-border">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <InstrumentLogo instrument={symbol} size={isMobile ? "sm" : "md"} showName={false} />
-          <div>
-            <h2 className="text-sm sm:text-lg font-semibold">{symbol}</h2>
+      {/* Chart Header — TradingView-style: compact, information-dense */}
+      <div className="flex items-center justify-between px-3 py-1 border-b border-border/40">
+        <div className="flex items-center gap-2 min-w-0">
+          <InstrumentLogo instrument={symbol} size="sm" showName={false} />
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold tracking-tight">{symbol}</span>
             {priceData && (
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                <span className="font-medium">{formatPrice(priceData.current)}</span>
-                <span className={`${getChangeColor()} ${isMobile ? 'hidden xs:inline' : ''}`}>
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-semibold font-mono tabular-nums tracking-tight">
+                  {formatPrice(priceData.current)}
+                </span>
+                <span className={`text-xs font-mono tabular-nums ${getChangeColor()}`}>
                   {priceData.change >= 0 ? '+' : ''}{priceData.changePct.toFixed(2)}%
                 </span>
-                {getTrendIcon()}
               </div>
             )}
           </div>
@@ -446,139 +447,117 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             <UniversalSymbolSearch
               onSelect={(sym) => onSymbolChange(sym)}
               trigger={
-                <Button variant="outline" size="sm" className="h-7 sm:h-8 gap-1.5 text-xs text-muted-foreground">
+                <button className="h-6 px-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-muted-foreground rounded border border-border/40 hover:border-border transition-colors">
                   <Search className="h-3 w-3" />
-                  <span className="hidden sm:inline">Search ticker...</span>
-                </Button>
+                  <span className="hidden sm:inline">Search</span>
+                </button>
               }
             />
           )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Add to Watchlist Button */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          {/* Timeframe pills — TradingView style */}
+          <div className="flex items-center mr-1">
+            {TIMEFRAMES.map((tf) => (
+              <button
+                key={tf.value}
+                onClick={() => {
+                  if (tf.requiresAuth && !userId) {
+                    requireAuth(() => onTimeframeChange(tf.value));
+                  } else {
+                    onTimeframeChange(tf.value);
+                  }
+                }}
+                className={cn(
+                  "h-6 px-2 text-[11px] font-medium rounded transition-colors relative",
+                  timeframe === tf.value
+                    ? "text-foreground bg-muted"
+                    : "text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/30"
+                )}
+              >
+                {tf.label}
+                {tf.requiresAuth && !userId && <Lock className="h-2 w-2 absolute -top-0.5 -right-0.5 text-muted-foreground/50" />}
+              </button>
+            ))}
+          </div>
+
+          {/* Watchlist star */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant={isInWatchlist ? "secondary" : "outline"}
-                size="icon"
-                className="h-7 w-7 sm:h-8 sm:w-8"
+              <button
+                className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted/50 transition-colors"
                 onClick={isInWatchlist ? removeFromWatchlist : addToWatchlist}
                 disabled={watchlistLoading}
               >
                 {watchlistLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                 ) : isInWatchlist ? (
-                  <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-500 text-amber-500" />
+                  <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
                 ) : (
-                  <StarOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <StarOff className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
                 )}
-              </Button>
+              </button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">
               {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
             </TooltipContent>
           </Tooltip>
 
-          {/* Timeframe Selector */}
-          <Select value={timeframe} onValueChange={(val) => {
-            const tf = TIMEFRAMES.find(t => t.value === val);
-            if (tf?.requiresAuth && !userId) {
-              requireAuth(() => onTimeframeChange(val));
-            } else {
-              onTimeframeChange(val);
-            }
-          }}>
-            <SelectTrigger className="w-16 sm:w-20 h-7 sm:h-8 text-xs sm:text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIMEFRAMES.map((tf) => (
-                <SelectItem key={tf.value} value={tf.value}>
-                  <span className="flex items-center gap-1">
-                    {tf.label}
-                    {tf.requiresAuth && !userId && <Lock className="h-3 w-3 text-muted-foreground" />}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-
-
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 sm:h-8 sm:w-8"
+          {/* Refresh */}
+          <button
+            className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground/50 hover:text-muted-foreground"
             onClick={fetchChartData}
             disabled={loading}
           >
-            <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+            <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+          </button>
 
+          {/* TradingView link */}
           {!isMobile && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              asChild
+            <a
+              href={`https://www.tradingview.com/chart/?symbol=${symbol}&aff_id=3433`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-6 px-2 flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground rounded hover:bg-muted/30 transition-colors"
             >
-              <a
-                href={`https://www.tradingview.com/chart/?symbol=${symbol}&aff_id=3433`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-3 w-3 mr-1" />
-                TradingView
-              </a>
-            </Button>
+              <ExternalLink className="h-3 w-3" />
+              TV
+            </a>
           )}
         </div>
       </div>
 
-      {/* Chart Content */}
+      {/* Chart Content — maximum space */}
       <div className="flex-1 min-h-0">
         {isTimeframeGated ? (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center space-y-4 max-w-sm mx-auto">
-              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <Lock className="h-5 w-5 text-muted-foreground" />
+            <div className="text-center space-y-3 max-w-sm mx-auto">
+              <div className="mx-auto w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+                <Lock className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <p className="text-lg font-semibold text-foreground">Sign in to access {timeframe} charts</p>
-                <p className="text-sm text-muted-foreground">
-                  Intraday timeframes (15m, 1H) are available to registered users. Create a free account to unlock them.
-                </p>
-              </div>
-              <Button 
-                variant="default" 
-                onClick={() => setShowAuthDialog(true)}
-                className="mt-2"
-              >
-                Sign in to unlock
+              <p className="text-sm font-medium text-foreground">Sign in for {timeframe} charts</p>
+              <p className="text-xs text-muted-foreground">Intraday timeframes require a free account.</p>
+              <Button size="sm" onClick={() => setShowAuthDialog(true)}>
+                Sign in
               </Button>
             </div>
           </div>
         ) : loading ? (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-8 w-32 mx-auto" />
-              <Skeleton className="h-[300px] w-full max-w-2xl" />
-            </div>
+            <Skeleton className="h-[60%] w-[80%] rounded" />
           </div>
         ) : error ? (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <p className="text-destructive">{error}</p>
-              <Button variant="outline" onClick={fetchChartData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
+            <div className="text-center space-y-2">
+              <p className="text-sm text-destructive">{error}</p>
+              <button onClick={fetchChartData} className="text-xs text-muted-foreground hover:text-foreground underline">
                 Retry
-              </Button>
+              </button>
             </div>
           </div>
         ) : bars.length > 0 ? (
-          <div className="h-full p-2">
+          <div className="h-full">
             <StudyChart 
               bars={bars} 
               symbol={symbol} 
@@ -590,7 +569,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             />
           </div>
         ) : (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
             No data available for {symbol}
           </div>
         )}
