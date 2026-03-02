@@ -3,6 +3,7 @@ import { Trophy, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import { ALL_PATTERN_IDS, PATTERN_DISPLAY_NAMES } from "@/hooks/useScreenerCaps";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 const BULLISH_PATTERNS = new Set([
   "donchian-breakout-long",
@@ -16,6 +17,7 @@ const BULLISH_PATTERNS = new Set([
 ]);
 
 const EdgeAtlasIndexPage = () => {
+  const { t } = useTranslation();
   return (
     <div className="container max-w-5xl mx-auto px-4 py-10">
       {/* Header */}
@@ -23,10 +25,10 @@ const EdgeAtlasIndexPage = () => {
         <div className="p-2 rounded-lg bg-amber-500/15">
           <Trophy className="h-6 w-6 text-amber-500" />
         </div>
-        <h1 className="text-3xl font-bold">Edge Atlas</h1>
+        <h1 className="text-3xl font-bold">{t('edgeAtlas.indexTitle')}</h1>
       </div>
       <p className="text-muted-foreground mb-8 max-w-2xl">
-        Historical win-rate statistics for every chart pattern we track. Pick a pattern to explore instrument-level breakdowns, quality scores, and outcome data.
+        {t('edgeAtlas.indexDescription')}
       </p>
 
       {/* Pattern grid */}
@@ -51,7 +53,7 @@ const EdgeAtlasIndexPage = () => {
                         ) : (
                           <TrendingDown className="h-3 w-3 mr-0.5" />
                         )}
-                        {isBullish ? "Bullish" : "Bearish"}
+                        {isBullish ? t('edgeAtlas.bullish') : t('edgeAtlas.bearish')}
                       </Badge>
                     </CardDescription>
                   </div>
