@@ -328,13 +328,24 @@ const StudyChart = memo(({
         borderColor: theme.grid,
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 0,
+        rightOffset: 5,
       },
       localization: {
         locale: getChartLocale(i18n.language),
       },
       crosshair: {
         mode: 0,
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
       },
     });
 
