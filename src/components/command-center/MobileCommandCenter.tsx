@@ -461,41 +461,41 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
               <BarChart3 className="h-4 w-4" />
-               <span className="text-[10px]">Chart</span>
-             </TabsTrigger>
-            <TabsTrigger 
-              value="watchlist" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
-            >
-              <span className="relative">
-                <Star className="h-4 w-4" />
-                <NotificationBadge count={watchlistCount} size="sm" position="top-right" variant="warning" />
-              </span>
-              <span className="text-[10px]">Watchlist</span>
-            </TabsTrigger>
+               <span className="text-[11px]">Chart</span>
+              </TabsTrigger>
              <TabsTrigger 
-               value="patterns" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
+               value="watchlist" 
+               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
              >
-              <TrendingUp className="h-4 w-4" />
-               <span className="text-[10px]">Patterns</span>
+               <span className="relative">
+                 <Star className="h-4 w-4" />
+                 <NotificationBadge count={watchlistCount} size="sm" position="top-right" variant="warning" />
+               </span>
+               <span className="text-[11px]">Watchlist</span>
              </TabsTrigger>
+              <TabsTrigger 
+                value="patterns" 
+               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
+              >
+               <TrendingUp className="h-4 w-4" />
+                <span className="text-[11px]">Patterns</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="research" 
+               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
+              >
+               <FlaskConical className="h-4 w-4" />
+                <span className="text-[11px]">Research</span>
+              </TabsTrigger>
              <TabsTrigger 
-               value="research" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
+               value="alerts" 
+               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
              >
-              <FlaskConical className="h-4 w-4" />
-               <span className="text-[10px]">Research</span>
-             </TabsTrigger>
-            <TabsTrigger 
-              value="alerts" 
-              className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg relative"
-            >
-              <span className="relative">
-                <Bell className="h-4 w-4" />
-                <NotificationBadge count={alertCount} size="sm" position="top-right" />
-              </span>
-              <span className="text-[10px]">Alerts</span>
+               <span className="relative">
+                 <Bell className="h-4 w-4" />
+                 <NotificationBadge count={alertCount} size="sm" position="top-right" />
+               </span>
+               <span className="text-[11px]">Alerts</span>
             </TabsTrigger>
            </TabsList>
          </Tabs>

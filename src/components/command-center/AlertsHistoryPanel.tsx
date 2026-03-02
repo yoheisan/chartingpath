@@ -157,8 +157,8 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                     {getOutcomeIcon(outcome?.outcome_type)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium">{alert?.symbol}</span>
-                        <Badge variant="outline" className="text-[11px] px-1 py-0">
+                        <span className="text-[13px] font-medium">{alert?.symbol}</span>
+                        <Badge variant="outline" className="text-xs px-1 py-0">
                           {alert?.timeframe}
                         </Badge>
                       </div>
@@ -170,7 +170,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                       {outcome?.pnl_percentage !== null && outcome?.pnl_percentage !== undefined ? (
                         <span
                           className={cn(
-                            'text-xs font-medium',
+                            'text-[13px] font-medium',
                             outcome.pnl_percentage >= 0 ? 'text-emerald-500' : 'text-red-500'
                           )}
                         >
@@ -178,11 +178,11 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                           {outcome.pnl_percentage.toFixed(1)}%
                         </span>
                       ) : (
-                        <Badge variant="secondary" className="text-[11px]">
+                        <Badge variant="secondary" className="text-xs">
                           {t('commandCenter.pending')}
                         </Badge>
                       )}
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-xs text-muted-foreground">
                         {log.triggered_at
                           ? formatDistanceToNow(new Date(log.triggered_at), { addSuffix: true })
                           : 'N/A'}
@@ -213,8 +213,8 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                     <Bell className="h-3 w-3 text-primary/60" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium">{a.symbol}</span>
-                        <Badge variant="outline" className="text-[11px] px-1 py-0">
+                        <span className="text-[13px] font-medium">{a.symbol}</span>
+                        <Badge variant="outline" className="text-xs px-1 py-0">
                           {a.timeframe}
                         </Badge>
                       </div>
@@ -222,7 +222,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                         {formatPatternName(a.pattern)}
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-[11px] bg-primary/10 text-primary border-0">
+                    <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
                       {t('commandCenter.watching')}
                     </Badge>
                   </button>
