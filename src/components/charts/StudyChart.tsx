@@ -799,11 +799,15 @@ const StudyChart = memo(({
     patternLinesCleanupsRef.current = [];
 
     if (historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns) {
-      // Render price lines (Entry/SL/TP) for the CURRENT (most recent) pattern ONLY
+      // Render price lines (Entry/SL/TP) for the CURRENT pattern ONLY
+      const isResolvedOutcome = (outcome?: string | null) =>
+        ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
       const sortedPatterns = [...historicalPatterns].sort(
         (a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime()
       );
-      const currentPattern = sortedPatterns[0];
+      const activePattern = sortedPatterns.find(p => p.isActive && p.status !== 'expired');
+      const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
+      const currentPattern = activePattern || latestUnresolvedPattern || sortedPatterns[0];
       if (currentPattern) {
         const cleanup = renderPatternPriceLines(candleSeries, currentPattern, patternToggles);
         patternLinesCleanupsRef.current.push(cleanup);

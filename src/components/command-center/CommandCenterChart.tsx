@@ -338,7 +338,11 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           .limit(50);
 
         const combinedPatterns = [
-          ...(liveData || []).map(p => ({ ...p, outcome: null, isActive: p.status === 'active' })),
+          ...(liveData || []).map(p => ({
+            ...p,
+            outcome: p.status === 'expired' ? 'timeout' : null,
+            isActive: p.status === 'active'
+          })),
           ...(historicalData || []).map(p => ({ ...p, isActive: false })),
         ];
 
@@ -441,7 +445,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
-  // Derive trade plan from the latest unresolved pattern only
+  // Derive trade plan from current pattern (active first, then latest unresolved)
   const tradePlan = useMemo(() => {
     if (autoPatterns.length === 0) return undefined;
 
@@ -453,10 +457,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       .filter(p => !!getDetectedAt(p))
       .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
 
+    const activePattern = sortedPatterns.find(p => p.isActive && p.status !== 'expired');
     const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
-    if (!latestUnresolvedPattern) return undefined;
+    const currentPattern = activePattern || latestUnresolvedPattern;
+    if (!currentPattern) return undefined;
 
-    const { entry_price, stop_loss_price, take_profit_price, direction } = latestUnresolvedPattern;
+    const { entry_price, stop_loss_price, take_profit_price, direction } = currentPattern;
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
 
     return {
@@ -481,6 +487,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfitPrice: p.take_profit_price,
       outcome: p.outcome ?? null,
       outcomePnlPercent: p.outcome_pnl_percent ?? null,
+      isActive: !!p.isActive,
+      status: p.status ?? null,
       pivots: (p.visual_spec as any)?.pivots,
       bars: p.bars,
     }));
