@@ -72,7 +72,7 @@ const MemberScripts = () => {
   const { canDownload } = useUserProfile();
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("script generation");
   
-  // URL params from Pattern Lab / Screener
+  // URL params from Pattern Lab / Screener / Active Patterns
   const patternParam = searchParams.get('pattern');
   const patternsParam = searchParams.get('patterns');
   const platformParam = searchParams.get('platform') as Platform | null;
@@ -80,6 +80,7 @@ const MemberScripts = () => {
   const rrParam = searchParams.get('rr');
   const timeframeParam = searchParams.get('timeframe');
   const instrumentsParam = searchParams.get('instruments');
+  const instrumentParam = searchParams.get('instrument'); // single instrument context
   const winnersParam = searchParams.get('winners');
   const losersParam = searchParams.get('losers');
   
@@ -287,6 +288,22 @@ const MemberScripts = () => {
            {isFromPatternLab ? t('scripts.backToPatternLab') : t('common.backToHome')}
         </Link>
       </div>
+
+      {/* Instrument Context Banner */}
+      {(instrumentParam || (patternParam && !isFromPatternLab)) && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 px-4 py-3">
+          <ScanSearch className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex items-center gap-2 flex-wrap text-sm">
+            <span className="text-muted-foreground">Generating scripts for</span>
+            {instrumentParam && (
+              <Badge variant="secondary" className="font-mono font-semibold text-sm">{instrumentParam.replace(/=X$|=F$/, '')}</Badge>
+            )}
+            {patternParam && (
+              <Badge variant="outline" className="text-xs capitalize">{patternParam.replace(/-/g, ' ')}</Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="text-center mb-8">
