@@ -512,8 +512,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
     settings.watchlistTab === 'alerts' ? 'alerts' : settings.watchlistTab === 'paper' ? 'paper' : 'watchlist'
   );
 
-  // Right sidebar collapsed state
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  // Auto-collapse sidebar on smaller screens (< 1440px)
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 1440;
+  });
   
   // Study panel collapsed state — closed by default
   const [studyPanelCollapsed, setStudyPanelCollapsed] = useState(true);
@@ -521,7 +523,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   // Dispatch resize event after sidebar transition so charts re-fit
   const toggleSidebar = useCallback((collapsed: boolean) => {
     setRightSidebarCollapsed(collapsed);
-    // Wait for CSS transition to finish (200ms), then trigger resize
     setTimeout(() => window.dispatchEvent(new Event('resize')), 220);
   }, []);
 
@@ -545,22 +546,22 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full flex flex-col">
-      {/* Auth nudge for anonymous users */}
+    <div className="h-[calc(100vh-4rem)] w-full flex flex-col bg-background">
+      {/* Minimal auth nudge */}
       {!userId && <DashboardAuthNudge />}
-      
-      {/* Morning Briefing — top setups for today */}
-      <MorningBriefing userId={userId} onSymbolSelect={handleSymbolSelect} />
       
       {/* Auth gate dialog */}
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="dashboard features" />
       
       <div className="flex-1 min-h-0 flex">
-      {/* Main Content Area - Chart + Tab Bar + Content */}
-      <div className="flex-1 min-w-0 overflow-hidden">
+        {/* Main Content — chart-first, takes maximum available space */}
+        <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
-            {/* Main Chart - expands when study panel collapsed */}
-            <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[45%] min-h-[200px] shrink-0")}>
+            {/* Morning Briefing — compact inline strip */}
+            <MorningBriefing userId={userId} onSymbolSelect={handleSymbolSelect} />
+
+            {/* Main Chart — dominates viewport */}
+            <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[55%] min-h-[280px] shrink-0")}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -579,27 +580,27 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </div>
             
-            {/* Toggle button for study panel */}
+            {/* Minimal study panel toggle — TradingView-style thin divider */}
             <button
               onClick={() => setStudyPanelCollapsed(prev => !prev)}
-              className="flex items-center justify-center gap-1 w-full py-1 border-t border-border bg-muted/30 hover:bg-muted/60 transition-colors text-xs text-muted-foreground shrink-0"
+              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/40 hover:bg-muted/30 transition-colors text-[11px] text-muted-foreground/70 hover:text-muted-foreground shrink-0"
             >
               {studyPanelCollapsed ? (
                 <>
-                  <ChevronUp className="h-3.5 w-3.5" />
+                  <ChevronUp className="h-3 w-3" />
                   <span>{t('commandCenter.showPatternsMetrics')}</span>
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3 w-3" />
                   <span>{t('commandCenter.hidePatternsMetrics')}</span>
                 </>
               )}
             </button>
 
-            {/* Scrollable Study-style content below chart — kept mounted to avoid refetch on toggle */}
+            {/* Study panel — kept mounted to avoid refetch */}
             <div className={cn(
-              "flex-1 min-h-0 overflow-auto border-t border-border",
+              "flex-1 min-h-0 overflow-auto border-t border-border/40",
               studyPanelCollapsed && "hidden"
             )}>
               <DashboardPatternStudy
@@ -612,87 +613,88 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
           </div>
         </div>
 
-        {/* Right Sidebar - Collapsible */}
-        <div className={`flex h-full border-l border-border shrink-0 overflow-hidden transition-[width] duration-200 ${rightSidebarCollapsed ? 'w-12' : 'w-[320px]'}`}>
-          {/* Collapsed icon strip */}
+        {/* Right Sidebar — auto-collapse on smaller screens, TradingView-style icon strip */}
+        <div className={cn(
+          "flex h-full border-l border-border/40 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
+          rightSidebarCollapsed ? "w-10" : "w-[280px]"
+        )}>
           {rightSidebarCollapsed ? (
-            <div className="flex flex-col items-start w-12 py-2 gap-1 pl-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 mb-2"
+            /* Icon strip — minimal, like TradingView right toolbar */
+            <div className="flex flex-col items-center w-10 py-2 gap-0.5">
+              <button
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                 onClick={() => toggleSidebar(false)}
                 title={t('commandCenter.expandSidebar')}
               >
-                <PanelRightOpen className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={rightPanelTab === 'watchlist' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
+                <PanelRightOpen className="h-3.5 w-3.5" />
+              </button>
+              <div className="w-5 h-px bg-border/40 my-1" />
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'watchlist' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
                 onClick={() => { setRightPanelTab('watchlist'); toggleSidebar(false); }}
                 title={t('commandCenter.watchlist')}
               >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={rightPanelTab === 'alerts' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'alerts' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
                 onClick={() => { setRightPanelTab('alerts'); toggleSidebar(false); }}
                 title={t('commandCenter.alerts')}
               >
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={rightPanelTab === 'paper' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
+                <Bell className="h-3.5 w-3.5" />
+              </button>
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'paper' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
                 onClick={() => { setRightPanelTab('paper'); toggleSidebar(false); }}
                 title="Paper Trading"
               >
-                <Wallet className="h-4 w-4" />
-              </Button>
+                <Wallet className="h-3.5 w-3.5" />
+              </button>
               <div className="flex-1" />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+              <button
+                className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
                 onClick={() => { toggleSidebar(false); }}
                 title={t('commandCenter.marketOverview')}
               >
-                <Globe className="h-4 w-4" />
-              </Button>
+                <Globe className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
             <div className="flex flex-col h-full w-full">
-              {/* Collapse button */}
-              <div className="flex items-center justify-start px-1 py-1 border-b border-border shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
+              {/* Sidebar header with collapse */}
+              <div className="flex items-center justify-start px-1 py-0.5 border-b border-border/40 shrink-0">
+                <button
+                  className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground"
                   onClick={() => toggleSidebar(true)}
                   title={t('commandCenter.collapseSidebar')}
                 >
-                  <PanelRightClose className="h-4 w-4" />
-                </Button>
+                  <PanelRightClose className="h-3.5 w-3.5" />
+                </button>
               </div>
               <ResizablePanelGroup direction="vertical" className="flex-1" onLayout={handleRightPanelResize}>
-                {/* Watchlist & Alerts - Tabbed */}
+                {/* Watchlist & Alerts — tabbed */}
                 <ResizablePanel defaultSize={settings.alertsPanelSize} minSize={30}>
                   <Tabs value={rightPanelTab} onValueChange={(tab) => {
                     setRightPanelTab(tab);
                     updateSettings({ watchlistTab: tab });
                   }} className="h-full flex flex-col">
-                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2">
-                      <TabsTrigger value="watchlist" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                    <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent h-8 px-1.5">
+                      <TabsTrigger value="watchlist" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.watchlist')}
                       </TabsTrigger>
-                      <TabsTrigger value="alerts" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                      <TabsTrigger value="alerts" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="paper" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                      <TabsTrigger value="paper" className="text-[11px] px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Paper
                       </TabsTrigger>
                     </TabsList>
@@ -716,7 +718,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                   </Tabs>
                 </ResizablePanel>
 
-                <ResizableHandle withHandle />
+                <ResizableHandle className="data-[panel-group-direction=vertical]:h-px" />
 
                 {/* Market Overview */}
                 <ResizablePanel defaultSize={settings.marketOverviewSize} minSize={20}>
@@ -731,18 +733,18 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
           )}
         </div>
 
-      {/* Full Chart Viewer Modal for Pattern Details */}
-      <Suspense fallback={null}>
-        <FullChartViewer
-          open={chartOpen}
-          onOpenChange={setChartOpen}
-          setup={selectedSetup}
-           loading={loadingChartDetails}
-           onCreateAlert={handleCreateAlert}
-          isCreatingAlert={isCreatingAlert}
-        />
-      </Suspense>
-    </div>
+        {/* Full Chart Viewer Modal */}
+        <Suspense fallback={null}>
+          <FullChartViewer
+            open={chartOpen}
+            onOpenChange={setChartOpen}
+            setup={selectedSetup}
+            loading={loadingChartDetails}
+            onCreateAlert={handleCreateAlert}
+            isCreatingAlert={isCreatingAlert}
+          />
+        </Suspense>
+      </div>
     </div>
   );
 }
