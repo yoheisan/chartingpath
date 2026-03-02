@@ -78,7 +78,7 @@ const PARTITIONS: Record<string, PartitionConfig> = {
   }
 };
 
-const TIMEFRAMES = ['1h', '4h', '8h', '1d', '1wk'];
+const TIMEFRAMES = ['15m', '1h', '4h', '8h', '1d', '1wk'];
 const PREMIUM_TIMEFRAMES = ['15m', '1h', '4h'];
 
 async function runPartitionSeeding(
