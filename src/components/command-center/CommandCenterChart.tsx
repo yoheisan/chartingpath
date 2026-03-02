@@ -393,6 +393,20 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
+  // Derive trade plan from most recent active pattern for Entry/SL/TP price lines
+  const tradePlan = useMemo(() => {
+    const activePattern = autoPatterns.find(p => p.isActive);
+    if (!activePattern) return undefined;
+    const { entry_price, stop_loss_price, take_profit_price, direction } = activePattern;
+    if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
+    return {
+      entry: entry_price,
+      stopLoss: stop_loss_price,
+      takeProfit: take_profit_price,
+      direction: (direction === 'short' ? 'short' : 'long') as 'long' | 'short',
+    };
+  }, [autoPatterns]);
+
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
@@ -547,6 +561,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               symbol={symbol} 
               timeframe={timeframe}
               autoHeight 
+              tradePlan={tradePlan}
               onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
               chartMarkers={chartMarkers}
               formationOverlays={formationOverlays}
