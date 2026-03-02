@@ -216,6 +216,7 @@ const StudyChart = memo(({
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
   const analysisLinesRef = useRef<any[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
+  const persistedVisibleLogicalRangeRef = useRef<{ from: number; to: number } | null>(null);
 
   const fixedHeight = height ?? 350;
 
@@ -805,29 +806,29 @@ const StudyChart = memo(({
       }
     }
 
-    // Sync time scales across all charts using TIME-based range (not logical index)
-    // This is critical because RSI/MACD have fewer data points (warmup periods),
-    // so logical indices map to different timestamps across charts.
-    const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
-    allCharts.forEach((src) => {
-      src.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (syncingRangeRef.current || !range) return;
-        persistedVisibleRangeRef.current = range;
-        syncingRangeRef.current = true;
-        allCharts.forEach((dst) => {
-          if (dst !== src) {
-            try {
-              dst.timeScale().setVisibleRange(range);
-            } catch {
-              // Ignore if range is out of bounds for this chart
-            }
-          }
-        });
-        syncingRangeRef.current = false;
+    // Sync time scales from MAIN chart only using logical range.
+    // This preserves right-side whitespace and prevents snap-back to the latest bar.
+    const linkedCharts = [rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
+    chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
+      if (syncingRangeRef.current || !logicalRange) return;
+      persistedVisibleLogicalRangeRef.current = logicalRange;
+
+      const timeRange = chart.timeScale().getVisibleRange();
+      if (timeRange) persistedVisibleRangeRef.current = timeRange;
+
+      syncingRangeRef.current = true;
+      linkedCharts.forEach((dst) => {
+        try {
+          dst.timeScale().setVisibleLogicalRange(logicalRange);
+        } catch {
+          // Ignore if range is out of bounds for this chart
+        }
       });
+      syncingRangeRef.current = false;
     });
 
     // Sync crosshairs using official pattern: pass actual data point values
+    const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
     const chartSeriesMap = new Map<IChartApi, ReturnType<IChartApi['addSeries']>>();
     chartSeriesMap.set(chart, candleSeries);
     if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
@@ -889,9 +890,10 @@ const StudyChart = memo(({
     });
 
     // Preserve user's manually dragged range across chart re-renders (TradingView-like behavior)
-    if (persistedVisibleRangeRef.current) {
+    if (persistedVisibleLogicalRangeRef.current) {
+      chart.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
+    } else if (persistedVisibleRangeRef.current) {
       chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
-    } else if (safeChartData.length > 80) {
       const fromBar = safeChartData[safeChartData.length - 80];
       const toBar = safeChartData[safeChartData.length - 1];
       chart.timeScale().setVisibleRange({ from: fromBar.time, to: toBar.time });
@@ -961,7 +963,9 @@ const StudyChart = memo(({
         rsiChartRef.current?.applyOptions({ width: nextWidth });
         macdChartRef.current?.applyOptions({ width: nextWidth });
         // Keep current user-selected horizontal range on resize (do not auto-fit)
-        if (persistedVisibleRangeRef.current) {
+        if (persistedVisibleLogicalRangeRef.current) {
+          chartRef.current.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
+        } else if (persistedVisibleRangeRef.current) {
           chartRef.current.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
         }
         // Delay sync so labels re-render at new width first
@@ -1011,6 +1015,8 @@ const StudyChart = memo(({
 
     return () => {
       try {
+        const logicalRange = chart.timeScale().getVisibleLogicalRange();
+        if (logicalRange) persistedVisibleLogicalRangeRef.current = logicalRange;
         const range = chart.timeScale().getVisibleRange();
         if (range) persistedVisibleRangeRef.current = range;
       } catch {
