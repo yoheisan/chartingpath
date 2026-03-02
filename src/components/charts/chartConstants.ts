@@ -64,14 +64,15 @@ export const PRICE_SCALE_MARGINS = {
 } as const;
 
 /**
- * Calculate optimal price scale margins based on data characteristics.
- * This ensures charts never look "flat" regardless of actual price volatility.
+ * Calculate optimal price scale margins to ensure candles fill at least ~70%
+ * of the chart's vertical space, with the median price centered.
  * 
- * Rules:
- * 1. For low volatility data (< 2% range), use ultra-tight margins
- * 2. For medium volatility (2-10%), use standard margins
- * 3. For high volatility (> 10%), can use slightly more padding
- * 4. Always ensure at least 90% of chart height is used for price action
+ * lightweight-charts' scaleMargins define the fraction of chart height reserved
+ * as empty padding at top/bottom. By keeping these small and symmetric, the
+ * price action is centered and uses most of the available space.
+ * 
+ * Target: price range occupies ≥70% of chart height → max 15% padding each side.
+ * For overlays (Entry/SL/TP lines) we allow slightly more room.
  */
 export function calculateOptimalPriceMargins(
   bars: { h: number; l: number }[],
@@ -97,20 +98,38 @@ export function calculateOptimalPriceMargins(
   const priceRange = maxHigh - minLow;
   const volatilityPercent = midPrice > 0 ? (priceRange / midPrice) * 100 : 0;
 
-  // Rule-based margin selection
-  if (volatilityPercent < 2) {
-    // Very low volatility - use tightest margins to amplify visual movement
-    return { top: 0.01, bottom: 0.01 };
-  } else if (volatilityPercent < 5) {
-    // Low volatility - tight margins
-    return { top: 0.02, bottom: 0.02 };
-  } else if (volatilityPercent < 10) {
-    // Medium volatility - standard tight
-    return hasOverlays ? { top: 0.05, bottom: 0.05 } : { top: 0.03, bottom: 0.03 };
+  // We want the candle range to fill ~70-85% of chart height.
+  // scaleMargins top+bottom = fraction of height NOT used by price.
+  // So we target total padding of 15-30% (each side 7.5-15%).
+  //
+  // For low volatility data we use the tightest margins so small moves
+  // are visually amplified. For higher volatility we can be slightly looser
+  // to avoid clipping wicks during live updates.
+
+  let margin: number;
+  if (volatilityPercent < 1) {
+    // Ultra-low volatility – maximize visual impact
+    margin = 0.02;
+  } else if (volatilityPercent < 3) {
+    // Low volatility – tight
+    margin = 0.04;
+  } else if (volatilityPercent < 8) {
+    // Normal range – balanced (price fills ~86% of height)
+    margin = 0.07;
+  } else if (volatilityPercent < 20) {
+    // Higher volatility – a touch more breathing room
+    margin = 0.10;
   } else {
-    // High volatility - can afford slightly more padding
-    return hasOverlays ? { top: 0.08, bottom: 0.08 } : { top: 0.05, bottom: 0.05 };
+    // Very high volatility – still keep it reasonable
+    margin = 0.12;
   }
+
+  // Overlays need extra room for SL/TP labels outside the candle range
+  if (hasOverlays) {
+    margin = Math.min(margin + 0.04, 0.15);
+  }
+
+  return { top: margin, bottom: margin };
 }
 
 /**
