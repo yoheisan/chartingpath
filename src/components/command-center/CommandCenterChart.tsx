@@ -1,16 +1,8 @@
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, TrendingUp, TrendingDown, Minus, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
+import { ExternalLink, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
