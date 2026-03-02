@@ -263,8 +263,28 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {messages.length === 0 && !initialPrompt ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            Ask me anything about patterns, markets, or trading strategies...
+          <div className="flex flex-col items-center gap-5 py-6">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Try one of these to get started
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+              {[
+                { emoji: "📊", text: "What are the top 3 most profitable chart patterns this month?" },
+                { emoji: "🎯", text: "Show me a bull flag setup with entry, stop-loss & target" },
+                { emoji: "⚡", text: "Compare head & shoulders vs double top win rates" },
+                { emoji: "🧠", text: "Build me a swing trading plan for EURUSD using patterns" },
+              ].map((prompt) => (
+                <button
+                  key={prompt.text}
+                  onClick={() => streamChat(prompt.text)}
+                  className="flex items-start gap-2 text-left rounded-lg border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/30 transition-all px-3 py-2.5 text-sm group"
+                >
+                  <span className="text-base mt-0.5 shrink-0">{prompt.emoji}</span>
+                  <span className="text-muted-foreground group-hover:text-foreground transition-colors leading-snug">{prompt.text}</span>
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
