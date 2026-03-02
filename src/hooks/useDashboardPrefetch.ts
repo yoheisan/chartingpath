@@ -4,6 +4,16 @@ import { symbolDataCache } from '@/lib/symbolDataCache';
 import { getChartDataLimits, type Timeframe } from '@/config/dataCoverageContract';
 
 /**
+ * Pre-warmed context available globally for copilot's first message.
+ * Populated by useDashboardPrefetch on dashboard mount.
+ */
+export const prewarmedContext = {
+  watchlistSymbols: [] as string[],
+  activePatternCount: 0,
+  ready: false,
+};
+
+/**
  * Prefetches watchlist symbols' OHLCV data and active patterns on dashboard mount.
  * This ensures instant chart switches for watchlisted instruments and
  * pre-warms the copilot context with portfolio + hit rate data.
@@ -32,6 +42,9 @@ export function useDashboardPrefetch(userId?: string, currentTimeframe = '1d') {
         if (symbols.length === 0) {
           symbols = ['AAPL', 'MSFT', 'BTC-USD', 'EURUSD=X', 'TSLA', 'NVDA'];
         }
+
+        // Store for copilot pre-warm
+        prewarmedContext.watchlistSymbols = symbols;
 
         console.debug('[DashboardPrefetch] Prefetching', symbols.length, 'symbols');
 
@@ -85,9 +98,13 @@ export function useDashboardPrefetch(userId?: string, currentTimeframe = '1d') {
                 .eq('status', 'active')
                 .in('instrument', symbols);
               
+              prewarmedContext.activePatternCount = count || 0;
+              prewarmedContext.ready = true;
               console.debug('[DashboardPrefetch] Active patterns on watchlist:', count);
             } catch {}
           }, symbols.length * 100 + 200);
+        } else {
+          prewarmedContext.ready = true;
         }
       } catch (err) {
         console.debug('[DashboardPrefetch] Prefetch init error:', err);
