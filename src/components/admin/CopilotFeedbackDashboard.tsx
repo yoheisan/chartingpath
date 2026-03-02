@@ -185,7 +185,7 @@ export function CopilotFeedbackDashboard() {
               <CheckCircle2 className="w-4 h-4" />
               Resolved ({resolvedCount})
             </TabsTrigger>
-
+          </TabsList>
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
