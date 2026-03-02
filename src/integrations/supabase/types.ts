@@ -4780,6 +4780,23 @@ export type Database = {
         }
         Relationships: []
       }
+      instrument_pattern_stats_mv: {
+        Row: {
+          asset_type: string | null
+          avg_bars: number | null
+          avg_rr: number | null
+          expectancy_r: number | null
+          losses: number | null
+          pattern_id: string | null
+          pattern_name: string | null
+          symbol: string | null
+          timeframe: string | null
+          total_trades: number | null
+          win_rate_pct: number | null
+          wins: number | null
+        }
+        Relationships: []
+      }
       quiz_analytics: {
         Row: {
           avg_time_taken_seconds: number | null
@@ -5053,6 +5070,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_instrument_pattern_stats: { Args: never; Returns: undefined }
       release_worker_lock: {
         Args: { p_worker_name: string }
         Returns: undefined
