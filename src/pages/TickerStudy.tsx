@@ -774,6 +774,7 @@ export default function TickerStudy() {
               timeframe={selectedTimeframe}
               onSendToCopilot={handleSendToCopilot}
               chartMarkers={chartMarkers}
+              historicalPatterns={historicalPatternOverlays}
             />
           </CardContent>
         </Card>
