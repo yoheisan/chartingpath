@@ -71,7 +71,6 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
 
     setLoading(true);
     try {
-      // Get top active patterns sorted by quality + trend alignment
       let query = supabase
         .from('live_pattern_detections')
         .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators')
@@ -80,7 +79,6 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
         .order('first_detected_at', { ascending: false })
         .limit(50);
 
-      // If user has watchlist, prefer their symbols
       if (userId) {
         const { data: wl } = await supabase
           .from('user_watchlist')
@@ -91,7 +89,6 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
         const watchlistSymbols = (wl || []).map(w => w.symbol);
         
         if (watchlistSymbols.length > 0) {
-          // First try watchlist-only
           const { data: wlPatterns } = await supabase
             .from('live_pattern_detections')
             .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators')
@@ -133,11 +130,11 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="flex items-center gap-2 px-3 h-6 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors border-b border-border/30 w-full shrink-0"
+        className="flex items-center gap-2 px-3 h-6 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors border-b border-border/30 w-full shrink-0"
       >
         <Sparkles className="h-2.5 w-2.5" />
         <span>{t('dashboard.showBriefing', 'Show briefing')}</span>
-        <span className="text-[10px] ml-auto tabular-nums">{setups.length}</span>
+        <span className="text-[11px] ml-auto tabular-nums">{setups.length}</span>
       </button>
     );
   }
@@ -148,7 +145,7 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
       <div className="flex items-center justify-between px-3 h-7">
         <div className="flex items-center gap-1.5">
           <Sunrise className="h-3 w-3 text-amber-500/70" />
-          <span className="text-[11px] font-medium text-muted-foreground">{t('dashboard.morningBriefing', "Today's Setups")}</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('dashboard.morningBriefing', "Today's Setups")}</span>
         </div>
         <div className="flex items-center gap-0.5">
           <button
@@ -174,7 +171,7 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             <Skeleton key={i} className="h-10 w-32 shrink-0 rounded" />
           ))
         ) : setups.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/60 py-1">{t('dashboard.noSetups', 'No setups today')}</p>
+          <p className="text-xs text-muted-foreground/60 py-1">{t('dashboard.noSetups', 'No setups today')}</p>
         ) : (
           setups.map((setup) => (
             <button
@@ -187,20 +184,20 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-[11px] font-medium">{setup.instrument}</span>
+                  <span className="text-xs font-medium">{setup.instrument}</span>
                   {setup.direction === 'long' ? (
                     <TrendingUp className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
                   ) : (
                     <TrendingDown className="h-2.5 w-2.5 text-red-500 shrink-0" />
                   )}
                   <span className={cn(
-                    "text-[9px] font-mono",
+                    "text-[10px] font-mono",
                     setup.quality_score === 'A' ? "text-emerald-500" : "text-blue-500",
                   )}>
                     {setup.quality_score}
                   </span>
                 </div>
-                <p className="text-[9px] text-muted-foreground/60 truncate max-w-[120px]">
+                <p className="text-[10px] text-muted-foreground/60 truncate max-w-[120px]">
                   {setup.pattern_name.replace(/-/g, ' ')} · {setup.timeframe}
                 </p>
               </div>
@@ -217,15 +214,11 @@ function scoreAndSort(patterns: any[]): BriefingSetup[] {
   return patterns
     .map((p) => {
       let score = 0;
-      // Quality: A=30, B=20
       if (p.quality_score === 'A') score += 30;
       else if (p.quality_score === 'B') score += 20;
-      // Trend alignment: with_trend=25
       if (p.trend_alignment === 'with_trend') score += 25;
       else if (p.trend_alignment === 'neutral') score += 10;
-      // R:R bonus
       score += Math.min(20, (p.risk_reward_ratio || 2) * 5);
-      // Normalize to 0-100
       const confidence = Math.min(100, Math.round(score * 1.2));
 
       return {

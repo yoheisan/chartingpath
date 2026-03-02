@@ -80,7 +80,6 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
 
     fetchData();
 
-    // Realtime subscription for trade updates
     const channel = supabase
       .channel('paper-trades-realtime')
       .on(
@@ -169,7 +168,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-semibold">{trade.symbol}</span>
-                      <Badge variant={trade.trade_type === 'long' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 h-4">
+                      <Badge variant={trade.trade_type === 'long' ? 'default' : 'destructive'} className="text-[11px] px-1.5 py-0 h-4">
                         {trade.trade_type === 'long' ? (
                           <><ArrowUpRight className="h-2.5 w-2.5 mr-0.5" />Long</>
                         ) : (
@@ -177,13 +176,13 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
                         )}
                       </Badge>
                       {isAutoTrade(trade.notes) && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-amber-500/50 text-amber-500">
+                        <Badge variant="outline" className="text-[11px] px-1 py-0 h-4 border-amber-500/50 text-amber-500">
                           Auto
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-1 text-[11px] text-muted-foreground">
+                  <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
                     <span>Entry: {trade.entry_price.toFixed(2)}</span>
                     <span>Qty: {trade.quantity}</span>
                   </div>
@@ -213,11 +212,11 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold">{trade.symbol}</span>
-                          <Badge variant={trade.trade_type === 'long' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 h-4">
+                          <Badge variant={trade.trade_type === 'long' ? 'default' : 'destructive'} className="text-[11px] px-1.5 py-0 h-4">
                             {trade.trade_type === 'long' ? 'L' : 'S'}
                           </Badge>
                           {isAutoTrade(trade.notes) && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-amber-500/50 text-amber-500">
+                            <Badge variant="outline" className="text-[11px] px-1 py-0 h-4 border-amber-500/50 text-amber-500">
                               Auto
                             </Badge>
                           )}
@@ -226,7 +225,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
                           {(trade.pnl ?? 0) >= 0 ? '+' : ''}${(trade.pnl ?? 0).toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
                         <span>{trade.entry_price.toFixed(2)} → {trade.exit_price?.toFixed(2) ?? '—'}</span>
                         <span>{trade.closed_at ? new Date(trade.closed_at).toLocaleDateString() : ''}</span>
                       </div>

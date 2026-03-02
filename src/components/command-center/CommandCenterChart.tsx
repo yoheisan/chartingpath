@@ -435,7 +435,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             <UniversalSymbolSearch
               onSelect={(sym) => onSymbolChange(sym)}
               trigger={
-                <button className="h-6 px-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-muted-foreground rounded border border-border/40 hover:border-border transition-colors">
+                <button className="h-6 px-2 flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground rounded border border-border/40 hover:border-border transition-colors">
                   <Search className="h-3 w-3" />
                   <span className="hidden sm:inline">Search</span>
                 </button>
@@ -458,7 +458,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                   }
                 }}
                 className={cn(
-                  "h-6 px-2 text-[11px] font-semibold rounded transition-colors relative",
+                  "h-6 px-2 text-xs font-semibold rounded transition-colors relative",
                   timeframe === tf.value
                     ? "text-foreground bg-muted"
                     : "text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/30"
@@ -507,7 +507,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               href={`https://www.tradingview.com/chart/?symbol=${symbol}&aff_id=3433`}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-6 px-2 flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground rounded hover:bg-muted/30 transition-colors"
+              className="h-6 px-2 flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground rounded hover:bg-muted/30 transition-colors"
             >
               <ExternalLink className="h-3 w-3" />
               TV

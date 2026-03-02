@@ -55,7 +55,7 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
                 <h4 className="text-xs font-medium mb-0.5 group-hover:text-primary transition-colors">
                   {tool.title}
                 </h4>
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   {tool.description}
                 </p>
               </Card>
