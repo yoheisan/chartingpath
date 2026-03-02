@@ -213,6 +213,12 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-popover z-50">
                 <DropdownMenuItem asChild>
+                  <Link to="/edge-atlas" className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    {t('navigation.edgeAtlas', 'Edge Atlas')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/chart-patterns/library" className="flex items-center gap-2">
                     <Database className="h-4 w-4 text-blue-500" />
                     {t('navigation.patternLibrary', 'Pattern Library')}
