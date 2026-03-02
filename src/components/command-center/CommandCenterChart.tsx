@@ -601,6 +601,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               onSendToCopilot={(context, analysis) => copilot.openWithAnalysis(context, analysis)}
               chartMarkers={chartMarkers}
               formationOverlays={formationOverlays}
+              historicalPatterns={historicalPatternOverlays}
             />
           </div>
         ) : (
