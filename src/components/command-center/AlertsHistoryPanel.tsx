@@ -158,11 +158,11 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-medium">{alert?.symbol}</span>
-                        <Badge variant="outline" className="text-[10px] px-1 py-0">
+                        <Badge variant="outline" className="text-[11px] px-1 py-0">
                           {alert?.timeframe}
                         </Badge>
                       </div>
-                      <div className="text-[11px] text-muted-foreground truncate">
+                      <div className="text-xs text-muted-foreground truncate">
                         {formatPatternName(alert?.pattern || '')}
                       </div>
                     </div>
@@ -178,11 +178,11 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect }: AlertsHistoryPane
                           {outcome.pnl_percentage.toFixed(1)}%
                         </span>
                       ) : (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <Badge variant="secondary" className="text-[11px]">
                           {t('commandCenter.pending')}
                         </Badge>
                       )}
-                      <div className="text-[10px] text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {log.triggered_at
                           ? formatDistanceToNow(new Date(log.triggered_at), { addSuffix: true })
                           : 'N/A'}
