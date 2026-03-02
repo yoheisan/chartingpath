@@ -97,6 +97,10 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
 
   // Persisted dashboard settings — skip writes for anonymous users
   const { settings, updateSettings: _updateSettings } = useDashboardSettings();
+  
+  // Prefetch watchlist symbols for instant chart switching
+  useDashboardPrefetch(userId, settings.selectedTimeframe);
+  
   const updateSettings = useCallback((updates: Parameters<typeof _updateSettings>[0]) => {
     if (!userId) return; // silently skip for anon
     _updateSettings(updates);
