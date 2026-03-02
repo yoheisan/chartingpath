@@ -71,11 +71,11 @@ export interface IndicatorSettings {
 }
 
 const DEFAULT_INDICATORS: IndicatorSettings = {
-  ema20: true,
+  ema20: false,
   ema50: true,
   ema200: true,
-  bollingerBands: true,
-  vwap: true,
+  bollingerBands: false,
+  vwap: false,
   rsi: false,
   macd: false,
 };
