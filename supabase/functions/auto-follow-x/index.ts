@@ -77,6 +77,23 @@ async function getMyUserId(): Promise<string> {
   return cachedUserId!;
 }
 
+// ── Resolve username to numeric user ID ────────────────────────────────
+async function resolveUsernameToId(username: string): Promise<string | null> {
+  const bearerToken = Deno.env.get("TWITTER_BEARER_TOKEN");
+  if (!bearerToken) return null;
+  const cleanUsername = username.replace(/^@/, "");
+  const url = `https://api.x.com/2/users/by/username/${cleanUsername}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${bearerToken}` },
+  });
+  if (!res.ok) {
+    console.log(`[auto-follow-x] Could not resolve @${cleanUsername}: ${res.status}`);
+    return null;
+  }
+  const body = await res.json();
+  return body.data?.id || null;
+}
+
 // ── Follow a single user ───────────────────────────────────────────────
 async function followUser(
   myId: string,
