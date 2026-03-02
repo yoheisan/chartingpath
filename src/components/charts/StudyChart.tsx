@@ -1174,7 +1174,7 @@ const StudyChart = memo(({
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
     };
-  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.ema200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
+  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.ema200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers, historicalPatterns, patternToggles]);
 
 
   useEffect(() => {
