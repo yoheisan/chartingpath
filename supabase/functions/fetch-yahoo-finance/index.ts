@@ -205,7 +205,27 @@ serve(async (req) => {
     }
 
     if (!response) {
-      throw lastError || new Error(`Yahoo Finance API error: No valid symbol variant found for ${symbol}`);
+      // Instead of throwing, return empty dataset gracefully
+      // Some symbols (e.g. HO=F futures) don't support intraday intervals
+      console.log(`No valid data for ${symbol} at interval ${interval} — returning empty dataset`);
+      return new Response(
+        JSON.stringify({
+          index: [],
+          columns: [symbol],
+          data: [],
+          bars: [],
+          meta: {
+            provider: 'yahoo_finance',
+            interval,
+            empty: true,
+            reason: `Symbol ${symbol} does not support interval ${interval}`,
+          },
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
     }
 
     const data = await response.json();
