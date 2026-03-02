@@ -828,6 +828,7 @@ const StudyChart = memo(({
     });
 
     // Sync crosshairs using official pattern: pass actual data point values
+    const allCharts = [chart, rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
     const chartSeriesMap = new Map<IChartApi, ReturnType<IChartApi['addSeries']>>();
     chartSeriesMap.set(chart, candleSeries);
     if (rsiChartRef.current && rsiSeriesRef.current) chartSeriesMap.set(rsiChartRef.current, rsiSeriesRef.current);
