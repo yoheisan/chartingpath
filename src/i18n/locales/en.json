@@ -1725,6 +1725,11 @@
     "howThisPatternForms": "How This Pattern Forms",
     "marketPsychology": "Market Psychology"
   },
+  "dashboard": {
+    "morningBriefing": "Today's Top Setups",
+    "showBriefing": "Show morning briefing",
+    "noSetups": "No high-quality setups detected today"
+  },
   "commandCenter": {
     "watchlist": "Watchlist",
     "custom": "Custom",
