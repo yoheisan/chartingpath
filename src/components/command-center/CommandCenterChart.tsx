@@ -412,18 +412,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
-  // Derive trade plan from the LATEST active pattern (sorted by first_detected_at desc)
+  // Derive trade plan from the LATEST pattern (active first, then most recent by date)
   const tradePlan = useMemo(() => {
-    // Active patterns are already sorted desc by first_detected_at from the query
+    if (autoPatterns.length === 0) return undefined;
+    // Prefer active pattern, fall back to most recent
     const activePattern = autoPatterns.find(p => p.isActive);
-    if (!activePattern) return undefined;
-    const { entry_price, stop_loss_price, take_profit_price, direction } = activePattern;
+    const latestPattern = activePattern || autoPatterns.sort((a, b) => {
+      const dateA = a.isActive ? a.first_detected_at : a.detected_at;
+      const dateB = b.isActive ? b.first_detected_at : b.detected_at;
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    })[0];
+    if (!latestPattern) return undefined;
+    const { entry_price, stop_loss_price, take_profit_price, direction } = latestPattern;
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
     return {
       entry: entry_price,
       stopLoss: stop_loss_price,
       takeProfit: take_profit_price,
-      direction: (direction === 'short' ? 'short' : 'long') as 'long' | 'short',
+      direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
   }, [autoPatterns]);
 
