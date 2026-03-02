@@ -382,12 +382,33 @@ export function TradingCopilot({
 
   if (!isExpanded) {
     return (
-      <Button
-        onClick={onToggle}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-accent hover:opacity-90"
-      >
-        <Sparkles className="h-6 w-6" />
-      </Button>
+      <div className={cn("fixed z-50 flex flex-col items-end gap-2", isMobile ? "bottom-20 right-4" : "bottom-6 right-6")}>
+        {/* First-visit tooltip — disappears after first open */}
+        {typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
+          <div className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
+            Ask anything about markets, patterns & trade setups ✨
+          </div>
+        )}
+        <Button
+          onClick={() => {
+            try { sessionStorage.setItem('copilot_opened', '1'); } catch {}
+            onToggle?.();
+          }}
+          className={cn(
+            "rounded-full shadow-xl transition-all group",
+            "bg-gradient-to-r from-primary to-accent hover:opacity-90",
+            isMobile ? "h-14 px-5 gap-2 text-sm" : "h-12 px-5 gap-2 text-sm"
+          )}
+          aria-label="Open AI Trading Copilot"
+        >
+          <span className="relative flex h-3 w-3 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90" />
+          </span>
+          <Sparkles className="h-4 w-4 shrink-0" />
+          <span className="font-semibold whitespace-nowrap">Ask AI</span>
+        </Button>
+      </div>
     );
   }
 
