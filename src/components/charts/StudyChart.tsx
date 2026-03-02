@@ -814,6 +814,8 @@ const StudyChart = memo(({
 
     // Sync time scales from MAIN chart only using logical range.
     // This preserves right-side whitespace and prevents snap-back to the latest bar.
+    // Also re-enable autoScale on every horizontal scroll so the Y-axis always
+    // adjusts to center the visible bars' price range smoothly.
     const linkedCharts = [rsiChartRef.current, macdChartRef.current].filter(Boolean) as IChartApi[];
     chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
       if (syncingRangeRef.current || !logicalRange) return;
@@ -821,6 +823,12 @@ const StudyChart = memo(({
 
       const timeRange = chart.timeScale().getVisibleRange();
       if (timeRange) persistedVisibleRangeRef.current = timeRange;
+
+      // Re-enable autoScale so the price axis dynamically adjusts to visible bars
+      // (it gets disabled when the user manually drags the price axis)
+      try {
+        chart.priceScale('right').applyOptions({ autoScale: true });
+      } catch { /* ignore */ }
 
       syncingRangeRef.current = true;
       linkedCharts.forEach((dst) => {
