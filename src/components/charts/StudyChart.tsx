@@ -265,6 +265,14 @@ const StudyChart = memo(({
     });
   };
 
+  const handlePatternToggle = useCallback((key: keyof PatternOverlayToggles) => {
+    setPatternToggles((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      savePatternOverlayToggles(updated);
+      return updated;
+    });
+  }, []);
+
   // Reset chart to auto-scale and fit content
   const handleResetChart = useCallback(() => {
     if (chartRef.current) {
