@@ -894,9 +894,6 @@ const StudyChart = memo(({
       chart.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
     } else if (persistedVisibleRangeRef.current) {
       chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
-      const fromBar = safeChartData[safeChartData.length - 80];
-      const toBar = safeChartData[safeChartData.length - 1];
-      chart.timeScale().setVisibleRange({ from: fromBar.time, to: toBar.time });
     } else {
       chart.timeScale().fitContent();
     }
