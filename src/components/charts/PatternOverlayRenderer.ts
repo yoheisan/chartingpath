@@ -201,6 +201,7 @@ export function generatePatternMarkers(
   );
 
   for (const p of patterns) {
+    if (!p.detectedAt) continue;
     const dateOnly = p.detectedAt.split('T')[0];
     
     // Find closest chart bar to the pattern's detection date

@@ -441,7 +441,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
       direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
-      detectedAt: p.isActive ? p.first_detected_at : p.detected_at,
+      detectedAt: p.first_detected_at || p.detected_at,
       entryPrice: p.entry_price,
       stopLossPrice: p.stop_loss_price,
       takeProfitPrice: p.take_profit_price,
