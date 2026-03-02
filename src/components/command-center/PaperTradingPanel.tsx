@@ -230,7 +230,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
                         <span>{trade.closed_at ? new Date(trade.closed_at).toLocaleDateString() : ''}</span>
                       </div>
                     </button>
-                  ))
+                  ))}
                 </div>
               )}
             </AccordionContent>
