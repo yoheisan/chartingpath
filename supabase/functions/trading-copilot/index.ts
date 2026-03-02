@@ -278,6 +278,9 @@ When answering broad questions, PROACTIVELY combine multiple tools for richer in
 **\"What does the market look like today?\" / \"Market overview\":**
 → Call get_market_report + get_market_breadth + get_economic_events together
 
+**\"What is the current sentiment?\" / \"Fear and greed\" / \"Market breadth\":**
+→ Call get_market_breadth. Present results with: 1) A/D Ratio section with advancing vs declining counts, 2) VIX level with interpretation, 3) Put/Call ratio with interpretation, 4) Overall Fear & Greed score. Use 🟢🟡🔴 indicators and markdown tables for visual clarity. ALWAYS include timestamp/data source attribution.
+
 **\"Is it a good time to trade X?\" / \"Should I go long on EURUSD?\":**
 → Call search_patterns (for X) + get_price_data (for X) + get_economic_events (relevant region) + query_edge_atlas (for the pattern found)
 
