@@ -34,12 +34,22 @@ interface FeedbackItem {
 export function CopilotFeedbackDashboard() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'gaps' | 'high-priority'>('gaps');
+  const [filter, setFilter] = useState<'all' | 'gaps' | 'high-priority' | 'resolved'>('gaps');
+  const [resolvedCount, setResolvedCount] = useState(0);
   const [sortBy, setSortBy] = useState<'recent' | 'priority' | 'quality'>('recent');
 
   useEffect(() => {
     loadFeedback();
+    loadResolvedCount();
   }, [filter, sortBy]);
+
+  const loadResolvedCount = async () => {
+    const { count } = await supabase
+      .from('copilot_feedback')
+      .select('*', { count: 'exact', head: true })
+      .eq('resolved', true);
+    setResolvedCount(count || 0);
+  };
 
   const loadFeedback = async () => {
     setLoading(true);
@@ -62,6 +72,8 @@ export function CopilotFeedbackDashboard() {
         query = query.eq('content_gap_identified', true).eq('resolved', false);
       } else if (filter === 'high-priority') {
         query = query.gte('priority_score', 60).eq('resolved', false);
+      } else if (filter === 'resolved') {
+        query = query.eq('resolved', true);
       }
 
       const { data, error } = await query;
@@ -75,16 +87,19 @@ export function CopilotFeedbackDashboard() {
     }
   };
 
-  const markResolved = async (id: string) => {
+  const toggleResolved = async (id: string, currentlyResolved: boolean) => {
     const { error } = await supabase
       .from('copilot_feedback')
-      .update({ resolved: true })
+      .update({ resolved: !currentlyResolved })
       .eq('id', id);
 
     if (!error) {
       setFeedback(prev => prev.filter(f => f.id !== id));
+      setResolvedCount(prev => currentlyResolved ? prev - 1 : prev + 1);
     }
   };
+
+  const markResolved = async (id: string) => toggleResolved(id, false);
 
   const getPriorityColor = (score: number) => {
     if (score >= 80) return 'bg-destructive text-destructive-foreground';
@@ -166,8 +181,11 @@ export function CopilotFeedbackDashboard() {
             </TabsTrigger>
             <TabsTrigger value="high-priority">High Priority</TabsTrigger>
             <TabsTrigger value="all">All Feedback</TabsTrigger>
+            <TabsTrigger value="resolved" className="gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Resolved ({resolvedCount})
+            </TabsTrigger>
           </TabsList>
-
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
@@ -244,11 +262,11 @@ export function CopilotFeedbackDashboard() {
                         </span>
                         <Button 
                           size="sm" 
-                          variant="outline"
-                          onClick={() => markResolved(item.id)}
+                          variant={item.resolved ? "secondary" : "outline"}
+                          onClick={() => toggleResolved(item.id, item.resolved)}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Mark Resolved
+                          {item.resolved ? 'Reopen' : 'Mark Resolved'}
                         </Button>
                       </div>
                     </CardContent>
