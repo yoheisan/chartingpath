@@ -14,6 +14,32 @@ function getBearerToken(): string {
   return token;
 }
 
+// ── Resolve username to numeric user ID ────────────────────────────────
+async function resolveUsernameToId(username: string): Promise<{ id: string; name: string } | null> {
+  const bearerToken = getBearerToken();
+  const cleanUsername = username.replace(/^@/, "");
+  const url = `https://api.x.com/2/users/by/username/${cleanUsername}?user.fields=public_metrics`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${bearerToken}` },
+  });
+
+  if (res.status === 429) {
+    const resetAt = res.headers.get("x-rate-limit-reset");
+    throw new Error(`rate_limited:${resetAt || ""}`);
+  }
+
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error(`[discover-x] Failed to resolve @${cleanUsername}: ${res.status} ${txt}`);
+    return null;
+  }
+
+  const body = await res.json();
+  if (!body.data) return null;
+  return { id: body.data.id, name: body.data.name };
+}
+
 // ── Fetch following list for a user ────────────────────────────────────
 async function fetchFollowing(
   userId: string,
@@ -131,7 +157,35 @@ serve(async (req) => {
         );
       }
 
-      console.log(`[discover-x] Crawling seed: ${seed.seed_user_id} (@${seed.seed_username || "?"})`);
+      let seedUserId = seed.seed_user_id;
+
+      // If seed_user_id looks like a username (not numeric), resolve it
+      if (!/^\d+$/.test(seedUserId)) {
+        console.log(`[discover-x] Resolving username: ${seedUserId}`);
+        const resolved = await resolveUsernameToId(seedUserId);
+        if (!resolved) {
+          await supabase
+            .from("x_discovery_seeds")
+            .update({ status: "failed", crawled_at: new Date().toISOString() })
+            .eq("id", seed.id);
+          return new Response(
+            JSON.stringify({ error: `Could not resolve username: ${seedUserId}` }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // Update the seed with the real numeric ID
+        seedUserId = resolved.id;
+        await supabase
+          .from("x_discovery_seeds")
+          .update({
+            seed_user_id: resolved.id,
+            seed_username: seed.seed_username || seedUserId.replace(/^@/, ""),
+          })
+          .eq("id", seed.id);
+        console.log(`[discover-x] Resolved to ID: ${resolved.id} (${resolved.name})`);
+      }
+
+      console.log(`[discover-x] Crawling seed: ${seedUserId} (@${seed.seed_username || "?"})`);
 
       // Mark as crawling
       await supabase
@@ -140,7 +194,7 @@ serve(async (req) => {
         .eq("id", seed.id);
 
       try {
-        const result = await fetchFollowing(seed.seed_user_id, seed.pagination_token || undefined);
+        const result = await fetchFollowing(seedUserId, seed.pagination_token || undefined);
         const users = result.users;
 
         console.log(`[discover-x] Found ${users.length} following for seed ${seed.seed_user_id}`);
