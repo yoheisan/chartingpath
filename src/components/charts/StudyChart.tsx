@@ -185,6 +185,8 @@ interface StudyChartProps {
   chartMarkers?: ChartMarker[];
   /** Formation overlays (zigzag, trendlines) to render on the chart */
   formationOverlays?: FormationOverlayData[];
+  /** Historical pattern occurrences to render as overlays with toggleable layers */
+  historicalPatterns?: HistoricalPatternOverlay[];
 }
 
 /**
