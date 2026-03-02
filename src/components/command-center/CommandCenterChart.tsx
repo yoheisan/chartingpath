@@ -309,29 +309,32 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     const fetchAutoPatterns = async () => {
       const upperSymbol = symbol.toUpperCase();
       try {
-        // Fetch active live patterns
+        // Fetch recent live patterns (active + expired within last 90 days)
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
         const { data: liveData } = await supabase
           .from('live_pattern_detections')
-          .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars')
+          .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
           .eq('instrument', upperSymbol)
           .eq('timeframe', timeframe)
-          .eq('status', 'active')
+          .gte('first_detected_at', ninetyDaysAgo.toISOString())
+          .order('first_detected_at', { ascending: false })
           .limit(20);
 
-        // Fetch recent historical (last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Fetch historical patterns (last 365 days for full chart coverage)
+        const oneYearAgo = new Date();
+        oneYearAgo.setDate(oneYearAgo.getDate() - 365);
         const { data: historicalData } = await supabase
           .from('historical_pattern_occurrences')
           .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
           .eq('symbol', upperSymbol)
           .eq('timeframe', timeframe)
-          .gte('detected_at', thirtyDaysAgo.toISOString())
+          .gte('detected_at', oneYearAgo.toISOString())
           .order('detected_at', { ascending: false })
           .limit(50);
 
         setAutoPatterns([
-          ...(liveData || []).map(p => ({ ...p, isActive: true })),
+          ...(liveData || []).map(p => ({ ...p, isActive: p.status === 'active' })),
           ...(historicalData || []).map(p => ({ ...p, isActive: false })),
         ]);
       } catch (err) {
