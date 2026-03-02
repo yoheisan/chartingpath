@@ -181,7 +181,10 @@ export function CopilotFeedbackDashboard() {
             </TabsTrigger>
             <TabsTrigger value="high-priority">High Priority</TabsTrigger>
             <TabsTrigger value="all">All Feedback</TabsTrigger>
-          </TabsList>
+            <TabsTrigger value="resolved" className="gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Resolved ({resolvedCount})
+            </TabsTrigger>
 
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
@@ -259,11 +262,11 @@ export function CopilotFeedbackDashboard() {
                         </span>
                         <Button 
                           size="sm" 
-                          variant="outline"
-                          onClick={() => markResolved(item.id)}
+                          variant={item.resolved ? "secondary" : "outline"}
+                          onClick={() => toggleResolved(item.id, item.resolved)}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Mark Resolved
+                          {item.resolved ? 'Reopen' : 'Mark Resolved'}
                         </Button>
                       </div>
                     </CardContent>
