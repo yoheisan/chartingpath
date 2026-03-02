@@ -1937,60 +1937,136 @@ ${snapshot.top_queried_symbols?.length > 0 ? `Trending symbols (user queries): $
 }
 
 // ============================================
-// CONTEXT LAYER 3: User Behavioral Context
+// CONTEXT LAYER 3: User Behavioral + Portfolio Context
 // ============================================
 
 async function fetchUserBehavior(supabase: any, userId: string | null): Promise<string> {
   if (!userId) return '';
 
   try {
-    const { data, error } = await supabase
-      .from('copilot_feedback')
-      .select('question, topics, intent_category')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(5);
+    // Fetch behavior, watchlist, and portfolio in parallel
+    const [feedbackResult, watchlistResult, portfolioResult, alertsResult] = await Promise.all([
+      supabase
+        .from('copilot_feedback')
+        .select('question, topics, intent_category')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('user_watchlist')
+        .select('symbol')
+        .eq('user_id', userId)
+        .limit(20),
+      supabase
+        .from('paper_portfolios')
+        .select('initial_balance, current_balance, total_pnl')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      supabase
+        .from('paper_trades')
+        .select('symbol, trade_type, entry_price, quantity, status, stop_loss, take_profit')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .limit(10),
+    ]);
 
-    if (error || !data?.length) return '';
+    const sections: string[] = [];
 
-    // Extract preferred symbols and topics
-    const symbolFreq: Record<string, number> = {};
-    const intentFreq: Record<string, number> = {};
+    // Behavioral patterns
+    const data = feedbackResult.data;
+    if (data?.length) {
+      const symbolFreq: Record<string, number> = {};
+      const intentFreq: Record<string, number> = {};
 
-    for (const row of data) {
-      if (Array.isArray(row.topics)) {
-        for (const topic of row.topics) {
-          const upper = String(topic).toUpperCase();
-          if (/^[A-Z]{2,6}(USD|USDT|BTC|ETH)?$/.test(upper)) {
-            symbolFreq[upper] = (symbolFreq[upper] || 0) + 1;
+      for (const row of data) {
+        if (Array.isArray(row.topics)) {
+          for (const topic of row.topics) {
+            const upper = String(topic).toUpperCase();
+            if (/^[A-Z]{2,6}(USD|USDT|BTC|ETH)?$/.test(upper)) {
+              symbolFreq[upper] = (symbolFreq[upper] || 0) + 1;
+            }
           }
         }
+        if (row.intent_category) {
+          intentFreq[row.intent_category] = (intentFreq[row.intent_category] || 0) + 1;
+        }
       }
-      if (row.intent_category) {
-        intentFreq[row.intent_category] = (intentFreq[row.intent_category] || 0) + 1;
+
+      const topSymbols = Object.entries(symbolFreq).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([s]) => s);
+      const topIntents = Object.entries(intentFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([i]) => i);
+
+      if (topSymbols.length > 0 || topIntents.length > 0) {
+        sections.push(`**Preferred instruments:** ${topSymbols.join(', ') || 'N/A'}`);
+        sections.push(`**Common query types:** ${topIntents.join(', ') || 'N/A'}`);
       }
     }
 
-    const topSymbols = Object.entries(symbolFreq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([s]) => s);
+    // Watchlist context
+    const watchlist = watchlistResult.data;
+    if (watchlist?.length) {
+      const symbols = watchlist.map((w: any) => w.symbol);
+      sections.push(`**Watchlist (${symbols.length} symbols):** ${symbols.join(', ')}`);
 
-    const topIntents = Object.entries(intentFreq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([i]) => i);
+      // Pre-fetch active patterns on watchlist symbols
+      const { data: watchlistPatterns } = await supabase
+        .from('live_pattern_detections')
+        .select('instrument, pattern_name, direction, quality_score, risk_reward_ratio, timeframe')
+        .eq('status', 'active')
+        .in('instrument', symbols)
+        .limit(10);
 
-    if (topSymbols.length === 0 && topIntents.length === 0) return '';
+      if (watchlistPatterns?.length) {
+        const patternsText = watchlistPatterns.map((p: any) =>
+          `  • ${p.instrument}: ${p.pattern_name} (${p.direction}, ${p.quality_score}, R:R ${p.risk_reward_ratio?.toFixed(1) || '?'})`
+        ).join('\n');
+        sections.push(`**Active patterns on watchlist:**\n${patternsText}`);
+      }
+    }
 
-    const recentQuestions = data.slice(0, 3).map((d: any) => `"${d.question?.substring(0, 80)}"`).join(', ');
+    // Portfolio context
+    const portfolio = portfolioResult.data;
+    const openTrades = alertsResult.data;
+    if (portfolio || openTrades?.length) {
+      if (portfolio) {
+        const returnPct = portfolio.initial_balance > 0
+          ? ((portfolio.current_balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)
+          : '0';
+        sections.push(`**Paper Portfolio:** $${portfolio.current_balance?.toFixed(0) || 0} (${Number(returnPct) >= 0 ? '+' : ''}${returnPct}% P&L)`);
+      }
+      if (openTrades?.length) {
+        const tradesText = openTrades.map((t: any) =>
+          `  • ${t.symbol} ${t.trade_type} @ $${t.entry_price} (SL: $${t.stop_loss || '?'}, TP: $${t.take_profit || '?'})`
+        ).join('\n');
+        sections.push(`**Open positions (${openTrades.length}):**\n${tradesText}`);
 
-    return `## User Context (Personalization)
-${topSymbols.length > 0 ? `Preferred instruments: ${topSymbols.join(', ')}` : ''}
-${topIntents.length > 0 ? `Common query types: ${topIntents.join(', ')}` : ''}
-Recent questions: ${recentQuestions}
+        // Detect concentration risk
+        const symbolCounts: Record<string, number> = {};
+        const directionCounts = { long: 0, short: 0 };
+        for (const t of openTrades) {
+          symbolCounts[t.symbol] = (symbolCounts[t.symbol] || 0) + 1;
+          if (t.trade_type === 'long') directionCounts.long++;
+          else directionCounts.short++;
+        }
+        const duplicates = Object.entries(symbolCounts).filter(([, c]) => c > 1);
+        if (duplicates.length > 0) {
+          sections.push(`⚠️ **Concentration risk:** Multiple positions on ${duplicates.map(([s, c]) => `${s}(${c}x)`).join(', ')}`);
+        }
+        if (directionCounts.long >= 3 && directionCounts.short === 0) {
+          sections.push(`⚠️ **Directional risk:** All ${directionCounts.long} positions are LONG. No hedging.`);
+        }
+      }
+    }
 
-When this user asks broad questions, prioritize their preferred instruments and query patterns.`;
+    if (sections.length === 0) return '';
+
+    return `## User Context (Personalization & Portfolio Awareness)
+${sections.join('\n')}
+
+**Portfolio-Aware Rules:**
+- When discussing a symbol the user holds, ALWAYS mention their existing exposure
+- Warn about adding to concentrated positions
+- Factor open P&L into risk recommendations (if deep in loss, suggest caution; if profitable, discuss trailing stops)
+- When recommending new trades, prioritize symbols NOT already in portfolio for diversification`;
   } catch (err) {
     console.error('[UserBehavior] Failed to fetch:', err);
     return '';
