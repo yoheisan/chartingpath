@@ -1430,8 +1430,16 @@ const StudyChart = memo(({
       </TooltipProvider>
       )}
       {!hideAnalysisToolbar && (
-      <div className="absolute top-2 left-2 z-20">
-        <Popover>
+      <div className="absolute top-2 left-2 z-20 flex items-center gap-1">
+        {/* Pattern Overlay Toggles */}
+        {historicalPatterns && historicalPatterns.length > 0 && (
+          <PatternOverlayTogglePanel
+            toggles={patternToggles}
+            onToggle={handlePatternToggle}
+            patternCount={historicalPatterns.length}
+          />
+        )}
+        {/* Indicator Toggles */}
           <PopoverTrigger asChild>
             <Button
               variant="outline"
