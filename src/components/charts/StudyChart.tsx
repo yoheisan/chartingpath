@@ -797,9 +797,13 @@ const StudyChart = memo(({
     patternLinesCleanupsRef.current = [];
 
     if (historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns) {
-      // Render price lines (Entry/SL/TP) for each pattern
-      for (const pattern of historicalPatterns) {
-        const cleanup = renderPatternPriceLines(candleSeries, pattern, patternToggles);
+      // Render price lines (Entry/SL/TP) for the CURRENT (most recent) pattern ONLY
+      const sortedPatterns = [...historicalPatterns].sort(
+        (a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime()
+      );
+      const currentPattern = sortedPatterns[0];
+      if (currentPattern) {
+        const cleanup = renderPatternPriceLines(candleSeries, currentPattern, patternToggles);
         patternLinesCleanupsRef.current.push(cleanup);
       }
 
@@ -844,8 +848,8 @@ const StudyChart = memo(({
         }
       }
 
-      // Draw trade zones on canvas (TP/SL shading)
-      if (patternToggles.showTradeZones) {
+      // Draw trade zones on canvas (TP/SL shading) — current pattern only
+      if (patternToggles.showTradeZones && currentPattern) {
         const drawHistoricalPatternZones = () => {
           const canvas = canvasOverlayRef.current;
           if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
@@ -865,7 +869,7 @@ const StudyChart = memo(({
 
           drawPatternZones(
             ctx, chartRef.current, candleSeriesRef.current,
-            historicalPatterns, patternToggles,
+            [currentPattern], patternToggles,
             rect.width, rect.height
           );
         };
