@@ -238,11 +238,11 @@ export function CopilotFeedbackDashboard() {
                     </CardHeader>
                     <CardContent>
                       {item.content_gap_description && (
-                        <div className="mb-3 p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
+                        <div className="mb-3 p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800 overflow-hidden">
                           <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
                             📋 Content Gap Identified:
                           </p>
-                          <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
+                          <p className="text-sm text-orange-700 dark:text-orange-300 mt-1 break-words whitespace-normal">
                             {item.content_gap_description}
                           </p>
                         </div>
