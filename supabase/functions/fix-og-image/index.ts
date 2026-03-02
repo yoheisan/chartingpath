@@ -25,10 +25,6 @@ serve(async () => {
       return new Response(JSON.stringify({ error: 'Could not fetch image from any URL' }), { status: 500 });
     }
     
-    if (!imgRes.ok) {
-      return new Response(JSON.stringify({ error: `Failed to fetch image: ${imgRes.status}` }), { status: 500 });
-    }
-
     const imgBlob = await imgRes.blob();
     console.log(`Fetched image: ${imgBlob.size} bytes, type: ${imgBlob.type}`);
 
