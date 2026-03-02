@@ -263,3 +263,6 @@ verify_jwt = false
 
 [functions.fire-signal-webhook]
 verify_jwt = false
+
+[functions.get-instrument-pattern-stats]
+verify_jwt = false

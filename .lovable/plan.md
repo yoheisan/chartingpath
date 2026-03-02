@@ -1,99 +1,97 @@
 
 
-# Long-Tail Asset/Pattern SEO Pages
+# Multi-Page Funnel Analysis and Improvement Plan
 
-## Goal
-Create auto-generated, SEO-optimized landing pages for every instrument+pattern combination, targeting searches like "Bull Flag win rate on AAPL" or "Head and Shoulders BTCUSD statistics." This creates a massive moat of ~100K+ indexable pages built from existing `historical_pattern_occurrences` data.
+## Data Summary
 
-## Architecture
+| Page | Views | Avg Time on Page | Key Issue |
+|------|-------|-----------------|-----------|
+| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
+| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
+| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
+| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
+| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
+| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
+| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
 
-```text
-/patterns/:patternId/statistics           (existing -- pattern-level stats)
-/patterns/:patternId/:instrument/statistics  (NEW -- instrument+pattern stats)
-```
+---
 
-Each new page shows:
-- KPI cards (win rate, expectancy, sample size, avg duration) for that specific instrument+pattern combo
-- Timeframe breakdown table (reusing existing UI from PatternStatisticsPage)
-- FAQ JSON-LD (e.g., "What is the Bull Flag win rate on AAPL?")
-- Internal links to the pattern's global stats page, live screener, and Pattern Lab
-- "Related instruments" grid linking to sibling instrument pages for the same pattern
+## Priority 1: Auth Page (75 views, 0 signups)
 
-## Implementation Steps
+**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
 
-### 1. Database: Create a materialized view for fast queries
-A migration to create `instrument_pattern_stats_mv` that pre-aggregates `historical_pattern_occurrences` by `(pattern_id, symbol, timeframe)`. This avoids scanning millions of rows per page load. A DB function refreshes it periodically (can piggyback on existing cron).
+**Improvements**:
+1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
+2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
+3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
+4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
 
-Columns: `pattern_id`, `symbol`, `asset_type`, `timeframe`, `total_trades`, `wins`, `losses`, `win_rate_pct`, `expectancy_r`, `avg_rr`, `avg_bars`, `last_updated`.
+### Files to modify
+- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
+- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
 
-### 2. Edge function: `get-instrument-pattern-stats`
-Accepts `{ pattern_id, instrument }` and returns aggregated stats from the materialized view. Includes a `related_instruments` array (top 8 instruments with the most trades for this pattern).
+---
 
-### 3. New page: `InstrumentPatternStatsPage.tsx`
-- Reuses the `KpiCard` component pattern from `PatternStatisticsPage`
-- Dynamic `PageMeta` with title like "Bull Flag on AAPL -- Win Rate, Expectancy & Stats"
-- `FAQPage` JSON-LD with instrument-specific questions and data-driven answers
-- Canonical URL at `/patterns/bull-flag/AAPL/statistics`
-- Breadcrumb: Home > Edge Atlas > Bull Flag Stats > AAPL
-- "Related Instruments" grid linking to other instrument pages
-- CTA buttons: "View Live Signals" (screener), "Backtest This" (Pattern Lab pre-filled)
+## Priority 2: Screener (101 views, 18s avg dwell)
 
-### 4. Route registration in `App.tsx`
-Add route: `/patterns/:patternId/:instrument/statistics`
+**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
 
-### 5. Sitemap expansion
-Update the `sitemap` edge function to query the materialized view for all instrument+pattern combos with sufficient data (e.g., >= 10 trades) and include them in the XML sitemap.
+**Improvements**:
+1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
+2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
+3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
 
-### 6. Internal linking
-- Add links from the existing `PatternStatisticsPage` breakdown rows to the instrument-specific pages
-- Add links from the pattern auto-linker context where relevant
+### Files to modify
+- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
 
-## Technical Details
+---
 
-### Materialized View SQL
-```sql
-CREATE MATERIALIZED VIEW instrument_pattern_stats_mv AS
-SELECT
-  pattern_id, pattern_name, symbol, asset_type, timeframe,
-  COUNT(*) AS total_trades,
-  COUNT(*) FILTER (WHERE outcome = 'hit_tp') AS wins,
-  COUNT(*) FILTER (WHERE outcome = 'hit_sl') AS losses,
-  ROUND((COUNT(*) FILTER (WHERE outcome='hit_tp'))::numeric / COUNT(*) * 100, 1) AS win_rate_pct,
-  ROUND(AVG(COALESCE(risk_reward_ratio,2))::numeric, 2) AS avg_rr,
-  ROUND(AVG(bars_to_outcome)::numeric, 1) AS avg_bars
-FROM historical_pattern_occurrences
-WHERE outcome IN ('hit_tp','hit_sl') AND bars_to_outcome IS NOT NULL
-GROUP BY pattern_id, pattern_name, symbol, asset_type, timeframe
-HAVING COUNT(*) >= 10;
+## Priority 3: Pattern Lab (71 views, 0 backtests completed)
 
-CREATE UNIQUE INDEX ON instrument_pattern_stats_mv (pattern_id, symbol, timeframe);
-```
+**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
 
-Refresh function called by existing hourly cron:
-```sql
-CREATE OR REPLACE FUNCTION refresh_instrument_pattern_stats()
-RETURNS void AS $$
-BEGIN
-  REFRESH MATERIALIZED VIEW CONCURRENTLY instrument_pattern_stats_mv;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
+**Improvements**:
+1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
+2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
+3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
 
-### Edge Function Response Shape
-```json
-{
-  "success": true,
-  "instrument": "AAPL",
-  "pattern_id": "bull-flag",
-  "pattern_name": "Bull Flag",
-  "breakdowns": [
-    { "timeframe": "1d", "total_trades": 45, "wins": 28, "win_rate_pct": 62.2, "expectancy_r": 0.244, "avg_rr": 2.1, "avg_bars": 8.3 }
-  ],
-  "aggregates": { "total_trades": 120, "win_rate_pct": 58.3, "expectancy_r": 0.166 },
-  "related_instruments": ["MSFT", "GOOGL", "TSLA", "AMZN", "META", "NVDA", "SPY", "QQQ"]
-}
-```
+### Files to modify
+- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
 
-### SEO Impact Estimate
-With ~8,500 instruments x 17 patterns, even filtering to combinations with >= 10 trades should yield thousands of unique, data-rich pages -- each targeting a distinct long-tail keyword that no competitor currently serves.
+---
+
+## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+
+**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+
+**Improvements**:
+1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
+2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+
+### Files to modify
+- Blog/Learn page components (investigate rendering issue first)
+
+---
+
+## Priority 5: Shared Links (8 views, 7 pattern views)
+
+**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+
+**Improvements**:
+1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
+2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+
+### Files to modify
+- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
+- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+
+---
+
+## Implementation Sequence
+
+1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
+2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
+3. **Screener** (first-visit guidance + top setup highlight)
+4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
+5. **Shared links** (add try-it-yourself CTA)
 

@@ -51,6 +51,24 @@ Deno.serve(async (req) => {
       console.error('Error fetching articles:', error);
     }
 
+    // Fetch instrument+pattern combos from the materialized view
+    const { data: instrumentStats, error: mvError } = await supabase
+      .from('instrument_pattern_stats_mv')
+      .select('pattern_id, symbol')
+      .gte('total_trades', 10);
+
+    if (mvError) {
+      console.error('Error fetching instrument pattern stats:', mvError);
+    }
+
+    // Deduplicate instrument+pattern pairs (view may have multiple timeframe rows)
+    const instrumentPairs = new Set<string>();
+    if (instrumentStats) {
+      for (const row of instrumentStats) {
+        instrumentPairs.add(`${row.pattern_id}|${row.symbol}`);
+      }
+    }
+
     const today = new Date().toISOString().split('T')[0];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -68,13 +86,25 @@ Deno.serve(async (req) => {
 `;
     }
 
-    // Pattern statistics pages
+    // Pattern statistics pages (global)
     for (const pid of PATTERN_IDS) {
       xml += `  <url>
     <loc>${BASE_URL}/patterns/${pid}/statistics</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+`;
+    }
+
+    // Instrument+pattern statistics pages (long-tail SEO)
+    for (const pair of instrumentPairs) {
+      const [patternId, symbol] = pair.split('|');
+      xml += `  <url>
+    <loc>${BASE_URL}/patterns/${patternId}/${symbol}/statistics</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
 `;
     }

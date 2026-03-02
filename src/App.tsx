@@ -87,6 +87,7 @@ const TranslationManagement = lazy(() =>
 const Terms = lazy(() => import("./pages/Terms"));
 const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
 const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage"));
+const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
@@ -215,6 +216,7 @@ const App = () => (
           <Route path="/support" element={withSuspense(<SupportPage />)} />
           <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
           <Route path="/patterns/:patternId/statistics" element={withSuspense(<PatternStatisticsPage />)} />
+          <Route path="/patterns/:patternId/:instrument/statistics" element={withSuspense(<InstrumentPatternStatsPage />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={withSuspense(<NotFound />)} />
