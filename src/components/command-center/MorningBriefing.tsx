@@ -195,7 +195,7 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
               }}
               className="shrink-0 flex items-start gap-2 rounded-lg border border-border bg-card/50 hover:bg-accent/50 transition-colors p-2 text-left min-w-[160px] max-w-[200px]"
             >
-              <InstrumentLogo symbol={setup.instrument} size="sm" />
+              <InstrumentLogo instrument={setup.instrument} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold truncate">{setup.instrument}</span>
