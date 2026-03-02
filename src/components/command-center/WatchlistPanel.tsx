@@ -50,7 +50,6 @@ interface WatchlistItem {
   asset_type?: string;
 }
 
-// Default universe for FREE users (sample of popular instruments)
 const DEFAULT_UNIVERSE_SAMPLES = [
   'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'NFLX',
   'BTC-USD', 'ETH-USD', 'EURUSD=X', 'GC=F'
@@ -73,7 +72,6 @@ export function WatchlistPanel({
   const [loading, setLoading] = useState(false);
   const [addingSymbol, setAddingSymbol] = useState(false);
 
-  // Determine if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
     !['free', 'starter'].includes(profile.subscription_plan);
 
@@ -105,12 +103,10 @@ export function WatchlistPanel({
         .eq('status', 'active')
         .order('last_confirmed_at', { ascending: false });
 
-      // For paid users with a watchlist, filter to their symbols
       if (isPaidUser && userWatchlist.length > 0) {
         const watchlistSymbols = userWatchlist.map(w => w.symbol);
         query = query.in('instrument', watchlistSymbols);
       } else {
-        // For free users, show patterns from default universe
         query = query.in('instrument', DEFAULT_UNIVERSE_SAMPLES).limit(20);
       }
 
@@ -187,11 +183,9 @@ export function WatchlistPanel({
     }
   };
 
-  // Display list based on tier
   const displayList = isPaidUser 
     ? userWatchlist 
     : DEFAULT_UNIVERSE_SAMPLES.map(s => ({ symbol: s }));
-
 
   const formatPatternName = (name: string) => {
     return name.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
@@ -206,7 +200,7 @@ export function WatchlistPanel({
             <Eye className="h-4 w-4" />
             {t('commandCenter.watchlist')}
             {isPaidUser && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
+              <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">
                 <Crown className="h-2.5 w-2.5 mr-0.5" />
                 {t('commandCenter.custom')}
               </Badge>
@@ -229,7 +223,7 @@ export function WatchlistPanel({
             }
           />
         ) : (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground p-2 rounded-md bg-muted/50 border border-dashed">
             <Lock className="h-3 w-3" />
             <span>{t('commandCenter.upgradeToAdd')}</span>
           </div>
@@ -247,7 +241,7 @@ export function WatchlistPanel({
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.active')}
             {activePatterns.length > 0 && (
-              <Badge variant="secondary" className="ml-1 text-[9px] px-1 py-0">
+              <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">
                 {activePatterns.length}
               </Badge>
             )}
@@ -260,7 +254,7 @@ export function WatchlistPanel({
             <div className="p-1">
               {!isPaidUser && (
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Lock className="h-3 w-3" />
                     <span>{t('commandCenter.upgradeToMonitor')}</span>
                   </div>
@@ -282,7 +276,7 @@ export function WatchlistPanel({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{item.symbol}</div>
                       {'name' in item && item.name && (
-                        <div className="text-[10px] text-muted-foreground truncate">{String(item.name)}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{String(item.name)}</div>
                       )}
                     </div>
                   </button>
@@ -315,7 +309,7 @@ export function WatchlistPanel({
             <div className="p-1">
               {!isPaidUser && (
                 <div className="mx-1 mb-2 p-2 rounded-md bg-muted/50 border border-dashed">
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Activity className="h-3 w-3" />
                     <span>{t('commandCenter.showingDefault')}</span>
                   </div>
@@ -347,7 +341,7 @@ export function WatchlistPanel({
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[9px] px-1 py-0',
+                          'text-[10px] px-1 py-0',
                           pattern.direction === 'bullish'
                             ? 'border-emerald-500/50 text-emerald-600'
                             : 'border-red-500/50 text-red-600'
@@ -361,16 +355,16 @@ export function WatchlistPanel({
                         {pattern.direction}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">
                         {formatPatternName(pattern.pattern_name)}
                       </span>
-                      <Badge variant="secondary" className="text-[9px] px-1 py-0">
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">
                         {pattern.timeframe}
                       </Badge>
                     </div>
                     {pattern.current_price && (
-                      <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center justify-between text-[11px]">
                         <span>${pattern.current_price.toFixed(2)}</span>
                         {pattern.change_percent !== null && (
                           <span

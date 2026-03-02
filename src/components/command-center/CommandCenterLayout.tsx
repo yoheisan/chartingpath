@@ -583,7 +583,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
             {/* Minimal study panel toggle — TradingView-style thin divider */}
             <button
               onClick={() => setStudyPanelCollapsed(prev => !prev)}
-              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/60 hover:bg-muted/30 transition-colors text-[11px] font-medium text-muted-foreground/70 hover:text-muted-foreground shrink-0"
+              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/60 hover:bg-muted/30 transition-colors text-xs font-medium text-muted-foreground/70 hover:text-muted-foreground shrink-0"
             >
               {studyPanelCollapsed ? (
                 <>
@@ -688,13 +688,13 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     updateSettings({ watchlistTab: tab });
                   }} className="h-full flex flex-col">
                     <TabsList className="w-full justify-start rounded-none border-b border-border/60 bg-transparent h-8 px-1.5">
-                      <TabsTrigger value="watchlist" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="watchlist" className="text-xs font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.watchlist')}
                       </TabsTrigger>
-                      <TabsTrigger value="alerts" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="alerts" className="text-xs font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="paper" className="text-[11px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="paper" className="text-xs font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Paper
                       </TabsTrigger>
                     </TabsList>

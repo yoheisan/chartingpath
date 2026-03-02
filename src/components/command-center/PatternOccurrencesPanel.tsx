@@ -201,17 +201,17 @@ function PatternRow({
         {p.quality_score && (
           <GradeBadge grade={p.quality_score} size="sm" showTooltip={false} />
         )}
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+        <Badge variant="outline" className="text-[11px] px-1.5 py-0">
           {p.risk_reward_ratio.toFixed(1)}R
         </Badge>
         {p.isActive ? (
-          <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">
+          <Badge className="bg-primary/20 text-primary text-[11px] px-1.5 py-0">
             Active
           </Badge>
         ) : p.outcome ? (
           <Badge
             className={cn(
-              'text-[10px] px-1.5 py-0',
+              'text-[11px] px-1.5 py-0',
               (p.outcome === 'win' || p.outcome === 'hit_tp')
                 ? 'bg-emerald-500/20 text-emerald-600'
                 : (p.outcome === 'loss' || p.outcome === 'hit_sl')
@@ -384,7 +384,7 @@ export function PatternOccurrencesPanel({
           <div className="p-2 space-y-1">
             {activePatterns.length > 0 && (
               <div className="px-1 py-1">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   {t('commandCenter.historical', { count: historicalPatterns.length })}
                 </span>
               </div>
