@@ -1003,8 +1003,7 @@ export const TranslationManagement = () => {
                               )}
                             </div>
                           </div>
-                          </div>
-                          {missing > 0 && (
+                          {(missing > 0 || stale > 0) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1013,7 +1012,7 @@ export const TranslationManagement = () => {
                               disabled={articleSyncing}
                             >
                               <Zap className="h-3 w-3 mr-1" />
-                              Translate {missing} articles
+                              Translate {missing + stale} articles
                             </Button>
                           )}
                         </Card>
