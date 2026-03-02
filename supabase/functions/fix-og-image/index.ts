@@ -8,8 +8,22 @@ serve(async () => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Fetch the PNG from the public directory of the deployed site
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://chartingpath.lovable.app';
-    const imgRes = await fetch(`${siteUrl}/images/default-og.png`);
+    // Try multiple URLs
+    const urls = [
+      'https://chartingpath.lovable.app/images/default-og.png',
+      'https://chartingpath.com/images/default-og.png',
+      'https://id-preview--c36c7d47-0b2b-4bf9-835b-9393a929a85f.lovable.app/images/default-og.png',
+    ];
+    let imgRes: Response | null = null;
+    for (const u of urls) {
+      console.log(`Trying: ${u}`);
+      const r = await fetch(u);
+      if (r.ok) { imgRes = r; console.log(`Success: ${u}`); break; }
+      console.log(`Failed: ${u} -> ${r.status}`);
+    }
+    if (!imgRes) {
+      return new Response(JSON.stringify({ error: 'Could not fetch image from any URL' }), { status: 500 });
+    }
     
     if (!imgRes.ok) {
       return new Response(JSON.stringify({ error: `Failed to fetch image: ${imgRes.status}` }), { status: 500 });
