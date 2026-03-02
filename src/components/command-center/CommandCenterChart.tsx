@@ -357,7 +357,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
       const color = p.isActive ? '#f97316' : '#6b7280';
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
-      const detectedAt = p.isActive ? p.first_detected_at : p.detected_at;
+      const detectedAt = p.first_detected_at || p.detected_at;
       const isLong = p.direction === 'long' || p.direction === 'bullish';
       
       // Add pattern name marker at detection time
@@ -441,7 +441,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
       direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
-      detectedAt: p.isActive ? p.first_detected_at : p.detected_at,
+      detectedAt: p.first_detected_at || p.detected_at,
       entryPrice: p.entry_price,
       stopLossPrice: p.stop_loss_price,
       takeProfitPrice: p.take_profit_price,
