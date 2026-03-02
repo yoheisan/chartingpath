@@ -136,55 +136,48 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border-b border-border w-full"
+        className="flex items-center gap-2 px-3 h-6 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors border-b border-border/30 w-full shrink-0"
       >
-        <Sparkles className="h-3 w-3 text-amber-500" />
-        <span>{t('dashboard.showBriefing', 'Show morning briefing')}</span>
-        <Badge variant="secondary" className="text-[10px] ml-auto">{setups.length}</Badge>
+        <Sparkles className="h-2.5 w-2.5" />
+        <span>{t('dashboard.showBriefing', 'Show briefing')}</span>
+        <span className="text-[10px] ml-auto tabular-nums">{setups.length}</span>
       </button>
     );
   }
 
   return (
-    <div className="border-b border-border bg-gradient-to-r from-amber-500/5 via-transparent to-primary/5">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Sunrise className="h-4 w-4 text-amber-500" />
-          <span className="text-xs font-semibold">{t('dashboard.morningBriefing', "Today's Top Setups")}</span>
-          <Badge variant="secondary" className="text-[10px]">
-            {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-          </Badge>
+    <div className="border-b border-border/30 shrink-0">
+      {/* Header — minimal */}
+      <div className="flex items-center justify-between px-3 h-7">
+        <div className="flex items-center gap-1.5">
+          <Sunrise className="h-3 w-3 text-amber-500/70" />
+          <span className="text-[11px] font-medium text-muted-foreground">{t('dashboard.morningBriefing', "Today's Setups")}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
+        <div className="flex items-center gap-0.5">
+          <button
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/30 transition-colors text-muted-foreground/50"
             onClick={() => fetchBriefing(true)}
             disabled={loading}
           >
-            <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
+            <RefreshCw className={cn("h-2.5 w-2.5", loading && "animate-spin")} />
+          </button>
+          <button
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/30 transition-colors text-muted-foreground/50"
             onClick={() => setCollapsed(true)}
           >
-            <ChevronRight className="h-3 w-3" />
-          </Button>
+            <ChevronRight className="h-2.5 w-2.5" />
+          </button>
         </div>
       </div>
 
-      {/* Setups */}
-      <div className="flex gap-2 px-3 pb-2 overflow-x-auto scrollbar-thin">
+      {/* Setups — compact horizontal strip */}
+      <div className="flex gap-1.5 px-3 pb-1.5 overflow-x-auto scrollbar-thin">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-40 shrink-0 rounded-lg" />
+            <Skeleton key={i} className="h-10 w-32 shrink-0 rounded" />
           ))
         ) : setups.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-2">{t('dashboard.noSetups', 'No high-quality setups detected today')}</p>
+          <p className="text-[11px] text-muted-foreground/60 py-1">{t('dashboard.noSetups', 'No setups today')}</p>
         ) : (
           setups.map((setup) => (
             <button
@@ -193,40 +186,26 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
                 onSymbolSelect(setup.instrument);
                 onPatternClick?.(setup);
               }}
-              className="shrink-0 flex items-start gap-2 rounded-lg border border-border bg-card/50 hover:bg-accent/50 transition-colors p-2 text-left min-w-[160px] max-w-[200px]"
+              className="shrink-0 flex items-center gap-2 rounded border border-border/30 hover:border-border/60 hover:bg-muted/20 transition-colors px-2 py-1 text-left"
             >
-              <InstrumentLogo instrument={setup.instrument} size="sm" />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-xs font-semibold truncate">{setup.instrument}</span>
+                  <span className="text-[11px] font-medium">{setup.instrument}</span>
                   {setup.direction === 'long' ? (
-                    <TrendingUp className="h-3 w-3 text-green-500 shrink-0" />
+                    <TrendingUp className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
                   ) : (
-                    <TrendingDown className="h-3 w-3 text-red-500 shrink-0" />
+                    <TrendingDown className="h-2.5 w-2.5 text-red-500 shrink-0" />
                   )}
-                </div>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {setup.pattern_name.replace(/-/g, ' ')}
-                </p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[9px] px-1 py-0 h-4",
-                      setup.quality_score === 'A' && "border-green-500/50 text-green-600",
-                      setup.quality_score === 'B' && "border-blue-500/50 text-blue-600",
-                    )}
-                  >
+                  <span className={cn(
+                    "text-[9px] font-mono",
+                    setup.quality_score === 'A' ? "text-emerald-500" : "text-blue-500",
+                  )}>
                     {setup.quality_score}
-                  </Badge>
-                  <span className="text-[9px] text-muted-foreground">{setup.timeframe}</span>
-                  {setup.trend_alignment === 'with_trend' && (
-                    <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">↑ Trend</Badge>
-                  )}
-                  <span className="text-[9px] font-mono text-muted-foreground ml-auto">
-                    {setup.confidence}/100
                   </span>
                 </div>
+                <p className="text-[9px] text-muted-foreground/60 truncate max-w-[120px]">
+                  {setup.pattern_name.replace(/-/g, ' ')} · {setup.timeframe}
+                </p>
               </div>
             </button>
           ))
