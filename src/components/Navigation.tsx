@@ -24,7 +24,8 @@ import {
   FileCode,
   Bell,
   Star,
-  Bot
+  Bot,
+  Trophy
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useTranslation } from "react-i18next";
@@ -111,6 +112,7 @@ const Navigation = () => {
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.learning', 'Learning')}</p>
         <div className="flex flex-col gap-2 pl-2">
+          <Link to="/edge-atlas" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.edgeAtlas', 'Edge Atlas')}</Link>
           <Link to="/chart-patterns/library" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternLibrary', 'Pattern Library')}</Link>
           <Link to="/learn" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.blogArticles', 'Blog & Articles')}</Link>
           <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternQuiz', 'Pattern Quizzes')}</Link>
