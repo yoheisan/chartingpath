@@ -812,15 +812,19 @@ const StudyChart = memo(({
       if (patternMarkerData.length > 0) {
         // Merge with existing external markers
         const allMarkers = [
-          ...(chartMarkers || []).map(m => ({
-            time: m.time.split('T')[0] as Time,
+          ...(chartMarkers || []).filter(m => m.time).map(m => ({
+            time: (typeof m.time === 'string' ? m.time.split('T')[0] : String(m.time)) as Time,
             position: m.position,
             color: m.color,
             shape: m.shape as SeriesMarkerShape,
             text: m.text,
           })),
           ...patternMarkerData,
-        ].sort((a, b) => (a.time as string).localeCompare(b.time as string));
+        ].sort((a, b) => {
+          const ta = typeof a.time === 'string' ? a.time : String(a.time);
+          const tb = typeof b.time === 'string' ? b.time : String(b.time);
+          return ta.localeCompare(tb);
+        });
 
         try {
           createSeriesMarkers(candleSeries, allMarkers);
