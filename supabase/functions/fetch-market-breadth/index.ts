@@ -117,7 +117,14 @@ serve(async (req) => {
       fetchYahooQuote("^DECL"),
       fetchYahooQuote("^UNCH"),
       fetchYahooQuote("^VIX"),
-      fetchYahooQuote("^PCSP"),  // S&P 500 Put/Call Ratio (fallback: try ^CPC, ^CPCE)
+      // Try multiple Put/Call symbols - Yahoo availability varies
+      (async () => {
+        for (const sym of ["^CPCE", "^CPC", "^PCSP"]) {
+          const val = await fetchYahooQuote(sym);
+          if (val !== null) return val;
+        }
+        return null;
+      })(),
     ]);
 
     let advances = advResult || 0;
