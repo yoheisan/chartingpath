@@ -208,6 +208,7 @@ const StudyChart = memo(({
   hideAnalysisToolbar = false,
   chartMarkers,
   formationOverlays,
+  historicalPatterns,
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -223,6 +224,7 @@ const StudyChart = memo(({
   const syncingRangeRef = useRef(false);
   const syncingCrosshairRef = useRef(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
+  const [patternToggles, setPatternToggles] = useState<PatternOverlayToggles>(loadPatternOverlayToggles);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const isMobile = useIsMobile();
@@ -230,6 +232,7 @@ const StudyChart = memo(({
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
   const analysisLinesRef = useRef<any[]>([]);
+  const patternLinesCleanupsRef = useRef<(() => void)[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
   const persistedVisibleLogicalRangeRef = useRef<{ from: number; to: number } | null>(null);
 
