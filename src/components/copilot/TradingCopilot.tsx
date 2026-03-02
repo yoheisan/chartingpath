@@ -261,6 +261,13 @@ export function TradingCopilot({
             .slice(-20) // Cap context window to last 20 messages for speed
             .map(m => ({ role: m.role, content: m.content })),
           language: i18n.language,
+          // Include pre-warmed dashboard context for faster first response
+          ...(prewarmedCtx.ready && {
+            prewarmed: {
+              watchlist: prewarmedCtx.watchlistSymbols,
+              activePatterns: prewarmedCtx.activePatternCount,
+            },
+          }),
         }),
       });
 
