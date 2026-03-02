@@ -109,7 +109,7 @@ const tools = [
     type: "function",
     function: {
       name: "get_market_breadth",
-      description: "Get current market breadth data including advance/decline ratios and market sentiment. Use when users ask about overall market health, market internals, or broad market conditions.",
+      description: "Get current market breadth data including advance/decline ratios, VIX (fear gauge), Put/Call ratio, and composite Fear & Greed sentiment estimate. Use when users ask about market sentiment, overall market health, fear and greed, market internals, or broad market conditions.",
       parameters: {
         type: "object",
         properties: {},
@@ -262,7 +262,7 @@ const systemPrompt = `You are ChartingPath Copilot—a friendly, expert trading 
 - **generate_pine_script**: Create TradingView Pine Script strategies.
 - **find_article**: Search 120+ strategy guides and educational articles in the Learning Center.
 - **add_to_watchlist**: Add symbols to the user's watchlist for pattern monitoring.
-- **get_market_breadth**: Get current market internals (advance/decline ratio, sentiment).
+- **get_market_breadth**: Get current market internals (advance/decline ratio, VIX, Put/Call ratio, Fear & Greed sentiment estimate).
 - **analyze_chart_context**: When users send chart context with technical indicators and price data, analyze it and provide trading scenarios.
 - **query_edge_atlas**: Search 320,000+ backtested trades for the best-performing pattern/timeframe combinations.
 - **get_economic_events**: Get upcoming and recent high-impact economic events (GDP, CPI, NFP, interest rate decisions). Use to assess macro risk for trades.
@@ -277,6 +277,9 @@ When answering broad questions, PROACTIVELY combine multiple tools for richer in
 
 **\"What does the market look like today?\" / \"Market overview\":**
 → Call get_market_report + get_market_breadth + get_economic_events together
+
+**\"What is the current sentiment?\" / \"Fear and greed\" / \"Market breadth\":**
+→ Call get_market_breadth. Present results with: 1) A/D Ratio section with advancing vs declining counts, 2) VIX level with interpretation, 3) Put/Call ratio with interpretation, 4) Overall Fear & Greed score. Use 🟢🟡🔴 indicators and markdown tables for visual clarity. ALWAYS include timestamp/data source attribution.
 
 **\"Is it a good time to trade X?\" / \"Should I go long on EURUSD?\":**
 → Call search_patterns (for X) + get_price_data (for X) + get_economic_events (relevant region) + query_edge_atlas (for the pattern found)
@@ -840,6 +843,7 @@ async function executeGetMarketBreadth() {
     const result = await response.json();
     const breadth = result?.data || {};
     const meta = result?.meta || {};
+    const sentiment = result?.sentiment || {};
     
     return {
       advanceDecline: {
@@ -850,7 +854,15 @@ async function executeGetMarketBreadth() {
         adLine: breadth.advanceDeclineLine || 0,
         exchange: breadth.exchange || 'NYSE'
       },
-      sentiment: meta.sentiment || 'unknown',
+      sentimentIndicators: {
+        vix: sentiment.vix,
+        vixLevel: sentiment.vixLevel || 'unknown',
+        putCallRatio: sentiment.putCallRatio,
+        putCallSignal: sentiment.putCallSignal || 'unknown',
+        fearGreedEstimate: sentiment.fearGreedEstimate || 'Unknown',
+        fearGreedScore: sentiment.fearGreedScore ?? null,
+      },
+      breadthSentiment: meta.sentiment || 'unknown',
       advancePercent: meta.advancePercent || 0,
       declinePercent: meta.declinePercent || 0,
       timestamp: breadth.timestamp || new Date().toISOString(),
@@ -867,7 +879,24 @@ async function executeGetMarketBreadth() {
         (breadth.advanceDeclineRatio || 0) >= 1.0 ? 'Breadth is neutral to slightly positive.' :
         (breadth.advanceDeclineRatio || 0) >= 0.67 ? 'Breadth is weakening — fewer stocks participating in any rally.' :
         'Broad-based selling — majority of stocks declining.'
-      }`
+      }`,
+      vixInterpretation: sentiment.vix != null 
+        ? `VIX at ${sentiment.vix}: ${
+            sentiment.vix >= 30 ? 'Extreme fear — high volatility expected. Consider defensive positioning.' :
+            sentiment.vix >= 20 ? 'Elevated fear — market participants are hedging. Increased caution warranted.' :
+            sentiment.vix >= 15 ? 'Normal volatility — no extreme fear or complacency.' :
+            'Low fear / complacency — markets calm, but watch for potential reversal.'
+          }`
+        : 'VIX data unavailable.',
+      putCallInterpretation: sentiment.putCallRatio != null
+        ? `Put/Call Ratio at ${sentiment.putCallRatio}: ${
+            sentiment.putCallRatio >= 1.2 ? 'Heavy put buying — extreme bearish hedging. Contrarian bullish signal.' :
+            sentiment.putCallRatio >= 0.9 ? 'Elevated put buying — market participants are cautious.' :
+            sentiment.putCallRatio >= 0.7 ? 'Balanced options flow — no extreme positioning.' :
+            'Low put buying — complacency or strong bullish conviction.'
+          }`
+        : 'Put/Call ratio data unavailable.',
+      presentationHint: 'Present this data in a structured format with sections for: 1) Market Breadth (A/D ratio with visual bar), 2) Sentiment Indicators (VIX + Put/Call), 3) Overall Fear & Greed assessment with the score. Use emoji indicators (🟢🟡🔴) for quick visual cues.'
     };
   } catch (error) {
     console.error('[trading-copilot] Market breadth error:', error);
