@@ -54,6 +54,27 @@
       "validatePatternLab": "Valideren in Pattern Lab",
       "findActiveSignals": "Actieve signalen zoeken",
       "exportScript": "Script exporteren"
-    }
+    },
+    "instrumentStats": "Instrumentstatistieken",
+    "instrumentStatsDesc": "Bekijk hoe dit patroon presteert op dit specifieke instrument",
+    "comparePerformance": "Prestaties vergelijken",
+    "comparePerformanceDesc": "Vergelijk patroonprestaties met het marktgemiddelde",
+    "decisionConfidence": "Beslissingsvertrouwen",
+    "decisionConfidenceDesc": "Krijg een samengestelde vertrouwensscore voor deze setup",
+    "highConfidence": "Hoog vertrouwen",
+    "moderateConfidence": "Matig vertrouwen",
+    "lowConfidence": "Laag vertrouwen",
+    "veryLowConfidence": "Zeer laag vertrouwen",
+    "outperforms": "Presteert beter dan marktgemiddelde",
+    "underperforms": "Presteert slechter dan marktgemiddelde",
+    "inLine": "In lijn met marktgemiddelde",
+    "concentrationRisk": "Concentratierisico gedetecteerd",
+    "directionalRisk": "Richtingsrisico gedetecteerd",
+    "portfolioAware": "Portefeuille-bewuste analyse",
+    "tickerSpecific": "Instrumentspecifieke data",
+    "vsMarketAvg": "vs marktgemiddelde",
+    "confidenceScore": "Vertrouwensscore",
+    "sampleSize": "Steekproefgrootte",
+    "notEnoughData": "Onvoldoende historische gegevens voor dit instrument"
   }
 }
