@@ -391,15 +391,6 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        if (password !== confirmPassword) {
-          toast({
-            title: t('auth.toastPasswordMismatch'),
-            description: t('auth.toastPasswordsDoNotMatch'),
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
 
         const { data, error } = await supabase.auth.signUp({
           email,
