@@ -120,8 +120,29 @@ export function DailyReportPanel() {
     const since = subDays(new Date(), days).toISOString();
 
     try {
+      // Paginate analytics_events to avoid the 1000-row default limit
+      const fetchAllAnalytics = async () => {
+        const allEvents: any[] = [];
+        const PAGE_SIZE = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from("analytics_events")
+            .select("event_name, properties, session_id, ts")
+            .gte("ts", since)
+            .order("ts", { ascending: true })
+            .range(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allEvents.push(...(data || []));
+          hasMore = (data?.length || 0) === PAGE_SIZE;
+          from += PAGE_SIZE;
+        }
+        return allEvents;
+      };
+
       const [
-        analyticsRes,
+        analyticsEvents,
         searchRes,
         alertsRes,
         alertsLogRes,
@@ -130,11 +151,7 @@ export function DailyReportPanel() {
         backtestRes,
         communityRes,
       ] = await Promise.all([
-        supabase
-          .from("analytics_events")
-          .select("event_name, properties, session_id, ts")
-          .gte("ts", since)
-          .order("ts", { ascending: true }),
+        fetchAllAnalytics(),
         supabase.from("instrument_search_analytics").select("search_query").gte("created_at", since),
         supabase.from("alerts").select("id").gte("created_at", since),
         supabase.from("alerts_log").select("email_sent").gte("triggered_at", since),
