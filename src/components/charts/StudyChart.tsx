@@ -59,6 +59,19 @@ import {
 import { ChartAnalysisToolbar } from './ChartAnalysisToolbar';
 import { useChartAnalysis } from '@/hooks/useChartAnalysis';
 import { cn } from '@/lib/utils';
+import {
+  HistoricalPatternOverlay,
+  PatternOverlayToggles,
+  DEFAULT_PATTERN_OVERLAY_TOGGLES,
+  loadPatternOverlayToggles,
+  savePatternOverlayToggles,
+  renderPatternPriceLines,
+  generatePatternMarkers,
+  drawPatternZones,
+  PATTERN_OVERLAY_COLORS,
+} from './PatternOverlayRenderer';
+import { PatternOverlayTogglePanel } from './PatternOverlayTogglePanel';
+import { deriveFormationOverlay } from '@/utils/formationOverlay';
 
 export interface IndicatorSettings {
   ema20: boolean;
@@ -172,6 +185,8 @@ interface StudyChartProps {
   chartMarkers?: ChartMarker[];
   /** Formation overlays (zigzag, trendlines) to render on the chart */
   formationOverlays?: FormationOverlayData[];
+  /** Historical pattern occurrences to render as overlays with toggleable layers */
+  historicalPatterns?: HistoricalPatternOverlay[];
 }
 
 /**
@@ -193,6 +208,7 @@ const StudyChart = memo(({
   hideAnalysisToolbar = false,
   chartMarkers,
   formationOverlays,
+  historicalPatterns,
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -208,6 +224,7 @@ const StudyChart = memo(({
   const syncingRangeRef = useRef(false);
   const syncingCrosshairRef = useRef(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
+  const [patternToggles, setPatternToggles] = useState<PatternOverlayToggles>(loadPatternOverlayToggles);
   const [showAnalysisOverlay, setShowAnalysisOverlay] = useState(true);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const isMobile = useIsMobile();
@@ -215,6 +232,7 @@ const StudyChart = memo(({
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
   const analysisLinesRef = useRef<any[]>([]);
+  const patternLinesCleanupsRef = useRef<(() => void)[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
   const persistedVisibleLogicalRangeRef = useRef<{ from: number; to: number } | null>(null);
 
@@ -246,6 +264,14 @@ const StudyChart = memo(({
       return updated;
     });
   };
+
+  const handlePatternToggle = useCallback((key: keyof PatternOverlayToggles) => {
+    setPatternToggles((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      savePatternOverlayToggles(updated);
+      return updated;
+    });
+  }, []);
 
   // Reset chart to auto-scale and fit content
   const handleResetChart = useCallback(() => {
@@ -765,6 +791,90 @@ const StudyChart = memo(({
       scaleMargins: optimalMargins,
     });
 
+    // === HISTORICAL PATTERN OVERLAYS ===
+    // Clean up previous pattern line cleanups
+    patternLinesCleanupsRef.current.forEach(cleanup => cleanup());
+    patternLinesCleanupsRef.current = [];
+
+    if (historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns) {
+      // Render price lines (Entry/SL/TP) for each pattern
+      for (const pattern of historicalPatterns) {
+        const cleanup = renderPatternPriceLines(candleSeries, pattern, patternToggles);
+        patternLinesCleanupsRef.current.push(cleanup);
+      }
+
+      // Render pattern markers (name labels + direction arrows)
+      const patternMarkerData = generatePatternMarkers(historicalPatterns, bars, patternToggles);
+      if (patternMarkerData.length > 0) {
+        // Merge with existing external markers
+        const allMarkers = [
+          ...(chartMarkers || []).map(m => ({
+            time: m.time.split('T')[0] as Time,
+            position: m.position,
+            color: m.color,
+            shape: m.shape as SeriesMarkerShape,
+            text: m.text,
+          })),
+          ...patternMarkerData,
+        ].sort((a, b) => (a.time as string).localeCompare(b.time as string));
+
+        try {
+          createSeriesMarkers(candleSeries, allMarkers);
+        } catch { /* ignore marker errors */ }
+      }
+
+      // Render zigzag polylines for patterns with pivots
+      if (patternToggles.showZigzag) {
+        for (const pattern of historicalPatterns) {
+          if (!pattern.pivots || pattern.pivots.length < 2) continue;
+          const patternBars = pattern.bars && pattern.bars.length > 0 ? pattern.bars : bars;
+          const formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          if (formation && formation.zigzag.length >= 2) {
+            const zigzagSeries = chart.addSeries(LineSeries, {
+              color: PATTERN_OVERLAY_COLORS.zigzag,
+              lineWidth: 2,
+              lineStyle: 0,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+              autoscaleInfoProvider: () => null,
+            });
+            zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
+          }
+        }
+      }
+
+      // Draw trade zones on canvas (TP/SL shading)
+      if (patternToggles.showTradeZones) {
+        const drawHistoricalPatternZones = () => {
+          const canvas = canvasOverlayRef.current;
+          if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          const chartEl = containerRef.current;
+          if (!chartEl) return;
+          const rect = chartEl.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(rect.width) * dpr;
+          canvas.height = Math.floor(rect.height) * dpr;
+          canvas.style.width = `${Math.floor(rect.width)}px`;
+          canvas.style.height = `${Math.floor(rect.height)}px`;
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, rect.width, rect.height);
+
+          drawPatternZones(
+            ctx, chartRef.current, candleSeriesRef.current,
+            historicalPatterns, patternToggles,
+            rect.width, rect.height
+          );
+        };
+
+        setTimeout(() => requestAnimationFrame(drawHistoricalPatternZones), 200);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternZones);
+      }
+    }
+
     // === RSI as separate chart (skip on shared/clean views) ===
     if (!hideAnalysisToolbar && indicators.rsi && rsiContainerRef.current) {
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
@@ -1064,7 +1174,7 @@ const StudyChart = memo(({
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
     };
-  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.ema200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers]);
+  }, [bars, fixedHeight, autoHeight, indicators.ema20, indicators.ema50, indicators.ema200, indicators.bollingerBands, indicators.vwap, indicators.rsi, indicators.macd, i18n.language, tradePlan, chartMarkers, historicalPatterns, patternToggles]);
 
 
   useEffect(() => {
@@ -1320,7 +1430,16 @@ const StudyChart = memo(({
       </TooltipProvider>
       )}
       {!hideAnalysisToolbar && (
-      <div className="absolute top-2 left-2 z-20">
+      <div className="absolute top-2 left-2 z-20 flex items-center gap-1">
+        {/* Pattern Overlay Toggles */}
+        {historicalPatterns && historicalPatterns.length > 0 && (
+          <PatternOverlayTogglePanel
+            toggles={patternToggles}
+            onToggle={handlePatternToggle}
+            patternCount={historicalPatterns.length}
+          />
+        )}
+        {/* Indicator Toggles */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
