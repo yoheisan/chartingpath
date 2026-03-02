@@ -973,9 +973,10 @@ export const TranslationManagement = () => {
                     {languages.filter(l => l.code !== 'en').map(lang => {
                       const stats = articleCoverage.language_summary[lang.code];
                       const translated = stats?.translated || 0;
+                      const stale = stats?.stale || 0;
                       const total = articleCoverage.total_articles;
                       const pct = total > 0 ? Math.round((translated / total) * 100) : 0;
-                      const missing = total - translated;
+                      const missing = total - translated - stale;
                       return (
                         <Card key={lang.code} className="p-4">
                           <div className="flex items-center justify-between mb-2">
@@ -988,12 +989,20 @@ export const TranslationManagement = () => {
                           </div>
                           <Progress value={pct} className="h-2 mb-2" />
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{pct}% complete</span>
-                            {missing > 0 && (
-                              <Badge variant="destructive" className="text-xs px-1 py-0">
-                                {missing} missing
-                              </Badge>
-                            )}
+                            <span>{pct}% up-to-date</span>
+                            <div className="flex gap-1">
+                              {stale > 0 && (
+                                <Badge variant="secondary" className="text-xs px-1 py-0">
+                                  {stale} stale
+                                </Badge>
+                              )}
+                              {missing > 0 && (
+                                <Badge variant="destructive" className="text-xs px-1 py-0">
+                                  {missing} missing
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                           </div>
                           {missing > 0 && (
                             <Button
