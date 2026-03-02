@@ -573,7 +573,9 @@ const StudyChart = memo(({
     } // end !hideAnalysisToolbar
 
 
-    if (tradePlan) {
+    const shouldRenderStandaloneTradePlan = !!tradePlan && !(historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns);
+
+    if (shouldRenderStandaloneTradePlan) {
       // Entry line — solid blue (matches X post SVG style)
       candleSeries.createPriceLine({
         price: tradePlan.entry,
@@ -742,7 +744,7 @@ const StudyChart = memo(({
 
             // Draw TP/SL shaded zones on the same canvas (matches X post SVG)
             const drawTradePlanZones = () => {
-              if (!tradePlan || !candleSeriesRef.current || !chartRef.current) return;
+              if (!shouldRenderStandaloneTradePlan || !candleSeriesRef.current || !chartRef.current) return;
               const canvas = canvasOverlayRef.current;
               if (!canvas) return;
               const ctx = canvas.getContext('2d');
