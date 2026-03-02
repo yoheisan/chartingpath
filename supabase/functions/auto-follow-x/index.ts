@@ -95,7 +95,7 @@ async function followUser(
   const txt = await res.text();
   console.log(`[auto-follow-x] Follow ${targetUserId}: ${res.status} ${txt}`);
 
-  if (res.status === 429) {
+  if (res.status === 429 || res.status === 402) {
     return { ok: false, error: "rate_limited" };
   }
 
