@@ -40,6 +40,8 @@ function getCachedBriefing(): CachedBriefing | null {
     const parsed: CachedBriefing = JSON.parse(raw);
     const today = new Date().toISOString().slice(0, 10);
     if (parsed.date !== today) return null;
+    // Stale after 30 minutes
+    if (Date.now() - parsed.ts > BRIEFING_REFRESH_MS) return null;
     return parsed;
   } catch {
     return null;
