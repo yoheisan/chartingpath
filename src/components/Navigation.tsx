@@ -28,6 +28,8 @@ import {
   Trophy
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useTranslation } from "react-i18next";
 import { wedgeConfig } from "@/config/wedge";
 import { usePrefetchArticles } from "@/hooks/usePrefetchArticles";
@@ -131,6 +133,15 @@ const Navigation = () => {
         <div className="flex flex-col gap-2 pl-2">
           <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.dashboard', 'Dashboard')}</Link>
           <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.settings', 'Settings')}</Link>
+        </div>
+      </div>
+      
+      {/* Language & Theme - always visible */}
+      <div className="border-t pt-4 mt-2">
+        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.preferences', 'Preferences')}</p>
+        <div className="flex items-center justify-between pl-2">
+          <LanguageSwitcher />
+          <ThemeSwitcher />
         </div>
       </div>
       
