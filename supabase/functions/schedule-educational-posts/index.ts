@@ -81,7 +81,14 @@ serve(async (req) => {
     const scheduledPosts: any[] = [];
     const stateUpdates: { marketId: string; nextPosition: number; pieceId: string; postedCount: number }[] = [];
 
-    for (const market of markets) {
+    // Budget-aware: only 1 educational post per day (rotate through markets)
+    // Pick the market whose turn it is based on day-of-year
+    const dayOfYear = Math.floor((tomorrow.getTime() - new Date(tomorrow.getFullYear(), 0, 0).getTime()) / 86400000);
+    const marketIndex = dayOfYear % markets.length;
+    const market = markets[marketIndex];
+    console.log(`[schedule-edu] Day ${dayOfYear} → market ${marketIndex}: ${market.market_region} (budget: 1 edu/day)`);
+
+    {
       // Get the piece at the current position (with wraparound)
       const position = market.current_position % totalPieces;
       
@@ -94,58 +101,49 @@ serve(async (req) => {
       
       if (pieceError || !piece) {
         console.warn(`No piece found at position ${position} for ${market.market_region}:`, pieceError?.message);
-        continue;
-      }
-
-      // Validate piece has actual content
-      if (!piece.content || piece.content.trim().length < 10) {
+      } else if (!piece.content || piece.content.trim().length < 10) {
         console.warn(`Piece at position ${position} has empty/short content, skipping ${market.market_region}`);
-        continue;
+      } else {
+        // Build the scheduled time: tomorrow at the optimal time
+        const timeStr = market.optimal_post_time_utc;
+        const scheduledTime = `${tomorrowDate}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}Z`;
+        
+        // piece.content already contains the CTA link from generation
+        // Just append hashtags
+        const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
+        const fullContent = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
+
+        if (fullContent && fullContent.trim().length > 0) {
+          scheduledPosts.push({
+            account_id: account.id,
+            post_type: 'educational',
+            platform: 'twitter',
+            content: fullContent,
+            scheduled_time: scheduledTime,
+            timezone: market.timezone,
+            recurrence_pattern: 'daily',
+            status: 'scheduled',
+            link_back_url: piece.link_back_url,
+            report_config: {
+              market_region: market.market_region,
+              piece_id: piece.id,
+              article_title: piece.article_title,
+              piece_type: piece.piece_type,
+              sequence: `${piece.sequence_number}/${piece.total_in_series}`,
+              global_position: position,
+            },
+          });
+
+          // Queue state update
+          const nextPosition = market.current_position + 1;
+          stateUpdates.push({
+            marketId: market.id,
+            nextPosition,
+            pieceId: piece.id,
+            postedCount: piece.posted_count,
+          });
+        }
       }
-
-      // Build the scheduled time: tomorrow at the optimal time
-      const timeStr = market.optimal_post_time_utc;
-      const scheduledTime = `${tomorrowDate}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}Z`;
-      
-      // piece.content already contains the CTA link from generation
-      // Just append hashtags
-      const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
-      const fullContent = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
-
-      // Final safety check: tweet must have content
-      if (!fullContent || fullContent.trim().length === 0) {
-        console.error(`Built empty content for position ${position}, market ${market.market_region}`);
-        continue;
-      }
-
-      scheduledPosts.push({
-        account_id: account.id,
-        post_type: 'educational',
-        platform: 'twitter',
-        content: fullContent,
-        scheduled_time: scheduledTime,
-        timezone: market.timezone,
-        recurrence_pattern: 'weekdays',
-        status: 'scheduled',
-        link_back_url: piece.link_back_url,
-        report_config: {
-          market_region: market.market_region,
-          piece_id: piece.id,
-          article_title: piece.article_title,
-          piece_type: piece.piece_type,
-          sequence: `${piece.sequence_number}/${piece.total_in_series}`,
-          global_position: position,
-        },
-      });
-
-      // Queue state updates (apply AFTER successful insert)
-      const nextPosition = market.current_position + markets.length;
-      stateUpdates.push({
-        marketId: market.id,
-        nextPosition,
-        pieceId: piece.id,
-        postedCount: piece.posted_count,
-      });
     }
 
     // Insert all scheduled posts FIRST
