@@ -1228,27 +1228,22 @@ const StudyChart = memo(({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isPanningRef.current || !chartRef.current || !candleSeriesRef.current) return;
+      if (!isPanningRef.current || !chartRef.current) return;
       const deltaY = e.clientY - panStartYRef.current;
       panStartYRef.current = e.clientY;
 
-      // Convert pixel delta to price delta using the candle series coordinate system
-      const chartEl = container.querySelector('table') || container;
-      const rect = chartEl.getBoundingClientRect();
-      const midY = rect.height / 2;
-      const priceAtMid = candleSeriesRef.current.coordinateToPrice(midY);
-      const priceAtMidShifted = candleSeriesRef.current.coordinateToPrice(midY + deltaY);
-      if (priceAtMid != null && priceAtMidShifted != null) {
-        const priceDelta = Number(priceAtMidShifted) - Number(priceAtMid);
-        // Shift the visible price range by the delta
-        const ps = chartRef.current.priceScale('right');
-        // lightweight-charts doesn't expose setVisiblePriceRange on the scale directly,
-        // but we can use chart.applyOptions to nudge. Instead, use series scroll offset trick:
-        // read current auto-scale margins and adjust
-        // Simplest cross-version approach: scroll the price axis via coordinate translation
-        // We move all price lines conceptually by adjusting the chart's price offset
-        // Actually the best approach: use chart.priceScale().scrollBy(delta)
-        // But that doesn't exist. So we'll update the visible range via the series.
+      const ps = chartRef.current.priceScale('right');
+      try {
+        const range = (ps as any).getVisibleRange();
+        if (range) {
+          // deltaY > 0 means mouse moved down → shift prices down (subtract from range)
+          const priceSpan = range.maxValue - range.minValue;
+          const containerHeight = containerRef.current?.clientHeight || 500;
+          const priceDelta = (deltaY / containerHeight) * priceSpan;
+          (ps as any).setVisibleRange({ minValue: range.minValue - priceDelta, maxValue: range.maxValue - priceDelta });
+        }
+      } catch {
+        // fallback: just disable auto-scale so user sees the intent
       }
     };
 
