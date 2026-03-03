@@ -124,4 +124,5 @@ export const languages = [
   { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
   { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
   { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
 ];
