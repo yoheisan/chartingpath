@@ -274,8 +274,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       scaleMargins: optimalMargins,
     });
     
-    // Fit content
-    chart.timeScale().fitContent();
+    // Show the latest candles — scroll to the right edge so the most recent
+    // bar is always visible. fitContent() centres all bars and can leave the
+    // viewport stuck in the middle on wide datasets.
+    const ts = chart.timeScale();
+    ts.fitContent();
+    // After fitting, nudge the visible range so the rightmost bar is flush
+    // with the right edge. scrollToRealTime() ensures the latest bar is shown.
+    ts.scrollToRealTime();
 
     // Handle resize
     const resizeObserver = new ResizeObserver(entries => {
