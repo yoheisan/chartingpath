@@ -555,6 +555,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     if (Number.isFinite(latestClose) && latestClose > 0) {
       const entryDist = Math.abs((entry_price - latestClose) / latestClose) * 100;
       if (entryDist > 20) return undefined;
+
+      // SL-breach invalidation: if current price has already breached the SL,
+      // the trade is effectively stopped out — suppress all trade plan lines.
+      const isLong = direction === 'long' || direction === 'bullish';
+      if (isLong && latestClose < stop_loss_price) return undefined;
+      if (!isLong && latestClose > stop_loss_price) return undefined;
     }
 
     return {
