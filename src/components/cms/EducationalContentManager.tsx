@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, CalendarPlus, RefreshCw, BookOpen, Globe, Trash2, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, Sparkles, CalendarPlus, RefreshCw, BookOpen, Globe, Trash2, Pencil, ExternalLink, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -53,7 +53,23 @@ export function EducationalContentManager() {
   const [editContent, setEditContent] = useState("");
   const [editHashtags, setEditHashtags] = useState("");
   const [editLinkUrl, setEditLinkUrl] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const buildFullPost = (piece: any): string => {
+    const parts: string[] = [piece.content];
+    if (piece.link_back_url) parts.push(`\n${piece.link_back_url}`);
+    if (piece.hashtags?.length) parts.push(`\n${piece.hashtags.map((t: string) => `#${t}`).join(" ")}`);
+    return parts.join("\n");
+  };
+
+  const handleCopy = async (piece: any) => {
+    const text = buildFullPost(piece);
+    await navigator.clipboard.writeText(text);
+    setCopiedId(piece.id);
+    toast.success("Copied to clipboard — ready to paste!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // Fetch educational pieces
   const { data: pieces, isLoading: piecesLoading } = useQuery({
@@ -309,6 +325,7 @@ export function EducationalContentManager() {
                 <TableHead className="w-36">Article</TableHead>
                 <TableHead className="w-44">Link</TableHead>
                 <TableHead className="w-20">Posts</TableHead>
+                <TableHead className="w-16">Copy</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
@@ -358,6 +375,21 @@ export function EducationalContentManager() {
                   </TableCell>
                   <TableCell className="text-center">
                     <span className="text-sm">{piece.posted_count}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleCopy(piece)}
+                      title="Copy full post to clipboard"
+                    >
+                      {copiedId === piece.id ? (
+                        <Check className="h-3.5 w-3.5 text-green-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
