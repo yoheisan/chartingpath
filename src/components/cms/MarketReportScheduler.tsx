@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
+const BREADTH_URL = "https://chartingpath.com/tools/market-breadth";
+
 export function MarketReportScheduler() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
