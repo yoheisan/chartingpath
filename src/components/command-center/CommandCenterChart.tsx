@@ -538,11 +538,34 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
   }, [autoPatterns, timeframe]);
 
-  // Only pass active patterns for overlay price lines (historical are shown as minimal dots)
+  // Only pass active + fresh + tradable patterns for overlay price lines
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
     if (autoPatterns.length === 0) return [];
+
+    const freshnessHoursByTf: Record<string, number> = {
+      '15m': 6, '1h': 24, '4h': 72, '8h': 120, '1d': 14 * 24, '1wk': 60 * 24,
+    };
+    const maxDriftByTf: Record<string, number> = {
+      '15m': 2.5, '1h': 4, '4h': 6, '8h': 8, '1d': 12, '1wk': 20,
+    };
+    const freshnessMs = (freshnessHoursByTf[timeframe] ?? 24) * 60 * 60 * 1000;
+    const cutoff = Date.now() - freshnessMs;
+    const maxDrift = maxDriftByTf[timeframe] ?? 4;
+
     return autoPatterns
-      .filter(p => p.isActive)
+      .filter(p => {
+        if (!p.isActive) return false;
+        // Freshness check
+        const ts = new Date(p.last_confirmed_at || p.first_detected_at || '').getTime();
+        if (!Number.isFinite(ts) || ts < cutoff) return false;
+        // Price drift check
+        const entry = Number(p.entry_price);
+        const current = Number(p.current_price);
+        if (Number.isFinite(entry) && entry > 0 && Number.isFinite(current) && current > 0) {
+          if (Math.abs((current - entry) / entry) * 100 > maxDrift) return false;
+        }
+        return true;
+      })
       .map(p => ({
       id: p.id,
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
@@ -559,7 +582,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       pivots: (p.visual_spec as any)?.pivots,
       bars: p.bars,
     }));
-  }, [autoPatterns]);
+  }, [autoPatterns, timeframe]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
