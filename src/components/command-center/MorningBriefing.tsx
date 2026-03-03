@@ -127,6 +127,9 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
 
   useEffect(() => {
     fetchBriefing();
+    // Auto-refresh every 30 minutes to match the 1H live-scan cadence
+    const interval = setInterval(() => fetchBriefing(true), BRIEFING_REFRESH_MS);
+    return () => clearInterval(interval);
   }, [userId]);
 
   if (collapsed) {
