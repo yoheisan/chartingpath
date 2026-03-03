@@ -120,17 +120,20 @@ serve(async (req) => {
     }
 
     // Helper: fetch Yahoo Finance with retry and rate limit handling
-    const fetchYahooQuote = async (symbol: string, retries = 2): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
+    const fetchYahooQuote = async (symbol: string, retries = 3): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
           const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
           if (response.status === 429) {
-            console.warn(`Yahoo 429 for ${symbol}, attempt ${attempt + 1}, waiting...`);
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            console.warn(`Yahoo 429 for ${symbol}, attempt ${attempt + 1}/${retries + 1}, waiting ${1500 * (attempt + 1)}ms...`);
+            // Consume body to avoid leaks
+            await response.text();
+            await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
             continue;
           }
           if (!response.ok) {
             console.error(`Yahoo ${response.status} for ${symbol}`);
+            await response.text(); // consume body
             return { symbol, c: 0, pc: 0, error: true };
           }
           const data = await response.json();
@@ -138,23 +141,28 @@ serve(async (req) => {
           const meta = quote?.meta;
           const current = meta?.regularMarketPrice || 0;
           const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          return { symbol, c: current, pc: previous, error: !current };
+          if (!current || current === 0) {
+            console.warn(`Yahoo returned zero price for ${symbol}`);
+            return { symbol, c: 0, pc: 0, error: true };
+          }
+          return { symbol, c: current, pc: previous, error: false };
         } catch (error) {
-          console.error(`Error fetching Yahoo data for ${symbol}:`, error);
-          if (attempt < retries) await new Promise(r => setTimeout(r, 800));
+          console.error(`Error fetching Yahoo data for ${symbol} (attempt ${attempt + 1}):`, error);
+          if (attempt < retries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
         }
       }
+      console.error(`All ${retries + 1} attempts failed for ${symbol}`);
       return { symbol, c: 0, pc: 0, error: true };
     };
 
-    // Helper: sequential Yahoo fetches with small delay to avoid 429
+    // Helper: sequential Yahoo fetches with delay to avoid 429
     const fetchYahooSequential = async (symbols: string[]): Promise<any[]> => {
       const results: any[] = [];
-      for (const symbol of symbols) {
-        const result = await fetchYahooQuote(symbol);
+      for (let i = 0; i < symbols.length; i++) {
+        const result = await fetchYahooQuote(symbols[i]);
         results.push(result);
-        if (symbols.indexOf(symbol) < symbols.length - 1) {
-          await new Promise(r => setTimeout(r, 300)); // 300ms between requests
+        if (i < symbols.length - 1) {
+          await new Promise(r => setTimeout(r, 700)); // 700ms between requests
         }
       }
       return results;
@@ -303,6 +311,24 @@ serve(async (req) => {
     }
 
     console.log("Market data fetched successfully");
+
+    // CRITICAL: If no valid stock data at all, abort — don't generate a misleading report
+    const validStocks = (marketData.stocks || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    const validForex = (marketData.forex || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    const validCrypto = (marketData.crypto || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    
+    if (validStocks.length === 0 && validForex.length === 0 && validCrypto.length === 0) {
+      console.error("ABORTING: No valid market data from any source. All Yahoo/Finnhub fetches failed.");
+      return new Response(
+        JSON.stringify({ 
+          error: "Market data temporarily unavailable. All data sources returned errors. Please try again in a few minutes.",
+          retryable: true
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`Valid data: ${validStocks.length} stocks, ${validForex.length} forex, ${validCrypto.length} crypto`);
 
     // Step 1: Summarize top news articles using GPT-4o-mini (reduced to 6 total for speed)
     console.log("Summarizing news articles with GPT-4o-mini...");
