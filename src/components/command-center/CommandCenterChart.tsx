@@ -387,6 +387,48 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return () => window.clearInterval(intervalId);
   }, [fetchAutoPatterns]);
 
+  const getDetectedAt = (pattern: any) =>
+    pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
+
+  const freshnessHoursByTimeframe: Record<string, number> = {
+    '15m': 6,
+    '1h': 24,
+    '4h': 72,
+    '8h': 120,
+    '1d': 14 * 24,
+    '1wk': 60 * 24,
+  };
+
+  const maxEntryDriftPctByTimeframe: Record<string, number> = {
+    '15m': 2.5,
+    '1h': 4,
+    '4h': 6,
+    '8h': 8,
+    '1d': 12,
+    '1wk': 20,
+  };
+
+  const freshnessWindowMs = (freshnessHoursByTimeframe[timeframe] ?? 24) * 60 * 60 * 1000;
+  const freshnessCutoffTs = Date.now() - freshnessWindowMs;
+  const maxEntryDriftPct = maxEntryDriftPctByTimeframe[timeframe] ?? 4;
+
+  const isFreshPattern = (pattern: any) => {
+    const ts = new Date(getDetectedAt(pattern)).getTime();
+    return Number.isFinite(ts) && ts >= freshnessCutoffTs;
+  };
+
+  const isEntryStillTradable = (pattern: any) => {
+    const entry = Number(pattern?.entry_price);
+    let current = Number(pattern?.current_price);
+    if (!Number.isFinite(current) || current <= 0) {
+      const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
+      current = lastBar ? Number(lastBar.c) : 0;
+    }
+    if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
+    const driftPct = Math.abs((current - entry) / entry) * 100;
+    return driftPct <= maxEntryDriftPct;
+  };
+
   // Generate chart markers from auto-detected patterns
   // Apple design: only active patterns get detailed labels; historical get minimal circle markers
   const chartMarkers: ChartMarker[] = useMemo(() => {
