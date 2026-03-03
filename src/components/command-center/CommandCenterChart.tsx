@@ -476,18 +476,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     
     const markers: ChartMarker[] = [];
 
-    // Keep pattern-identification UI visible for all active patterns.
-    // (Freshness/drift filters are for tradability, not for hiding structure labels.)
+    // Build a set of actionable pattern IDs for detailed rendering
     const actionableIds = new Set(
       autoPatterns
-        .filter(p => p.isActive && p.status !== 'expired')
+        .filter(p => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p))
         .map(p => p.id)
     );
 
-    // Live patterns with derived outcomes should also retain full UI
+    // Live patterns with derived outcomes still get full UI (name + pivots) but with outcome color
     const derivedOutcomeIds = new Set(
       autoPatterns
-        .filter(p => !!p._derivedOutcome)
+        .filter(p => p._derivedOutcome && isFreshPattern(p))
         .map(p => p.id)
     );
 
