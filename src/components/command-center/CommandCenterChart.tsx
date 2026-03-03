@@ -609,6 +609,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // Derive formation overlays from selected overlay pattern (not only actionable patterns)
   const formationOverlays: FormationOverlayData[] = useMemo(() => {
     if (!overlayPattern || bars.length === 0) return [];
+    // Gate on tradePlan: if trade levels were filtered out (extreme price), hide formation too
+    // Per UI/UX spec: show full pattern UI or nothing
+    if (!tradePlan) return [];
 
     const vs = overlayPattern.visual_spec as any;
     const pivots = vs?.pivots;
