@@ -1199,8 +1199,11 @@ const StudyChart = memo(({
 
     resizeObserver.observe(containerRef.current);
 
-    // Space+drag (or Shift+drag / middle-click) vertical panning handlers
+    // Space+drag vertical panning handlers
+    // Uses scaleMargins manipulation since lightweight-charts v5 PriceScale
+    // does not expose getVisibleRange/setVisibleRange.
     const container = containerRef.current;
+    const marginsRef = { top: 0.05, bottom: 0.05 };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat) {
@@ -1215,42 +1218,55 @@ const StudyChart = memo(({
         if (!isPanningRef.current) container.style.cursor = '';
       }
     };
+    // Reset space state when window loses focus
+    const handleBlur = () => {
+      spaceHeldRef.current = false;
+      if (isPanningRef.current) {
+        isPanningRef.current = false;
+        container.style.cursor = '';
+      }
+    };
 
     const handleMouseDown = (e: MouseEvent) => {
-      if (spaceHeldRef.current || e.shiftKey || e.button === 1) {
+      if (spaceHeldRef.current || e.button === 1) {
         e.preventDefault();
         isPanningRef.current = true;
         panStartYRef.current = e.clientY;
-        // Disable auto-scale so manual offset is visible
-        chartRef.current?.priceScale('right').applyOptions({ autoScale: false });
+        // Read current margins
+        try {
+          const opts = chartRef.current?.priceScale('right').options();
+          if (opts?.scaleMargins) {
+            marginsRef.top = opts.scaleMargins.top;
+            marginsRef.bottom = opts.scaleMargins.bottom;
+          }
+        } catch {}
         container.style.cursor = 'grabbing';
       }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isPanningRef.current || !chartRef.current) return;
-      const deltaY = e.clientY - panStartYRef.current;
-      panStartYRef.current = e.clientY;
-
-      const ps = chartRef.current.priceScale('right');
       try {
-        const range = (ps as any).getVisibleRange();
-        if (range) {
-          // deltaY > 0 means mouse moved down → shift prices down (subtract from range)
-          const priceSpan = range.maxValue - range.minValue;
-          const containerHeight = containerRef.current?.clientHeight || 500;
-          const priceDelta = (deltaY / containerHeight) * priceSpan;
-          (ps as any).setVisibleRange({ minValue: range.minValue - priceDelta, maxValue: range.maxValue - priceDelta });
-        }
+        const deltaY = e.clientY - panStartYRef.current;
+        panStartYRef.current = e.clientY;
+        const containerHeight = containerRef.current?.clientHeight || 500;
+        // Convert pixel delta to margin delta (fraction of chart height)
+        const marginDelta = deltaY / containerHeight;
+        // Shift both margins: moving mouse down increases top margin, decreases bottom
+        marginsRef.top = Math.max(0, Math.min(0.9, marginsRef.top + marginDelta));
+        marginsRef.bottom = Math.max(0, Math.min(0.9, marginsRef.bottom - marginDelta));
+        chartRef.current.priceScale('right').applyOptions({
+          autoScale: true,
+          scaleMargins: { top: marginsRef.top, bottom: marginsRef.bottom },
+        });
       } catch {
-        // fallback: just disable auto-scale so user sees the intent
+        // Chart may have been disposed
       }
     };
 
     const handleMouseUp = () => {
       if (isPanningRef.current) {
         isPanningRef.current = false;
-        panStartPriceRef.current = null;
         container.style.cursor = spaceHeldRef.current ? 'grab' : '';
       }
     };
@@ -1260,6 +1276,7 @@ const StudyChart = memo(({
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       try {
@@ -1282,6 +1299,7 @@ const StudyChart = memo(({
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
