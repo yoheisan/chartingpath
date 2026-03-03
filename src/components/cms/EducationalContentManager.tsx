@@ -325,6 +325,7 @@ export function EducationalContentManager() {
                 <TableHead className="w-36">Article</TableHead>
                 <TableHead className="w-44">Link</TableHead>
                 <TableHead className="w-20">Posts</TableHead>
+                <TableHead className="w-16">Copy</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
