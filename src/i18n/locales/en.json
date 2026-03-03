@@ -930,7 +930,17 @@
     "scanMarketDesc": "Discover active pattern setups across 1,100+ instruments in real-time.",
     "scriptsBullet1": "Pine Script & MQL",
     "scriptsBullet2": "Customizable templates",
-    "scriptsBullet3": "Subscriber access"
+    "scriptsBullet3": "Subscriber access",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace"
   },
   "livePatterns": {
     "assetClass": "Asset Class",
