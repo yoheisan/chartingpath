@@ -1535,8 +1535,15 @@ export default function LivePatternsPage() {
               } else if (data?.error) {
                 toast.error(data.error);
               } else {
-                toast.success(`Alert created for ${selectedSetup.instrument} — ${selectedSetup.patternName}`);
-              }
+                toast.success(`Alert created for ${selectedSetup.instrument} — ${selectedSetup.patternName}`, {
+                  duration: 8000,
+                  action: {
+                    label: '⚡ Generate Script',
+                    onClick: () => {
+                      window.location.href = `/members/scripts?symbol=${selectedSetup.instrument}&pattern=${selectedSetup.patternId}&timeframe=${selectedSetup.visualSpec?.timeframe || '1d'}`;
+                    },
+                  },
+                });
             } catch (err: any) {
               console.error('Create alert error:', err);
               const msg = err?.message || '';
