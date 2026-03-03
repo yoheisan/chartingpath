@@ -476,18 +476,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     
     const markers: ChartMarker[] = [];
 
-    // Keep pattern-identification UI visible for all active patterns.
-    // (Freshness/drift filters are for tradability, not for hiding structure labels.)
+    // Build a set of actionable pattern IDs for detailed rendering
     const actionableIds = new Set(
       autoPatterns
-        .filter(p => p.isActive && p.status !== 'expired')
+        .filter(p => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p))
         .map(p => p.id)
     );
 
-    // Live patterns with derived outcomes should also retain full UI
+    // Live patterns with derived outcomes still get full UI (name + pivots) but with outcome color
     const derivedOutcomeIds = new Set(
       autoPatterns
-        .filter(p => !!p._derivedOutcome)
+        .filter(p => p._derivedOutcome && isFreshPattern(p))
         .map(p => p.id)
     );
 
@@ -584,13 +583,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
 
   // Pattern source for visual overlays (polyline/zones/TP-SL lines):
-  // Active > latest unresolved > most recent historical
+  // Active > derived outcome > latest unresolved > most recent historical
+  // NOTE: Do NOT gate on freshness/drift here — overlays should always render for active patterns
   const overlayPattern = useMemo(() => {
     if (sortedPatterns.length === 0) return null;
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
-    const derivedOutcomePattern = sortedPatterns.find((p) => p._derivedOutcome && isFreshPattern(p));
+    const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
     const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
     const preferred = activePattern || derivedOutcomePattern || latestUnresolvedPattern || sortedPatterns[0];
 
@@ -612,15 +612,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return formation ? [formation] : [];
   }, [overlayPattern, bars]);
 
-  // Derive trade plan from current, fresh pattern (active first, then latest unresolved)
+  // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
-    if (autoPatterns.length === 0) return undefined;
-
-    const activePattern = actionableActivePatterns[0];
-    const latestUnresolvedPattern = sortedPatterns.find(
-      (p) => !isResolvedOutcome(p.outcome) && isFreshPattern(p) && isEntryStillTradable(p)
-    );
-    const currentPattern = activePattern || latestUnresolvedPattern;
+    const currentPattern = overlayPattern;
     if (!currentPattern) return undefined;
 
     const { entry_price, stop_loss_price, take_profit_price, direction } = currentPattern;
@@ -632,7 +626,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [actionableActivePatterns, autoPatterns, sortedPatterns, timeframe]);
+  }, [overlayPattern]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
