@@ -53,6 +53,23 @@ export function EducationalContentManager() {
   const [editContent, setEditContent] = useState("");
   const [editHashtags, setEditHashtags] = useState("");
   const [editLinkUrl, setEditLinkUrl] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const buildFullPost = (piece: any): string => {
+    const parts: string[] = [piece.content];
+    if (piece.link_back_url) parts.push(`\n${piece.link_back_url}`);
+    if (piece.hashtags?.length) parts.push(`\n${piece.hashtags.map((t: string) => `#${t}`).join(" ")}`);
+    return parts.join("\n");
+  };
+
+  const handleCopy = async (piece: any) => {
+    const text = buildFullPost(piece);
+    await navigator.clipboard.writeText(text);
+    setCopiedId(piece.id);
+    toast.success("Copied to clipboard — ready to paste!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
   const queryClient = useQueryClient();
 
   // Fetch educational pieces
