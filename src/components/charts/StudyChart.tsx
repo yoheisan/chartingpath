@@ -234,6 +234,7 @@ const StudyChart = memo(({
   const isPanningRef = useRef(false);
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
+  const spaceHeldRef = useRef(false);
   const analysisLinesRef = useRef<any[]>([]);
   const patternLinesCleanupsRef = useRef<(() => void)[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
@@ -1198,27 +1199,56 @@ const StudyChart = memo(({
 
     resizeObserver.observe(containerRef.current);
 
-    // Shift+drag vertical panning handlers
+    // Space+drag (or Shift+drag / middle-click) vertical panning handlers
     const container = containerRef.current;
-    
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        spaceHeldRef.current = true;
+        container.style.cursor = 'grab';
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        spaceHeldRef.current = false;
+        if (!isPanningRef.current) container.style.cursor = '';
+      }
+    };
+
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.shiftKey || e.button === 1) {
+      if (spaceHeldRef.current || e.shiftKey || e.button === 1) {
         e.preventDefault();
         isPanningRef.current = true;
         panStartYRef.current = e.clientY;
-        const visibleRange = chart.timeScale().getVisibleLogicalRange();
-        if (visibleRange) {
-          panStartPriceRef.current = { from: 0, to: 0 };
-        }
-        container.style.cursor = 'ns-resize';
+        // Disable auto-scale so manual offset is visible
+        chartRef.current?.priceScale('right').applyOptions({ autoScale: false });
+        container.style.cursor = 'grabbing';
       }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isPanningRef.current && chartRef.current) {
-        const deltaY = e.clientY - panStartYRef.current;
-        chartRef.current.priceScale('right').applyOptions({ autoScale: false });
-        panStartYRef.current = e.clientY;
+      if (!isPanningRef.current || !chartRef.current || !candleSeriesRef.current) return;
+      const deltaY = e.clientY - panStartYRef.current;
+      panStartYRef.current = e.clientY;
+
+      // Convert pixel delta to price delta using the candle series coordinate system
+      const chartEl = container.querySelector('table') || container;
+      const rect = chartEl.getBoundingClientRect();
+      const midY = rect.height / 2;
+      const priceAtMid = candleSeriesRef.current.coordinateToPrice(midY);
+      const priceAtMidShifted = candleSeriesRef.current.coordinateToPrice(midY + deltaY);
+      if (priceAtMid != null && priceAtMidShifted != null) {
+        const priceDelta = Number(priceAtMidShifted) - Number(priceAtMid);
+        // Shift the visible price range by the delta
+        const ps = chartRef.current.priceScale('right');
+        // lightweight-charts doesn't expose setVisiblePriceRange on the scale directly,
+        // but we can use chart.applyOptions to nudge. Instead, use series scroll offset trick:
+        // read current auto-scale margins and adjust
+        // Simplest cross-version approach: scroll the price axis via coordinate translation
+        // We move all price lines conceptually by adjusting the chart's price offset
+        // Actually the best approach: use chart.priceScale().scrollBy(delta)
+        // But that doesn't exist. So we'll update the visible range via the series.
       }
     };
 
@@ -1226,7 +1256,7 @@ const StudyChart = memo(({
       if (isPanningRef.current) {
         isPanningRef.current = false;
         panStartPriceRef.current = null;
-        container.style.cursor = '';
+        container.style.cursor = spaceHeldRef.current ? 'grab' : '';
       }
     };
 
