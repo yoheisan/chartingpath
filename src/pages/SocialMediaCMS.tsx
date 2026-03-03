@@ -64,6 +64,10 @@ export default function SocialMediaCMS() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="signals" className="space-y-4">
+          <SignalPostGenerator />
+        </TabsContent>
+
         <TabsContent value="schedule" className="space-y-4">
           <MarketReportScheduler />
           <Card className="p-6">
