@@ -272,12 +272,23 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         
         console.log(`[CommandCenterChart] Using EODHD→Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${lookbackDays} days)`);
 
-        const fetchedBars = await fetchMarketBars({
-          symbol,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          interval: timeframe,
-        });
+        // Add timeout to prevent indefinite hanging on edge function calls
+        const fetchWithTimeout = Promise.race([
+          fetchMarketBars({
+            symbol,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            interval: timeframe,
+          }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 15000)),
+        ]);
+
+        let fetchedBars: CompressedBar[] = [];
+        try {
+          fetchedBars = await fetchWithTimeout;
+        } catch (fetchErr) {
+          console.warn('[CommandCenterChart] fetchMarketBars failed/timed out:', fetchErr);
+        }
 
         if (fetchedBars.length === 0) {
           // Last resort: try to use bars embedded in active pattern detections
