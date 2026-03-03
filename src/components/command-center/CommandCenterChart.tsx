@@ -583,13 +583,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
 
   // Pattern source for visual overlays (polyline/zones/TP-SL lines):
-  // Active > latest unresolved > most recent historical
+  // Active > derived outcome > latest unresolved > most recent historical
+  // NOTE: Do NOT gate on freshness/drift here — overlays should always render for active patterns
   const overlayPattern = useMemo(() => {
     if (sortedPatterns.length === 0) return null;
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
-    const derivedOutcomePattern = sortedPatterns.find((p) => p._derivedOutcome && isFreshPattern(p));
+    const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
     const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
     const preferred = activePattern || derivedOutcomePattern || latestUnresolvedPattern || sortedPatterns[0];
 
