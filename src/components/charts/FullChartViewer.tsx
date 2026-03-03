@@ -857,9 +857,8 @@ export default function FullChartViewer({
         const totalBars = bars.length;
         const visibleBars = Math.min(totalBars, 120);
         const from = Math.max(0, totalBars - visibleBars);
-        const to = totalBars + 5;
+        const to = totalBars + 2; // minimal right margin
         chart.timeScale().setVisibleLogicalRange({ from, to });
-        chart.timeScale().scrollToRealTime();
 
         resizeObserver = new ResizeObserver((entries) => {
           const entry = entries[0];
