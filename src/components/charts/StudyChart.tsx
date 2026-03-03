@@ -187,6 +187,8 @@ interface StudyChartProps {
   formationOverlays?: FormationOverlayData[];
   /** Historical pattern occurrences to render as overlays with toggleable layers */
   historicalPatterns?: HistoricalPatternOverlay[];
+  /** Number of recent bars to show initially instead of fitting all content. Enables focused zoom. */
+  initialVisibleBars?: number;
 }
 
 /**
@@ -209,6 +211,7 @@ const StudyChart = memo(({
   chartMarkers,
   formationOverlays,
   historicalPatterns,
+  initialVisibleBars,
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
