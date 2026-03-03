@@ -312,6 +312,24 @@ serve(async (req) => {
 
     console.log("Market data fetched successfully");
 
+    // CRITICAL: If no valid stock data at all, abort — don't generate a misleading report
+    const validStocks = (marketData.stocks || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    const validForex = (marketData.forex || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    const validCrypto = (marketData.crypto || []).filter((s: any) => s.c > 0 && s.pc > 0 && !s.error);
+    
+    if (validStocks.length === 0 && validForex.length === 0 && validCrypto.length === 0) {
+      console.error("ABORTING: No valid market data from any source. All Yahoo/Finnhub fetches failed.");
+      return new Response(
+        JSON.stringify({ 
+          error: "Market data temporarily unavailable. All data sources returned errors. Please try again in a few minutes.",
+          retryable: true
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`Valid data: ${validStocks.length} stocks, ${validForex.length} forex, ${validCrypto.length} crypto`);
+
     // Step 1: Summarize top news articles using GPT-4o-mini (reduced to 6 total for speed)
     console.log("Summarizing news articles with GPT-4o-mini...");
     const allNewsArticles = [
