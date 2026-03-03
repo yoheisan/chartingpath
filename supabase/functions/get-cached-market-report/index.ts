@@ -388,43 +388,59 @@ serve(async (req) => {
     const userDayOfWeek = new Date().toLocaleString('en-US', { timeZone: timezone, weekday: 'long' });
     const isWeekend = userDayOfWeek === 'Saturday' || userDayOfWeek === 'Sunday';
 
-    // Format market data for AI prompt
+    // Format market data for AI prompt — FILTER OUT zero-value data
     let marketDataSummary = `**Real-Time Market Data**\n**Your Local Time: ${userLocalTime} (${timezone})**\n\n`;
     
+    const validEntries = (items: any[]) => items.filter((i: any) => i.c > 0 && i.pc > 0 && !i.error);
+
     if (marketData.stocks) {
-      marketDataSummary += "**Stock Indices:**\n";
-      marketData.stocks.forEach((stock: any) => {
-        const changePercent = ((stock.c - stock.pc) / stock.pc * 100).toFixed(2);
-        marketDataSummary += `- ${stock.symbol}: $${stock.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.stocks);
+      if (valid.length > 0) {
+        marketDataSummary += "**Stock Indices:**\n";
+        valid.forEach((stock: any) => {
+          const changePercent = ((stock.c - stock.pc) / stock.pc * 100).toFixed(2);
+          marketDataSummary += `- ${stock.symbol}: $${stock.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      } else {
+        marketDataSummary += "**Stock Indices:** Data temporarily unavailable\n\n";
+      }
     }
     
     if (marketData.forex) {
-      marketDataSummary += "**Forex Pairs:**\n";
-      marketData.forex.forEach((pair: any) => {
-        const changePercent = ((pair.c - pair.pc) / pair.pc * 100).toFixed(2);
-        marketDataSummary += `- ${pair.symbol}: ${pair.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.forex);
+      if (valid.length > 0) {
+        marketDataSummary += "**Forex Pairs:**\n";
+        valid.forEach((pair: any) => {
+          const changePercent = ((pair.c - pair.pc) / pair.pc * 100).toFixed(2);
+          marketDataSummary += `- ${pair.symbol}: ${pair.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
     
     if (marketData.crypto) {
-      marketDataSummary += "**Cryptocurrencies:**\n";
-      marketData.crypto.forEach((crypto: any) => {
-        const changePercent = ((crypto.c - crypto.pc) / crypto.pc * 100).toFixed(2);
-        marketDataSummary += `- ${crypto.symbol}: $${crypto.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.crypto);
+      if (valid.length > 0) {
+        marketDataSummary += "**Cryptocurrencies:**\n";
+        valid.forEach((crypto: any) => {
+          const changePercent = ((crypto.c - crypto.pc) / crypto.pc * 100).toFixed(2);
+          marketDataSummary += `- ${crypto.symbol}: $${crypto.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
     
     if (marketData.commodities) {
-      marketDataSummary += "**Commodities:**\n";
-      marketData.commodities.forEach((commodity: any) => {
-        const changePercent = ((commodity.c - commodity.pc) / commodity.pc * 100).toFixed(2);
-        marketDataSummary += `- ${commodity.symbol}: $${commodity.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.commodities);
+      if (valid.length > 0) {
+        marketDataSummary += "**Commodities:**\n";
+        valid.forEach((commodity: any) => {
+          const changePercent = ((commodity.c - commodity.pc) / commodity.pc * 100).toFixed(2);
+          marketDataSummary += `- ${commodity.symbol}: $${commodity.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
 
     if (newsSummaries.length > 0) {
