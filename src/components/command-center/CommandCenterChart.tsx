@@ -520,33 +520,41 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     [autoPatterns, timeframe, bars]
   );
 
-  // Derive formation overlays ONLY for actionable active patterns (keep shading/levels in sync)
-  const formationOverlays: FormationOverlayData[] = useMemo(() => {
-    if (actionableActivePatterns.length === 0 || bars.length === 0) return [];
+  const sortedPatterns = useMemo(
+    () =>
+      [...autoPatterns]
+        .filter((p) => !!getDetectedAt(p))
+        .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()),
+    [autoPatterns]
+  );
 
-    const overlays: FormationOverlayData[] = [];
-    for (const p of actionableActivePatterns) {
-      const vs = p.visual_spec as any;
-      const patternBars = p.bars as CompressedBar[] | undefined;
-      const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
-      const formation = deriveFormationOverlay(vs?.pivots, barsToUse, vs?.patternId || p.pattern_id);
-      if (formation) {
-        overlays.push(formation);
-      }
-    }
-    return overlays;
-  }, [actionableActivePatterns, bars]);
+  const isResolvedOutcome = (outcome?: string | null) =>
+    ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
+
+  // Pattern source for visual overlays (polyline/zones/TP-SL lines):
+  // Active > latest unresolved > most recent historical
+  const overlayPattern = useMemo(() => {
+    if (sortedPatterns.length === 0) return null;
+    const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
+    const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
+    return activePattern || latestUnresolvedPattern || sortedPatterns[0];
+  }, [sortedPatterns]);
+
+  // Derive formation overlays from selected overlay pattern (not only actionable patterns)
+  const formationOverlays: FormationOverlayData[] = useMemo(() => {
+    if (!overlayPattern || bars.length === 0) return [];
+
+    const vs = overlayPattern.visual_spec as any;
+    const patternBars = overlayPattern.bars as CompressedBar[] | undefined;
+    const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
+    const formation = deriveFormationOverlay(vs?.pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
+
+    return formation ? [formation] : [];
+  }, [overlayPattern, bars]);
 
   // Derive trade plan from current, fresh pattern (active first, then latest unresolved)
   const tradePlan = useMemo(() => {
     if (autoPatterns.length === 0) return undefined;
-
-    const isResolvedOutcome = (outcome?: string | null) =>
-      ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-
-    const sortedPatterns = [...autoPatterns]
-      .filter((p) => !!getDetectedAt(p))
-      .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
 
     const activePattern = actionableActivePatterns[0];
     const latestUnresolvedPattern = sortedPatterns.find(
@@ -564,29 +572,29 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [actionableActivePatterns, autoPatterns, timeframe]);
+  }, [actionableActivePatterns, autoPatterns, sortedPatterns, timeframe]);
 
-  // Pass only actionable active patterns for overlay price lines
+  // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
-    if (actionableActivePatterns.length === 0) return [];
+    if (!overlayPattern) return [];
 
-    return actionableActivePatterns.map((p) => ({
-      id: p.id,
-      patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
-      patternId: p.pattern_id,
-      direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
-      detectedAt: getDetectedAt(p),
-      entryPrice: p.entry_price,
-      stopLossPrice: p.stop_loss_price,
-      takeProfitPrice: p.take_profit_price,
-      outcome: p.outcome ?? null,
-      outcomePnlPercent: p.outcome_pnl_percent ?? null,
-      isActive: !!p.isActive,
-      status: p.status ?? null,
-      pivots: (p.visual_spec as any)?.pivots,
-      bars: p.bars,
-    }));
-  }, [actionableActivePatterns]);
+    return [{
+      id: overlayPattern.id,
+      patternName: PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name,
+      patternId: overlayPattern.pattern_id,
+      direction: (overlayPattern.direction === 'bullish' ? 'long' : overlayPattern.direction === 'bearish' ? 'short' : overlayPattern.direction) as 'long' | 'short',
+      detectedAt: getDetectedAt(overlayPattern),
+      entryPrice: overlayPattern.entry_price,
+      stopLossPrice: overlayPattern.stop_loss_price,
+      takeProfitPrice: overlayPattern.take_profit_price,
+      outcome: overlayPattern.outcome ?? null,
+      outcomePnlPercent: overlayPattern.outcome_pnl_percent ?? null,
+      isActive: !!overlayPattern.isActive,
+      status: overlayPattern.status ?? null,
+      pivots: (overlayPattern.visual_spec as any)?.pivots,
+      bars: overlayPattern.bars,
+    }];
+  }, [overlayPattern]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
