@@ -1258,6 +1258,8 @@ const StudyChart = memo(({
     container.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     return () => {
       try {
@@ -1278,6 +1280,8 @@ const StudyChart = memo(({
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
