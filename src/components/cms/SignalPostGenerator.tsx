@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Zap, Copy, Loader2, RefreshCw } from "lucide-react";
+import { Zap, Copy, Loader2, RefreshCw, Download } from "lucide-react";
 import { GradeBadge } from "@/components/ui/GradeBadge";
+import { renderSignalSVG, parseBarsFromDetection, parsePivotsFromDetection } from "./signalChartSvg";
 
 // ─── Tweet formatting (mirrors post-patterns-to-social edge function) ───────
 
@@ -56,12 +57,20 @@ interface PatternRow {
   risk_reward_ratio: number;
   trend_alignment: string | null;
   status: string;
+  bars: any;
+  visual_spec: any;
+}
+
+interface SignalItem {
+  pattern: PatternRow;
+  tweet: string;
+  svgMarkup: string;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function SignalPostGenerator() {
-  const [signals, setSignals] = useState<{ pattern: PatternRow; tweet: string }[]>([]);
+  const [signals, setSignals] = useState<SignalItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const generate = async () => {
@@ -69,7 +78,7 @@ export function SignalPostGenerator() {
     try {
       const { data, error } = await supabase
         .from('live_pattern_detections')
-        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status')
+        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status, bars, visual_spec')
         .in('quality_score', ['A', 'B'])
         .in('status', ['active', 'pending'])
         .order('last_confirmed_at', { ascending: false })
@@ -87,8 +96,27 @@ export function SignalPostGenerator() {
         return;
       }
 
-      setSignals(filtered.map(p => ({ pattern: p, tweet: buildTweet(p) })));
-      toast({ title: `${filtered.length} signal(s) generated` });
+      const items: SignalItem[] = filtered.map(p => {
+        const bars = parseBarsFromDetection(p);
+        const pivots = parsePivotsFromDetection(p);
+        const svgMarkup = renderSignalSVG({
+          bars,
+          entry: p.entry_price,
+          sl: p.stop_loss_price,
+          tp: p.take_profit_price,
+          direction: p.direction,
+          patternName: p.pattern_name,
+          instrument: p.instrument,
+          timeframe: p.timeframe,
+          grade: p.quality_score?.toUpperCase() ?? '?',
+          rr: Number(p.risk_reward_ratio).toFixed(1),
+          pivots,
+        });
+        return { pattern: p, tweet: buildTweet(p), svgMarkup };
+      });
+
+      setSignals(items);
+      toast({ title: `${items.length} signal(s) generated` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -99,6 +127,17 @@ export function SignalPostGenerator() {
   const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);
     toast({ title: "Copied to clipboard" });
+  };
+
+  const downloadSvg = (svgMarkup: string, instrument: string) => {
+    const blob = new Blob([svgMarkup], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${instrument.replace(/[^a-zA-Z0-9]/g, '_')}_signal.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "SVG downloaded" });
   };
 
   return (
@@ -130,8 +169,8 @@ export function SignalPostGenerator() {
       )}
 
       <div className="grid gap-4">
-        {signals.map(({ pattern, tweet }) => (
-          <Card key={pattern.id} className="p-5 space-y-3">
+        {signals.map(({ pattern, tweet, svgMarkup }) => (
+          <Card key={pattern.id} className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-lg">{pattern.instrument}</span>
@@ -145,16 +184,34 @@ export function SignalPostGenerator() {
                 </span>
                 <span className="text-xs text-muted-foreground">{pattern.timeframe?.toUpperCase()}</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(tweet)}
-                className="gap-1.5"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copy
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadSvg(svgMarkup, pattern.instrument)}
+                  className="gap-1.5"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  SVG
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyToClipboard(tweet)}
+                  className="gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </Button>
+              </div>
             </div>
+
+            {/* Inline chart visual */}
+            <div
+              className="rounded-lg overflow-hidden border border-border"
+              dangerouslySetInnerHTML={{ __html: svgMarkup }}
+            />
+
             <pre className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 font-mono border">
               {tweet}
             </pre>
