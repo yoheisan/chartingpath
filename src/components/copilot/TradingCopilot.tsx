@@ -491,7 +491,7 @@ export function TradingCopilot({
                   </p>
                   {!isAuthenticated && (
                     <p className="text-xs text-muted-foreground/70 mt-2">
-                      Try {GUEST_MSG_LIMIT} free messages — sign in for unlimited access
+                      {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
                     </p>
                   )}
                 </div>

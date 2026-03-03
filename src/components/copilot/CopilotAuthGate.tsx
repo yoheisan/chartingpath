@@ -2,6 +2,7 @@ import { Lock, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { useTranslation } from "react-i18next";
 
 interface CopilotAuthGateProps {
   messagesUsed: number;
@@ -9,6 +10,7 @@ interface CopilotAuthGateProps {
 }
 
 export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGateProps) {
+  const { t } = useTranslation();
   const redirectPath = typeof window !== 'undefined'
     ? encodeURIComponent(window.location.pathname + window.location.search)
     : '/';
@@ -20,9 +22,9 @@ export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGatePr
           <Lock className="h-5 w-5 text-primary" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium">You've used all {maxMessages} free messages</p>
+          <p className="text-sm font-medium">{t('copilot.usedAllMessages', "You've used all {{count}} free messages", { count: maxMessages })}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Sign in for unlimited access to the Trading Copilot
+            {t('copilot.signInUnlimited', 'Sign in for unlimited access to the Trading Copilot')}
           </p>
         </div>
         
@@ -36,7 +38,7 @@ export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGatePr
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">or</span>
+            <span className="bg-background px-2 text-muted-foreground">{t('copilot.or', 'or')}</span>
           </div>
         </div>
 
@@ -44,13 +46,13 @@ export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGatePr
           <Button asChild size="sm" className="flex-1">
             <Link to={`/auth?redirect=${redirectPath}`}>
               <LogIn className="h-3.5 w-3.5 mr-1.5" />
-              Sign In
+              {t('copilot.signIn', 'Sign In')}
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="flex-1">
             <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
               <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-              Register
+              {t('copilot.register', 'Register')}
             </Link>
           </Button>
         </div>
