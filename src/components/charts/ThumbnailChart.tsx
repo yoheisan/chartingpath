@@ -64,12 +64,18 @@ function coerceBars(input: any[] | undefined | null): CompressedBar[] {
   return out;
 }
 
+const MAX_THUMBNAIL_BARS = 80; // Cap bars for performance — keeps chart snappy
+
 const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick, instrument }: ThumbnailChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
 
-  const coercedBars = useMemo(() => coerceBars(bars), [bars]);
+  // Coerce then trim to last N bars for performance — always shows latest candles
+  const coercedBars = useMemo(() => {
+    const all = coerceBars(bars);
+    return all.length > MAX_THUMBNAIL_BARS ? all.slice(-MAX_THUMBNAIL_BARS) : all;
+  }, [bars]);
 
   useEffect(() => {
     // Always clean up any existing chart instance before rebuilding.
@@ -268,8 +274,14 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
       scaleMargins: optimalMargins,
     });
     
-    // Fit content
-    chart.timeScale().fitContent();
+    // Show the latest candles — scroll to the right edge so the most recent
+    // bar is always visible. fitContent() centres all bars and can leave the
+    // viewport stuck in the middle on wide datasets.
+    const ts = chart.timeScale();
+    ts.fitContent();
+    // After fitting, nudge the visible range so the rightmost bar is flush
+    // with the right edge. scrollToRealTime() ensures the latest bar is shown.
+    ts.scrollToRealTime();
 
     // Handle resize
     const resizeObserver = new ResizeObserver(entries => {
