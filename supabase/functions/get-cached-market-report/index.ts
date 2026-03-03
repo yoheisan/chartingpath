@@ -270,39 +270,15 @@ serve(async (req) => {
       }
     }
 
-    // Fetch forex data
+    // Fetch forex data (sequential to avoid Yahoo 429)
     if (markets.includes("forex")) {
-      const forexPairs = [
-        { symbol: "EURUSD=X", name: "EUR/USD" },
-        { symbol: "GBPUSD=X", name: "GBP/USD" },
-        { symbol: "USDJPY=X", name: "USD/JPY" },
-        { symbol: "AUDUSD=X", name: "AUD/USD" }
-      ];
-      const forexPromises = forexPairs.map(async ({ symbol, name }) => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol: name, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching forex data for ${name}:`, error);
-          return { symbol: name, c: 0, pc: 0, error: true };
-        }
-      });
-      marketData.forex = await Promise.all(forexPromises);
+      const forexSymbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"];
+      const forexNames = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD"];
+      const forexResults = await fetchYahooSequential(forexSymbols);
+      marketData.forex = forexResults.map((r, i) => ({ ...r, symbol: forexNames[i] }));
     }
 
-    // Fetch crypto data
+    // Fetch crypto data (Finnhub, not Yahoo — parallel is fine)
     if (markets.includes("crypto")) {
       const cryptoSymbols = ["BINANCE:BTCUSDT", "BINANCE:ETHUSDT"];
       const cryptoPromises = cryptoSymbols.map(async symbol => {
@@ -318,36 +294,12 @@ serve(async (req) => {
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
-    // Fetch commodities data
+    // Fetch commodities data (sequential to avoid Yahoo 429)
     if (markets.includes("commodities")) {
-      const commodities = [
-        { symbol: "GC=F", name: "Gold (XAU/USD)" },
-        { symbol: "SI=F", name: "Silver (XAG/USD)" },
-        { symbol: "CL=F", name: "WTI Crude" },
-        { symbol: "BZ=F", name: "Brent Crude" }
-      ];
-      const commodityPromises = commodities.map(async ({ symbol, name }) => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol: name, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching commodity data for ${name}:`, error);
-          return { symbol: name, c: 0, pc: 0, error: true };
-        }
-      });
-      marketData.commodities = await Promise.all(commodityPromises);
+      const comSymbols = ["GC=F", "SI=F", "CL=F", "BZ=F"];
+      const comNames = ["Gold (XAU/USD)", "Silver (XAG/USD)", "WTI Crude", "Brent Crude"];
+      const comResults = await fetchYahooSequential(comSymbols);
+      marketData.commodities = comResults.map((r, i) => ({ ...r, symbol: comNames[i] }));
     }
 
     console.log("Market data fetched successfully");
