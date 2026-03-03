@@ -63,15 +63,37 @@ serve(async (req) => {
       });
 
       if (generateError || !newReport?.report) {
-        console.error('Could not generate market report:', generateError);
+        const errorMsg = newReport?.error || generateError?.message || 'Unknown error';
+        console.error('Could not generate market report:', errorMsg);
+        
+        // If retryable (data source issue), tell the caller
+        if (newReport?.retryable) {
+          return new Response(
+            JSON.stringify({ error: 'Market data temporarily unavailable. Try again in a few minutes.', retryable: true }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+          );
+        }
         throw new Error('Could not fetch or generate market report');
       }
       report = newReport.report;
     }
 
+    // Validate report doesn't contain "Data temporarily unavailable" for stocks
+    if (report.includes('Data temporarily unavailable')) {
+      console.warn('WARNING: Report contains "Data temporarily unavailable" — refusing to generate teaser');
+      return new Response(
+        JSON.stringify({ error: 'Market report has incomplete data. Skipping teaser generation.', retryable: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+      );
+    }
+
     // Validate report has real data (not all zeros)
     if (report.includes('$0 (') || report.includes('$0.00') || report.match(/\b0\s*\(0\.?0*%\)/)) {
-      console.warn('WARNING: Report appears to contain zero-value data, may indicate data fetch failure');
+      console.warn('WARNING: Report contains zero-value data — refusing to generate teaser');
+      return new Response(
+        JSON.stringify({ error: 'Market report contains invalid zero-value data. Skipping teaser generation.', retryable: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+      );
     }
 
     const link = 'chartingpath.com';
