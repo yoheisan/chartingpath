@@ -684,7 +684,9 @@ const StudyChart = memo(({
         }
 
         // Shaded formation zone (canvas overlay)
-        if (formation.hasZone) {
+        // Skip standalone canvas handler when historical patterns are present —
+        // the unified drawHistoricalPatternOverlay will handle formation zones + triangles
+        if (formation.hasZone && !hasHistoricalOverlays) {
           const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
           if (zonePoints.length >= 2) {
             const drawZone = () => {
