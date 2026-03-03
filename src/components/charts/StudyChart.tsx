@@ -1276,6 +1276,7 @@ const StudyChart = memo(({
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       try {
@@ -1298,6 +1299,7 @@ const StudyChart = memo(({
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
