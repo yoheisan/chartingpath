@@ -4716,6 +4716,8 @@
     "login": "Login"
   },
   "copilot": {
+    "tooltip": "Ask anything about markets, patterns & trade setups ✨",
+    "askAI": "Ask AI",
     "title": "Trading Copilot",
     "subtitle": "AI-powered research assistant",
     "welcome": "How can I help you trade smarter?",
