@@ -1305,13 +1305,21 @@ const StudyChart = memo(({
       const clampedFrom = clampedTo - rawWidth;
       const latestBarInsideViewport = clampedTo >= totalBars - 1;
 
-      if (latestBarInsideViewport) {
+      // Guard against stale/overly-wide persisted ranges that cause candles to sit far left
+      // with excessive whitespace on the right.
+      const maxReasonableWidth = Math.max(
+        (initialVisibleBars || 80) * 2,
+        Math.min(totalBars + maxRightPaddingBars, 260)
+      );
+      const hasReasonableWidth = rawWidth <= maxReasonableWidth;
+
+      if (latestBarInsideViewport && hasReasonableWidth) {
         chart.timeScale().setVisibleLogicalRange({ from: clampedFrom, to: clampedTo });
       } else {
         // Fallback to focused default when persisted range is stale for this dataset
         const visibleCount = Math.min(totalBars, initialVisibleBars || 80);
-        const from = totalBars - visibleCount;
         const to = totalBars + 2;
+        const from = Math.max(0, to - visibleCount);
         chart.timeScale().setVisibleLogicalRange({ from, to });
       }
     } else if (persistedTimeRange) {
