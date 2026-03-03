@@ -57,10 +57,19 @@ export function EducationalContentManager() {
   const queryClient = useQueryClient();
 
   const buildFullPost = (piece: any): string => {
-    const parts: string[] = [piece.content];
-    if (piece.link_back_url) parts.push(`\n${piece.link_back_url}`);
-    if (piece.hashtags?.length) parts.push(`\n${piece.hashtags.map((t: string) => `#${t}`).join(" ")}`);
-    return parts.join("\n");
+    let text = piece.content;
+    // Only append link if content doesn't already contain it
+    if (piece.link_back_url && !text.includes(piece.link_back_url)) {
+      text += `\n\n${piece.link_back_url}`;
+    }
+    // Only append hashtags if content doesn't already have them
+    if (piece.hashtags?.length) {
+      const hashtagLine = piece.hashtags.map((t: string) => `#${t}`).join(" ");
+      if (!text.includes(hashtagLine)) {
+        text += `\n\n${hashtagLine}`;
+      }
+    }
+    return text;
   };
 
   const handleCopy = async (piece: any) => {
@@ -367,7 +376,7 @@ export function EducationalContentManager() {
                         className="text-xs text-primary hover:underline flex items-center gap-1 line-clamp-1"
                       >
                         <ExternalLink className="h-3 w-3 shrink-0" />
-                        {piece.link_back_url.replace("https://chartingpath.lovable.app/blog/", "")}
+                        {piece.link_back_url.replace("https://chartingpath.com/blog/", "")}
                       </a>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
@@ -452,7 +461,7 @@ export function EducationalContentManager() {
               <Input
                 value={editLinkUrl}
                 onChange={(e) => setEditLinkUrl(e.target.value)}
-                placeholder="https://chartingpath.lovable.app/blog/..."
+                placeholder="https://chartingpath.com/blog/..."
                 className="mt-1"
               />
             </div>
