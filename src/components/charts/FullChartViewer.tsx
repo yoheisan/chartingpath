@@ -853,7 +853,13 @@ export default function FullChartViewer({
           scaleMargins: optimalMargins,
         });
 
-        chart.timeScale().fitContent();
+        // Show recent bars focused on the right edge instead of centering all data
+        const totalBars = bars.length;
+        const visibleBars = Math.min(totalBars, 120);
+        const from = Math.max(0, totalBars - visibleBars);
+        const to = totalBars + 5;
+        chart.timeScale().setVisibleLogicalRange({ from, to });
+        chart.timeScale().scrollToRealTime();
 
         resizeObserver = new ResizeObserver((entries) => {
           const entry = entries[0];
