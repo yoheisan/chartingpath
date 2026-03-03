@@ -22,6 +22,37 @@ import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationO
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 
+/** Last-resort fallback: extract bars embedded in active pattern detections */
+async function tryExtractPatternBars(sym: string, tf: string): Promise<CompressedBar[]> {
+  try {
+    const { data } = await supabase
+      .from('live_pattern_detections')
+      .select('bars')
+      .eq('instrument', sym.toUpperCase())
+      .eq('timeframe', tf)
+      .eq('status', 'active')
+      .order('first_detected_at', { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0 && data[0].bars) {
+      const raw = data[0].bars as any[];
+      if (Array.isArray(raw) && raw.length > 0) {
+        return raw.map((b: any) => ({
+          t: b.t || '',
+          o: Number(b.o ?? b.open ?? 0),
+          h: Number(b.h ?? b.high ?? 0),
+          l: Number(b.l ?? b.low ?? 0),
+          c: Number(b.c ?? b.close ?? 0),
+          v: Number(b.v ?? b.volume ?? 0),
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('[CommandCenterChart] pattern bars fallback failed:', e);
+  }
+  return [];
+}
+
 interface CommandCenterChartProps {
   symbol: string;
   timeframe: string;
