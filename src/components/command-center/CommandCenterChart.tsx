@@ -454,7 +454,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [autoPatterns]);
+  }, [autoPatterns, actionableActivePatterns]);
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
@@ -504,7 +504,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       autoPatterns.filter(
         (p) => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p)
       ),
-    [autoPatterns, timeframe]
+    [autoPatterns, timeframe, bars]
   );
 
   // Derive formation overlays ONLY for actionable active patterns (keep shading/levels in sync)
