@@ -970,9 +970,48 @@ const StudyChart = memo(({
         }
       }
 
-      // Draw trade zones on canvas (TP/SL shading) — current pattern only
-      if (patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels) {
-        const drawHistoricalPatternZones = () => {
+      // Helper: draw filled triangle markers on canvas (matching FullChartViewer / Study Chart)
+      const drawCanvasTriangles = (ctx: CanvasRenderingContext2D) => {
+        if (canvasTriangleMarkers.length === 0 || !chartRef.current || !candleSeriesRef.current) return;
+        const ts = chartRef.current.timeScale();
+        canvasTriangleMarkers.forEach((marker) => {
+          try {
+            const x = (ts as any).timeToCoordinate?.(marker.time);
+            const y = (candleSeriesRef.current as any).priceToCoordinate?.(marker.price);
+            if (x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y)) return;
+
+            const size = 10;
+            ctx.beginPath();
+            if (marker.direction === 'up') {
+              ctx.moveTo(x, y - size * 0.2);
+              ctx.lineTo(x - size * 0.7, y + size);
+              ctx.lineTo(x + size * 0.7, y + size);
+            } else {
+              ctx.moveTo(x, y + size * 0.2);
+              ctx.lineTo(x - size * 0.7, y - size);
+              ctx.lineTo(x + size * 0.7, y - size);
+            }
+            ctx.closePath();
+            ctx.fillStyle = marker.color;
+            ctx.fill();
+
+            if (marker.label) {
+              ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = marker.color;
+              const labelY = marker.direction === 'up' ? y + size + 14 : y - size - 6;
+              ctx.fillText(marker.label, x, labelY);
+            }
+          } catch { /* ignore */ }
+        });
+      };
+
+      // Draw trade zones + canvas triangles on canvas overlay
+      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels;
+      const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
+
+      if (shouldDrawZones || shouldDrawTriangles) {
+        const drawHistoricalPatternOverlay = () => {
           const canvas = canvasOverlayRef.current;
           if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
           const ctx = canvas.getContext('2d');
@@ -989,15 +1028,23 @@ const StudyChart = memo(({
           ctx.scale(dpr, dpr);
           ctx.clearRect(0, 0, rect.width, rect.height);
 
-          drawPatternZones(
-            ctx, chartRef.current, candleSeriesRef.current,
-            [currentPattern], patternToggles,
-            rect.width, rect.height
-          );
+          // TP/SL shaded zones
+          if (shouldDrawZones) {
+            drawPatternZones(
+              ctx, chartRef.current, candleSeriesRef.current,
+              [currentPattern!], patternToggles,
+              rect.width, rect.height
+            );
+          }
+
+          // Canvas triangle markers (Entry, Breakout Level)
+          if (shouldDrawTriangles) {
+            drawCanvasTriangles(ctx);
+          }
         };
 
-        setTimeout(() => requestAnimationFrame(drawHistoricalPatternZones), 200);
-        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternZones);
+        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 200);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
       }
     }
 
