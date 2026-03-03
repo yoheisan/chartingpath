@@ -88,7 +88,7 @@ async function filterSeededSetups(patterns: any[]): Promise<any[]> {
   return filtered;
 }
 
-
+export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: MorningBriefingProps) {
   const { t } = useTranslation();
   const [setups, setSetups] = useState<BriefingSetup[]>(() => getCachedBriefing()?.setups || []);
   const [loading, setLoading] = useState(!getCachedBriefing());
