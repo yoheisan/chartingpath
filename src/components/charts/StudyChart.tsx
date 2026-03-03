@@ -855,29 +855,70 @@ const StudyChart = memo(({
         patternLinesCleanupsRef.current.push(cleanup);
       }
 
-      // Render pattern markers (name labels + direction arrows)
-      // Exclude the currentPattern from generatePatternMarkers since directionMarkers handles it
-      // to avoid duplicate markers (orange detection + green direction) on the same pattern
+      // === PIVOT-BASED STRUCTURAL MARKERS (matching FullChartViewer / Study Chart) ===
+      // Collect canvas triangle markers for Entry and Breakout Level
+      const canvasTriangleMarkers: Array<{
+        time: number;
+        price: number;
+        direction: 'up' | 'down';
+        color: string;
+        label?: string;
+      }> = [];
+
+      // Parse current pattern's pivots for structural markers
+      if (currentPattern && currentPattern.pivots && currentPattern.pivots.length > 0 && patternToggles.showLabels) {
+        const patternBars = currentPattern.bars && currentPattern.bars.length > 0 ? currentPattern.bars : bars;
+
+        currentPattern.pivots.forEach((pivot) => {
+          // Skip "Entry" pivot — we render it separately as a canvas triangle below
+          if ((pivot.label || '').toLowerCase().includes('entry')) return;
+
+          const isBreakout = (pivot.label || '').toLowerCase().includes('breakout') || (pivot.label || '').toLowerCase().includes('breakdown');
+          const isBreakdown = (pivot.label || '').toLowerCase().includes('breakdown');
+
+          let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+          if (Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < patternBars.length) {
+            const altT = Math.floor(new Date(patternBars[pivot.index].t).getTime() / 1000);
+            // Prefer index-based time if available
+            t = altT || t;
+          }
+
+          if (isBreakout) {
+            const pointUp = !isBreakdown;
+            const barIdx = patternBars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
+            const price = barIdx >= 0 ? (pointUp ? patternBars[barIdx].l : patternBars[barIdx].h) : pivot.price;
+            canvasTriangleMarkers.push({
+              time: t,
+              price,
+              direction: pointUp ? 'up' : 'down',
+              color: '#f97316',
+              label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
+            });
+          }
+        });
+      }
+
+      // Entry Point → canvas triangle on last bar (matching Study Chart blue ▲/▼)
+      if (currentPattern && hasRenderableTradeLevels && safeChartData.length > 0) {
+        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const lastBar = safeChartData[safeChartData.length - 1];
+        const lastBarData = bars[bars.length - 1];
+        canvasTriangleMarkers.push({
+          time: lastBar.time as number,
+          price: isLong ? (lastBarData?.l ?? currentPattern.entryPrice) : (lastBarData?.h ?? currentPattern.entryPrice),
+          direction: isLong ? 'up' : 'down',
+          color: '#3b82f6',
+          label: 'Entry',
+        });
+      }
+
+      // Render pattern markers for OTHER patterns (not the current one — it uses canvas triangles)
       const patternsForMarkers = currentPattern
         ? historicalPatterns.filter(p => p.id !== currentPattern.id)
         : historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
-      
-      // Always add a direction arrow on the most recent bar for the current pattern
-      const directionMarkers: Array<{ time: Time; position: 'aboveBar' | 'belowBar'; color: string; shape: SeriesMarkerShape; text: string }> = [];
-      if (currentPattern && hasRenderableTradeLevels && safeChartData.length > 0) {
-        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
-        const lastBar = safeChartData[safeChartData.length - 1];
-        directionMarkers.push({
-          time: lastBar.time,
-          position: isLong ? 'belowBar' : 'aboveBar',
-          color: isLong ? '#22c55e' : '#ef4444',
-          shape: isLong ? 'arrowUp' : 'arrowDown',
-          text: currentPattern.patternName,
-        });
-      }
 
-      // Merge all marker sources into a single createSeriesMarkers call
+      // Merge native markers (no directionMarkers — Entry is now a canvas triangle)
       const allMarkers = [
         ...(chartMarkers || []).filter(m => m.time).map(m => ({
           time: (typeof m.time === 'string' ? m.time.split('T')[0] : String(m.time)) as Time,
@@ -887,7 +928,6 @@ const StudyChart = memo(({
           text: m.text,
         })),
         ...patternMarkerData,
-        ...directionMarkers,
       ].sort((a, b) => {
         const ta = typeof a.time === 'string' ? a.time : String(a.time);
         const tb = typeof b.time === 'string' ? b.time : String(b.time);
@@ -930,9 +970,48 @@ const StudyChart = memo(({
         }
       }
 
-      // Draw trade zones on canvas (TP/SL shading) — current pattern only
-      if (patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels) {
-        const drawHistoricalPatternZones = () => {
+      // Helper: draw filled triangle markers on canvas (matching FullChartViewer / Study Chart)
+      const drawCanvasTriangles = (ctx: CanvasRenderingContext2D) => {
+        if (canvasTriangleMarkers.length === 0 || !chartRef.current || !candleSeriesRef.current) return;
+        const ts = chartRef.current.timeScale();
+        canvasTriangleMarkers.forEach((marker) => {
+          try {
+            const x = (ts as any).timeToCoordinate?.(marker.time);
+            const y = (candleSeriesRef.current as any).priceToCoordinate?.(marker.price);
+            if (x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y)) return;
+
+            const size = 10;
+            ctx.beginPath();
+            if (marker.direction === 'up') {
+              ctx.moveTo(x, y - size * 0.2);
+              ctx.lineTo(x - size * 0.7, y + size);
+              ctx.lineTo(x + size * 0.7, y + size);
+            } else {
+              ctx.moveTo(x, y + size * 0.2);
+              ctx.lineTo(x - size * 0.7, y - size);
+              ctx.lineTo(x + size * 0.7, y - size);
+            }
+            ctx.closePath();
+            ctx.fillStyle = marker.color;
+            ctx.fill();
+
+            if (marker.label) {
+              ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = marker.color;
+              const labelY = marker.direction === 'up' ? y + size + 14 : y - size - 6;
+              ctx.fillText(marker.label, x, labelY);
+            }
+          } catch { /* ignore */ }
+        });
+      };
+
+      // Draw trade zones + canvas triangles on canvas overlay
+      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels;
+      const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
+
+      if (shouldDrawZones || shouldDrawTriangles) {
+        const drawHistoricalPatternOverlay = () => {
           const canvas = canvasOverlayRef.current;
           if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
           const ctx = canvas.getContext('2d');
@@ -949,15 +1028,23 @@ const StudyChart = memo(({
           ctx.scale(dpr, dpr);
           ctx.clearRect(0, 0, rect.width, rect.height);
 
-          drawPatternZones(
-            ctx, chartRef.current, candleSeriesRef.current,
-            [currentPattern], patternToggles,
-            rect.width, rect.height
-          );
+          // TP/SL shaded zones
+          if (shouldDrawZones) {
+            drawPatternZones(
+              ctx, chartRef.current, candleSeriesRef.current,
+              [currentPattern!], patternToggles,
+              rect.width, rect.height
+            );
+          }
+
+          // Canvas triangle markers (Entry, Breakout Level)
+          if (shouldDrawTriangles) {
+            drawCanvasTriangles(ctx);
+          }
         };
 
-        setTimeout(() => requestAnimationFrame(drawHistoricalPatternZones), 200);
-        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternZones);
+        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 200);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
       }
     }
 
