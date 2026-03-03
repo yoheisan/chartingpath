@@ -337,12 +337,42 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         .order('detected_at', { ascending: false })
         .limit(50);
 
+      // Derive outcome for live patterns by checking if price has breached SL/TP
+      const deriveLiveOutcome = (p: any): string | null => {
+        if (p.status === 'expired') return 'timeout';
+        if (p.status !== 'active') return null;
+        const entry = Number(p.entry_price);
+        const sl = Number(p.stop_loss_price);
+        const tp = Number(p.take_profit_price);
+        const currentBars = symbolDataCache.get(`${symbol}:${timeframe}`) || [];
+        if (currentBars.length === 0 || !Number.isFinite(entry)) return null;
+        
+        // Check bars AFTER the detection date for SL/TP breach
+        const detectedAt = p.last_confirmed_at || p.first_detected_at || '';
+        const isLong = p.direction === 'long' || p.direction === 'bullish';
+        
+        for (const bar of currentBars) {
+          if (bar.t <= detectedAt) continue;
+          if (isLong) {
+            if (Number.isFinite(sl) && bar.l <= sl) return 'hit_sl';
+            if (Number.isFinite(tp) && bar.h >= tp) return 'hit_tp';
+          } else {
+            if (Number.isFinite(sl) && bar.h >= sl) return 'hit_sl';
+            if (Number.isFinite(tp) && bar.l <= tp) return 'hit_tp';
+          }
+        }
+        return null;
+      };
+
       const combinedPatterns = [
-        ...(liveData || []).map(p => ({
-          ...p,
-          outcome: p.status === 'expired' ? 'timeout' : null,
-          isActive: p.status === 'active'
-        })),
+        ...(liveData || []).map(p => {
+          const derivedOutcome = deriveLiveOutcome(p);
+          return {
+            ...p,
+            outcome: derivedOutcome,
+            isActive: p.status === 'active' && !derivedOutcome,
+          };
+        }),
         ...(historicalData || []).map(p => ({ ...p, isActive: false })),
       ];
 
