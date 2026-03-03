@@ -896,11 +896,9 @@ const StudyChart = memo(({
 
           if (isBreakout) {
             const pointUp = !isBreakdown;
-            const barIdx = patternBars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
-            const price = barIdx >= 0 ? (pointUp ? patternBars[barIdx].l : patternBars[barIdx].h) : pivot.price;
             canvasTriangleMarkers.push({
               time: t,
-              price,
+              price: pivot.price,
               direction: pointUp ? 'up' : 'down',
               color: '#f97316',
               label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
@@ -936,10 +934,10 @@ const StudyChart = memo(({
         const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
         canvasTriangleMarkers.push({
           time: matchBar.time as number,
-          price: currentPattern.entryPrice,
+          price: isLong ? (matchBarData?.l ?? currentPattern.entryPrice) : (matchBarData?.h ?? currentPattern.entryPrice),
           direction: isLong ? 'up' : 'down',
           color: '#3b82f6',
-          label: 'Entry',
+          label: '',
         });
       }
 

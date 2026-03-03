@@ -633,10 +633,10 @@ export default function FullChartViewer({
           const isLong = setup.direction === 'long';
           canvasTriangleMarkers.push({
             time: lastBar.time as number,
-            price: tradePlan.entry,
+            price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
             color: '#3b82f6',
-            label: 'Entry',
+            label: '',
           });
         }
 
