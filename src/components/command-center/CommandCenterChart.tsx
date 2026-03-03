@@ -589,8 +589,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
+    const derivedOutcomePattern = sortedPatterns.find((p) => p._derivedOutcome && isFreshPattern(p));
     const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
-    const preferred = activePattern || latestUnresolvedPattern || sortedPatterns[0];
+    const preferred = activePattern || derivedOutcomePattern || latestUnresolvedPattern || sortedPatterns[0];
 
     // Keep hierarchy, but prefer a pivot-bearing pattern so ZigZag/zone can always render.
     return hasPivots(preferred) ? preferred : (sortedPatterns.find(hasPivots) || preferred);
