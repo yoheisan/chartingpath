@@ -535,9 +535,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // Active > latest unresolved > most recent historical
   const overlayPattern = useMemo(() => {
     if (sortedPatterns.length === 0) return null;
+
+    const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
     const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
-    return activePattern || latestUnresolvedPattern || sortedPatterns[0];
+    const preferred = activePattern || latestUnresolvedPattern || sortedPatterns[0];
+
+    // Keep hierarchy, but prefer a pivot-bearing pattern so ZigZag/zone can always render.
+    return hasPivots(preferred) ? preferred : (sortedPatterns.find(hasPivots) || preferred);
   }, [sortedPatterns]);
 
   // Derive formation overlays from selected overlay pattern (not only actionable patterns)
