@@ -119,6 +119,47 @@ serve(async (req) => {
       throw new Error("NEWS_API_KEY is not configured");
     }
 
+    // Helper: fetch Yahoo Finance with retry and rate limit handling
+    const fetchYahooQuote = async (symbol: string, retries = 2): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
+          if (response.status === 429) {
+            console.warn(`Yahoo 429 for ${symbol}, attempt ${attempt + 1}, waiting...`);
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+          if (!response.ok) {
+            console.error(`Yahoo ${response.status} for ${symbol}`);
+            return { symbol, c: 0, pc: 0, error: true };
+          }
+          const data = await response.json();
+          const quote = data?.chart?.result?.[0];
+          const meta = quote?.meta;
+          const current = meta?.regularMarketPrice || 0;
+          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
+          return { symbol, c: current, pc: previous, error: !current };
+        } catch (error) {
+          console.error(`Error fetching Yahoo data for ${symbol}:`, error);
+          if (attempt < retries) await new Promise(r => setTimeout(r, 800));
+        }
+      }
+      return { symbol, c: 0, pc: 0, error: true };
+    };
+
+    // Helper: sequential Yahoo fetches with small delay to avoid 429
+    const fetchYahooSequential = async (symbols: string[]): Promise<any[]> => {
+      const results: any[] = [];
+      for (const symbol of symbols) {
+        const result = await fetchYahooQuote(symbol);
+        results.push(result);
+        if (symbols.indexOf(symbol) < symbols.length - 1) {
+          await new Promise(r => setTimeout(r, 300)); // 300ms between requests
+        }
+      }
+      return results;
+    };
+
     // Fetch real-time market data
     console.log("Fetching real-time market data...");
     
@@ -129,57 +170,24 @@ serve(async (req) => {
 
     // Fetch stock market data
     if (markets.includes("stocks")) {
-      // Select region-appropriate stock indices
       const getStockSymbols = (tz: string): { yahooSymbols: string[]; finnhubSymbols: string[] } => {
         if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
-          return { 
-            yahooSymbols: ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"], // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"], finnhubSymbols: [] };
         } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
-          return { 
-            yahooSymbols: ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"], // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"], finnhubSymbols: [] };
         } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
-          return { 
-            yahooSymbols: ["^AXJO", "^AORD"], // ASX 200, All Ordinaries
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^AXJO", "^AORD"], finnhubSymbols: [] };
         } else {
-          return { 
-            yahooSymbols: [],
-            finnhubSymbols: ["SPY", "QQQ", "DIA"] // US ETFs work with Finnhub
-          };
+          return { yahooSymbols: [], finnhubSymbols: ["SPY", "QQQ", "DIA"] };
         }
       };
       
       const stockSymbols = getStockSymbols(timezone);
       
-      // Fetch from Yahoo Finance (for indices)
-      const yahooPromises = stockSymbols.yahooSymbols.map(async symbol => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching Yahoo stock data for ${symbol}:`, error);
-          return { symbol, c: 0, pc: 0, error: true };
-        }
-      });
+      // Fetch Yahoo symbols sequentially to avoid rate limiting
+      const yahooResults = await fetchYahooSequential(stockSymbols.yahooSymbols);
       
-      // Fetch from Finnhub (for US symbols)
+      // Fetch Finnhub symbols in parallel (different API, no Yahoo rate limit)
       const finnhubPromises = stockSymbols.finnhubSymbols.map(async symbol => {
         try {
           const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
@@ -191,7 +199,8 @@ serve(async (req) => {
         }
       });
       
-      marketData.stocks = await Promise.all([...yahooPromises, ...finnhubPromises]);
+      const finnhubResults = await Promise.all(finnhubPromises);
+      marketData.stocks = [...yahooResults, ...finnhubResults];
       
       // Fetch market news from Finnhub with region-specific categories
       try {
