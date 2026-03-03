@@ -58,19 +58,25 @@ export function MarketReportScheduler() {
     }
   };
 
-  // Generate market breadth content for manual copy-paste
+  const REGION_CONFIG: Record<string, { timezone: string; markets: string[]; label: string }> = {
+    tokyo: { timezone: "Asia/Tokyo", markets: ["stocks", "forex", "commodities"], label: "Tokyo" },
+    london: { timezone: "Europe/London", markets: ["stocks", "forex", "commodities"], label: "London" },
+    us: { timezone: "America/New_York", markets: ["stocks", "forex", "crypto", "commodities"], label: "US" },
+  };
+
   const generateBreadthContent = useCallback(async () => {
     setIsGeneratingBreadth(true);
     setBreadthContent("");
     setBreadthCopied(false);
+    const config = REGION_CONFIG[breadthRegion];
     try {
       const { data, error } = await supabase.functions.invoke(
         "generate-social-market-teaser",
         {
           body: {
-            reportType: "post_market",
-            timezone: "America/New_York",
-            markets: ["stocks", "forex", "crypto", "commodities"],
+            reportType: breadthType,
+            timezone: config.timezone,
+            markets: config.markets,
             tone: "professional",
             linkBackUrl: BREADTH_URL
           }
@@ -82,14 +88,14 @@ export function MarketReportScheduler() {
       const teaser = data?.teaser || data?.content || "";
       const fullPost = `${teaser}\n\n📊 Full Market Breadth Dashboard 👉 ${BREADTH_URL}\n\n#MarketBreadth #Trading #StockMarket #Finance`;
       setBreadthContent(fullPost);
-      toast.success("Market breadth content generated — ready to copy!");
+      toast.success(`${config.label} ${breadthType === "pre_market" ? "Pre" : "Post"}-Market content generated!`);
     } catch (error: any) {
       console.error("Error generating breadth content:", error);
       toast.error(error.message || "Failed to generate market breadth content");
     } finally {
       setIsGeneratingBreadth(false);
     }
-  }, []);
+  }, [breadthRegion, breadthType]);
 
   const copyBreadthContent = async () => {
     await navigator.clipboard.writeText(breadthContent);
