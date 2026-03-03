@@ -70,7 +70,6 @@ export function EducationalContentManager() {
     toast.success("Copied to clipboard — ready to paste!");
     setTimeout(() => setCopiedId(null), 2000);
   };
-  const queryClient = useQueryClient();
 
   // Fetch educational pieces
   const { data: pieces, isLoading: piecesLoading } = useQuery({
