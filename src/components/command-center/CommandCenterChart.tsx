@@ -558,24 +558,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             });
           });
         }
-      } else {
-        // Historical pattern: colored circle marker with outcome label
-        if (detectedAt) {
-          const outcomeColor = p.outcome === 'hit_tp' ? '#22c55e' 
-            : p.outcome === 'hit_sl' ? '#ef4444' 
-            : '#6b7280';
-          const outcomeLabel = p.outcome === 'hit_tp' ? '✓ TP' 
-            : p.outcome === 'hit_sl' ? '✗ SL' 
-            : p.outcome === 'timeout' ? '⏱' 
-            : '';
-          markers.push({
-            time: detectedAt,
-            position: isLong ? 'belowBar' : 'aboveBar',
-            color: outcomeColor,
-            shape: 'circle',
-            text: outcomeLabel,
-          });
-        }
       }
     }
     
@@ -609,19 +591,19 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
 
   // Pattern source for visual overlays (polyline/zones/TP-SL lines):
-  // Active > derived outcome > latest unresolved > most recent historical
-  // NOTE: Do NOT gate on freshness/drift here — overlays should always render for active patterns
+  // Only show active patterns or live-derived outcomes (not yet backend-confirmed).
+  // Resolved/historical/stale patterns show nothing on chart.
   const overlayPattern = useMemo(() => {
     if (sortedPatterns.length === 0) return null;
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
     const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
-    const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
-    const preferred = activePattern || derivedOutcomePattern || latestUnresolvedPattern || sortedPatterns[0];
+    const preferred = activePattern || derivedOutcomePattern || null;
+    if (!preferred) return null;
 
-    // Keep hierarchy, but prefer a pivot-bearing pattern so ZigZag/zone can always render.
-    return hasPivots(preferred) ? preferred : (sortedPatterns.find(hasPivots) || preferred);
+    // Prefer a pivot-bearing pattern so ZigZag/zone can render.
+    return hasPivots(preferred) ? preferred : preferred;
   }, [sortedPatterns]);
 
   // Derive formation overlays from selected overlay pattern (not only actionable patterns)
@@ -847,24 +829,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                 : 80
               }
             />
-            {/* Outcome marker legend — visible when historical patterns exist */}
-            {chartMarkers.some(m => m.shape === 'circle') && (
-              <div className="absolute bottom-2 left-2 flex items-center gap-3 px-2.5 py-1.5 rounded-md bg-background/80 backdrop-blur-sm border border-border/40 text-[11px] text-muted-foreground z-10">
-                <span className="font-medium text-foreground/70">Outcomes:</span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-                  TP Hit
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                  SL Hit
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-gray-500" />
-                  Pending
-                </span>
-              </div>
-            )}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
