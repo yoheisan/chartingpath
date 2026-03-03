@@ -1055,11 +1055,16 @@ const StudyChart = memo(({
           ctx.scale(dpr, dpr);
           ctx.clearRect(0, 0, rect.width, rect.height);
 
-          // TP/SL shaded zones
+          // TP/SL shaded zones — only draw zones for levels within proximity
           if (shouldDrawZones) {
+            const zonesToggles = {
+              ...patternToggles,
+              showStopLoss: patternToggles.showStopLoss && levelDistances.sl,
+              showTakeProfit: patternToggles.showTakeProfit && levelDistances.tp,
+            };
             drawPatternZones(
               ctx, chartRef.current, candleSeriesRef.current,
-              [currentPattern!], patternToggles,
+              [currentPattern!], zonesToggles,
               rect.width, rect.height
             );
           }
