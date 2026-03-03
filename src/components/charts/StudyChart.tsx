@@ -610,23 +610,9 @@ const StudyChart = memo(({
         title: 'TP',
       });
 
-      // Add Entry triangle marker on the last bar
-      if (safeChartData.length > 0) {
-        const lastBar = safeChartData[safeChartData.length - 1];
-        const isLong = tradePlan.direction === 'long';
-        const markerShape: SeriesMarkerShape = isLong ? 'arrowUp' : 'arrowDown';
-        try {
-          createSeriesMarkers(candleSeries, [{
-            time: lastBar.time,
-            position: isLong ? 'belowBar' : 'aboveBar',
-            color: isLong ? '#22c55e' : '#ef4444',
-            shape: markerShape,
-            text: '',
-          }]);
-        } catch {
-          // Ignore marker errors
-        }
-      }
+      // Standalone entry marker — skip if historical patterns will render their own
+      // (historical patterns path draws canvas triangles at the correct entry price)
+
     }
 
     // Render external chart markers ONLY when historicalPatterns won't merge them later
@@ -950,7 +936,7 @@ const StudyChart = memo(({
         const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
         canvasTriangleMarkers.push({
           time: matchBar.time as number,
-          price: isLong ? (matchBarData?.l ?? currentPattern.entryPrice) : (matchBarData?.h ?? currentPattern.entryPrice),
+          price: currentPattern.entryPrice,
           direction: isLong ? 'up' : 'down',
           color: '#3b82f6',
           label: 'Entry',
