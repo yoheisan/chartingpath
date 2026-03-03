@@ -651,7 +651,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
-    if (!overlayPattern) return [];
+    if (!overlayPattern || !tradePlan) return [];
 
     return [{
       id: overlayPattern.id,
