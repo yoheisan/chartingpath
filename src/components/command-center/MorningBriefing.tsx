@@ -82,6 +82,8 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
         .order('first_detected_at', { ascending: false })
         .limit(50);
 
+      let rawPatterns: any[] = [];
+
       if (userId) {
         const { data: wl } = await supabase
           .from('user_watchlist')
@@ -102,19 +104,21 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             .limit(20);
 
           if (wlPatterns && wlPatterns.length >= 3) {
-            const scored = scoreAndSort(wlPatterns);
-            setSetups(scored.slice(0, 5));
-            setCachedBriefing(scored.slice(0, 5));
-            setLoading(false);
-            return;
+            rawPatterns = wlPatterns;
           }
         }
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      if (rawPatterns.length === 0) {
+        const { data, error } = await query;
+        if (error) throw error;
+        rawPatterns = data || [];
+      }
 
-      const scored = scoreAndSort(data || []);
+      // Filter to only setups that have seeded price data in the DB
+      const seededPatterns = await filterSeededSetups(rawPatterns);
+
+      const scored = scoreAndSort(seededPatterns);
       const top = scored.slice(0, 5);
       setSetups(top);
       setCachedBriefing(top);
