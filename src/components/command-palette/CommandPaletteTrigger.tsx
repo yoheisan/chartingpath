@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useCommandPalette } from "./CommandPaletteContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export function CommandPaletteTrigger() {
+  const { t } = useTranslation();
   const { open } = useCommandPalette();
   const isMobile = useIsMobile();
 
@@ -24,7 +26,7 @@ export function CommandPaletteTrigger() {
         <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90" />
       </span>
       <Sparkles className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
-      <span className="font-semibold whitespace-nowrap">Ask AI</span>
+      <span className="font-semibold whitespace-nowrap">{t('copilot.askAI', 'Ask AI')}</span>
     </Button>
   );
 }

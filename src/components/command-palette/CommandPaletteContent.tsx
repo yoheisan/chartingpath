@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   Command,
@@ -48,6 +49,7 @@ interface CommandPaletteContentProps {
 }
 
 export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandPaletteContentProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -264,7 +266,7 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
         </div>
         <div className="flex-1">
           <CommandInput 
-            placeholder={isMobile ? "Search or ask AI..." : "Search commands or ask AI anything..."} 
+            placeholder={isMobile ? t('commandPalette.searchMobile', 'Search or ask AI...') : t('commandPalette.searchDesktop', 'Search commands or ask AI anything...')} 
             value={search}
             onValueChange={setSearch}
             className={cn(
@@ -290,12 +292,12 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
               <Sparkles className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">No commands found</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('commandPalette.noCommandsFound', 'No commands found')}</p>
               <button 
                 onClick={() => onAIQuery(search)}
                 className="text-sm text-primary hover:underline font-medium"
               >
-                Ask AI: "{search}"
+                {t('commandPalette.askAIWith', 'Ask AI: "{{query}}"', { query: search })}
               </button>
             </div>
           </div>
@@ -459,21 +461,21 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       )}>
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
-          <span>Type anything to ask AI</span>
+          <span>{t('commandPalette.typeToAsk', 'Type anything to ask AI')}</span>
         </div>
         {!isMobile && (
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↑↓</kbd>
-              Navigate
+              {t('commandPalette.navigate', 'Navigate')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↵</kbd>
-              Select
+              {t('commandPalette.select', 'Select')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">Esc</kbd>
-              Close
+              {t('commandPalette.close', 'Close')}
             </span>
           </div>
         )}

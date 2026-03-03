@@ -4787,6 +4787,16 @@
     "signIn": "Sign In",
     "register": "Register"
   },
+  "commandPalette": {
+    "searchMobile": "Search or ask AI...",
+    "searchDesktop": "Search commands or ask AI anything...",
+    "noCommandsFound": "No commands found",
+    "askAIWith": "Ask AI: \"{{query}}\"",
+    "typeToAsk": "Type anything to ask AI",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close"
+  },
   "chartAnalysisDialog": {
     "title": "Chart Analysis",
     "askCopilot": "Ask Copilot",
