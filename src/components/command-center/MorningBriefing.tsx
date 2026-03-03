@@ -59,7 +59,36 @@ function setCachedBriefing(setups: BriefingSetup[]) {
   } catch {}
 }
 
-export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: MorningBriefingProps) {
+/** Filter setups to only those with seeded price data in historical_prices */
+async function filterSeededSetups(patterns: any[]): Promise<any[]> {
+  if (patterns.length === 0) return [];
+
+  // Get unique symbol+timeframe combos
+  const combos = [...new Set(patterns.map(p => `${p.instrument}|${p.timeframe}`))];
+  const symbols = [...new Set(patterns.map(p => p.instrument))];
+  const timeframes = [...new Set(patterns.map(p => p.timeframe))];
+
+  // Check which symbols have data in historical_prices for their timeframe
+  const { data: seeded } = await supabase
+    .from('historical_prices')
+    .select('symbol, timeframe')
+    .in('symbol', symbols)
+    .in('timeframe', timeframes)
+    .limit(500);
+
+  if (!seeded || seeded.length === 0) {
+    console.warn('[MorningBriefing] No seeded data found, hiding all setups');
+    return [];
+  }
+
+  const seededSet = new Set(seeded.map(s => `${s.symbol}|${s.timeframe}`));
+
+  const filtered = patterns.filter(p => seededSet.has(`${p.instrument}|${p.timeframe}`));
+  console.log(`[MorningBriefing] ${patterns.length} setups → ${filtered.length} with seeded data`);
+  return filtered;
+}
+
+
   const { t } = useTranslation();
   const [setups, setSetups] = useState<BriefingSetup[]>(() => getCachedBriefing()?.setups || []);
   const [loading, setLoading] = useState(!getCachedBriefing());
