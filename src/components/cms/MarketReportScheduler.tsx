@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,8 @@ export function MarketReportScheduler() {
   const [isGeneratingBreadth, setIsGeneratingBreadth] = useState(false);
   const [breadthContent, setBreadthContent] = useState<string>("");
   const [breadthCopied, setBreadthCopied] = useState(false);
+  const [breadthRegion, setBreadthRegion] = useState<string>("us");
+  const [breadthType, setBreadthType] = useState<"pre_market" | "post_market">("post_market");
 
   // Toggle auto-schedule cron jobs
   const toggleAutoSchedule = async () => {
@@ -56,19 +58,25 @@ export function MarketReportScheduler() {
     }
   };
 
-  // Generate market breadth content for manual copy-paste
+  const REGION_CONFIG: Record<string, { timezone: string; markets: string[]; label: string }> = {
+    tokyo: { timezone: "Asia/Tokyo", markets: ["stocks", "forex", "commodities"], label: "Tokyo" },
+    london: { timezone: "Europe/London", markets: ["stocks", "forex", "commodities"], label: "London" },
+    us: { timezone: "America/New_York", markets: ["stocks", "forex", "crypto", "commodities"], label: "US" },
+  };
+
   const generateBreadthContent = useCallback(async () => {
     setIsGeneratingBreadth(true);
     setBreadthContent("");
     setBreadthCopied(false);
+    const config = REGION_CONFIG[breadthRegion];
     try {
       const { data, error } = await supabase.functions.invoke(
         "generate-social-market-teaser",
         {
           body: {
-            reportType: "post_market",
-            timezone: "America/New_York",
-            markets: ["stocks", "forex", "crypto", "commodities"],
+            reportType: breadthType,
+            timezone: config.timezone,
+            markets: config.markets,
             tone: "professional",
             linkBackUrl: BREADTH_URL
           }
@@ -80,14 +88,14 @@ export function MarketReportScheduler() {
       const teaser = data?.teaser || data?.content || "";
       const fullPost = `${teaser}\n\n📊 Full Market Breadth Dashboard 👉 ${BREADTH_URL}\n\n#MarketBreadth #Trading #StockMarket #Finance`;
       setBreadthContent(fullPost);
-      toast.success("Market breadth content generated — ready to copy!");
+      toast.success(`${config.label} ${breadthType === "pre_market" ? "Pre" : "Post"}-Market content generated!`);
     } catch (error: any) {
       console.error("Error generating breadth content:", error);
       toast.error(error.message || "Failed to generate market breadth content");
     } finally {
       setIsGeneratingBreadth(false);
     }
-  }, []);
+  }, [breadthRegion, breadthType]);
 
   const copyBreadthContent = async () => {
     await navigator.clipboard.writeText(breadthContent);
@@ -355,17 +363,50 @@ export function MarketReportScheduler() {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "tokyo", label: "🇯🇵 Tokyo" },
+              { key: "london", label: "🇬🇧 London" },
+              { key: "us", label: "🇺🇸 US" },
+            ].map((r) => (
+              <Button
+                key={r.key}
+                variant={breadthRegion === r.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBreadthRegion(r.key)}
+              >
+                {r.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "pre_market" as const, label: "Pre-Market" },
+              { key: "post_market" as const, label: "Post-Market" },
+            ].map((t) => (
+              <Button
+                key={t.key}
+                variant={breadthType === t.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBreadthType(t.key)}
+              >
+                {t.key === "pre_market" ? "📋" : "📈"} {t.label}
+              </Button>
+            ))}
+          </div>
+
           <Button
             onClick={generateBreadthContent}
             disabled={isGeneratingBreadth}
             className="w-full"
           >
             {isGeneratingBreadth ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating from latest close...</>
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating {REGION_CONFIG[breadthRegion]?.label} {breadthType === "pre_market" ? "Pre" : "Post"}-Market...</>
             ) : (
-              <><BarChart3 className="h-4 w-4 mr-2" />Generate Market Breadth Post</>
+              <><BarChart3 className="h-4 w-4 mr-2" />Generate {REGION_CONFIG[breadthRegion]?.label} {breadthType === "pre_market" ? "Pre" : "Post"}-Market Post</>
             )}
-          </Button>
+           </Button>
 
           {breadthContent && (
             <div className="space-y-3">
@@ -381,7 +422,7 @@ export function MarketReportScheduler() {
                     className="h-8 gap-1.5"
                   >
                     {breadthCopied ? (
-                      <><Check className="h-3.5 w-3.5 text-green-500" />Copied!</>
+                      <><Check className="h-3.5 w-3.5" />Copied!</>
                     ) : (
                       <><Copy className="h-3.5 w-3.5" />Copy All</>
                     )}
