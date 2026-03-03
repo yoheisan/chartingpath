@@ -249,6 +249,16 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         });
 
         if (fetchedBars.length === 0) {
+          // Last resort: try to use bars embedded in active pattern detections
+          const patternBars = await tryExtractPatternBars(symbol, timeframe);
+          if (patternBars.length > 0) {
+            console.log(`[CommandCenterChart] Using ${patternBars.length} bars from pattern detection as fallback`);
+            symbolDataCache.set(cacheKey, patternBars);
+            setBars(patternBars);
+            updatePriceData(patternBars);
+            setLoading(false);
+            return;
+          }
           throw new Error('No data available for this symbol/timeframe');
         }
 
