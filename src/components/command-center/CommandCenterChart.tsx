@@ -453,15 +453,58 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     });
   }, [autoPatterns]);
 
-  // Derive formation overlays ONLY for active patterns (Apple: clean, focused)
+  const getDetectedAt = (pattern: any) =>
+    pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
+
+  const freshnessHoursByTimeframe: Record<string, number> = {
+    '15m': 6,
+    '1h': 24,
+    '4h': 72,
+    '8h': 120,
+    '1d': 14 * 24,
+    '1wk': 60 * 24,
+  };
+
+  const maxEntryDriftPctByTimeframe: Record<string, number> = {
+    '15m': 2.5,
+    '1h': 4,
+    '4h': 6,
+    '8h': 8,
+    '1d': 12,
+    '1wk': 20,
+  };
+
+  const freshnessWindowMs = (freshnessHoursByTimeframe[timeframe] ?? 24) * 60 * 60 * 1000;
+  const freshnessCutoffTs = Date.now() - freshnessWindowMs;
+  const maxEntryDriftPct = maxEntryDriftPctByTimeframe[timeframe] ?? 4;
+
+  const isFreshPattern = (pattern: any) => {
+    const ts = new Date(getDetectedAt(pattern)).getTime();
+    return Number.isFinite(ts) && ts >= freshnessCutoffTs;
+  };
+
+  const isEntryStillTradable = (pattern: any) => {
+    const entry = Number(pattern?.entry_price);
+    const current = Number(pattern?.current_price);
+    if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
+    const driftPct = Math.abs((current - entry) / entry) * 100;
+    return driftPct <= maxEntryDriftPct;
+  };
+
+  const actionableActivePatterns = useMemo(
+    () =>
+      autoPatterns.filter(
+        (p) => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p)
+      ),
+    [autoPatterns, timeframe]
+  );
+
+  // Derive formation overlays ONLY for actionable active patterns (keep shading/levels in sync)
   const formationOverlays: FormationOverlayData[] = useMemo(() => {
-    if (autoPatterns.length === 0 || bars.length === 0) return [];
-    
-    const activeOnly = autoPatterns.filter(p => p.isActive);
-    if (activeOnly.length === 0) return [];
-    
+    if (actionableActivePatterns.length === 0 || bars.length === 0) return [];
+
     const overlays: FormationOverlayData[] = [];
-    for (const p of activeOnly) {
+    for (const p of actionableActivePatterns) {
       const vs = p.visual_spec as any;
       const patternBars = p.bars as CompressedBar[] | undefined;
       const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
@@ -471,7 +514,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       }
     }
     return overlays;
-  }, [autoPatterns, bars]);
+  }, [actionableActivePatterns, bars]);
 
   // Derive trade plan from current, fresh pattern (active first, then latest unresolved)
   const tradePlan = useMemo(() => {
@@ -479,50 +522,14 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const isResolvedOutcome = (outcome?: string | null) =>
       ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-    const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
-
-    const freshnessHoursByTimeframe: Record<string, number> = {
-      '15m': 6,
-      '1h': 24,
-      '4h': 72,
-      '8h': 120,
-      '1d': 14 * 24,
-      '1wk': 60 * 24,
-    };
-    const freshnessWindowMs = (freshnessHoursByTimeframe[timeframe] ?? 24) * 60 * 60 * 1000;
-    const cutoffTs = Date.now() - freshnessWindowMs;
-    const maxEntryDriftPctByTimeframe: Record<string, number> = {
-      '15m': 2.5,
-      '1h': 4,
-      '4h': 6,
-      '8h': 8,
-      '1d': 12,
-      '1wk': 20,
-    };
-    const maxEntryDriftPct = maxEntryDriftPctByTimeframe[timeframe] ?? 4;
-
-    const isFresh = (pattern: any) => {
-      const ts = new Date(getDetectedAt(pattern)).getTime();
-      return Number.isFinite(ts) && ts >= cutoffTs;
-    };
-
-    const isEntryStillTradable = (pattern: any) => {
-      const entry = Number(pattern?.entry_price);
-      const current = Number(pattern?.current_price);
-      if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
-      const driftPct = Math.abs((current - entry) / entry) * 100;
-      return driftPct <= maxEntryDriftPct;
-    };
 
     const sortedPatterns = [...autoPatterns]
-      .filter(p => !!getDetectedAt(p))
+      .filter((p) => !!getDetectedAt(p))
       .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
 
-    const activePattern = sortedPatterns.find(
-      p => p.isActive && p.status !== 'expired' && isFresh(p) && isEntryStillTradable(p)
-    );
+    const activePattern = actionableActivePatterns[0];
     const latestUnresolvedPattern = sortedPatterns.find(
-      p => !isResolvedOutcome(p.outcome) && isFresh(p) && isEntryStillTradable(p)
+      (p) => !isResolvedOutcome(p.outcome) && isFreshPattern(p) && isEntryStillTradable(p)
     );
     const currentPattern = activePattern || latestUnresolvedPattern;
     if (!currentPattern) return undefined;
@@ -536,42 +543,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [autoPatterns, timeframe]);
+  }, [actionableActivePatterns, autoPatterns, timeframe]);
 
-  // Only pass active + fresh + tradable patterns for overlay price lines
+  // Pass only actionable active patterns for overlay price lines
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
-    if (autoPatterns.length === 0) return [];
+    if (actionableActivePatterns.length === 0) return [];
 
-    const freshnessHoursByTf: Record<string, number> = {
-      '15m': 6, '1h': 24, '4h': 72, '8h': 120, '1d': 14 * 24, '1wk': 60 * 24,
-    };
-    const maxDriftByTf: Record<string, number> = {
-      '15m': 2.5, '1h': 4, '4h': 6, '8h': 8, '1d': 12, '1wk': 20,
-    };
-    const freshnessMs = (freshnessHoursByTf[timeframe] ?? 24) * 60 * 60 * 1000;
-    const cutoff = Date.now() - freshnessMs;
-    const maxDrift = maxDriftByTf[timeframe] ?? 4;
-
-    return autoPatterns
-      .filter(p => {
-        if (!p.isActive) return false;
-        // Freshness check
-        const ts = new Date(p.last_confirmed_at || p.first_detected_at || '').getTime();
-        if (!Number.isFinite(ts) || ts < cutoff) return false;
-        // Price drift check
-        const entry = Number(p.entry_price);
-        const current = Number(p.current_price);
-        if (Number.isFinite(entry) && entry > 0 && Number.isFinite(current) && current > 0) {
-          if (Math.abs((current - entry) / entry) * 100 > maxDrift) return false;
-        }
-        return true;
-      })
-      .map(p => ({
+    return actionableActivePatterns.map((p) => ({
       id: p.id,
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
       direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
-      detectedAt: p.last_confirmed_at || p.first_detected_at || p.detected_at,
+      detectedAt: getDetectedAt(p),
       entryPrice: p.entry_price,
       stopLossPrice: p.stop_loss_price,
       takeProfitPrice: p.take_profit_price,
@@ -582,7 +565,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       pivots: (p.visual_spec as any)?.pivots,
       bars: p.bars,
     }));
-  }, [autoPatterns, timeframe]);
+  }, [actionableActivePatterns]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
