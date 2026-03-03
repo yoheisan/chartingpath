@@ -395,7 +395,11 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     const markers: ChartMarker[] = [];
 
     // Build a set of actionable pattern IDs for detailed rendering
-    const actionableIds = new Set(actionableActivePatterns.map(p => p.id));
+    const actionableIds = new Set(
+      autoPatterns
+        .filter(p => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p))
+        .map(p => p.id)
+    );
 
     for (const p of autoPatterns) {
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
@@ -454,7 +458,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [autoPatterns, actionableActivePatterns]);
+  }, [autoPatterns, bars, timeframe]);
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
