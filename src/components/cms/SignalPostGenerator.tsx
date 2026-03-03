@@ -62,6 +62,7 @@ interface PatternRow {
   risk_reward_ratio: number;
   trend_alignment: string | null;
   status: string;
+  share_token: string | null;
   bars: any;
   visual_spec: any;
 }
