@@ -818,28 +818,34 @@ const StudyChart = memo(({
       const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
       const currentPattern = activePattern || latestUnresolvedPattern || sortedPatterns[0];
 
-      // Guard against stale/outlier trade levels that can crush candle scaling.
-      const hasRenderableTradeLevels = (() => {
-        if (!currentPattern || safeChartData.length === 0) return false;
+      // Per-level distance guard: suppress individual distant levels instead of all-or-nothing.
+      // This prevents Y-axis distortion while still rendering close levels.
+      const levelDistances = (() => {
+        if (!currentPattern || safeChartData.length === 0) return { entry: false, sl: false, tp: false, any: false };
         const latestClose = Number(safeChartData[safeChartData.length - 1]?.close);
         const entry = Number(currentPattern.entryPrice);
         const sl = Number(currentPattern.stopLossPrice);
         const tp = Number(currentPattern.takeProfitPrice);
-        if (!Number.isFinite(latestClose) || latestClose <= 0) return false;
-        if (![entry, sl, tp].every((p) => Number.isFinite(p) && p > 0)) return false;
+        if (!Number.isFinite(latestClose) || latestClose <= 0) return { entry: false, sl: false, tp: false, any: false };
 
-        // If levels are extremely far from current price, skip rendering lines/zones.
-        const maxDistancePct = 35;
-        return [entry, sl, tp].every((price) => Math.abs((price - latestClose) / latestClose) * 100 <= maxDistancePct);
+        const pctDist = (price: number) => Number.isFinite(price) && price > 0 
+          ? Math.abs((price - latestClose) / latestClose) * 100 : Infinity;
+
+        // Tighter per-level thresholds: entry 20%, SL/TP 25%
+        const entryOk = pctDist(entry) <= 20;
+        const slOk = pctDist(sl) <= 25;
+        const tpOk = pctDist(tp) <= 25;
+
+        return { entry: entryOk, sl: slOk, tp: tpOk, any: entryOk || slOk || tpOk };
       })();
+      const hasRenderableTradeLevels = levelDistances.any;
 
       if (currentPattern && hasRenderableTradeLevels) {
-        // Include direction in the ENTRY price line title so user always knows the trade direction
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const dirLabel = isLong ? '▲ LONG' : '▼ SHORT';
         
-        // Override the default ENTRY title with direction
-        if (patternToggles.showEntry) {
+        // Render Entry line only if within range
+        if (patternToggles.showEntry && levelDistances.entry) {
           candleSeries.createPriceLine({
             price: currentPattern.entryPrice,
             color: '#3b82f6',
@@ -849,10 +855,29 @@ const StudyChart = memo(({
             title: `ENTRY ${dirLabel}`,
           });
         }
-        // Render SL/TP lines (skip entry since we just rendered it with direction)
-        const togglesWithoutEntry = { ...patternToggles, showEntry: false };
-        const cleanup = renderPatternPriceLines(candleSeries, currentPattern, togglesWithoutEntry);
-        patternLinesCleanupsRef.current.push(cleanup);
+        // Render SL/TP lines individually based on proximity
+        if (patternToggles.showStopLoss && levelDistances.sl) {
+          const slLine = candleSeries.createPriceLine({
+            price: currentPattern.stopLossPrice,
+            color: PATTERN_OVERLAY_COLORS.stopLoss,
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'SL',
+          });
+          patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(slLine); } catch {} });
+        }
+        if (patternToggles.showTakeProfit && levelDistances.tp) {
+          const tpLine = candleSeries.createPriceLine({
+            price: currentPattern.takeProfitPrice,
+            color: PATTERN_OVERLAY_COLORS.takeProfit,
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'TP',
+          });
+          patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(tpLine); } catch {} });
+        }
       }
 
       // === PIVOT-BASED STRUCTURAL MARKERS (matching FullChartViewer / Study Chart) ===
@@ -913,7 +938,9 @@ const StudyChart = memo(({
       }
 
       // Render pattern markers for OTHER patterns (not the current one — it uses canvas triangles)
-      const patternsForMarkers = currentPattern
+      // UNLESS the current pattern has no canvas triangles, in which case include it as a native marker fallback
+      const hasCanvasTrianglesForCurrent = canvasTriangleMarkers.length > 0;
+      const patternsForMarkers = currentPattern && hasCanvasTrianglesForCurrent
         ? historicalPatterns.filter(p => p.id !== currentPattern.id)
         : historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
@@ -1007,7 +1034,7 @@ const StudyChart = memo(({
       };
 
       // Draw trade zones + canvas triangles on canvas overlay
-      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels;
+      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry;
       const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
 
       if (shouldDrawZones || shouldDrawTriangles) {
@@ -1028,11 +1055,16 @@ const StudyChart = memo(({
           ctx.scale(dpr, dpr);
           ctx.clearRect(0, 0, rect.width, rect.height);
 
-          // TP/SL shaded zones
+          // TP/SL shaded zones — only draw zones for levels within proximity
           if (shouldDrawZones) {
+            const zonesToggles = {
+              ...patternToggles,
+              showStopLoss: patternToggles.showStopLoss && levelDistances.sl,
+              showTakeProfit: patternToggles.showTakeProfit && levelDistances.tp,
+            };
             drawPatternZones(
               ctx, chartRef.current, candleSeriesRef.current,
-              [currentPattern!], patternToggles,
+              [currentPattern!], zonesToggles,
               rect.width, rect.height
             );
           }

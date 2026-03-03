@@ -548,16 +548,13 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
     if (![entry_price, stop_loss_price, take_profit_price].every(p => Number.isFinite(p) && p > 0)) return undefined;
 
-    // Extreme price filter: skip rendering if any level is >35% from current price
-    // This prevents the chart Y-axis from being distorted by far-away TP/SL levels
+    // Per-level distance guard: skip the tradePlan entirely only if entry itself is too far.
+    // Individual SL/TP distance is handled by StudyChart's per-level rendering.
     const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
     const latestClose = Number(lastBar?.c);
     if (Number.isFinite(latestClose) && latestClose > 0) {
-      const maxDistancePct = 35;
-      const allLevelsInRange = [entry_price, stop_loss_price, take_profit_price].every(
-        price => Math.abs((price - latestClose) / latestClose) * 100 <= maxDistancePct
-      );
-      if (!allLevelsInRange) return undefined;
+      const entryDist = Math.abs((entry_price - latestClose) / latestClose) * 100;
+      if (entryDist > 20) return undefined;
     }
 
     return {
