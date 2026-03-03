@@ -550,9 +550,20 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     if (!overlayPattern || bars.length === 0) return [];
 
     const vs = overlayPattern.visual_spec as any;
+    const pivots = vs?.pivots;
+
+    // Guard: skip if pivots are too far from current price (>50% drift)
+    if (pivots && pivots.length > 0) {
+      const latestClose = bars[bars.length - 1].c;
+      const allClose = pivots.every((p: any) =>
+        Math.abs((p.price - latestClose) / latestClose) <= 0.5
+      );
+      if (!allClose) return [];
+    }
+
     const patternBars = overlayPattern.bars as CompressedBar[] | undefined;
     const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
-    const formation = deriveFormationOverlay(vs?.pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
+    const formation = deriveFormationOverlay(pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
 
     return formation ? [formation] : [];
   }, [overlayPattern, bars]);

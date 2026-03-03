@@ -666,6 +666,7 @@ const StudyChart = memo(({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            autoscaleInfoProvider: () => null,
           });
           zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
         }
@@ -678,6 +679,7 @@ const StudyChart = memo(({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            autoscaleInfoProvider: () => null,
           });
           upperSeries.setData(sanitizeSeriesData(formation.upperTrend as Array<{ time: Time; value: number }>));
         }
@@ -690,6 +692,7 @@ const StudyChart = memo(({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            autoscaleInfoProvider: () => null,
           });
           lowerSeries.setData(sanitizeSeriesData(formation.lowerTrend as Array<{ time: Time; value: number }>));
         }
