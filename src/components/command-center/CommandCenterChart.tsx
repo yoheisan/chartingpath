@@ -612,15 +612,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return formation ? [formation] : [];
   }, [overlayPattern, bars]);
 
-  // Derive trade plan from current, fresh pattern (active first, then latest unresolved)
+  // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
-    if (autoPatterns.length === 0) return undefined;
-
-    const activePattern = actionableActivePatterns[0];
-    const latestUnresolvedPattern = sortedPatterns.find(
-      (p) => !isResolvedOutcome(p.outcome) && isFreshPattern(p) && isEntryStillTradable(p)
-    );
-    const currentPattern = activePattern || latestUnresolvedPattern;
+    const currentPattern = overlayPattern;
     if (!currentPattern) return undefined;
 
     const { entry_price, stop_loss_price, take_profit_price, direction } = currentPattern;
@@ -632,7 +626,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [actionableActivePatterns, autoPatterns, sortedPatterns, timeframe]);
+  }, [overlayPattern]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
