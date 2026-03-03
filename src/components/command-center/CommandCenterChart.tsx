@@ -636,9 +636,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   }, [overlayPattern, bars]);
 
   // Derive formation overlays from selected overlay pattern
-  // Per UI/UX spec: show full pattern UI or nothing — gate on tradePlan
+  // Formation overlays (zigzag, pivots) render independently of trade plan levels
+  // They don't affect Y-axis scaling, so no extreme price filter needed
   const formationOverlays: FormationOverlayData[] = useMemo(() => {
-    if (!overlayPattern || !tradePlan || bars.length === 0) return [];
+    if (!overlayPattern || bars.length === 0) return [];
 
     const vs = overlayPattern.visual_spec as any;
     const pivots = vs?.pivots;
@@ -648,7 +649,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     const formation = deriveFormationOverlay(pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
 
     return formation ? [formation] : [];
-  }, [overlayPattern, tradePlan, bars]);
+  }, [overlayPattern, bars]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
