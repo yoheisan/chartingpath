@@ -419,13 +419,22 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   const isEntryStillTradable = (pattern: any) => {
     const entry = Number(pattern?.entry_price);
-    let current = Number(pattern?.current_price);
-    if (!Number.isFinite(current) || current <= 0) {
-      const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
-      current = lastBar ? Number(lastBar.c) : 0;
+    const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
+    const latestClose = Number(lastBar?.c);
+    const patternCurrent = Number(pattern?.current_price);
+
+    // Prefer the currently rendered chart price as source of truth.
+    // This prevents stale backend snapshot prices from forcing off-scale overlays.
+    const referencePrice = Number.isFinite(latestClose) && latestClose > 0
+      ? latestClose
+      : patternCurrent;
+
+    // If we cannot validate either side, fail closed to avoid misaligned visuals.
+    if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(referencePrice) || referencePrice <= 0) {
+      return false;
     }
-    if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
-    const driftPct = Math.abs((current - entry) / entry) * 100;
+
+    const driftPct = Math.abs((referencePrice - entry) / entry) * 100;
     return driftPct <= maxEntryDriftPct;
   };
 
