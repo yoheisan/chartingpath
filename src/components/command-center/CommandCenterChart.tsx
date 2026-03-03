@@ -338,9 +338,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         .limit(50);
 
       // Derive outcome for live patterns by checking if price has breached SL/TP
-      const deriveLiveOutcome = (p: any): string | null => {
+      const deriveLiveOutcome = (p: any, skipStatusCheck = false): string | null => {
         if (p.status === 'expired') return 'timeout';
-        if (p.status !== 'active') return null;
+        if (!skipStatusCheck && p.status !== 'active') return null;
         const entry = Number(p.entry_price);
         const sl = Number(p.stop_loss_price);
         const tp = Number(p.take_profit_price);
@@ -378,7 +378,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           // For historical patterns without a resolved outcome, derive one from current bars
           const existingOutcome = p.outcome;
           const isAlreadyResolved = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(existingOutcome || '').toLowerCase());
-          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcome(p);
+          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcome(p, true);
           return {
             ...p,
             outcome: derivedOutcome || existingOutcome,
