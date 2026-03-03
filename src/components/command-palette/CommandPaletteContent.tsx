@@ -467,15 +467,15 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↑↓</kbd>
-              Navigate
+              {t('commandPalette.navigate', 'Navigate')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">↵</kbd>
-              Select
+              {t('commandPalette.select', 'Select')}
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">Esc</kbd>
-              Close
+              {t('commandPalette.close', 'Close')}
             </span>
           </div>
         )}
