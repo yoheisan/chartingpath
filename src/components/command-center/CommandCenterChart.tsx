@@ -374,7 +374,18 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             _derivedOutcome: derivedOutcome,
           };
         }),
-        ...(historicalData || []).map(p => ({ ...p, isActive: false, _derivedOutcome: null })),
+        ...(historicalData || []).map(p => {
+          // For historical patterns without a resolved outcome, derive one from current bars
+          const existingOutcome = p.outcome;
+          const isAlreadyResolved = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(existingOutcome || '').toLowerCase());
+          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcome(p);
+          return {
+            ...p,
+            outcome: derivedOutcome || existingOutcome,
+            isActive: false,
+            _derivedOutcome: derivedOutcome,
+          };
+        }),
       ];
 
       // Deduplicate same occurrence across live/historical datasets.
@@ -543,6 +554,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const tradePlan = useMemo(() => {
     const currentPattern = overlayPattern;
     if (!currentPattern) return undefined;
+
+    // Suppress trade levels for resolved patterns (SL/TP already hit — no longer actionable)
+    const resolvedOutcomes = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'];
+    if (resolvedOutcomes.includes(String(currentPattern.outcome || '').toLowerCase())) return undefined;
 
     const { entry_price, stop_loss_price, take_profit_price, direction } = currentPattern;
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
