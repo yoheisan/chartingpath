@@ -1052,12 +1052,16 @@ const StudyChart = memo(({
           if (!chartEl) return;
           const rect = chartEl.getBoundingClientRect();
           const dpr = window.devicePixelRatio || 1;
-          canvas.width = Math.floor(rect.width) * dpr;
-          canvas.height = Math.floor(rect.height) * dpr;
-          canvas.style.width = `${Math.floor(rect.width)}px`;
-          canvas.style.height = `${Math.floor(rect.height)}px`;
-          ctx.scale(dpr, dpr);
-          ctx.clearRect(0, 0, rect.width, rect.height);
+          // Only initialize canvas if formation overlay hasn't already
+          const needsInit = canvas.width !== Math.floor(rect.width) * dpr || canvas.height !== Math.floor(rect.height) * dpr;
+          if (needsInit) {
+            canvas.width = Math.floor(rect.width) * dpr;
+            canvas.height = Math.floor(rect.height) * dpr;
+            canvas.style.width = `${Math.floor(rect.width)}px`;
+            canvas.style.height = `${Math.floor(rect.height)}px`;
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, rect.width, rect.height);
+          }
 
           // TP/SL shaded zones — only draw zones for levels within proximity
           if (shouldDrawZones) {
@@ -1079,7 +1083,8 @@ const StudyChart = memo(({
           }
         };
 
-        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 200);
+        // Use a slightly later timeout to ensure formation zone draws first
+        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
         chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
       }
     }
