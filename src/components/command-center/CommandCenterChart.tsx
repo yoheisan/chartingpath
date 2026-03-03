@@ -371,9 +371,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             ...p,
             outcome: derivedOutcome,
             isActive: p.status === 'active' && !derivedOutcome,
+            _derivedOutcome: derivedOutcome,
           };
         }),
-        ...(historicalData || []).map(p => ({ ...p, isActive: false })),
+        ...(historicalData || []).map(p => ({ ...p, isActive: false, _derivedOutcome: null })),
       ];
 
       // Deduplicate same occurrence across live/historical datasets.
