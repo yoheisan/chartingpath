@@ -1228,7 +1228,7 @@ const StudyChart = memo(({
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
 
     // Draw TP/SL shaded zones even without formation overlays
-    if (tradePlan && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
+    if (tradePlan && !hasHistoricalOverlays && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
       const drawStandaloneTradePlanZones = () => {
         const canvas = canvasOverlayRef.current;
         if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
