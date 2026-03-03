@@ -495,80 +495,15 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return driftPct <= maxEntryDriftPct;
   };
 
-  // Generate chart markers from auto-detected patterns
-  // Apple design: only active patterns get detailed labels; historical get minimal circle markers
+  // Chart markers are NOT generated here when historicalPatternOverlays exist.
+  // StudyChart's internal pattern overlay rendering (zigzag, markers, price lines)
+  // is the single source of truth — same code path as the Study page.
+  // Only generate standalone markers when no overlay pattern is selected.
   const chartMarkers: ChartMarker[] = useMemo(() => {
-    if (autoPatterns.length === 0) return [];
-    
-    const markers: ChartMarker[] = [];
-
-    // Build a set of actionable pattern IDs for detailed rendering
-    const actionableIds = new Set(
-      autoPatterns
-        .filter(p => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p))
-        .map(p => p.id)
-    );
-
-    // Live patterns with derived outcomes still get full UI (name + pivots) but with outcome color
-    const derivedOutcomeIds = new Set(
-      autoPatterns
-        .filter(p => p._derivedOutcome && isFreshPattern(p))
-        .map(p => p.id)
-    );
-
-    for (const p of autoPatterns) {
-      const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
-      const detectedAt = p.last_confirmed_at || p.first_detected_at || p.detected_at;
-      const isLong = p.direction === 'long' || p.direction === 'bullish';
-      
-      const showFullUI = actionableIds.has(p.id) || derivedOutcomeIds.has(p.id);
-      
-      if (showFullUI) {
-        // Active or recently-resolved patterns get full name + pivot labels
-        const outcomeColor = p._derivedOutcome === 'hit_tp' ? '#22c55e'
-          : p._derivedOutcome === 'hit_sl' ? '#ef4444'
-          : '#f97316';
-        const outcomeTag = p._derivedOutcome === 'hit_tp' ? ' ✓ TP'
-          : p._derivedOutcome === 'hit_sl' ? ' ✗ SL'
-          : '';
-        
-        if (detectedAt) {
-          markers.push({
-            time: detectedAt,
-            position: isLong ? 'belowBar' : 'aboveBar',
-            color: outcomeColor,
-            shape: isLong ? 'arrowUp' : 'arrowDown',
-            text: patternName + outcomeTag,
-          });
-        }
-
-        // Show pivot labels
-        const vs = p.visual_spec as any;
-        const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
-        if (pivots && pivots.length > 0) {
-          pivots.forEach((pivot: any) => {
-            if (!pivot?.timestamp || !pivot?.type) return;
-            const isHigh = pivot.type === 'high';
-            markers.push({
-              time: pivot.timestamp,
-              position: isHigh ? 'aboveBar' : 'belowBar',
-              color: outcomeColor,
-              shape: isHigh ? 'arrowDown' : 'arrowUp',
-              text: pivot.label || '',
-            });
-          });
-        }
-      }
-    }
-    
-    const seen = new Set<string>();
-    return markers.filter((m) => {
-      const key = `${m.time}|${m.text}|${m.shape}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [autoPatterns, bars, timeframe]);
+    // If we have an overlay pattern, StudyChart handles all markers internally
+    if (overlayPattern) return [];
+    return [];
+  }, [overlayPattern]);
 
 
   const actionableActivePatterns = useMemo(
