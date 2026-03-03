@@ -529,7 +529,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
     const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
-    const preferred = activePattern || derivedOutcomePattern || null;
+    // Fall back to the latest unresolved pattern, then the most recent overall
+    const isResolved = (o?: string | null) => ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(o || '').toLowerCase());
+    const latestUnresolved = sortedPatterns.find((p) => !isResolved(p.outcome));
+    const preferred = activePattern || derivedOutcomePattern || latestUnresolved || sortedPatterns[0];
     if (!preferred) return null;
 
     // Prefer a pivot-bearing pattern so ZigZag/zone can render.
