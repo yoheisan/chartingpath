@@ -187,6 +187,8 @@ interface StudyChartProps {
   formationOverlays?: FormationOverlayData[];
   /** Historical pattern occurrences to render as overlays with toggleable layers */
   historicalPatterns?: HistoricalPatternOverlay[];
+  /** Number of recent bars to show initially instead of fitting all content. Enables focused zoom. */
+  initialVisibleBars?: number;
 }
 
 /**
@@ -209,6 +211,7 @@ const StudyChart = memo(({
   chartMarkers,
   formationOverlays,
   historicalPatterns,
+  initialVisibleBars,
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1049,6 +1052,12 @@ const StudyChart = memo(({
       chart.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
     } else if (persistedVisibleRangeRef.current) {
       chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
+    } else if (initialVisibleBars && safeChartData.length > 0) {
+      // Zoom to recent N bars with some right offset for whitespace
+      const totalBars = safeChartData.length;
+      const from = Math.max(0, totalBars - initialVisibleBars);
+      const to = totalBars + 5; // small right whitespace
+      chart.timeScale().setVisibleLogicalRange({ from, to });
     } else {
       chart.timeScale().fitContent();
     }

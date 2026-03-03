@@ -388,60 +388,80 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   }, [fetchAutoPatterns]);
 
   // Generate chart markers from auto-detected patterns
+  // Apple design: only active patterns get detailed labels; historical get minimal circle markers
   const chartMarkers: ChartMarker[] = useMemo(() => {
     if (autoPatterns.length === 0) return [];
     
     const markers: ChartMarker[] = [];
 
     for (const p of autoPatterns) {
-      const vs = p.visual_spec as any;
-      const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
-      const color = p.isActive ? '#f97316' : '#6b7280';
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
       const detectedAt = p.last_confirmed_at || p.first_detected_at || p.detected_at;
       const isLong = p.direction === 'long' || p.direction === 'bullish';
       
-      // Add pattern name marker at detection time
-      if (detectedAt) {
-        markers.push({
-          time: detectedAt,
-          position: isLong ? 'belowBar' : 'aboveBar',
-          color: '#f97316',
-          shape: isLong ? 'arrowUp' : 'arrowDown',
-          text: patternName,
-        });
-      }
-
-      if (pivots && pivots.length > 0) {
-        pivots.forEach((pivot: any) => {
-          if (!pivot?.timestamp || !pivot?.type) return;
-          const isHigh = pivot.type === 'high';
+      if (p.isActive) {
+        // Active pattern: show full name + direction arrow
+        if (detectedAt) {
           markers.push({
-            time: pivot.timestamp,
-            position: isHigh ? 'aboveBar' : 'belowBar',
-            color,
-            shape: isHigh ? 'arrowDown' : 'arrowUp',
-            text: pivot.label || '',
+            time: detectedAt,
+            position: isLong ? 'belowBar' : 'aboveBar',
+            color: '#f97316',
+            shape: isLong ? 'arrowUp' : 'arrowDown',
+            text: patternName,
           });
-        });
+        }
+
+        // Show pivot labels only for active patterns
+        const vs = p.visual_spec as any;
+        const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
+        if (pivots && pivots.length > 0) {
+          pivots.forEach((pivot: any) => {
+            if (!pivot?.timestamp || !pivot?.type) return;
+            const isHigh = pivot.type === 'high';
+            markers.push({
+              time: pivot.timestamp,
+              position: isHigh ? 'aboveBar' : 'belowBar',
+              color: '#f97316',
+              shape: isHigh ? 'arrowDown' : 'arrowUp',
+              text: pivot.label || '',
+            });
+          });
+        }
+      } else {
+        // Historical pattern: minimal circle marker, no label clutter
+        if (detectedAt) {
+          const outcomeColor = p.outcome === 'hit_tp' ? '#22c55e' 
+            : p.outcome === 'hit_sl' ? '#ef4444' 
+            : '#6b7280';
+          markers.push({
+            time: detectedAt,
+            position: isLong ? 'belowBar' : 'aboveBar',
+            color: outcomeColor,
+            shape: 'circle',
+            text: '', // No text — clean and minimal
+          });
+        }
       }
     }
     
     const seen = new Set<string>();
     return markers.filter((m) => {
-      const key = `${m.time}|${m.text}`;
+      const key = `${m.time}|${m.text}|${m.shape}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   }, [autoPatterns]);
 
-  // Derive formation overlays from auto-detected patterns
+  // Derive formation overlays ONLY for active patterns (Apple: clean, focused)
   const formationOverlays: FormationOverlayData[] = useMemo(() => {
     if (autoPatterns.length === 0 || bars.length === 0) return [];
     
+    const activeOnly = autoPatterns.filter(p => p.isActive);
+    if (activeOnly.length === 0) return [];
+    
     const overlays: FormationOverlayData[] = [];
-    for (const p of autoPatterns) {
+    for (const p of activeOnly) {
       const vs = p.visual_spec as any;
       const patternBars = p.bars as CompressedBar[] | undefined;
       const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
@@ -518,10 +538,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
   }, [autoPatterns, timeframe]);
 
-  // Convert autoPatterns to HistoricalPatternOverlay format for the overlay system
+  // Only pass active patterns for overlay price lines (historical are shown as minimal dots)
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
     if (autoPatterns.length === 0) return [];
-    return autoPatterns.map(p => ({
+    return autoPatterns
+      .filter(p => p.isActive)
+      .map(p => ({
       id: p.id,
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
@@ -700,6 +722,16 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               chartMarkers={chartMarkers}
               formationOverlays={formationOverlays}
               historicalPatterns={historicalPatternOverlays}
+              initialVisibleBars={
+                // Focused zoom: show recent bars relevant to active trading
+                timeframe === '15m' ? 120 
+                : timeframe === '1h' ? 100 
+                : timeframe === '4h' ? 80 
+                : timeframe === '8h' ? 60 
+                : timeframe === '1d' ? 80 
+                : timeframe === '1wk' ? 52 
+                : 80
+              }
             />
           </div>
         ) : (
