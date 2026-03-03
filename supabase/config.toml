@@ -266,3 +266,6 @@ verify_jwt = false
 
 [functions.get-instrument-pattern-stats]
 verify_jwt = false
+
+[functions.fetch-binance]
+verify_jwt = false
