@@ -25,6 +25,7 @@ export interface BriefingSetup {
 }
 
 const BRIEFING_CACHE_KEY = 'cp-morning-briefing';
+const BRIEFING_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 
 interface CachedBriefing {
   date: string;
