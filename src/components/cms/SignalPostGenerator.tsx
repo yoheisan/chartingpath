@@ -84,7 +84,7 @@ export function SignalPostGenerator() {
     try {
       const { data, error } = await supabase
         .from('live_pattern_detections')
-        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status, bars, visual_spec')
+        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status, bars, visual_spec, share_token')
         .in('quality_score', ['A', 'B'])
         .in('status', ['active', 'pending'])
         .order('last_confirmed_at', { ascending: false })
