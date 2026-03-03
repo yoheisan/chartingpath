@@ -486,17 +486,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           });
         }
       } else {
-        // Historical pattern: minimal circle marker, no label clutter
+        // Historical pattern: colored circle marker with outcome label
         if (detectedAt) {
           const outcomeColor = p.outcome === 'hit_tp' ? '#22c55e' 
             : p.outcome === 'hit_sl' ? '#ef4444' 
             : '#6b7280';
+          const outcomeLabel = p.outcome === 'hit_tp' ? '✓ TP' 
+            : p.outcome === 'hit_sl' ? '✗ SL' 
+            : p.outcome === 'timeout' ? '⏱' 
+            : '';
           markers.push({
             time: detectedAt,
             position: isLong ? 'belowBar' : 'aboveBar',
             color: outcomeColor,
             shape: 'circle',
-            text: '', // No text — clean and minimal
+            text: outcomeLabel,
           });
         }
       }
