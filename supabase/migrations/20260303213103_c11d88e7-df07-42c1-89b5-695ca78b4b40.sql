@@ -1,0 +1,1 @@
+DELETE FROM cached_market_reports WHERE report LIKE '%$0 (%' OR report LIKE '%$0.00%' OR report LIKE '%NaN%' OR report LIKE '%closed at 0%';
