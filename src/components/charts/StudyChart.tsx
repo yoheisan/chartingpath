@@ -234,6 +234,7 @@ const StudyChart = memo(({
   const isPanningRef = useRef(false);
   const panStartYRef = useRef(0);
   const panStartPriceRef = useRef<{ from: number; to: number } | null>(null);
+  const spaceHeldRef = useRef(false);
   const analysisLinesRef = useRef<any[]>([]);
   const patternLinesCleanupsRef = useRef<(() => void)[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
@@ -1198,27 +1199,51 @@ const StudyChart = memo(({
 
     resizeObserver.observe(containerRef.current);
 
-    // Shift+drag vertical panning handlers
+    // Space+drag (or Shift+drag / middle-click) vertical panning handlers
     const container = containerRef.current;
-    
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        spaceHeldRef.current = true;
+        container.style.cursor = 'grab';
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        spaceHeldRef.current = false;
+        if (!isPanningRef.current) container.style.cursor = '';
+      }
+    };
+
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.shiftKey || e.button === 1) {
+      if (spaceHeldRef.current || e.shiftKey || e.button === 1) {
         e.preventDefault();
         isPanningRef.current = true;
         panStartYRef.current = e.clientY;
-        const visibleRange = chart.timeScale().getVisibleLogicalRange();
-        if (visibleRange) {
-          panStartPriceRef.current = { from: 0, to: 0 };
-        }
-        container.style.cursor = 'ns-resize';
+        // Disable auto-scale so manual offset is visible
+        chartRef.current?.priceScale('right').applyOptions({ autoScale: false });
+        container.style.cursor = 'grabbing';
       }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isPanningRef.current && chartRef.current) {
-        const deltaY = e.clientY - panStartYRef.current;
-        chartRef.current.priceScale('right').applyOptions({ autoScale: false });
-        panStartYRef.current = e.clientY;
+      if (!isPanningRef.current || !chartRef.current) return;
+      const deltaY = e.clientY - panStartYRef.current;
+      panStartYRef.current = e.clientY;
+
+      const ps = chartRef.current.priceScale('right');
+      try {
+        const range = (ps as any).getVisibleRange();
+        if (range) {
+          // deltaY > 0 means mouse moved down → shift prices down (subtract from range)
+          const priceSpan = range.maxValue - range.minValue;
+          const containerHeight = containerRef.current?.clientHeight || 500;
+          const priceDelta = (deltaY / containerHeight) * priceSpan;
+          (ps as any).setVisibleRange({ minValue: range.minValue - priceDelta, maxValue: range.maxValue - priceDelta });
+        }
+      } catch {
+        // fallback: just disable auto-scale so user sees the intent
       }
     };
 
@@ -1226,13 +1251,15 @@ const StudyChart = memo(({
       if (isPanningRef.current) {
         isPanningRef.current = false;
         panStartPriceRef.current = null;
-        container.style.cursor = '';
+        container.style.cursor = spaceHeldRef.current ? 'grab' : '';
       }
     };
 
     container.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     return () => {
       try {
@@ -1253,6 +1280,8 @@ const StudyChart = memo(({
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
