@@ -119,6 +119,47 @@ serve(async (req) => {
       throw new Error("NEWS_API_KEY is not configured");
     }
 
+    // Helper: fetch Yahoo Finance with retry and rate limit handling
+    const fetchYahooQuote = async (symbol: string, retries = 2): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
+          if (response.status === 429) {
+            console.warn(`Yahoo 429 for ${symbol}, attempt ${attempt + 1}, waiting...`);
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+          if (!response.ok) {
+            console.error(`Yahoo ${response.status} for ${symbol}`);
+            return { symbol, c: 0, pc: 0, error: true };
+          }
+          const data = await response.json();
+          const quote = data?.chart?.result?.[0];
+          const meta = quote?.meta;
+          const current = meta?.regularMarketPrice || 0;
+          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
+          return { symbol, c: current, pc: previous, error: !current };
+        } catch (error) {
+          console.error(`Error fetching Yahoo data for ${symbol}:`, error);
+          if (attempt < retries) await new Promise(r => setTimeout(r, 800));
+        }
+      }
+      return { symbol, c: 0, pc: 0, error: true };
+    };
+
+    // Helper: sequential Yahoo fetches with small delay to avoid 429
+    const fetchYahooSequential = async (symbols: string[]): Promise<any[]> => {
+      const results: any[] = [];
+      for (const symbol of symbols) {
+        const result = await fetchYahooQuote(symbol);
+        results.push(result);
+        if (symbols.indexOf(symbol) < symbols.length - 1) {
+          await new Promise(r => setTimeout(r, 300)); // 300ms between requests
+        }
+      }
+      return results;
+    };
+
     // Fetch real-time market data
     console.log("Fetching real-time market data...");
     
@@ -129,57 +170,24 @@ serve(async (req) => {
 
     // Fetch stock market data
     if (markets.includes("stocks")) {
-      // Select region-appropriate stock indices
       const getStockSymbols = (tz: string): { yahooSymbols: string[]; finnhubSymbols: string[] } => {
         if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) {
-          return { 
-            yahooSymbols: ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"], // Nikkei, Hang Seng, Shanghai, Singapore, KOSPI
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^N225", "^HSI", "000001.SS", "^STI", "^KS11"], finnhubSymbols: [] };
         } else if (tz.includes('London') || tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome')) {
-          return { 
-            yahooSymbols: ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"], // FTSE 100, DAX, CAC 40, FTSE MIB, Euro Stoxx 50
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^FTSE", "^GDAXI", "^FCHI", "^FTMIB", "^STOXX50E"], finnhubSymbols: [] };
         } else if (tz.includes('Sydney') || tz.includes('Melbourne')) {
-          return { 
-            yahooSymbols: ["^AXJO", "^AORD"], // ASX 200, All Ordinaries
-            finnhubSymbols: []
-          };
+          return { yahooSymbols: ["^AXJO", "^AORD"], finnhubSymbols: [] };
         } else {
-          return { 
-            yahooSymbols: [],
-            finnhubSymbols: ["SPY", "QQQ", "DIA"] // US ETFs work with Finnhub
-          };
+          return { yahooSymbols: [], finnhubSymbols: ["SPY", "QQQ", "DIA"] };
         }
       };
       
       const stockSymbols = getStockSymbols(timezone);
       
-      // Fetch from Yahoo Finance (for indices)
-      const yahooPromises = stockSymbols.yahooSymbols.map(async symbol => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching Yahoo stock data for ${symbol}:`, error);
-          return { symbol, c: 0, pc: 0, error: true };
-        }
-      });
+      // Fetch Yahoo symbols sequentially to avoid rate limiting
+      const yahooResults = await fetchYahooSequential(stockSymbols.yahooSymbols);
       
-      // Fetch from Finnhub (for US symbols)
+      // Fetch Finnhub symbols in parallel (different API, no Yahoo rate limit)
       const finnhubPromises = stockSymbols.finnhubSymbols.map(async symbol => {
         try {
           const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
@@ -191,7 +199,8 @@ serve(async (req) => {
         }
       });
       
-      marketData.stocks = await Promise.all([...yahooPromises, ...finnhubPromises]);
+      const finnhubResults = await Promise.all(finnhubPromises);
+      marketData.stocks = [...yahooResults, ...finnhubResults];
       
       // Fetch market news from Finnhub with region-specific categories
       try {
@@ -261,39 +270,15 @@ serve(async (req) => {
       }
     }
 
-    // Fetch forex data
+    // Fetch forex data (sequential to avoid Yahoo 429)
     if (markets.includes("forex")) {
-      const forexPairs = [
-        { symbol: "EURUSD=X", name: "EUR/USD" },
-        { symbol: "GBPUSD=X", name: "GBP/USD" },
-        { symbol: "USDJPY=X", name: "USD/JPY" },
-        { symbol: "AUDUSD=X", name: "AUD/USD" }
-      ];
-      const forexPromises = forexPairs.map(async ({ symbol, name }) => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol: name, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching forex data for ${name}:`, error);
-          return { symbol: name, c: 0, pc: 0, error: true };
-        }
-      });
-      marketData.forex = await Promise.all(forexPromises);
+      const forexSymbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"];
+      const forexNames = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD"];
+      const forexResults = await fetchYahooSequential(forexSymbols);
+      marketData.forex = forexResults.map((r, i) => ({ ...r, symbol: forexNames[i] }));
     }
 
-    // Fetch crypto data
+    // Fetch crypto data (Finnhub, not Yahoo — parallel is fine)
     if (markets.includes("crypto")) {
       const cryptoSymbols = ["BINANCE:BTCUSDT", "BINANCE:ETHUSDT"];
       const cryptoPromises = cryptoSymbols.map(async symbol => {
@@ -309,36 +294,12 @@ serve(async (req) => {
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
-    // Fetch commodities data
+    // Fetch commodities data (sequential to avoid Yahoo 429)
     if (markets.includes("commodities")) {
-      const commodities = [
-        { symbol: "GC=F", name: "Gold (XAU/USD)" },
-        { symbol: "SI=F", name: "Silver (XAG/USD)" },
-        { symbol: "CL=F", name: "WTI Crude" },
-        { symbol: "BZ=F", name: "Brent Crude" }
-      ];
-      const commodityPromises = commodities.map(async ({ symbol, name }) => {
-        try {
-          const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`);
-          const data = await response.json();
-          
-          const quote = data?.chart?.result?.[0];
-          const meta = quote?.meta;
-          const current = meta?.regularMarketPrice || 0;
-          const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          
-          return { 
-            symbol: name, 
-            c: current, 
-            pc: previous,
-            error: !current 
-          };
-        } catch (error) {
-          console.error(`Error fetching commodity data for ${name}:`, error);
-          return { symbol: name, c: 0, pc: 0, error: true };
-        }
-      });
-      marketData.commodities = await Promise.all(commodityPromises);
+      const comSymbols = ["GC=F", "SI=F", "CL=F", "BZ=F"];
+      const comNames = ["Gold (XAU/USD)", "Silver (XAG/USD)", "WTI Crude", "Brent Crude"];
+      const comResults = await fetchYahooSequential(comSymbols);
+      marketData.commodities = comResults.map((r, i) => ({ ...r, symbol: comNames[i] }));
     }
 
     console.log("Market data fetched successfully");
@@ -427,43 +388,59 @@ serve(async (req) => {
     const userDayOfWeek = new Date().toLocaleString('en-US', { timeZone: timezone, weekday: 'long' });
     const isWeekend = userDayOfWeek === 'Saturday' || userDayOfWeek === 'Sunday';
 
-    // Format market data for AI prompt
+    // Format market data for AI prompt — FILTER OUT zero-value data
     let marketDataSummary = `**Real-Time Market Data**\n**Your Local Time: ${userLocalTime} (${timezone})**\n\n`;
     
+    const validEntries = (items: any[]) => items.filter((i: any) => i.c > 0 && i.pc > 0 && !i.error);
+
     if (marketData.stocks) {
-      marketDataSummary += "**Stock Indices:**\n";
-      marketData.stocks.forEach((stock: any) => {
-        const changePercent = ((stock.c - stock.pc) / stock.pc * 100).toFixed(2);
-        marketDataSummary += `- ${stock.symbol}: $${stock.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.stocks);
+      if (valid.length > 0) {
+        marketDataSummary += "**Stock Indices:**\n";
+        valid.forEach((stock: any) => {
+          const changePercent = ((stock.c - stock.pc) / stock.pc * 100).toFixed(2);
+          marketDataSummary += `- ${stock.symbol}: $${stock.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      } else {
+        marketDataSummary += "**Stock Indices:** Data temporarily unavailable\n\n";
+      }
     }
     
     if (marketData.forex) {
-      marketDataSummary += "**Forex Pairs:**\n";
-      marketData.forex.forEach((pair: any) => {
-        const changePercent = ((pair.c - pair.pc) / pair.pc * 100).toFixed(2);
-        marketDataSummary += `- ${pair.symbol}: ${pair.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.forex);
+      if (valid.length > 0) {
+        marketDataSummary += "**Forex Pairs:**\n";
+        valid.forEach((pair: any) => {
+          const changePercent = ((pair.c - pair.pc) / pair.pc * 100).toFixed(2);
+          marketDataSummary += `- ${pair.symbol}: ${pair.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
     
     if (marketData.crypto) {
-      marketDataSummary += "**Cryptocurrencies:**\n";
-      marketData.crypto.forEach((crypto: any) => {
-        const changePercent = ((crypto.c - crypto.pc) / crypto.pc * 100).toFixed(2);
-        marketDataSummary += `- ${crypto.symbol}: $${crypto.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.crypto);
+      if (valid.length > 0) {
+        marketDataSummary += "**Cryptocurrencies:**\n";
+        valid.forEach((crypto: any) => {
+          const changePercent = ((crypto.c - crypto.pc) / crypto.pc * 100).toFixed(2);
+          marketDataSummary += `- ${crypto.symbol}: $${crypto.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
     
     if (marketData.commodities) {
-      marketDataSummary += "**Commodities:**\n";
-      marketData.commodities.forEach((commodity: any) => {
-        const changePercent = ((commodity.c - commodity.pc) / commodity.pc * 100).toFixed(2);
-        marketDataSummary += `- ${commodity.symbol}: $${commodity.c} (${changePercent > 0 ? '+' : ''}${changePercent}%)\n`;
-      });
-      marketDataSummary += "\n";
+      const valid = validEntries(marketData.commodities);
+      if (valid.length > 0) {
+        marketDataSummary += "**Commodities:**\n";
+        valid.forEach((commodity: any) => {
+          const changePercent = ((commodity.c - commodity.pc) / commodity.pc * 100).toFixed(2);
+          marketDataSummary += `- ${commodity.symbol}: $${commodity.c} (${Number(changePercent) > 0 ? '+' : ''}${changePercent}%)\n`;
+        });
+        marketDataSummary += "\n";
+      }
     }
 
     if (newsSummaries.length > 0) {
