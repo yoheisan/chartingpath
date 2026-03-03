@@ -371,9 +371,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             ...p,
             outcome: derivedOutcome,
             isActive: p.status === 'active' && !derivedOutcome,
+            _derivedOutcome: derivedOutcome,
           };
         }),
-        ...(historicalData || []).map(p => ({ ...p, isActive: false })),
+        ...(historicalData || []).map(p => ({ ...p, isActive: false, _derivedOutcome: null })),
       ];
 
       // Deduplicate same occurrence across live/historical datasets.
@@ -482,24 +483,40 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         .map(p => p.id)
     );
 
+    // Live patterns with derived outcomes still get full UI (name + pivots) but with outcome color
+    const derivedOutcomeIds = new Set(
+      autoPatterns
+        .filter(p => p._derivedOutcome && isFreshPattern(p))
+        .map(p => p.id)
+    );
+
     for (const p of autoPatterns) {
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
       const detectedAt = p.last_confirmed_at || p.first_detected_at || p.detected_at;
       const isLong = p.direction === 'long' || p.direction === 'bullish';
       
-      if (p.isActive && actionableIds.has(p.id)) {
-        // Only actionable active patterns get full name + pivot labels
+      const showFullUI = actionableIds.has(p.id) || derivedOutcomeIds.has(p.id);
+      
+      if (showFullUI) {
+        // Active or recently-resolved patterns get full name + pivot labels
+        const outcomeColor = p._derivedOutcome === 'hit_tp' ? '#22c55e'
+          : p._derivedOutcome === 'hit_sl' ? '#ef4444'
+          : '#f97316';
+        const outcomeTag = p._derivedOutcome === 'hit_tp' ? ' ✓ TP'
+          : p._derivedOutcome === 'hit_sl' ? ' ✗ SL'
+          : '';
+        
         if (detectedAt) {
           markers.push({
             time: detectedAt,
             position: isLong ? 'belowBar' : 'aboveBar',
-            color: '#f97316',
+            color: outcomeColor,
             shape: isLong ? 'arrowUp' : 'arrowDown',
-            text: patternName,
+            text: patternName + outcomeTag,
           });
         }
 
-        // Show pivot labels only for actionable active patterns
+        // Show pivot labels
         const vs = p.visual_spec as any;
         const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
         if (pivots && pivots.length > 0) {
@@ -509,7 +526,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             markers.push({
               time: pivot.timestamp,
               position: isHigh ? 'aboveBar' : 'belowBar',
-              color: '#f97316',
+              color: outcomeColor,
               shape: isHigh ? 'arrowDown' : 'arrowUp',
               text: pivot.label || '',
             });
@@ -572,8 +589,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
+    const derivedOutcomePattern = sortedPatterns.find((p) => p._derivedOutcome && isFreshPattern(p));
     const latestUnresolvedPattern = sortedPatterns.find((p) => !isResolvedOutcome(p.outcome));
-    const preferred = activePattern || latestUnresolvedPattern || sortedPatterns[0];
+    const preferred = activePattern || derivedOutcomePattern || latestUnresolvedPattern || sortedPatterns[0];
 
     // Keep hierarchy, but prefer a pivot-bearing pattern so ZigZag/zone can always render.
     return hasPivots(preferred) ? preferred : (sortedPatterns.find(hasPivots) || preferred);
