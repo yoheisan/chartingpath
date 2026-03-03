@@ -68,7 +68,7 @@ serve(async (req) => {
     for (const article of batch) {
       console.log(`Generating pieces for: ${article.title}`);
 
-      const linkUrl = `https://chartingpath.com/learn/${article.slug}`;
+      const linkUrl = `https://chartingpath.lovable.app/blog/${article.slug}`;
       
       const ctaOptions: Record<string, string[]> = {
         glossary: [
