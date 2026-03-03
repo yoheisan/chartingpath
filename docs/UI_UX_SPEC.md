@@ -143,7 +143,8 @@ The library supports exactly **four** marker shapes:
 1. **Active patterns only** — Never show trade levels for resolved/expired patterns
 2. **Freshness window** — Hide levels if the pattern's detection timestamp exceeds the freshness window for its timeframe
 3. **Price drift guard** — Hide levels if current price is >4% from entry price
-4. **Extreme filter** — Hide levels if >35% away from current market price
+4. **Extreme price filter (35%)** — If ANY level (entry, SL, or TP) is >35% away from the chart's latest close, hide ALL trade plan lines and zones entirely. This prevents Y-axis distortion where distant levels crush visible price action into a thin strip
+5. **Cascading hide** — When trade plan is hidden by the extreme filter, pattern overlay zones (`historicalPatternOverlays`) are also hidden to prevent orphaned shading
 
 ---
 
