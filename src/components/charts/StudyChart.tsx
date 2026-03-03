@@ -923,14 +923,34 @@ const StudyChart = memo(({
         });
       }
 
-      // Entry Point → canvas triangle on last bar (matching Study Chart blue ▲/▼)
+      // Entry Point → canvas triangle at the pattern's detection/signal bar (not the last bar)
       if (currentPattern && hasRenderableTradeLevels && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
-        const lastBar = safeChartData[safeChartData.length - 1];
-        const lastBarData = bars[bars.length - 1];
+
+        // Find the bar matching the pattern's detectedAt timestamp
+        const detectedDate = currentPattern.detectedAt?.split('T')[0];
+        const detectedTs = currentPattern.detectedAt ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000) : null;
+        
+        // Try exact timestamp match first, then date match, then fall back to last bar
+        let matchBarIdx = detectedTs 
+          ? safeChartData.findIndex(b => (b.time as number) === detectedTs)
+          : -1;
+        if (matchBarIdx < 0 && detectedDate) {
+          matchBarIdx = bars.findIndex(b => b.t.split('T')[0] === detectedDate);
+        }
+        // If no match found, use the last bar in the pattern's own bars array
+        if (matchBarIdx < 0 && currentPattern.bars && currentPattern.bars.length > 0) {
+          const lastPatternBar = currentPattern.bars[currentPattern.bars.length - 1];
+          const lastPatternTs = Math.floor(new Date(lastPatternBar.t).getTime() / 1000);
+          matchBarIdx = safeChartData.findIndex(b => (b.time as number) === lastPatternTs);
+        }
+        if (matchBarIdx < 0) matchBarIdx = safeChartData.length - 1;
+
+        const matchBar = safeChartData[matchBarIdx];
+        const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
         canvasTriangleMarkers.push({
-          time: lastBar.time as number,
-          price: isLong ? (lastBarData?.l ?? currentPattern.entryPrice) : (lastBarData?.h ?? currentPattern.entryPrice),
+          time: matchBar.time as number,
+          price: isLong ? (matchBarData?.l ?? currentPattern.entryPrice) : (matchBarData?.h ?? currentPattern.entryPrice),
           direction: isLong ? 'up' : 'down',
           color: '#3b82f6',
           label: 'Entry',
