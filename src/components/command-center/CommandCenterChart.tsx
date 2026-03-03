@@ -396,9 +396,35 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         }
       }
 
-      const deduped = [...bySignature.values()].sort(
-        (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
-      );
+      // Filter out patterns whose pivots are too close for this chart timeframe
+      const tfMinSeparationMs: Record<string, number> = {
+        '15m': 2 * 15 * 60_000,
+        '1h': 2 * 60 * 60_000,
+        '4h': 2 * 4 * 60 * 60_000,
+        '8h': 2 * 8 * 60 * 60_000,
+        '1d': 2 * 24 * 60 * 60_000,
+        '1wk': 2 * 7 * 24 * 60 * 60_000,
+      };
+      const minSepMs = tfMinSeparationMs[timeframe] || 2 * 4 * 60 * 60_000;
+
+      const pivotsFitTimeframe = (pattern: any): boolean => {
+        const pivots = pattern.visual_spec?.pivots;
+        if (!Array.isArray(pivots) || pivots.length < 2) return true; // no pivots to validate
+        const timestamps = pivots
+          .map((p: any) => p.timestamp ? new Date(p.timestamp).getTime() : NaN)
+          .filter(Number.isFinite)
+          .sort((a: number, b: number) => a - b);
+        if (timestamps.length < 2) return true;
+        // Check that the structural pivots (first and last) are separated enough
+        const span = timestamps[timestamps.length - 1] - timestamps[0];
+        return span >= minSepMs;
+      };
+
+      const deduped = [...bySignature.values()]
+        .filter(pivotsFitTimeframe)
+        .sort(
+          (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
+        );
 
       setAutoPatterns(deduped);
     } catch (err) {
