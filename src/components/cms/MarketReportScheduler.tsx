@@ -29,6 +29,8 @@ export function MarketReportScheduler() {
   const [isGeneratingBreadth, setIsGeneratingBreadth] = useState(false);
   const [breadthContent, setBreadthContent] = useState<string>("");
   const [breadthCopied, setBreadthCopied] = useState(false);
+  const [breadthRegion, setBreadthRegion] = useState<string>("us");
+  const [breadthType, setBreadthType] = useState<"pre_market" | "post_market">("post_market");
 
   // Toggle auto-schedule cron jobs
   const toggleAutoSchedule = async () => {
