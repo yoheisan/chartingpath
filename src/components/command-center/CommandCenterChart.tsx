@@ -298,86 +298,94 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     fetchChartData();
   }, [fetchChartData]);
 
-  // Auto-fetch active live patterns + recent historical for this symbol/timeframe
-  useEffect(() => {
+  // Fetch active live patterns + recent historical for this symbol/timeframe
+  const fetchAutoPatterns = useCallback(async () => {
     // Skip pattern fetch for auth-gated timeframes
     if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
       setAutoPatterns([]);
       return;
     }
 
-    const fetchAutoPatterns = async () => {
-      const upperSymbol = symbol.toUpperCase();
-      const isResolvedOutcome = (outcome?: string | null) =>
-        ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-      const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
+    const upperSymbol = symbol.toUpperCase();
+    const isResolvedOutcome = (outcome?: string | null) =>
+      ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
+    const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
 
-      try {
-        // Fetch recent live patterns (active + expired within last 90 days)
-        const ninetyDaysAgo = new Date();
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-        const { data: liveData } = await supabase
-          .from('live_pattern_detections')
-          .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
-          .eq('instrument', upperSymbol)
-          .eq('timeframe', timeframe)
-          .gte('first_detected_at', ninetyDaysAgo.toISOString())
-          .order('first_detected_at', { ascending: false })
-          .limit(20);
+    try {
+      // Fetch recent live patterns (active + expired)
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const { data: liveData } = await supabase
+        .from('live_pattern_detections')
+        .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, current_price, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
+        .eq('instrument', upperSymbol)
+        .eq('timeframe', timeframe)
+        .in('status', ['active', 'expired'])
+        .gte('first_detected_at', ninetyDaysAgo.toISOString())
+        .order('last_confirmed_at', { ascending: false })
+        .limit(20);
 
-        // Fetch historical patterns (last 365 days for full chart coverage)
-        const oneYearAgo = new Date();
-        oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-        const { data: historicalData } = await supabase
-          .from('historical_pattern_occurrences')
-          .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
-          .eq('symbol', upperSymbol)
-          .eq('timeframe', timeframe)
-          .gte('detected_at', oneYearAgo.toISOString())
-          .order('detected_at', { ascending: false })
-          .limit(50);
+      // Fetch historical patterns (last 365 days for full chart coverage)
+      const oneYearAgo = new Date();
+      oneYearAgo.setDate(oneYearAgo.getDate() - 365);
+      const { data: historicalData } = await supabase
+        .from('historical_pattern_occurrences')
+        .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
+        .eq('symbol', upperSymbol)
+        .eq('timeframe', timeframe)
+        .gte('detected_at', oneYearAgo.toISOString())
+        .order('detected_at', { ascending: false })
+        .limit(50);
 
-        const combinedPatterns = [
-          ...(liveData || []).map(p => ({
-            ...p,
-            outcome: p.status === 'expired' ? 'timeout' : null,
-            isActive: p.status === 'active'
-          })),
-          ...(historicalData || []).map(p => ({ ...p, isActive: false })),
-        ];
+      const combinedPatterns = [
+        ...(liveData || []).map(p => ({
+          ...p,
+          outcome: p.status === 'expired' ? 'timeout' : null,
+          isActive: p.status === 'active'
+        })),
+        ...(historicalData || []).map(p => ({ ...p, isActive: false })),
+      ];
 
-        // Deduplicate same occurrence across live/historical datasets.
-        // Prefer resolved historical records when both variants exist.
-        const bySignature = new Map<string, any>();
-        for (const pattern of combinedPatterns) {
-          const detectedAt = getDetectedAt(pattern);
-          const dayKey = detectedAt ? detectedAt.split('T')[0] : 'unknown';
-          const key = `${pattern.pattern_id}|${pattern.direction}|${dayKey}`;
-          const existing = bySignature.get(key);
+      // Deduplicate same occurrence across live/historical datasets.
+      // Prefer resolved historical records when both variants exist.
+      const bySignature = new Map<string, any>();
+      for (const pattern of combinedPatterns) {
+        const detectedAt = getDetectedAt(pattern);
+        const dayKey = detectedAt ? detectedAt.split('T')[0] : 'unknown';
+        const key = `${pattern.pattern_id}|${pattern.direction}|${dayKey}`;
+        const existing = bySignature.get(key);
 
-          if (!existing) {
-            bySignature.set(key, pattern);
-            continue;
-          }
-
-          if (isResolvedOutcome(pattern.outcome) && !isResolvedOutcome(existing.outcome)) {
-            bySignature.set(key, pattern);
-          }
+        if (!existing) {
+          bySignature.set(key, pattern);
+          continue;
         }
 
-        const deduped = [...bySignature.values()].sort(
-          (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
-        );
-
-        setAutoPatterns(deduped);
-      } catch (err) {
-        console.error('[CommandCenterChart] auto-pattern fetch error:', err);
-        setAutoPatterns([]);
+        if (isResolvedOutcome(pattern.outcome) && !isResolvedOutcome(existing.outcome)) {
+          bySignature.set(key, pattern);
+        }
       }
-    };
 
-    fetchAutoPatterns();
+      const deduped = [...bySignature.values()].sort(
+        (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
+      );
+
+      setAutoPatterns(deduped);
+    } catch (err) {
+      console.error('[CommandCenterChart] auto-pattern fetch error:', err);
+      setAutoPatterns([]);
+    }
   }, [symbol, timeframe, userId]);
+
+  useEffect(() => {
+    fetchAutoPatterns();
+
+    // Keep TP/SL current while user stays on the dashboard
+    const intervalId = window.setInterval(() => {
+      fetchAutoPatterns();
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchAutoPatterns]);
 
   // Generate chart markers from auto-detected patterns
   const chartMarkers: ChartMarker[] = useMemo(() => {
@@ -445,7 +453,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return overlays;
   }, [autoPatterns, bars]);
 
-  // Derive trade plan from current pattern (active first, then latest unresolved)
+  // Derive trade plan from current, fresh pattern (active first, then latest unresolved)
   const tradePlan = useMemo(() => {
     if (autoPatterns.length === 0) return undefined;
 
@@ -453,12 +461,49 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
     const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
 
+    const freshnessHoursByTimeframe: Record<string, number> = {
+      '15m': 6,
+      '1h': 24,
+      '4h': 72,
+      '8h': 120,
+      '1d': 14 * 24,
+      '1wk': 60 * 24,
+    };
+    const freshnessWindowMs = (freshnessHoursByTimeframe[timeframe] ?? 24) * 60 * 60 * 1000;
+    const cutoffTs = Date.now() - freshnessWindowMs;
+    const maxEntryDriftPctByTimeframe: Record<string, number> = {
+      '15m': 2.5,
+      '1h': 4,
+      '4h': 6,
+      '8h': 8,
+      '1d': 12,
+      '1wk': 20,
+    };
+    const maxEntryDriftPct = maxEntryDriftPctByTimeframe[timeframe] ?? 4;
+
+    const isFresh = (pattern: any) => {
+      const ts = new Date(getDetectedAt(pattern)).getTime();
+      return Number.isFinite(ts) && ts >= cutoffTs;
+    };
+
+    const isEntryStillTradable = (pattern: any) => {
+      const entry = Number(pattern?.entry_price);
+      const current = Number(pattern?.current_price);
+      if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
+      const driftPct = Math.abs((current - entry) / entry) * 100;
+      return driftPct <= maxEntryDriftPct;
+    };
+
     const sortedPatterns = [...autoPatterns]
       .filter(p => !!getDetectedAt(p))
       .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
 
-    const activePattern = sortedPatterns.find(p => p.isActive && p.status !== 'expired');
-    const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
+    const activePattern = sortedPatterns.find(
+      p => p.isActive && p.status !== 'expired' && isFresh(p) && isEntryStillTradable(p)
+    );
+    const latestUnresolvedPattern = sortedPatterns.find(
+      p => !isResolvedOutcome(p.outcome) && isFresh(p) && isEntryStillTradable(p)
+    );
     const currentPattern = activePattern || latestUnresolvedPattern;
     if (!currentPattern) return undefined;
 
@@ -471,7 +516,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [autoPatterns]);
+  }, [autoPatterns, timeframe]);
 
   // Convert autoPatterns to HistoricalPatternOverlay format for the overlay system
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
@@ -592,7 +637,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           {/* Refresh */}
           <button
             className="h-6 w-6 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground/50 hover:text-muted-foreground"
-            onClick={fetchChartData}
+            onClick={async () => {
+              await Promise.all([fetchChartData(), fetchAutoPatterns()]);
+            }}
             disabled={loading}
           >
             <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
