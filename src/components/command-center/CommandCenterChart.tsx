@@ -394,13 +394,20 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     
     const markers: ChartMarker[] = [];
 
+    // Build a set of actionable pattern IDs for detailed rendering
+    const actionableIds = new Set(
+      autoPatterns
+        .filter(p => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p))
+        .map(p => p.id)
+    );
+
     for (const p of autoPatterns) {
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
       const detectedAt = p.last_confirmed_at || p.first_detected_at || p.detected_at;
       const isLong = p.direction === 'long' || p.direction === 'bullish';
       
-      if (p.isActive) {
-        // Active pattern: show full name + direction arrow
+      if (p.isActive && actionableIds.has(p.id)) {
+        // Only actionable active patterns get full name + pivot labels
         if (detectedAt) {
           markers.push({
             time: detectedAt,
@@ -411,7 +418,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           });
         }
 
-        // Show pivot labels only for active patterns
+        // Show pivot labels only for actionable active patterns
         const vs = p.visual_spec as any;
         const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
         if (pivots && pivots.length > 0) {
@@ -451,7 +458,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       seen.add(key);
       return true;
     });
-  }, [autoPatterns]);
+  }, [autoPatterns, bars, timeframe]);
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
@@ -485,7 +492,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   const isEntryStillTradable = (pattern: any) => {
     const entry = Number(pattern?.entry_price);
-    const current = Number(pattern?.current_price);
+    // Use current_price from pattern, fallback to latest chart bar close
+    let current = Number(pattern?.current_price);
+    if (!Number.isFinite(current) || current <= 0) {
+      const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
+      current = lastBar ? Number(lastBar.c) : 0;
+    }
     if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
     const driftPct = Math.abs((current - entry) / entry) * 100;
     return driftPct <= maxEntryDriftPct;
@@ -496,7 +508,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       autoPatterns.filter(
         (p) => p.isActive && p.status !== 'expired' && isFreshPattern(p) && isEntryStillTradable(p)
       ),
-    [autoPatterns, timeframe]
+    [autoPatterns, timeframe, bars]
   );
 
   // Derive formation overlays ONLY for actionable active patterns (keep shading/levels in sync)
