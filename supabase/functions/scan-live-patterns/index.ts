@@ -632,6 +632,11 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
         last_confirmed_at: now, current_price: pattern.currentPrice, prev_close: pattern.prevClose,
         change_percent: pattern.changePercent, bars: pattern.bars, visual_spec: pattern.visualSpec,
         trend_alignment: pattern.trendAlignment, trend_indicators: pattern.trendIndicators || {}, updated_at: now,
+        // Recalculate trade plan on each re-confirmation so levels stay actionable
+        entry_price: pattern.tradePlan.entry,
+        stop_loss_price: pattern.tradePlan.stopLoss,
+        take_profit_price: pattern.tradePlan.takeProfit,
+        risk_reward_ratio: pattern.tradePlan.rr,
       }).eq('id', id)
     ));
   }
