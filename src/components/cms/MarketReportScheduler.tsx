@@ -70,7 +70,7 @@ export function MarketReportScheduler() {
             timezone: "America/New_York",
             markets: ["stocks", "forex", "crypto", "commodities"],
             tone: "professional",
-            linkBackUrl: "https://chartingpath.lovable.app/tools/market-breadth"
+            linkBackUrl: BREADTH_URL
           }
         }
       );
@@ -78,7 +78,7 @@ export function MarketReportScheduler() {
       if (error) throw error;
 
       const teaser = data?.teaser || data?.content || "";
-      const fullPost = `${teaser}\n\n📊 Full Market Breadth Dashboard 👉 https://chartingpath.lovable.app/tools/market-breadth\n\n#MarketBreadth #Trading #StockMarket #Finance`;
+      const fullPost = `${teaser}\n\n📊 Full Market Breadth Dashboard 👉 ${BREADTH_URL}\n\n#MarketBreadth #Trading #StockMarket #Finance`;
       setBreadthContent(fullPost);
       toast.success("Market breadth content generated — ready to copy!");
     } catch (error: any) {
@@ -130,7 +130,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("Asia/Tokyo", 8, 0),
           timezone: "Asia/Tokyo", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "commodities"], timeSpan: "pre_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         },
         {
           account_id: accountId, post_type: "market_report", platform: "twitter",
@@ -138,7 +138,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("Asia/Tokyo", 15, 30),
           timezone: "Asia/Tokyo", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "commodities"], timeSpan: "post_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         },
         {
           account_id: accountId, post_type: "market_report", platform: "twitter",
@@ -146,7 +146,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("Europe/London", 6, 45),
           timezone: "Europe/London", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "commodities"], timeSpan: "pre_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         },
         {
           account_id: accountId, post_type: "market_report", platform: "twitter",
@@ -154,7 +154,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("Europe/London", 16, 45),
           timezone: "Europe/London", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "commodities"], timeSpan: "post_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         },
         {
           account_id: accountId, post_type: "market_report", platform: "twitter",
@@ -162,7 +162,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("America/New_York", 8, 45),
           timezone: "America/New_York", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "crypto", "commodities"], timeSpan: "pre_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         },
         {
           account_id: accountId, post_type: "market_report", platform: "twitter",
@@ -170,7 +170,7 @@ export function MarketReportScheduler() {
           scheduled_time: createScheduledTime("America/New_York", 16, 30),
           timezone: "America/New_York", recurrence_pattern: "weekdays",
           report_config: { markets: ["stocks", "forex", "crypto", "commodities"], timeSpan: "post_market", tone: "professional" },
-          status: "scheduled", link_back_url: "https://chartingpath.lovable.app/tools/market-breadth"
+          status: "scheduled", link_back_url: BREADTH_URL
         }
       ];
 
@@ -193,7 +193,7 @@ export function MarketReportScheduler() {
     setIsTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-social-market-teaser", {
-        body: { reportType, timezone, markets: ["stocks", "forex", "crypto", "commodities"], tone: "professional", linkBackUrl: "https://chartingpath.lovable.app/tools/market-breadth" }
+        body: { reportType, timezone, markets: ["stocks", "forex", "crypto", "commodities"], tone: "professional", linkBackUrl: BREADTH_URL }
       });
       if (error) throw error;
       setPreviewContent(`📍 ${marketName} ${reportType === "pre_market" ? "Pre-Market" : "Post-Market"}\n⏰ Timezone: ${timezone}\n\n${data.teaser}`);
@@ -236,7 +236,7 @@ export function MarketReportScheduler() {
         content: "", scheduled_time: scheduledTime.toISOString(), timezone,
         recurrence_pattern: null,
         report_config: { timeSpan: reportType, markets: ["stocks", "forex", "crypto", "commodities"], tone: "professional" },
-        link_back_url: "https://chartingpath.lovable.app/tools/market-breadth", status: "scheduled"
+        link_back_url: BREADTH_URL, status: "scheduled"
       });
       if (insertError) throw insertError;
 
