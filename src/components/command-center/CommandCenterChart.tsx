@@ -722,6 +722,16 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               chartMarkers={chartMarkers}
               formationOverlays={formationOverlays}
               historicalPatterns={historicalPatternOverlays}
+              initialVisibleBars={
+                // Focused zoom: show recent bars relevant to active trading
+                timeframe === '15m' ? 120 
+                : timeframe === '1h' ? 100 
+                : timeframe === '4h' ? 80 
+                : timeframe === '8h' ? 60 
+                : timeframe === '1d' ? 80 
+                : timeframe === '1wk' ? 52 
+                : 80
+              }
             />
           </div>
         ) : (
