@@ -603,13 +603,10 @@ export default function FullChartViewer({
             if (!timeSet.has(t)) return;
 
             if (isBreakout) {
-              // Breakout → triangle up from below; Breakdown → triangle down from above
-              const barIdx = bars.findIndex(b => Math.floor(new Date(b.t).getTime() / 1000) === t);
               const pointUp = !isBreakdown;
-              const price = barIdx >= 0 ? (pointUp ? bars[barIdx].l : bars[barIdx].h) : pivot.price;
               canvasTriangleMarkers.push({
                 time: t,
-                price,
+                price: pivot.price,
                 direction: pointUp ? 'up' : 'down',
                 color: '#f97316',
                 label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
@@ -633,10 +630,10 @@ export default function FullChartViewer({
           const isLong = setup.direction === 'long';
           canvasTriangleMarkers.push({
             time: lastBar.time as number,
-            price: tradePlan.entry,
+            price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
             color: '#3b82f6',
-            label: 'Entry',
+            label: '',
           });
         }
 
