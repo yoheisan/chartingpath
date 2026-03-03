@@ -813,7 +813,23 @@ const StudyChart = memo(({
       const activePattern = sortedPatterns.find(p => p.isActive && p.status !== 'expired');
       const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
       const currentPattern = activePattern || latestUnresolvedPattern || sortedPatterns[0];
-      if (currentPattern) {
+
+      // Guard against stale/outlier trade levels that can crush candle scaling.
+      const hasRenderableTradeLevels = (() => {
+        if (!currentPattern || safeChartData.length === 0) return false;
+        const latestClose = Number(safeChartData[safeChartData.length - 1]?.close);
+        const entry = Number(currentPattern.entryPrice);
+        const sl = Number(currentPattern.stopLossPrice);
+        const tp = Number(currentPattern.takeProfitPrice);
+        if (!Number.isFinite(latestClose) || latestClose <= 0) return false;
+        if (![entry, sl, tp].every((p) => Number.isFinite(p) && p > 0)) return false;
+
+        // If levels are extremely far from current price, skip rendering lines/zones.
+        const maxDistancePct = 35;
+        return [entry, sl, tp].every((price) => Math.abs((price - latestClose) / latestClose) * 100 <= maxDistancePct);
+      })();
+
+      if (currentPattern && hasRenderableTradeLevels) {
         // Include direction in the ENTRY price line title so user always knows the trade direction
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const dirLabel = isLong ? '▲ LONG' : '▼ SHORT';
@@ -840,7 +856,7 @@ const StudyChart = memo(({
       
       // Always add a direction arrow on the most recent bar for the current pattern
       const directionMarkers: Array<{ time: Time; position: 'aboveBar' | 'belowBar'; color: string; shape: SeriesMarkerShape; text: string }> = [];
-      if (currentPattern && safeChartData.length > 0) {
+      if (currentPattern && hasRenderableTradeLevels && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const lastBar = safeChartData[safeChartData.length - 1];
         directionMarkers.push({
@@ -906,7 +922,7 @@ const StudyChart = memo(({
       }
 
       // Draw trade zones on canvas (TP/SL shading) — current pattern only
-      if (patternToggles.showTradeZones && currentPattern) {
+      if (patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels) {
         const drawHistoricalPatternZones = () => {
           const canvas = canvasOverlayRef.current;
           if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
