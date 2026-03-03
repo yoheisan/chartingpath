@@ -4,7 +4,6 @@ import { useCommandPalette } from "./CommandPaletteContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 export function CommandPaletteTrigger() {
   const { t } = useTranslation();
