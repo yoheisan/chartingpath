@@ -17,14 +17,51 @@ interface FetchBarsOptions {
   includeOhlc?: boolean;
 }
 
+/** Check if a symbol is a crypto ticker (e.g. BTC-USD, ETH-USD) */
+function isCryptoSymbol(symbol: string): boolean {
+  return /^[A-Z0-9]+-USD$/i.test(symbol) || symbol.toUpperCase().endsWith('USDT');
+}
+
 /**
- * Fetch OHLC bars using EODHD-first, Yahoo-fallback strategy.
- * Returns normalised bars in CompressedBar format { t, o, h, l, c, v }.
+ * Fetch OHLC bars with provider routing:
+ * - Crypto → Binance-first, Yahoo-fallback (skip EODHD entirely)
+ * - Everything else → EODHD-first, Yahoo-fallback
  */
 export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]> {
   const { symbol, startDate, endDate, interval, includeOhlc = true } = opts;
 
-  // --- 1. Try EODHD first ---
+  // --- Crypto path: Binance → Yahoo (skip EODHD) ---
+  if (isCryptoSymbol(symbol)) {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-binance', {
+        body: { symbol, startDate, endDate, interval, includeOhlc },
+      });
+
+      if (!error && data?.bars?.length > 0) {
+        console.log(`[fetchMarketBars] Binance returned ${data.bars.length} bars for ${symbol}`);
+        return normaliseBars(data.bars);
+      }
+
+      if (error) {
+        console.warn(`[fetchMarketBars] Binance error for ${symbol}, falling back to Yahoo:`, error.message ?? error);
+      } else {
+        console.warn(`[fetchMarketBars] Binance returned 0 bars for ${symbol}, falling back to Yahoo`);
+      }
+    } catch (e: any) {
+      console.warn(`[fetchMarketBars] Binance exception for ${symbol}:`, e?.message ?? e);
+    }
+
+    // Crypto fallback: Yahoo
+    const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
+      body: { symbol, startDate, endDate, interval, includeOhlc },
+    });
+    if (error) throw new Error(error.message || `Failed to fetch bars for ${symbol}`);
+    const bars = normaliseBars(data?.bars ?? []);
+    console.log(`[fetchMarketBars] Yahoo returned ${bars.length} bars for ${symbol} (crypto fallback)`);
+    return bars;
+  }
+
+  // --- Non-crypto path: EODHD → Yahoo ---
   try {
     const { data, error } = await supabase.functions.invoke('fetch-eodhd', {
       body: { symbol, startDate, endDate, interval, includeOhlc },
@@ -35,7 +72,6 @@ export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]
       return normaliseBars(data.bars);
     }
 
-    // EODHD returned 0 bars or an error response (e.g. 404) – fall through
     if (error) {
       console.warn(`[fetchMarketBars] EODHD error for ${symbol}, falling back to Yahoo:`, error.message ?? error);
     } else {
@@ -45,15 +81,11 @@ export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]
     console.warn(`[fetchMarketBars] EODHD exception for ${symbol}:`, e?.message ?? e);
   }
 
-  // --- 2. Fallback to Yahoo Finance ---
+  // Non-crypto fallback: Yahoo
   const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
     body: { symbol, startDate, endDate, interval, includeOhlc },
   });
-
-  if (error) {
-    throw new Error(error.message || `Failed to fetch bars for ${symbol}`);
-  }
-
+  if (error) throw new Error(error.message || `Failed to fetch bars for ${symbol}`);
   const bars = normaliseBars(data?.bars ?? []);
   console.log(`[fetchMarketBars] Yahoo returned ${bars.length} bars for ${symbol}`);
   return bars;
