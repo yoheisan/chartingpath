@@ -376,6 +376,21 @@ export function EducationalContentManager() {
                   <TableCell className="text-center">
                     <span className="text-sm">{piece.posted_count}</span>
                   </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleCopy(piece)}
+                      title="Copy full post to clipboard"
+                    >
+                      {copiedId === piece.id ? (
+                        <Check className="h-3.5 w-3.5 text-green-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button
