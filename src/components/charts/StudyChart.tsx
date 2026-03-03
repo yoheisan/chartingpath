@@ -856,7 +856,12 @@ const StudyChart = memo(({
       }
 
       // Render pattern markers (name labels + direction arrows)
-      const patternMarkerData = generatePatternMarkers(historicalPatterns, bars, patternToggles);
+      // Exclude the currentPattern from generatePatternMarkers since directionMarkers handles it
+      // to avoid duplicate markers (orange detection + green direction) on the same pattern
+      const patternsForMarkers = currentPattern
+        ? historicalPatterns.filter(p => p.id !== currentPattern.id)
+        : historicalPatterns;
+      const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
       
       // Always add a direction arrow on the most recent bar for the current pattern
       const directionMarkers: Array<{ time: Time; position: 'aboveBar' | 'belowBar'; color: string; shape: SeriesMarkerShape; text: string }> = [];
