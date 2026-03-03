@@ -1052,6 +1052,12 @@ const StudyChart = memo(({
       chart.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
     } else if (persistedVisibleRangeRef.current) {
       chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
+    } else if (initialVisibleBars && safeChartData.length > 0) {
+      // Zoom to recent N bars with some right offset for whitespace
+      const totalBars = safeChartData.length;
+      const from = Math.max(0, totalBars - initialVisibleBars);
+      const to = totalBars + 5; // small right whitespace
+      chart.timeScale().setVisibleLogicalRange({ from, to });
     } else {
       chart.timeScale().fitContent();
     }
