@@ -3019,6 +3019,8 @@
     "generateScriptPrompt": "BTCUSDのアセンディングトライアングル取引用のPine Scriptストラテジーを生成してください",
     "learnPatterns": "パターンを学ぶ",
     "learnPatternsPrompt": "ヘッドアンドショルダーパターンの見分け方と取引方法を説明してください",
+    "marketBreadth": "マーケット・ブレッドス",
+    "marketBreadthPrompt": "現在のマーケット・ブレッドスは？アドバンス/デクライン比率とセンチメントを見せてください",
     "placeholder": "パターン、アラート、スクリプトについて質問...",
     "disclaimer": "教育目的のみ。投資助言ではありません。",
     "moreBelow": "続きあり",
