@@ -938,7 +938,9 @@ const StudyChart = memo(({
       }
 
       // Render pattern markers for OTHER patterns (not the current one — it uses canvas triangles)
-      const patternsForMarkers = currentPattern
+      // UNLESS the current pattern has no canvas triangles, in which case include it as a native marker fallback
+      const hasCanvasTrianglesForCurrent = canvasTriangleMarkers.length > 0;
+      const patternsForMarkers = currentPattern && hasCanvasTrianglesForCurrent
         ? historicalPatterns.filter(p => p.id !== currentPattern.id)
         : historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
@@ -1032,7 +1034,7 @@ const StudyChart = memo(({
       };
 
       // Draw trade zones + canvas triangles on canvas overlay
-      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels;
+      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry;
       const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
 
       if (shouldDrawZones || shouldDrawTriangles) {
