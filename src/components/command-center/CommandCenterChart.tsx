@@ -538,10 +538,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
   }, [autoPatterns, timeframe]);
 
-  // Convert autoPatterns to HistoricalPatternOverlay format for the overlay system
+  // Only pass active patterns for overlay price lines (historical are shown as minimal dots)
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
     if (autoPatterns.length === 0) return [];
-    return autoPatterns.map(p => ({
+    return autoPatterns
+      .filter(p => p.isActive)
+      .map(p => ({
       id: p.id,
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
