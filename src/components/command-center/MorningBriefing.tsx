@@ -25,6 +25,7 @@ export interface BriefingSetup {
 }
 
 const BRIEFING_CACHE_KEY = 'cp-morning-briefing';
+const BRIEFING_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 
 interface CachedBriefing {
   date: string;
@@ -39,6 +40,8 @@ function getCachedBriefing(): CachedBriefing | null {
     const parsed: CachedBriefing = JSON.parse(raw);
     const today = new Date().toISOString().slice(0, 10);
     if (parsed.date !== today) return null;
+    // Stale after 30 minutes
+    if (Date.now() - parsed.ts > BRIEFING_REFRESH_MS) return null;
     return parsed;
   } catch {
     return null;
@@ -124,6 +127,9 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
 
   useEffect(() => {
     fetchBriefing();
+    // Auto-refresh every 30 minutes to match the 1H live-scan cadence
+    const interval = setInterval(() => fetchBriefing(true), BRIEFING_REFRESH_MS);
+    return () => clearInterval(interval);
   }, [userId]);
 
   if (collapsed) {
