@@ -486,17 +486,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           });
         }
       } else {
-        // Historical pattern: minimal circle marker, no label clutter
+        // Historical pattern: colored circle marker with outcome label
         if (detectedAt) {
           const outcomeColor = p.outcome === 'hit_tp' ? '#22c55e' 
             : p.outcome === 'hit_sl' ? '#ef4444' 
             : '#6b7280';
+          const outcomeLabel = p.outcome === 'hit_tp' ? '✓ TP' 
+            : p.outcome === 'hit_sl' ? '✗ SL' 
+            : p.outcome === 'timeout' ? '⏱' 
+            : '';
           markers.push({
             time: detectedAt,
             position: isLong ? 'belowBar' : 'aboveBar',
             color: outcomeColor,
             shape: 'circle',
-            text: '', // No text — clean and minimal
+            text: outcomeLabel,
           });
         }
       }
@@ -753,7 +757,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             </div>
           </div>
         ) : bars.length > 0 ? (
-          <div className="h-full">
+          <div className="h-full relative">
             <StudyChart 
               bars={bars} 
               symbol={symbol} 
@@ -765,7 +769,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
               formationOverlays={formationOverlays}
               historicalPatterns={historicalPatternOverlays}
               initialVisibleBars={
-                // Focused zoom: show recent bars relevant to active trading
                 timeframe === '15m' ? 120 
                 : timeframe === '1h' ? 100 
                 : timeframe === '4h' ? 80 
@@ -775,6 +778,24 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                 : 80
               }
             />
+            {/* Outcome marker legend — visible when historical patterns exist */}
+            {chartMarkers.some(m => m.shape === 'circle') && (
+              <div className="absolute bottom-2 left-2 flex items-center gap-3 px-2.5 py-1.5 rounded-md bg-background/80 backdrop-blur-sm border border-border/40 text-[11px] text-muted-foreground z-10">
+                <span className="font-medium text-foreground/70">Outcomes:</span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                  TP Hit
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                  SL Hit
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-gray-500" />
+                  Pending
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
