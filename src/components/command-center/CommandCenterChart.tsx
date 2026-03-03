@@ -495,15 +495,10 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return driftPct <= maxEntryDriftPct;
   };
 
-  // Chart markers are NOT generated here when historicalPatternOverlays exist.
-  // StudyChart's internal pattern overlay rendering (zigzag, markers, price lines)
-  // is the single source of truth — same code path as the Study page.
-  // Only generate standalone markers when no overlay pattern is selected.
-  const chartMarkers: ChartMarker[] = useMemo(() => {
-    // If we have an overlay pattern, StudyChart handles all markers internally
-    if (overlayPattern) return [];
-    return [];
-  }, [overlayPattern]);
+  // Chart markers are NOT generated here — StudyChart's internal pattern overlay
+  // rendering (zigzag, markers, price lines) is the single source of truth,
+  // using the same code path as the Study page. This prevents duplicate/cluttered markers.
+  const chartMarkers: ChartMarker[] = [];
 
 
   const actionableActivePatterns = useMemo(
