@@ -1052,15 +1052,52 @@ const StudyChart = memo(({
           if (!chartEl) return;
           const rect = chartEl.getBoundingClientRect();
           const dpr = window.devicePixelRatio || 1;
-          // Only initialize canvas if formation overlay hasn't already
-          const needsInit = canvas.width !== Math.floor(rect.width) * dpr || canvas.height !== Math.floor(rect.height) * dpr;
-          if (needsInit) {
-            canvas.width = Math.floor(rect.width) * dpr;
-            canvas.height = Math.floor(rect.height) * dpr;
-            canvas.style.width = `${Math.floor(rect.width)}px`;
-            canvas.style.height = `${Math.floor(rect.height)}px`;
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, rect.width, rect.height);
+
+          // Full canvas clear + re-init to avoid stale drawings
+          canvas.width = Math.floor(rect.width) * dpr;
+          canvas.height = Math.floor(rect.height) * dpr;
+          canvas.style.width = `${Math.floor(rect.width)}px`;
+          canvas.style.height = `${Math.floor(rect.height)}px`;
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, rect.width, rect.height);
+
+          // Re-draw formation zone if present (since we cleared the canvas)
+          if (formationOverlays && formationOverlays.length > 0) {
+            for (const formation of formationOverlays) {
+              if (formation.hasZone) {
+                const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
+                if (zonePoints.length >= 2) {
+                  const ts = chartRef.current!.timeScale();
+                  const series = candleSeriesRef.current;
+                  if (series) {
+                    const pixelPoints: { x: number; upper: number; lower: number }[] = [];
+                    for (const pt of zonePoints) {
+                      try {
+                        const x = ts.timeToCoordinate(pt.time as unknown as Time);
+                        const yUp = (series as any).priceToCoordinate(pt.upper);
+                        const yLo = (series as any).priceToCoordinate(pt.lower);
+                        if (x != null && yUp != null && yLo != null &&
+                            Number.isFinite(x) && Number.isFinite(yUp) && Number.isFinite(yLo)) {
+                          pixelPoints.push({ x, upper: yUp, lower: yLo });
+                        }
+                      } catch {}
+                    }
+                    if (pixelPoints.length >= 2) {
+                      ctx.beginPath();
+                      ctx.moveTo(pixelPoints[0].x, pixelPoints[0].upper);
+                      for (let i = 1; i < pixelPoints.length; i++) ctx.lineTo(pixelPoints[i].x, pixelPoints[i].upper);
+                      for (let i = pixelPoints.length - 1; i >= 0; i--) ctx.lineTo(pixelPoints[i].x, pixelPoints[i].lower);
+                      ctx.closePath();
+                      ctx.fillStyle = 'rgba(0, 200, 255, 0.12)';
+                      ctx.fill();
+                      ctx.strokeStyle = 'rgba(0, 200, 255, 0.25)';
+                      ctx.lineWidth = 1;
+                      ctx.stroke();
+                    }
+                  }
+                }
+              }
+            }
           }
 
           // TP/SL shaded zones — only draw zones for levels within proximity
@@ -1083,7 +1120,6 @@ const StudyChart = memo(({
           }
         };
 
-        // Use a slightly later timeout to ensure formation zone draws first
         setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
         chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
       }
