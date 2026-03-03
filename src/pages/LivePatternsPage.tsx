@@ -482,29 +482,54 @@ export default function LivePatternsPage() {
       }
     }
 
-    // Pattern not in screener results — fetch directly by dbId
-    if (openPatternId) {
+    // Pattern not in screener results — fetch directly
+    if (openPatternId || highlightSymbol) {
       autoOpenTriggeredRef.current = true;
       (async () => {
         try {
           setChartOpen(true);
           setLoadingChartDetails(true);
-          const res = await withTimeout(
-            supabase.functions.invoke('get-live-pattern-details', {
-              body: { id: openPatternId },
-            }),
-            30_000,
-            'get-live-pattern-details'
-          );
-          if (res.error || !res.data?.success || !res.data.pattern) {
-            console.warn('[LivePatternsPage] Failed to load openPattern directly', res.error);
-            setChartOpen(false);
+
+          // If we have a specific pattern ID, fetch by ID
+          if (openPatternId) {
+            const res = await withTimeout(
+              supabase.functions.invoke('get-live-pattern-details', {
+                body: { id: openPatternId },
+              }),
+              30_000,
+              'get-live-pattern-details'
+            );
+            if (res.error || !res.data?.success || !res.data.pattern) {
+              console.warn('[LivePatternsPage] Failed to load openPattern directly', res.error);
+              setChartOpen(false);
+              return;
+            }
+            const setup = mapApiResponseToLiveSetup(res.data.pattern);
+            setSelectedSetup(toSetupWithVisuals(setup));
             return;
           }
-          const setup = mapApiResponseToLiveSetup(res.data.pattern);
-          setSelectedSetup(toSetupWithVisuals(setup));
+
+          // Fallback: query live_pattern_detections directly for the highlighted instrument
+          if (highlightSymbol) {
+            const { data, error } = await supabase
+              .from('live_pattern_detections')
+              .select('*')
+              .or(`instrument.eq.${highlightSymbol},instrument.ilike.%${highlightSymbol}%`)
+              .in('status', ['active', 'pending'])
+              .order('last_confirmed_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (error || !data) {
+              console.warn('[LivePatternsPage] No pattern found for highlight symbol', highlightSymbol, error);
+              setChartOpen(false);
+              return;
+            }
+            const setup = mapApiResponseToLiveSetup(data);
+            setSelectedSetup(toSetupWithVisuals(setup));
+          }
         } catch (err) {
-          console.error('[LivePatternsPage] Error fetching openPattern', err);
+          console.error('[LivePatternsPage] Error fetching pattern for highlight/openPattern', err);
           setChartOpen(false);
         } finally {
           setLoadingChartDetails(false);
