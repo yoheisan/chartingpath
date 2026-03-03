@@ -70,13 +70,14 @@ The library supports exactly **four** marker shapes:
 
 | Shape | Value | Visual |
 |---|---|---|
-| Arrow Up | `'arrowUp'` | ▲ triangle pointing up |
-| Arrow Down | `'arrowDown'` | ▼ triangle pointing down |
+| Arrow Up | `'arrowUp'` | ▲ solid triangle pointing up (NOT a literal arrow with shaft) |
+| Arrow Down | `'arrowDown'` | ▼ solid triangle pointing down (NOT a literal arrow with shaft) |
 | Circle | `'circle'` | ● filled circle |
 | Square | `'square'` | ■ filled square |
 
-> **⚠️ IMPORTANT:** There are NO diamond, star, or other shapes available.  
-> Never describe or promise any shape not in this list.
+> **⚠️ IMPORTANT:**  
+> - There are NO diamond, star, or other shapes available. Never describe or promise any shape not in this list.  
+> - Despite the API names `arrowUp`/`arrowDown`, the rendered visuals are **solid triangles** (▲/▼), not arrows. Always describe them as "triangles" in user-facing communication and documentation.
 
 ### 3.2 Pattern Detection Marker
 
