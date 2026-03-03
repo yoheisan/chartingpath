@@ -59,6 +59,35 @@ function setCachedBriefing(setups: BriefingSetup[]) {
   } catch {}
 }
 
+/** Filter setups to only those with seeded price data in historical_prices */
+async function filterSeededSetups(patterns: any[]): Promise<any[]> {
+  if (patterns.length === 0) return [];
+
+  // Get unique symbol+timeframe combos
+  const combos = [...new Set(patterns.map(p => `${p.instrument}|${p.timeframe}`))];
+  const symbols = [...new Set(patterns.map(p => p.instrument))];
+  const timeframes = [...new Set(patterns.map(p => p.timeframe))];
+
+  // Check which symbols have data in historical_prices for their timeframe
+  const { data: seeded } = await supabase
+    .from('historical_prices')
+    .select('symbol, timeframe')
+    .in('symbol', symbols)
+    .in('timeframe', timeframes)
+    .limit(500);
+
+  if (!seeded || seeded.length === 0) {
+    console.warn('[MorningBriefing] No seeded data found, hiding all setups');
+    return [];
+  }
+
+  const seededSet = new Set(seeded.map(s => `${s.symbol}|${s.timeframe}`));
+
+  const filtered = patterns.filter(p => seededSet.has(`${p.instrument}|${p.timeframe}`));
+  console.log(`[MorningBriefing] ${patterns.length} setups → ${filtered.length} with seeded data`);
+  return filtered;
+}
+
 export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: MorningBriefingProps) {
   const { t } = useTranslation();
   const [setups, setSetups] = useState<BriefingSetup[]>(() => getCachedBriefing()?.setups || []);
@@ -82,6 +111,8 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
         .order('first_detected_at', { ascending: false })
         .limit(50);
 
+      let rawPatterns: any[] = [];
+
       if (userId) {
         const { data: wl } = await supabase
           .from('user_watchlist')
@@ -102,19 +133,21 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             .limit(20);
 
           if (wlPatterns && wlPatterns.length >= 3) {
-            const scored = scoreAndSort(wlPatterns);
-            setSetups(scored.slice(0, 5));
-            setCachedBriefing(scored.slice(0, 5));
-            setLoading(false);
-            return;
+            rawPatterns = wlPatterns;
           }
         }
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      if (rawPatterns.length === 0) {
+        const { data, error } = await query;
+        if (error) throw error;
+        rawPatterns = data || [];
+      }
 
-      const scored = scoreAndSort(data || []);
+      // Filter to only setups that have seeded price data in the DB
+      const seededPatterns = await filterSeededSetups(rawPatterns);
+
+      const scored = scoreAndSort(seededPatterns);
       const top = scored.slice(0, 5);
       setSetups(top);
       setCachedBriefing(top);
