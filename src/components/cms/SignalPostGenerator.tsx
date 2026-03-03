@@ -93,8 +93,7 @@ export function SignalPostGenerator() {
       if (error) throw error;
 
       const filtered = (data ?? [])
-        .filter(p => p.trend_alignment && p.trend_alignment !== 'counter_trend')
-        .slice(0, 5) as PatternRow[];
+        .filter(p => p.trend_alignment && p.trend_alignment !== 'counter_trend') as PatternRow[];
 
       if (filtered.length === 0) {
         toast({ title: "No signals", description: "No A/B grade with-trend patterns found right now." });
