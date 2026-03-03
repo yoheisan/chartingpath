@@ -310,7 +310,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const upperSymbol = symbol.toUpperCase();
       const isResolvedOutcome = (outcome?: string | null) =>
         ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-      const getDetectedAt = (pattern: any) => pattern.first_detected_at || pattern.detected_at || '';
+      const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
 
       try {
         // Fetch recent live patterns (active + expired within last 90 days)
@@ -318,7 +318,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
         const { data: liveData } = await supabase
           .from('live_pattern_detections')
-          .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
+          .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
           .eq('instrument', upperSymbol)
           .eq('timeframe', timeframe)
           .gte('first_detected_at', ninetyDaysAgo.toISOString())
@@ -390,7 +390,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       const pivots = vs?.pivots as Array<{ timestamp: string; label: string; type: string; price: number }> | undefined;
       const color = p.isActive ? '#f97316' : '#6b7280';
       const patternName = PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name;
-      const detectedAt = p.first_detected_at || p.detected_at;
+      const detectedAt = p.last_confirmed_at || p.first_detected_at || p.detected_at;
       const isLong = p.direction === 'long' || p.direction === 'bullish';
       
       // Add pattern name marker at detection time
@@ -451,7 +451,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const isResolvedOutcome = (outcome?: string | null) =>
       ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-    const getDetectedAt = (pattern: any) => pattern.first_detected_at || pattern.detected_at || '';
+    const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
 
     const sortedPatterns = [...autoPatterns]
       .filter(p => !!getDetectedAt(p))
@@ -481,7 +481,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       patternName: PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name,
       patternId: p.pattern_id,
       direction: (p.direction === 'bullish' ? 'long' : p.direction === 'bearish' ? 'short' : p.direction) as 'long' | 'short',
-      detectedAt: p.first_detected_at || p.detected_at,
+      detectedAt: p.last_confirmed_at || p.first_detected_at || p.detected_at,
       entryPrice: p.entry_price,
       stopLossPrice: p.stop_loss_price,
       takeProfitPrice: p.take_profit_price,
