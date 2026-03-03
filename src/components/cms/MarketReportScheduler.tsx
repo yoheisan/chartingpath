@@ -406,7 +406,14 @@ export function MarketReportScheduler() {
             ) : (
               <><BarChart3 className="h-4 w-4 mr-2" />Generate {REGION_CONFIG[breadthRegion]?.label} {breadthType === "pre_market" ? "Pre" : "Post"}-Market Post</>
             )}
-          </Button>
+           </Button>
+
+          {breadthContent && (
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm font-mono leading-relaxed border">
+                  {breadthContent}
+                </div>
                 <div className="absolute top-2 right-2">
                   <Button
                     variant="secondary"
@@ -415,7 +422,7 @@ export function MarketReportScheduler() {
                     className="h-8 gap-1.5"
                   >
                     {breadthCopied ? (
-                      <><Check className="h-3.5 w-3.5 text-green-500" />Copied!</>
+                      <><Check className="h-3.5 w-3.5" />Copied!</>
                     ) : (
                       <><Copy className="h-3.5 w-3.5" />Copy All</>
                     )}
