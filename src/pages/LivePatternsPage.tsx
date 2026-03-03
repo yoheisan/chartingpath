@@ -1544,6 +1544,7 @@ export default function LivePatternsPage() {
                     },
                   },
                 });
+              }
             } catch (err: any) {
               console.error('Create alert error:', err);
               const msg = err?.message || '';
