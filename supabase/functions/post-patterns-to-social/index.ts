@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 25; // Increased to cover US session gaps
+const MAX_DAILY_POSTS = 3; // $100/mo Basic tier: ~90 posts/mo = 3/day
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
