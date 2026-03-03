@@ -22,6 +22,37 @@ import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationO
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 
+/** Last-resort fallback: extract bars embedded in active pattern detections */
+async function tryExtractPatternBars(sym: string, tf: string): Promise<CompressedBar[]> {
+  try {
+    const { data } = await supabase
+      .from('live_pattern_detections')
+      .select('bars')
+      .eq('instrument', sym.toUpperCase())
+      .eq('timeframe', tf)
+      .eq('status', 'active')
+      .order('first_detected_at', { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0 && data[0].bars) {
+      const raw = data[0].bars as any[];
+      if (Array.isArray(raw) && raw.length > 0) {
+        return raw.map((b: any) => ({
+          t: b.t || '',
+          o: Number(b.o ?? b.open ?? 0),
+          h: Number(b.h ?? b.high ?? 0),
+          l: Number(b.l ?? b.low ?? 0),
+          c: Number(b.c ?? b.close ?? 0),
+          v: Number(b.v ?? b.volume ?? 0),
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('[CommandCenterChart] pattern bars fallback failed:', e);
+  }
+  return [];
+}
+
 interface CommandCenterChartProps {
   symbol: string;
   timeframe: string;
@@ -241,14 +272,35 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         
         console.log(`[CommandCenterChart] Using EODHD→Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${lookbackDays} days)`);
 
-        const fetchedBars = await fetchMarketBars({
-          symbol,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          interval: timeframe,
-        });
+        // Add timeout to prevent indefinite hanging on edge function calls
+        const fetchWithTimeout = Promise.race([
+          fetchMarketBars({
+            symbol,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            interval: timeframe,
+          }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 15000)),
+        ]);
+
+        let fetchedBars: CompressedBar[] = [];
+        try {
+          fetchedBars = await fetchWithTimeout;
+        } catch (fetchErr) {
+          console.warn('[CommandCenterChart] fetchMarketBars failed/timed out:', fetchErr);
+        }
 
         if (fetchedBars.length === 0) {
+          // Last resort: try to use bars embedded in active pattern detections
+          const patternBars = await tryExtractPatternBars(symbol, timeframe);
+          if (patternBars.length > 0) {
+            console.log(`[CommandCenterChart] Using ${patternBars.length} bars from pattern detection as fallback`);
+            symbolDataCache.set(cacheKey, patternBars);
+            setBars(patternBars);
+            updatePriceData(patternBars);
+            setLoading(false);
+            return;
+          }
           throw new Error('No data available for this symbol/timeframe');
         }
 
