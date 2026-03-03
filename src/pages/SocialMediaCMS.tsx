@@ -10,10 +10,11 @@ import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
 import { EducationalContentManager } from "@/components/cms/EducationalContentManager";
 import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
 import { DiscoveryManager } from "@/components/cms/DiscoveryManager";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar } from "lucide-react";
+import { SignalPostGenerator } from "@/components/cms/SignalPostGenerator";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap } from "lucide-react";
 
 export default function SocialMediaCMS() {
-  const [activeTab, setActiveTab] = useState("schedule");
+  const [activeTab, setActiveTab] = useState("signals");
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -28,7 +29,11 @@ export default function SocialMediaCMS() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="signals" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Signals</span>
+          </TabsTrigger>
           <TabsTrigger value="schedule" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Schedule</span>
@@ -58,6 +63,10 @@ export default function SocialMediaCMS() {
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="signals" className="space-y-4">
+          <SignalPostGenerator />
+        </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
           <MarketReportScheduler />
