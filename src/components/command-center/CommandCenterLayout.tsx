@@ -558,7 +558,15 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="h-full flex flex-col">
             {/* Morning Briefing — compact inline strip */}
-            <MorningBriefing userId={userId} onSymbolSelect={handleSymbolSelect} />
+            <MorningBriefing 
+              userId={userId} 
+              onSymbolSelect={handleSymbolSelect} 
+              onPatternClick={(setup) => {
+                if (setup.timeframe) {
+                  setSelectedTimeframe(setup.timeframe);
+                }
+              }}
+            />
 
             {/* Main Chart — dominates viewport */}
             <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[55%] min-h-[280px] shrink-0")}>
