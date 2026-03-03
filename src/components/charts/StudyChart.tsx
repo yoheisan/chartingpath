@@ -1245,16 +1245,18 @@ const StudyChart = memo(({
     } else if (persistedVisibleRangeRef.current) {
       chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
     } else if (initialVisibleBars && safeChartData.length > 0) {
-      // Zoom to recent N bars with some right offset for whitespace
+      // Zoom to recent N bars — latest bar anchored near the right edge
       const totalBars = safeChartData.length;
-      const from = Math.max(0, totalBars - initialVisibleBars);
-      const to = totalBars + 5; // small right whitespace
+      const visibleCount = Math.min(totalBars, initialVisibleBars);
+      const from = totalBars - visibleCount;
+      // Minimal right margin (2 bars) so latest candle isn't flush against the edge
+      const to = totalBars + 2;
       chart.timeScale().setVisibleLogicalRange({ from, to });
     } else {
+      // Few bars — fit all content and scroll latest bar to right edge
       chart.timeScale().fitContent();
+      chart.timeScale().scrollToRealTime();
     }
-    // Always ensure the latest bar is flush with the right edge
-    chart.timeScale().scrollToRealTime();
     
     // Force-sync oscillator charts to the main chart's visible range.
     // This overrides their independent fitContent() ranges to match the main chart,
