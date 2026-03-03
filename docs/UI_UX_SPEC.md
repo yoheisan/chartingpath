@@ -168,7 +168,8 @@ The library supports exactly **four** marker shapes:
 
 | State | ZigZag | Markers | Price Lines | Trade Zones | Notes |
 |---|---|---|---|---|---|
-| **Active** | ✅ Cyan polyline | ✅ Arrow + pattern name | ✅ Entry/SL/TP | ✅ TP & SL zones | Full identification UI |
+| **Active (levels in range)** | ✅ Cyan polyline | ✅ Arrow + pattern name | ✅ Entry/SL/TP | ✅ TP & SL zones | Full identification UI |
+| **Active (levels extreme >35%)** | ✅ Cyan polyline | ✅ Arrow + pattern name | ❌ Hidden | ❌ Hidden | Structural ID visible, trade levels filtered to prevent Y-axis distortion |
 | **Live Resolved** | ✅ Cyan polyline | ✅ Outcome-colored arrow | ✅ Entry/SL/TP | ✅ TP & SL zones | Color shifts to green (TP) or red (SL) |
 | **Backend Resolved** | ❌ | ❌ | ❌ | ❌ | Completely removed from chart |
 | **Expired/Stale** | ❌ | ❌ | ❌ | ❌ | Completely removed from chart |
