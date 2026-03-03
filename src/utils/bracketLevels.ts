@@ -105,8 +105,8 @@ export function computeBracketLevels(input: BracketLevelsInput): BracketLevelsOu
 
   let stopLossPrice: number;
   let takeProfitPrice: number;
-  let actualStopMethod = stopLossMethod;
-  let actualTpMethod = takeProfitMethod;
+  let actualStopMethod: string = stopLossMethod;
+  let actualTpMethod: string = takeProfitMethod;
   let slFloored = false;
   let tpScaled = false;
 
