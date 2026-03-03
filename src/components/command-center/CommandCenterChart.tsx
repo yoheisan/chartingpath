@@ -669,7 +669,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       pivots: (overlayPattern.visual_spec as any)?.pivots,
       bars: overlayPattern.bars,
     }];
-  }, [overlayPattern]);
+  }, [overlayPattern, tradePlan]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
