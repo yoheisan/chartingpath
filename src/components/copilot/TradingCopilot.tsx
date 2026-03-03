@@ -404,7 +404,7 @@ export function TradingCopilot({
         {/* First-visit tooltip — disappears after first open */}
         {typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
           <div className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
-            Ask anything about markets, patterns & trade setups ✨
+            {t('copilot.tooltip', 'Ask anything about markets, patterns & trade setups ✨')}
           </div>
         )}
         <Button
@@ -424,7 +424,7 @@ export function TradingCopilot({
             <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90" />
           </span>
           <Sparkles className="h-4 w-4 shrink-0" />
-          <span className="font-semibold whitespace-nowrap">Ask AI</span>
+          <span className="font-semibold whitespace-nowrap">{t('copilot.askAI', 'Ask AI')}</span>
         </Button>
       </div>
     );
