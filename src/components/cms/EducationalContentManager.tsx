@@ -367,7 +367,7 @@ export function EducationalContentManager() {
                         className="text-xs text-primary hover:underline flex items-center gap-1 line-clamp-1"
                       >
                         <ExternalLink className="h-3 w-3 shrink-0" />
-                        {piece.link_back_url.replace("https://chartingpath.com/learn/", "")}
+                        {piece.link_back_url.replace("https://chartingpath.lovable.app/blog/", "")}
                       </a>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
@@ -452,7 +452,7 @@ export function EducationalContentManager() {
               <Input
                 value={editLinkUrl}
                 onChange={(e) => setEditLinkUrl(e.target.value)}
-                placeholder="https://chartingpath.com/learn/..."
+                placeholder="https://chartingpath.lovable.app/blog/..."
                 className="mt-1"
               />
             </div>
