@@ -2,28 +2,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Crown, Zap, ArrowLeft, Star } from "lucide-react";
+import { Check, Crown, Zap, ArrowLeft, Star, Shield, Users, TrendingUp, Clock } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { trackPricingClicked, trackCheckoutStarted } from "@/services/analytics";
+import { trackPricingClicked, trackCheckoutStarted, track } from "@/services/analytics";
 import { useTranslation } from "react-i18next";
 
 const Pricing = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(true); // Default to annual for higher conversion
 
-  // Track pricing page view from paywall
   useEffect(() => {
+    track('pricing_viewed');
     const source = searchParams.get('source');
     if (source === 'paywall') {
       trackPricingClicked({ source: 'paywall' });
     }
   }, [searchParams]);
 
-  // Map display plan names to database plan_pricing keys
   const planNameToDbPlan: Record<string, string> = {
     free: 'free',
     lite: 'starter',
@@ -32,47 +31,23 @@ const Pricing = () => {
     team: 'elite',
   };
 
-  const handlePlanSelect = (planName: string) => {
-    const dbPlan = planNameToDbPlan[planName.toLowerCase()];
+  const handlePlanSelect = (planKey: string) => {
+    const dbPlan = planNameToDbPlan[planKey.toLowerCase()];
     
     if (dbPlan === 'free') {
       window.location.href = '/auth';
       return;
     }
 
-    // Paid plans are coming soon - show toast instead of Stripe checkout
+    trackCheckoutStarted({
+      plan: dbPlan || planKey,
+      billing_cycle: isAnnual ? 'annual' : 'monthly',
+      source: 'pricing_page'
+    });
+
     toast('🚀 Stay tight, this plan is coming soon!', {
       description: 'We\'re working hard to bring you this plan. Check back shortly!',
     });
-  };
-
-  const createSubscription = async (dbPlan: string, displayName: string) => {
-    try {
-      trackCheckoutStarted({
-        plan: dbPlan,
-        billing_cycle: isAnnual ? 'annual' : 'monthly',
-        source: 'pricing_page'
-      });
-
-      const { data, error } = await supabase.functions.invoke('create-subscription', {
-        body: {
-          plan: dbPlan,
-          billing_cycle: isAnnual ? 'annual' : 'monthly'
-        }
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast.error('Failed to start checkout. Please try again or contact support.');
-    }
   };
 
   const calculateMonthlySavings = (monthlyPrice: number, annualPrice: number) => {
@@ -82,109 +57,102 @@ const Pricing = () => {
     return { savings, percentage };
   };
 
-  const planKeys = ['free', 'lite', 'plus', 'pro', 'team'] as const;
-
-  const plans = [
+  // Focused 3-tier layout: Free / Plus (recommended) / Pro
+  const corePlans = [
     {
       key: 'free',
       price: 0,
       annualPrice: 0,
       features: [
-        "Daily (1D) timeframe charts only",
-        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
-        "6 classic chart patterns (Double Top/Bottom, H&S, Triangles)",
-        "3 active pattern alerts",
-        "50 credits/month for Pattern Lab research",
-        "Demo-only backtesting (prebuilt examples)",
-        "Basic pattern recognition learning guides"
+        "Daily (1D) timeframe only",
+        "1,100+ instruments screened",
+        "6 classic chart patterns",
+        "3 active alerts",
+        "50 credits/month",
+        "Demo backtesting",
       ],
-      dataRefresh: "Daily scans updated every 24h",
-      limitations: ["Daily (1D) charts only"],
       popular: false,
-      icon: Zap
-    },
-    {
-      key: 'lite',
-      price: 12,
-      annualPrice: 120,
-      features: [
-        "Daily + 8H + 4H + 15-minute timeframe charts",
-        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
-        "8 chart patterns (incl. Channels, Flags)",
-        "5 active pattern alerts",
-        "100 credits/month for Pattern Lab research",
-        "Basic backtesting: up to 2 years of historical data",
-        "Email support"
-      ],
-      dataRefresh: "4H: Every 4h • 15m: Top 300 every 15m",
-      limitations: [],
-      popular: false,
-      icon: Zap
+      icon: Zap,
+      cta: 'Get Started Free',
     },
     {
       key: 'plus',
       price: 29,
       annualPrice: 290,
       features: [
-        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
-        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
-        "10 chart patterns (incl. Wedges, Cup & Handle)",
-        "25 active pattern alerts",
-        "300 credits/month for deep research",
-        "Full backtesting: up to 3 years of data",
-        "Advanced risk & pip calculators",
-        "Priority email support"
+        "All timeframes (15m → Weekly)",
+        "1,100+ instruments screened",
+        "10 chart patterns",
+        "25 active alerts",
+        "300 credits/month",
+        "Full backtesting (3 years)",
+        "Risk & pip calculators",
+        "Priority email support",
       ],
-      dataRefresh: "1H: Core 1,100 hourly • 4H: All 8,500+ every 4h",
-      limitations: [],
-      popular: false,
-      icon: Star
+      popular: true,
+      icon: Star,
+      cta: 'Start Plus Plan',
     },
     {
       key: 'pro',
       price: 79,
       annualPrice: 790,
       features: [
-        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
-        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
-        "Full pattern library (12 patterns incl. premium)",
-        "100 active pattern alerts",
-        "900 credits/month for unlimited research",
-        "Multi-platform script export (TradingView, MT4/MT5)",
-        "Full backtesting: up to 5 years daily, 7 years weekly",
-        "Advanced metrics & trade analytics",
-        "Priority support"
+        "Everything in Plus, and:",
+        "Full pattern library (12+)",
+        "100 active alerts",
+        "900 credits/month",
+        "Script export (TV, MT4/MT5)",
+        "Full backtesting (5+ years)",
+        "Advanced trade analytics",
+        "Priority support",
       ],
-      dataRefresh: "1H: Core 1,100 hourly • 4H/Daily: Full 8,500+ real-time",
-      limitations: [],
-      popular: true,
-      icon: Star
+      popular: false,
+      icon: Crown,
+      cta: 'Start Pro Plan',
+    },
+  ];
+
+  const expandedPlans = [
+    {
+      key: 'lite',
+      price: 12,
+      annualPrice: 120,
+      features: [
+        "Daily + 8H + 4H + 15m timeframes",
+        "1,100+ instruments screened",
+        "8 chart patterns",
+        "5 active alerts",
+        "100 credits/month",
+        "Basic backtesting (2 years)",
+        "Email support",
+      ],
+      icon: Zap,
+      cta: 'Start Lite Plan',
     },
     {
       key: 'team',
       price: 199,
       annualPrice: 1990,
       features: [
-        "All timeframes (15m, 1H, 4H, 8H, Daily, Weekly)",
-        "Full screener access: 1,100+ instruments (S&P 500, Top Crypto, FX, Commodities)",
-        "Complete pattern library (15+ patterns)",
-        "500 active pattern alerts",
-        "3000 credits/month for team research",
-        "Script conversion across ALL platforms",
-        "Full backtesting: up to 10 years of data",
+        "Everything in Pro, and:",
+        "15+ patterns",
+        "500 active alerts",
+        "3000 credits/month",
+        "Full 10-year backtesting",
         "Priority queues & VIP support",
-        "Early access to new features"
+        "Early access to new features",
       ],
-      dataRefresh: "All timeframes: Full 8,500+ instruments, fastest refresh rates",
-      limitations: [],
-      popular: false,
-      icon: Crown
-    }
+      icon: Crown,
+      cta: 'Start Team Plan',
+    },
   ];
+
+  const [showAllPlans, setShowAllPlans] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="container mx-auto px-6 py-8 max-w-5xl">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -193,44 +161,35 @@ const Pricing = () => {
           </Link>
         </div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+        {/* Header — simplified */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
             {t('pricingPage.headline')}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-6">
             {t('pricingPage.subheadline')}
           </p>
-          
-          {/* Value Proposition */}
-          <div className="max-w-4xl mx-auto mb-8 p-6 bg-gradient-to-br from-primary/5 via-background to-accent/5 rounded-2xl border border-border/50">
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              {t('pricingPage.whyTraders')}
-            </h2>
-            <div className="grid md:grid-cols-3 gap-4 text-sm">
-              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
-                <div className="text-2xl mb-2">📈</div>
-                <div className="font-medium text-foreground mb-1">{t('pricingPage.outcomeProof')}</div>
-                <div className="text-muted-foreground">{t('pricingPage.outcomeProofDesc')}</div>
-              </div>
-              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
-                <div className="text-2xl mb-2">💰</div>
-                <div className="font-medium text-foreground mb-1">{t('pricingPage.proFeatures')}</div>
-                <div className="text-muted-foreground">{t('pricingPage.proFeaturesDesc')}</div>
-              </div>
-              <div className="p-4 bg-background/80 rounded-xl border border-border/30">
-                <div className="text-2xl mb-2">🎯</div>
-                <div className="font-medium text-foreground mb-1">{t('pricingPage.patternFirst')}</div>
-                <div className="text-muted-foreground">{t('pricingPage.patternFirstDesc')}</div>
-              </div>
+
+          {/* Social Proof Strip */}
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground mb-8">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              <span><strong className="text-foreground">2,400+</strong> traders</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span><strong className="text-foreground">320K+</strong> backtested outcomes</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-primary" />
+              <span><strong className="text-foreground">1,100+</strong> instruments tracked daily</span>
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground mb-8">
-            <span className="px-3 py-1 bg-muted rounded-full">📊 {t('pricingPage.usStocks')}</span>
-            <span className="px-3 py-1 bg-muted rounded-full">₿ {t('pricingPage.cryptos')}</span>
-            <span className="px-3 py-1 bg-muted rounded-full">💱 {t('pricingPage.forexPairs')}</span>
-            <span className="px-3 py-1 bg-muted rounded-full">🛢️ {t('pricingPage.commodities')}</span>
+          {/* Money-Back Guarantee */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-sm font-medium text-foreground mb-8">
+            <Shield className="h-4 w-4 text-primary" />
+            14-day money-back guarantee on annual plans · Cancel anytime
           </div>
 
           {/* Billing Toggle */}
@@ -261,20 +220,18 @@ const Pricing = () => {
           )}
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-5 mb-12">
-          {plans.map((plan) => {
+        {/* Core 3-Column Pricing Cards */}
+        <div className="grid gap-6 md:grid-cols-3 mb-6">
+          {corePlans.map((plan) => {
             const Icon = plan.icon;
-            const displayPrice = isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
             const savings = plan.annualPrice ? calculateMonthlySavings(plan.price, plan.annualPrice) : null;
             const planName = t(`pricingPage.plans.${plan.key}.name`);
             const planDesc = t(`pricingPage.plans.${plan.key}.description`);
-            const planButton = t(`pricingPage.plans.${plan.key}.button`);
 
             return (
               <Card 
                 key={plan.key} 
-                className={`relative ${plan.popular ? 'border-primary shadow-glow' : ''}`}
+                className={`relative flex flex-col ${plan.popular ? 'border-primary shadow-glow ring-1 ring-primary/20 scale-[1.02]' : ''}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -284,100 +241,160 @@ const Pricing = () => {
                   </div>
                 )}
                 
-                <CardHeader className="text-center">
+                <CardHeader className="text-center pb-4">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Icon className="h-6 w-6 text-primary" />
-                    <CardTitle className="text-2xl">{planName}</CardTitle>
+                    <Icon className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-xl">{planName}</CardTitle>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {plan.price === 0 ? (
-                      <div className="text-4xl font-bold text-foreground">
+                      <div className="text-3xl font-bold text-foreground">
                         {t('pricingPage.free')}
-                        <span className="text-lg text-muted-foreground"> {t('pricingPage.forever')}</span>
+                        <span className="text-base text-muted-foreground"> {t('pricingPage.forever')}</span>
                       </div>
                     ) : isAnnual && plan.annualPrice ? (
                       <div>
-                        <div className="text-4xl font-bold text-foreground">
+                        <div className="text-3xl font-bold text-foreground">
                           ${Math.round(plan.annualPrice / 12)}
-                          <span className="text-lg text-muted-foreground">{t('pricingPage.month')}</span>
+                          <span className="text-base text-muted-foreground">{t('pricingPage.month')}</span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           {t('pricingPage.billedAnnually')} (${plan.annualPrice})
                         </div>
-                        <div className="text-sm text-muted-foreground line-through">
-                          ${plan.price}{t('pricingPage.monthlyBilling')}
-                        </div>
+                        {savings && (
+                          <div className="text-xs text-accent font-semibold mt-1">
+                            Save ${savings.savings}/yr ({savings.percentage}% off)
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <div className="text-4xl font-bold text-foreground">
+                      <div className="text-3xl font-bold text-foreground">
                         ${plan.price}
-                        <span className="text-lg text-muted-foreground">{t('pricingPage.month')}</span>
-                      </div>
-                    )}
-                    
-                    {isAnnual && savings && plan.price > 0 && (
-                      <div className="text-sm text-accent font-semibold">
-                        {t('pricingPage.savePerYear', { amount: savings.savings })}
+                        <span className="text-base text-muted-foreground">{t('pricingPage.month')}</span>
                       </div>
                     )}
                   </div>
                   
-                  <CardDescription className="text-base">
+                  <CardDescription className="text-sm mt-2">
                     {planDesc}
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-6">
-                  {plan.dataRefresh && (
-                    <div className="p-2 bg-muted/50 rounded-lg border border-border/50">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-medium">{plan.dataRefresh}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, index) => {
-                      const isTimeframeFeature = index === 0 && feature.toLowerCase().includes('timeframe');
-                      const isLimited = feature.toLowerCase().includes('daily') && feature.toLowerCase().includes('only');
-                      
-                      return (
-                        <li key={index} className="flex items-start gap-3">
-                          <Check className={`h-5 w-5 mt-0.5 flex-shrink-0 ${isLimited ? 'text-amber-500' : 'text-primary'}`} />
-                          <span className={`text-sm ${isTimeframeFeature ? 'font-medium text-foreground' : 'text-muted-foreground'} ${isLimited ? 'text-amber-600 dark:text-amber-400' : ''}`}>
-                            {feature}
-                          </span>
-                        </li>
-                      );
-                    })}
+                <CardContent className="flex flex-col flex-1 space-y-4">
+                  <ul className="space-y-2.5 flex-1">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2.5">
+                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+                        <span className="text-sm text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
                   </ul>
 
                   <Button 
-                    className="w-full" 
+                    className={`w-full ${plan.popular ? 'shadow-md' : ''}`}
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handlePlanSelect(planName)}
+                    size="lg"
+                    onClick={() => handlePlanSelect(plan.key)}
                   >
-                    {planButton}
+                    {plan.cta}
                   </Button>
+
+                  {plan.popular && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      No credit card required to start
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
 
-        {/* Billing Info Section */}
-        <Card className="mb-8">
-          <CardContent className="p-6 text-center">
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              {t('pricingPage.flexibleBilling')}
-            </h3>
-            <p className="text-muted-foreground">
-              {t('pricingPage.flexibleBillingDesc')}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Expand to see Lite & Team */}
+        <div className="text-center mb-12">
+          <button
+            onClick={() => setShowAllPlans(!showAllPlans)}
+            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+          >
+            {showAllPlans ? 'Show fewer plans' : 'See Lite ($12/mo) and Team ($199/mo) plans'}
+          </button>
+
+          {showAllPlans && (
+            <div className="grid gap-6 md:grid-cols-2 mt-6 max-w-3xl mx-auto">
+              {expandedPlans.map((plan) => {
+                const Icon = plan.icon;
+                const savings = plan.annualPrice ? calculateMonthlySavings(plan.price, plan.annualPrice) : null;
+                const planName = t(`pricingPage.plans.${plan.key}.name`);
+                const planDesc = t(`pricingPage.plans.${plan.key}.description`);
+
+                return (
+                  <Card key={plan.key} className="flex flex-col">
+                    <CardHeader className="text-center pb-4">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Icon className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-xl">{planName}</CardTitle>
+                      </div>
+                      <div className="space-y-1">
+                        {isAnnual && plan.annualPrice ? (
+                          <div>
+                            <div className="text-3xl font-bold text-foreground">
+                              ${Math.round(plan.annualPrice / 12)}
+                              <span className="text-base text-muted-foreground">{t('pricingPage.month')}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {t('pricingPage.billedAnnually')} (${plan.annualPrice})
+                            </div>
+                            {savings && (
+                              <div className="text-xs text-accent font-semibold mt-1">
+                                Save ${savings.savings}/yr
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-3xl font-bold text-foreground">
+                            ${plan.price}
+                            <span className="text-base text-muted-foreground">{t('pricingPage.month')}</span>
+                          </div>
+                        )}
+                      </div>
+                      <CardDescription className="text-sm mt-2">{planDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col flex-1 space-y-4">
+                      <ul className="space-y-2.5 flex-1">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2.5">
+                            <Check className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+                            <span className="text-sm text-muted-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button className="w-full" variant="outline" onClick={() => handlePlanSelect(plan.key)}>
+                        {plan.cta}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Trust Signals Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {[
+            { icon: Shield, label: '14-Day Guarantee', sub: 'Annual plans' },
+            { icon: Clock, label: 'Cancel Anytime', sub: 'No lock-in' },
+            { icon: Zap, label: 'Instant Access', sub: 'Start in seconds' },
+            { icon: Users, label: 'Active Community', sub: '2,400+ traders' },
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl bg-muted/30 border border-border/30">
+              <item.icon className="h-5 w-5 text-primary mb-2" />
+              <span className="text-sm font-medium text-foreground">{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.sub}</span>
+            </div>
+          ))}
+        </div>
 
         {/* FAQ Section */}
         <div className="space-y-8">
@@ -388,6 +405,18 @@ const Pricing = () => {
           </div>
 
           <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+            <AccordionItem value="money-back">
+              <AccordionTrigger className="text-left">
+                Is there a money-back guarantee?
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="text-muted-foreground space-y-2">
+                  <p>Yes! Annual plans come with a <strong className="text-foreground">14-day money-back guarantee</strong>. If you're not satisfied, contact us within 14 days for a full refund.</p>
+                  <p>Monthly plans can be cancelled anytime — you'll retain access until the end of your billing period.</p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
             <AccordionItem value="upgrade-payment">
               <AccordionTrigger className="text-left">
                 {t('pricingPage.faq.upgradeQ')}
@@ -435,24 +464,6 @@ const Pricing = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="platform-compatibility">
-              <AccordionTrigger className="text-left">
-                {t('pricingPage.faq.platformQ')}
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground">{t('pricingPage.faq.platformA')}</p>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="billing-upgrades">
-              <AccordionTrigger className="text-left">
-                {t('pricingPage.faq.billingQ')}
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground">{t('pricingPage.faq.billingA')}</p>
-              </AccordionContent>
-            </AccordionItem>
-
             <AccordionItem value="data-refresh-rates">
               <AccordionTrigger className="text-left">
                 {t('pricingPage.faq.refreshQ')}
@@ -473,17 +484,10 @@ const Pricing = () => {
           </Accordion>
         </div>
 
-        {/* Pricing Disclaimer */}
+        {/* Disclaimer */}
         <div className="mt-8 p-4 bg-muted/50 rounded-lg mb-8">
           <p className="text-sm text-muted-foreground text-center">
-            <strong>{t('about.disclaimerTitle')}</strong> {t('pricingPage.disclaimerEducational')}
-          </p>
-        </div>
-
-        {/* Disclaimer */}
-        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm text-muted-foreground text-center">
-            <strong>Disclaimer:</strong> {t('pricingPage.disclaimer')}
+            <strong>{t('about.disclaimerTitle')}</strong> {t('pricingPage.disclaimer')}
           </p>
         </div>
       </div>
