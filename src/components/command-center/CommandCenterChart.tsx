@@ -606,20 +606,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return hasPivots(preferred) ? preferred : preferred;
   }, [sortedPatterns]);
 
-  // Derive formation overlays from selected overlay pattern (not only actionable patterns)
-  const formationOverlays: FormationOverlayData[] = useMemo(() => {
-    if (!overlayPattern || bars.length === 0) return [];
-
-    const vs = overlayPattern.visual_spec as any;
-    const pivots = vs?.pivots;
-
-    const patternBars = overlayPattern.bars as CompressedBar[] | undefined;
-    const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
-    const formation = deriveFormationOverlay(pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
-
-    return formation ? [formation] : [];
-  }, [overlayPattern, bars]);
-
   // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
     const currentPattern = overlayPattern;
@@ -648,6 +634,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
   }, [overlayPattern, bars]);
+
+  // Derive formation overlays from selected overlay pattern
+  // Per UI/UX spec: show full pattern UI or nothing — gate on tradePlan
+  const formationOverlays: FormationOverlayData[] = useMemo(() => {
+    if (!overlayPattern || !tradePlan || bars.length === 0) return [];
+
+    const vs = overlayPattern.visual_spec as any;
+    const pivots = vs?.pivots;
+
+    const patternBars = overlayPattern.bars as CompressedBar[] | undefined;
+    const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
+    const formation = deriveFormationOverlay(pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
+
+    return formation ? [formation] : [];
+  }, [overlayPattern, tradePlan, bars]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
