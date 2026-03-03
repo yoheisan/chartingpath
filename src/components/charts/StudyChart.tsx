@@ -628,8 +628,10 @@ const StudyChart = memo(({
       }
     }
 
-    // Render external chart markers (e.g., historical pattern occurrences)
-    if (chartMarkers && chartMarkers.length > 0 && safeChartData.length > 0) {
+    // Render external chart markers ONLY when historicalPatterns won't merge them later
+    // (historicalPatterns path calls createSeriesMarkers which overwrites any previous call)
+    const hasHistoricalOverlays = historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns;
+    if (!hasHistoricalOverlays && chartMarkers && chartMarkers.length > 0 && safeChartData.length > 0) {
       try {
         const validMarkers = chartMarkers
           .map(m => {
@@ -812,31 +814,73 @@ const StudyChart = memo(({
       const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome));
       const currentPattern = activePattern || latestUnresolvedPattern || sortedPatterns[0];
       if (currentPattern) {
-        const cleanup = renderPatternPriceLines(candleSeries, currentPattern, patternToggles);
+        // Include direction in the ENTRY price line title so user always knows the trade direction
+        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const dirLabel = isLong ? '▲ LONG' : '▼ SHORT';
+        
+        // Override the default ENTRY title with direction
+        if (patternToggles.showEntry) {
+          candleSeries.createPriceLine({
+            price: currentPattern.entryPrice,
+            color: '#3b82f6',
+            lineWidth: 2,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title: `ENTRY ${dirLabel}`,
+          });
+        }
+        // Render SL/TP lines (skip entry since we just rendered it with direction)
+        const togglesWithoutEntry = { ...patternToggles, showEntry: false };
+        const cleanup = renderPatternPriceLines(candleSeries, currentPattern, togglesWithoutEntry);
         patternLinesCleanupsRef.current.push(cleanup);
       }
 
       // Render pattern markers (name labels + direction arrows)
       const patternMarkerData = generatePatternMarkers(historicalPatterns, bars, patternToggles);
-      if (patternMarkerData.length > 0) {
-        // Merge with existing external markers
-        const allMarkers = [
-          ...(chartMarkers || []).filter(m => m.time).map(m => ({
-            time: (typeof m.time === 'string' ? m.time.split('T')[0] : String(m.time)) as Time,
-            position: m.position,
-            color: m.color,
-            shape: m.shape as SeriesMarkerShape,
-            text: m.text,
-          })),
-          ...patternMarkerData,
-        ].sort((a, b) => {
-          const ta = typeof a.time === 'string' ? a.time : String(a.time);
-          const tb = typeof b.time === 'string' ? b.time : String(b.time);
-          return ta.localeCompare(tb);
+      
+      // Always add a direction arrow on the most recent bar for the current pattern
+      const directionMarkers: Array<{ time: Time; position: 'aboveBar' | 'belowBar'; color: string; shape: SeriesMarkerShape; text: string }> = [];
+      if (currentPattern && safeChartData.length > 0) {
+        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const lastBar = safeChartData[safeChartData.length - 1];
+        directionMarkers.push({
+          time: lastBar.time,
+          position: isLong ? 'belowBar' : 'aboveBar',
+          color: isLong ? '#22c55e' : '#ef4444',
+          shape: isLong ? 'arrowUp' : 'arrowDown',
+          text: currentPattern.patternName,
         });
+      }
 
+      // Merge all marker sources into a single createSeriesMarkers call
+      const allMarkers = [
+        ...(chartMarkers || []).filter(m => m.time).map(m => ({
+          time: (typeof m.time === 'string' ? m.time.split('T')[0] : String(m.time)) as Time,
+          position: m.position,
+          color: m.color,
+          shape: m.shape as SeriesMarkerShape,
+          text: m.text,
+        })),
+        ...patternMarkerData,
+        ...directionMarkers,
+      ].sort((a, b) => {
+        const ta = typeof a.time === 'string' ? a.time : String(a.time);
+        const tb = typeof b.time === 'string' ? b.time : String(b.time);
+        return ta.localeCompare(tb);
+      });
+
+      // Deduplicate by time+text+shape
+      const seenMarkers = new Set<string>();
+      const dedupedMarkers = allMarkers.filter(m => {
+        const key = `${m.time}|${m.text}|${m.shape}`;
+        if (seenMarkers.has(key)) return false;
+        seenMarkers.add(key);
+        return true;
+      });
+
+      if (dedupedMarkers.length > 0) {
         try {
-          createSeriesMarkers(candleSeries, allMarkers);
+          createSeriesMarkers(candleSeries, dedupedMarkers);
         } catch { /* ignore marker errors */ }
       }
 
