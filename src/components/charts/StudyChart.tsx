@@ -239,6 +239,7 @@ const StudyChart = memo(({
   const patternLinesCleanupsRef = useRef<(() => void)[]>([]);
   const persistedVisibleRangeRef = useRef<{ from: Time; to: Time } | null>(null);
   const persistedVisibleLogicalRangeRef = useRef<{ from: number; to: number } | null>(null);
+  const lastViewportKeyRef = useRef<string>('');
 
   const fixedHeight = height ?? 350;
 
@@ -260,6 +261,16 @@ const StudyChart = memo(({
       analysis.setBars(bars);
     }
   }, [bars, analysis.setBars]);
+
+  // Reset persisted viewport when symbol/timeframe changes to avoid carrying stale pan offsets
+  useEffect(() => {
+    const viewportKey = `${symbol}:${timeframe}`;
+    if (lastViewportKeyRef.current && lastViewportKeyRef.current !== viewportKey) {
+      persistedVisibleLogicalRangeRef.current = null;
+      persistedVisibleRangeRef.current = null;
+    }
+    lastViewportKeyRef.current = viewportKey;
+  }, [symbol, timeframe]);
 
   const handleToggle = (key: keyof IndicatorSettings) => {
     setIndicators((prev) => {
@@ -1283,11 +1294,29 @@ const StudyChart = memo(({
     });
 
     // Preserve user's manually dragged range across chart re-renders (TradingView-like behavior)
-    if (persistedVisibleLogicalRangeRef.current) {
-      chart.timeScale().setVisibleLogicalRange(persistedVisibleLogicalRangeRef.current);
-    } else if (persistedVisibleRangeRef.current) {
-      chart.timeScale().setVisibleRange(persistedVisibleRangeRef.current);
-    } else if (initialVisibleBars && safeChartData.length > 0) {
+    const totalBars = safeChartData.length;
+    const persistedLogical = persistedVisibleLogicalRangeRef.current;
+    const persistedTimeRange = persistedVisibleRangeRef.current;
+    const maxRightPaddingBars = 30;
+
+    if (persistedLogical && totalBars > 0) {
+      const rawWidth = Math.max(10, persistedLogical.to - persistedLogical.from);
+      const clampedTo = Math.min(persistedLogical.to, totalBars + maxRightPaddingBars);
+      const clampedFrom = clampedTo - rawWidth;
+      const latestBarInsideViewport = clampedTo >= totalBars - 1;
+
+      if (latestBarInsideViewport) {
+        chart.timeScale().setVisibleLogicalRange({ from: clampedFrom, to: clampedTo });
+      } else {
+        // Fallback to focused default when persisted range is stale for this dataset
+        const visibleCount = Math.min(totalBars, initialVisibleBars || 80);
+        const from = totalBars - visibleCount;
+        const to = totalBars + 2;
+        chart.timeScale().setVisibleLogicalRange({ from, to });
+      }
+    } else if (persistedTimeRange) {
+      chart.timeScale().setVisibleRange(persistedTimeRange);
+    } else if (initialVisibleBars && totalBars > 0) {
       // Zoom to recent N bars — latest bar anchored near the right edge
       const totalBars = safeChartData.length;
       const visibleCount = Math.min(totalBars, initialVisibleBars);
