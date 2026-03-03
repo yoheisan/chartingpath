@@ -363,24 +363,50 @@ export function MarketReportScheduler() {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "tokyo", label: "🇯🇵 Tokyo" },
+              { key: "london", label: "🇬🇧 London" },
+              { key: "us", label: "🇺🇸 US" },
+            ].map((r) => (
+              <Button
+                key={r.key}
+                variant={breadthRegion === r.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBreadthRegion(r.key)}
+              >
+                {r.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "pre_market" as const, label: "Pre-Market" },
+              { key: "post_market" as const, label: "Post-Market" },
+            ].map((t) => (
+              <Button
+                key={t.key}
+                variant={breadthType === t.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBreadthType(t.key)}
+              >
+                {t.key === "pre_market" ? "📋" : "📈"} {t.label}
+              </Button>
+            ))}
+          </div>
+
           <Button
             onClick={generateBreadthContent}
             disabled={isGeneratingBreadth}
             className="w-full"
           >
             {isGeneratingBreadth ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating from latest close...</>
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating {REGION_CONFIG[breadthRegion]?.label} {breadthType === "pre_market" ? "Pre" : "Post"}-Market...</>
             ) : (
-              <><BarChart3 className="h-4 w-4 mr-2" />Generate Market Breadth Post</>
+              <><BarChart3 className="h-4 w-4 mr-2" />Generate {REGION_CONFIG[breadthRegion]?.label} {breadthType === "pre_market" ? "Pre" : "Post"}-Market Post</>
             )}
           </Button>
-
-          {breadthContent && (
-            <div className="space-y-3">
-              <div className="relative">
-                <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm font-mono leading-relaxed border">
-                  {breadthContent}
-                </div>
                 <div className="absolute top-2 right-2">
                   <Button
                     variant="secondary"
