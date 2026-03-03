@@ -33,11 +33,16 @@ function buildTweet(pattern: PatternRow): string {
   const sl = Number(pattern.stop_loss_price).toPrecision(5);
   const tp = Number(pattern.take_profit_price).toPrecision(5);
 
+  // OG share link — X crawler will render the chart image as a Twitter Card
+  const shareLink = pattern.share_token
+    ? `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/og-share?token=${pattern.share_token}`
+    : 'chartingpath.com';
+
   return (
     `${emoji} ${dir} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
     `Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
-    `Free alerts at chartingpath.com`
+    `${shareLink}`
   ).slice(0, 280);
 }
 
