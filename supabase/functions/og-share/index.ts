@@ -68,16 +68,19 @@ serve(async (req) => {
     const title = `${data.pattern_name} on ${displaySymbol} — ${dirLabel}`;
     const description = `Entry: ${data.entry_price} | SL: ${data.stop_loss_price} | TP: ${data.take_profit_price} | R:R 1:${data.risk_reward_ratio?.toFixed(1)} | Quality: ${data.quality_score || 'N/A'}`;
     
-    // Check if pattern-specific image exists, otherwise use branded fallback
-    const patternImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
-    let ogImageUrl = patternImageUrl;
+    // Check for pattern-specific image (SVG first, then PNG fallback)
+    const svgUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.svg`;
+    const pngUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
+    const fallbackUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+    let ogImageUrl = svgUrl;
     try {
-      const headRes = await fetch(patternImageUrl, { method: 'HEAD' });
-      if (!headRes.ok) {
-        ogImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+      const svgRes = await fetch(svgUrl, { method: 'HEAD' });
+      if (!svgRes.ok) {
+        const pngRes = await fetch(pngUrl, { method: 'HEAD' });
+        ogImageUrl = pngRes.ok ? pngUrl : fallbackUrl;
       }
     } catch {
-      ogImageUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+      ogImageUrl = fallbackUrl;
     }
 
     const html = `<!DOCTYPE html>
