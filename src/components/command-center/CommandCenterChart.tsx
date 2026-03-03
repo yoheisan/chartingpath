@@ -317,7 +317,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       const { data: liveData } = await supabase
         .from('live_pattern_detections')
-        .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
+        .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, current_price, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
         .eq('instrument', upperSymbol)
         .eq('timeframe', timeframe)
         .in('status', ['active', 'expired'])
@@ -471,17 +471,39 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
     const freshnessWindowMs = (freshnessHoursByTimeframe[timeframe] ?? 24) * 60 * 60 * 1000;
     const cutoffTs = Date.now() - freshnessWindowMs;
+    const maxEntryDriftPctByTimeframe: Record<string, number> = {
+      '15m': 2.5,
+      '1h': 4,
+      '4h': 6,
+      '8h': 8,
+      '1d': 12,
+      '1wk': 20,
+    };
+    const maxEntryDriftPct = maxEntryDriftPctByTimeframe[timeframe] ?? 4;
+
     const isFresh = (pattern: any) => {
       const ts = new Date(getDetectedAt(pattern)).getTime();
       return Number.isFinite(ts) && ts >= cutoffTs;
+    };
+
+    const isEntryStillTradable = (pattern: any) => {
+      const entry = Number(pattern?.entry_price);
+      const current = Number(pattern?.current_price);
+      if (!Number.isFinite(entry) || entry <= 0 || !Number.isFinite(current) || current <= 0) return true;
+      const driftPct = Math.abs((current - entry) / entry) * 100;
+      return driftPct <= maxEntryDriftPct;
     };
 
     const sortedPatterns = [...autoPatterns]
       .filter(p => !!getDetectedAt(p))
       .sort((a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime());
 
-    const activePattern = sortedPatterns.find(p => p.isActive && p.status !== 'expired' && isFresh(p));
-    const latestUnresolvedPattern = sortedPatterns.find(p => !isResolvedOutcome(p.outcome) && isFresh(p));
+    const activePattern = sortedPatterns.find(
+      p => p.isActive && p.status !== 'expired' && isFresh(p) && isEntryStillTradable(p)
+    );
+    const latestUnresolvedPattern = sortedPatterns.find(
+      p => !isResolvedOutcome(p.outcome) && isFresh(p) && isEntryStillTradable(p)
+    );
     const currentPattern = activePattern || latestUnresolvedPattern;
     if (!currentPattern) return undefined;
 
