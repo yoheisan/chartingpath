@@ -10,7 +10,8 @@ import { MarketReportScheduler } from "@/components/cms/MarketReportScheduler";
 import { EducationalContentManager } from "@/components/cms/EducationalContentManager";
 import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
 import { DiscoveryManager } from "@/components/cms/DiscoveryManager";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar } from "lucide-react";
+import { SignalPostGenerator } from "@/components/cms/SignalPostGenerator";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("schedule");
