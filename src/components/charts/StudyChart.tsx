@@ -1253,6 +1253,8 @@ const StudyChart = memo(({
     } else {
       chart.timeScale().fitContent();
     }
+    // Always ensure the latest bar is flush with the right edge
+    chart.timeScale().scrollToRealTime();
     
     // Force-sync oscillator charts to the main chart's visible range.
     // This overrides their independent fitContent() ranges to match the main chart,
