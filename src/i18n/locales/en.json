@@ -4779,7 +4779,13 @@
     "vsMarketAvg": "vs market average",
     "confidenceScore": "Confidence Score",
     "sampleSize": "Sample size",
-    "notEnoughData": "Not enough historical data for this instrument"
+    "notEnoughData": "Not enough historical data for this instrument",
+    "guestLimit": "Try {{count}} free messages — sign in for unlimited access",
+    "usedAllMessages": "You've used all {{count}} free messages",
+    "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
+    "or": "or",
+    "signIn": "Sign In",
+    "register": "Register"
   },
   "chartAnalysisDialog": {
     "title": "Chart Analysis",
