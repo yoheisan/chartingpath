@@ -144,7 +144,7 @@ export default function EdgeAtlasPatternPage() {
   const edgeAtlasBackUrl = `/edge-atlas/${encodeURIComponent(patternId!)}?timeframe=${timeframe}&assetType=${assetType}&patternName=${encodeURIComponent(patternName)}`;
 
   const handleLiveSignals = (symbol: string) => {
-    navigate(`/patterns/live?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&assetType=${assetType}`, {
+    navigate(`/patterns/live?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&assetType=${assetType}&highlight=${encodeURIComponent(symbol)}`, {
       state: { backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
     });
   };
