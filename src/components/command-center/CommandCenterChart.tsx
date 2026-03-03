@@ -627,6 +627,19 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const { entry_price, stop_loss_price, take_profit_price, direction } = currentPattern;
     if (!entry_price || !stop_loss_price || !take_profit_price) return undefined;
+    if (![entry_price, stop_loss_price, take_profit_price].every(p => Number.isFinite(p) && p > 0)) return undefined;
+
+    // Extreme price filter: skip rendering if any level is >35% from current price
+    // This prevents the chart Y-axis from being distorted by far-away TP/SL levels
+    const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
+    const latestClose = Number(lastBar?.c);
+    if (Number.isFinite(latestClose) && latestClose > 0) {
+      const maxDistancePct = 35;
+      const allLevelsInRange = [entry_price, stop_loss_price, take_profit_price].every(
+        price => Math.abs((price - latestClose) / latestClose) * 100 <= maxDistancePct
+      );
+      if (!allLevelsInRange) return undefined;
+    }
 
     return {
       entry: entry_price,
@@ -634,7 +647,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       takeProfit: take_profit_price,
       direction: (direction === 'short' || direction === 'bearish' ? 'short' : 'long') as 'long' | 'short',
     };
-  }, [overlayPattern]);
+  }, [overlayPattern, bars]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
