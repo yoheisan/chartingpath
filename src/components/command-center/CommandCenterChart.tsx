@@ -653,7 +653,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
-    if (!overlayPattern || !tradePlan) return [];
+    if (!overlayPattern) return [];
 
     return [{
       id: overlayPattern.id,
@@ -671,7 +671,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       pivots: (overlayPattern.visual_spec as any)?.pivots,
       bars: overlayPattern.bars,
     }];
-  }, [overlayPattern, tradePlan]);
+  }, [overlayPattern]);
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
