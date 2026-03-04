@@ -628,8 +628,8 @@ export default function FullChartViewer({
           });
         }
 
-        // Entry Point → canvas triangle on last bar
-        if (chartData.length > 0 && tradePlan?.entry) {
+        // Entry Point → canvas triangle on last bar (skip for resolved trades)
+        if (!tradeResolved && chartData.length > 0 && tradePlan?.entry) {
           const lastBar = chartData[chartData.length - 1];
           const lastBarData = bars[bars.length - 1];
           const isLong = setup.direction === 'long';
