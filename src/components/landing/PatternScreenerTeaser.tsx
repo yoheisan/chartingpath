@@ -184,7 +184,9 @@ export function PatternScreenerTeaser() {
 
         if (error) throw error;
 
-        const allPatterns = (data || []).map(rowToLiveSetup);
+        const allPatternsRaw = (data || []).map(rowToLiveSetup);
+        // Filter out patterns where trade has already ended (SL/TP breached)
+        const allPatterns = filterActiveTradesOnly(allPatternsRaw);
 
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');
