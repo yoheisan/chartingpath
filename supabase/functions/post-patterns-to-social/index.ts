@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 2; // $100/mo Basic tier: 2 signals + 1 edu = ~74/mo of 100 limit
+const MAX_DAILY_POSTS = 3; // $100/mo Basic tier: 3 signals + 1 edu + 1 breadth = ~150/mo
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
