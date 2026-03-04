@@ -167,6 +167,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      if (!user) incrementExportCount();
       toast({
         title: "Export Successful",
         description: `Downloaded ${filename}`,
@@ -184,6 +185,10 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
   };
 
   const copyToClipboard = async (format: ExportFormat) => {
+    if (hasReachedFreeLimit) {
+      setShowAuthDialog(true);
+      return;
+    }
     if (!playbook) return;
 
     try {
