@@ -105,6 +105,10 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
   }, [playbook]);
 
   const generateAndDownload = async (format: ExportFormat) => {
+    if (hasReachedFreeLimit) {
+      setShowAuthDialog(true);
+      return;
+    }
     if (!playbook) {
       toast({
         title: "Export Failed",
