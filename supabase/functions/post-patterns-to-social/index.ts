@@ -463,7 +463,49 @@ serve(async (req) => {
 
         const patternNames = group.map((p: any) => p.pattern_name).join(' + ');
         console.log(`[pattern-poster] Posting: ${primary.instrument} [${patternNames}] (${primary.quality_score}) — ${group.length} pattern(s) consolidated`);
-        const twitterResponse = await postToTwitter(tweet);
+
+        // ── Generate chart image ────────────────────────────────────────
+        let mediaId: string | undefined;
+        try {
+          const bars = primary.bars || [];
+          const overlays = primary.visual_spec?.overlays || [];
+          const dir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
+
+          if (bars.length > 0) {
+            const pngData = await generateChartPNG(
+              bars, overlays, primary.instrument, primary.timeframe,
+              formatPatternName(primary.pattern_name), dir, primary.quality_score || '?'
+            );
+
+            // Upload to Supabase Storage
+            const fileName = `social/${primary.id}-${Date.now()}.png`;
+            const { error: uploadErr } = await supabase.storage
+              .from('share-images')
+              .upload(fileName, pngData, { contentType: 'image/png', upsert: true });
+
+            if (uploadErr) {
+              console.warn(`[pattern-poster] Storage upload failed: ${uploadErr.message}`);
+            } else {
+              // Update share_image_url on the pattern
+              const { data: urlData } = supabase.storage.from('share-images').getPublicUrl(fileName);
+              if (urlData?.publicUrl) {
+                await supabase.from('live_pattern_detections')
+                  .update({ share_image_url: urlData.publicUrl })
+                  .eq('id', primary.id);
+              }
+            }
+
+            // Upload to Twitter
+            mediaId = await uploadMediaToTwitter(pngData);
+            console.log(`[pattern-poster] 📸 Chart image attached: ${mediaId}`);
+          } else {
+            console.log(`[pattern-poster] No bar data for ${primary.instrument} — posting text-only`);
+          }
+        } catch (imgErr: any) {
+          console.warn(`[pattern-poster] ⚠️ Image generation failed, posting text-only: ${imgErr.message}`);
+        }
+
+        const twitterResponse = await postToTwitter(tweet, mediaId);
 
         // Record post_history for ALL patterns in the group to prevent re-posting
         for (const p of group) {
@@ -486,8 +528,9 @@ serve(async (req) => {
           instrument: primary.instrument,
           tweet_id: twitterResponse?.id,
           consolidated: group.length,
+          has_image: !!mediaId,
         });
-        console.log(`[pattern-poster] ✅ Posted ${primary.instrument} — tweet ${twitterResponse?.id} — ${group.length} signal(s)`);
+        console.log(`[pattern-poster] ✅ Posted ${primary.instrument} — tweet ${twitterResponse?.id} — ${group.length} signal(s) — image: ${!!mediaId}`);
 
       } catch (err: any) {
         if (err.name === 'RateLimitError') {
