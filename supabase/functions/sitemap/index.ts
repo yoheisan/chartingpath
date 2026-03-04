@@ -119,6 +119,19 @@ Deno.serve(async (req) => {
 `;
     }
 
+    // Individual instrument pages
+    if (allInstruments) {
+      for (const inst of allInstruments) {
+        xml += `  <url>
+    <loc>${BASE_URL}/instruments/${encodeURIComponent(inst.symbol)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
+    }
+
     // Dynamic article routes
     if (articles) {
       for (const article of articles) {
