@@ -407,7 +407,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       const combinedPatterns = [
         ...(liveData || []).map(p => {
-          const derivedOutcome = deriveLiveOutcome(p);
+          const derivedOutcome = deriveLiveOutcomeForPattern(p);
           return {
             ...p,
             outcome: derivedOutcome,
@@ -419,7 +419,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           // For historical patterns without a resolved outcome, derive one from current bars
           const existingOutcome = p.outcome;
           const isAlreadyResolved = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(existingOutcome || '').toLowerCase());
-          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcome(p, true);
+          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcomeForPattern(p, true);
           return {
             ...p,
             outcome: derivedOutcome || existingOutcome,
