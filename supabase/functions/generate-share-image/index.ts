@@ -73,7 +73,7 @@ function renderCandlestickSVG(opts: {
   const W = 1200;
   const H = 630;
   const CHART_LEFT = 60;
-  const CHART_RIGHT = W - 80;
+  const CHART_RIGHT = W - 140;
   const CHART_TOP = 120;
   const CHART_BOTTOM = H - 100;
   const CHART_W = CHART_RIGHT - CHART_LEFT;
@@ -174,8 +174,8 @@ function renderCandlestickSVG(opts: {
     const priceStr = formatPrice(price);
     return `
       <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-width="1.5" stroke-dasharray="${dashArray}" opacity="0.7"/>
-      <rect x="${CHART_RIGHT + 4}" y="${y - 12}" width="${W - CHART_RIGHT - 10}" height="24" rx="4" fill="${color}" opacity="0.9"/>
-      <text x="${CHART_RIGHT + 10}" y="${y + 4}" fill="white" font-size="11" font-family="Courier, monospace" font-weight="600">${label} ${priceStr}</text>
+      <rect x="${CHART_RIGHT + 6}" y="${y - 13}" width="${W - CHART_RIGHT - 12}" height="26" rx="4" fill="${color}" opacity="0.9"/>
+      <text x="${CHART_RIGHT + 14}" y="${y + 5}" fill="white" font-size="12" font-family="Courier, monospace" font-weight="700">${label} ${priceStr}</text>
     `;
   };
 
