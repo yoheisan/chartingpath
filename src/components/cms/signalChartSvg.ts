@@ -95,10 +95,9 @@ export function renderSignalSVG(opts: {
   const lastCloseY = yForPrice(lastClose);
   const entryYArrow = yForPrice(entry);
 
-  // Projected move: dashed line from last close to entry level
+  // Projected move: short dashed line from last close toward entry level (same x)
   const projectedMoveSvg = Math.abs(lastCloseY - entryYArrow) > 4
-    ? `<line x1="${lastBarX}" y1="${lastCloseY}" x2="${lastBarX + barSpacing * 1.5}" y2="${entryYArrow}" stroke="${dirColor}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
-       <circle cx="${lastBarX + barSpacing * 1.5}" cy="${entryYArrow}" r="3.5" fill="${dirColor}" opacity="0.7"/>`
+    ? `<line x1="${lastBarX}" y1="${lastCloseY}" x2="${lastBarX}" y2="${entryYArrow}" stroke="${dirColor}" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.4"/>`
     : '';
 
   const arrowY = isBullish
