@@ -1,0 +1,1 @@
+UPDATE public.social_post_budget SET max_posts = 3 WHERE post_date = '2026-03-04' AND platform = 'twitter';
