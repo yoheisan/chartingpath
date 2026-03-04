@@ -352,9 +352,9 @@ export default function FullChartViewer({
         const representativePrice = normalizedBars.length > 0 ? normalizedBars[normalizedBars.length - 1].c : 1;
         const { precision, minMove } = calculatePricePrecision(representativePrice);
 
-        // Collect trade plan prices from overlays for autoscale
+        // Collect trade plan prices for autoscale — skip if trade is resolved
         const tradePlanPrices: number[] = [];
-        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+        if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           for (const ov of visualSpec.overlays) {
             if (ov.type === 'hline' && Number.isFinite(ov.price)) {
               tradePlanPrices.push(ov.price);
