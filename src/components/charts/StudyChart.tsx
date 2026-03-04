@@ -1514,6 +1514,55 @@ const StudyChart = memo(({
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('blur', handleBlur);
 
+    // Two-finger vertical panning for mobile
+    // When the user places two fingers and drags vertically, shift the
+    // price axis up/down using the same scaleMargins technique as Space+drag.
+    let twoFingerPanActive = false;
+    let twoFingerStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        twoFingerPanActive = true;
+        twoFingerStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        // Read current margins
+        try {
+          const opts = chartRef.current?.priceScale('right').options();
+          if (opts?.scaleMargins) {
+            marginsRef.top = opts.scaleMargins.top;
+            marginsRef.bottom = opts.scaleMargins.bottom;
+          }
+        } catch {}
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!twoFingerPanActive || e.touches.length !== 2 || !chartRef.current) return;
+      e.preventDefault(); // prevent page scroll while two-finger panning
+      const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const deltaY = currentY - twoFingerStartY;
+      twoFingerStartY = currentY;
+      const containerHeight = containerRef.current?.clientHeight || 500;
+      const marginDelta = deltaY / containerHeight;
+      marginsRef.top = Math.max(0, Math.min(0.9, marginsRef.top + marginDelta));
+      marginsRef.bottom = Math.max(0, Math.min(0.9, marginsRef.bottom - marginDelta));
+      try {
+        chartRef.current.priceScale('right').applyOptions({
+          autoScale: true,
+          scaleMargins: { top: marginsRef.top, bottom: marginsRef.bottom },
+        });
+      } catch {}
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (twoFingerPanActive && e.touches.length < 2) {
+        twoFingerPanActive = false;
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
     return () => {
       try {
         const logicalRange = chart.timeScale().getVisibleLogicalRange();
@@ -1536,6 +1585,9 @@ const StudyChart = memo(({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
       if (rsiChartRef.current) { rsiChartRef.current.remove(); rsiChartRef.current = null; }
       if (macdChartRef.current) { macdChartRef.current.remove(); macdChartRef.current = null; }
