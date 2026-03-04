@@ -321,6 +321,7 @@ serve(async (req) => {
     const bars = parseBars(detection);
     const pivots = parsePivots(detection);
     const windowStartIndex = parseWindowStartIndex(detection, bars.length);
+    console.log(`[generate-share-image] windowStartIndex=${windowStartIndex}, barCount=${bars.length}, pivots=[${pivots.map(p=>p.index).join(',')}]`);
 
     const svg = renderCandlestickSVG({
       bars,
