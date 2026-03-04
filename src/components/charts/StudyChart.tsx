@@ -848,8 +848,11 @@ const StudyChart = memo(({
         return { entry: entryOk, sl: slOk, tp: tpOk, any: entryOk || slOk || tpOk, zonesOk };
       })();
       const hasRenderableTradeLevels = levelDistances.any;
+      
+      // Suppress trade plan rendering for resolved patterns (SL/TP already hit)
+      const currentPatternResolved = currentPattern ? isResolvedOutcome(currentPattern.outcome) : false;
 
-      if (currentPattern && hasRenderableTradeLevels) {
+      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const dirLabel = isLong ? '▲ LONG' : '▼ SHORT';
         
@@ -931,7 +934,7 @@ const StudyChart = memo(({
       }
 
       // Entry Point → canvas triangle at the pattern's detection/signal bar (not the last bar)
-      if (currentPattern && hasRenderableTradeLevels && safeChartData.length > 0) {
+      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
 
         // Find the bar matching the pattern's detectedAt timestamp
