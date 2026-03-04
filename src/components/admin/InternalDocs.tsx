@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2 } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -36,20 +36,23 @@ const OverviewTab = () => (
       <CardHeader>
         <CardTitle className="text-base">Platform Architecture — Executive Summary</CardTitle>
         <CardDescription>
-          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-01.
+          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-04.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           The platform operates a fully automated, multi-stage data pipeline responsible for detecting,
           seeding, validating and surfacing institutional-grade chart patterns across 8,500+ global
-          instruments (stocks, ETFs, forex, crypto, indices, commodities).
+          instruments (stocks, ETFs, forex, crypto, indices, commodities). With the Hybrid Instrument Search,
+          users can discover and chart 100,000+ tickers globally via live Yahoo Finance fallback, with on-demand
+          pattern scanning for non-seeded instruments.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { label: "Instruments covered", value: "8,500+" },
+            { label: "Seeded instruments", value: "817+" },
+            { label: "Searchable universe", value: "100,000+" },
             { label: "Validation throughput", value: "150k / hr" },
-            { label: "Daily seeding jobs", value: "40 cron jobs" },
+            { label: "Daily cron jobs", value: "47" },
           ].map(({ label, value }) => (
             <div key={label} className="text-center p-3 bg-muted rounded-lg">
               <p className="text-xl font-bold">{value}</p>
@@ -105,7 +108,21 @@ historical_pattern_occurrences (status: validated / rejected)
 [check-alert-matches] ──► alerts_log + send-pattern-alert (Email + Push)
         │
         ├─► [auto-paper-trade] ──► paper_trades (if enabled)
-        └─► [fire-signal-webhook] ──► External platforms (if configured)`}</CodeBlock>
+        └─► [fire-signal-webhook] ──► External platforms (if configured)
+
+═══ ON-DEMAND PATH (user-triggered) ═══
+
+User Search ──► [search-symbols] ──► Yahoo Finance autocomplete (100k+ tickers)
+        │                                └──► Upserts to instruments table
+        ▼
+/instruments/:symbol ──► "Request Pattern Scan" button
+        │
+        ▼
+scan_requests (status: pending) ──► [process-scan-requests] (01:00 UTC cron)
+        │                                 └──► Fetches 5yr OHLCV
+        │                                 └──► Runs 8 pattern detectors
+        ▼
+historical_pattern_occurrences ──► Toast notification on next visit`}</CodeBlock>
       </CardContent>
     </Card>
   </div>
