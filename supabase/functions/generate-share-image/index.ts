@@ -12,20 +12,27 @@ let cachedFont: ArrayBuffer | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
   if (cachedFont) return cachedFont;
-  // Fetch Inter Regular static TTF
-  const fontRes = await fetch(
-    'https://cdn.jsdelivr.net/gh/rsms/inter@v4.0/docs/font-files/Inter-Regular.woff2'
-  );
-  if (!fontRes.ok) {
-    // Try alternative static TTF source
-    const fallbackRes = await fetch(
-      'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2'
-    );
-    if (!fallbackRes.ok) throw new Error(`Font fetch failed: ${fallbackRes.status}`);
-    cachedFont = await fallbackRes.arrayBuffer();
-  } else {
-    cachedFont = await fontRes.arrayBuffer();
+  // Google Fonts serves TTF when User-Agent is an older browser
+  const css = await fetch(
+    'https://fonts.googleapis.com/css2?family=Inter&display=swap',
+    { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)' } }
+  ).then(r => r.text());
+  
+  // This user-agent gets TTF urls from Google Fonts
+  const urlMatch = css.match(/src:\s*url\(([^)]+\.ttf[^)]*)\)/);
+  if (!urlMatch) {
+    // Fallback: extract any url
+    const anyUrl = css.match(/url\(([^)]+)\)/);
+    if (!anyUrl) throw new Error('No font URL found in CSS');
+    const res = await fetch(anyUrl[1]);
+    if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
+    cachedFont = await res.arrayBuffer();
+    return cachedFont;
   }
+  
+  const fontRes = await fetch(urlMatch[1]);
+  if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
+  cachedFont = await fontRes.arrayBuffer();
   return cachedFont;
 }
 
