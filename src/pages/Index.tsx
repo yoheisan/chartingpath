@@ -25,6 +25,7 @@ import { useSectionTracking } from '@/hooks/useSectionTracking';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [instrumentCount, setInstrumentCount] = useState<number | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
