@@ -25,6 +25,7 @@ import { useSectionTracking } from '@/hooks/useSectionTracking';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [instrumentCount, setInstrumentCount] = useState<number | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
@@ -41,6 +42,17 @@ const Index = () => {
   useEffect(() => {
     prefetchArticles();
   }, [prefetchArticles]);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('instruments')
+        .select('symbol', { count: 'exact', head: true })
+        .eq('is_active', true);
+      if (count != null) setInstrumentCount(count);
+    };
+    fetchCount();
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,7 +94,7 @@ const Index = () => {
     },
     {
       title: t('landing.scanMarket', 'Scan the Market'),
-      description: t('landing.scanMarketDesc', 'Discover active pattern setups across 1,100+ instruments in real-time.'),
+      description: t('landing.scanMarketDesc', `Discover active pattern setups across ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments in real-time.`),
       bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBulletCopilot', '💡 Ask Copilot to find setups')],
       ctaText: t('landing.openScreener', 'Open Screener'),
       ctaLink: "/patterns/live",
@@ -138,7 +150,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <PageMeta
         title="ChartingPath – Chart Pattern Screener & Backtesting Platform"
-        description="Find chart pattern setups before they break out. Scan 1,100+ instruments, validate with 320K+ historical trades, and export Pine Script strategies."
+        description={`Find chart pattern setups before they break out. Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments, validate with 320K+ historical trades, and export Pine Script strategies.`}
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
@@ -175,7 +187,7 @@ const Index = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitle', 'Scan 1,100+ instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.')}
+            {t('hero.subtitle', `Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.`)}
           </p>
           
           {/* Ticker Search — prominent */}
@@ -189,7 +201,7 @@ const Index = () => {
                     Search any ticker — AAPL, BTC, EUR/USD…
                   </span>
                   <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
-                    1,100+ instruments
+                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ instruments` : '800+ instruments'}
                   </kbd>
                 </button>
               }
