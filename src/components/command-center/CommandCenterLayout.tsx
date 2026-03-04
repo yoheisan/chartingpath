@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { withTimeout } from '@/utils/withTimeout';
+import { deriveSetupOutcome } from '@/utils/deriveLiveOutcome';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useDashboardPrefetch } from '@/hooks/useDashboardPrefetch';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -348,7 +349,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
           // Ignore stale responses
           if (chartDetailsRequestIdRef.current !== requestId) return;
 
-          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+          const builtSetup = toSetupWithVisuals(res.data.pattern);
+          const derived = deriveSetupOutcome(builtSetup);
+          if (derived) {
+            builtSetup.outcome = derived as any;
+          }
+          setSelectedSetup(builtSetup);
           return;
         } catch (err: any) {
           lastErr = err;
@@ -426,7 +432,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       // Ignore stale responses
       if (occurrenceRequestIdRef.current !== requestId) return;
 
-      setOccurrenceSetup(toSetupWithVisuals(res.data.pattern));
+      const builtOccSetup = toSetupWithVisuals(res.data.pattern);
+      const derivedOcc = deriveSetupOutcome(builtOccSetup);
+      if (derivedOcc) {
+        builtOccSetup.outcome = derivedOcc as any;
+      }
+      setOccurrenceSetup(builtOccSetup);
     } catch (err: any) {
       console.error('[CommandCenter] Failed to load occurrence details:', err?.message || err);
       toast.error(t('commandCenter.failedToLoadPatternDetails'));

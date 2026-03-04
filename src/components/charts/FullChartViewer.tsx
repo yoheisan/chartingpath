@@ -74,6 +74,7 @@ import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
 import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
+import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
   getThemeColors, 
@@ -258,6 +259,9 @@ export default function FullChartViewer({
     }
 
     const { bars, visualSpec } = setup;
+    // Determine if trade plan should be suppressed (SL/TP already hit)
+    const tradeResolved = isResolvedOutcome(setup.outcome);
+    
     if (!bars || bars.length === 0) {
       console.warn('[FullChartViewer] no bars to render');
       return;
@@ -348,9 +352,9 @@ export default function FullChartViewer({
         const representativePrice = normalizedBars.length > 0 ? normalizedBars[normalizedBars.length - 1].c : 1;
         const { precision, minMove } = calculatePricePrecision(representativePrice);
 
-        // Collect trade plan prices from overlays for autoscale
+        // Collect trade plan prices for autoscale — skip if trade is resolved
         const tradePlanPrices: number[] = [];
-        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+        if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           for (const ov of visualSpec.overlays) {
             if (ov.type === 'hline' && Number.isFinite(ov.price)) {
               tradePlanPrices.push(ov.price);
@@ -516,11 +520,12 @@ export default function FullChartViewer({
         // Pattern overlays — standardized prescriptive style:
         // Entry = solid blue, SL = dashed red, TP = dashed green
         // Track actual overlay prices to use for shaded zones (ensures alignment)
-        let overlayEntryPrice = tradePlan?.entry;
-        let overlaySlPrice = tradePlan?.stopLoss;
-        let overlayTpPrice = tradePlan?.takeProfit;
+        // SUPPRESS all trade plan lines when the trade is resolved
+        let overlayEntryPrice = tradeResolved ? undefined : tradePlan?.entry;
+        let overlaySlPrice = tradeResolved ? undefined : tradePlan?.stopLoss;
+        let overlayTpPrice = tradeResolved ? undefined : tradePlan?.takeProfit;
 
-        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+        if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
               const isEntry = overlay.id === 'entry' || (overlay.label || '').toLowerCase().includes('entry');
@@ -623,8 +628,8 @@ export default function FullChartViewer({
           });
         }
 
-        // Entry Point → canvas triangle on last bar
-        if (chartData.length > 0 && tradePlan?.entry) {
+        // Entry Point → canvas triangle on last bar (skip for resolved trades)
+        if (!tradeResolved && chartData.length > 0 && tradePlan?.entry) {
           const lastBar = chartData[chartData.length - 1];
           const lastBarData = bars[bars.length - 1];
           const isLong = setup.direction === 'long';
