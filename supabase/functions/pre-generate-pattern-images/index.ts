@@ -2,13 +2,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 // Use resvg WASM for SVG→PNG conversion  
-import { Resvg, initWasm } from "https://esm.sh/@aspect-dev/esm-resvg-wasm@2.6.2";
+import { Resvg, initWasm } from "https://esm.sh/@aspect-dev/esm-resvg-wasm@2.6.2/index.js";
 
 let wasmInitialized = false;
 
 async function ensureWasm() {
   if (wasmInitialized) return;
-  // Fetch raw WASM binary from unpkg  
   const wasmUrl = "https://unpkg.com/@aspect-dev/esm-resvg-wasm@2.6.2/index_bg.wasm";
   const resp = await fetch(wasmUrl);
   if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
