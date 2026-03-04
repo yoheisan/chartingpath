@@ -522,7 +522,7 @@ Highlight events that could impact the user's current or prospective trades.
 async function executeSearchPatterns(supabase: any, args: any) {
   let query = supabase
     .from('live_pattern_detections')
-    .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
+    .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at, exchange')
     .eq('status', 'active')
     .order('first_detected_at', { ascending: false })
     .limit(args.limit || 5);
@@ -545,6 +545,9 @@ async function executeSearchPatterns(supabase: any, args: any) {
     if (minIndex >= 0) {
       query = query.in('quality_score', qualityOrder.slice(0, minIndex + 1));
     }
+  }
+  if (args.exchange) {
+    query = query.eq('exchange', args.exchange.toUpperCase());
   }
 
   const { data, error } = await query;
