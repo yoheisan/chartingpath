@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2 } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -36,20 +36,23 @@ const OverviewTab = () => (
       <CardHeader>
         <CardTitle className="text-base">Platform Architecture — Executive Summary</CardTitle>
         <CardDescription>
-          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-01.
+          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-04.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           The platform operates a fully automated, multi-stage data pipeline responsible for detecting,
           seeding, validating and surfacing institutional-grade chart patterns across 8,500+ global
-          instruments (stocks, ETFs, forex, crypto, indices, commodities).
+          instruments (stocks, ETFs, forex, crypto, indices, commodities). With the Hybrid Instrument Search,
+          users can discover and chart 100,000+ tickers globally via live Yahoo Finance fallback, with on-demand
+          pattern scanning for non-seeded instruments.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { label: "Instruments covered", value: "8,500+" },
+            { label: "Seeded instruments", value: "817+" },
+            { label: "Searchable universe", value: "100,000+" },
             { label: "Validation throughput", value: "150k / hr" },
-            { label: "Daily seeding jobs", value: "40 cron jobs" },
+            { label: "Daily cron jobs", value: "47" },
           ].map(({ label, value }) => (
             <div key={label} className="text-center p-3 bg-muted rounded-lg">
               <p className="text-xl font-bold">{value}</p>
@@ -105,7 +108,21 @@ historical_pattern_occurrences (status: validated / rejected)
 [check-alert-matches] ──► alerts_log + send-pattern-alert (Email + Push)
         │
         ├─► [auto-paper-trade] ──► paper_trades (if enabled)
-        └─► [fire-signal-webhook] ──► External platforms (if configured)`}</CodeBlock>
+        └─► [fire-signal-webhook] ──► External platforms (if configured)
+
+═══ ON-DEMAND PATH (user-triggered) ═══
+
+User Search ──► [search-symbols] ──► Yahoo Finance autocomplete (100k+ tickers)
+        │                                └──► Upserts to instruments table
+        ▼
+/instruments/:symbol ──► "Request Pattern Scan" button
+        │
+        ▼
+scan_requests (status: pending) ──► [process-scan-requests] (01:00 UTC cron)
+        │                                 └──► Fetches 5yr OHLCV
+        │                                 └──► Runs 8 pattern detectors
+        ▼
+historical_pattern_occurrences ──► Toast notification on next visit`}</CodeBlock>
       </CardContent>
     </Card>
   </div>
@@ -134,7 +151,7 @@ const CronTab = () => (
      [─────────────────────── scan-live-patterns (every 15 min) ─────────────]
                                                                 (12:00–04:45)`}</CodeBlock>
 
-        <SectionHeader icon={Clock} title="Registered pg_cron Jobs (46 total)" />
+        <SectionHeader icon={Clock} title="Registered pg_cron Jobs (47 total)" />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border">
             <thead className="bg-muted">
@@ -165,6 +182,7 @@ const CronTab = () => (
                 ["every min, 12:00–04:45", "backfill-validation-forex", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-indices", "backfill-validation", "active"],
                 ["every 15 min, 12:00–04:45", "scan-live-patterns-scheduled (ID: 134)", "scan-live-patterns", "active"],
+                ["01:00 daily", "process-scan-requests-nightly (ID: 185)", "process-scan-requests", "active"],
               ].map(([time, job, fn, status]) => (
                 <tr key={job}>
                   <td className="px-3 py-2 border-b text-muted-foreground">{time}</td>
@@ -1468,6 +1486,227 @@ const AnalyticsTab = () => (
   </div>
 );
 
+// ─── Tab: Hybrid Search & On-Demand Scanning ──────────────────────────────────
+
+const HybridSearchTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Hybrid Instrument Search & On-Demand Scanning</CardTitle>
+        <CardDescription>
+          Two-tier search architecture + user-triggered pattern scanning pipeline. Added 2026-03-04.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Search} title="Hybrid Search Architecture" />
+        <p className="text-sm text-muted-foreground mb-3">
+          Expands the searchable universe from 817 seeded instruments to 100,000+ tickers globally.
+          Local DB results load instantly; a debounced (300ms) Yahoo Finance fallback fills in the rest.
+        </p>
+        <CodeBlock>{`User types "PLTR" in UniversalSymbolSearch
+        │
+        ▼
+┌──────────────────────┐
+│  1. Local DB query   │  ← instant, instruments table (817+ rows)
+│     (existing logic) │
+└──────────┬───────────┘
+           │ query length >= 2
+           ▼
+┌──────────────────────────────┐
+│  2. search-symbols (Edge Fn) │  ← Yahoo Finance /v1/finance/search
+│     debounced 300ms          │     quotesCount=15, no auth needed
+└──────────┬───────────────────┘
+           │ merge & deduplicate
+           ▼
+┌──────────────────────┐
+│  3. Display combined │  local first, then "Web Results" separator
+│     results          │  with Globe badge on Yahoo hits
+└──────────┬───────────┘
+           │ user clicks Yahoo result
+           ▼
+┌──────────────────────┐
+│  4. Auto-upsert into │  ← instruments table, is_active=true
+│     instruments      │  permanently searchable after first select
+└──────────────────────┘`}</CodeBlock>
+
+        <SectionHeader icon={Database} title="search-symbols Edge Function" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Parameter", "Value", "Notes"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Function", "search-symbols", "Deno edge function"],
+                ["API", "Yahoo Finance autocomplete", "https://query2.finance.yahoo.com/v1/finance/search"],
+                ["Auth", "None required", "Yahoo search endpoint is unauthenticated"],
+                ["Debounce", "300ms client-side", "Prevents excessive API calls"],
+                ["Search mode", "query param", "Returns top 15 matches"],
+                ["Upsert mode", "upsert_symbol param", "Persists selected ticker to instruments"],
+                ["Mapping logic", "mapQuoteType + mapExchange", "Yahoo metadata → internal schema"],
+                ["Country/currency", "deriveCountry + deriveCurrency", "Suffix-based heuristics (.HK → HK/HKD)"],
+              ].map(([p, v, n]) => (
+                <tr key={p}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{p}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{v}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Radar} title="On-Demand Scan Requests" />
+        <p className="text-sm text-muted-foreground mb-3">
+          When users discover tickers not in the seeded universe, they can request historical pattern analysis.
+          Requests are queued and processed nightly at 01:00 UTC to stay within compute limits.
+        </p>
+        <CodeBlock>{`/instruments/:symbol (no pattern data)
+        │
+        ▼
+"Request Pattern Scan" button
+        │
+        ▼
+scan_requests table (status: pending)
+        │  rate-limited: 5/day (starter), 20/day (pro), unlimited (elite)
+        │  unique constraint: one pending request per user+symbol
+        ▼
+[process-scan-requests] ← cron: 01:00 UTC daily
+        │  picks up to 10 pending requests per run
+        │  fetches 5yr daily OHLCV from Yahoo Finance
+        │  runs 8 core pattern detectors
+        │  inserts into historical_pattern_occurrences
+        ▼
+scan_requests (status: completed, patterns_found: N)
+        │
+        ▼
+ScanNotificationListener (global, main.tsx)
+        │  checks for completed+unnotified on every page load
+        └──► sonner toast: "Scan complete: PLTR — 47 patterns found" [View]
+             marks as notified`}</CodeBlock>
+
+        <SectionHeader icon={Database} title="Database: scan_requests" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Column", "Type", "Notes"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["id", "UUID PK", "gen_random_uuid()"],
+                ["user_id", "UUID FK → auth.users", "RLS: users see own requests only"],
+                ["symbol", "TEXT", "Ticker symbol to scan"],
+                ["asset_type", "TEXT", "Optional asset classification"],
+                ["status", "TEXT", "pending → processing → completed/failed"],
+                ["priority", "INTEGER", "Default 0, higher = processed first"],
+                ["patterns_found", "INTEGER", "Set on completion"],
+                ["notified", "BOOLEAN", "Toast shown to user?"],
+                ["requested_at", "TIMESTAMPTZ", "When user clicked button"],
+                ["completed_at", "TIMESTAMPTZ", "When processing finished"],
+              ].map(([col, type, notes]) => (
+                <tr key={col}>
+                  <td className="px-4 py-2 border-b font-mono text-xs">{col}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{type}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Shield} title="Rate Limiting (check_scan_request_limit)" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { title: "Starter", desc: "5 scan requests per day. Sufficient for casual discovery." },
+            { title: "Pro", desc: "20 scan requests per day. Covers active traders exploring new instruments." },
+            { title: "Elite", desc: "Unlimited scan requests. Full universe access." },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Cpu} title="process-scan-requests — Pattern Detectors" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Pattern", "Direction", "Window"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Double Top", "Bearish", "15+ bars"],
+                ["Double Bottom", "Bullish", "15+ bars"],
+                ["Bull Flag", "Bullish", "10+ bars"],
+                ["Bear Flag", "Bearish", "10+ bars"],
+                ["Ascending Triangle", "Bullish", "15+ bars"],
+                ["Descending Triangle", "Bearish", "15+ bars"],
+                ["Donchian Breakout (Long)", "Bullish", "10+ bars"],
+                ["Donchian Breakout (Short)", "Bearish", "10+ bars"],
+              ].map(([pattern, dir, window]) => (
+                <tr key={pattern}>
+                  <td className="px-4 py-2 border-b text-xs font-medium">{pattern}</td>
+                  <td className="px-4 py-2 border-b text-xs">{dir}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{window}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Activity} title="Frontend Components" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Component", "Location", "Purpose"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["UniversalSymbolSearch", "src/components/charts/", "Hybrid search dialog: local + Yahoo web results"],
+                ["RequestScanButton", "src/components/instruments/", "Shows on /instruments/:symbol when no pattern data"],
+                ["ScanNotificationListener", "src/components/instruments/", "Global listener in main.tsx, shows toasts for completed scans"],
+                ["useScanRequests", "src/hooks/", "Hook: queue management, rate limit check, toast notifications"],
+              ].map(([comp, loc, purpose]) => (
+                <tr key={comp}>
+                  <td className="px-4 py-2 border-b font-mono text-xs text-primary">{comp}</td>
+                  <td className="px-4 py-2 border-b text-xs">{loc}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{purpose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Shield} title="Key Constraints" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p>• <strong>No compute impact:</strong> On-demand lookups don't touch the seeding pipeline</p>
+          <p>• <strong>No live scanning:</strong> New tickers are chartable but not included in live_pattern_detections until added to screenerInstruments.ts</p>
+          <p>• <strong>Cron window:</strong> 01:00 UTC — outside both seeding (05:00–12:00) and validation (12:00–04:45) windows</p>
+          <p>• <strong>Batch cap:</strong> Max 10 tickers per cron run to prevent memory exhaustion on Medium instance</p>
+          <p>• <strong>Dedup:</strong> Unique constraint on (user_id, symbol) WHERE status IN ('pending', 'processing')</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
@@ -1489,6 +1728,7 @@ export const InternalDocs = () => {
           <TabsTrigger value="cron">Cron Schedule</TabsTrigger>
           <TabsTrigger value="validation">Validation Shards</TabsTrigger>
           <TabsTrigger value="infra">Infrastructure</TabsTrigger>
+          <TabsTrigger value="hybrid-search">Hybrid Search</TabsTrigger>
           <TabsTrigger value="apac">APAC Expansion</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
@@ -1500,6 +1740,7 @@ export const InternalDocs = () => {
         <TabsContent value="cron" className="mt-4"><CronTab /></TabsContent>
         <TabsContent value="validation" className="mt-4"><ValidationTab /></TabsContent>
         <TabsContent value="infra" className="mt-4"><InfraTab /></TabsContent>
+        <TabsContent value="hybrid-search" className="mt-4"><HybridSearchTab /></TabsContent>
         <TabsContent value="apac" className="mt-4"><APACTab /></TabsContent>
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
@@ -1509,7 +1750,7 @@ export const InternalDocs = () => {
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-03-01 · Version 2.7
+        Last updated: 2026-03-04 · Version 2.8
       </p>
     </div>
   );
