@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 0; // Emergency pause: disable automated pattern posts
+const MAX_DAILY_POSTS = 3;
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
@@ -127,46 +127,9 @@ function generateOAuthHeader(method: string, url: string): string {
     .join(', ');
 }
 
-// ─── Twitter media upload (v1.1) ─────────────────────────────────────────────
-
-function uint8ToBase64(data: Uint8Array): string {
-  let binary = '';
-  const chunkSize = 8192;
-  for (let i = 0; i < data.length; i += chunkSize) {
-    binary += String.fromCharCode(...data.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
-
-async function uploadMediaToTwitter(imageData: Uint8Array): Promise<string> {
-  const url = 'https://upload.twitter.com/1.1/media/upload.json';
-  const base64Data = uint8ToBase64(imageData);
-  const formData = new FormData();
-  formData.append('media_data', base64Data);
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: generateOAuthHeader('POST', url) },
-    body: formData,
-  });
-
-  const body = await res.text();
-  if (!res.ok) {
-    console.warn(`[pattern-poster] Media upload failed ${res.status}: ${body}`);
-    throw new Error(`Twitter media upload ${res.status}: ${body}`);
-  }
-
-  const data = JSON.parse(body);
-  console.log(`[pattern-poster] ✅ Media uploaded: ${data.media_id_string}`);
-  return data.media_id_string;
-}
-
-async function postToTwitter(text: string, mediaId?: string): Promise<{ id: string }> {
+async function postToTwitter(text: string): Promise<{ id: string }> {
   const url = 'https://api.x.com/2/tweets';
   const payload: any = { text };
-  if (mediaId) {
-    payload.media = { media_ids: [mediaId] };
-  }
 
   const res = await fetch(url, {
     method: 'POST',
@@ -236,32 +199,6 @@ async function checkAndIncrementBudget(supabase: any, platform: string): Promise
 
   console.log(`[pattern-poster] 📊 Budget: ${budget.post_count + 1}/${budget.max_posts}`);
   return true;
-}
-
-// ─── Download pre-generated image (SVG → PNG via weserv.nl proxy) ───────────
-
-async function downloadImageAsBytes(url: string): Promise<Uint8Array | null> {
-  try {
-    // Twitter rejects SVG — convert via free weserv.nl image proxy
-    let fetchUrl = url;
-    if (url.endsWith('.svg') || url.includes('image/svg')) {
-      fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&output=png&w=1200`;
-      console.log(`[pattern-poster] Converting SVG→PNG via weserv.nl`);
-    }
-
-    const res = await fetch(fetchUrl);
-    if (!res.ok) {
-      console.warn(`[pattern-poster] Image download failed: ${res.status}`);
-      return null;
-    }
-    const contentType = res.headers.get('content-type') || '';
-    console.log(`[pattern-poster] Image downloaded: ${contentType}, ${res.headers.get('content-length')} bytes`);
-    const buffer = await res.arrayBuffer();
-    return new Uint8Array(buffer);
-  } catch (err: any) {
-    console.warn(`[pattern-poster] Image download error: ${err.message}`);
-    return null;
-  }
 }
 
 // ─── Ensure share token ──────────────────────────────────────────────────────
@@ -370,13 +307,17 @@ serve(async (req) => {
     const groups = groupByTradeLevels(unposted);
     console.log(`[pattern-poster] ${unposted.length} unposted patterns → ${groups.size} unique trade-level groups`);
 
-    // Pick the best group to post (prefer groups with images)
+    // Pick the best group to post (highest grade, then best R:R)
     let bestGroup: any[] | null = null;
+    let bestScore = -1;
     for (const group of groups.values()) {
-      const hasImage = group.some((p: any) => p.share_image_url);
-      if (!bestGroup || (hasImage && !bestGroup.some((p: any) => p.share_image_url))) {
+      const first = group[0];
+      const gradeScore = first.quality_score === 'A' ? 2 : 1;
+      const rrScore = Number(first.risk_reward_ratio) || 0;
+      const score = gradeScore * 10 + rrScore;
+      if (score > bestScore) {
+        bestScore = score;
         bestGroup = group;
-        if (hasImage) break; // Found one with image, use it
       }
     }
 
@@ -402,7 +343,7 @@ serve(async (req) => {
     const results: any[] = [];
 
     for (const group of toPost) {
-      const primary = group.find((p: any) => p.share_image_url) || group[0];
+      const primary = group[0];
       try {
         const token = await ensureShareToken(supabase, primary.id);
         const shareUrl = `https://chartingpath.com/s/${token}`;
@@ -410,26 +351,9 @@ serve(async (req) => {
           ? buildConsolidatedTweet(group)
           : buildTweet(primary);
 
-        // Try to attach pre-generated image (from any pattern in the group)
-        let mediaId: string | undefined;
-        const imagePattern = group.find((p: any) => p.share_image_url);
-        if (imagePattern?.share_image_url) {
-          try {
-            const imageBytes = await downloadImageAsBytes(imagePattern.share_image_url);
-            if (imageBytes && imageBytes.length > 0) {
-              mediaId = await uploadMediaToTwitter(imageBytes);
-              console.log(`[pattern-poster] 🖼️ Image attached for ${primary.instrument}`);
-            }
-          } catch (imgErr: any) {
-            console.warn(`[pattern-poster] Image attach failed, posting text-only: ${imgErr.message}`);
-          }
-        } else {
-          console.log(`[pattern-poster] No pre-generated image for ${primary.instrument}, posting text-only`);
-        }
-
         const patternNames = group.map((p: any) => p.pattern_name).join(' + ');
-        console.log(`[pattern-poster] Posting: ${primary.instrument} [${patternNames}] (${primary.quality_score})${mediaId ? ' [with image]' : ''} — ${group.length} pattern(s) consolidated`);
-        const twitterResponse = await postToTwitter(tweet, mediaId);
+        console.log(`[pattern-poster] Posting: ${primary.instrument} [${patternNames}] (${primary.quality_score}) — ${group.length} pattern(s) consolidated`);
+        const twitterResponse = await postToTwitter(tweet);
 
         // Record post_history for ALL patterns in the group to prevent re-posting
         for (const p of group) {
@@ -451,10 +375,9 @@ serve(async (req) => {
           pattern_ids: group.map((p: any) => p.id),
           instrument: primary.instrument,
           tweet_id: twitterResponse?.id,
-          has_image: !!mediaId,
           consolidated: group.length,
         });
-        console.log(`[pattern-poster] ✅ Posted ${primary.instrument} — tweet ${twitterResponse?.id}${mediaId ? ' (with image)' : ''} — ${group.length} signal(s)`);
+        console.log(`[pattern-poster] ✅ Posted ${primary.instrument} — tweet ${twitterResponse?.id} — ${group.length} signal(s)`);
 
       } catch (err: any) {
         if (err.name === 'RateLimitError') {
