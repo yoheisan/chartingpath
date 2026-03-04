@@ -1729,6 +1729,7 @@ export type Database = {
           detected_at: string
           direction: string
           entry_price: number
+          exchange: string | null
           id: string
           multi_rr_computed_at: string | null
           outcome: string | null
@@ -1771,6 +1772,7 @@ export type Database = {
           detected_at: string
           direction: string
           entry_price: number
+          exchange?: string | null
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
@@ -1813,6 +1815,7 @@ export type Database = {
           detected_at?: string
           direction?: string
           entry_price?: number
+          exchange?: string | null
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
@@ -1918,6 +1921,45 @@ export type Database = {
           selected_instrument?: string | null
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      instruments: {
+        Row: {
+          asset_type: string
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          exchange: string
+          is_active: boolean | null
+          name: string | null
+          sector: string | null
+          symbol: string
+          updated_at: string | null
+        }
+        Insert: {
+          asset_type: string
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          exchange: string
+          is_active?: boolean | null
+          name?: string | null
+          sector?: string | null
+          symbol: string
+          updated_at?: string | null
+        }
+        Update: {
+          asset_type?: string
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          exchange?: string
+          is_active?: boolean | null
+          name?: string | null
+          sector?: string | null
+          symbol?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2143,6 +2185,7 @@ export type Database = {
           current_price: number | null
           direction: string
           entry_price: number
+          exchange: string | null
           first_detected_at: string
           historical_performance: Json | null
           id: string
@@ -2176,6 +2219,7 @@ export type Database = {
           current_price?: number | null
           direction: string
           entry_price: number
+          exchange?: string | null
           first_detected_at?: string
           historical_performance?: Json | null
           id?: string
@@ -2209,6 +2253,7 @@ export type Database = {
           current_price?: number | null
           direction?: string
           entry_price?: number
+          exchange?: string | null
           first_detected_at?: string
           historical_performance?: Json | null
           id?: string
