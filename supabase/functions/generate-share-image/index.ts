@@ -320,6 +320,7 @@ serve(async (req) => {
     // Parse bars and pivots for full candlestick chart
     const bars = parseBars(detection);
     const pivots = parsePivots(detection);
+    const windowStartIndex = parseWindowStartIndex(detection, bars.length);
 
     const svg = renderCandlestickSVG({
       bars,
@@ -333,6 +334,7 @@ serve(async (req) => {
       grade: detection.quality_score?.toUpperCase() ?? '?',
       rr: Number(detection.risk_reward_ratio).toFixed(1),
       pivots,
+      windowStartIndex,
     });
 
     const svgPath = `${shareToken}.svg`;
