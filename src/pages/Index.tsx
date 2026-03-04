@@ -44,6 +44,17 @@ const Index = () => {
   }, [prefetchArticles]);
 
   useEffect(() => {
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('instruments')
+        .select('symbol', { count: 'exact', head: true })
+        .eq('is_active', true);
+      if (count != null) setInstrumentCount(count);
+    };
+    fetchCount();
+  }, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
