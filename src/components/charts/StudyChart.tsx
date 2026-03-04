@@ -1249,7 +1249,18 @@ const StudyChart = memo(({
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
 
     // Draw TP/SL shaded zones even without formation overlays
-    if (tradePlan && !hasHistoricalOverlays && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
+    // Apply same zone sync guard: suppress zones when entry hasn't been reached
+    const standaloneTradePlanZonesOk = (() => {
+      if (!tradePlan || safeChartData.length === 0) return false;
+      const latestClose = Number(safeChartData[safeChartData.length - 1]?.close);
+      if (!Number.isFinite(latestClose) || latestClose <= 0) return false;
+      const entry = tradePlan.entry;
+      const pctFromEntry = Math.abs((entry - latestClose) / latestClose) * 100;
+      if (pctFromEntry > 3) return false; // Entry too far — zones would be misleading
+      return true;
+    })();
+
+    if (tradePlan && standaloneTradePlanZonesOk && !hasHistoricalOverlays && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
       const drawStandaloneTradePlanZones = () => {
         const canvas = canvasOverlayRef.current;
         if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
