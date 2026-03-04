@@ -11,6 +11,7 @@ import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
+import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import type { SetupWithVisuals, PatternQuality, VisualSpec } from '@/types/VisualSpec';
 import { toast } from 'sonner';
@@ -183,7 +184,9 @@ export function PatternScreenerTeaser() {
 
         if (error) throw error;
 
-        const allPatterns = (data || []).map(rowToLiveSetup);
+        const allPatternsRaw = (data || []).map(rowToLiveSetup);
+        // Filter out patterns where trade has already ended (SL/TP breached)
+        const allPatterns = filterActiveTradesOnly(allPatternsRaw);
 
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');

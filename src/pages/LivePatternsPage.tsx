@@ -175,6 +175,7 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
+import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
 
@@ -394,7 +395,9 @@ export default function LivePatternsPage() {
       if (fnError) throw fnError;
       
       if (data?.patterns) {
-        setPatterns(data.patterns);
+        // Filter out patterns where the trade has already ended (SL/TP breached)
+        const activeOnly = filterActiveTradesOnly(data.patterns);
+        setPatterns(activeOnly);
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
         setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
