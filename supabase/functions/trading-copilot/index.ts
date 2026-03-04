@@ -21,6 +21,7 @@ const tools = [
           timeframe: { type: "string", enum: ["1h", "4h", "8h", "1d", "1wk"], description: "Timeframe to search. Default is 1d (daily)." },
           direction: { type: "string", enum: ["bullish", "bearish", "any"], description: "Filter by trade direction." },
           min_quality: { type: "string", enum: ["A", "B", "C"], description: "Minimum quality score (A is highest)." },
+          exchange: { type: "string", description: "Filter by exchange. Examples: NYSE, NASDAQ, HKEX, SGX, SET, CRYPTO, FOREX, COMEX, US_ETF." },
           limit: { type: "number", description: "Maximum results to return. Default 5." }
         },
         required: []
