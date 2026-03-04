@@ -41,8 +41,9 @@ function renderCandlestickSVG(opts: {
   grade: string;
   rr: string;
   pivots?: Pivot[];
+  windowStartIndex?: number;
 }): string {
-  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots } = opts;
+  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots, windowStartIndex } = opts;
 
   const W = 1200;
   const H = 630;
@@ -87,9 +88,12 @@ function renderCandlestickSVG(opts: {
   if (pivots && pivots.length >= 2) {
     const validPivots = pivots.filter(p => p.index >= 0 && p.index < barCount);
     if (validPivots.length >= 2) {
-      const firstIdx = validPivots[0].index;
+      // Use windowStartIndex if available (from visual_spec.window), otherwise fall back to first pivot
+      const zoneStartIdx = (windowStartIndex !== undefined && windowStartIndex >= 0) 
+        ? Math.max(0, windowStartIndex) 
+        : validPivots[0].index;
       const lastIdx = validPivots[validPivots.length - 1].index;
-      const zoneX = xForBar(firstIdx) - barSpacing / 2;
+      const zoneX = xForBar(zoneStartIdx) - barSpacing / 2;
       const zoneW = xForBar(lastIdx) - zoneX + barSpacing / 2;
 
       patternOverlaySvg += `<rect x="${zoneX}" y="${CHART_TOP}" width="${zoneW}" height="${CHART_H}" fill="#38bdf8" opacity="0.06" rx="4"/>`;
