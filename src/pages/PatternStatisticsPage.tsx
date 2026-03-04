@@ -251,9 +251,10 @@ export default function PatternStatisticsPage() {
             {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
           </div>
         ) : aggregates ? (
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <section className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
             <KpiCard icon={<Target className="h-4 w-4" />} label="Win Rate" value={`${aggregates.win_rate_pct}%`} subtitle={`${aggregates.wins.toLocaleString()}W / ${aggregates.losses.toLocaleString()}L`} />
             <KpiCard icon={<TrendingUp className="h-4 w-4" />} label="Expectancy (R)" value={`${aggregates.expectancy_r > 0 ? '+' : ''}${aggregates.expectancy_r.toFixed(3)}R`} subtitle={`Avg R:R ${aggregates.avg_rr}`} highlight={aggregates.expectancy_r > 0} />
+            <KpiCard icon={<Clock className="h-4 w-4" />} label="Return on Time" value={`${aggregates.avg_bars > 0 ? (aggregates.expectancy_r / aggregates.avg_bars).toFixed(4) : '—'}R/bar`} subtitle="Capital efficiency" highlight={aggregates.avg_bars > 0 && aggregates.expectancy_r / aggregates.avg_bars >= 0.01} />
             <KpiCard icon={<BarChart3 className="h-4 w-4" />} label="Sample Size" value={aggregates.total_trades.toLocaleString()} subtitle="Resolved trades" />
             <KpiCard icon={<Clock className="h-4 w-4" />} label="Avg Duration" value={`${aggregates.avg_bars} bars`} subtitle={`Best: ${ASSET_LABEL[aggregates.best_asset] || aggregates.best_asset} ${TF_LABEL[aggregates.best_timeframe] || aggregates.best_timeframe}`} />
           </section>
@@ -268,10 +269,11 @@ export default function PatternStatisticsPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-semibold mb-4">Performance by Market & Timeframe</h2>
             <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
-              <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_90px_80px_140px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
+              <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_80px_90px_80px_140px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Market / Timeframe</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Exp (R)</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">ROT</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg R:R</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg Bars</span>
@@ -281,7 +283,7 @@ export default function PatternStatisticsPage() {
               {breakdowns.map((b) => (
                 <div
                   key={`${b.asset_type}-${b.timeframe}`}
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_90px_80px_140px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_80px_90px_80px_140px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-xs capitalize">{ASSET_LABEL[b.asset_type] || b.asset_type}</Badge>
@@ -292,6 +294,9 @@ export default function PatternStatisticsPage() {
                   </span>
                   <span className={`hidden sm:block text-sm text-right font-mono ${b.expectancy_r > 0 ? 'text-green-500' : 'text-red-500'}`}>
                     {b.expectancy_r > 0 ? '+' : ''}{b.expectancy_r.toFixed(3)}R
+                  </span>
+                  <span className={`hidden sm:block text-sm text-right font-mono ${b.avg_bars > 0 && b.expectancy_r / b.avg_bars >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                    {b.avg_bars > 0 ? (b.expectancy_r / b.avg_bars).toFixed(4) : '—'}
                   </span>
                   <span className="hidden sm:block text-sm text-right text-muted-foreground">{b.avg_rr}</span>
                   <span className="hidden sm:block text-sm text-right text-muted-foreground">{b.total.toLocaleString()}</span>

@@ -422,9 +422,19 @@ export function EdgeAtlasSection() {
                           <span className="text-[10px] text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
                         <span>{t('edgeAtlas.win')} <span className={`font-medium ${r.win_rate_pct >= 55 ? 'text-green-500' : r.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>{r.win_rate_pct}%</span></span>
                         <span>{t('edgeAtlas.expect')} <span className="font-mono text-green-500">{r.expectancy_r.toFixed(3)}R</span></span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">ROT <span className={`font-mono ${(r.avg_bars > 0 ? r.expectancy_r / r.avg_bars : 0) >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>{r.avg_bars > 0 ? (r.expectancy_r / r.avg_bars).toFixed(4) : '—'}R/bar</span></span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-xs"><strong>Return on Time</strong> — R earned per bar of capital exposure. Higher = more capital-efficient edge. Measures how quickly the pattern converts risk into return.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <span className="hidden sm:inline">{r.trades_per_year.toFixed(0)} {t('edgeAtlas.tradesPerYear')}</span>
                         <span className="text-muted-foreground/60">n={r.total_trades.toLocaleString()}</span>
                       </div>
