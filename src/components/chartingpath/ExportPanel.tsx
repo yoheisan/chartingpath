@@ -31,8 +31,22 @@ interface ExportPanelProps {
 type ExportFormat = 'pine' | 'mt4' | 'mt5';
 
 export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
+  const { user } = useAuth();
+  const { showAuthDialog, setShowAuthDialog, requireAuth } = useAuthGate('script export');
   const [copiedFormat, setCopiedFormat] = useState<ExportFormat | null>(null);
   const [generating, setGenerating] = useState<ExportFormat | null>(null);
+
+  const EXPORT_COUNT_KEY = 'cp_export_count';
+
+  const getExportCount = (): number => {
+    try { return parseInt(localStorage.getItem(EXPORT_COUNT_KEY) || '0', 10); } catch { return 0; }
+  };
+
+  const incrementExportCount = () => {
+    try { localStorage.setItem(EXPORT_COUNT_KEY, String(getExportCount() + 1)); } catch {}
+  };
+
+  const hasReachedFreeLimit = !user && getExportCount() >= 1;
 
   // Validate strategy has required timeframe
   const validationResult = useMemo(() => {
