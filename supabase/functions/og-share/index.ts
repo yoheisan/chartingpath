@@ -98,7 +98,8 @@ serve(async (req) => {
 </head>
 <body>
   <p>Redirecting to <a href="${spaUrl}">${escapeHtml(title)}</a>...</p>
-  <script>window.location.replace(${JSON.stringify('${spaUrl}').replace('"${spaUrl}"', '"' + spaUrl + '"')});</script>
+  <script>window.location.replace(${JSON.stringify(spaUrl)});</script>
+</body>
 </html>`;
 
     return new Response(html, {
