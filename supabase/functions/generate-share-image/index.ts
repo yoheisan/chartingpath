@@ -262,6 +262,30 @@ function parsePivots(detection: any): Pivot[] {
   return [];
 }
 
+/** Compute formation zone start index from visual_spec.window timestamps */
+function parseWindowStartIndex(detection: any, barCount: number): number | undefined {
+  try {
+    const spec = typeof detection.visual_spec === 'string' ? JSON.parse(detection.visual_spec) : detection.visual_spec;
+    if (!spec?.window?.startTs || !spec?.window?.endTs) return undefined;
+
+    const startMs = new Date(spec.window.startTs).getTime();
+    const endMs = new Date(spec.window.endTs).getTime();
+    if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) return undefined;
+
+    const windowDuration = endMs - startMs;
+    // Timeframe duration per bar (approximate from total bars and window)
+    // endTs maps to approximately the last bar
+    const tfMs = windowDuration / barCount;
+    // If bars extend before the window start, clamp to 0
+    // The bars array typically covers a larger lookback; estimate where window starts
+    // We assume the last bar aligns with endTs
+    const windowStartBar = Math.max(0, Math.round(barCount - (windowDuration / tfMs)));
+    // But if window covers the whole bars array, start at 0
+    return Math.max(0, windowStartBar);
+  } catch { /* ignore */ }
+  return undefined;
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
