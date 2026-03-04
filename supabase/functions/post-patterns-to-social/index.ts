@@ -74,7 +74,9 @@ function buildTweet(pattern: any): string {
 function buildConsolidatedTweet(group: any[]): string {
   const first = group[0];
   const emoji = ASSET_EMOJI[first.asset_type?.toLowerCase()] ?? '📉';
-  const dir = directionEmoji(first.direction);
+  const dir = deriveDirection(first);
+  const dirEmoji = directionEmoji(dir);
+  const dirLabel = dir.toUpperCase();
   const tf = first.timeframe?.toUpperCase() ?? '';
   const grade = first.quality_score?.toUpperCase() ?? '?';
   const rr = Number(first.risk_reward_ratio).toFixed(1);
@@ -85,8 +87,8 @@ function buildConsolidatedTweet(group: any[]): string {
   const patternNames = group.map((p: any) => formatPatternName(p.pattern_name)).join(' + ');
 
   return (
-    `${emoji} ${dir} ${patternNames} — ${first.instrument} (${tf})\n\n` +
-    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `${emoji} ${dirEmoji} ${patternNames} — ${first.instrument} (${tf})\n\n` +
+    `${dirLabel} | Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
     `Free alerts at chartingpath.com`
   ).slice(0, 280);
