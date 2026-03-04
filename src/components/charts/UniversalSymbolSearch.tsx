@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Search, X, TrendingUp, Coins, DollarSign, BarChart3, Building2, Layers } from 'lucide-react';
+import { Search, X, TrendingUp, Coins, DollarSign, BarChart3, Building2, Layers, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,6 +41,14 @@ interface Instrument {
   currency: string | null;
 }
 
+interface WebResult {
+  symbol: string;
+  name: string;
+  quoteType: string;
+  exchange: string;
+  asset_type: string;
+}
+
 interface UniversalSymbolSearchProps {
   onSelect: (symbol: string, name: string, category: string) => void;
   trigger?: React.ReactNode;
@@ -48,32 +56,12 @@ interface UniversalSymbolSearchProps {
 }
 
 const EXCHANGE_SHORT: Record<string, string> = {
-  NYSE: 'NYSE',
-  NASDAQ: 'NASDAQ',
-  HKEX: 'HKEX',
-  SGX: 'SGX',
-  SET: 'SET',
-  SSE: 'SSE',
-  SZSE: 'SZSE',
-  BINANCE: 'Binance',
-  FOREX: 'Forex',
-  COMEX: 'COMEX',
-  NYMEX: 'NYMEX',
-  CBOT: 'CBOT',
-  ICE: 'ICE',
-  CME: 'CME',
-  US_ETF: 'US ETF',
-  US_INDEX: 'US Index',
-  LSE: 'LSE',
-  XETRA: 'XETRA',
-  EURONEXT: 'Euronext',
-  JPX: 'JPX',
-  KRX: 'KRX',
-  ASX: 'ASX',
-  NSE_INDIA: 'NSE',
-  MIL: 'MIL',
-  INDEX: 'Index',
-  OTHER: 'Other',
+  NYSE: 'NYSE', NASDAQ: 'NASDAQ', HKEX: 'HKEX', SGX: 'SGX', SET: 'SET',
+  SSE: 'SSE', SZSE: 'SZSE', BINANCE: 'Binance', FOREX: 'Forex',
+  COMEX: 'COMEX', NYMEX: 'NYMEX', CBOT: 'CBOT', ICE: 'ICE', CME: 'CME',
+  US_ETF: 'US ETF', US_INDEX: 'US Index', LSE: 'LSE', XETRA: 'XETRA',
+  EURONEXT: 'Euronext', JPX: 'JPX', KRX: 'KRX', ASX: 'ASX',
+  NSE_INDIA: 'NSE', MIL: 'MIL', INDEX: 'Index', OTHER: 'Other',
 };
 
 function getExchangeColor(exchange: string): string {
@@ -110,7 +98,10 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
+  const [webResults, setWebResults] = useState<WebResult[]>([]);
+  const [webLoading, setWebLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Load instruments from DB when dialog opens
   useEffect(() => {
@@ -118,7 +109,6 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
     setLoading(true);
 
     const loadInstruments = async () => {
-      // Paginate to get all instruments (beyond 1000-row default)
       let all: Instrument[] = [];
       let from = 0;
       const PAGE = 1000;
@@ -150,6 +140,39 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
     }
   }, [open]);
 
+  // Debounced Yahoo search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setWebResults([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setWebLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('search-symbols', {
+          body: { query: searchQuery.trim() },
+        });
+        if (error) {
+          console.error('Yahoo search error:', error);
+          setWebResults([]);
+        } else {
+          setWebResults(data?.results || []);
+        }
+      } catch (err) {
+        console.error('Yahoo search error:', err);
+        setWebResults([]);
+      }
+      setWebLoading(false);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
   const filteredInstruments = useMemo(() => {
     let results = instruments;
 
@@ -169,15 +192,53 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
     return results.slice(0, 80);
   }, [searchQuery, selectedType, instruments]);
 
+  // Deduplicated web results (exclude symbols already in local results)
+  const filteredWebResults = useMemo(() => {
+    if (!webResults.length) return [];
+    const localSymbols = new Set(filteredInstruments.map(i => i.symbol));
+    let results = webResults.filter(w => !localSymbols.has(w.symbol));
+    if (selectedType !== 'all') {
+      results = results.filter(w => w.asset_type === selectedType);
+    }
+    return results.slice(0, 20);
+  }, [webResults, filteredInstruments, selectedType]);
+
   const handleSelect = useCallback((inst: Instrument) => {
     onSelect(inst.symbol, inst.name || inst.symbol, inst.asset_type);
     setOpen(false);
     setSearchQuery('');
+    setWebResults([]);
+  }, [onSelect]);
+
+  const handleWebSelect = useCallback(async (result: WebResult) => {
+    // Upsert into instruments table so it persists
+    try {
+      await supabase.functions.invoke('search-symbols', {
+        body: {
+          upsert_symbol: {
+            symbol: result.symbol,
+            name: result.name,
+            quoteType: result.quoteType,
+            exchange: result.exchange,
+          },
+        },
+      });
+    } catch (err) {
+      console.error('Upsert error:', err);
+    }
+    onSelect(result.symbol, result.name, result.asset_type);
+    setOpen(false);
+    setSearchQuery('');
+    setWebResults([]);
+    // Refresh local cache next time dialog opens
+    setAllLoaded(false);
   }, [onSelect]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') setOpen(false);
   };
+
+  const totalResults = filteredInstruments.length + filteredWebResults.length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -200,7 +261,7 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
             <Input
               ref={inputRef}
               type="text"
-              placeholder="Search by symbol, name, or exchange..."
+              placeholder="Search any symbol worldwide..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-12 h-14 text-lg bg-background border-border"
@@ -210,7 +271,7 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                 variant="ghost"
                 size="icon"
                 className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setSearchQuery('')}
+                onClick={() => { setSearchQuery(''); setWebResults([]); }}
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -249,34 +310,25 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
             <div className="flex items-center justify-center h-full py-12 text-muted-foreground">
               <p className="text-sm">Loading instruments...</p>
             </div>
-          ) : filteredInstruments.length > 0 ? (
+          ) : totalResults > 0 ? (
             <div className="p-2">
+              {/* Local DB Results */}
               {filteredInstruments.map((inst) => (
                 <button
-                  key={inst.symbol}
+                  key={`local-${inst.symbol}`}
                   onClick={() => handleSelect(inst)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left group"
                 >
-                  <InstrumentLogo
-                    instrument={inst.symbol}
-                    size="md"
-                    showName={false}
-                  />
+                  <InstrumentLogo instrument={inst.symbol} size="md" showName={false} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-foreground">
                         {inst.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
                       </span>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 ${getExchangeColor(inst.exchange)}`}
-                      >
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getExchangeColor(inst.exchange)}`}>
                         {EXCHANGE_SHORT[inst.exchange] || inst.exchange}
                       </Badge>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 capitalize ${getCategoryColor(inst.asset_type)}`}
-                      >
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${getCategoryColor(inst.asset_type)}`}>
                         {inst.asset_type}
                       </Badge>
                     </div>
@@ -286,25 +338,81 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                     </p>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Badge variant="secondary" className="text-xs">
-                      Study
-                    </Badge>
+                    <Badge variant="secondary" className="text-xs">Study</Badge>
                   </div>
                 </button>
               ))}
+
+              {/* Web Results Separator */}
+              {filteredWebResults.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-2.5 mt-1">
+                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Web Results
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                    {webLoading && (
+                      <span className="text-[10px] text-muted-foreground animate-pulse">Searching...</span>
+                    )}
+                  </div>
+                  {filteredWebResults.map((result) => (
+                    <button
+                      key={`web-${result.symbol}`}
+                      onClick={() => handleWebSelect(result)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                    >
+                      <div className="h-9 w-9 rounded-full bg-muted/60 flex items-center justify-center text-xs font-bold text-muted-foreground">
+                        {result.symbol.slice(0, 2)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground">
+                            {result.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/50 text-muted-foreground border-border">
+                            {result.exchange || 'Global'}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${getCategoryColor(result.asset_type)}`}>
+                            {result.asset_type}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/20">
+                            <Globe className="h-2.5 w-2.5 mr-0.5" />
+                            Web
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{result.name}</p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Badge variant="secondary" className="text-xs">Study</Badge>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
               <Search className="h-12 w-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No instruments found</p>
-              <p className="text-sm">Try a different search term or category</p>
+              <p className="text-sm">
+                {searchQuery.length < 2
+                  ? 'Type at least 2 characters to search globally'
+                  : webLoading
+                    ? 'Searching global markets...'
+                    : 'Try a different search term or category'}
+              </p>
             </div>
           )}
         </ScrollArea>
 
         {/* Footer */}
         <div className="p-3 border-t border-border bg-muted/30 text-sm text-muted-foreground flex items-center justify-between">
-          <span>{filteredInstruments.length} of {instruments.length} instruments • Search by name, symbol, or exchange</span>
+          <span>
+            {filteredInstruments.length} local
+            {filteredWebResults.length > 0 && ` + ${filteredWebResults.length} web`}
+            {' '}results • Search any ticker worldwide
+          </span>
           <span className="flex items-center gap-2">
             <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↵</kbd>
             <span>select</span>
