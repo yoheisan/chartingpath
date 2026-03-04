@@ -621,6 +621,7 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
         quality_score: p.quality?.score || 'B', quality_reasons: p.quality?.reasons || [],
         trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {},
         validation_status: 'pending', validation_layers_passed: ['bulkowski_engine'],
+        exchange: p._exchange || null,
         _key: key,
       });
     }
@@ -1107,6 +1108,17 @@ serve(async (req) => {
     const instrumentsWithData = [...instrumentDataMap.entries()].filter(([, bars]) => bars.length >= 20);
     console.log(`[scan-live-patterns] Instruments with >=20 bars: ${instrumentsWithData.length}`);
     
+    // Lookup exchange for each instrument from the instruments table
+    let instrumentExchangeMap: Map<string, string> | null = null;
+    try {
+      const { data: exchData } = await supabase.from('instruments').select('symbol, exchange').in('symbol', instruments);
+      if (exchData) {
+        instrumentExchangeMap = new Map(exchData.map((r: any) => [r.symbol, r.exchange]));
+      }
+    } catch (e) {
+      console.warn('[scan-live-patterns] Exchange lookup failed, continuing without:', e);
+    }
+    
     const detectedPatterns: any[] = [];
     for (const instrument of instruments) {
       const bars = instrumentDataMap.get(instrument);
@@ -1198,7 +1210,8 @@ serve(async (req) => {
           prevClose: prevBar?.close, 
           changePercent: changePercent != null ? +changePercent.toFixed(2) : null, 
           trendAlignment, 
-          trendIndicators 
+          trendIndicators,
+          _exchange: instrumentExchangeMap?.get(instrument) || null,
         });
       }
     }

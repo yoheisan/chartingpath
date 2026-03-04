@@ -21,6 +21,7 @@ const tools = [
           timeframe: { type: "string", enum: ["1h", "4h", "8h", "1d", "1wk"], description: "Timeframe to search. Default is 1d (daily)." },
           direction: { type: "string", enum: ["bullish", "bearish", "any"], description: "Filter by trade direction." },
           min_quality: { type: "string", enum: ["A", "B", "C"], description: "Minimum quality score (A is highest)." },
+          exchange: { type: "string", description: "Filter by exchange. Examples: NYSE, NASDAQ, HKEX, SGX, SET, CRYPTO, FOREX, COMEX, US_ETF." },
           limit: { type: "number", description: "Maximum results to return. Default 5." }
         },
         required: []
@@ -521,7 +522,7 @@ Highlight events that could impact the user's current or prospective trades.
 async function executeSearchPatterns(supabase: any, args: any) {
   let query = supabase
     .from('live_pattern_detections')
-    .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
+    .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at, exchange')
     .eq('status', 'active')
     .order('first_detected_at', { ascending: false })
     .limit(args.limit || 5);
@@ -544,6 +545,9 @@ async function executeSearchPatterns(supabase: any, args: any) {
     if (minIndex >= 0) {
       query = query.in('quality_score', qualityOrder.slice(0, minIndex + 1));
     }
+  }
+  if (args.exchange) {
+    query = query.eq('exchange', args.exchange.toUpperCase());
   }
 
   const { data, error } = await query;
