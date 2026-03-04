@@ -137,7 +137,6 @@ const Navigation = () => {
       <div className="border-t pt-4 mt-2">
         <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">{t('navigation.account', 'Account')}</p>
         <div className="flex flex-col gap-2 pl-2">
-          <Link to="/members/dashboard" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.dashboard', 'Dashboard')}</Link>
           <Link to="/members/account" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.settings', 'Settings')}</Link>
         </div>
       </div>
