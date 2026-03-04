@@ -1,34 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { svg2png, initialize } from "https://esm.sh/svg2png-wasm@0.6.1";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-let wasmInitialized = false;
-let fontBase64Cache: string | null = null;
+let resvgModule: any = null;
+let fontBuffer: Uint8Array | null = null;
 
-async function ensureWasm() {
-  if (wasmInitialized) return;
-  const wasmUrl = "https://unpkg.com/svg2png-wasm@0.6.1/svg2png_wasm_bg.wasm";
-  const resp = await fetch(wasmUrl);
-  if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
-  await initialize(await resp.arrayBuffer());
-  wasmInitialized = true;
+async function ensureResvg() {
+  if (resvgModule) return;
+  const mod = await import("https://esm.sh/@resvg/resvg-wasm@2.6.2");
+  const wasmResp = await fetch("https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
+  if (!wasmResp.ok) throw new Error(`Failed to fetch resvg WASM: ${wasmResp.status}`);
+  await mod.initWasm(wasmResp);
+  resvgModule = mod;
 }
 
-async function getFontBase64(): Promise<string> {
-  if (fontBase64Cache) return fontBase64Cache;
-  // Fetch Inter Regular woff2 from Google Fonts CDN (small ~50kb)
+async function ensureFont(): Promise<Uint8Array> {
+  if (fontBuffer) return fontBuffer;
   const fontUrl = "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2";
   const resp = await fetch(fontUrl);
   if (!resp.ok) throw new Error(`Failed to fetch font: ${resp.status}`);
-  const buf = await resp.arrayBuffer();
-  fontBase64Cache = base64Encode(new Uint8Array(buf));
-  return fontBase64Cache;
+  fontBuffer = new Uint8Array(await resp.arrayBuffer());
+  return fontBuffer;
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -80,12 +76,10 @@ function renderCandlestickSVG(opts: {
   grade: string;
   rr: string;
   pivots?: Pivot[];
-  fontBase64: string;
 }): string {
-  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots, fontBase64 } = opts;
+  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots } = opts;
 
   const FONT = 'Inter, sans-serif';
-  const MONO = 'Inter, monospace'; // Use same embedded font for mono too
 
   const W = 1200;
   const H = 630;
@@ -118,7 +112,7 @@ function renderCandlestickSVG(opts: {
   for (let i = 0; i <= yAxisSteps; i++) {
     const price = pMin + (pRange / yAxisSteps) * i;
     const y = yForPrice(price);
-    yAxisSvg += `<text x="${CHART_LEFT - 8}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11" font-family="${MONO}">${formatPrice(price)}</text>`;
+    yAxisSvg += `<text x="${CHART_LEFT - 8}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11" font-family="${FONT}">${formatPrice(price)}</text>`;
     yAxisSvg += `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>`;
   }
 
@@ -198,7 +192,7 @@ function renderCandlestickSVG(opts: {
     return `
       <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-width="1.5" stroke-dasharray="${dashArray}" opacity="0.7"/>
       <rect x="${CHART_RIGHT + 6}" y="${y - 13}" width="${W - CHART_RIGHT - 12}" height="26" rx="4" fill="${color}" opacity="0.9"/>
-      <text x="${CHART_RIGHT + 14}" y="${y + 5}" fill="white" font-size="12" font-family="${MONO}" font-weight="700">${label} ${priceStr}</text>
+      <text x="${CHART_RIGHT + 14}" y="${y + 5}" fill="white" font-size="12" font-family="${FONT}" font-weight="700">${label} ${priceStr}</text>
     `;
   };
 
@@ -216,14 +210,6 @@ function renderCandlestickSVG(opts: {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <defs>
-    <style>
-      @font-face {
-        font-family: 'Inter';
-        src: url('data:font/woff2;base64,${fontBase64}') format('woff2');
-        font-weight: 100 900;
-        font-style: normal;
-      }
-    </style>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#0f1419"/>
       <stop offset="100%" stop-color="#1a1f2e"/>
@@ -236,7 +222,7 @@ function renderCandlestickSVG(opts: {
   <rect width="${W}" height="${H}" fill="url(#bg)" rx="0"/>
   <rect x="0" y="0" width="${W}" height="4" fill="url(#accent)"/>
 
-  <!-- Header: Ticker prominent, then pattern name -->
+  <!-- Header -->
   <text x="40" y="48" fill="#ffffff" font-size="32" font-family="${FONT}" font-weight="800">${displayInstrument}</text>
   <text x="${40 + displayInstrument.length * 20 + 12}" y="48" fill="#64748b" font-size="20" font-family="${FONT}" font-weight="500">${timeframe.toUpperCase()}</text>
   <text x="40" y="78" fill="#94a3b8" font-size="16" font-family="${FONT}" font-weight="500">${displayPattern}</text>
@@ -254,9 +240,7 @@ function renderCandlestickSVG(opts: {
   <!-- Chart area border -->
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
 
-  <!-- Y-axis price scale -->
   ${yAxisSvg}
-
   ${zoneSvg}
   ${ema200Svg}
   ${ema50Svg}
@@ -274,8 +258,8 @@ function renderCandlestickSVG(opts: {
   <line x1="120" y1="${H - 38}" x2="140" y2="${H - 38}" stroke="#a855f7" stroke-width="2" opacity="0.8"/>
   <text x="144" y="${H - 34}" fill="#94a3b8" font-size="11" font-family="${FONT}">EMA 200</text>
   <text x="40" y="${H - 14}" fill="#ff6633" font-size="18" font-family="${FONT}" font-weight="800">ChartingPath</text>
-  <text x="220" y="${H - 14}" fill="#64748b" font-size="14" font-family="${FONT}">chartingpath.com · Live Pattern Detection</text>
-  <text x="${W - 40}" y="${H - 14}" fill="#94a3b8" font-size="13" font-family="${MONO}" font-weight="600" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
+  <text x="220" y="${H - 14}" fill="#64748b" font-size="14" font-family="${FONT}">chartingpath.com</text>
+  <text x="${W - 40}" y="${H - 14}" fill="#94a3b8" font-size="13" font-family="${FONT}" font-weight="600" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
 }
 
@@ -378,10 +362,10 @@ serve(async (req) => {
     const bars = parseBars(detection);
     const pivots = parsePivots(detection);
 
-    // Fetch font and init WASM in parallel
-    const [fontBase64] = await Promise.all([
-      getFontBase64(),
-      ensureWasm(),
+    // Init resvg WASM and fetch font in parallel
+    const [font] = await Promise.all([
+      ensureFont(),
+      ensureResvg(),
     ]);
 
     const svg = renderCandlestickSVG({
@@ -396,11 +380,19 @@ serve(async (req) => {
       grade: detection.quality_score?.toUpperCase() ?? '?',
       rr: Number(detection.risk_reward_ratio).toFixed(1),
       pivots,
-      fontBase64,
     });
 
-    // Convert to PNG
-    const pngBuffer = await svg2png(svg, { width: 1200, height: 630 });
+    // Render SVG to PNG using resvg-wasm with custom font
+    const resvgInstance = new resvgModule.Resvg(svg, {
+      fitTo: { mode: 'width', value: 1200 },
+      font: {
+        fontBuffers: [font],
+        loadSystemFonts: false,
+        defaultFontFamily: 'Inter',
+      },
+    });
+    const pngData = resvgInstance.render();
+    const pngBuffer = pngData.asPng();
 
     const pngPath = `${shareToken}.png`;
     const pngBlob = new Blob([pngBuffer], { type: 'image/png' });
@@ -417,16 +409,6 @@ serve(async (req) => {
       throw pngUploadError;
     }
 
-    // Also upload the SVG as fallback
-    const svgPath = `${shareToken}.svg`;
-    const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
-    await supabase.storage
-      .from('share-images')
-      .upload(svgPath, svgBlob, {
-        contentType: 'image/svg+xml',
-        upsert: true,
-      });
-
     const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${pngPath}`;
 
     await supabase
@@ -434,14 +416,14 @@ serve(async (req) => {
       .update({ share_image_url: publicUrl })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots, font embedded)`);
+    console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots, resvg+Inter font)`);
 
     return new Response(
       JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'png' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
-    console.error('[generate-share-image] Error:', err.message);
+    console.error('[generate-share-image] Error:', err.message, err.stack);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
