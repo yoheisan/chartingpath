@@ -1064,7 +1064,7 @@ const StudyChart = memo(({
       };
 
       // Draw trade zones + canvas triangles on canvas overlay
-      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry && levelDistances.zonesOk;
+      const shouldDrawZones = !currentPatternResolved && patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry && levelDistances.zonesOk;
       const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
 
       if (shouldDrawZones || shouldDrawTriangles) {
