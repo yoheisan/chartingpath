@@ -520,11 +520,12 @@ export default function FullChartViewer({
         // Pattern overlays — standardized prescriptive style:
         // Entry = solid blue, SL = dashed red, TP = dashed green
         // Track actual overlay prices to use for shaded zones (ensures alignment)
-        let overlayEntryPrice = tradePlan?.entry;
-        let overlaySlPrice = tradePlan?.stopLoss;
-        let overlayTpPrice = tradePlan?.takeProfit;
+        // SUPPRESS all trade plan lines when the trade is resolved
+        let overlayEntryPrice = tradeResolved ? undefined : tradePlan?.entry;
+        let overlaySlPrice = tradeResolved ? undefined : tradePlan?.stopLoss;
+        let overlayTpPrice = tradeResolved ? undefined : tradePlan?.takeProfit;
 
-        if (visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
+        if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
               const isEntry = overlay.id === 'entry' || (overlay.label || '').toLowerCase().includes('entry');
