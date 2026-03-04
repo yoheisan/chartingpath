@@ -94,6 +94,73 @@ function groupByTradeLevels(patterns: any[]): Map<string, any[]> {
   return groups;
 }
 
+// ─── Chart SVG Generation ───────────────────────────────────────────────────
+
+function generateChartSVG(bars: any[], overlays: any[], symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): string {
+  const width = 800, height = 400;
+  const colors = {
+    background: '#0f0f0f', text: '#a1a1a1', upCandle: '#22c55e', downCandle: '#ef4444',
+    primary: '#3b82f6', destructive: '#ef4444', positive: '#22c55e', muted: '#888888',
+  };
+  const padding = { top: 50, right: 80, bottom: 30, left: 10 };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+
+  if (!bars || bars.length === 0) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="${colors.background}"/><text x="50%" y="50%" text-anchor="middle" fill="${colors.text}" font-family="monospace">No chart data</text></svg>`;
+  }
+
+  const allPrices = bars.flatMap((b: any) => [b.h, b.l]);
+  (overlays || []).forEach((o: any) => { if (o.price) allPrices.push(o.price); });
+  const minP = Math.min(...allPrices) * 0.995;
+  const maxP = Math.max(...allPrices) * 1.005;
+  const range = maxP - minP;
+  const priceToY = (p: number) => padding.top + chartH - ((p - minP) / range) * chartH;
+  const barW = Math.max(2, Math.floor(chartW / bars.length) - 1);
+  const barToX = (i: number) => padding.left + (i / bars.length) * chartW;
+
+  const candles = bars.map((bar: any, i: number) => {
+    const x = barToX(i);
+    const isUp = bar.c >= bar.o;
+    const color = isUp ? colors.upCandle : colors.downCandle;
+    const bodyTop = Math.min(priceToY(bar.o), priceToY(bar.c));
+    const bodyH = Math.max(1, Math.abs(priceToY(bar.o) - priceToY(bar.c)));
+    return `<line x1="${x+barW/2}" y1="${priceToY(bar.h)}" x2="${x+barW/2}" y2="${priceToY(bar.l)}" stroke="${color}" stroke-width="1"/><rect x="${x}" y="${bodyTop}" width="${barW}" height="${bodyH}" fill="${color}"/>`;
+  }).join('');
+
+  const lines = (overlays || []).filter((o: any) => o.type === 'hline').map((o: any) => {
+    const y = priceToY(o.price);
+    const c = (colors as any)[o.style] || colors.muted;
+    const dash = o.id === 'entry' ? '0' : '5,3';
+    return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="1.5" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="70" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+40}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${o.label}: ${o.price.toFixed(2)}</text>`;
+  }).join('');
+
+  const dirColor = direction === 'long' ? colors.positive : colors.destructive;
+  const dirArrow = direction === 'long' ? '↑' : '↓';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <rect width="100%" height="100%" fill="${colors.background}"/>
+    <text x="${padding.left}" y="25" fill="${colors.text}" font-size="14" font-family="monospace" font-weight="600">${symbol}</text>
+    <text x="${padding.left}" y="42" fill="${colors.muted}" font-size="11" font-family="monospace">${patternName} • ${timeframe.toUpperCase()}</text>
+    <text x="${padding.left+200}" y="33" fill="${dirColor}" font-size="16" font-family="monospace" font-weight="bold">${dirArrow} ${direction.toUpperCase()}</text>
+    <rect x="${width-100}" y="10" width="90" height="35" rx="8" fill="${colors.positive}20" stroke="${colors.positive}" stroke-width="1.5"/>
+    <text x="${width-55}" y="25" text-anchor="middle" fill="${colors.positive}" font-size="10" font-family="monospace" font-weight="500">Grade</text>
+    <text x="${width-55}" y="40" text-anchor="middle" fill="${colors.positive}" font-size="14" font-family="monospace" font-weight="bold">${qualityScore}</text>
+    ${candles}${lines}
+    <text x="${width/2}" y="${height-10}" text-anchor="middle" fill="${colors.muted}" font-size="10" font-family="monospace" opacity="0.5">ChartingPath.com</text>
+  </svg>`;
+}
+
+// ─── PNG Generation ─────────────────────────────────────────────────────────
+
+async function generateChartPNG(bars: any[], overlays: any[], symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): Promise<Uint8Array> {
+  const svg = generateChartSVG(bars, overlays, symbol, timeframe, patternName, direction, qualityScore);
+  console.log(`[pattern-poster] Generated SVG for ${symbol} (${svg.length} bytes)`);
+  const pngData = await render(svg);
+  console.log(`[pattern-poster] Converted to PNG (${pngData.length} bytes)`);
+  return pngData;
+}
+
 // ─── Twitter OAuth ──────────────────────────────────────────────────────────
 
 function generateOAuthSignature(
@@ -128,9 +195,51 @@ function generateOAuthHeader(method: string, url: string): string {
     .join(', ');
 }
 
-async function postToTwitter(text: string): Promise<{ id: string }> {
+// ─── Twitter Media Upload ───────────────────────────────────────────────────
+
+async function uploadMediaToTwitter(pngData: Uint8Array): Promise<string> {
+  const url = 'https://upload.twitter.com/1.1/media/upload.json';
+
+  // Convert PNG to base64
+  const base64Data = btoa(String.fromCharCode(...pngData));
+
+  // Build multipart form
+  const boundary = '----TwitterMediaBoundary' + Math.random().toString(36).substring(2);
+  const body = [
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="media_data"',
+    '',
+    base64Data,
+    `--${boundary}--`,
+  ].join('\r\n');
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: generateOAuthHeader('POST', url),
+      'Content-Type': `multipart/form-data; boundary=${boundary}`,
+    },
+    body,
+  });
+
+  const responseText = await res.text();
+  if (!res.ok) {
+    console.error(`[pattern-poster] Media upload failed: ${res.status} ${responseText}`);
+    throw new Error(`Twitter media upload ${res.status}: ${responseText}`);
+  }
+
+  const mediaResponse = JSON.parse(responseText);
+  const mediaId = mediaResponse.media_id_string;
+  console.log(`[pattern-poster] 📸 Media uploaded: ${mediaId}`);
+  return mediaId;
+}
+
+async function postToTwitter(text: string, mediaId?: string): Promise<{ id: string }> {
   const url = 'https://api.x.com/2/tweets';
   const payload: any = { text };
+  if (mediaId) {
+    payload.media = { media_ids: [mediaId] };
+  }
 
   const res = await fetch(url, {
     method: 'POST',
