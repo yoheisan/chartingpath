@@ -151,7 +151,7 @@ const CronTab = () => (
      [─────────────────────── scan-live-patterns (every 15 min) ─────────────]
                                                                 (12:00–04:45)`}</CodeBlock>
 
-        <SectionHeader icon={Clock} title="Registered pg_cron Jobs (46 total)" />
+        <SectionHeader icon={Clock} title="Registered pg_cron Jobs (47 total)" />
         <div className="overflow-x-auto">
           <table className="w-full text-xs border">
             <thead className="bg-muted">
@@ -182,6 +182,7 @@ const CronTab = () => (
                 ["every min, 12:00–04:45", "backfill-validation-forex", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-indices", "backfill-validation", "active"],
                 ["every 15 min, 12:00–04:45", "scan-live-patterns-scheduled (ID: 134)", "scan-live-patterns", "active"],
+                ["01:00 daily", "process-scan-requests-nightly (ID: 185)", "process-scan-requests", "active"],
               ].map(([time, job, fn, status]) => (
                 <tr key={job}>
                   <td className="px-3 py-2 border-b text-muted-foreground">{time}</td>
