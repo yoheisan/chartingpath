@@ -418,6 +418,18 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
           Ensure your chart/broker timeframe matches <strong>{validationResult.timeframe}</strong>.
         </AlertDescription>
       </Alert>
+
+      {/* Free limit warning */}
+      {hasReachedFreeLimit && (
+        <Alert className="border-primary/30 bg-primary/5">
+          <Lock className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-xs">
+            <strong>Free export used.</strong> Sign in to unlock unlimited script exports.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script export" />
     </div>
   );
 };
