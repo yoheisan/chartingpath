@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { ChartingPathStrategy } from '@/components/ChartingPathStrategyBuilder';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthGate } from '@/hooks/useAuthGate';
-import { AuthGateDialog } from '@/components/auth/AuthGateDialog';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { 
   chartingPathToPlaybook, 
   PlaybookAST, 
