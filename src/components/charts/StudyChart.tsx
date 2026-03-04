@@ -820,12 +820,12 @@ const StudyChart = memo(({
       // Per-level distance guard: suppress individual distant levels instead of all-or-nothing.
       // This prevents Y-axis distortion while still rendering close levels.
       const levelDistances = (() => {
-        if (!currentPattern || safeChartData.length === 0) return { entry: false, sl: false, tp: false, any: false };
+        if (!currentPattern || safeChartData.length === 0) return { entry: false, sl: false, tp: false, any: false, zonesOk: false };
         const latestClose = Number(safeChartData[safeChartData.length - 1]?.close);
         const entry = Number(currentPattern.entryPrice);
         const sl = Number(currentPattern.stopLossPrice);
         const tp = Number(currentPattern.takeProfitPrice);
-        if (!Number.isFinite(latestClose) || latestClose <= 0) return { entry: false, sl: false, tp: false, any: false };
+        if (!Number.isFinite(latestClose) || latestClose <= 0) return { entry: false, sl: false, tp: false, any: false, zonesOk: false };
 
         const pctDist = (price: number) => Number.isFinite(price) && price > 0 
           ? Math.abs((price - latestClose) / latestClose) * 100 : Infinity;
@@ -835,7 +835,17 @@ const StudyChart = memo(({
         const slOk = pctDist(sl) <= 25;
         const tpOk = pctDist(tp) <= 25;
 
-        return { entry: entryOk, sl: slOk, tp: tpOk, any: entryOk || slOk || tpOk };
+        // Zone sync guard: suppress shaded zones when ALL trade levels sit on one side
+        // of price and entry hasn't been reached (causes visual disconnect from candles).
+        // For LONG: entry > currentPrice means trade hasn't triggered → zones misleading
+        // For SHORT: entry < currentPrice means trade hasn't triggered → zones misleading
+        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const entryReached = isLong ? latestClose >= entry * 0.998 : latestClose <= entry * 1.002;
+        // Also suppress if entry is more than 3% from current price (clearly not triggered)
+        const entryTooFar = pctDist(entry) > 3;
+        const zonesOk = entryOk && slOk && tpOk && (entryReached || !entryTooFar);
+
+        return { entry: entryOk, sl: slOk, tp: tpOk, any: entryOk || slOk || tpOk, zonesOk };
       })();
       const hasRenderableTradeLevels = levelDistances.any;
 
@@ -1051,7 +1061,7 @@ const StudyChart = memo(({
       };
 
       // Draw trade zones + canvas triangles on canvas overlay
-      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry;
+      const shouldDrawZones = patternToggles.showTradeZones && currentPattern && hasRenderableTradeLevels && levelDistances.entry && levelDistances.zonesOk;
       const shouldDrawTriangles = canvasTriangleMarkers.length > 0;
 
       if (shouldDrawZones || shouldDrawTriangles) {
@@ -1239,7 +1249,18 @@ const StudyChart = memo(({
     if (macdChartRef.current && macdHistSeriesRef.current) chartSeriesMap.set(macdChartRef.current, macdHistSeriesRef.current);
 
     // Draw TP/SL shaded zones even without formation overlays
-    if (tradePlan && !hasHistoricalOverlays && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
+    // Apply same zone sync guard: suppress zones when entry hasn't been reached
+    const standaloneTradePlanZonesOk = (() => {
+      if (!tradePlan || safeChartData.length === 0) return false;
+      const latestClose = Number(safeChartData[safeChartData.length - 1]?.close);
+      if (!Number.isFinite(latestClose) || latestClose <= 0) return false;
+      const entry = tradePlan.entry;
+      const pctFromEntry = Math.abs((entry - latestClose) / latestClose) * 100;
+      if (pctFromEntry > 3) return false; // Entry too far — zones would be misleading
+      return true;
+    })();
+
+    if (tradePlan && standaloneTradePlanZonesOk && !hasHistoricalOverlays && (!formationOverlays || formationOverlays.length === 0 || !formationOverlays.some(f => f.hasZone))) {
       const drawStandaloneTradePlanZones = () => {
         const canvas = canvasOverlayRef.current;
         if (!canvas || !chartRef.current || !candleSeriesRef.current) return;

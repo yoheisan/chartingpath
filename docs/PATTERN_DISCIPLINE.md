@@ -100,6 +100,7 @@ A reversal pattern detected in a **sideways** market or **against** the required
 | **Pivot Resolution** | Pattern's first-to-last pivot span must be ≥2 bars at chart resolution | Prevents collapsed overlays |
 | **Price Drift** | Entry price must be within 4% of current close (6% for 4H+) | Hides stale levels |
 | **Extreme Filter** | Any level >35% from latest close | Hides ALL trade plan lines and zones |
+| **Zone Sync Guard** | Entry must be within 3% of current close AND (reached or ≤3% away) for TP/SL shaded zones to render | Prevents visually disconnected zones above/below candles |
 | **ATR Stop Floor** | SL must be ≥1× ATR from entry | Prevents unrealistic stops |
 | **Minimum R:R** | Trade must offer ≥1.5:1 R:R | Ensures positive expectancy potential |
 
