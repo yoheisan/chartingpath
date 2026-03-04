@@ -343,7 +343,7 @@ serve(async (req) => {
           .eq('id', detection.id);
 
         results.push({ id: detection.id, instrument: detection.instrument, status: 'ok', pivots: pivots.length });
-        console.log(`[pre-gen-images] ✅ ${detection.instrument} → ${filePath} (${pivots.length} pivots)`);
+        console.log(`[pre-gen-images] ✅ ${detection.instrument} → ${pngPath} (${pivots.length} pivots)`);
 
       } catch (err: any) {
         console.error(`[pre-gen-images] ❌ ${detection.instrument}: ${err.message}`);
