@@ -12,14 +12,14 @@ let cachedFont: ArrayBuffer | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
   if (cachedFont) return cachedFont;
-  // Fetch Inter Regular TTF directly from GitHub
+  // Fetch Inter Regular static TTF
   const fontRes = await fetch(
-    'https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf'
+    'https://cdn.jsdelivr.net/gh/rsms/inter@v4.0/docs/font-files/Inter-Regular.woff2'
   );
   if (!fontRes.ok) {
-    // Fallback: use Roboto from cdnfonts
+    // Try alternative static TTF source
     const fallbackRes = await fetch(
-      'https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/dist/Inter/Inter-Regular.ttf'
+      'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2'
     );
     if (!fallbackRes.ok) throw new Error(`Font fetch failed: ${fallbackRes.status}`);
     cachedFont = await fallbackRes.arrayBuffer();
