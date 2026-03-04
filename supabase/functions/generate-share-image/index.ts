@@ -416,7 +416,7 @@ serve(async (req) => {
       .update({ share_image_url: publicUrl })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots, resvg+Inter font)`);
+    console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots, svg2png+font buffers)`);
 
     return new Response(
       JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'png' }),
