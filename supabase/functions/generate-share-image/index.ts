@@ -1,26 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
+import { svg2png, initialize } from "https://esm.sh/svg2png-wasm@0.6.1";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-let resvgModule: any = null;
+let wasmInitialized = false;
 let fontBuffer: Uint8Array | null = null;
 
-async function ensureResvg() {
-  if (resvgModule) return;
-  const mod = await import("https://esm.sh/@resvg/resvg-wasm@2.6.2");
-  const wasmResp = await fetch("https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
-  if (!wasmResp.ok) throw new Error(`Failed to fetch resvg WASM: ${wasmResp.status}`);
-  await mod.initWasm(wasmResp);
-  resvgModule = mod;
+async function ensureWasm() {
+  if (wasmInitialized) return;
+  const wasmUrl = "https://unpkg.com/svg2png-wasm@0.6.1/svg2png_wasm_bg.wasm";
+  const resp = await fetch(wasmUrl);
+  if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
+  await initialize(await resp.arrayBuffer());
+  wasmInitialized = true;
 }
 
 async function ensureFont(): Promise<Uint8Array> {
   if (fontBuffer) return fontBuffer;
-  const fontUrl = "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2";
+  const fontUrl = "https://raw.githubusercontent.com/google/fonts/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf";
   const resp = await fetch(fontUrl);
   if (!resp.ok) throw new Error(`Failed to fetch font: ${resp.status}`);
   fontBuffer = new Uint8Array(await resp.arrayBuffer());
@@ -362,10 +362,10 @@ serve(async (req) => {
     const bars = parseBars(detection);
     const pivots = parsePivots(detection);
 
-    // Init resvg WASM and fetch font in parallel
+    // Init svg2png WASM and fetch font in parallel
     const [font] = await Promise.all([
       ensureFont(),
-      ensureResvg(),
+      ensureWasm(),
     ]);
 
     const svg = renderCandlestickSVG({
@@ -382,17 +382,17 @@ serve(async (req) => {
       pivots,
     });
 
-    // Render SVG to PNG using resvg-wasm with custom font
-    const resvgInstance = new resvgModule.Resvg(svg, {
-      fitTo: { mode: 'width', value: 1200 },
-      font: {
-        fontBuffers: [font],
-        loadSystemFonts: false,
-        defaultFontFamily: 'Inter',
+    // Render SVG to PNG with explicit embedded font buffers
+    const pngBuffer = await svg2png(svg, {
+      width: 1200,
+      height: 630,
+      fonts: [font],
+      defaultFontFamily: {
+        sansSerifFamily: 'Inter',
+        serifFamily: 'Inter',
+        monospaceFamily: 'Inter',
       },
     });
-    const pngData = resvgInstance.render();
-    const pngBuffer = pngData.asPng();
 
     const pngPath = `${shareToken}.png`;
     const pngBlob = new Blob([pngBuffer], { type: 'image/png' });
