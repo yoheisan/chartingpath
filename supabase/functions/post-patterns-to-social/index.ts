@@ -376,7 +376,7 @@ serve(async (req) => {
     // ── Fetch A/B grade active patterns ───────────────────────────────────
     const { data: patterns, error: pErr } = await supabase
       .from('live_pattern_detections')
-      .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, share_token, share_image_url, status, trend_alignment')
+      .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, share_token, share_image_url, status, trend_alignment, bars, visual_spec')
       .in('quality_score', ALLOWED_GRADES)
       .in('status', ['active', 'pending'])
       .order('last_confirmed_at', { ascending: false })
