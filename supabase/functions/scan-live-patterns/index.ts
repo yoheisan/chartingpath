@@ -621,6 +621,7 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
         quality_score: p.quality?.score || 'B', quality_reasons: p.quality?.reasons || [],
         trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {},
         validation_status: 'pending', validation_layers_passed: ['bulkowski_engine'],
+        exchange: p._exchange || null,
         _key: key,
       });
     }
@@ -1198,7 +1199,8 @@ serve(async (req) => {
           prevClose: prevBar?.close, 
           changePercent: changePercent != null ? +changePercent.toFixed(2) : null, 
           trendAlignment, 
-          trendIndicators 
+          trendIndicators,
+          _exchange: instrumentExchangeMap?.get(instrument) || null,
         });
       }
     }
