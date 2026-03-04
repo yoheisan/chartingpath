@@ -12,20 +12,20 @@ let cachedFont: ArrayBuffer | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
   if (cachedFont) return cachedFont;
-  // Use Google Fonts CSS API to get the actual TTF URL, then fetch the binary
-  const css = await fetch(
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap',
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } }
-  ).then(r => r.text());
-
-  // Extract first TTF/WOFF2 URL from the CSS
-  const urlMatch = css.match(/src:\s*url\(([^)]+)\)/);
-  if (!urlMatch) throw new Error('Could not find font URL in Google Fonts CSS');
-
-  const fontUrl = urlMatch[1];
-  const fontRes = await fetch(fontUrl);
-  if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
-  cachedFont = await fontRes.arrayBuffer();
+  // Fetch Inter Regular TTF directly from GitHub
+  const fontRes = await fetch(
+    'https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf'
+  );
+  if (!fontRes.ok) {
+    // Fallback: use Roboto from cdnfonts
+    const fallbackRes = await fetch(
+      'https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/dist/Inter/Inter-Regular.ttf'
+    );
+    if (!fallbackRes.ok) throw new Error(`Font fetch failed: ${fallbackRes.status}`);
+    cachedFont = await fallbackRes.arrayBuffer();
+  } else {
+    cachedFont = await fontRes.arrayBuffer();
+  }
   return cachedFont;
 }
 
