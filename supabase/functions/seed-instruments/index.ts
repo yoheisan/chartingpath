@@ -20,9 +20,25 @@ function deriveExchange(yahooSymbol: string, assetType: string): string {
   if (yahooSymbol.endsWith('.MI')) return 'MIL';
 
   // Asset-type based
-  if (assetType === 'crypto') return 'CRYPTO';
+  if (assetType === 'crypto') return 'BINANCE';
   if (assetType === 'fx') return 'FOREX';
-  if (assetType === 'commodities') return 'COMEX';
+  
+  // Commodity exchanges — map by contract symbol
+  if (assetType === 'commodities') {
+    // Precious metals → COMEX
+    if (['GC=F','SI=F','PL=F','PA=F','HG=F'].includes(yahooSymbol)) return 'COMEX';
+    // Energy → NYMEX
+    if (['CL=F','BZ=F','NG=F','RB=F','HO=F'].includes(yahooSymbol)) return 'NYMEX';
+    // Grains → CBOT
+    if (['ZC=F','ZW=F','ZS=F','ZM=F','ZL=F','ZO=F','ZR=F'].includes(yahooSymbol)) return 'CBOT';
+    // Industrial metals → COMEX
+    if (['ALI=F','ZN=F'].includes(yahooSymbol)) return 'COMEX';
+    // Softs → ICE
+    if (['KC=F','SB=F','CC=F','CT=F','OJ=F','LBS=F'].includes(yahooSymbol)) return 'ICE';
+    // Livestock → CME
+    if (['LE=F','HE=F','GF=F'].includes(yahooSymbol)) return 'CME';
+    return 'COMEX';
+  }
   if (assetType === 'indices') {
     if (yahooSymbol.startsWith('^GSPC') || yahooSymbol.startsWith('^DJI') || yahooSymbol.startsWith('^IXIC') || yahooSymbol.startsWith('^NDX') || yahooSymbol.startsWith('^RUT') || yahooSymbol.startsWith('^VIX') || yahooSymbol.startsWith('^MID') || yahooSymbol.startsWith('^SP600')) return 'US_INDEX';
     if (yahooSymbol.startsWith('^FTSE')) return 'LSE';
