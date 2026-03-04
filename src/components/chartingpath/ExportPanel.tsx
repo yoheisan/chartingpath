@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Copy, Check, AlertTriangle, FileCode, Info } from 'lucide-react';
+import { Download, Copy, Check, AlertTriangle, FileCode, Info, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ChartingPathStrategy } from '@/components/ChartingPathStrategyBuilder';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/auth/AuthGateDialog';
 import { 
   chartingPathToPlaybook, 
   PlaybookAST, 
