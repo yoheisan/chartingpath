@@ -413,7 +413,10 @@ serve(async (req) => {
 
     await supabase
       .from('live_pattern_detections')
-      .update({ share_image_url: publicUrl })
+      .update({
+        share_image_url: publicUrl,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', detection.id);
 
     console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots, svg2png+font buffers)`);
