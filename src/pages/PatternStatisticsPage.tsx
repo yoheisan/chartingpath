@@ -251,9 +251,10 @@ export default function PatternStatisticsPage() {
             {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
           </div>
         ) : aggregates ? (
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <section className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
             <KpiCard icon={<Target className="h-4 w-4" />} label="Win Rate" value={`${aggregates.win_rate_pct}%`} subtitle={`${aggregates.wins.toLocaleString()}W / ${aggregates.losses.toLocaleString()}L`} />
             <KpiCard icon={<TrendingUp className="h-4 w-4" />} label="Expectancy (R)" value={`${aggregates.expectancy_r > 0 ? '+' : ''}${aggregates.expectancy_r.toFixed(3)}R`} subtitle={`Avg R:R ${aggregates.avg_rr}`} highlight={aggregates.expectancy_r > 0} />
+            <KpiCard icon={<Clock className="h-4 w-4" />} label="Return on Time" value={`${aggregates.avg_bars > 0 ? (aggregates.expectancy_r / aggregates.avg_bars).toFixed(4) : '—'}R/bar`} subtitle="Capital efficiency" highlight={aggregates.avg_bars > 0 && aggregates.expectancy_r / aggregates.avg_bars >= 0.01} />
             <KpiCard icon={<BarChart3 className="h-4 w-4" />} label="Sample Size" value={aggregates.total_trades.toLocaleString()} subtitle="Resolved trades" />
             <KpiCard icon={<Clock className="h-4 w-4" />} label="Avg Duration" value={`${aggregates.avg_bars} bars`} subtitle={`Best: ${ASSET_LABEL[aggregates.best_asset] || aggregates.best_asset} ${TF_LABEL[aggregates.best_timeframe] || aggregates.best_timeframe}`} />
           </section>
