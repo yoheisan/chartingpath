@@ -830,7 +830,10 @@ export default function FullChartViewer({
               ctx.scale(dpr, dpr);
               ctx.clearRect(0, 0, rect.width, rect.height);
 
-              if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+              // Zone sync guard: suppress shaded zones when entry is >3% from price
+              const standaloneEntryDist = latestBarClose && overlayEntryPrice
+                ? Math.abs((overlayEntryPrice - latestBarClose) / latestBarClose) * 100 : 0;
+              if (standaloneEntryDist <= 3 && overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
                 const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
                 const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
                 const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
