@@ -253,13 +253,14 @@ serve(async (req) => {
   );
 
   try {
-    // Find A/B grade active detections without a share image
+    // Find A/B grade active detections without a PNG share image
+    // Also re-process detections that only have SVG URLs (Twitter needs PNG)
     const { data: detections, error: fetchErr } = await supabase
       .from('live_pattern_detections')
       .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, bars, visual_spec, share_token, share_image_url')
       .in('quality_score', ALLOWED_GRADES)
       .in('status', ['active', 'pending'])
-      .is('share_image_url', null)
+      .or('share_image_url.is.null,share_image_url.like.%.svg')
       .order('last_confirmed_at', { ascending: false })
       .limit(MAX_IMAGES_PER_RUN);
 
