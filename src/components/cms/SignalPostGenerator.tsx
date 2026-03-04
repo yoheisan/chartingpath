@@ -33,9 +33,9 @@ function buildTweet(pattern: PatternRow): string {
   const sl = Number(pattern.stop_loss_price).toPrecision(5);
   const tp = Number(pattern.take_profit_price).toPrecision(5);
 
-  // OG share link — X crawler will render the chart image as a Twitter Card
+  // OG share link — add version query to force X to re-scrape instead of using stale cache
   const shareLink = pattern.share_token
-    ? `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/og-share?token=${pattern.share_token}`
+    ? `https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/og-share?token=${pattern.share_token}&v=${encodeURIComponent(pattern.updated_at ?? String(Date.now()))}`
     : 'chartingpath.com';
 
   return (
@@ -63,9 +63,9 @@ interface PatternRow {
   trend_alignment: string | null;
   status: string;
   share_token: string | null;
+  updated_at: string | null;
   bars: any;
   visual_spec: any;
-}
 
 interface SignalItem {
   pattern: PatternRow;
@@ -84,7 +84,7 @@ export function SignalPostGenerator() {
     try {
       const { data, error } = await supabase
         .from('live_pattern_detections')
-        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status, bars, visual_spec, share_token')
+        .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, status, bars, visual_spec, share_token, updated_at')
         .in('quality_score', ['A', 'B'])
         .in('status', ['active', 'pending'])
         .order('last_confirmed_at', { ascending: false })
