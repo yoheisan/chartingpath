@@ -214,19 +214,28 @@ function renderCandlestickSVG(opts: {
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)" rx="0"/>
   <rect x="0" y="0" width="${W}" height="4" fill="url(#accent)"/>
-  ${Array.from({ length: 5 }, (_, i) => {
-    const y = CHART_TOP + (CHART_H / 4) * i;
-    return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>`;
-  }).join('\n  ')}
-  <text x="40" y="50" fill="#ffffff" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">${displayPattern}</text>
-  <text x="40" y="82" fill="#94a3b8" font-size="18" font-family="Arial, Helvetica, sans-serif">${displayInstrument} · ${timeframe.toUpperCase()}</text>
-  <rect x="${W - 200}" y="26" width="160" height="36" rx="18" fill="${dirColor}" opacity="0.15"/>
-  <text x="${W - 120}" y="50" fill="${dirColor}" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">${dirEmoji} ${isBullish ? 'BULLISH' : 'BEARISH'}</text>
-  <rect x="${W - 200}" y="72" width="70" height="28" rx="14" fill="#3b82f6" opacity="0.2"/>
-  <text x="${W - 165}" y="91" fill="#60a5fa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">${grade}</text>
-  <rect x="${W - 120}" y="72" width="80" height="28" rx="14" fill="#8b5cf6" opacity="0.2"/>
-  <text x="${W - 80}" y="91" fill="#a78bfa" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">R:R ${rr}</text>
+
+  <!-- Header: Ticker prominent, then pattern name -->
+  <text x="40" y="48" fill="#ffffff" font-size="32" font-family="Arial, Helvetica, sans-serif" font-weight="800">${displayInstrument}</text>
+  <text x="${40 + displayInstrument.length * 20 + 12}" y="48" fill="#64748b" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="500">${timeframe.toUpperCase()}</text>
+  <text x="40" y="78" fill="#94a3b8" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="500">${displayPattern}</text>
+
+  <!-- Direction badge -->
+  <rect x="${W - 200}" y="18" width="160" height="40" rx="20" fill="${dirColor}" opacity="0.18"/>
+  <text x="${W - 120}" y="44" fill="${dirColor}" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="800" text-anchor="middle">${dirEmoji} ${isBullish ? 'BULLISH' : 'BEARISH'}</text>
+
+  <!-- Grade + R:R badges -->
+  <rect x="${W - 200}" y="68" width="70" height="30" rx="15" fill="#3b82f6" opacity="0.25"/>
+  <text x="${W - 165}" y="88" fill="#60a5fa" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">${grade}</text>
+  <rect x="${W - 120}" y="68" width="80" height="30" rx="15" fill="#8b5cf6" opacity="0.25"/>
+  <text x="${W - 80}" y="88" fill="#a78bfa" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">R:R ${rr}</text>
+
+  <!-- Chart area border -->
   <rect x="${CHART_LEFT}" y="${CHART_TOP}" width="${CHART_W}" height="${CHART_H}" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.08" rx="4"/>
+
+  <!-- Y-axis price scale -->
+  ${yAxisSvg}
+
   ${zoneSvg}
   ${ema200Svg}
   ${ema50Svg}
@@ -236,14 +245,16 @@ function renderCandlestickSVG(opts: {
   ${levelLine(entry, '#3b82f6', 'ENTRY', '')}
   ${levelLine(sl, '#ef4444', 'SL', '6,4')}
   ${levelLine(tp, '#22c55e', 'TP', '6,4')}
-  <rect x="0" y="${H - 50}" width="${W}" height="50" fill="#0a0e14" opacity="0.8"/>
-  <line x1="40" y1="${H - 38}" x2="60" y2="${H - 38}" stroke="#f59e0b" stroke-width="1.5" opacity="0.7"/>
-  <text x="64" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 50</text>
-  <line x1="110" y1="${H - 38}" x2="130" y2="${H - 38}" stroke="#a855f7" stroke-width="1.5" opacity="0.7"/>
-  <text x="134" y="${H - 34}" fill="#94a3b8" font-size="10" font-family="Arial, Helvetica, sans-serif">EMA 200</text>
-  <text x="40" y="${H - 16}" fill="#ff6633" font-size="16" font-family="Arial, Helvetica, sans-serif" font-weight="700">ChartingPath</text>
-  <text x="200" y="${H - 16}" fill="#64748b" font-size="13" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
-  <text x="${W - 40}" y="${H - 16}" fill="#475569" font-size="12" font-family="Courier, monospace" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
+
+  <!-- Footer -->
+  <rect x="0" y="${H - 54}" width="${W}" height="54" fill="#0a0e14" opacity="0.9"/>
+  <line x1="40" y1="${H - 38}" x2="60" y2="${H - 38}" stroke="#f59e0b" stroke-width="2" opacity="0.8"/>
+  <text x="64" y="${H - 34}" fill="#94a3b8" font-size="11" font-family="Arial, Helvetica, sans-serif">EMA 50</text>
+  <line x1="120" y1="${H - 38}" x2="140" y2="${H - 38}" stroke="#a855f7" stroke-width="2" opacity="0.8"/>
+  <text x="144" y="${H - 34}" fill="#94a3b8" font-size="11" font-family="Arial, Helvetica, sans-serif">EMA 200</text>
+  <text x="40" y="${H - 14}" fill="#ff6633" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="800">ChartingPath</text>
+  <text x="220" y="${H - 14}" fill="#64748b" font-size="14" font-family="Arial, Helvetica, sans-serif">chartingpath.com · Live Pattern Detection</text>
+  <text x="${W - 40}" y="${H - 14}" fill="#94a3b8" font-size="13" font-family="Courier, monospace" font-weight="600" text-anchor="end">Entry: ${formatPrice(entry)} | SL: ${formatPrice(sl)} | TP: ${formatPrice(tp)}</text>
 </svg>`;
 }
 
