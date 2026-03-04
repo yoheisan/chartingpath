@@ -251,6 +251,8 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
     <text x="${width-55}" y="40" text-anchor="middle" fill="${colors.positive}" font-size="14" font-family="monospace" font-weight="bold">${qualityScore}</text>
     ${formationZone}
     ${candles}
+    ${tpZone}
+    ${slZone}
     ${hlines}
     ${zigzagLine}
     ${entryMarker}
