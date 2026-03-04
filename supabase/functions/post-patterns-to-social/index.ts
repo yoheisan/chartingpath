@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 5; // Temporarily bumped for manual post
+const MAX_DAILY_POSTS = 0; // Emergency pause: disable automated pattern posts
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
