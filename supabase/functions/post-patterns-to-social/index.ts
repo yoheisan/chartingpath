@@ -125,14 +125,17 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
   const barW = Math.max(2, Math.floor(chartW / bars.length) - 1);
   const barToX = (i: number) => padding.left + (i / bars.length) * chartW;
 
-  // ── 1. Formation zone shading (teal, semi-transparent) ──────────────
+  // ── 1. Formation zone shading (teal, semi-transparent) + label ────
   let formationZone = '';
   if (visualSpec?.window?.startTs) {
     const startIdx = tsIndex.get(visualSpec.window.startTs) ?? 0;
     const endIdx = visualSpec.entryBarIndex ?? (tsIndex.get(visualSpec.signalTs) ?? bars.length - 1);
     const x1 = barToX(startIdx);
     const x2 = barToX(Math.min(endIdx, bars.length - 1)) + barW;
-    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.07"/>`;
+    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.10"/>`;
+    // Formation period label at top
+    const labelX = x1 + (x2 - x1) / 2;
+    formationZone += `<text x="${labelX}" y="${padding.top + 14}" text-anchor="middle" fill="${colors.formationZone}" font-size="9" font-family="monospace" opacity="0.8">Formation Period</text>`;
   }
 
   // ── 2. Candlesticks ─────────────────────────────────────────────────
@@ -145,15 +148,40 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
     return `<line x1="${x+barW/2}" y1="${priceToY(bar.h)}" x2="${x+barW/2}" y2="${priceToY(bar.l)}" stroke="${color}" stroke-width="1"/><rect x="${x}" y="${bodyTop}" width="${barW}" height="${bodyH}" fill="${color}"/>`;
   }).join('');
 
-  // ── 3. Horizontal overlay lines (Entry, SL, TP) ─────────────────────
+  // ── 3. Horizontal overlay lines (Entry, SL, TP) + Zone shading ──────
+  const entryOverlay = overlays.find((o: any) => o.type === 'hline' && o.id === 'entry');
+  const slOverlay = overlays.find((o: any) => o.type === 'hline' && o.style === 'destructive');
+  const tpOverlay = overlays.find((o: any) => o.type === 'hline' && o.style === 'positive');
+
+  // TP Zone shading (green between entry and TP) — per UI/UX spec §2.2
+  let tpZone = '';
+  if (entryOverlay && tpOverlay) {
+    const entryY = priceToY(entryOverlay.price);
+    const tpY = priceToY(tpOverlay.price);
+    const zoneTop = Math.min(entryY, tpY);
+    const zoneH = Math.abs(entryY - tpY);
+    tpZone = `<rect x="${padding.left}" y="${zoneTop}" width="${chartW}" height="${zoneH}" fill="rgba(34, 197, 94, 0.06)"/>`;
+  }
+
+  // SL Zone shading (red between entry and SL) — per UI/UX spec §2.2
+  let slZone = '';
+  if (entryOverlay && slOverlay) {
+    const entryY = priceToY(entryOverlay.price);
+    const slY = priceToY(slOverlay.price);
+    const zoneTop = Math.min(entryY, slY);
+    const zoneH = Math.abs(entryY - slY);
+    slZone = `<rect x="${padding.left}" y="${zoneTop}" width="${chartW}" height="${zoneH}" fill="rgba(239, 68, 68, 0.06)"/>`;
+  }
+
   const hlines = overlays.filter((o: any) => o.type === 'hline').map((o: any) => {
     const y = priceToY(o.price);
     const c = (colors as any)[o.style] || colors.muted;
     const dash = o.id === 'entry' ? '0' : '5,3';
-    return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="1.5" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="70" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+40}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${o.label}: ${o.price.toFixed(2)}</text>`;
+    const lw = o.id === 'entry' ? '2' : '1';
+    return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="${lw}" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="70" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+40}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${o.label}: ${o.price.toFixed(2)}</text>`;
   }).join('');
 
-  // ── 4. ZigZag polyline from pivot overlays ──────────────────────────
+  // ── 4. ZigZag polyline — cyan per UI/UX spec §6 ─────────────────────
   let zigzagLine = '';
   const pivotOverlay = overlays.find((o: any) => o.type === 'pivot');
   const pivots = pivotOverlay?.pivots || visualSpec?.pivots || [];
@@ -164,16 +192,17 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
       const y = priceToY(pv.price);
       return `${x},${y}`;
     }).join(' ');
-    zigzagLine = `<polyline points="${points}" fill="none" stroke="${colors.muted}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7"/>`;
+    // Cyan polyline per spec: rgba(0, 200, 255, 0.85), width 2
+    zigzagLine = `<polyline points="${points}" fill="none" stroke="rgba(0, 200, 255, 0.85)" stroke-width="2"/>`;
 
-    // Pivot labels (H1, L1, H2, etc.)
+    // Pivot labels
     zigzagLine += pivots.map((pv: any) => {
       const idx = pv.index ?? tsIndex.get(pv.timestamp) ?? 0;
       const x = barToX(idx) + barW / 2;
       const y = priceToY(pv.price);
       const labelY = pv.type === 'high' ? y - 8 : y + 14;
       const label = pv.label || (pv.type === 'high' ? 'H' : 'L');
-      return `<text x="${x}" y="${labelY}" text-anchor="middle" fill="${colors.muted}" font-size="9" font-family="monospace">${label}</text>`;
+      return `<text x="${x}" y="${labelY}" text-anchor="middle" fill="rgba(0, 200, 255, 0.85)" font-size="9" font-family="monospace">${label}</text>`;
     }).join('');
   }
 
@@ -222,6 +251,8 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
     <text x="${width-55}" y="40" text-anchor="middle" fill="${colors.positive}" font-size="14" font-family="monospace" font-weight="bold">${qualityScore}</text>
     ${formationZone}
     ${candles}
+    ${tpZone}
+    ${slZone}
     ${hlines}
     ${zigzagLine}
     ${entryMarker}
@@ -474,6 +505,9 @@ serve(async (req) => {
     // Bullish setups should be with_trend or neutral (not counter_trend)
     // Bearish setups should be with_trend or neutral (not counter_trend)
     // Patterns without trend data are excluded to maintain quality
+    const REVERSAL_BEARISH = ['double-top', 'triple-top', 'head-and-shoulders', 'rising-wedge'];
+    const REVERSAL_BULLISH = ['double-bottom', 'triple-bottom', 'inverse-head-and-shoulders', 'falling-wedge'];
+
     const contextFiltered = patterns.filter((p: any) => {
       const alignment = p.trend_alignment?.toLowerCase();
       if (!alignment) {
@@ -484,7 +518,22 @@ serve(async (req) => {
         console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — counter-trend`);
         return false;
       }
-      return true; // 'with_trend' or 'neutral'/'sideways'
+
+      // Context-aware: reversal patterns MUST form against the prior trend
+      // Double Top needs prior uptrend (with_trend for bearish = prior was bullish)
+      // Double Bottom needs prior downtrend
+      const pName = p.pattern_name?.toLowerCase();
+      const dir = p.direction?.toLowerCase();
+      if (REVERSAL_BEARISH.includes(pName) && alignment !== 'with_trend' && dir !== 'bearish') {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — reversal needs prior uptrend`);
+        return false;
+      }
+      if (REVERSAL_BULLISH.includes(pName) && alignment !== 'with_trend' && dir !== 'bullish') {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — reversal needs prior downtrend`);
+        return false;
+      }
+
+      return true;
     });
 
     console.log(`[pattern-poster] ${patterns.length} A/B patterns → ${contextFiltered.length} after trend filter`);
