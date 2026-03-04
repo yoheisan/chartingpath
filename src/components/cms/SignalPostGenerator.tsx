@@ -66,6 +66,7 @@ interface PatternRow {
   updated_at: string | null;
   bars: any;
   visual_spec: any;
+}
 
 interface SignalItem {
   pattern: PatternRow;
