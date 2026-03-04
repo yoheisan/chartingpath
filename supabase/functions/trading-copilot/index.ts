@@ -349,7 +349,7 @@ When answering, PROACTIVELY combine multiple tools for insights NO generic AI ca
 → Call get_market_report + get_market_breadth + get_economic_events together
 
 **"What is the current sentiment?" / "Fear and greed" / "Market breadth":**
-→ Call get_market_breadth. Present with 🟢🟡🔴 indicators and markdown tables.
+→ Call get_market_breadth. ALWAYS start by stating the "dataAsOf" timestamp from the response so the user knows exactly when the data is from (e.g., "As of 2026-03-04 20:15 UTC, NYSE:" or "Based on the last trading session close on 2026-03-01, NYSE. Markets are currently closed for the weekend."). Present with 🟢🟡🔴 indicators and markdown tables.
 
 **"What should I trade?" / "Best setups right now":**
 → Call search_patterns (quality A/B) + query_edge_atlas (top setups) + get_economic_events + get_market_breadth
@@ -1034,6 +1034,18 @@ async function executeGetMarketBreadth() {
       advancePercent: meta.advancePercent || 0,
       declinePercent: meta.declinePercent || 0,
       timestamp: breadth.timestamp || new Date().toISOString(),
+      dataAsOf: (() => {
+        const ts = breadth.timestamp ? new Date(breadth.timestamp) : new Date();
+        const exchange = breadth.exchange || 'NYSE';
+        const dayOfWeek = ts.getUTCDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const formattedDate = ts.toISOString().split('T')[0];
+        const formattedTime = ts.toISOString().split('T')[1]?.slice(0, 5) + ' UTC';
+        if (isWeekend) {
+          return `As of last trading session close (${formattedDate}), ${exchange}. Markets are currently closed for the weekend.`;
+        }
+        return `As of ${formattedDate} ${formattedTime}, ${exchange}.`;
+      })(),
       description: meta.sentiment === 'bullish'
         ? 'More stocks are advancing than declining, indicating positive market breadth and broad-based buying.'
         : meta.sentiment === 'bearish'
@@ -1064,7 +1076,7 @@ async function executeGetMarketBreadth() {
             'Low put buying — complacency or strong bullish conviction.'
           }`
         : 'Put/Call ratio data unavailable.',
-      presentationHint: 'Present this data in a structured format with sections for: 1) Market Breadth (A/D ratio with visual bar), 2) Sentiment Indicators (VIX + Put/Call), 3) Overall Fear & Greed assessment with the score. Use emoji indicators (🟢🟡🔴) for quick visual cues.'
+      presentationHint: 'CRITICAL: Always start your market breadth response by stating the "dataAsOf" timestamp so users know exactly when this data is from. Then present in a structured format: 1) Market Breadth (A/D ratio with visual bar), 2) Sentiment Indicators (VIX + Put/Call), 3) Overall Fear & Greed assessment with the score. Use emoji indicators (🟢🟡🔴) for quick visual cues.'
     };
   } catch (error) {
     console.error('[trading-copilot] Market breadth error:', error);
