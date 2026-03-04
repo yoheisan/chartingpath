@@ -432,7 +432,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       // Ignore stale responses
       if (occurrenceRequestIdRef.current !== requestId) return;
 
-      setOccurrenceSetup(toSetupWithVisuals(res.data.pattern));
+      const builtOccSetup = toSetupWithVisuals(res.data.pattern);
+      const derivedOcc = deriveSetupOutcome(builtOccSetup);
+      if (derivedOcc) {
+        builtOccSetup.outcome = derivedOcc as any;
+      }
+      setOccurrenceSetup(builtOccSetup);
     } catch (err: any) {
       console.error('[CommandCenter] Failed to load occurrence details:', err?.message || err);
       toast.error(t('commandCenter.failedToLoadPatternDetails'));
