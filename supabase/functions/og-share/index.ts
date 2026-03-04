@@ -51,7 +51,7 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from('live_pattern_detections')
-      .select('instrument, pattern_name, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score')
+      .select('instrument, pattern_name, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, updated_at')
       .eq('share_token', token)
       .single();
 
@@ -69,17 +69,18 @@ serve(async (req) => {
     const description = `Entry: ${data.entry_price} | SL: ${data.stop_loss_price} | TP: ${data.take_profit_price} | R:R 1:${data.risk_reward_ratio?.toFixed(1)} | Quality: ${data.quality_score || 'N/A'}`;
     
     // Twitter/X REQUIRES raster images (PNG/JPG). SVG is never supported.
-    // Only use PNG — fall back to a default PNG if the pattern-specific one doesn't exist yet.
-    const pngUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
-    const fallbackUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
-    let ogImageUrl = pngUrl;
+    // Add a version query param so Twitter doesn't keep a stale cached broken image.
+    const imageVersion = Date.parse(data.updated_at ?? '') || Date.now();
+    const pngProbeUrl = `${supabaseUrl}/storage/v1/object/public/share-images/${token}.png`;
+    const fallbackProbeUrl = `${supabaseUrl}/storage/v1/object/public/share-images/default-og.png`;
+    let ogImageUrl = `${pngProbeUrl}?v=${imageVersion}`;
     try {
-      const pngRes = await fetch(pngUrl, { method: 'HEAD' });
+      const pngRes = await fetch(pngProbeUrl, { method: 'HEAD' });
       if (!pngRes.ok) {
-        ogImageUrl = fallbackUrl;
+        ogImageUrl = `${fallbackProbeUrl}?v=${imageVersion}`;
       }
     } catch {
-      ogImageUrl = fallbackUrl;
+      ogImageUrl = `${fallbackProbeUrl}?v=${imageVersion}`;
     }
 
     const html = `<!DOCTYPE html>
@@ -119,7 +120,7 @@ serve(async (req) => {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'no-store, max-age=0',
       },
     });
   } catch (err) {
