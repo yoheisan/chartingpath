@@ -94,7 +94,7 @@ const Index = () => {
     },
     {
       title: t('landing.scanMarket', 'Scan the Market'),
-      description: t('landing.scanMarketDesc', 'Discover active pattern setups across 1,100+ instruments in real-time.'),
+      description: t('landing.scanMarketDesc', `Discover active pattern setups across ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments in real-time.`),
       bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBulletCopilot', '💡 Ask Copilot to find setups')],
       ctaText: t('landing.openScreener', 'Open Screener'),
       ctaLink: "/patterns/live",
