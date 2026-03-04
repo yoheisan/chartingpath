@@ -1,0 +1,1 @@
+UPDATE x_follow_queue SET status = 'pending', error_message = NULL, attempted_at = NULL WHERE status = 'failed' AND error_message LIKE '%SpendCapReached%';
