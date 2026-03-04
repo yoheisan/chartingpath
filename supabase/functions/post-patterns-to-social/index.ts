@@ -96,22 +96,28 @@ function groupByTradeLevels(patterns: any[]): Map<string, any[]> {
 
 // ─── Chart SVG Generation ───────────────────────────────────────────────────
 
-function generateChartSVG(bars: any[], overlays: any[], symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): string {
+function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): string {
   const width = 800, height = 400;
   const colors = {
     background: '#0f0f0f', text: '#a1a1a1', upCandle: '#22c55e', downCandle: '#ef4444',
     primary: '#3b82f6', destructive: '#ef4444', positive: '#22c55e', muted: '#888888',
+    detection: '#f97316', formationZone: '#38bdf8',
   };
   const padding = { top: 50, right: 80, bottom: 30, left: 10 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
+  const overlays = visualSpec?.overlays || [];
 
   if (!bars || bars.length === 0) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="${colors.background}"/><text x="50%" y="50%" text-anchor="middle" fill="${colors.text}" font-family="monospace">No chart data</text></svg>`;
   }
 
+  // Build timestamp-to-index map for precise positioning
+  const tsIndex = new Map<string, number>();
+  bars.forEach((b: any, i: number) => tsIndex.set(b.t, i));
+
   const allPrices = bars.flatMap((b: any) => [b.h, b.l]);
-  (overlays || []).forEach((o: any) => { if (o.price) allPrices.push(o.price); });
+  overlays.forEach((o: any) => { if (o.price) allPrices.push(o.price); });
   const minP = Math.min(...allPrices) * 0.995;
   const maxP = Math.max(...allPrices) * 1.005;
   const range = maxP - minP;
@@ -119,6 +125,17 @@ function generateChartSVG(bars: any[], overlays: any[], symbol: string, timefram
   const barW = Math.max(2, Math.floor(chartW / bars.length) - 1);
   const barToX = (i: number) => padding.left + (i / bars.length) * chartW;
 
+  // ── 1. Formation zone shading (teal, semi-transparent) ──────────────
+  let formationZone = '';
+  if (visualSpec?.window?.startTs) {
+    const startIdx = tsIndex.get(visualSpec.window.startTs) ?? 0;
+    const endIdx = visualSpec.entryBarIndex ?? (tsIndex.get(visualSpec.signalTs) ?? bars.length - 1);
+    const x1 = barToX(startIdx);
+    const x2 = barToX(Math.min(endIdx, bars.length - 1)) + barW;
+    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.07"/>`;
+  }
+
+  // ── 2. Candlesticks ─────────────────────────────────────────────────
   const candles = bars.map((bar: any, i: number) => {
     const x = barToX(i);
     const isUp = bar.c >= bar.o;
@@ -128,12 +145,69 @@ function generateChartSVG(bars: any[], overlays: any[], symbol: string, timefram
     return `<line x1="${x+barW/2}" y1="${priceToY(bar.h)}" x2="${x+barW/2}" y2="${priceToY(bar.l)}" stroke="${color}" stroke-width="1"/><rect x="${x}" y="${bodyTop}" width="${barW}" height="${bodyH}" fill="${color}"/>`;
   }).join('');
 
-  const lines = (overlays || []).filter((o: any) => o.type === 'hline').map((o: any) => {
+  // ── 3. Horizontal overlay lines (Entry, SL, TP) ─────────────────────
+  const hlines = overlays.filter((o: any) => o.type === 'hline').map((o: any) => {
     const y = priceToY(o.price);
     const c = (colors as any)[o.style] || colors.muted;
     const dash = o.id === 'entry' ? '0' : '5,3';
     return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="1.5" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="70" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+40}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${o.label}: ${o.price.toFixed(2)}</text>`;
   }).join('');
+
+  // ── 4. ZigZag polyline from pivot overlays ──────────────────────────
+  let zigzagLine = '';
+  const pivotOverlay = overlays.find((o: any) => o.type === 'pivot');
+  const pivots = pivotOverlay?.pivots || visualSpec?.pivots || [];
+  if (pivots.length >= 2) {
+    const points = pivots.map((pv: any) => {
+      const idx = pv.index ?? tsIndex.get(pv.timestamp) ?? 0;
+      const x = barToX(idx) + barW / 2;
+      const y = priceToY(pv.price);
+      return `${x},${y}`;
+    }).join(' ');
+    zigzagLine = `<polyline points="${points}" fill="none" stroke="${colors.muted}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7"/>`;
+
+    // Pivot labels (H1, L1, H2, etc.)
+    zigzagLine += pivots.map((pv: any) => {
+      const idx = pv.index ?? tsIndex.get(pv.timestamp) ?? 0;
+      const x = barToX(idx) + barW / 2;
+      const y = priceToY(pv.price);
+      const labelY = pv.type === 'high' ? y - 8 : y + 14;
+      const label = pv.label || (pv.type === 'high' ? 'H' : 'L');
+      return `<text x="${x}" y="${labelY}" text-anchor="middle" fill="${colors.muted}" font-size="9" font-family="monospace">${label}</text>`;
+    }).join('');
+  }
+
+  // ── 5. Entry triangle marker (blue) ─────────────────────────────────
+  let entryMarker = '';
+  const entryIdx = visualSpec?.entryBarIndex;
+  const entryPrice = visualSpec?.entryPrice;
+  if (entryIdx != null && entryPrice != null && entryIdx < bars.length) {
+    const x = barToX(entryIdx) + barW / 2;
+    const y = priceToY(entryPrice);
+    const isLong = direction === 'long';
+    // Triangle: pointing up for long, down for short
+    const triSize = 8;
+    const tri = isLong
+      ? `${x},${y - triSize} ${x - triSize},${y + triSize} ${x + triSize},${y + triSize}`
+      : `${x},${y + triSize} ${x - triSize},${y - triSize} ${x + triSize},${y - triSize}`;
+    entryMarker = `<polygon points="${tri}" fill="${colors.primary}" stroke="${colors.primary}" stroke-width="1"/>`;
+  }
+
+  // ── 6. Detection arrow (orange) ─────────────────────────────────────
+  let detectionMarker = '';
+  if (visualSpec?.signalTs) {
+    const sigIdx = tsIndex.get(visualSpec.signalTs);
+    if (sigIdx != null && sigIdx < bars.length) {
+      const sigBar = bars[sigIdx];
+      const x = barToX(sigIdx) + barW / 2;
+      const isLong = direction === 'long';
+      const anchorPrice = isLong ? sigBar.l : sigBar.h;
+      const y = priceToY(anchorPrice);
+      const arrowY = isLong ? y + 15 : y - 15;
+      const arrowHead = isLong ? '↑' : '↓';
+      detectionMarker = `<text x="${x}" y="${arrowY}" text-anchor="middle" fill="${colors.detection}" font-size="14" font-family="monospace" font-weight="bold">${arrowHead}</text>`;
+    }
+  }
 
   const dirColor = direction === 'long' ? colors.positive : colors.destructive;
   const dirArrow = direction === 'long' ? '↑' : '↓';
@@ -146,15 +220,20 @@ function generateChartSVG(bars: any[], overlays: any[], symbol: string, timefram
     <rect x="${width-100}" y="10" width="90" height="35" rx="8" fill="${colors.positive}20" stroke="${colors.positive}" stroke-width="1.5"/>
     <text x="${width-55}" y="25" text-anchor="middle" fill="${colors.positive}" font-size="10" font-family="monospace" font-weight="500">Grade</text>
     <text x="${width-55}" y="40" text-anchor="middle" fill="${colors.positive}" font-size="14" font-family="monospace" font-weight="bold">${qualityScore}</text>
-    ${candles}${lines}
+    ${formationZone}
+    ${candles}
+    ${hlines}
+    ${zigzagLine}
+    ${entryMarker}
+    ${detectionMarker}
     <text x="${width/2}" y="${height-10}" text-anchor="middle" fill="${colors.muted}" font-size="10" font-family="monospace" opacity="0.5">ChartingPath.com</text>
   </svg>`;
 }
 
 // ─── PNG Generation ─────────────────────────────────────────────────────────
 
-async function generateChartPNG(bars: any[], overlays: any[], symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): Promise<Uint8Array> {
-  const svg = generateChartSVG(bars, overlays, symbol, timeframe, patternName, direction, qualityScore);
+async function generateChartPNG(bars: any[], visualSpec: any, symbol: string, timeframe: string, patternName: string, direction: string, qualityScore: string): Promise<Uint8Array> {
+  const svg = generateChartSVG(bars, visualSpec, symbol, timeframe, patternName, direction, qualityScore);
   console.log(`[pattern-poster] Generated SVG for ${symbol} (${svg.length} bytes)`);
   const pngData = await render(svg);
   console.log(`[pattern-poster] Converted to PNG (${pngData.length} bytes)`);
