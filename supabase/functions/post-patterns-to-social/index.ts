@@ -547,12 +547,12 @@ serve(async (req) => {
         let mediaId: string | undefined;
         try {
           const bars = primary.bars || [];
-          const overlays = primary.visual_spec?.overlays || [];
+          const vSpec = primary.visual_spec || {};
           const dir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
 
           if (bars.length > 0) {
             const pngData = await generateChartPNG(
-              bars, overlays, primary.instrument, primary.timeframe,
+              bars, vSpec, primary.instrument, primary.timeframe,
               formatPatternName(primary.pattern_name), dir, primary.quality_score || '?'
             );
 
