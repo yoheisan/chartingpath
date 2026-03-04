@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { withTimeout } from '@/utils/withTimeout';
+import { deriveSetupOutcome } from '@/utils/deriveLiveOutcome';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useDashboardPrefetch } from '@/hooks/useDashboardPrefetch';
 import { useIsMobile } from '@/hooks/use-mobile';

@@ -12,6 +12,7 @@ import { SetupWithVisuals, VisualSpec, CompressedBar } from '@/types/VisualSpec'
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { withTimeout } from '@/utils/withTimeout';
+import { deriveSetupOutcome } from '@/utils/deriveLiveOutcome';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useUnreadAlerts } from '@/hooks/useUnreadAlerts';
 import { NotificationBadge } from '@/components/ui/notification-badge';
