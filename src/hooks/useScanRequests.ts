@@ -74,10 +74,11 @@ export function useScanRequests(userId?: string) {
     try {
       // Check rate limit
       const { data: limitCheck } = await supabase.rpc('check_scan_request_limit', { p_user_id: userId });
+      const limit = limitCheck as unknown as { allowed: boolean; used: number; limit: number; plan: string } | null;
       
-      if (limitCheck && !limitCheck.allowed) {
+      if (limit && !limit.allowed) {
         toast.error('Daily scan limit reached', {
-          description: `You've used ${limitCheck.used}/${limitCheck.limit} scans today. Upgrade for more.`,
+          description: `You've used ${limit.used}/${limit.limit} scans today. Upgrade for more.`,
         });
         return false;
       }
