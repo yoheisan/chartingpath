@@ -486,17 +486,30 @@ serve(async (req) => {
   );
 
   try {
+    // Parse optional override flags from request body
+    let overrideBudget = false;
+    let maxPostsOverride: number | null = null;
+    try {
+      const body = await req.json();
+      overrideBudget = body?.overrideBudget === true;
+      if (typeof body?.maxPosts === 'number') maxPostsOverride = body.maxPosts;
+    } catch { /* no body or invalid JSON — fine */ }
+
     const nowUtc = new Date();
     const hourUtc = nowUtc.getUTCHours();
     const session = getCurrentSession(hourUtc);
-    console.log(`[pattern-poster] Running at ${nowUtc.toISOString()} — session: ${session}`);
+    console.log(`[pattern-poster] Running at ${nowUtc.toISOString()} — session: ${session}, overrideBudget: ${overrideBudget}`);
 
-    // ── Budget check ──────────────────────────────────────────────────────
-    const withinBudget = await checkAndIncrementBudget(supabase, 'twitter');
-    if (!withinBudget) {
-      return new Response(JSON.stringify({ posted: 0, reason: 'daily_budget_exhausted' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // ── Budget check (skipped when overrideBudget=true) ───────────────────
+    if (!overrideBudget) {
+      const withinBudget = await checkAndIncrementBudget(supabase, 'twitter');
+      if (!withinBudget) {
+        return new Response(JSON.stringify({ posted: 0, reason: 'daily_budget_exhausted' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      console.log('[pattern-poster] Budget override active — skipping budget check');
     }
 
     // ── Find already-posted pattern IDs ───────────────────────────────────
