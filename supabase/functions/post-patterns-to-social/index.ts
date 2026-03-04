@@ -101,9 +101,10 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
   const colors = {
     background: '#0f0f0f', text: '#a1a1a1', upCandle: '#22c55e', downCandle: '#ef4444',
     primary: '#3b82f6', destructive: '#ef4444', positive: '#22c55e', muted: '#888888',
-    detection: '#f97316', formationZone: '#38bdf8',
+    detection: '#f97316', formationZone: 'rgba(59, 130, 246, 0.04)',
+    zigzag: 'rgba(0, 200, 255, 0.85)',
   };
-  const padding = { top: 50, right: 80, bottom: 30, left: 10 };
+  const padding = { top: 50, right: 140, bottom: 30, left: 10 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
   const overlays = visualSpec?.overlays || [];
@@ -125,17 +126,32 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
   const barW = Math.max(2, Math.floor(chartW / bars.length) - 1);
   const barToX = (i: number) => padding.left + (i / bars.length) * chartW;
 
-  // ── 1. Formation zone shading (teal, semi-transparent) + label ────
+  // Resolve pivots early (needed for formation zone)
+  const pivotOverlay = overlays.find((o: any) => o.type === 'pivot');
+  const pivots = pivotOverlay?.pivots || visualSpec?.pivots || [];
+
+  // ── 1. Formation zone — vertical time range shading at pivot span ───
+  // Per UI/UX spec §2.2: Time Range Zone rgba(59, 130, 246, 0.04)
+  // Derived from first pivot to last pivot (the structural formation period)
   let formationZone = '';
-  if (visualSpec?.window?.startTs) {
+  if (pivots.length >= 2) {
+    const pivotIndices = pivots.map((pv: any) => pv.index ?? tsIndex.get(pv.timestamp) ?? 0);
+    const firstPivotIdx = Math.min(...pivotIndices);
+    const lastPivotIdx = Math.max(...pivotIndices);
+    const x1 = barToX(firstPivotIdx);
+    const x2 = barToX(lastPivotIdx) + barW;
+    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}"/>`;
+    const labelX = x1 + (x2 - x1) / 2;
+    formationZone += `<text x="${labelX}" y="${padding.top + 14}" text-anchor="middle" fill="${colors.primary}" font-size="9" font-family="monospace" opacity="0.6">Formation Period</text>`;
+  } else if (visualSpec?.window?.startTs) {
+    // Fallback to window timestamps
     const startIdx = tsIndex.get(visualSpec.window.startTs) ?? 0;
-    const endIdx = visualSpec.entryBarIndex ?? (tsIndex.get(visualSpec.signalTs) ?? bars.length - 1);
+    const endIdx = tsIndex.get(visualSpec.signalTs) ?? bars.length - 1;
     const x1 = barToX(startIdx);
     const x2 = barToX(Math.min(endIdx, bars.length - 1)) + barW;
-    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.10"/>`;
-    // Formation period label at top
+    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}"/>`;
     const labelX = x1 + (x2 - x1) / 2;
-    formationZone += `<text x="${labelX}" y="${padding.top + 14}" text-anchor="middle" fill="${colors.formationZone}" font-size="9" font-family="monospace" opacity="0.8">Formation Period</text>`;
+    formationZone += `<text x="${labelX}" y="${padding.top + 14}" text-anchor="middle" fill="${colors.primary}" font-size="9" font-family="monospace" opacity="0.6">Formation Period</text>`;
   }
 
   // ── 2. Candlesticks ─────────────────────────────────────────────────
@@ -153,7 +169,7 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
   const slOverlay = overlays.find((o: any) => o.type === 'hline' && o.style === 'destructive');
   const tpOverlay = overlays.find((o: any) => o.type === 'hline' && o.style === 'positive');
 
-  // TP Zone shading (green between entry and TP) — per UI/UX spec §2.2
+  // TP Zone shading — per UI/UX spec §2.2
   let tpZone = '';
   if (entryOverlay && tpOverlay) {
     const entryY = priceToY(entryOverlay.price);
@@ -163,7 +179,7 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
     tpZone = `<rect x="${padding.left}" y="${zoneTop}" width="${chartW}" height="${zoneH}" fill="rgba(34, 197, 94, 0.06)"/>`;
   }
 
-  // SL Zone shading (red between entry and SL) — per UI/UX spec §2.2
+  // SL Zone shading — per UI/UX spec §2.2
   let slZone = '';
   if (entryOverlay && slOverlay) {
     const entryY = priceToY(entryOverlay.price);
@@ -173,18 +189,20 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
     slZone = `<rect x="${padding.left}" y="${zoneTop}" width="${chartW}" height="${zoneH}" fill="rgba(239, 68, 68, 0.06)"/>`;
   }
 
+  // Spec-standard labels: ENTRY, SL, TP (override whatever the overlay says)
+  const LABEL_MAP: Record<string, string> = { entry: 'ENTRY', destructive: 'SL', positive: 'TP' };
   const hlines = overlays.filter((o: any) => o.type === 'hline').map((o: any) => {
     const y = priceToY(o.price);
     const c = (colors as any)[o.style] || colors.muted;
     const dash = o.id === 'entry' ? '0' : '5,3';
     const lw = o.id === 'entry' ? '2' : '1';
-    return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="${lw}" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="70" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+40}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${o.label}: ${o.price.toFixed(2)}</text>`;
+    const label = LABEL_MAP[o.id] || LABEL_MAP[o.style] || o.label;
+    const priceStr = o.price.toFixed(2);
+    return `<line x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}" stroke="${c}" stroke-width="${lw}" stroke-dasharray="${dash}"/><rect x="${width-padding.right+5}" y="${y-10}" width="130" height="20" fill="${c}" rx="3"/><text x="${width-padding.right+70}" y="${y+4}" text-anchor="middle" fill="white" font-size="11" font-family="monospace" font-weight="500">${label}: ${priceStr}</text>`;
   }).join('');
 
   // ── 4. ZigZag polyline — cyan per UI/UX spec §6 ─────────────────────
   let zigzagLine = '';
-  const pivotOverlay = overlays.find((o: any) => o.type === 'pivot');
-  const pivots = pivotOverlay?.pivots || visualSpec?.pivots || [];
   if (pivots.length >= 2) {
     const points = pivots.map((pv: any) => {
       const idx = pv.index ?? tsIndex.get(pv.timestamp) ?? 0;
@@ -192,8 +210,7 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
       const y = priceToY(pv.price);
       return `${x},${y}`;
     }).join(' ');
-    // Cyan polyline per spec: rgba(0, 200, 255, 0.85), width 2
-    zigzagLine = `<polyline points="${points}" fill="none" stroke="rgba(0, 200, 255, 0.85)" stroke-width="2"/>`;
+    zigzagLine = `<polyline points="${points}" fill="none" stroke="${colors.zigzag}" stroke-width="2"/>`;
 
     // Pivot labels
     zigzagLine += pivots.map((pv: any) => {
@@ -202,24 +219,30 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
       const y = priceToY(pv.price);
       const labelY = pv.type === 'high' ? y - 8 : y + 14;
       const label = pv.label || (pv.type === 'high' ? 'H' : 'L');
-      return `<text x="${x}" y="${labelY}" text-anchor="middle" fill="rgba(0, 200, 255, 0.85)" font-size="9" font-family="monospace">${label}</text>`;
+      return `<text x="${x}" y="${labelY}" text-anchor="middle" fill="${colors.zigzag}" font-size="9" font-family="monospace">${label}</text>`;
     }).join('');
   }
 
-  // ── 5. Entry triangle marker (blue) ─────────────────────────────────
+  // ── 5. Entry triangle marker (blue) — with signal fallback ──────────
   let entryMarker = '';
-  const entryIdx = visualSpec?.entryBarIndex;
-  const entryPrice = visualSpec?.entryPrice;
+  let entryIdx = visualSpec?.entryBarIndex;
+  const entryPrice = visualSpec?.entryPrice ?? entryOverlay?.price;
+  // Fallback: use signal timestamp bar if entryBarIndex not set
+  if (entryIdx == null && visualSpec?.signalTs) {
+    entryIdx = tsIndex.get(visualSpec.signalTs);
+  }
   if (entryIdx != null && entryPrice != null && entryIdx < bars.length) {
     const x = barToX(entryIdx) + barW / 2;
-    const y = priceToY(entryPrice);
     const isLong = direction === 'long';
-    // Triangle: pointing up for long, down for short
+    // Anchor triangle to candle extreme for visual connection
+    const bar = bars[entryIdx];
+    const anchorPrice = isLong ? bar.l : bar.h;
+    const y = priceToY(anchorPrice);
     const triSize = 8;
     const tri = isLong
-      ? `${x},${y - triSize} ${x - triSize},${y + triSize} ${x + triSize},${y + triSize}`
-      : `${x},${y + triSize} ${x - triSize},${y - triSize} ${x + triSize},${y - triSize}`;
-    entryMarker = `<polygon points="${tri}" fill="${colors.primary}" stroke="${colors.primary}" stroke-width="1"/>`;
+      ? `${x},${y + 4} ${x - triSize},${y + 4 + triSize * 1.5} ${x + triSize},${y + 4 + triSize * 1.5}`
+      : `${x},${y - 4} ${x - triSize},${y - 4 - triSize * 1.5} ${x + triSize},${y - 4 - triSize * 1.5}`;
+    entryMarker = `<polygon points="${tri}" fill="${colors.primary}"/>`;
   }
 
   // ── 6. Detection arrow (orange) ─────────────────────────────────────
@@ -232,9 +255,9 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
       const isLong = direction === 'long';
       const anchorPrice = isLong ? sigBar.l : sigBar.h;
       const y = priceToY(anchorPrice);
-      const arrowY = isLong ? y + 15 : y - 15;
-      const arrowHead = isLong ? '↑' : '↓';
-      detectionMarker = `<text x="${x}" y="${arrowY}" text-anchor="middle" fill="${colors.detection}" font-size="14" font-family="monospace" font-weight="bold">${arrowHead}</text>`;
+      const arrowY = isLong ? y + 28 : y - 28;
+      const arrowHead = isLong ? '▲' : '▼';
+      detectionMarker = `<text x="${x}" y="${arrowY}" text-anchor="middle" fill="${colors.detection}" font-size="12" font-family="monospace" font-weight="bold">${arrowHead}</text>`;
     }
   }
 
