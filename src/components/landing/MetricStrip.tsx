@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3, Layers, Database, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MetricProps {
   value: number;
@@ -55,9 +56,21 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
 
 export const MetricStrip = () => {
   const { t } = useTranslation();
+  const [tickerCount, setTickerCount] = useState(800);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { count } = await supabase
+        .from('instruments')
+        .select('symbol', { count: 'exact', head: true })
+        .eq('is_active', true);
+      if (count != null) setTickerCount(count);
+    };
+    fetch();
+  }, []);
 
   const metrics: MetricProps[] = [
-    { value: 1100, suffix: "+", label: t("metrics.instruments", "Instruments Scanned"), icon: BarChart3 },
+    { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments Scanned"), icon: BarChart3 },
     { value: 17, suffix: "", label: t("metrics.patterns", "Pattern Types"), icon: Layers },
     { value: 320000, suffix: "+", label: t("metrics.trades", "Historical Trades"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Refresh Cycle"), icon: Clock },
