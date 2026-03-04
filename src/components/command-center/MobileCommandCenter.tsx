@@ -278,7 +278,14 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
        }
  
        if (chartDetailsRequestIdRef.current !== requestId) return;
-       setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+        setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+        // Derive outcome from bars if not already resolved
+        const builtSetup = toSetupWithVisuals(res.data.pattern);
+        const derived = deriveSetupOutcome(builtSetup);
+        if (derived) {
+          builtSetup.outcome = derived as any;
+        }
+        setSelectedSetup(builtSetup);
      } catch (err: any) {
        console.error('[MobileCommandCenter] Failed to load pattern:', err?.message || err);
        toast.error('Failed to load pattern details');
@@ -329,7 +336,12 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
        }
  
        if (occurrenceRequestIdRef.current !== requestId) return;
-       setOccurrenceSetup(toSetupWithVisuals(res.data.pattern));
+        const builtOccSetup = toSetupWithVisuals(res.data.pattern);
+        const derivedOcc = deriveSetupOutcome(builtOccSetup);
+        if (derivedOcc) {
+          builtOccSetup.outcome = derivedOcc as any;
+        }
+        setOccurrenceSetup(builtOccSetup);
      } catch (err: any) {
        console.error('[MobileCommandCenter] Failed to load occurrence:', err?.message || err);
        toast.error('Failed to load pattern details');

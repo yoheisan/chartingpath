@@ -349,7 +349,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
           // Ignore stale responses
           if (chartDetailsRequestIdRef.current !== requestId) return;
 
-          setSelectedSetup(toSetupWithVisuals(res.data.pattern));
+          const builtSetup = toSetupWithVisuals(res.data.pattern);
+          const derived = deriveSetupOutcome(builtSetup);
+          if (derived) {
+            builtSetup.outcome = derived as any;
+          }
+          setSelectedSetup(builtSetup);
           return;
         } catch (err: any) {
           lastErr = err;
