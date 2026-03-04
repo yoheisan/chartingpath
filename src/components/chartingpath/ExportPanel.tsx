@@ -206,6 +206,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
       }
 
       await navigator.clipboard.writeText(code);
+      if (!user) incrementExportCount();
       setCopiedFormat(format);
       setTimeout(() => setCopiedFormat(null), 2000);
 
