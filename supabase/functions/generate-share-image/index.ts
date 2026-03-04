@@ -72,7 +72,7 @@ function renderCandlestickSVG(opts: {
 
   const W = 1200;
   const H = 630;
-  const CHART_LEFT = 60;
+  const CHART_LEFT = 90;
   const CHART_RIGHT = W - 140;
   const CHART_TOP = 120;
   const CHART_BOTTOM = H - 100;
@@ -94,6 +94,16 @@ function renderCandlestickSVG(opts: {
   const barWidth = Math.min(Math.max(CHART_W / barCount * 0.6, 3), 16);
   const barSpacing = CHART_W / barCount;
   const xForBar = (i: number) => CHART_LEFT + i * barSpacing + barSpacing / 2;
+
+  // ── Y-axis price labels ──
+  const yAxisSteps = 5;
+  let yAxisSvg = '';
+  for (let i = 0; i <= yAxisSteps; i++) {
+    const price = pMin + (pRange / yAxisSteps) * i;
+    const y = yForPrice(price);
+    yAxisSvg += `<text x="${CHART_LEFT - 8}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11" font-family="Courier, monospace">${formatPrice(price)}</text>`;
+    yAxisSvg += `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>`;
+  }
 
   const isBullish = direction?.toLowerCase() === 'bullish' || direction === 'long';
   const dirColor = isBullish ? '#22c55e' : '#ef4444';
