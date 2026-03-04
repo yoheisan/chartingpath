@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_DAILY_POSTS = 3;
+const MAX_DAILY_POSTS = 20;
 
 const SESSIONS = [
   { name: 'tokyo',   start: 0,  end: 9  },
