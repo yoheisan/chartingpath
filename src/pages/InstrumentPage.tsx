@@ -6,6 +6,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RequestScanButton } from '@/components/instruments/RequestScanButton';
 import {
   BarChart3,
   TrendingUp,
