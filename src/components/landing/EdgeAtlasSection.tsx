@@ -104,15 +104,18 @@ export function EdgeAtlasSection() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('live_pattern_detections')
-          .select('asset_type')
-          .eq('status', 'active');
-        if (error) { console.error('Tab count fetch error:', error); return; }
         const counts: Record<string, number> = {};
-        for (const row of (data || [])) {
-          counts[row.asset_type] = (counts[row.asset_type] || 0) + 1;
-        }
+        // Use server-side count per asset type to avoid 1000-row limit
+        await Promise.all(
+          ASSET_TAB_KEYS.map(async (asset) => {
+            const { count, error } = await supabase
+              .from('live_pattern_detections')
+              .select('id', { count: 'exact', head: true })
+              .eq('status', 'active')
+              .eq('asset_type', asset);
+            if (!error && count != null) counts[asset] = count;
+          })
+        );
         setTabCounts(counts);
       } catch (e) {
         console.error('Tab count fetch error:', e);
