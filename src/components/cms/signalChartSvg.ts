@@ -88,15 +88,27 @@ export function renderSignalSVG(opts: {
     }
   }
 
-  // Signal arrow
+  // Signal arrow + projected move line
   const lastBarX = xForBar(barCount - 1);
+  const lastBar = bars[barCount - 1];
+  const lastClose = lastBar?.close ?? entry;
+  const lastCloseY = yForPrice(lastClose);
+  const entryYArrow = yForPrice(entry);
+
+  // Projected move: dashed line from last close to entry level
+  const projectedMoveSvg = Math.abs(lastCloseY - entryYArrow) > 4
+    ? `<line x1="${lastBarX}" y1="${lastCloseY}" x2="${lastBarX + barSpacing * 1.5}" y2="${entryYArrow}" stroke="${dirColor}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+       <circle cx="${lastBarX + barSpacing * 1.5}" cy="${entryYArrow}" r="3.5" fill="${dirColor}" opacity="0.7"/>`
+    : '';
+
   const arrowY = isBullish
-    ? yForPrice(bars[barCount - 1]?.low ?? entry) + 14
-    : yForPrice(bars[barCount - 1]?.high ?? entry) - 14;
+    ? yForPrice(lastBar?.low ?? entry) + 14
+    : yForPrice(lastBar?.high ?? entry) - 14;
   const arrowPath = isBullish
     ? `M${lastBarX - 6},${arrowY + 10} L${lastBarX},${arrowY} L${lastBarX + 6},${arrowY + 10} Z`
     : `M${lastBarX - 6},${arrowY - 10} L${lastBarX},${arrowY} L${lastBarX + 6},${arrowY - 10} Z`;
-  const signalArrowSvg = `<path d="${arrowPath}" fill="${dirColor}" opacity="0.9"/>`;
+  const signalArrowSvg = `<path d="${arrowPath}" fill="${dirColor}" opacity="0.9"/>
+  ${projectedMoveSvg}`;
 
   // Candlesticks
   let candleSvg = '';
