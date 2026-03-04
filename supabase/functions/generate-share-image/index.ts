@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { svg2png, initialize } from "https://esm.sh/svg2png-wasm@0.6.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+let wasmInitialized = false;
+
+async function ensureWasm() {
+  if (wasmInitialized) return;
+  const wasmUrl = "https://unpkg.com/svg2png-wasm@0.6.1/svg2png_wasm_bg.wasm";
+  const resp = await fetch(wasmUrl);
+  if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
+  await initialize(await resp.arrayBuffer());
+  wasmInitialized = true;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -338,34 +350,46 @@ serve(async (req) => {
       pivots,
     });
 
-    // Store as pure SVG — no WASM/resvg dependency
-    const filePath = `${shareToken}.svg`;
-    const uploadBlob = new Blob([svg], { type: 'image/svg+xml' });
+    // Convert to PNG (Twitter/X compatible), upload PNG + SVG fallback
+    await ensureWasm();
+    const pngBuffer = await svg2png(svg, { width: 1200, height: 630 });
 
-    const { error: uploadError } = await supabase.storage
+    const pngPath = `${shareToken}.png`;
+    const pngBlob = new Blob([pngBuffer], { type: 'image/png' });
+
+    const { error: pngUploadError } = await supabase.storage
       .from('share-images')
-      .upload(filePath, uploadBlob, {
+      .upload(pngPath, pngBlob, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (pngUploadError) {
+      console.error('[generate-share-image] PNG upload error:', pngUploadError);
+      throw pngUploadError;
+    }
+
+    const svgPath = `${shareToken}.svg`;
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+    await supabase.storage
+      .from('share-images')
+      .upload(svgPath, svgBlob, {
         contentType: 'image/svg+xml',
         upsert: true,
       });
 
-    if (uploadError) {
-      console.error('[generate-share-image] Upload error:', uploadError);
-      throw uploadError;
-    }
+    const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${pngPath}`;
 
-    const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${filePath}`;
-
-    // Update detection with image URL
+    // Update detection with PNG image URL
     await supabase
       .from('live_pattern_detections')
       .update({ share_image_url: publicUrl })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] ✅ Generated SVG ${filePath} for ${detection.instrument} (${pivots.length} pivots)`);
+    console.log(`[generate-share-image] ✅ Generated PNG ${pngPath} for ${detection.instrument} (${pivots.length} pivots)`);
 
     return new Response(
-      JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'svg' }),
+      JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'png' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
