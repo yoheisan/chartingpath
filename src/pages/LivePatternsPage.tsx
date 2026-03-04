@@ -394,7 +394,9 @@ export default function LivePatternsPage() {
       if (fnError) throw fnError;
       
       if (data?.patterns) {
-        setPatterns(data.patterns);
+        // Filter out patterns where the trade has already ended (SL/TP breached)
+        const activeOnly = filterActiveTradesOnly(data.patterns);
+        setPatterns(activeOnly);
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
         setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
