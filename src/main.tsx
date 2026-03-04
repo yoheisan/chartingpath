@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { MarketReportProvider } from "@/contexts/MarketReportContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ScanNotificationListener } from "@/components/instruments/ScanNotificationListener";
 import HreflangTags from "@/components/HreflangTags";
 import Bootstrap from "./Bootstrap";
 import "./index.css";
