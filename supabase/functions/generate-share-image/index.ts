@@ -41,8 +41,9 @@ function renderCandlestickSVG(opts: {
   grade: string;
   rr: string;
   pivots?: Pivot[];
+  windowStartIndex?: number;
 }): string {
-  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots } = opts;
+  const { bars, entry, sl, tp, direction, patternName, instrument, timeframe, grade, rr, pivots, windowStartIndex } = opts;
 
   const W = 1200;
   const H = 630;
@@ -87,9 +88,12 @@ function renderCandlestickSVG(opts: {
   if (pivots && pivots.length >= 2) {
     const validPivots = pivots.filter(p => p.index >= 0 && p.index < barCount);
     if (validPivots.length >= 2) {
-      const firstIdx = validPivots[0].index;
+      // Use windowStartIndex if available (from visual_spec.window), otherwise fall back to first pivot
+      const zoneStartIdx = (windowStartIndex !== undefined && windowStartIndex >= 0) 
+        ? Math.max(0, windowStartIndex) 
+        : validPivots[0].index;
       const lastIdx = validPivots[validPivots.length - 1].index;
-      const zoneX = xForBar(firstIdx) - barSpacing / 2;
+      const zoneX = xForBar(zoneStartIdx) - barSpacing / 2;
       const zoneW = xForBar(lastIdx) - zoneX + barSpacing / 2;
 
       patternOverlaySvg += `<rect x="${zoneX}" y="${CHART_TOP}" width="${zoneW}" height="${CHART_H}" fill="#38bdf8" opacity="0.06" rx="4"/>`;
@@ -258,6 +262,34 @@ function parsePivots(detection: any): Pivot[] {
   return [];
 }
 
+/** Compute formation zone start index from visual_spec.window timestamps */
+function parseWindowStartIndex(detection: any, barCount: number): number | undefined {
+  try {
+    const spec = typeof detection.visual_spec === 'string' ? JSON.parse(detection.visual_spec) : detection.visual_spec;
+    if (!spec?.window?.startTs || !spec?.window?.endTs) return undefined;
+
+    const startMs = new Date(spec.window.startTs).getTime();
+    const endMs = new Date(spec.window.endTs).getTime();
+    if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) return undefined;
+
+    // Map timeframe string to milliseconds per bar
+    const tfMap: Record<string, number> = {
+      '15m': 15 * 60_000, '1h': 3600_000, '4h': 4 * 3600_000,
+      '8h': 8 * 3600_000, '1d': 86400_000, '1wk': 7 * 86400_000,
+    };
+    const tf = detection.timeframe?.toLowerCase() ?? '4h';
+    const barMs = tfMap[tf] ?? 4 * 3600_000;
+
+    // endTs aligns with the last bar (index barCount - 1)
+    // Calculate how many bars back the window start is from the end
+    const barsFromEnd = Math.round((endMs - startMs) / barMs);
+    const windowStartIdx = barCount - 1 - barsFromEnd;
+
+    return Math.max(0, windowStartIdx);
+  } catch { /* ignore */ }
+  return undefined;
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -288,6 +320,8 @@ serve(async (req) => {
     // Parse bars and pivots for full candlestick chart
     const bars = parseBars(detection);
     const pivots = parsePivots(detection);
+    const windowStartIndex = parseWindowStartIndex(detection, bars.length);
+    console.log(`[generate-share-image] windowStartIndex=${windowStartIndex}, barCount=${bars.length}, pivots=[${pivots.map(p=>p.index).join(',')}]`);
 
     const svg = renderCandlestickSVG({
       bars,
@@ -301,6 +335,7 @@ serve(async (req) => {
       grade: detection.quality_score?.toUpperCase() ?? '?',
       rr: Number(detection.risk_reward_ratio).toFixed(1),
       pivots,
+      windowStartIndex,
     });
 
     const svgPath = `${shareToken}.svg`;
