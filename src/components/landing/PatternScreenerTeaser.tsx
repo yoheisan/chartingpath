@@ -11,6 +11,7 @@ import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER, getPatternGrade } from '@/types/screener';
+import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import type { SetupWithVisuals, PatternQuality, VisualSpec } from '@/types/VisualSpec';
 import { toast } from 'sonner';

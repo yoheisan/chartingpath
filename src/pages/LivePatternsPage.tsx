@@ -175,6 +175,7 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
+import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
 
