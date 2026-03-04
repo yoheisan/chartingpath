@@ -7,6 +7,45 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+let cachedFont: ArrayBuffer | null = null;
+
+async function loadFont(): Promise<ArrayBuffer> {
+  if (cachedFont) return cachedFont;
+  
+  // Fetch a TTF font. Google Fonts returns TTF for older user-agents.
+  const css = await fetch(
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap',
+    { headers: { 'User-Agent': 'Mozilla/5.0 (BB10; Touch) AppleWebKit/537.10+ (KHTML, like Gecko) Version/10.0.9.2372 Mobile Safari/537.10+' } }
+  ).then(r => r.text());
+  
+  console.log('[generate-share-image] Google Fonts CSS snippet:', css.substring(0, 300));
+  
+  // Extract TTF URL
+  const match = css.match(/url\(([^)]+)\)\s*format\(['"]truetype['"]\)/);
+  let fontUrl: string;
+  
+  if (match) {
+    fontUrl = match[1];
+  } else {
+    // Fallback: just grab any URL from the CSS
+    const anyMatch = css.match(/url\(([^)]+)\)/);
+    if (anyMatch) {
+      fontUrl = anyMatch[1];
+    } else {
+      throw new Error('No font URL found in Google Fonts CSS response');
+    }
+  }
+  
+  console.log('[generate-share-image] Fetching font from:', fontUrl);
+  const res = await fetch(fontUrl);
+  if (!res.ok) throw new Error(`Font fetch ${res.status}: ${fontUrl}`);
+  
+  cachedFont = await res.arrayBuffer();
+  const header = new Uint8Array(cachedFont, 0, 4);
+  console.log(`[generate-share-image] Font loaded: ${cachedFont.byteLength} bytes, header=[${header.join(',')}]`);
+  return cachedFont;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -32,9 +71,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No share token' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Generate PNG using og_edge (Satori) — has built-in font rendering
-    const imageResponse = generateImage(detection);
-    const pngBuffer = new Uint8Array(await imageResponse.arrayBuffer());
+    const fontData = await loadFont();
+    const pngBuffer = await generateImage(detection, fontData);
 
     const pngPath = `${shareToken}.png`;
     const pngBlob = new Blob([pngBuffer], { type: 'image/png' });
@@ -51,7 +89,7 @@ serve(async (req) => {
       .update({ share_image_url: publicUrl, updated_at: new Date().toISOString() })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] PNG ${pngPath} for ${detection.instrument} (og_edge/satori)`);
+    console.log(`[generate-share-image] Success: ${pngPath} for ${detection.instrument}`);
 
     return new Response(
       JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'png' }),
