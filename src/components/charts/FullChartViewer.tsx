@@ -831,8 +831,9 @@ export default function FullChartViewer({
               ctx.clearRect(0, 0, rect.width, rect.height);
 
               // Zone sync guard: suppress shaded zones when entry is >3% from price
-              const standaloneEntryDist = latestBarClose && overlayEntryPrice
-                ? Math.abs((overlayEntryPrice - latestBarClose) / latestBarClose) * 100 : 0;
+              const sLatestClose = chartData.length > 0 ? Number((chartData[chartData.length - 1] as any).close) : null;
+              const standaloneEntryDist = sLatestClose && overlayEntryPrice
+                ? Math.abs((overlayEntryPrice - sLatestClose) / sLatestClose) * 100 : 0;
               if (standaloneEntryDist <= 3 && overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
                 const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
                 const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
