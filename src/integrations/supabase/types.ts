@@ -3530,6 +3530,54 @@ export type Database = {
           },
         ]
       }
+      scan_requests: {
+        Row: {
+          asset_type: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          notified: boolean
+          patterns_found: number | null
+          priority: number
+          requested_at: string
+          started_at: string | null
+          status: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          asset_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notified?: boolean
+          patterns_found?: number | null
+          priority?: number
+          requested_at?: string
+          started_at?: string | null
+          status?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notified?: boolean
+          patterns_found?: number | null
+          priority?: number
+          requested_at?: string
+          started_at?: string | null
+          status?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_posts: {
         Row: {
           account_id: string | null
@@ -4890,6 +4938,7 @@ export type Database = {
         Args: { p_subscription_id: string; p_user_id: string }
         Returns: Json
       }
+      check_scan_request_limit: { Args: { p_user_id: string }; Returns: Json }
       check_worker_can_run: {
         Args: {
           p_seeding_end_utc?: number
