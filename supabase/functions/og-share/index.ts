@@ -33,7 +33,7 @@ serve(async (req) => {
     }
 
     const userAgent = req.headers.get('user-agent') || '';
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://chartingpath.com';
+    const siteUrl = (Deno.env.get('SITE_URL') || 'https://chartingpath.com').replace(/\/+$/, '');
     const spaUrl = `${siteUrl}/s/${token}`;
 
     // Non-bot visitors get redirected to the SPA
