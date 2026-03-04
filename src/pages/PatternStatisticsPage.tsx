@@ -269,10 +269,11 @@ export default function PatternStatisticsPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-semibold mb-4">Performance by Market & Timeframe</h2>
             <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
-              <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_90px_80px_140px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
+              <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_80px_90px_80px_140px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Market / Timeframe</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Exp (R)</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">ROT</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg R:R</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg Bars</span>
@@ -282,7 +283,7 @@ export default function PatternStatisticsPage() {
               {breakdowns.map((b) => (
                 <div
                   key={`${b.asset_type}-${b.timeframe}`}
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_90px_80px_140px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_80px_80px_90px_80px_140px] gap-3 sm:gap-4 items-center px-4 py-3.5 border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-xs capitalize">{ASSET_LABEL[b.asset_type] || b.asset_type}</Badge>
@@ -293,6 +294,9 @@ export default function PatternStatisticsPage() {
                   </span>
                   <span className={`hidden sm:block text-sm text-right font-mono ${b.expectancy_r > 0 ? 'text-green-500' : 'text-red-500'}`}>
                     {b.expectancy_r > 0 ? '+' : ''}{b.expectancy_r.toFixed(3)}R
+                  </span>
+                  <span className={`hidden sm:block text-sm text-right font-mono ${b.avg_bars > 0 && b.expectancy_r / b.avg_bars >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                    {b.avg_bars > 0 ? (b.expectancy_r / b.avg_bars).toFixed(4) : '—'}
                   </span>
                   <span className="hidden sm:block text-sm text-right text-muted-foreground">{b.avg_rr}</span>
                   <span className="hidden sm:block text-sm text-right text-muted-foreground">{b.total.toLocaleString()}</span>
