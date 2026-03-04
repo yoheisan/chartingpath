@@ -785,7 +785,13 @@ export default function FullChartViewer({
             }
 
             // 2) TP/SL shaded zones — use overlay prices for exact alignment with dotted lines
-            if (overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
+            // Zone sync guard: suppress zones when entry is >3% from current price
+            const latestBarClose = chartData.length > 0 ? Number((chartData[chartData.length - 1] as any).close) : null;
+            const entryPctDist = latestBarClose && overlayEntryPrice 
+              ? Math.abs((overlayEntryPrice - latestBarClose) / latestBarClose) * 100 : 0;
+            const zonesInSync = entryPctDist <= 3;
+
+            if (zonesInSync && overlayEntryPrice != null && overlayTpPrice != null && overlaySlPrice != null) {
               const entryY = (candleSeries as any).priceToCoordinate(overlayEntryPrice);
               const tpY = (candleSeries as any).priceToCoordinate(overlayTpPrice);
               const slY = (candleSeries as any).priceToCoordinate(overlaySlPrice);
