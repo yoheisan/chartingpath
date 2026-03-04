@@ -305,10 +305,7 @@ serve(async (req) => {
         });
 
         // Initialize resvg WASM if needed
-        if (!wasmInitialized) {
-          await initWasm(resvgWasm);
-          wasmInitialized = true;
-        }
+        await ensureWasm();
 
         // Render SVG to PNG
         const resvg = new Resvg(svg, {
