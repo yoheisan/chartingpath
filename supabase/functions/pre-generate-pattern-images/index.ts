@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MAX_IMAGES_PER_RUN = 2;
+const MAX_IMAGES_PER_RUN = 10;
 const ALLOWED_GRADES = ['A', 'B'];
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -239,14 +239,14 @@ serve(async (req) => {
   );
 
   try {
-    // Find A/B grade active detections without a PNG share image
-    // Also re-process detections that only have SVG URLs (Twitter needs PNG)
+    // Find A/B grade active detections that need SVG images
+    // Re-process stale PNGs (from broken WASM renderer) and missing images
     const { data: detections, error: fetchErr } = await supabase
       .from('live_pattern_detections')
       .select('id, pattern_name, instrument, asset_type, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, bars, visual_spec, share_token, share_image_url')
       .in('quality_score', ALLOWED_GRADES)
       .in('status', ['active', 'pending'])
-      .filter('share_image_url', 'is', null)
+      .or('share_image_url.is.null,share_image_url.like.%.png')
       .order('last_confirmed_at', { ascending: false })
       .limit(MAX_IMAGES_PER_RUN);
 
