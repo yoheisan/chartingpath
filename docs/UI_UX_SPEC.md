@@ -311,3 +311,4 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-03-03 | Initial specification codified from codebase and memories |
+| 1.1.0 | 2026-03-04 | Added formation zone pivot-based bounds, direction coherence cross-refs, expanded anti-patterns, companion doc link |
