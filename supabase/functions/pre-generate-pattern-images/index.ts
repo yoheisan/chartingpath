@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
+import resvgWasm from "https://esm.sh/@aspect-dev/esm-resvg-wasm@2.6.2/index_bg.wasm?module";
+
+let wasmInitialized = false;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -290,22 +294,46 @@ serve(async (req) => {
           pivots,
         });
 
-        // Upload SVG
-        const filePath = `${shareToken}.svg`;
+        // Initialize resvg WASM if needed
+        if (!wasmInitialized) {
+          await initWasm(resvgWasm);
+          wasmInitialized = true;
+        }
+
+        // Render SVG to PNG
+        const resvg = new Resvg(svg, {
+          fitTo: { mode: 'width', value: 1200 },
+        });
+        const pngData = resvg.render();
+        const pngBuffer = pngData.asPng();
+
+        // Upload PNG (primary — for Twitter/X OG cards)
+        const pngPath = `${shareToken}.png`;
+        const pngBlob = new Blob([pngBuffer], { type: 'image/png' });
+
+        const { error: pngUploadError } = await supabase.storage
+          .from('share-images')
+          .upload(pngPath, pngBlob, {
+            contentType: 'image/png',
+            upsert: true,
+          });
+
+        if (pngUploadError) throw pngUploadError;
+
+        // Also upload SVG as fallback
+        const svgPath = `${shareToken}.svg`;
         const uploadBlob = new Blob([svg], { type: 'image/svg+xml' });
 
-        const { error: uploadError } = await supabase.storage
+        await supabase.storage
           .from('share-images')
-          .upload(filePath, uploadBlob, {
+          .upload(svgPath, uploadBlob, {
             contentType: 'image/svg+xml',
             upsert: true,
           });
 
-        if (uploadError) throw uploadError;
+        const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${pngPath}`;
 
-        const publicUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/share-images/${filePath}`;
-
-        // Update detection with image URL
+        // Update detection with image URL (PNG)
         await supabase
           .from('live_pattern_detections')
           .update({ share_image_url: publicUrl })
