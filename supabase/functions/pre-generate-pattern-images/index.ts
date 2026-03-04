@@ -307,12 +307,8 @@ serve(async (req) => {
         // Initialize resvg WASM if needed
         await ensureWasm();
 
-        // Render SVG to PNG
-        const resvg = new Resvg(svg, {
-          fitTo: { mode: 'width', value: 1200 },
-        });
-        const pngData = resvg.render();
-        const pngBuffer = pngData.asPng();
+        // Render SVG to PNG using svg2png-wasm
+        const pngBuffer = await svg2png(svg, { width: 1200, height: 630 });
 
         // Upload PNG (primary — for Twitter/X OG cards)
         const pngPath = `${shareToken}.png`;
