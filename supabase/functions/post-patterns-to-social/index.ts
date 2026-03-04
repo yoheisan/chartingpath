@@ -125,14 +125,17 @@ function generateChartSVG(bars: any[], visualSpec: any, symbol: string, timefram
   const barW = Math.max(2, Math.floor(chartW / bars.length) - 1);
   const barToX = (i: number) => padding.left + (i / bars.length) * chartW;
 
-  // ── 1. Formation zone shading (teal, semi-transparent) ──────────────
+  // ── 1. Formation zone shading (teal, semi-transparent) + label ────
   let formationZone = '';
   if (visualSpec?.window?.startTs) {
     const startIdx = tsIndex.get(visualSpec.window.startTs) ?? 0;
     const endIdx = visualSpec.entryBarIndex ?? (tsIndex.get(visualSpec.signalTs) ?? bars.length - 1);
     const x1 = barToX(startIdx);
     const x2 = barToX(Math.min(endIdx, bars.length - 1)) + barW;
-    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.07"/>`;
+    formationZone = `<rect x="${x1}" y="${padding.top}" width="${x2 - x1}" height="${chartH}" fill="${colors.formationZone}" opacity="0.10"/>`;
+    // Formation period label at top
+    const labelX = x1 + (x2 - x1) / 2;
+    formationZone += `<text x="${labelX}" y="${padding.top + 14}" text-anchor="middle" fill="${colors.formationZone}" font-size="9" font-family="monospace" opacity="0.8">Formation Period</text>`;
   }
 
   // ── 2. Candlesticks ─────────────────────────────────────────────────
