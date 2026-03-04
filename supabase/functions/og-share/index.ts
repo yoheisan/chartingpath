@@ -83,7 +83,7 @@ serve(async (req) => {
   <meta property="og:image" content="${ogImageUrl}"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
-  <meta property="og:url" content="${url.origin}${url.pathname}?token=${encodeURIComponent(token)}${versionParam ? `&v=${encodeURIComponent(versionParam)}` : ''}"/>
+  <meta property="og:url" content="${supabaseUrl}/functions/v1/og-share?token=${encodeURIComponent(token)}${versionParam ? `&v=${encodeURIComponent(versionParam)}` : ''}"/>
   <meta property="og:site_name" content="ChartingPath"/>
 
   <!-- Twitter Card -->
