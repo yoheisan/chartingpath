@@ -187,7 +187,7 @@ const Index = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitle', 'Scan 1,100+ instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.')}
+            {t('hero.subtitle', `Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.`)}
           </p>
           
           {/* Ticker Search — prominent */}
@@ -201,7 +201,7 @@ const Index = () => {
                     Search any ticker — AAPL, BTC, EUR/USD…
                   </span>
                   <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
-                    1,100+ instruments
+                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ instruments` : '800+ instruments'}
                   </kbd>
                 </button>
               }
