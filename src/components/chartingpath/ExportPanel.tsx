@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Copy, Check, AlertTriangle, FileCode, Info } from 'lucide-react';
+import { Download, Copy, Check, AlertTriangle, FileCode, Info, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ChartingPathStrategy } from '@/components/ChartingPathStrategyBuilder';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { 
   chartingPathToPlaybook, 
   PlaybookAST, 
@@ -28,8 +31,22 @@ interface ExportPanelProps {
 type ExportFormat = 'pine' | 'mt4' | 'mt5';
 
 export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
+  const { user } = useAuth();
+  const { showAuthDialog, setShowAuthDialog, requireAuth } = useAuthGate('script export');
   const [copiedFormat, setCopiedFormat] = useState<ExportFormat | null>(null);
   const [generating, setGenerating] = useState<ExportFormat | null>(null);
+
+  const EXPORT_COUNT_KEY = 'cp_export_count';
+
+  const getExportCount = (): number => {
+    try { return parseInt(localStorage.getItem(EXPORT_COUNT_KEY) || '0', 10); } catch { return 0; }
+  };
+
+  const incrementExportCount = () => {
+    try { localStorage.setItem(EXPORT_COUNT_KEY, String(getExportCount() + 1)); } catch {}
+  };
+
+  const hasReachedFreeLimit = !user && getExportCount() >= 1;
 
   // Validate strategy has required timeframe
   const validationResult = useMemo(() => {
@@ -88,6 +105,10 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
   }, [playbook]);
 
   const generateAndDownload = async (format: ExportFormat) => {
+    if (hasReachedFreeLimit) {
+      setShowAuthDialog(true);
+      return;
+    }
     if (!playbook) {
       toast({
         title: "Export Failed",
@@ -146,6 +167,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      if (!user) incrementExportCount();
       toast({
         title: "Export Successful",
         description: `Downloaded ${filename}`,
@@ -163,6 +185,10 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
   };
 
   const copyToClipboard = async (format: ExportFormat) => {
+    if (hasReachedFreeLimit) {
+      setShowAuthDialog(true);
+      return;
+    }
     if (!playbook) return;
 
     try {
@@ -180,6 +206,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
       }
 
       await navigator.clipboard.writeText(code);
+      if (!user) incrementExportCount();
       setCopiedFormat(format);
       setTimeout(() => setCopiedFormat(null), 2000);
 
@@ -391,6 +418,18 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ strategy }) => {
           Ensure your chart/broker timeframe matches <strong>{validationResult.timeframe}</strong>.
         </AlertDescription>
       </Alert>
+
+      {/* Free limit warning */}
+      {hasReachedFreeLimit && (
+        <Alert className="border-primary/30 bg-primary/5">
+          <Lock className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-xs">
+            <strong>Free export used.</strong> Sign in to unlock unlimited script exports.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="script export" />
     </div>
   );
 };
