@@ -210,6 +210,9 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 |---|---|
 | TP Zone | `ctx.fillRect()` with `rgba(34, 197, 94, 0.06)` between entry Y and TP Y |
 | SL Zone | `ctx.fillRect()` with `rgba(239, 68, 68, 0.06)` between entry Y and SL Y |
+| Formation Zone | Vertical time range shading from **first pivot to last pivot** with `rgba(59, 130, 246, 0.04)` |
+
+> **⚠️ IMPORTANT:** The formation zone spans first-to-last pivot, NOT `window.startTs`. See `docs/PATTERN_DISCIPLINE.md` §4 for full rules.
 
 ---
 
