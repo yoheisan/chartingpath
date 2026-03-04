@@ -12,27 +12,17 @@ let cachedFont: ArrayBuffer | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
   if (cachedFont) return cachedFont;
-  // Google Fonts serves TTF when User-Agent is an older browser
-  const css = await fetch(
-    'https://fonts.googleapis.com/css2?family=Inter&display=swap',
-    { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)' } }
-  ).then(r => r.text());
-  
-  // This user-agent gets TTF urls from Google Fonts
-  const urlMatch = css.match(/src:\s*url\(([^)]+\.ttf[^)]*)\)/);
-  if (!urlMatch) {
-    // Fallback: extract any url
-    const anyUrl = css.match(/url\(([^)]+)\)/);
-    if (!anyUrl) throw new Error('No font URL found in CSS');
-    const res = await fetch(anyUrl[1]);
-    if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
-    cachedFont = await res.arrayBuffer();
-    return cachedFont;
-  }
-  
-  const fontRes = await fetch(urlMatch[1]);
+  // Use Noto Sans from Google Fonts static TTF (known to work with Satori)
+  const fontRes = await fetch(
+    'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-400-normal.ttf'
+  );
   if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
-  cachedFont = await fontRes.arrayBuffer();
+  const buf = await fontRes.arrayBuffer();
+  // Verify it's actually a TTF/OTF by checking magic bytes
+  const sig = new Uint8Array(buf, 0, 4);
+  const sigStr = String.fromCharCode(...sig);
+  console.log(`[generate-share-image] Font loaded, size=${buf.byteLength}, sig=${sigStr}`);
+  cachedFont = buf;
   return cachedFont;
 }
 
