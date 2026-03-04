@@ -20,7 +20,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MAX_IMAGES_PER_RUN = 5;
+const MAX_IMAGES_PER_RUN = 2;
 const ALLOWED_GRADES = ['A', 'B'];
 
 // ─── Types ──────────────────────────────────────────────────────────────────
