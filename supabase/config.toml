@@ -269,3 +269,6 @@ verify_jwt = false
 
 [functions.fetch-binance]
 verify_jwt = false
+
+[functions.search-symbols]
+verify_jwt = false
