@@ -1,18 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-// Use resvg WASM for SVG→PNG conversion  
-import { Resvg, initWasm } from "https://esm.sh/@aspect-dev/esm-resvg-wasm@2.6.2/index.js";
+// SVG→PNG using svg2png-wasm (resvg-based, Deno-compatible)
+import { svg2png, initialize } from "https://esm.sh/svg2png-wasm@0.6.1";
 
 let wasmInitialized = false;
 
 async function ensureWasm() {
   if (wasmInitialized) return;
-  const wasmUrl = "https://unpkg.com/@aspect-dev/esm-resvg-wasm@2.6.2/index_bg.wasm";
+  const wasmUrl = "https://unpkg.com/svg2png-wasm@0.6.1/svg2png_wasm_bg.wasm";
   const resp = await fetch(wasmUrl);
   if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
-  const wasmModule = await WebAssembly.compile(await resp.arrayBuffer());
-  await initWasm(wasmModule);
+  await initialize(await resp.arrayBuffer());
   wasmInitialized = true;
 }
 
