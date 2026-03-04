@@ -272,16 +272,20 @@ function parseWindowStartIndex(detection: any, barCount: number): number | undef
     const endMs = new Date(spec.window.endTs).getTime();
     if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) return undefined;
 
-    const windowDuration = endMs - startMs;
-    // Timeframe duration per bar (approximate from total bars and window)
-    // endTs maps to approximately the last bar
-    const tfMs = windowDuration / barCount;
-    // If bars extend before the window start, clamp to 0
-    // The bars array typically covers a larger lookback; estimate where window starts
-    // We assume the last bar aligns with endTs
-    const windowStartBar = Math.max(0, Math.round(barCount - (windowDuration / tfMs)));
-    // But if window covers the whole bars array, start at 0
-    return Math.max(0, windowStartBar);
+    // Map timeframe string to milliseconds per bar
+    const tfMap: Record<string, number> = {
+      '15m': 15 * 60_000, '1h': 3600_000, '4h': 4 * 3600_000,
+      '8h': 8 * 3600_000, '1d': 86400_000, '1wk': 7 * 86400_000,
+    };
+    const tf = detection.timeframe?.toLowerCase() ?? '4h';
+    const barMs = tfMap[tf] ?? 4 * 3600_000;
+
+    // endTs aligns with the last bar (index barCount - 1)
+    // Calculate how many bars back the window start is from the end
+    const barsFromEnd = Math.round((endMs - startMs) / barMs);
+    const windowStartIdx = barCount - 1 - barsFromEnd;
+
+    return Math.max(0, windowStartIdx);
   } catch { /* ignore */ }
   return undefined;
 }
