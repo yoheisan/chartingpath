@@ -638,7 +638,16 @@ serve(async (req) => {
         try {
           const bars = primary.bars || [];
           const vSpec = primary.visual_spec || {};
-          const dir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
+          // Derive direction from trade levels (TP > Entry = long), NOT from db direction field
+          // This guards against upstream data conflicts (e.g. Double Bottom tagged as bearish)
+          const dbDir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
+          const tp = Number(primary.take_profit_price);
+          const entry = Number(primary.entry_price);
+          const levelDir = tp > entry ? 'long' : 'short';
+          if (dbDir !== levelDir) {
+            console.warn(`[pattern-poster] ⚠️ Direction conflict for ${primary.instrument}: db=${dbDir}, levels=${levelDir}. Using levels.`);
+          }
+          const dir = levelDir;
 
           if (bars.length > 0) {
             const pngData = await generateChartPNG(
