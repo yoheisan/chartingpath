@@ -51,7 +51,9 @@ function directionEmoji(dir: string): string {
 
 function buildTweet(pattern: any): string {
   const emoji = ASSET_EMOJI[pattern.asset_type?.toLowerCase()] ?? '📉';
-  const dir = directionEmoji(pattern.direction);
+  const dir = deriveDirection(pattern);
+  const dirEmoji = directionEmoji(dir);
+  const dirLabel = dir.toUpperCase();
   const patternName = formatPatternName(pattern.pattern_name);
   const grade = pattern.quality_score?.toUpperCase() ?? '?';
   const tf = pattern.timeframe?.toUpperCase() ?? '';
@@ -61,8 +63,8 @@ function buildTweet(pattern: any): string {
   const tp = Number(pattern.take_profit_price).toPrecision(5);
 
   return (
-    `${emoji} ${dir} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
-    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `${emoji} ${dirEmoji} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
+    `${dirLabel} | Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
     `Free alerts at chartingpath.com`
   ).slice(0, 280);
