@@ -1,9 +1,10 @@
 # ChartingPath — UI/UX Visual Specification
 
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-03-03  
+> **Version:** 1.1.0  
+> **Last Updated:** 2026-03-04  
 > **Authority:** This is the single source of truth for all visual design decisions.  
-> **Rule:** Before implementing or describing any visual element, consult this document first.
+> **Companion:** `docs/PATTERN_DISCIPLINE.md` — pattern identification logic, direction coherence, filtering rules, and social chart rendering.  
+> **Rule:** Before implementing or describing any visual element, consult this document AND the Pattern Discipline document.
 
 ---
 
