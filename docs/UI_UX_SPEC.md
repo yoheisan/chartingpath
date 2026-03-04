@@ -1,9 +1,10 @@
 # ChartingPath — UI/UX Visual Specification
 
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-03-03  
+> **Version:** 1.1.0  
+> **Last Updated:** 2026-03-04  
 > **Authority:** This is the single source of truth for all visual design decisions.  
-> **Rule:** Before implementing or describing any visual element, consult this document first.
+> **Companion:** `docs/PATTERN_DISCIPLINE.md` — pattern identification logic, direction coherence, filtering rules, and social chart rendering.  
+> **Rule:** Before implementing or describing any visual element, consult this document AND the Pattern Discipline document.
 
 ---
 
@@ -209,6 +210,9 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 |---|---|
 | TP Zone | `ctx.fillRect()` with `rgba(34, 197, 94, 0.06)` between entry Y and TP Y |
 | SL Zone | `ctx.fillRect()` with `rgba(239, 68, 68, 0.06)` between entry Y and SL Y |
+| Formation Zone | Vertical time range shading from **first pivot to last pivot** with `rgba(59, 130, 246, 0.04)` |
+
+> **⚠️ IMPORTANT:** The formation zone spans first-to-last pivot, NOT `window.startTs`. See `docs/PATTERN_DISCIPLINE.md` §4 for full rules.
 
 ---
 
@@ -295,6 +299,10 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 | Use custom color classes directly | Use semantic design tokens from `index.css` |
 | Describe UI elements that don't exist in the code | Verify against this spec before describing |
 | Show letter grades (A/B/C) directly | Use descriptive labels ("High Confluence") |
+| Trust database `direction` field blindly | Derive direction from TP vs Entry (see PATTERN_DISCIPLINE.md §2) |
+| Post counter-trend patterns publicly | Block from social/alerts (see PATTERN_DISCIPLINE.md §3) |
+| Use `window.startTs` for formation zone bounds | Use first-to-last pivot span (see PATTERN_DISCIPLINE.md §4) |
+| Use "Stop:" or "Target:" as labels | Use "SL:" and "TP:" per spec §4.2–4.3 |
 
 ---
 
@@ -303,3 +311,4 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-03-03 | Initial specification codified from codebase and memories |
+| 1.1.0 | 2026-03-04 | Added formation zone pivot-based bounds, direction coherence cross-refs, expanded anti-patterns, companion doc link |
