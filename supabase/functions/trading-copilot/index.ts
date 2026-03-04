@@ -1034,6 +1034,18 @@ async function executeGetMarketBreadth() {
       advancePercent: meta.advancePercent || 0,
       declinePercent: meta.declinePercent || 0,
       timestamp: breadth.timestamp || new Date().toISOString(),
+      dataAsOf: (() => {
+        const ts = breadth.timestamp ? new Date(breadth.timestamp) : new Date();
+        const exchange = breadth.exchange || 'NYSE';
+        const dayOfWeek = ts.getUTCDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const formattedDate = ts.toISOString().split('T')[0];
+        const formattedTime = ts.toISOString().split('T')[1]?.slice(0, 5) + ' UTC';
+        if (isWeekend) {
+          return `As of last trading session close (${formattedDate}), ${exchange}. Markets are currently closed for the weekend.`;
+        }
+        return `As of ${formattedDate} ${formattedTime}, ${exchange}.`;
+      })(),
       description: meta.sentiment === 'bullish'
         ? 'More stocks are advancing than declining, indicating positive market breadth and broad-based buying.'
         : meta.sentiment === 'bearish'
