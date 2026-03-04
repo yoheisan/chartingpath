@@ -38,13 +38,22 @@ function formatPatternName(raw: string): string {
   return raw.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-function directionEmoji(direction: string): string {
-  return direction?.toLowerCase() === 'bullish' ? '🟢' : '🔴';
+/** Derive direction from trade levels, not db field */
+function deriveDirection(pattern: any): 'long' | 'short' {
+  const tp = Number(pattern.take_profit_price);
+  const entry = Number(pattern.entry_price);
+  return tp > entry ? 'long' : 'short';
+}
+
+function directionEmoji(dir: string): string {
+  return dir === 'long' ? '🟢' : '🔴';
 }
 
 function buildTweet(pattern: any): string {
   const emoji = ASSET_EMOJI[pattern.asset_type?.toLowerCase()] ?? '📉';
-  const dir = directionEmoji(pattern.direction);
+  const dir = deriveDirection(pattern);
+  const dirEmoji = directionEmoji(dir);
+  const dirLabel = dir.toUpperCase();
   const patternName = formatPatternName(pattern.pattern_name);
   const grade = pattern.quality_score?.toUpperCase() ?? '?';
   const tf = pattern.timeframe?.toUpperCase() ?? '';
@@ -54,8 +63,8 @@ function buildTweet(pattern: any): string {
   const tp = Number(pattern.take_profit_price).toPrecision(5);
 
   return (
-    `${emoji} ${dir} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
-    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `${emoji} ${dirEmoji} ${patternName} — ${pattern.instrument} (${tf})\n\n` +
+    `${dirLabel} | Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
     `Free alerts at chartingpath.com`
   ).slice(0, 280);
@@ -65,7 +74,9 @@ function buildTweet(pattern: any): string {
 function buildConsolidatedTweet(group: any[]): string {
   const first = group[0];
   const emoji = ASSET_EMOJI[first.asset_type?.toLowerCase()] ?? '📉';
-  const dir = directionEmoji(first.direction);
+  const dir = deriveDirection(first);
+  const dirEmoji = directionEmoji(dir);
+  const dirLabel = dir.toUpperCase();
   const tf = first.timeframe?.toUpperCase() ?? '';
   const grade = first.quality_score?.toUpperCase() ?? '?';
   const rr = Number(first.risk_reward_ratio).toFixed(1);
@@ -76,8 +87,8 @@ function buildConsolidatedTweet(group: any[]): string {
   const patternNames = group.map((p: any) => formatPatternName(p.pattern_name)).join(' + ');
 
   return (
-    `${emoji} ${dir} ${patternNames} — ${first.instrument} (${tf})\n\n` +
-    `Grade: ${grade} | R:R ${rr}:1\n` +
+    `${emoji} ${dirEmoji} ${patternNames} — ${first.instrument} (${tf})\n\n` +
+    `${dirLabel} | Grade: ${grade} | R:R ${rr}:1\n` +
     `Entry: ${entry} | SL: ${sl} | TP: ${tp}\n\n` +
     `Free alerts at chartingpath.com`
   ).slice(0, 280);
@@ -638,7 +649,16 @@ serve(async (req) => {
         try {
           const bars = primary.bars || [];
           const vSpec = primary.visual_spec || {};
-          const dir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
+          // Derive direction from trade levels (TP > Entry = long), NOT from db direction field
+          // This guards against upstream data conflicts (e.g. Double Bottom tagged as bearish)
+          const dbDir = primary.direction?.toLowerCase() === 'bullish' ? 'long' : 'short';
+          const tp = Number(primary.take_profit_price);
+          const entry = Number(primary.entry_price);
+          const levelDir = tp > entry ? 'long' : 'short';
+          if (dbDir !== levelDir) {
+            console.warn(`[pattern-poster] ⚠️ Direction conflict for ${primary.instrument}: db=${dbDir}, levels=${levelDir}. Using levels.`);
+          }
+          const dir = levelDir;
 
           if (bars.length > 0) {
             const pngData = await generateChartPNG(
