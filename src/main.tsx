@@ -72,6 +72,7 @@ createRoot(document.getElementById("root")!).render(
           <AuthProvider>
             <MarketReportProvider>
               <ErrorBoundary>
+                <ScanNotificationListener />
                 <HreflangTags />
                 <Bootstrap />
               </ErrorBoundary>
