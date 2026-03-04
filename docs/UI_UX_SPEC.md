@@ -299,6 +299,10 @@ Because Lightweight Charts lacks native polygon support, formation zones are ren
 | Use custom color classes directly | Use semantic design tokens from `index.css` |
 | Describe UI elements that don't exist in the code | Verify against this spec before describing |
 | Show letter grades (A/B/C) directly | Use descriptive labels ("High Confluence") |
+| Trust database `direction` field blindly | Derive direction from TP vs Entry (see PATTERN_DISCIPLINE.md §2) |
+| Post counter-trend patterns publicly | Block from social/alerts (see PATTERN_DISCIPLINE.md §3) |
+| Use `window.startTs` for formation zone bounds | Use first-to-last pivot span (see PATTERN_DISCIPLINE.md §4) |
+| Use "Stop:" or "Target:" as labels | Use "SL:" and "TP:" per spec §4.2–4.3 |
 
 ---
 
