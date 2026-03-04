@@ -12,6 +12,7 @@ import { track } from '@/services/analytics';
 import { trackEvent } from '@/lib/analytics';
 import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
+import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
@@ -177,6 +178,24 @@ const Index = () => {
             {t('hero.subtitle', 'Scan 1,100+ instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.')}
           </p>
           
+          {/* Ticker Search — prominent */}
+          <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+            <UniversalSymbolSearch
+              onSelect={(symbol) => navigate(`/instruments/${symbol}`)}
+              trigger={
+                <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-primary/30 bg-card/80 backdrop-blur-sm hover:border-primary/60 transition-all shadow-lg hover:shadow-primary/10 group cursor-pointer">
+                  <Search className="h-5 w-5 text-primary" />
+                  <span className="text-muted-foreground text-base group-hover:text-foreground transition-colors">
+                    Search any ticker — AAPL, BTC, EUR/USD…
+                  </span>
+                  <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
+                    1,100+ instruments
+                  </kbd>
+                </button>
+              }
+            />
+          </div>
+
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Button 
