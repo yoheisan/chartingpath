@@ -7,6 +7,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Cache font data across requests
+let cachedFont: ArrayBuffer | null = null;
+
+async function loadFont(): Promise<ArrayBuffer> {
+  if (cachedFont) return cachedFont;
+  // Use Google Fonts CSS API to get the actual TTF URL, then fetch the binary
+  const css = await fetch(
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap',
+    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } }
+  ).then(r => r.text());
+
+  // Extract first TTF/WOFF2 URL from the CSS
+  const urlMatch = css.match(/src:\s*url\(([^)]+)\)/);
+  if (!urlMatch) throw new Error('Could not find font URL in Google Fonts CSS');
+
+  const fontUrl = urlMatch[1];
+  const fontRes = await fetch(fontUrl);
+  if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
+  cachedFont = await fontRes.arrayBuffer();
+  return cachedFont;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -32,8 +54,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No share token' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Generate PNG using og_edge (Satori) — has built-in font rendering
-    const imageResponse = generateImage(detection);
+    // Load font data for Satori
+    const fontData = await loadFont();
+
+    // Generate PNG using og_edge (Satori) with explicit font data
+    const imageResponse = generateImage(detection, fontData);
     const pngBuffer = new Uint8Array(await imageResponse.arrayBuffer());
 
     const pngPath = `${shareToken}.png`;
@@ -51,7 +76,7 @@ serve(async (req) => {
       .update({ share_image_url: publicUrl, updated_at: new Date().toISOString() })
       .eq('id', detection.id);
 
-    console.log(`[generate-share-image] PNG ${pngPath} for ${detection.instrument} (og_edge/satori)`);
+    console.log(`[generate-share-image] PNG ${pngPath} for ${detection.instrument} (og_edge/satori+inter)`);
 
     return new Response(
       JSON.stringify({ success: true, url: publicUrl, token: shareToken, format: 'png' }),

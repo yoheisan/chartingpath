@@ -2,7 +2,7 @@
 import React from 'https://esm.sh/react@18.2.0';
 import { ImageResponse } from 'https://deno.land/x/og_edge@0.0.4/mod.ts';
 
-export default function handler(detection: any) {
+export default function handler(detection: any, fontData: ArrayBuffer) {
   const entry = detection.entry_price;
   const sl = detection.stop_loss_price;
   const tp = detection.take_profit_price;
@@ -21,10 +21,10 @@ export default function handler(detection: any) {
       <div style={{
         width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
         background: 'linear-gradient(180deg, #0f1419 0%, #1a1f2e 100%)',
-        fontFamily: 'sans-serif', color: 'white', position: 'relative',
+        fontFamily: 'Inter', color: 'white', position: 'relative',
       }}>
         {/* Orange accent bar */}
-        <div style={{ width: '100%', height: '4px', background: 'linear-gradient(90deg, #ff6633, #ff8c00)' }} />
+        <div style={{ width: '100%', height: '4px', background: 'linear-gradient(90deg, #ff6633, #ff8c00)', display: 'flex' }} />
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 40px 0', alignItems: 'flex-start' }}>
@@ -44,11 +44,11 @@ export default function handler(detection: any) {
                 {isBullish ? '▲ BULLISH' : '▼ BEARISH'}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: 8 }}>
-              <div style={{ background: '#3b82f640', borderRadius: 16, padding: '6px 18px' }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <div style={{ background: '#3b82f640', borderRadius: 16, padding: '6px 18px', display: 'flex' }}>
                 <span style={{ color: '#60a5fa', fontSize: 16, fontWeight: 700 }}>{grade}</span>
               </div>
-              <div style={{ background: '#8b5cf640', borderRadius: 16, padding: '6px 18px' }}>
+              <div style={{ background: '#8b5cf640', borderRadius: 16, padding: '6px 18px', display: 'flex' }}>
                 <span style={{ color: '#a78bfa', fontSize: 16, fontWeight: 700 }}>R:R {rr}</span>
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function handler(detection: any) {
         {/* Trade levels - large center display */}
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', flex: 1, gap: '16px', padding: '0 60px',
+          justifyContent: 'center', flex: 1, gap: 16, padding: '0 60px',
         }}>
           {/* TP */}
           <div style={{
@@ -72,7 +72,7 @@ export default function handler(detection: any) {
             }}>
               <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>TP {formatPrice(tp)}</span>
             </div>
-            <div style={{ flex: 1, height: '2px', background: '#22c55e', opacity: 0.3, marginLeft: 16 }} />
+            <div style={{ flex: 1, height: 2, background: '#22c55e', opacity: 0.3, marginLeft: 16, display: 'flex' }} />
           </div>
 
           {/* Entry */}
@@ -87,7 +87,7 @@ export default function handler(detection: any) {
             }}>
               <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>ENTRY {formatPrice(entry)}</span>
             </div>
-            <div style={{ flex: 1, height: '2px', background: '#3b82f6', opacity: 0.3, marginLeft: 16 }} />
+            <div style={{ flex: 1, height: 2, background: '#3b82f6', opacity: 0.3, marginLeft: 16, display: 'flex' }} />
           </div>
 
           {/* SL */}
@@ -102,7 +102,7 @@ export default function handler(detection: any) {
             }}>
               <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>SL {formatPrice(sl)}</span>
             </div>
-            <div style={{ flex: 1, height: '2px', background: '#ef4444', opacity: 0.3, marginLeft: 16 }} />
+            <div style={{ flex: 1, height: 2, background: '#ef4444', opacity: 0.3, marginLeft: 16, display: 'flex' }} />
           </div>
         </div>
 
@@ -111,9 +111,9 @@ export default function handler(detection: any) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 40px', height: 54, background: 'rgba(10,14,20,0.9)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ color: '#ff6633', fontSize: 20, fontWeight: 800 }}>ChartingPath</span>
-            <span style={{ color: '#64748b', fontSize: 14 }}>chartingpath.com · Live Pattern Detection</span>
+            <span style={{ color: '#64748b', fontSize: 14 }}>chartingpath.com</span>
           </div>
           <span style={{ color: '#94a3b8', fontSize: 14, fontWeight: 600 }}>
             Entry: {formatPrice(entry)} | SL: {formatPrice(sl)} | TP: {formatPrice(tp)}
@@ -121,6 +121,17 @@ export default function handler(detection: any) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        {
+          name: 'Inter',
+          data: fontData,
+          weight: 400,
+          style: 'normal',
+        },
+      ],
+    }
   );
 }
