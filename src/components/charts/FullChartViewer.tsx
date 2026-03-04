@@ -259,6 +259,9 @@ export default function FullChartViewer({
     }
 
     const { bars, visualSpec } = setup;
+    // Determine if trade plan should be suppressed (SL/TP already hit)
+    const tradeResolved = isResolvedOutcome(setup.outcome);
+    
     if (!bars || bars.length === 0) {
       console.warn('[FullChartViewer] no bars to render');
       return;
