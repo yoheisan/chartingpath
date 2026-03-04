@@ -38,8 +38,15 @@ function formatPatternName(raw: string): string {
   return raw.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-function directionEmoji(direction: string): string {
-  return direction?.toLowerCase() === 'bullish' ? '🟢' : '🔴';
+/** Derive direction from trade levels, not db field */
+function deriveDirection(pattern: any): 'long' | 'short' {
+  const tp = Number(pattern.take_profit_price);
+  const entry = Number(pattern.entry_price);
+  return tp > entry ? 'long' : 'short';
+}
+
+function directionEmoji(dir: string): string {
+  return dir === 'long' ? '🟢' : '🔴';
 }
 
 function buildTweet(pattern: any): string {
