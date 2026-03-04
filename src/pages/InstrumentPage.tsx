@@ -6,6 +6,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RequestScanButton } from '@/components/instruments/RequestScanButton';
 import {
   BarChart3,
   TrendingUp,
@@ -296,7 +297,12 @@ export default function InstrumentPage() {
         {/* Empty state */}
         {!loading && patterns.length === 0 && (
           <div className="rounded-xl border border-border/40 bg-card/40 p-12 text-center text-muted-foreground mb-10">
-            No historical pattern data available for {displayName} yet. Data is updated daily.
+            <p className="mb-4">No historical pattern data available for {displayName} yet.</p>
+            <RequestScanButton
+              symbol={symbol}
+              assetType={instrument?.asset_type}
+              hasPatternData={false}
+            />
           </div>
         )}
 
