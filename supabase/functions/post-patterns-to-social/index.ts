@@ -505,6 +505,9 @@ serve(async (req) => {
     // Bullish setups should be with_trend or neutral (not counter_trend)
     // Bearish setups should be with_trend or neutral (not counter_trend)
     // Patterns without trend data are excluded to maintain quality
+    const REVERSAL_BEARISH = ['double-top', 'triple-top', 'head-and-shoulders', 'rising-wedge'];
+    const REVERSAL_BULLISH = ['double-bottom', 'triple-bottom', 'inverse-head-and-shoulders', 'falling-wedge'];
+
     const contextFiltered = patterns.filter((p: any) => {
       const alignment = p.trend_alignment?.toLowerCase();
       if (!alignment) {
@@ -515,7 +518,22 @@ serve(async (req) => {
         console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — counter-trend`);
         return false;
       }
-      return true; // 'with_trend' or 'neutral'/'sideways'
+
+      // Context-aware: reversal patterns MUST form against the prior trend
+      // Double Top needs prior uptrend (with_trend for bearish = prior was bullish)
+      // Double Bottom needs prior downtrend
+      const pName = p.pattern_name?.toLowerCase();
+      const dir = p.direction?.toLowerCase();
+      if (REVERSAL_BEARISH.includes(pName) && alignment !== 'with_trend' && dir !== 'bearish') {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — reversal needs prior uptrend`);
+        return false;
+      }
+      if (REVERSAL_BULLISH.includes(pName) && alignment !== 'with_trend' && dir !== 'bullish') {
+        console.log(`[pattern-poster] Skipping ${p.instrument} ${p.pattern_name} — reversal needs prior downtrend`);
+        return false;
+      }
+
+      return true;
     });
 
     console.log(`[pattern-poster] ${patterns.length} A/B patterns → ${contextFiltered.length} after trend filter`);
