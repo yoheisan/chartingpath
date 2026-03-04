@@ -84,8 +84,14 @@ const Navigation = () => {
   // Mobile nav content - journey-aligned structure (Discover → Research → Execute → Automate)
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
+      {/* 0. Dashboard - Command Center */}
+      <Link to="/members/dashboard" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
+        <BarChart3 className="h-5 w-5 text-blue-500" />
+        {t('navigation.dashboard', 'Dashboard')}
+      </Link>
+      
       {/* 1. Screener - Discover signals */}
-      <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
+      <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2 border-t pt-4 mt-2">
         <Activity className="h-5 w-5 text-amber-500" />
         {t('navigation.screener', 'Screener')}
       </Link>
