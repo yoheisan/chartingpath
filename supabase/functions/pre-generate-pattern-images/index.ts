@@ -1,20 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-// SVG→PNG using svg2png-wasm (resvg-based, Deno-compatible)
-import { svg2png, initialize } from "https://esm.sh/svg2png-wasm@0.6.1";
-
-let wasmInitialized = false;
-
-async function ensureWasm() {
-  if (wasmInitialized) return;
-  const wasmUrl = "https://unpkg.com/svg2png-wasm@0.6.1/svg2png_wasm_bg.wasm";
-  const resp = await fetch(wasmUrl);
-  if (!resp.ok) throw new Error(`Failed to fetch WASM: ${resp.status}`);
-  await initialize(await resp.arrayBuffer());
-  wasmInitialized = true;
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
