@@ -69,6 +69,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch all active instruments for /instruments/:symbol pages
+    const { data: allInstruments, error: instrError } = await supabase
+      .from('instruments')
+      .select('symbol')
+      .eq('is_active', true);
+
+    if (instrError) {
+      console.error('Error fetching instruments:', instrError);
+    }
+
     const today = new Date().toISOString().split('T')[0];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -107,6 +117,19 @@ Deno.serve(async (req) => {
     <priority>0.6</priority>
   </url>
 `;
+    }
+
+    // Individual instrument pages
+    if (allInstruments) {
+      for (const inst of allInstruments) {
+        xml += `  <url>
+    <loc>${BASE_URL}/instruments/${encodeURIComponent(inst.symbol)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
     }
 
     // Dynamic article routes
