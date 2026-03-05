@@ -861,154 +861,125 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
   const currentStrategyName = builderRef.current?.getStrategy()?.name || 'New Chart Pattern Strategy';
 
   return (
-    <div className="min-h-screen">
-      {/* Fixed Header with Strategy Menu and Summary Bar */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-background border-b border-border">
-        <div className="container mx-auto max-w-7xl px-4 md:px-6">
-          {/* Title Row */}
-          <div className="flex items-center justify-between py-4">
-            <div className="border-l-4 border-foreground pl-6">
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">STRATEGY WORKSPACE</h1>
-              {currentChartingPathStrategy && currentChartingPathStrategy.id && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {currentChartingPathStrategy.name}
-                </p>
-              )}
-            </div>
-            
-            {/* Agent Backtest switch */}
-            {onSwitchToAgent && (
-              <Button variant="outline" size="sm" className="gap-2" onClick={onSwitchToAgent}>
-                <Brain className="w-4 h-4" />
-                <span className="hidden sm:inline">Agent Backtest</span>
-              </Button>
-            )}
-
-            {/* Strategy Actions Menu - Hidden in wedge mode for MVP simplicity */}
-            {!wedgeConfig.wedgeEnabled && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Save className="w-4 h-4" />
-                    <span className="hidden sm:inline">Strategy</span>
-                    <MoreVertical className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-popover">
-                  <DropdownMenuItem onClick={handleSaveFromMenu}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Strategy
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={openSaveAsDialog}>
-                    <SaveAll className="w-4 h-4 mr-2" />
-                    Save As...
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={openRenameDialog}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
-                    <FolderOpen className="w-4 h-4 mr-2" />
-                    Load Strategy...
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => {
-                    try {
-                      toast.info('Capturing screenshot...');
-                      const element = document.body;
-                      const canvas = await html2canvas(element, {
-                        useCORS: true,
-                        allowTaint: true,
-                        scrollY: -window.scrollY,
-                        windowHeight: document.documentElement.scrollHeight,
-                        height: document.documentElement.scrollHeight,
-                      });
-                      const link = document.createElement('a');
-                      link.download = `strategy-workspace-${new Date().toISOString().slice(0, 10)}.png`;
-                      link.href = canvas.toDataURL('image/png');
-                      link.click();
-                      toast.success('Screenshot downloaded!');
-                    } catch (err) {
-                      console.error('Screenshot failed:', err);
-                      toast.error('Failed to capture screenshot');
-                    }
-                  }}>
-                    <Camera className="w-4 h-4 mr-2" />
-                    Export as Image
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Summary Bar */}
-          <div className="pb-3">
-            <div className="bg-muted/30 border border-dashed border-border rounded-lg py-3 px-4">
-              <div className="flex items-center justify-between text-sm flex-wrap gap-2">
-                <div className="flex items-center gap-4 flex-wrap">
-                  {summaryData.instrument && (
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-primary" />
-                      <span className="font-medium">{summaryData.instrument}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {summaryData.timeframes?.join(', ')}
-                      </Badge>
-                    </div>
-                  )}
-                  {summaryData.patternsCount > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-primary" />
-                      <span>{summaryData.patternsCount} Patterns</span>
-                    </div>
-                  )}
-                  {summaryData.targetGainPercent > 0 && (
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-500" />
-                      <span>TP: {summaryData.targetGainPercent}%</span>
-                    </div>
-                  )}
-                  {summaryData.stopLossPercent > 0 && (
-                    <div className="flex items-center gap-2">
-                      <TrendingDown className="w-4 h-4 text-red-500" />
-                      <span>SL: {summaryData.stopLossPercent}%</span>
-                    </div>
-                  )}
-                  {summaryData.backtestReturn !== undefined && (
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-green-500" />
-                      <span className="text-green-600 font-medium">
-                        {summaryData.backtestReturn > 0 ? '+' : ''}{summaryData.backtestReturn?.toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {summaryData.completedSteps}/{summaryData.totalSteps} complete
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Clean Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Strategy Builder</h1>
+          {currentChartingPathStrategy?.id && (
+            <p className="text-sm text-muted-foreground mt-1">{currentChartingPathStrategy.name}</p>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Strategy Actions Menu - Hidden in wedge mode */}
+          {!wedgeConfig.wedgeEnabled && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="default" className="gap-2">
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Strategy</span>
+                  <MoreVertical className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuItem onClick={handleSaveFromMenu}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Strategy
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openSaveAsDialog}>
+                  <SaveAll className="w-4 h-4 mr-2" />
+                  Save As...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={openRenameDialog}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Load Strategy...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={async () => {
+                  try {
+                    toast.info('Capturing screenshot...');
+                    const element = document.body;
+                    const canvas = await html2canvas(element, {
+                      useCORS: true,
+                      allowTaint: true,
+                      scrollY: -window.scrollY,
+                      windowHeight: document.documentElement.scrollHeight,
+                      height: document.documentElement.scrollHeight,
+                    });
+                    const link = document.createElement('a');
+                    link.download = `strategy-workspace-${new Date().toISOString().slice(0, 10)}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    toast.success('Screenshot downloaded!');
+                  } catch (err) {
+                    console.error('Screenshot failed:', err);
+                    toast.error('Failed to capture screenshot');
+                  }
+                }}>
+                  <Camera className="w-4 h-4 mr-2" />
+                  Export as Image
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
-      {/* Scrollable Content - with padding to account for fixed header */}
-      <div className="pt-40">
-        <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6 space-y-6">
-          {/* Crypto Preset Panel (Wedge Mode) */}
-          {wedgeConfig.wedgeEnabled && (
-            <CryptoPresetPanel 
-              onPresetLoad={handlePresetLoad} 
-              onOneClickBacktest={handleOneClickBacktest}
-              isBacktesting={isBacktesting}
-            />
+      {/* Summary Strip — minimal, only when data exists */}
+      {summaryData.instrument && (
+        <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 text-primary" />
+            <span className="font-medium text-foreground">{summaryData.instrument}</span>
+            <Badge variant="secondary" className="text-xs">{summaryData.timeframes?.join(', ')}</Badge>
+          </div>
+          {summaryData.patternsCount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Target className="w-4 h-4 text-primary" />
+              <span>{summaryData.patternsCount} Patterns</span>
+            </div>
           )}
+          {summaryData.targetGainPercent > 0 && (
+            <span className="flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              TP {summaryData.targetGainPercent}%
+            </span>
+          )}
+          {summaryData.stopLossPercent > 0 && (
+            <span className="flex items-center gap-1.5">
+              <TrendingDown className="w-4 h-4 text-red-500" />
+              SL {summaryData.stopLossPercent}%
+            </span>
+          )}
+          {summaryData.backtestReturn !== undefined && (
+            <span className={`font-semibold ${summaryData.backtestReturn >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+              {summaryData.backtestReturn > 0 ? '+' : ''}{summaryData.backtestReturn?.toFixed(1)}%
+            </span>
+          )}
+          <span className="ml-auto text-xs">{summaryData.completedSteps}/{summaryData.totalSteps} steps</span>
+        </div>
+      )}
 
-          {/* Result Summary with CTAs after backtest */}
-          {backtestResults && wedgeConfig.wedgeEnabled && (
-            <div ref={resultSummaryRef}>
-              <BacktestResultSummary
+      {/* Crypto Preset Panel (Wedge Mode) */}
+      {wedgeConfig.wedgeEnabled && (
+        <CryptoPresetPanel 
+          onPresetLoad={handlePresetLoad} 
+          onOneClickBacktest={handleOneClickBacktest}
+          isBacktesting={isBacktesting}
+        />
+      )}
+
+      {/* Result Summary with CTAs after backtest */}
+      {backtestResults && wedgeConfig.wedgeEnabled && (
+        <div ref={resultSummaryRef}>
+          <BacktestResultSummary
                 results={{
                   totalTrades: backtestResults.totalTrades || 0,
                   winRate: backtestResults.winRate || 0,
