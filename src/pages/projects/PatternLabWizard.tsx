@@ -403,6 +403,59 @@ const PatternLabWizard = () => {
     };
   }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades, session]);
   
+  // Data availability check — queries historical_prices to warn before credit spend
+  interface DataCoverage { symbol: string; bars: number; earliest: string | null; latest: string | null }
+  const [dataCoverage, setDataCoverage] = useState<DataCoverage[]>([]);
+  const [isCheckingData, setIsCheckingData] = useState(false);
+
+  useEffect(() => {
+    if (selectedInstruments.length === 0) { setDataCoverage([]); return; }
+    let cancelled = false;
+    const check = async () => {
+      setIsCheckingData(true);
+      try {
+        // Check each instrument's data availability for the selected timeframe
+        const results: DataCoverage[] = [];
+        for (const sym of selectedInstruments) {
+          const { count, data } = await supabase
+            .from('historical_prices')
+            .select('date', { count: 'exact', head: false })
+            .eq('symbol', sym)
+            .eq('timeframe', timeframe)
+            .order('date', { ascending: true })
+            .limit(1);
+          
+          const { data: latestData } = await supabase
+            .from('historical_prices')
+            .select('date')
+            .eq('symbol', sym)
+            .eq('timeframe', timeframe)
+            .order('date', { ascending: false })
+            .limit(1);
+          
+          if (!cancelled) {
+            results.push({
+              symbol: sym,
+              bars: count ?? 0,
+              earliest: data?.[0]?.date ?? null,
+              latest: latestData?.[0]?.date ?? null,
+            });
+          }
+        }
+        if (!cancelled) setDataCoverage(results);
+      } catch (e) {
+        console.error('Data coverage check failed:', e);
+      } finally {
+        if (!cancelled) setIsCheckingData(false);
+      }
+    };
+    const debounce = setTimeout(check, 500);
+    return () => { clearTimeout(debounce); cancelled = true; };
+  }, [selectedInstruments, timeframe]);
+  
+  const hasNoData = dataCoverage.some(d => d.bars === 0);
+  const hasLowData = dataCoverage.some(d => d.bars > 0 && d.bars < 50);
+
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
       prev.includes(symbol)
@@ -1307,6 +1360,59 @@ const PatternLabWizard = () => {
                   </p>
                 )}
                 
+                {/* Data Availability Check */}
+                {dataCoverage.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Database className="h-3 w-3" />
+                      Data Availability
+                    </p>
+                    <div className="space-y-1.5">
+                      {dataCoverage.map(d => (
+                        <div key={d.symbol} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-foreground truncate max-w-[120px]">{d.symbol}</span>
+                          {d.bars === 0 ? (
+                            <span className="flex items-center gap-1 text-destructive font-medium">
+                              <AlertCircle className="h-3 w-3" />
+                              No data
+                            </span>
+                          ) : d.bars < 50 ? (
+                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
+                              <AlertCircle className="h-3 w-3" />
+                              {d.bars} bars
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {d.bars.toLocaleString()} bars
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {hasNoData && (
+                      <Alert variant="destructive" className="mt-2 py-2">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        <AlertDescription className="text-xs">
+                          No historical data found for {dataCoverage.filter(d => d.bars === 0).map(d => d.symbol).join(', ')} on {timeframe}. Credits will not be charged but the backtest will fail. Try a different timeframe.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {!hasNoData && hasLowData && (
+                      <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
+                        <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                        <span>Low data may produce unreliable results with few trades.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {isCheckingData && dataCoverage.length === 0 && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Checking data availability…
+                  </div>
+                )}
+                
                 <Button
                   className="w-full"
                   size="lg"
@@ -1314,6 +1420,7 @@ const PatternLabWizard = () => {
                   disabled={
                     isRunning || 
                     isAuthLoading ||
+                    hasNoData ||
                     selectedInstruments.length === 0 || 
                     selectedPatterns.length === 0 ||
                     (isAuthenticated && !isEnabled) ||
