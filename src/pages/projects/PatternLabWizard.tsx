@@ -627,7 +627,7 @@ const PatternLabWizard = () => {
                     { instrument: 'EURUSD=X', pattern: 'falling-wedge', timeframe: '1d', labelKey: 'patternLabWizard.quickStartEurusd', labelFallback: 'Falling Wedge on EUR/USD', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
                   ].map((example) => (
                     <button
-                      key={example.label}
+                      key={example.labelKey}
                       onClick={() => {
                         trackEvent('pattern_lab.quick_start', { instrument: example.instrument, pattern: example.pattern });
                         setSelectedInstruments([example.instrument]);
