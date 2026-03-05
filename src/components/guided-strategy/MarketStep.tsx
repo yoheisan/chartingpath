@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TrendingUp, TrendingDown, Minus, Globe, Clock, Zap, HelpCircle, Search, RefreshCw, Lock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Globe, Clock, Zap, HelpCircle, Search, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GuidedStrategyAnswers } from '../GuidedStrategyBuilder';
 import { POPULAR_STOCKS, searchStocks, StockSymbol } from '@/data/stockSymbols';
