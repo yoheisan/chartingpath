@@ -52,6 +52,7 @@ export const AgentBacktestPanel: React.FC = () => {
   const [fromDate, setFromDate] = useState('2024-01-01');
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
+  const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [isRunning, setIsRunning] = useState(false);
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
