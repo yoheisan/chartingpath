@@ -212,6 +212,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               </ToggleGroup>
             </CardContent>
           </Card>
+
+          {/* Timeframe Filter */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-4 space-y-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Timeframe</span>
+              <ToggleGroup
+                type="single"
+                value={timeframeFilter}
+                onValueChange={(v) => v && setTimeframeFilter(v as TimeframeFilter)}
+                className="flex flex-wrap gap-1.5"
+              >
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: '1H', label: '1H' },
+                  { value: '4H', label: '4H' },
+                  { value: '1D', label: '1D' },
+                  { value: '1W', label: '1W' },
+                ].map((tf) => (
+                  <ToggleGroupItem key={tf.value} value={tf.value} size="sm" className="text-sm h-9 px-3.5">
+                    {tf.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </CardContent>
+          </Card>
           {/* Agent Sliders */}
           <Card className="border-border bg-card">
             <CardContent className="p-4 space-y-5">
@@ -347,7 +372,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 weights={weights}
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
-                assetClassFilter={assetClassFilter}
+                detections={liveDetections}
+                isLoading={detectionsLoading}
                 onSendToBacktest={onSendToBacktest}
                 basketSymbols={basketSymbols}
                 onToggleBasket={toggleBasket}
