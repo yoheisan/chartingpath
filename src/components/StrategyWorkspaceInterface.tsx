@@ -1048,8 +1048,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
               backtestPhase={backtestPhase}
             />
           )}
-        </div>
-      </div>
 
       {/* Save As Dialog */}
       <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
