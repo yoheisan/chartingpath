@@ -103,13 +103,19 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     
-    // If no basket specified, use all symbols from live detections
-    const effectiveSymbols = symbolList.length > 0 ? symbolList : [...new Set(liveDetections.map((d) => d.instrument))];
+    if (symbolList.length === 0) {
+      toast.error('Add symbols to the basket first. Click + next to rows in the table.');
+      return;
+    }
     
-    if (effectiveSymbols.length === 0) { toast.error('No active detections available to backtest'); return; }
+    const MAX_INSTRUMENTS = 20;
+    if (symbolList.length > MAX_INSTRUMENTS) {
+      toast.error(`Too many instruments (${symbolList.length}). Maximum is ${MAX_INSTRUMENTS} per run. Remove some from the basket.`);
+      return;
+    }
     
     // Derive patterns from detections matching the effective symbols
-    const relevantDetections = liveDetections.filter((d) => effectiveSymbols.includes(d.instrument));
+    const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
     const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
     
     if (uniquePatterns.length === 0) {
@@ -140,7 +146,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           body: JSON.stringify({
             projectType: 'pattern_lab',
             inputs: {
-              instruments: effectiveSymbols,
+              instruments: symbolList,
               patterns: uniquePatterns,
               timeframe: tf,
               lookbackYears: 2,
