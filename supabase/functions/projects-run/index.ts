@@ -1834,13 +1834,45 @@ serve(async (req) => {
         const endDate = new Date();
         const startDate = new Date();
         startDate.setFullYear(startDate.getFullYear() - effectiveLookbackYears);
+
+        const executionStartedAt = Date.now();
+        const EXECUTION_BUDGET_MS = 95_000;
+        const ensureBudget = (stage: string) => {
+          if (Date.now() - executionStartedAt > EXECUTION_BUDGET_MS) {
+            throw new Error(`Backtest timed out during ${stage}. Reduce instruments/patterns/lookback and retry.`);
+          }
+        };
         
         let artifactJson: any = null;
         let artifactType = 'backtest_report';
         
         // ============= PATTERN LAB EXECUTION =============
         if (projectType === 'pattern_lab') {
-          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${patterns.length} patterns, ${lookbackYears} years`);
+          const normalizedInstrumentPatternMap: Record<string, string[]> = {};
+          if (instrumentPatternMap && typeof instrumentPatternMap === 'object') {
+            for (const instrument of instruments) {
+              const raw = (instrumentPatternMap as Record<string, unknown>)[instrument];
+              if (!Array.isArray(raw)) continue;
+              const cleaned = raw
+                .filter((p): p is string => typeof p === 'string')
+                .filter((p) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
+              if (cleaned.length > 0) {
+                normalizedInstrumentPatternMap[instrument] = [...new Set(cleaned)];
+              }
+            }
+          }
+
+          const effectivePatternMap: Record<string, string[]> = {};
+          for (const instrument of instruments) {
+            const scoped = normalizedInstrumentPatternMap[instrument];
+            const fallback = patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
+            effectivePatternMap[instrument] = (scoped && scoped.length > 0) ? scoped : fallback;
+          }
+
+          const scannedPatternIds = [...new Set(Object.values(effectivePatternMap).flat())];
+          const totalPatternScans = Object.values(effectivePatternMap).reduce((sum, list) => sum + list.length, 0);
+
+          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${scannedPatternIds.length} unique patterns, ${totalPatternScans} instrument-pattern scans, ${lookbackYears} years`);
           
           const allTrades: BacktestTrade[] = [];
           const patternResults: any[] = [];
