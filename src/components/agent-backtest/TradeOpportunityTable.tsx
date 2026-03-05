@@ -41,6 +41,22 @@ const MOCK_TRADES: TradeOpportunity[] = [
   { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
 ];
 
+const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; label: string; tooltip: string }) => (
+  <span className="inline-flex items-center gap-1 justify-center">
+    {icon} {label}
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed font-normal">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </span>
+);
+
 // Map display pattern names to engine pattern IDs
 const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Bull Flag': 'bull_flag',
