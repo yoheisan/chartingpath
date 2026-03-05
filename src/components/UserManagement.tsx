@@ -168,6 +168,51 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
     }
   };
 
+  const generateTempPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+    let pass = '';
+    for (let i = 0; i < 12; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+    return pass;
+  };
+
+  const handleCreateUser = async () => {
+    if (!newEmail.trim()) {
+      toast({ title: "Error", description: "Email is required", variant: "destructive" });
+      return;
+    }
+    const password = tempPassword.trim() || generateTempPassword();
+    setIsCreatingUser(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: { email: newEmail.trim(), temp_password: password, subscription_plan: newUserPlan }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setCreatedUserInfo({ email: newEmail.trim(), password });
+      toast({ title: "User Created", description: `Account created for ${newEmail.trim()}` });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to create user", variant: "destructive" });
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const resetCreateUserDialog = () => {
+    setIsCreateUserOpen(false);
+    setNewEmail("");
+    setTempPassword("");
+    setNewUserPlan("starter");
+    setCreatedUserInfo(null);
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPlan = selectedPlan === "all" || user.subscription_plan === selectedPlan;
