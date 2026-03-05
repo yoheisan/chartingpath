@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartingPathManager } from './ChartingPathManager';
-import { CryptoPresetPanel } from './CryptoPresetPanel';
+
 import { 
   wedgeConfig, 
   getFullSymbol, 
@@ -967,14 +967,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
         </div>
       )}
 
-      {/* Crypto Preset Panel (Wedge Mode) */}
-      {wedgeConfig.wedgeEnabled && (
-        <CryptoPresetPanel 
-          onPresetLoad={handlePresetLoad} 
-          onOneClickBacktest={handleOneClickBacktest}
-          isBacktesting={isBacktesting}
-        />
-      )}
 
       {/* Result Summary with CTAs after backtest */}
       {backtestResults && wedgeConfig.wedgeEnabled && (
