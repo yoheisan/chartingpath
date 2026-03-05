@@ -146,7 +146,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           body: JSON.stringify({
             projectType: 'pattern_lab',
             inputs: {
-              instruments: effectiveSymbols,
+              instruments: symbolList,
               patterns: uniquePatterns,
               timeframe: tf,
               lookbackYears: 2,
