@@ -57,6 +57,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
+  const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
   const [backtestResult, setBacktestResult] = useState<(V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any }) | null>(null);
@@ -77,6 +78,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     setWeights({ ...p.weights });
     setTakeCutoff(p.cutoffs.take);
     setWatchCutoff(p.cutoffs.watch);
+    setActivePreset(key);
   };
 
   // Compute gauge stats dynamically
@@ -168,7 +170,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(PRESETS).map(([key, preset]) => (
-                  <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-sm h-9">
+                  <Button
+                    key={key}
+                    variant={activePreset === key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => applyPreset(key)}
+                    className={`text-sm h-9 ${activePreset === key ? 'ring-2 ring-primary/40' : ''}`}
+                  >
                     {preset.label}
                   </Button>
                 ))}
