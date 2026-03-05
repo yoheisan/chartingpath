@@ -32,21 +32,7 @@ const AGENTS = [
   { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: 'Concentration risk, sector heat & directional exposure. Higher weight → penalize trades that over-concentrate in one asset or direction.' },
 ];
 
-// Simulated trade data for gauge calculations
-const MOCK_RAW_SCORES = [
-  { analyst: 0.92, risk: 0.88, timing: 0.75, portfolio: 0.80 },
-  { analyst: 0.85, risk: 0.72, timing: 0.80, portfolio: 0.65 },
-  { analyst: 0.60, risk: 0.45, timing: 0.55, portfolio: 0.70 },
-  { analyst: 0.95, risk: 0.82, timing: 0.60, portfolio: 0.40 },
-  { analyst: 0.78, risk: 0.90, timing: 0.85, portfolio: 0.75 },
-  { analyst: 0.72, risk: 0.68, timing: 0.40, portfolio: 0.85 },
-  { analyst: 0.55, risk: 0.50, timing: 0.30, portfolio: 0.60 },
-  { analyst: 0.88, risk: 0.75, timing: 0.70, portfolio: 0.55 },
-  { analyst: 0.82, risk: 0.92, timing: 0.65, portfolio: 0.90 },
-  { analyst: 0.70, risk: 0.55, timing: 0.15, portfolio: 0.50 },
-  { analyst: 0.65, risk: 0.60, timing: 0.45, portfolio: 0.35 },
-  { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
-];
+// Raw score derivation is now done inside TradeOpportunityTable from live data
 
 export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
