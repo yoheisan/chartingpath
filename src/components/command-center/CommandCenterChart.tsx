@@ -291,6 +291,26 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           console.warn('[CommandCenterChart] fetchMarketBars failed/timed out:', fetchErr);
         }
 
+        // Retry with shorter range for intraday if first attempt returned 0
+        if (fetchedBars.length === 0 && ['5m', '15m', '30m'].includes(timeframe)) {
+          const shortStart = new Date();
+          shortStart.setDate(endDate.getDate() - 8);
+          console.log(`[CommandCenterChart] Retrying with 8-day range for ${timeframe}`);
+          try {
+            fetchedBars = await Promise.race([
+              fetchMarketBars({
+                symbol,
+                startDate: shortStart.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                interval: timeframe,
+              }),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 12000)),
+            ]);
+          } catch (retryErr) {
+            console.warn('[CommandCenterChart] Short-range retry also failed:', retryErr);
+          }
+        }
+
         if (fetchedBars.length === 0) {
           // Last resort: try to use bars embedded in active pattern detections
           const patternBars = await tryExtractPatternBars(symbol, timeframe);
