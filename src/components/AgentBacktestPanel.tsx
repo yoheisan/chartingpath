@@ -169,7 +169,16 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           {/* Agent Sliders */}
           <Card className="border-border bg-card">
             <CardContent className="p-3 space-y-4">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
+                <AgentWeightsFAQ
+                  trigger={
+                    <button className="inline-flex items-center">
+                      <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                    </button>
+                  }
+                />
+              </div>
               {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
                 <div key={key} className="space-y-1.5">
                   <div className="flex items-center justify-between">
