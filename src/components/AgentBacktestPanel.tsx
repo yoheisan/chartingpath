@@ -16,6 +16,7 @@ import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AgentBacktestResults } from './agent-backtest/AgentBacktestResults';
 import { V2BacktestResult } from '@/adapters/backtesterV2';
+import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
   balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
@@ -31,21 +32,7 @@ const AGENTS = [
   { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: 'Concentration risk, sector heat & directional exposure. Higher weight → penalize trades that over-concentrate in one asset or direction.' },
 ];
 
-// Simulated trade data for gauge calculations
-const MOCK_RAW_SCORES = [
-  { analyst: 0.92, risk: 0.88, timing: 0.75, portfolio: 0.80 },
-  { analyst: 0.85, risk: 0.72, timing: 0.80, portfolio: 0.65 },
-  { analyst: 0.60, risk: 0.45, timing: 0.55, portfolio: 0.70 },
-  { analyst: 0.95, risk: 0.82, timing: 0.60, portfolio: 0.40 },
-  { analyst: 0.78, risk: 0.90, timing: 0.85, portfolio: 0.75 },
-  { analyst: 0.72, risk: 0.68, timing: 0.40, portfolio: 0.85 },
-  { analyst: 0.55, risk: 0.50, timing: 0.30, portfolio: 0.60 },
-  { analyst: 0.88, risk: 0.75, timing: 0.70, portfolio: 0.55 },
-  { analyst: 0.82, risk: 0.92, timing: 0.65, portfolio: 0.90 },
-  { analyst: 0.70, risk: 0.55, timing: 0.15, portfolio: 0.50 },
-  { analyst: 0.65, risk: 0.60, timing: 0.45, portfolio: 0.35 },
-  { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
-];
+// Raw score derivation is now done inside TradeOpportunityTable from live data
 
 export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
@@ -57,11 +44,14 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilter>('1D');
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
   const [backtestResult, setBacktestResult] = useState<(V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any }) | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter);
 
   const toggleBasket = (symbol: string) => {
     setBasketSymbols((prev) => {
@@ -81,11 +71,24 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     setActivePreset(key);
   };
 
-  // Compute gauge stats dynamically
+  // Compute gauge stats from live detections
   const gaugeStats = useMemo(() => {
-    const composites = MOCK_RAW_SCORES.map((r) =>
-      r.analyst * weights.analyst + r.risk * weights.risk + r.timing * weights.timing + r.portfolio * weights.portfolio
-    );
+    if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
+    
+    // Simple heuristic: derive raw scores inline (mirrors TradeOpportunityTable logic)
+    const composites = liveDetections.map((d) => {
+      const hp = d.historical_performance as any;
+      const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
+      const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
+      const analystRaw = Math.min(1, winRate * 0.7 + Math.min(sampleSize / 100, 1) * 0.3);
+      const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
+      const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
+      const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
+      const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
+      const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
+      const portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
+      return analystRaw * weights.analyst + riskRaw * weights.risk + trendScore * weights.timing + portfolioRaw * weights.portfolio;
+    });
     const total = composites.length;
     const takes = composites.filter((c) => c >= takeCutoff).length;
     const watches = composites.filter((c) => c >= watchCutoff && c < takeCutoff).length;
@@ -97,7 +100,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       skipRate: (skips / total) * 100,
       avgScore: avg,
     };
-  }, [weights, takeCutoff, watchCutoff]);
+  }, [liveDetections, weights, takeCutoff, watchCutoff]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
@@ -203,6 +206,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 ].map((ac) => (
                   <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-sm h-9 px-3.5">
                     {ac.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </CardContent>
+          </Card>
+
+          {/* Timeframe Filter */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-4 space-y-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Timeframe</span>
+              <ToggleGroup
+                type="single"
+                value={timeframeFilter}
+                onValueChange={(v) => v && setTimeframeFilter(v as TimeframeFilter)}
+                className="flex flex-wrap gap-1.5"
+              >
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: '1H', label: '1H' },
+                  { value: '4H', label: '4H' },
+                  { value: '1D', label: '1D' },
+                  { value: '1W', label: '1W' },
+                ].map((tf) => (
+                  <ToggleGroupItem key={tf.value} value={tf.value} size="sm" className="text-sm h-9 px-3.5">
+                    {tf.label}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
@@ -343,7 +371,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 weights={weights}
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
-                assetClassFilter={assetClassFilter}
+                detections={liveDetections}
+                isLoading={detectionsLoading}
                 onSendToBacktest={onSendToBacktest}
                 basketSymbols={basketSymbols}
                 onToggleBasket={toggleBasket}
