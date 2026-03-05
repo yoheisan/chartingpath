@@ -6,7 +6,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical } from 'lucide-react';
+import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info } from 'lucide-react';
 import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useTranslation } from 'react-i18next';
