@@ -2113,9 +2113,18 @@ serve(async (req) => {
             return results;
           };
 
-          patternsByTier['1:3'] = computePatternResultsForTier('rr3');
-          patternsByTier['1:4'] = computePatternResultsForTier('rr4');
-          patternsByTier['1:5'] = computePatternResultsForTier('rr5');
+          // Skip heavy tier computations when many trades to avoid CPU timeout
+          if (allTrades.length <= 300) {
+            patternsByTier['1:3'] = computePatternResultsForTier('rr3');
+            patternsByTier['1:4'] = computePatternResultsForTier('rr4');
+            patternsByTier['1:5'] = computePatternResultsForTier('rr5');
+          } else {
+            console.log(`[PatternLab] Skipping per-tier pattern analytics (${allTrades.length} trades > 300 threshold) to stay within CPU budget`);
+            // Reuse baseline for all tiers
+            patternsByTier['1:3'] = patternResults;
+            patternsByTier['1:4'] = patternResults;
+            patternsByTier['1:5'] = patternResults;
+          }
 
           // Build equity curves by tier from all trades (accurate even though trade log is capped)
           const sortedTrades = [...allTrades].sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime());
@@ -2272,26 +2281,29 @@ serve(async (req) => {
           
           console.log(`[PatternLab] Optimal exit strategy: ${optimalExitStrategy.strategyName} (${optimalExitStrategy.expectancy.toFixed(2)}R)`);
           
-          // Build equity curves per exit strategy
+          // Build equity curves per exit strategy (skip for large trade sets to save CPU)
           const exitEquityByStrategy: Record<string, { date: string; value: number; drawdown: number }[]> = {};
-          // Use user-defined riskPerTrade for exit strategy equity simulation
-          const exitRiskFraction = riskPerTrade / 100;
-          for (const strategy of EXIT_STRATEGIES) {
-            const points: { date: string; value: number; drawdown: number }[] = [];
-            let cumulativeR = 0;
-            let peakValue = 10000;
-            
-            for (const trade of allTrades.sort((a: any, b: any) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())) {
-              const outcome = trade.exitOutcomes?.[strategy.id];
-              if (!outcome) continue;
+          if (allTrades.length <= 300) {
+            const exitRiskFraction = riskPerTrade / 100;
+            for (const strategy of EXIT_STRATEGIES) {
+              const points: { date: string; value: number; drawdown: number }[] = [];
+              let cumulativeR = 0;
+              let peakValue = 10000;
               
-              cumulativeR += outcome.rMultiple;
-              const value = 10000 * (1 + cumulativeR * exitRiskFraction);
-              peakValue = Math.max(peakValue, value);
-              const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
-              points.push({ date: outcome.exitDate, value: Math.max(0, value), drawdown: dd });
+              for (const trade of sortedTrades) {
+                const outcome = trade.exitOutcomes?.[strategy.id];
+                if (!outcome) continue;
+                
+                cumulativeR += outcome.rMultiple;
+                const value = 10000 * (1 + cumulativeR * exitRiskFraction);
+                peakValue = Math.max(peakValue, value);
+                const dd = peakValue > 0 ? (peakValue - value) / peakValue : 0;
+                points.push({ date: outcome.exitDate, value: Math.max(0, value), drawdown: dd });
+              }
+              exitEquityByStrategy[strategy.id] = points;
             }
-            exitEquityByStrategy[strategy.id] = points;
+          } else {
+            console.log(`[PatternLab] Skipping exit equity curves (${allTrades.length} trades > 300 threshold) to stay within CPU budget`);
           }
           
           artifactJson = {
@@ -2482,7 +2494,7 @@ serve(async (req) => {
       // Recover from edge-runtime crashes that can leave runs stuck in "running"
       if (runRow.status === 'running' && runRow.started_at) {
         const startedAt = new Date(runRow.started_at).getTime();
-        const staleThresholdMs = 10 * 60 * 1000;
+        const staleThresholdMs = 3 * 60 * 1000;
         if (!Number.isNaN(startedAt) && Date.now() - startedAt > staleThresholdMs) {
           const timeoutMessage = 'Run timed out before completion. Please retry with fewer instruments/patterns or a shorter lookback.';
           await supabaseAdmin
