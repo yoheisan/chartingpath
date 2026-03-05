@@ -337,6 +337,9 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full h-10 text-sm" size="default">
                 {isRunning ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Running...</> : <><Zap className="h-4 w-4 mr-1.5" />Run Backtest</>}
               </Button>
+              {totalWeight !== 100 && (
+                <p className="text-xs text-destructive text-center">Weights must total 100 to run ({totalWeight} currently)</p>
+              )}
             </CardContent>
           </Card>
         </div>
