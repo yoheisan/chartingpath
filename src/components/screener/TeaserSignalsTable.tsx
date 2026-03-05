@@ -134,6 +134,24 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                   <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
+              <TableCell className="text-right">
+                {(() => {
+                  const perf = setup.historicalPerformance;
+                  if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                    const rot = perf.avgRMultiple / perf.avgDurationBars;
+                    const isHighEfficiency = rot >= 0.01;
+                    return (
+                      <span className={cn(
+                        'font-mono text-xs font-medium',
+                        isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
+                      )}>
+                        {rot.toFixed(4)}
+                      </span>
+                    );
+                  }
+                  return <span className="text-muted-foreground text-xs">—</span>;
+                })()}
+              </TableCell>
               <TableCell className="text-right text-muted-foreground text-sm">
                 {signalAge}
               </TableCell>
