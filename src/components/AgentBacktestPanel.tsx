@@ -249,6 +249,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
                 assetClassFilter={assetClassFilter}
+                onSendToBacktest={onSendToBacktest}
               />
             </CardContent>
           </Card>
