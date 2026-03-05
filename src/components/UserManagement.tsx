@@ -461,6 +461,101 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateUserOpen} onOpenChange={(open) => { if (!open) resetCreateUserDialog(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Create an account by email with a temporary password
+            </DialogDescription>
+          </DialogHeader>
+
+          {!createdUserInfo ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Temporary Password</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Leave blank to auto-generate"
+                    value={tempPassword}
+                    onChange={(e) => setTempPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTempPassword(generateTempPassword())}
+                  >
+                    Generate
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Min 6 characters. Auto-generated if left blank.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Subscription Plan</Label>
+                <Select value={newUserPlan} onValueChange={setNewUserPlan}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="pro">Pro</SelectItem>
+                    <SelectItem value="elite">Elite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={resetCreateUserDialog}>Cancel</Button>
+                <Button onClick={handleCreateUser} disabled={isCreatingUser || !newEmail.trim()}>
+                  {isCreatingUser ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating...</> : "Create Account"}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <p className="text-sm font-medium text-foreground">Account created successfully! Share these credentials:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-background p-2 border">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Email</p>
+                      <p className="text-sm font-mono">{createdUserInfo.email}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleCopy(createdUserInfo.email, 'email')}>
+                      {copiedField === 'email' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-background p-2 border">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Temporary Password</p>
+                      <p className="text-sm font-mono">{createdUserInfo.password}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleCopy(createdUserInfo.password, 'password')}>
+                      {copiedField === 'password' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">⚠️ This password is shown only once. Make sure to copy it now.</p>
+              </div>
+              <DialogFooter>
+                <Button onClick={resetCreateUserDialog}>Done</Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
