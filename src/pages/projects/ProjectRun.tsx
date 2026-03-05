@@ -88,6 +88,7 @@ const ProjectRun = () => {
   const location = useLocation();
   const previousMetrics = (location.state as any)?.previousMetrics ?? null;
   const locationMode = (location.state as any)?.mode as 'validate' | 'automate' | null;
+  const fromAgentScoring = (location.state as any)?.fromAgentScoring === true;
   const [mode] = useState<'validate' | 'automate' | null>(locationMode);
   const isValidate = mode === 'validate';
   const [showFullAnalysis, setShowFullAnalysis] = useState(true);
@@ -344,22 +345,26 @@ const ProjectRun = () => {
           <Button 
             variant="ghost" 
             onClick={() => {
-              const inputs = artifact?.inputs;
-              navigate('/projects/pattern-lab/new', {
-                state: inputs ? {
-                  instruments: inputs.instruments,
-                  patterns: inputs.patterns,
-                  gradeFilter: inputs.gradeFilter,
-                  timeframe: artifact?.timeframe,
-                  lookbackYears: artifact?.lookbackYears,
-                  riskPerTrade: inputs.riskPerTrade ?? artifact?.riskPerTrade ?? 1,
-                } : undefined
-              });
+              if (fromAgentScoring) {
+                navigate('/tools/agent-scoring');
+              } else {
+                const inputs = artifact?.inputs;
+                navigate('/projects/pattern-lab/new', {
+                  state: inputs ? {
+                    instruments: inputs.instruments,
+                    patterns: inputs.patterns,
+                    gradeFilter: inputs.gradeFilter,
+                    timeframe: artifact?.timeframe,
+                    lookbackYears: artifact?.lookbackYears,
+                    riskPerTrade: inputs.riskPerTrade ?? artifact?.riskPerTrade ?? 1,
+                  } : undefined
+                });
+              }
             }}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Pattern Lab
+            {fromAgentScoring ? 'Back to Agent Scoring' : 'Back to Pattern Lab'}
           </Button>
           
           <div className="flex items-center justify-between flex-wrap gap-4">
