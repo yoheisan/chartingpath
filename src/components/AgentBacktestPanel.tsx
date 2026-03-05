@@ -16,6 +16,7 @@ import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AgentBacktestResults } from './agent-backtest/AgentBacktestResults';
 import { V2BacktestResult } from '@/adapters/backtesterV2';
+import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
   balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
