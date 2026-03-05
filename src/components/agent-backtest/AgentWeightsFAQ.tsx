@@ -1,0 +1,182 @@
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Brain, Shield, Clock, Briefcase, Info, HelpCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+
+export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigger }) => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-xl max-h-[85vh] p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <HelpCircle className="h-5 w-5 text-primary" />
+            Agent Weights — How It Works
+          </DialogTitle>
+        </DialogHeader>
+
+        <ScrollArea className="px-6 pb-6 max-h-[70vh]">
+          <div className="space-y-5 pr-3">
+            {/* Overview */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">What are Agent Weights?</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The Multi-Agent Trade Filter uses four specialized AI agents that independently evaluate every trade opportunity. 
+                Each agent scores a setup from 0 to 1 based on its domain expertise. <strong>Agent Weights</strong> control 
+                how much influence each agent has on the final <strong>Composite Score (0–100)</strong> that determines whether 
+                a trade is labeled <strong>TAKE</strong>, <strong>WATCH</strong>, or <strong>SKIP</strong>.
+              </p>
+            </section>
+
+            {/* Formula */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Scoring Formula</h3>
+              <div className="bg-muted/40 border border-border rounded-lg p-3">
+                <code className="text-xs text-foreground font-mono">
+                  Composite = (Analyst_raw × W<sub>a</sub>) + (Risk_raw × W<sub>r</sub>) + (Timing_raw × W<sub>t</sub>) + (Portfolio_raw × W<sub>p</sub>)
+                </code>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The four weights must sum to <strong>100</strong>. Each agent's raw score (0–1) is multiplied by its weight, 
+                and the results are summed to produce the composite. A composite of 70+ defaults to <strong>TAKE</strong>, 
+                50–69 to <strong>WATCH</strong>, and below 50 to <strong>SKIP</strong> (thresholds are adjustable).
+              </p>
+            </section>
+
+            <Separator />
+
+            {/* Agent Details */}
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground">The Four Agents</h3>
+
+              {/* Analyst */}
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 h-fit">
+                  <Brain className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-foreground">🧠 Analyst Agent</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Evaluates <strong>Bayesian win-probability</strong> and historical hit-rates for the detected chart pattern 
+                    on the specific instrument. It cross-references the pattern's sample size, expectancy (avg R-multiple), 
+                    and win rate from the historical database.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 italic">
+                    High weight → You prioritize setups with a proven statistical edge — patterns that have historically delivered 
+                    consistent returns on this specific ticker.
+                  </p>
+                </div>
+              </div>
+
+              {/* Risk */}
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 h-fit">
+                  <Shield className="h-4 w-4 text-amber-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-foreground">🛡️ Risk Manager Agent</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Assesses <strong>ATR-based stop placement</strong>, Kelly criterion position sizing, and the trade's 
+                    risk/reward ratio quality. It penalizes setups with wide stops (high risk per trade), poor R:R ratios, 
+                    or situations where Kelly sizing suggests over-betting.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 italic">
+                    High weight → You prioritize tight risk control — only taking setups with well-defined stops and 
+                    favorable risk-to-reward (typically 2:1 or better). Recommended for capital preservation strategies.
+                  </p>
+                </div>
+              </div>
+
+              {/* Timing */}
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 h-fit">
+                  <Clock className="h-4 w-4 text-purple-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-foreground">⏱️ Timing Agent</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Monitors <strong>macro/economic calendar proximity</strong> and market-session context. It checks for 
+                    upcoming high-impact events (FOMC, NFP, CPI), evaluates whether the current session is liquid enough 
+                    for the trade's timeframe, and considers weekend/holiday gaps.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 italic">
+                    High weight → You prioritize event-aware entries — avoiding trades right before major announcements 
+                    or during illiquid after-hours sessions. Essential for news-sensitive instruments.
+                  </p>
+                </div>
+              </div>
+
+              {/* Portfolio */}
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 h-fit">
+                  <Briefcase className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-foreground">💼 Portfolio Agent</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Evaluates <strong>concentration risk</strong>, sector heat (total portfolio exposure), and directional 
+                    skew across all existing positions. It penalizes adding a trade that would over-concentrate your portfolio 
+                    in a single asset, sector, or direction (all-long / all-short).
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 italic">
+                    High weight → You prioritize portfolio balance — ensuring no single position dominates and your book 
+                    maintains healthy diversification. Critical for multi-asset portfolios.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Presets */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Quick Presets</h3>
+              <div className="space-y-2">
+                {[
+                  { emoji: '⚖️', name: 'Balanced (25/25/25/25)', desc: 'Equal influence from all agents. Good starting point for most traders.' },
+                  { emoji: '🛡️', name: 'Conservative (20/35/25/20)', desc: 'Heavy risk management bias. Fewer trades, tighter stops, higher quality.' },
+                  { emoji: '🔥', name: 'Aggressive (35/15/25/25)', desc: 'Pattern-edge focused. Accepts more risk for higher-conviction signals.' },
+                  { emoji: '⚡', name: 'Momentum (30/20/30/20)', desc: 'Timing-heavy. Ideal for event-driven or session-sensitive strategies.' },
+                ].map((p) => (
+                  <div key={p.name} className="flex gap-2 items-start">
+                    <span className="text-sm shrink-0">{p.emoji}</span>
+                    <div>
+                      <span className="text-xs font-medium text-foreground">{p.name}</span>
+                      <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Tips */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Tips & Best Practices</h3>
+              <ul className="text-xs text-muted-foreground leading-relaxed space-y-1.5 list-disc pl-4">
+                <li>Weights must always sum to <strong>100</strong>. The system warns you if they don't.</li>
+                <li>Setting a weight to <strong>0</strong> completely disables that agent — the trade will never be filtered by it.</li>
+                <li>Use the <strong>Agent Impact Simulator</strong> to test how different weight configurations affect verdicts on sample scenarios before committing.</li>
+                <li>The <strong>Verdict Thresholds</strong> (TAKE/WATCH cutoffs) work in tandem with weights — tightening the TAKE cutoff to 80+ produces fewer but higher-conviction signals.</li>
+                <li>For volatile assets (crypto), consider increasing <strong>Risk Mgr</strong> and <strong>Timing</strong> weights to filter out noisy setups.</li>
+                <li>For diversified portfolios (10+ positions), increase <strong>Portfolio</strong> weight to prevent over-concentration.</li>
+              </ul>
+            </section>
+
+            {/* References */}
+            <section className="space-y-2 pb-2">
+              <h3 className="text-sm font-semibold text-foreground">References</h3>
+              <ul className="text-[11px] text-muted-foreground space-y-1 list-disc pl-4">
+                <li>Bulkowski, T. — <em>Encyclopedia of Chart Patterns</em> (pattern win-rate methodology)</li>
+                <li>Vince, R. — <em>The Mathematics of Money Management</em> (Kelly criterion & optimal f)</li>
+                <li>Wilder, J.W. — <em>New Concepts in Technical Trading Systems</em> (ATR-based stops)</li>
+              </ul>
+            </section>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};
