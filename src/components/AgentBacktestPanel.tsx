@@ -2,96 +2,100 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Play, TrendingUp, Shield, Clock, Briefcase, Loader2, AlertTriangle, CheckCircle, Eye, Zap, Settings2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2 } from 'lucide-react';
 import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
-import { AgentCard } from './agent-backtest/AgentCard';
-import { CompositeScoreRing } from './agent-backtest/CompositeScoreRing';
+import { Slider } from '@/components/ui/slider';
+import { TradeOpportunityTable } from './agent-backtest/TradeOpportunityTable';
+import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
-import { AgentImpactSimulator } from './agent-backtest/AgentImpactSimulator';
 
-const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number }; description: string }> = {
-  balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 }, description: 'Equal weight across all agents' },
-  conservative: { label: '🛡️ Conservative', weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 }, cutoffs: { take: 80, watch: 60 }, description: 'Heavy risk focus, higher thresholds' },
-  aggressive: { label: '🔥 Aggressive', weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 }, cutoffs: { take: 60, watch: 40 }, description: 'Signal-driven, lower thresholds' },
-  momentum: { label: '⚡ Momentum', weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 }, cutoffs: { take: 65, watch: 45 }, description: 'Timing + analyst heavy for trend capture' },
+const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
+  balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
+  conservative: { label: '🛡️ Conservative', weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 }, cutoffs: { take: 80, watch: 60 } },
+  aggressive: { label: '🔥 Aggressive', weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 }, cutoffs: { take: 60, watch: 40 } },
+  momentum: { label: '⚡ Momentum', weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 }, cutoffs: { take: 65, watch: 45 } },
 };
 
-const AGENT_META = [
-  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-500', bgColor: 'bg-blue-500/5', borderColor: 'border-blue-500/20', description: 'Bayesian win-probability & expectancy', factors: ['Win Rate', 'Expectancy R', 'Sample Size'] },
-  { key: 'risk' as const, label: 'Risk Manager', icon: Shield, color: 'text-amber-500', bgColor: 'bg-amber-500/5', borderColor: 'border-amber-500/20', description: 'ATR stops, Kelly sizing, R:R validation', factors: ['ATR Stop', 'Kelly %', 'R:R Ratio'] },
-  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-500', bgColor: 'bg-purple-500/5', borderColor: 'border-purple-500/20', description: 'Macro events & economic calendar risk', factors: ['FOMC', 'NFP', 'CPI Events'] },
-  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-500', bgColor: 'bg-emerald-500/5', borderColor: 'border-emerald-500/20', description: 'Concentration, directional heat, balance', factors: ['Sector Heat', 'Correlation', 'Max Weight'] },
+const AGENTS = [
+  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500' },
+  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500' },
+  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500' },
+  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500' },
 ];
 
-const VERDICT_COLORS: Record<string, string> = {
-  TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  WATCH: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  SKIP: 'bg-red-500/20 text-red-400 border-red-500/30',
-};
+// Simulated trade data for gauge calculations
+const MOCK_RAW_SCORES = [
+  { analyst: 0.92, risk: 0.88, timing: 0.75, portfolio: 0.80 },
+  { analyst: 0.85, risk: 0.72, timing: 0.80, portfolio: 0.65 },
+  { analyst: 0.60, risk: 0.45, timing: 0.55, portfolio: 0.70 },
+  { analyst: 0.95, risk: 0.82, timing: 0.60, portfolio: 0.40 },
+  { analyst: 0.78, risk: 0.90, timing: 0.85, portfolio: 0.75 },
+  { analyst: 0.72, risk: 0.68, timing: 0.40, portfolio: 0.85 },
+  { analyst: 0.55, risk: 0.50, timing: 0.30, portfolio: 0.60 },
+  { analyst: 0.88, risk: 0.75, timing: 0.70, portfolio: 0.55 },
+  { analyst: 0.82, risk: 0.92, timing: 0.65, portfolio: 0.90 },
+  { analyst: 0.70, risk: 0.55, timing: 0.15, portfolio: 0.50 },
+  { analyst: 0.65, risk: 0.60, timing: 0.45, portfolio: 0.35 },
+  { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
+];
 
 export const AgentBacktestPanel: React.FC = () => {
-  const [symbols, setSymbols] = useState('AAPL, MSFT, GOOGL');
-  const [fromDate, setFromDate] = useState('2024-01-01');
-  const [toDate, setToDate] = useState('2025-01-01');
-  const [initialCapital, setInitialCapital] = useState(100000);
-  const [commission, setCommission] = useState(0.1);
-  const [slippage, setSlippage] = useState(0.05);
-  const [rebalanceDays, setRebalanceDays] = useState(1);
-
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
 
+  const [symbols, setSymbols] = useState('AAPL, MSFT, GOOGL');
+  const [fromDate, setFromDate] = useState('2024-01-01');
+  const [toDate, setToDate] = useState('2025-01-01');
+  const [initialCapital, setInitialCapital] = useState(100000);
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [activeResultTab, setActiveResultTab] = useState('overview');
-  const [configTab, setConfigTab] = useState('agents');
-
-  const applyPreset = (presetKey: string) => {
-    const preset = PRESETS[presetKey];
-    setWeights({ ...preset.weights });
-    setTakeCutoff(preset.cutoffs.take);
-    setWatchCutoff(preset.cutoffs.watch);
-  };
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
 
-  // Simulated composite for the ring preview
-  const simulatedBreakdown = useMemo(() => {
-    return AGENT_META.map(({ key, label, color }) => ({
-      key, label, color,
-      score: weights[key] * 0.72, // simulated 72% fill for preview
-      max: weights[key],
-    }));
-  }, [weights]);
+  const applyPreset = (key: string) => {
+    const p = PRESETS[key];
+    setWeights({ ...p.weights });
+    setTakeCutoff(p.cutoffs.take);
+    setWatchCutoff(p.cutoffs.watch);
+  };
 
-  const simulatedComposite = useMemo(() => {
-    return simulatedBreakdown.reduce((a, b) => a + b.score, 0);
-  }, [simulatedBreakdown]);
+  // Compute gauge stats dynamically
+  const gaugeStats = useMemo(() => {
+    const composites = MOCK_RAW_SCORES.map((r) =>
+      r.analyst * weights.analyst + r.risk * weights.risk + r.timing * weights.timing + r.portfolio * weights.portfolio
+    );
+    const total = composites.length;
+    const takes = composites.filter((c) => c >= takeCutoff).length;
+    const watches = composites.filter((c) => c >= watchCutoff && c < takeCutoff).length;
+    const skips = composites.filter((c) => c < watchCutoff).length;
+    const avg = composites.reduce((a, b) => a + b, 0) / total;
+    return {
+      takeRate: (takes / total) * 100,
+      watchRate: (watches / total) * 100,
+      skipRate: (skips / total) * 100,
+      avgScore: avg,
+    };
+  }, [weights, takeCutoff, watchCutoff]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     if (symbolList.length === 0) { toast.error('Add at least one symbol'); return; }
-
     setIsRunning(true);
     try {
       const adapter = new AgentBacktestAdapter();
       const params: AgentBacktestParams = {
-        symbols: symbolList, fromDate, toDate, initialCapital, commission, slippage,
+        symbols: symbolList, fromDate, toDate, initialCapital,
+        commission: 0.1, slippage: 0.05,
         agentWeights: weights,
         verdictCutoffs: { take: takeCutoff, watch: watchCutoff },
-        rebalanceFrequencyDays: rebalanceDays,
+        rebalanceFrequencyDays: 1,
       };
       const result = await adapter.runAgentBacktest(params);
-      setResults(result);
-      setActiveResultTab('overview');
       toast.success(`Agent backtest complete — ${result.total_trades} trades`);
     } catch (err: any) {
-      console.error('Agent backtest failed:', err);
       toast.error(err.message || 'Agent backtest failed');
     } finally {
       setIsRunning(false);
@@ -99,247 +103,130 @@ export const AgentBacktestPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
-          <Brain className="h-6 w-6 text-primary" />
+    <div className="space-y-4">
+      {/* Title bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+            <Brain className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Multi-Agent Trade Filter</h2>
+            <p className="text-xs text-muted-foreground">Adjust agent weights to dynamically filter trade opportunities</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Multi-Agent Portfolio Engine</h2>
-          <p className="text-sm text-muted-foreground">4 autonomous agents score every trade opportunity. Adjust their influence in real-time.</p>
-        </div>
+        {totalWeight !== 100 && (
+          <Badge variant="destructive" className="text-xs">Weights: {totalWeight}/100</Badge>
+        )}
       </div>
 
-      {/* Main Layout: Agents + Score Ring */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Agent Cards (2x2 grid) */}
-        <div className="lg:col-span-2">
+      {/* Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+        {/* LEFT SIDEBAR: Agent Controls */}
+        <div className="space-y-3">
           {/* Presets */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {Object.entries(PRESETS).map(([key, preset]) => (
-              <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-xs">
-                {preset.label}
-              </Button>
-            ))}
-            {totalWeight !== 100 && (
-              <Badge variant="destructive" className="text-xs ml-auto">
-                Weights: {totalWeight}/100
-              </Badge>
-            )}
-          </div>
+          <Card className="border-border bg-card">
+            <CardContent className="p-3 space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quick Presets</span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {Object.entries(PRESETS).map(([key, preset]) => (
+                  <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-[11px] h-7">
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {AGENT_META.map((agent) => (
-              <AgentCard
-                key={agent.key}
-                agentKey={agent.key}
-                label={agent.label}
-                icon={agent.icon}
-                color={agent.color}
-                bgColor={agent.bgColor}
-                borderColor={agent.borderColor}
-                weight={weights[agent.key]}
-                onWeightChange={(v) => setWeights((prev) => ({ ...prev, [agent.key]: v }))}
-                description={agent.description}
-                factors={agent.factors}
-                liveScore={results?.agentScoreSummary ? weights[agent.key] * 0.72 : undefined}
-              />
-            ))}
-          </div>
-        </div>
+          {/* Agent Sliders */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-3 space-y-4">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
+              {AGENTS.map(({ key, label, icon: Icon, color, barColor }) => (
+                <div key={key} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className={`h-3.5 w-3.5 ${color}`} />
+                      <span className="text-xs font-medium text-foreground">{label}</span>
+                    </div>
+                    <span className={`text-sm font-mono font-bold ${color}`}>{weights[key]}</span>
+                  </div>
+                  <Slider
+                    value={[weights[key]]}
+                    onValueChange={([v]) => setWeights((prev) => ({ ...prev, [key]: v }))}
+                    min={0}
+                    max={50}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
-        {/* Right: Composite Score Ring */}
-        <div className="flex flex-col items-center justify-center">
-          <Card className="border-border bg-card w-full">
-            <CardContent className="pt-6 flex flex-col items-center">
-              <CompositeScoreRing
-                score={Math.round(simulatedComposite)}
+          {/* Verdict Thresholds */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-3">
+              <VerdictZoneBar
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
-                agentBreakdown={simulatedBreakdown}
+                onTakeChange={setTakeCutoff}
+                onWatchChange={setWatchCutoff}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Backtest Config (collapsed) */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Settings2 className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Backtest</span>
+              </div>
+              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Symbols" className="text-xs h-7" />
+              <div className="grid grid-cols-2 gap-1.5">
+                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-xs h-7" />
+                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-xs h-7" />
+              </div>
+              <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full h-8 text-xs" size="sm">
+                {isRunning ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Running...</> : <><Zap className="h-3 w-3 mr-1" />Run Backtest</>}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT: Dashboard Content */}
+        <div className="space-y-4">
+          {/* Gauges Row */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-4">
+              <AgentGauges
+                takeRate={gaugeStats.takeRate}
+                watchRate={gaugeStats.watchRate}
+                skipRate={gaugeStats.skipRate}
+                avgScore={gaugeStats.avgScore}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Trade Opportunity Table */}
+          <Card className="border-border bg-card">
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                Trade Opportunities
+                <span className="text-[10px] font-normal text-muted-foreground">— scores update live as you adjust agents</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <TradeOpportunityTable
+                weights={weights}
+                takeCutoff={takeCutoff}
+                watchCutoff={watchCutoff}
               />
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Verdict Zone Bar */}
-      <Card className="border-border bg-card">
-        <CardContent className="pt-6">
-          <VerdictZoneBar
-            takeCutoff={takeCutoff}
-            watchCutoff={watchCutoff}
-            onTakeChange={setTakeCutoff}
-            onWatchChange={setWatchCutoff}
-            currentScore={Math.round(simulatedComposite)}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Live Scenario Simulator */}
-      <Card className="border-border bg-card">
-        <CardContent className="pt-6">
-          <AgentImpactSimulator weights={weights} takeCutoff={takeCutoff} watchCutoff={watchCutoff} />
-        </CardContent>
-      </Card>
-
-      {/* Backtest Configuration */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm">Backtest Parameters</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-3">
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Symbols</label>
-              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="AAPL, MSFT, GOOGL" className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">From</label>
-              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">To</label>
-              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Capital ($)</label>
-              <Input type="number" value={initialCapital} onChange={(e) => setInitialCapital(Number(e.target.value))} className="text-sm" />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Commission (%)</label>
-              <Input type="number" step="0.01" value={commission} onChange={(e) => setCommission(Number(e.target.value))} className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Slippage (%)</label>
-              <Input type="number" step="0.01" value={slippage} onChange={(e) => setSlippage(Number(e.target.value))} className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Re-evaluate (days)</label>
-              <Input type="number" value={rebalanceDays} onChange={(e) => setRebalanceDays(Number(e.target.value))} min={1} className="text-sm" />
-            </div>
-          </div>
-
-          <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full" size="lg">
-            {isRunning ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Running Agent Backtest...</>
-            ) : (
-              <><Zap className="h-4 w-4 mr-2" />Run Multi-Agent Backtest</>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      {results && (
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Agent Backtest Results
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeResultTab} onValueChange={setActiveResultTab}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="verdicts">Verdicts</TabsTrigger>
-                <TabsTrigger value="trades">Trades</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <MetricCard label="Net P&L" value={`${results.net_pnl > 0 ? '+' : ''}${results.net_pnl.toFixed(2)}%`} positive={results.net_pnl > 0} />
-                  <MetricCard label="Sharpe" value={results.sharpe_ratio.toFixed(2)} positive={results.sharpe_ratio > 1} />
-                  <MetricCard label="Max DD" value={`${results.max_drawdown.toFixed(2)}%`} positive={false} />
-                  <MetricCard label="Trades" value={String(results.total_trades)} />
-                </div>
-                {results.agentScoreSummary && (
-                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                    <h4 className="text-sm font-medium text-foreground">Decision Summary</h4>
-                    <div className="flex items-center gap-6 text-sm flex-wrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground">Avg Score:</span>
-                        <span className="font-mono font-medium">{results.agentScoreSummary.avgComposite}</span>
-                      </div>
-                      <Badge className={VERDICT_COLORS.TAKE}><CheckCircle className="h-3 w-3 mr-1" /> TAKE: {results.agentScoreSummary.takeCount}</Badge>
-                      <Badge className={VERDICT_COLORS.WATCH}><Eye className="h-3 w-3 mr-1" /> WATCH: {results.agentScoreSummary.watchCount}</Badge>
-                      <Badge className={VERDICT_COLORS.SKIP}><AlertTriangle className="h-3 w-3 mr-1" /> SKIP: {results.agentScoreSummary.skipCount}</Badge>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="verdicts">
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {results.verdicts?.slice(-50).reverse().map((v: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 text-sm border-b border-border pb-2">
-                      <span className="text-muted-foreground w-24 shrink-0">{v.date}</span>
-                      <span className="font-medium w-16 shrink-0">{v.symbol}</span>
-                      <Badge className={`${VERDICT_COLORS[v.verdict]} text-xs`}>{v.verdict}</Badge>
-                      <span className="font-mono text-xs">{v.compositeScore}</span>
-                      <div className="flex items-center gap-2 ml-auto text-xs text-muted-foreground">
-                        {AGENT_META.map(({ key, icon: Icon, color }) => (
-                          <span key={key} className="flex items-center gap-0.5">
-                            <Icon className={`h-3 w-3 ${color}`} />
-                            {v.agentScores?.[key]?.score?.toFixed(0)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {(!results.verdicts || results.verdicts.length === 0) && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No verdicts generated</p>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="trades">
-                <div className="max-h-96 overflow-y-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-muted-foreground text-left border-b border-border">
-                        <th className="pb-2">Date</th><th className="pb-2">Type</th><th className="pb-2">Price</th>
-                        <th className="pb-2">Qty</th><th className="pb-2">Score</th><th className="pb-2">Verdict</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {results.trade_log?.slice(-50).reverse().map((t: any, i: number) => (
-                        <tr key={i} className="border-b border-border/50">
-                          <td className="py-1.5">{t.entry_time}</td>
-                          <td className={t.trade_type === 'BUY' ? 'text-emerald-500' : 'text-red-500'}>{t.trade_type}</td>
-                          <td className="font-mono">${t.entry_price?.toFixed(2)}</td>
-                          <td>{t.quantity}</td>
-                          <td className="font-mono">{t.compositeScore?.toFixed(0) ?? '-'}</td>
-                          <td>{t.verdict && <Badge className={`${VERDICT_COLORS[t.verdict]} text-xs`}>{t.verdict}</Badge>}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {(!results.trade_log || results.trade_log.length === 0) && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No trades executed</p>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
-
-const MetricCard: React.FC<{ label: string; value: string; positive?: boolean }> = ({ label, value, positive }) => (
-  <div className="bg-muted/30 rounded-lg p-3 text-center">
-    <div className="text-xs text-muted-foreground mb-1">{label}</div>
-    <div className={`text-lg font-mono font-semibold ${positive === true ? 'text-emerald-500' : positive === false ? 'text-red-400' : 'text-foreground'}`}>
-      {value}
-    </div>
-  </div>
-);
