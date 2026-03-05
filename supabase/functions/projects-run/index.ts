@@ -1834,21 +1834,56 @@ serve(async (req) => {
         const endDate = new Date();
         const startDate = new Date();
         startDate.setFullYear(startDate.getFullYear() - effectiveLookbackYears);
+
+        const executionStartedAt = Date.now();
+        const EXECUTION_BUDGET_MS = 95_000;
+        const ensureBudget = (stage: string) => {
+          if (Date.now() - executionStartedAt > EXECUTION_BUDGET_MS) {
+            throw new Error(`Backtest timed out during ${stage}. Reduce instruments/patterns/lookback and retry.`);
+          }
+        };
         
         let artifactJson: any = null;
         let artifactType = 'backtest_report';
         
         // ============= PATTERN LAB EXECUTION =============
         if (projectType === 'pattern_lab') {
-          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${patterns.length} patterns, ${lookbackYears} years`);
+          const normalizedInstrumentPatternMap: Record<string, string[]> = {};
+          if (instrumentPatternMap && typeof instrumentPatternMap === 'object') {
+            for (const instrument of instruments) {
+              const raw = (instrumentPatternMap as Record<string, unknown>)[instrument];
+              if (!Array.isArray(raw)) continue;
+              const cleaned = raw
+                .filter((p): p is string => typeof p === 'string')
+                .filter((p) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
+              if (cleaned.length > 0) {
+                normalizedInstrumentPatternMap[instrument] = [...new Set(cleaned)];
+              }
+            }
+          }
+
+          const effectivePatternMap: Record<string, string[]> = {};
+          for (const instrument of instruments) {
+            const scoped = normalizedInstrumentPatternMap[instrument];
+            const fallback = patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
+            effectivePatternMap[instrument] = (scoped && scoped.length > 0) ? scoped : fallback;
+          }
+
+          const scannedPatternIds = [...new Set(Object.values(effectivePatternMap).flat())];
+          const totalPatternScans = Object.values(effectivePatternMap).reduce((sum, list) => sum + list.length, 0);
+
+          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${scannedPatternIds.length} unique patterns, ${totalPatternScans} instrument-pattern scans, ${lookbackYears} years`);
           
           const allTrades: BacktestTrade[] = [];
           const patternResults: any[] = [];
           const equity: { date: string; value: number; drawdown: number }[] = [];
           
           // Fetch data and run backtests
+          let completedPatternScans = 0;
           for (let instIdx = 0; instIdx < instruments.length; instIdx++) {
+            ensureBudget(`instrument preflight (${instIdx + 1}/${instruments.length})`);
             const instrument = instruments[instIdx];
+            const instrumentPatterns = effectivePatternMap[instrument] || [];
             console.log(`[PatternLab] Processing ${instrument}... (${instIdx + 1}/${instruments.length})`);
             
             // Update progress in execution_metadata
@@ -1856,11 +1891,12 @@ serve(async (req) => {
               .from('project_runs')
               .update({ 
                 execution_metadata: { 
-                  progress: Math.round(((instIdx) / instruments.length) * 100),
+                  progress: totalPatternScans > 0 ? Math.round((completedPatternScans / totalPatternScans) * 100) : 0,
                   currentStep: `Scanning ${instrument}`,
                   instrumentsProcessed: instIdx,
                   instrumentsTotal: instruments.length,
-                  patternsTotal: patterns.length,
+                  patternsTotal: totalPatternScans,
+                  scansCompleted: completedPatternScans,
                 } 
               })
               .eq('id', run.id);
@@ -1873,25 +1909,27 @@ serve(async (req) => {
             );
             
             if (bars.length < 50) {
+              completedPatternScans += instrumentPatterns.length;
               console.log(`[PatternLab] Insufficient data for ${instrument}: ${bars.length} bars`);
               continue;
             }
-            
-              // Use per-instrument pattern scoping if available (from Agent Scoring)
-              const instrumentPatterns = instrumentPatternMap?.[instrument] || patterns;
-              
-              for (const patternId of instrumentPatterns) {
-                const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-                if (!pattern) {
-                  console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
-                  continue;
-                }
-                
-                const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-                allTrades.push(...trades);
+
+            for (const patternId of instrumentPatterns) {
+              ensureBudget(`pattern scan ${instrument}:${patternId}`);
+              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+              if (!pattern) {
+                console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
+                completedPatternScans += 1;
+                continue;
               }
+              
+              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
+              allTrades.push(...trades);
+              completedPatternScans += 1;
+            }
           }
           
+          ensureBudget('result computation preflight');
           // Update progress to 100% after all instruments processed
           await supabase
             .from('project_runs')
@@ -1901,15 +1939,17 @@ serve(async (req) => {
                 currentStep: 'Computing results',
                 instrumentsProcessed: instruments.length,
                 instrumentsTotal: instruments.length,
-                patternsTotal: patterns.length,
+                patternsTotal: totalPatternScans,
+                scansCompleted: totalPatternScans,
               } 
             })
             .eq('id', run.id);
           
           console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
+          ensureBudget('pattern-level analytics');
           
           // Calculate pattern-level stats
-          for (const patternId of patterns) {
+          for (const patternId of scannedPatternIds) {
             const pattern = WEDGE_PATTERN_REGISTRY[patternId];
             if (!pattern) continue;
             
@@ -1989,7 +2029,7 @@ serve(async (req) => {
 
           const computePatternResultsForTier = (tierKey: typeof tierKeys[number]) => {
             const results: any[] = [];
-            for (const patternId of patterns) {
+            for (const patternId of scannedPatternIds) {
               const pattern = WEDGE_PATTERN_REGISTRY[patternId];
               if (!pattern) continue;
 
@@ -2160,6 +2200,7 @@ serve(async (req) => {
           const overallMaxDrawdown = maxDrawdownByTier['1:2'] ?? 0;
           
           // ============= EXIT STRATEGY COMPARISON =============
+          ensureBudget('exit strategy comparison');
           console.log(`[PatternLab] Computing exit strategy comparison...`);
           
           const exitComparison = EXIT_STRATEGIES.map(strategy => {
@@ -2258,7 +2299,7 @@ serve(async (req) => {
             // Include inputs for reproducing/editing the run
             inputs: {
               instruments,
-              patterns,
+              patterns: scannedPatternIds,
               gradeFilter,
               riskPerTrade, // Professional tiers: 0.5%, 1%, 2%
             },
@@ -2436,6 +2477,28 @@ serve(async (req) => {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Recover from edge-runtime crashes that can leave runs stuck in "running"
+      if (runRow.status === 'running' && runRow.started_at) {
+        const startedAt = new Date(runRow.started_at).getTime();
+        const staleThresholdMs = 10 * 60 * 1000;
+        if (!Number.isNaN(startedAt) && Date.now() - startedAt > staleThresholdMs) {
+          const timeoutMessage = 'Run timed out before completion. Please retry with fewer instruments/patterns or a shorter lookback.';
+          await supabaseAdmin
+            .from('project_runs')
+            .update({
+              status: 'failed',
+              finished_at: new Date().toISOString(),
+              error_message: timeoutMessage,
+            })
+            .eq('id', runId)
+            .eq('status', 'running');
+
+          runRow.status = 'failed';
+          runRow.finished_at = new Date().toISOString();
+          runRow.error_message = timeoutMessage;
+        }
       }
 
       let artifact = null;
