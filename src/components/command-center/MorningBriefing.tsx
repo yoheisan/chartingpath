@@ -185,8 +185,14 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
   const [loading, setLoading] = useState(!getCachedBriefing());
   const [collapsed, setCollapsed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fetchingRef = useRef(false);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
 
   const loadSetups = useCallback(async (force = false) => {
+    // Prevent concurrent fetches
+    if (fetchingRef.current) return;
+
     // Use cache if valid and not forced
     if (!force) {
       const cached = getCachedBriefing();
@@ -197,34 +203,35 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
       }
     }
 
-    // Force: clear cache and fetch fresh
     if (force) clearCachedBriefing();
 
+    fetchingRef.current = true;
     setLoading(true);
     try {
-      const fresh = await fetchTopSetups(userId);
+      const fresh = await fetchTopSetups(userIdRef.current);
       setSetups(fresh);
       setCachedBriefing(fresh);
       console.log(`[MorningBriefing] Loaded ${fresh.length} setups (force=${force})`);
     } catch (err) {
       console.error('[MorningBriefing] fetch error:', err);
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   // Initial load + auto-refresh interval
   useEffect(() => {
     loadSetups();
-
     intervalRef.current = setInterval(() => loadSetups(true), AUTO_REFRESH_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [loadSetups]);
 
-  // Manual refresh handler — always force
+  // Manual refresh — bypass guard by resetting it first
   const handleRefresh = useCallback(() => {
+    fetchingRef.current = false;
     loadSetups(true);
   }, [loadSetups]);
 
