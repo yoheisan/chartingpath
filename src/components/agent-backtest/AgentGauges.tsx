@@ -1,4 +1,18 @@
 import React from 'react';
+import { Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+const GAUGE_TOOLTIPS: Record<string, string> = {
+  'Take Rate': 'Percentage of scanned setups that scored ≥70 (TAKE verdict). A high Take Rate means your current weights are accepting more trades — good for aggressive styles, but watch for quality dilution.',
+  'Watch Rate': 'Percentage of setups scoring 50–69 (WATCH verdict). These are borderline opportunities worth monitoring but not yet actionable. A high Watch Rate suggests many setups are close to your threshold.',
+  'Skip Rate': 'Percentage of setups scoring below 50 (SKIP verdict). A high Skip Rate means your agents are filtering aggressively — typical of conservative presets. This protects capital but may miss opportunities.',
+  'Avg Score': 'The mean composite score (0–100) across all scanned setups, weighted by your agent configuration. Compare this across presets to see how your weighting strategy shifts overall market sentiment.',
+};
 
 interface GaugeProps {
   value: number;
@@ -17,6 +31,8 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, color }) => {
     red: 'hsl(0, 84%, 60%)',
     blue: 'hsl(217, 91%, 60%)',
   };
+
+  const tooltip = GAUGE_TOOLTIPS[label];
 
   return (
     <div className="flex flex-col items-center">
@@ -45,7 +61,21 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, color }) => {
           {value.toFixed(0)}%
         </text>
       </svg>
-      <span className="text-xs text-muted-foreground mt-1 font-medium">{label}</span>
+      <div className="flex items-center gap-1 mt-1">
+        <span className="text-xs text-muted-foreground font-medium">{label}</span>
+        {tooltip && (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed">
+                {tooltip}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
     </div>
   );
 };
