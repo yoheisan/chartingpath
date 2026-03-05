@@ -29,7 +29,7 @@ export interface BriefingSetup {
 }
 
 const BRIEFING_CACHE_KEY = 'cp-morning-briefing';
-const BRIEFING_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
+const BRIEFING_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches scan cadence
 const LIVE_CHECK_MS = 60 * 1000; // Check SL/TP every 60 seconds
 
 interface CachedBriefing {
