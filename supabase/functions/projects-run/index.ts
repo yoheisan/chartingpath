@@ -729,83 +729,114 @@ async function estimateCacheHitRatio(
   }
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
   // Yahoo Finance intraday limits: 1h data max ~730 days
   const MAX_INTRADAY_DAYS = 729;
+  const REQUEST_TIMEOUT_MS = 15000;
+  const MAX_RETRIES = 2;
   const isIntraday = ['1h', '4h', '8h'].includes(interval);
-  
+
   let period1 = Math.floor(new Date(startDate).getTime() / 1000);
   const period2 = Math.floor(new Date(endDate).getTime() / 1000);
-  
+
   // Cap intraday lookback to Yahoo's maximum
   if (isIntraday) {
     const maxStart = Math.floor((Date.now() - MAX_INTRADAY_DAYS * 86400000) / 1000);
     if (period1 < maxStart) {
-      console.log(`[fetchYahoo] Capping ${symbol} ${interval} start from ${new Date(period1*1000).toISOString().slice(0,10)} to ${new Date(maxStart*1000).toISOString().slice(0,10)} (Yahoo ${MAX_INTRADAY_DAYS}d limit)`);
+      console.log(`[fetchYahoo] Capping ${symbol} ${interval} start from ${new Date(period1 * 1000).toISOString().slice(0, 10)} to ${new Date(maxStart * 1000).toISOString().slice(0, 10)} (Yahoo ${MAX_INTRADAY_DAYS}d limit)`);
       period1 = maxStart;
     }
   }
-  
+
   const yahooInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '1d' ? '1d' : interval === '1wk' ? '1wk' : '1h';
-  
   const encodedSymbol = encodeURIComponent(symbol);
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
-  
-  console.log(`[fetchYahoo] ${symbol} interval=${interval} yahooInterval=${yahooInterval} range=${new Date(period1*1000).toISOString().slice(0,10)}..${new Date(period2*1000).toISOString().slice(0,10)}`);
-  
-  const response = await fetch(yahooUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  });
-  
-  if (!response.ok) {
-    console.error(`[fetchYahoo] HTTP ${response.status} for ${symbol}`);
-    return [];
-  }
-  
-  const data = await response.json();
-  if (!data.chart?.result?.[0]) {
-    console.error(`[fetchYahoo] No chart result for ${symbol}`, JSON.stringify(data.chart?.error || 'unknown'));
-    return [];
-  }
-  
-  const result = data.chart.result[0];
-  const timestamps = result.timestamp || [];
-  const quotes = result.indicators?.quote?.[0] || {};
-  
-  console.log(`[fetchYahoo] ${symbol}: ${timestamps.length} raw bars received`);
-  
-  const bars = timestamps.map((ts: number, idx: number) => ({
-    timestamp: ts * 1000,
-    date: new Date(ts * 1000).toISOString(),
-    open: quotes.open?.[idx] || 0,
-    high: quotes.high?.[idx] || 0,
-    low: quotes.low?.[idx] || 0,
-    close: quotes.close?.[idx] || 0,
-    volume: quotes.volume?.[idx] || 0,
-  })).filter((b: any) => b.close > 0);
-  
-  // Aggregate 1h bars to 4h or 8h if needed
-  const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
-  if (aggregateSize > 0 && bars.length > 0) {
-    const aggregated: any[] = [];
-    for (let i = 0; i < bars.length; i += aggregateSize) {
-      const chunk = bars.slice(i, i + aggregateSize);
-      if (chunk.length === 0) continue;
-      aggregated.push({
-        timestamp: chunk[0].timestamp,
-        date: chunk[0].date,
-        open: chunk[0].open,
-        high: Math.max(...chunk.map((c: any) => c.high)),
-        low: Math.min(...chunk.map((c: any) => c.low)),
-        close: chunk[chunk.length - 1].close,
-        volume: chunk.reduce((sum: number, c: any) => sum + c.volume, 0),
+
+  console.log(`[fetchYahoo] ${symbol} interval=${interval} yahooInterval=${yahooInterval} range=${new Date(period1 * 1000).toISOString().slice(0, 10)}..${new Date(period2 * 1000).toISOString().slice(0, 10)}`);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(yahooUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: controller.signal,
       });
+
+      if (!response.ok) {
+        const shouldRetry = response.status === 429 || response.status >= 500;
+        console.warn(`[fetchYahoo] HTTP ${response.status} for ${symbol} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+        if (shouldRetry && attempt < MAX_RETRIES) {
+          await sleep(500 * (attempt + 1));
+          continue;
+        }
+        return [];
+      }
+
+      const data = await response.json();
+      if (!data.chart?.result?.[0]) {
+        console.error(`[fetchYahoo] No chart result for ${symbol}`, JSON.stringify(data.chart?.error || 'unknown'));
+        return [];
+      }
+
+      const result = data.chart.result[0];
+      const timestamps = result.timestamp || [];
+      const quotes = result.indicators?.quote?.[0] || {};
+
+      console.log(`[fetchYahoo] ${symbol}: ${timestamps.length} raw bars received`);
+
+      const bars = timestamps.map((ts: number, idx: number) => ({
+        timestamp: ts * 1000,
+        date: new Date(ts * 1000).toISOString(),
+        open: quotes.open?.[idx] || 0,
+        high: quotes.high?.[idx] || 0,
+        low: quotes.low?.[idx] || 0,
+        close: quotes.close?.[idx] || 0,
+        volume: quotes.volume?.[idx] || 0,
+      })).filter((b: any) => b.close > 0);
+
+      // Aggregate 1h bars to 4h or 8h if needed
+      const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
+      if (aggregateSize > 0 && bars.length > 0) {
+        const aggregated: any[] = [];
+        for (let i = 0; i < bars.length; i += aggregateSize) {
+          const chunk = bars.slice(i, i + aggregateSize);
+          if (chunk.length === 0) continue;
+          aggregated.push({
+            timestamp: chunk[0].timestamp,
+            date: chunk[0].date,
+            open: chunk[0].open,
+            high: Math.max(...chunk.map((c: any) => c.high)),
+            low: Math.min(...chunk.map((c: any) => c.low)),
+            close: chunk[chunk.length - 1].close,
+            volume: chunk.reduce((sum: number, c: any) => sum + c.volume, 0),
+          });
+        }
+        console.log(`[fetchYahoo] ${symbol}: aggregated ${bars.length} 1h bars → ${aggregated.length} ${interval} bars`);
+        return aggregated;
+      }
+
+      return bars;
+    } catch (error: any) {
+      const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+      const isLastAttempt = attempt >= MAX_RETRIES;
+      console.warn(`[fetchYahoo] ${symbol} request ${isTimeout ? 'timed out' : 'failed'} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+
+      if (isLastAttempt) {
+        console.error(`[fetchYahoo] Giving up on ${symbol}:`, error?.message || error);
+        return [];
+      }
+
+      await sleep(500 * (attempt + 1));
+    } finally {
+      clearTimeout(timeoutId);
     }
-    console.log(`[fetchYahoo] ${symbol}: aggregated ${bars.length} 1h bars → ${aggregated.length} ${interval} bars`);
-    return aggregated;
   }
-  
-  return bars;
+
+  return [];
 }
 
 // ============= BACKTEST ENGINE =============
