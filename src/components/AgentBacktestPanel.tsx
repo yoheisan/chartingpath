@@ -114,7 +114,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       return;
     }
     
-    // Derive patterns from detections matching the effective symbols
+    // Derive exact (instrument, pattern, timeframe) tuples from basket detections
     const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
     const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
     
@@ -123,8 +123,18 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       return;
     }
     
-    // Use the timeframe filter, or derive from detections
-    const tf = timeframeFilter !== 'all' ? timeframeFilter : '1d';
+    // Build per-instrument pattern map so each symbol only backtests its own patterns
+    const instrumentPatternMap: Record<string, string[]> = {};
+    relevantDetections.forEach((d) => {
+      if (!instrumentPatternMap[d.instrument]) instrumentPatternMap[d.instrument] = [];
+      if (!instrumentPatternMap[d.instrument].includes(d.pattern_id)) {
+        instrumentPatternMap[d.instrument].push(d.pattern_id);
+      }
+    });
+    
+    // Use timeframes from actual detections, not a hardcoded default
+    const detectionTimeframes = [...new Set(relevantDetections.map((d) => d.timeframe))];
+    const tf = timeframeFilter !== 'all' ? timeframeFilter : (detectionTimeframes.length === 1 ? detectionTimeframes[0] : '1d');
     
     setIsRunning(true);
     try {
@@ -148,6 +158,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             inputs: {
               instruments: symbolList,
               patterns: uniquePatterns,
+              instrumentPatternMap,
               timeframe: tf,
               lookbackYears: 2,
               gradeFilter: ['A', 'B', 'C'],
