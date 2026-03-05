@@ -24,11 +24,11 @@ export class MarketDataProvider {
 
   constructor(config?: Partial<DataServiceConfig>) {
     this.dataService = new DataService({
-      defaultProvider: 'yahoo',
+      defaultProvider: 'supabase-db',
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_ANON_KEY,
       enableFallback: true,
-      fallbackOrder: ['yahoo', 'eodhd'],
+      fallbackOrder: ['supabase-db', 'yahoo', 'eodhd'],
       ...config
     });
   }
