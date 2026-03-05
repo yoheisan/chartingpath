@@ -1946,6 +1946,7 @@ serve(async (req) => {
             .eq('id', run.id);
           
           console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
+          ensureBudget('pattern-level analytics');
           
           // Calculate pattern-level stats
           for (const patternId of scannedPatternIds) {
@@ -2199,6 +2200,7 @@ serve(async (req) => {
           const overallMaxDrawdown = maxDrawdownByTier['1:2'] ?? 0;
           
           // ============= EXIT STRATEGY COMPARISON =============
+          ensureBudget('exit strategy comparison');
           console.log(`[PatternLab] Computing exit strategy comparison...`);
           
           const exitComparison = EXIT_STRATEGIES.map(strategy => {
