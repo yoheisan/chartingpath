@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TradeOpportunity {
   id: string;
