@@ -22,6 +22,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
   const minEquity = equityValues.length ? Math.min(...equityValues) : 0;
   const maxEquity = equityValues.length ? Math.max(...equityValues) : 0;
   const span = Math.max(maxEquity - minEquity, Math.max(1, minEquity * 0.02));
+  const isSinglePoint = chartData.length === 1;
 
   const metrics = [
     { label: 'Net P&L', value: `${isProfit ? '+' : ''}${result.net_pnl.toFixed(2)}%`, icon: isProfit ? TrendingUp : TrendingDown, color: isProfit ? 'text-emerald-400' : 'text-red-400' },
@@ -75,8 +76,8 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.5} />
-                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.08} />
+                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.65} />
+                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.22} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
@@ -93,7 +94,16 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                     labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
                   />
-                  <Area type="monotone" dataKey="equity" stroke={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} fill="url(#agentEquityGrad)" strokeWidth={3} />
+                  <Area
+                    type="monotone"
+                    dataKey="equity"
+                    connectNulls
+                    stroke={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'}
+                    fill="url(#agentEquityGrad)"
+                    strokeWidth={3}
+                    dot={isSinglePoint ? { r: 4, strokeWidth: 2, stroke: isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))', fill: 'hsl(var(--background))' } : false}
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))', fill: 'hsl(var(--background))' }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
