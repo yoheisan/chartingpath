@@ -14,6 +14,15 @@ interface AgentBacktestResultsProps {
 export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ result, onClose }) => {
   const isProfit = result.net_pnl >= 0;
 
+  const chartData = (result.equity_curve_data || []).filter(
+    (_: any, i: number, arr: any[]) =>
+      i % Math.max(1, Math.floor(arr.length / 60)) === 0 || i === arr.length - 1
+  );
+  const equityValues = chartData.map((d: any) => Number(d?.equity ?? 0)).filter((v: number) => Number.isFinite(v));
+  const minEquity = equityValues.length ? Math.min(...equityValues) : 0;
+  const maxEquity = equityValues.length ? Math.max(...equityValues) : 0;
+  const span = Math.max(maxEquity - minEquity, Math.max(1, minEquity * 0.02));
+
   const metrics = [
     { label: 'Net P&L', value: `${isProfit ? '+' : ''}${result.net_pnl.toFixed(2)}%`, icon: isProfit ? TrendingUp : TrendingDown, color: isProfit ? 'text-emerald-400' : 'text-red-400' },
     { label: 'Total Trades', value: result.total_trades.toString(), icon: BarChart3, color: 'text-blue-400' },
@@ -58,27 +67,33 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
         </div>
 
         {/* Equity Curve */}
-        {result.equity_curve_data && result.equity_curve_data.length > 0 && (
+        {chartData.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-3">Equity Curve</h4>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={result.equity_curve_data.filter((_: any, i: number) => i % Math.max(1, Math.floor(result.equity_curve_data.length / 60)) === 0 || i === result.equity_curve_data.length - 1)}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0} />
+                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.5} />
+                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.08} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={(v: string) => v?.slice(0, 7)} />
-                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[minEquity - span * 0.15, maxEquity + span * 0.15]}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  />
                   <RechartsTooltip
                     contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                     labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
                   />
-                  <Area type="monotone" dataKey="equity" stroke={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} fill="url(#agentEquityGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="equity" stroke={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} fill="url(#agentEquityGrad)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
