@@ -21,8 +21,10 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  Clock
+  Clock,
+  Bot
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { track } from '@/services/analytics';
 
 // Wedge Summary type for UX display
@@ -430,7 +432,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
           </p>
         </div>
 
-        {/* Primary CTAs - ONLY: Create Alert, Open TradingView, Share */}
+        {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-3">
           <Button 
             onClick={handleCreateAlert} 
@@ -441,7 +443,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             Create Alert
           </Button>
           
-          
+          <AgentScoreButton symbol={symbol} pattern={pattern} />
           
           <Button 
             onClick={handleShare} 

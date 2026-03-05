@@ -6,7 +6,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info, Bot } from 'lucide-react';
 import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +46,11 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
   const handleValidate = (e: React.MouseEvent, setup: LiveSetup) => {
     e.stopPropagation();
     navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(setup.patternId)}&instrument=${encodeURIComponent(setup.instrument)}&mode=validate`);
+  };
+
+  const handleAgentScore = (e: React.MouseEvent, setup: LiveSetup) => {
+    e.stopPropagation();
+    navigate(`/tools/agent-scoring?symbol=${encodeURIComponent(setup.instrument)}&pattern=${encodeURIComponent(setup.patternId)}`);
   };
 
   return (
@@ -176,6 +181,16 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                   >
                     <FlaskConical className="h-3 w-3" />
                     <span className="hidden sm:inline">{t('teaserSignals.validate', 'Validate')}</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs text-amber-500 hover:text-amber-400 gap-1"
+                    onClick={(e) => handleAgentScore(e, setup)}
+                    title={t('teaserSignals.agentScore', 'Score')}
+                  >
+                    <Bot className="h-3 w-3" />
+                    <span className="hidden sm:inline">{t('teaserSignals.agentScore', 'Score')}</span>
                   </Button>
                 </div>
               </TableCell>

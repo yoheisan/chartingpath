@@ -156,6 +156,7 @@ const Navigation = () => {
           <Link to="/tools/pip-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.pipCalculator', 'Pip Calculator')}</Link>
           <Link to="/tools/risk-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.riskCalculator', 'Risk Calculator')}</Link>
           <Link to="/tools/economic-calendar" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.economicCalendar', 'Economic Calendar')}</Link>
+          <Link to="/tools/agent-scoring" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.agentScoring', 'Agent Scoring')}</Link>
           <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternQuiz', 'Pattern Quizzes')}</Link>
         </div>
       </div>
@@ -309,6 +310,12 @@ const Navigation = () => {
                       <Link to="/features/trading-copilot" className="flex items-center gap-2">
                         <Bot className="h-4 w-4 text-primary" />
                         {t('navigation.aiCopilot', 'AI Copilot')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/tools/agent-scoring" className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-amber-500" />
+                        {t('navigation.agentScoring', 'Agent Scoring')}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
