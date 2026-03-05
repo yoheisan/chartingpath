@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StrategyWorkspaceInterface } from '@/components/StrategyWorkspaceInterface';
 import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
@@ -6,16 +6,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Brain, LineChart } from 'lucide-react';
 
 const StrategyWorkspace = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeMode = searchParams.get('mode') || 'strategy';
   const initialTab = searchParams.get('tab') || 'builder';
-  const [activeMode, setActiveMode] = React.useState<string>(
-    searchParams.get('mode') || 'strategy'
-  );
+
+  const handleModeChange = useCallback((value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('mode', value);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-7xl px-4 md:px-6 pt-4">
-        <Tabs value={activeMode} onValueChange={setActiveMode}>
+        <Tabs value={activeMode} onValueChange={handleModeChange}>
           <TabsList className="mb-4">
             <TabsTrigger value="strategy" className="gap-1.5">
               <LineChart className="h-4 w-4" />
