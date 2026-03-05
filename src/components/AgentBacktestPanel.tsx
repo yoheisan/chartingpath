@@ -140,6 +140,30 @@ export const AgentBacktestPanel: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Asset Class Filter */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-3 space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Asset Class</span>
+              <ToggleGroup
+                type="single"
+                value={assetClassFilter}
+                onValueChange={(v) => v && setAssetClassFilter(v as AssetClassFilter)}
+                className="flex flex-wrap gap-1"
+              >
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'stocks', label: 'Stocks' },
+                  { value: 'crypto', label: 'Crypto' },
+                  { value: 'forex', label: 'Forex' },
+                  { value: 'commodities', label: 'Cmdty' },
+                ].map((ac) => (
+                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-[11px] h-7 px-2.5">
+                    {ac.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </CardContent>
+          </Card>
           {/* Agent Sliders */}
           <Card className="border-border bg-card">
             <CardContent className="p-3 space-y-4">
