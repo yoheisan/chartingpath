@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TradeOpportunity {
   id: string;
@@ -40,6 +40,22 @@ const MOCK_TRADES: TradeOpportunity[] = [
   { id: '15', symbol: 'GOLD', pattern: 'Bull Flag', direction: 'Long', timeframe: '1D', assetClass: 'commodities', entryPrice: 2340, stopLoss: 2305, takeProfit: 2410, rr: 2.0, analystRaw: 0.80, riskRaw: 0.85, timingRaw: 0.72, portfolioRaw: 0.68 },
   { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
 ];
+
+const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; label: string; tooltip: string }) => (
+  <span className="inline-flex items-center gap-1 justify-center">
+    {icon} {label}
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed font-normal">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </span>
+);
 
 // Map display pattern names to engine pattern IDs
 const PATTERN_NAME_TO_ID: Record<string, string> = {
@@ -142,21 +158,27 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               <th className="px-4 py-3 font-medium">Pattern</th>
               <th className="px-4 py-3 font-medium text-center">Dir</th>
               <th className="px-4 py-3 font-medium text-center">TF</th>
-              <th className="px-4 py-3 font-medium text-center">R:R</th>
               <th className="px-4 py-3 font-medium text-center">
-                <Brain className="h-3.5 w-3.5 inline text-blue-400" /> Analyst
+                <HeaderWithInfo label="R:R" tooltip="Risk-to-Reward ratio. How much potential profit per unit of risk. Higher is better — 2.0+ is the baseline." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Shield className="h-3.5 w-3.5 inline text-amber-400" /> Risk
+                <HeaderWithInfo icon={<Brain className="h-3.5 w-3.5 inline text-blue-400" />} label="Analyst" tooltip="Bayesian win-probability score based on historical pattern hit rates, quality grade, and sample size for this specific instrument." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Clock className="h-3.5 w-3.5 inline text-purple-400" /> Timing
+                <HeaderWithInfo icon={<Shield className="h-3.5 w-3.5 inline text-amber-400" />} label="Risk" tooltip="Risk Manager score evaluating ATR-based stop placement, Kelly criterion sizing, and whether the trade fits within acceptable drawdown limits." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Briefcase className="h-3.5 w-3.5 inline text-emerald-400" /> Portfolio
+                <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label="Timing" tooltip="Macro timing score factoring in upcoming economic events, market session overlap, and whether the setup aligns with current trend momentum." />
               </th>
-              <th className="px-4 py-3 font-medium text-center">Score</th>
-              <th className="px-4 py-3 font-medium text-center">Verdict</th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label="Portfolio" tooltip="Portfolio-level score checking for concentration risk, directional bias, and correlation with existing positions to prevent over-exposure." />
+              </th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo label="Score" tooltip="Weighted composite score (0–100) combining all four agent scores based on your preset weights. This drives the final verdict." />
+              </th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo label="Verdict" tooltip="Final decision: TAKE (≥70) = actionable, WATCH (50–69) = monitor, SKIP (<50) = pass. Thresholds adjust based on your selected preset." />
+              </th>
               {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
             </tr>
           </thead>
