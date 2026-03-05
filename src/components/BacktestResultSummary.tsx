@@ -21,8 +21,10 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  Clock
+  Clock,
+  Bot
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { track } from '@/services/analytics';
 
 // Wedge Summary type for UX display
@@ -112,6 +114,21 @@ const generateInterpretation = (results: BacktestResultData): string => {
     return `Results suggest weak or no edge. Consider adjusting parameters before trading.`;
   }
   return `Mixed signals. Review risk-reward and consider demo trading first.`;
+};
+
+const AgentScoreButton: React.FC<{ symbol: string; pattern: string }> = ({ symbol, pattern }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      onClick={() => navigate(`/tools/agent-scoring?symbol=${encodeURIComponent(symbol)}&pattern=${encodeURIComponent(pattern)}`)}
+      variant="outline"
+      className="flex-1 gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+      size="lg"
+    >
+      <Bot className="h-4 w-4" />
+      Score with AI Agents
+    </Button>
+  );
 };
 
 export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
@@ -430,7 +447,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
           </p>
         </div>
 
-        {/* Primary CTAs - ONLY: Create Alert, Open TradingView, Share */}
+        {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-3">
           <Button 
             onClick={handleCreateAlert} 
@@ -441,7 +458,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             Create Alert
           </Button>
           
-          
+          <AgentScoreButton symbol={symbol} pattern={pattern} />
           
           <Button 
             onClick={handleShare} 

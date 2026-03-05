@@ -26,6 +26,7 @@ import {
   Target,
   LineChart,
   Compass,
+  Bot,
   Command as CommandIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -161,6 +162,15 @@ export function CommandPaletteContent({ onClose, onAIQuery, isMobile }: CommandP
       action: () => navigate("/learn"),
       shortcut: isMobile ? undefined : "G E",
       keywords: ["education", "tutorials", "guides"]
+    },
+    {
+      id: "nav-agent-scoring",
+      label: "Agent Scoring",
+      description: "Multi-agent TAKE/WATCH/SKIP verdicts",
+      icon: Bot,
+      category: "navigate",
+      action: () => navigate("/tools/agent-scoring"),
+      keywords: ["agent", "scoring", "verdict", "take", "watch", "skip", "decision"]
     },
   ], [navigate, isMobile]);
 
