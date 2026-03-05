@@ -142,21 +142,27 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               <th className="px-4 py-3 font-medium">Pattern</th>
               <th className="px-4 py-3 font-medium text-center">Dir</th>
               <th className="px-4 py-3 font-medium text-center">TF</th>
-              <th className="px-4 py-3 font-medium text-center">R:R</th>
               <th className="px-4 py-3 font-medium text-center">
-                <Brain className="h-3.5 w-3.5 inline text-blue-400" /> Analyst
+                <HeaderWithInfo label="R:R" tooltip="Risk-to-Reward ratio. How much potential profit per unit of risk. Higher is better — 2.0+ is the baseline." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Shield className="h-3.5 w-3.5 inline text-amber-400" /> Risk
+                <HeaderWithInfo icon={<Brain className="h-3.5 w-3.5 inline text-blue-400" />} label="Analyst" tooltip="Bayesian win-probability score based on historical pattern hit rates, quality grade, and sample size for this specific instrument." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Clock className="h-3.5 w-3.5 inline text-purple-400" /> Timing
+                <HeaderWithInfo icon={<Shield className="h-3.5 w-3.5 inline text-amber-400" />} label="Risk" tooltip="Risk Manager score evaluating ATR-based stop placement, Kelly criterion sizing, and whether the trade fits within acceptable drawdown limits." />
               </th>
               <th className="px-4 py-3 font-medium text-center">
-                <Briefcase className="h-3.5 w-3.5 inline text-emerald-400" /> Portfolio
+                <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label="Timing" tooltip="Macro timing score factoring in upcoming economic events, market session overlap, and whether the setup aligns with current trend momentum." />
               </th>
-              <th className="px-4 py-3 font-medium text-center">Score</th>
-              <th className="px-4 py-3 font-medium text-center">Verdict</th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label="Portfolio" tooltip="Portfolio-level score checking for concentration risk, directional bias, and correlation with existing positions to prevent over-exposure." />
+              </th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo label="Score" tooltip="Weighted composite score (0–100) combining all four agent scores based on your preset weights. This drives the final verdict." />
+              </th>
+              <th className="px-4 py-3 font-medium text-center">
+                <HeaderWithInfo label="Verdict" tooltip="Final decision: TAKE (≥70) = actionable, WATCH (50–69) = monitor, SKIP (<50) = pass. Thresholds adjust based on your selected preset." />
+              </th>
               {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
             </tr>
           </thead>
