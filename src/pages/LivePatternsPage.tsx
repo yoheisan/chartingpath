@@ -252,7 +252,7 @@ export default function LivePatternsPage() {
   
   
   // Sorting for list view
-  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate' | 'expectancy';
+  type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate' | 'expectancy' | 'rot';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
   const [sortAsc, setSortAsc] = useState(true);
   
@@ -678,6 +678,17 @@ export default function LivePatternsPage() {
             ? calculateProjectedExpectancy(b.historicalPerformance.winRate, DEFAULT_RR)
             : -999;
           cmp = expB - expA;
+          break;
+        }
+        case 'rot': {
+          const getROT = (s: LiveSetup) => {
+            const perf = s.historicalPerformance;
+            if (perf?.avgRMultiple && perf?.avgDurationBars && perf.avgDurationBars > 0) {
+              return perf.avgRMultiple / perf.avgDurationBars;
+            }
+            return -999;
+          };
+          cmp = getROT(b) - getROT(a);
           break;
         }
       }
@@ -1356,6 +1367,25 @@ export default function LivePatternsPage() {
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
+                    onClick={() => handleSort('rot')}
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center justify-end gap-1 cursor-help">
+                            ROT
+                            <Info className="h-3 w-3 opacity-50" />
+                            <SortIcon columnKey="rot" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('signal')}
                   >
                     <div className="flex items-center justify-end">
@@ -1370,7 +1400,7 @@ export default function LivePatternsPage() {
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={7} className="py-2">
+                      <TableCell colSpan={8} className="py-2">
                         <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1483,6 +1513,25 @@ export default function LivePatternsPage() {
                             })() : (
                               <span className="text-muted-foreground text-xs">—</span>
                             )}
+                          </TableCell>
+                          {/* ROT - Return on Time */}
+                          <TableCell className="text-right">
+                            {(() => {
+                              const perf = setup.historicalPerformance;
+                              if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                                const rot = perf.avgRMultiple / perf.avgDurationBars;
+                                const isHighEfficiency = rot >= 0.01;
+                                return (
+                                  <span className={cn(
+                                    'font-mono text-xs font-medium',
+                                    isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
+                                  )}>
+                                    {rot.toFixed(4)}
+                                  </span>
+                                );
+                              }
+                              return <span className="text-muted-foreground text-xs">—</span>;
+                            })()}
                           </TableCell>
                           <TableCell className="text-right">
                             <span className={`text-xs ${
