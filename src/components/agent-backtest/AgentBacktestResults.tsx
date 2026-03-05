@@ -14,7 +14,24 @@ interface AgentBacktestResultsProps {
 export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ result, onClose }) => {
   const isProfit = result.net_pnl >= 0;
 
-  const chartData = (result.equity_curve_data || []).filter(
+  // Debug: log what equity data we actually receive
+  console.log('[AgentBacktestResults] equity_curve_data length:', result.equity_curve_data?.length, 'sample:', result.equity_curve_data?.slice(0, 3));
+
+  // Build chart data: use real equity curve if available, otherwise synthesize from initial capital + net pnl
+  let rawChartData = result.equity_curve_data || [];
+  
+  if (rawChartData.length === 0 && result.initial_capital) {
+    // Synthesize a simple 2-point equity curve as fallback
+    const startEquity = result.initial_capital;
+    const endEquity = startEquity * (1 + result.net_pnl / 100);
+    rawChartData = [
+      { date: result.from_date, equity: startEquity, drawdown: 0 },
+      { date: result.to_date, equity: endEquity, drawdown: 0 },
+    ];
+    console.log('[AgentBacktestResults] Synthesized fallback equity curve:', rawChartData);
+  }
+
+  const chartData = rawChartData.filter(
     (_: any, i: number, arr: any[]) =>
       i % Math.max(1, Math.floor(arr.length / 60)) === 0 || i === arr.length - 1
   );
