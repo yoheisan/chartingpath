@@ -395,7 +395,7 @@ const Navigation = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/strategy-workspace">Strategy Workspace</Link>
+                  <Link to="/projects/pattern-lab/new">Pattern Lab</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/tools/pip-calculator">Pip Calculator</Link>

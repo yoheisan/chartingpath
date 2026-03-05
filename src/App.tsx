@@ -65,7 +65,7 @@ const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 
 
 const CommunityFeed = lazy(() => import("./pages/CommunityFeed"));
-const StrategyWorkspace = lazy(() => import("./pages/StrategyWorkspace"));
+const AgentScoring = lazy(() => import("./pages/AgentScoring"));
 const EliteDashboard = lazy(() => import("./pages/EliteDashboard"));
 const SharedBacktest = lazy(() => import("./pages/SharedBacktest"));
 const SharedPattern = lazy(() => import("./pages/SharedPattern"));
@@ -174,10 +174,11 @@ const App = () => (
           <Route path="/learn/trading-journal" element={<Navigate to="/blog/trading-journal" replace />} />
           <Route path="/learn/trading-strategies-guide" element={<Navigate to="/blog/trading-strategies-guide" replace />} />
           <Route path="/community" element={withSuspense(<CommunityFeed />)} />
-          <Route path="/strategy-workspace" element={withSuspense(<StrategyWorkspace />)} />
-          <Route path="/ai-builder" element={<Navigate to="/strategy-workspace" replace />} />
-          <Route path="/backtest" element={<Navigate to="/strategy-workspace" replace />} />
-          <Route path="/strategy" element={<Navigate to="/strategy-workspace" replace />} />
+          <Route path="/tools/agent-scoring" element={withSuspense(<AgentScoring />)} />
+          <Route path="/strategy-workspace" element={<Navigate to="/projects/pattern-lab/new" replace />} />
+          <Route path="/ai-builder" element={<Navigate to="/projects/pattern-lab/new" replace />} />
+          <Route path="/backtest" element={<Navigate to="/projects/pattern-lab/new" replace />} />
+          <Route path="/strategy" element={<Navigate to="/projects/pattern-lab/new" replace />} />
           <Route path="/projects" element={<Navigate to="/projects/pattern-lab/new" replace />} />
           <Route path="/projects/pricing" element={withSuspense(<ProjectsPricing />)} />
           <Route path="/projects/setup-finder/new" element={<Navigate to="/projects/pattern-lab/new" replace />} />

@@ -130,8 +130,8 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">{t('footer.tools', 'Tools')}</h3>
             <nav className="flex flex-col gap-2">
-              <Link to="/strategy-workspace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('footer.strategyWorkspace', 'Strategy Workspace')}
+              <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {t('footer.patternLab', 'Pattern Lab')}
               </Link>
               <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pipCalculator', 'Pip Calculator')}
