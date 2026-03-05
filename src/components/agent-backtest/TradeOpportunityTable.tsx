@@ -235,31 +235,31 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               {onToggleBasket && <th className="px-3 py-3 font-medium text-center w-10">
                 <HeaderWithInfo label="" tooltip="Add symbols to the backtest basket. Selected symbols will auto-populate the Run Backtest input." />
               </th>}
-              <th className="px-4 py-3 font-medium">Symbol</th>
-              <th className="px-4 py-3 font-medium">Pattern</th>
-              <th className="px-4 py-3 font-medium text-center">Dir</th>
-              <th className="px-4 py-3 font-medium text-center">TF</th>
-              <th className="px-4 py-3 font-medium text-center">
+              <SortableHeader sortKey="symbol" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>Symbol</SortableHeader>
+              <SortableHeader sortKey="pattern" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>Pattern</SortableHeader>
+              <SortableHeader sortKey="direction" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">Dir</SortableHeader>
+              <SortableHeader sortKey="timeframe" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">TF</SortableHeader>
+              <SortableHeader sortKey="rr" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo label="R:R" tooltip="Risk-to-Reward ratio. How much potential profit per unit of risk. Higher is better — 2.0+ is the baseline." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="analystScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Brain className="h-3.5 w-3.5 inline text-blue-400" />} label="Analyst" tooltip="Bayesian win-probability score based on historical pattern hit rates, quality grade, and sample size for this specific instrument." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="riskScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Shield className="h-3.5 w-3.5 inline text-amber-400" />} label="Risk" tooltip="Risk Manager score evaluating ATR-based stop placement, Kelly criterion sizing, and whether the trade fits within acceptable drawdown limits." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="timingScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label="Timing" tooltip="Macro timing score factoring in upcoming economic events, market session overlap, and whether the setup aligns with current trend momentum." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="portfolioScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label="Portfolio" tooltip="Portfolio-level score checking for concentration risk, directional bias, and correlation with existing positions to prevent over-exposure." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="composite" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo label="Score" tooltip="Weighted composite score (0–100) combining all four agent scores based on your preset weights. This drives the final verdict." />
-              </th>
-              <th className="px-4 py-3 font-medium text-center">
+              </SortableHeader>
+              <SortableHeader sortKey="verdict" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo label="Verdict" tooltip="Final decision: TAKE (≥70) = actionable, WATCH (50–69) = monitor, SKIP (<50) = pass. Thresholds adjust based on your selected preset." />
-              </th>
+              </SortableHeader>
               {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
             </tr>
           </thead>
