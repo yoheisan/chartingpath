@@ -156,9 +156,9 @@ const ASSET_CLASS_KEYS: Record<string, string> = {
   etfs: 'ETFs',
 };
 
-// Timeframes - synced with screener (1h, 4h, 8h, 1d, 1wk)
-// Lookback limits based on Data Coverage Contract (Yahoo Finance provider)
+// Timeframes - synced with seeded data (15m, 1h, 4h, 8h, 1d, 1wk)
 const TIMEFRAMES = [
+  { value: '15m', labelKey: 'patternLabWizard.tf15m', maxYears: 0.16, hintKey: 'patternLabWizard.yearsMax' },
   { value: '1h', labelKey: 'patternLabWizard.tf1h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
   { value: '4h', labelKey: 'patternLabWizard.tf4h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
   { value: '8h', labelKey: 'patternLabWizard.tf8h', maxYears: 2, hintKey: 'patternLabWizard.yearsMax' },
