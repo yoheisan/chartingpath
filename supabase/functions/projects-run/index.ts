@@ -2479,6 +2479,28 @@ serve(async (req) => {
         });
       }
 
+      // Recover from edge-runtime crashes that can leave runs stuck in "running"
+      if (runRow.status === 'running' && runRow.started_at) {
+        const startedAt = new Date(runRow.started_at).getTime();
+        const staleThresholdMs = 10 * 60 * 1000;
+        if (!Number.isNaN(startedAt) && Date.now() - startedAt > staleThresholdMs) {
+          const timeoutMessage = 'Run timed out before completion. Please retry with fewer instruments/patterns or a shorter lookback.';
+          await supabaseAdmin
+            .from('project_runs')
+            .update({
+              status: 'failed',
+              finished_at: new Date().toISOString(),
+              error_message: timeoutMessage,
+            })
+            .eq('id', runId)
+            .eq('status', 'running');
+
+          runRow.status = 'failed';
+          runRow.finished_at = new Date().toISOString();
+          runRow.error_message = timeoutMessage;
+        }
+      }
+
       let artifact = null;
       if (runRow.status === 'succeeded') {
         const { data: artifactData } = await supabaseAdmin
