@@ -420,7 +420,7 @@ async function fetchCrossTimeframeFallback(
       try {
         const { data, error } = await supabase
           .from('historical_pattern_occurrences')
-          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}`)
+          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, bars_to_outcome`)
           .in('pattern_id', uniquePatternIds)
           .in('symbol', uniqueSymbols)
           .eq('timeframe', tf)
@@ -429,16 +429,17 @@ async function fetchCrossTimeframeFallback(
 
         if (error || !data?.length) continue;
 
-        const grouped = new Map<string, { wins: number; total: number; pnlSum: number }>();
+        const grouped = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
         for (const row of data) {
           const outcome = row[outcomeCol];
           if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
           const k = `${row.pattern_id}|${row.symbol}`;
-          if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0 });
+          if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
           const e = grouped.get(k)!;
           e.total++;
           if (outcome === 'hit_tp') e.wins++;
           e.pnlSum += row[pnlCol] ?? 0;
+          if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
         }
 
         for (const [baseKey, e] of grouped) {
@@ -450,7 +451,7 @@ async function fetchCrossTimeframeFallback(
             winRate: Math.round((e.wins / e.total) * 1000) / 10,
             avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
             sampleSize: e.total,
-            avgDurationBars: 0,
+            avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
             accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
           });
         }
@@ -472,21 +473,22 @@ async function fetchCrossTimeframeFallback(
       // Query aggregate stats across ALL symbols for these patterns (prefer same timeframe, then any)
       const { data, error } = await supabase
         .from('historical_pattern_occurrences')
-        .select(`pattern_id, ${outcomeCol}, ${pnlCol}`)
+        .select(`pattern_id, ${outcomeCol}, ${pnlCol}, bars_to_outcome`)
         .in('pattern_id', missingPatternIds)
         .not(outcomeCol, 'is', null)
         .limit(5000);
 
       if (!error && data?.length) {
-        const patternAgg = new Map<string, { wins: number; total: number; pnlSum: number }>();
+        const patternAgg = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
         for (const row of data) {
           const outcome = row[outcomeCol];
           if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
-          if (!patternAgg.has(row.pattern_id)) patternAgg.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0 });
+          if (!patternAgg.has(row.pattern_id)) patternAgg.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
           const e = patternAgg.get(row.pattern_id)!;
           e.total++;
           if (outcome === 'hit_tp') e.wins++;
           e.pnlSum += row[pnlCol] ?? 0;
+          if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
         }
 
         for (const pair of stillMissing) {
@@ -497,7 +499,7 @@ async function fetchCrossTimeframeFallback(
             winRate: Math.round((agg.wins / agg.total) * 1000) / 10,
             avgRMultiple: Math.round((agg.pnlSum / agg.total / 100) * 100) / 100,
             sampleSize: agg.total,
-            avgDurationBars: 0,
+            avgDurationBars: agg.durationCount > 0 ? Math.round(agg.durationSum / agg.durationCount) : 0,
             accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
           });
         }
