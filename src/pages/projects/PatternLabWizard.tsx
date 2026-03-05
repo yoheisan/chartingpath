@@ -1069,6 +1069,137 @@ const PatternLabWizard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Advanced Strategy Controls — collapsed by default */}
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors pb-4">
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Settings className="h-5 w-5 text-muted-foreground" />
+                        {t('patternLabWizard.advancedStrategy', 'Advanced Strategy')}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-6 pt-0">
+                    {/* Target & Stop Loss */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Target className="h-4 w-4 text-primary" />
+                        {t('patternLabWizard.targetStopLoss', 'Target & Stop Loss')}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">
+                            {t('patternLabWizard.takeProfit', 'Take Profit %')}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Slider
+                              value={[targetGainPercent]}
+                              onValueChange={([v]) => setTargetGainPercent(v)}
+                              min={0.5}
+                              max={20}
+                              step={0.5}
+                              className="flex-1"
+                            />
+                            <span className="text-sm font-medium text-primary w-12 text-right">
+                              {targetGainPercent}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">
+                            {t('patternLabWizard.stopLoss', 'Stop Loss %')}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Slider
+                              value={[stopLossPercent]}
+                              onValueChange={([v]) => setStopLossPercent(v)}
+                              min={0.25}
+                              max={10}
+                              step={0.25}
+                              className="flex-1"
+                            />
+                            <span className="text-sm font-medium text-destructive w-12 text-right">
+                              {stopLossPercent}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        R:R = {(targetGainPercent / stopLossPercent).toFixed(1)}:1
+                      </div>
+                    </div>
+
+                    {/* Position Management */}
+                    <div className="space-y-3 border-t border-border/50 pt-4">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        {t('patternLabWizard.positionManagement', 'Position Management')}
+                      </h4>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
+                          {t('patternLabWizard.maxOpenPositions', 'Max Open Positions')}
+                        </Label>
+                        <Select value={String(maxOpenPositions)} onValueChange={v => setMaxOpenPositions(Number(v))}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 5, 10].map(n => (
+                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
+                          {t('patternLabWizard.minRiskReward', 'Min Risk:Reward')}
+                        </Label>
+                        <Select value={String(minRiskReward)} onValueChange={v => setMinRiskReward(Number(v))}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 1.5, 2, 2.5, 3].map(n => (
+                              <SelectItem key={n} value={String(n)}>{n}:1</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Discipline Filters */}
+                    <div className="space-y-3 border-t border-border/50 pt-4">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Flame className="h-4 w-4 text-muted-foreground" />
+                        {t('patternLabWizard.disciplineFilters', 'Discipline Filters')}
+                      </h4>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={requireVolumeConfirm}
+                            onCheckedChange={(v) => setRequireVolumeConfirm(!!v)}
+                          />
+                          <span className="text-sm">{t('patternLabWizard.requireVolume', 'Require volume confirmation')}</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={avoidEarnings}
+                            onCheckedChange={(v) => setAvoidEarnings(!!v)}
+                          />
+                          <span className="text-sm">{t('patternLabWizard.avoidEarnings', 'Skip trades near earnings')}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           </div>
           
           {/* Sidebar - Credits & Run - Clean inline layout (no sticky floating) */}
