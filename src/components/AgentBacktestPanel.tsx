@@ -1,47 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Play, RotateCcw, TrendingUp, TrendingDown, Shield, Clock, Briefcase, Loader2, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
+import { Brain, Play, TrendingUp, Shield, Clock, Briefcase, Loader2, AlertTriangle, CheckCircle, Eye, Zap, Settings2 } from 'lucide-react';
 import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
+import { AgentCard } from './agent-backtest/AgentCard';
+import { CompositeScoreRing } from './agent-backtest/CompositeScoreRing';
+import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
+import { AgentImpactSimulator } from './agent-backtest/AgentImpactSimulator';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number }; description: string }> = {
-  balanced: {
-    label: 'Balanced',
-    weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 },
-    cutoffs: { take: 70, watch: 50 },
-    description: 'Equal weight across all agents',
-  },
-  conservative: {
-    label: 'Conservative',
-    weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 },
-    cutoffs: { take: 80, watch: 60 },
-    description: 'Heavy risk focus, higher thresholds',
-  },
-  aggressive: {
-    label: 'Aggressive',
-    weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 },
-    cutoffs: { take: 60, watch: 40 },
-    description: 'Signal-driven, lower thresholds',
-  },
-  momentum: {
-    label: 'Momentum',
-    weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 },
-    cutoffs: { take: 65, watch: 45 },
-    description: 'Timing + analyst heavy for trend capture',
-  },
+  balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 }, description: 'Equal weight across all agents' },
+  conservative: { label: '🛡️ Conservative', weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 }, cutoffs: { take: 80, watch: 60 }, description: 'Heavy risk focus, higher thresholds' },
+  aggressive: { label: '🔥 Aggressive', weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 }, cutoffs: { take: 60, watch: 40 }, description: 'Signal-driven, lower thresholds' },
+  momentum: { label: '⚡ Momentum', weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 }, cutoffs: { take: 65, watch: 45 }, description: 'Timing + analyst heavy for trend capture' },
 };
 
 const AGENT_META = [
-  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-500' },
-  { key: 'risk' as const, label: 'Risk Manager', icon: Shield, color: 'text-amber-500' },
-  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-500' },
-  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-500' },
+  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-500', bgColor: 'bg-blue-500/5', borderColor: 'border-blue-500/20', description: 'Bayesian win-probability & expectancy', factors: ['Win Rate', 'Expectancy R', 'Sample Size'] },
+  { key: 'risk' as const, label: 'Risk Manager', icon: Shield, color: 'text-amber-500', bgColor: 'bg-amber-500/5', borderColor: 'border-amber-500/20', description: 'ATR stops, Kelly sizing, R:R validation', factors: ['ATR Stop', 'Kelly %', 'R:R Ratio'] },
+  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-500', bgColor: 'bg-purple-500/5', borderColor: 'border-purple-500/20', description: 'Macro events & economic calendar risk', factors: ['FOMC', 'NFP', 'CPI Events'] },
+  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-500', bgColor: 'bg-emerald-500/5', borderColor: 'border-emerald-500/20', description: 'Concentration, directional heat, balance', factors: ['Sector Heat', 'Correlation', 'Max Weight'] },
 ];
 
 const VERDICT_COLORS: Record<string, string> = {
@@ -66,6 +49,7 @@ export const AgentBacktestPanel: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [activeResultTab, setActiveResultTab] = useState('overview');
+  const [configTab, setConfigTab] = useState('agents');
 
   const applyPreset = (presetKey: string) => {
     const preset = PRESETS[presetKey];
@@ -74,34 +58,34 @@ export const AgentBacktestPanel: React.FC = () => {
     setWatchCutoff(preset.cutoffs.watch);
   };
 
-  const updateWeight = (key: keyof AgentWeights, value: number) => {
-    setWeights((prev) => ({ ...prev, [key]: value }));
-  };
-
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+
+  // Simulated composite for the ring preview
+  const simulatedBreakdown = useMemo(() => {
+    return AGENT_META.map(({ key, label, color }) => ({
+      key, label, color,
+      score: weights[key] * 0.72, // simulated 72% fill for preview
+      max: weights[key],
+    }));
+  }, [weights]);
+
+  const simulatedComposite = useMemo(() => {
+    return simulatedBreakdown.reduce((a, b) => a + b.score, 0);
+  }, [simulatedBreakdown]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
-    if (symbolList.length === 0) {
-      toast.error('Add at least one symbol');
-      return;
-    }
+    if (symbolList.length === 0) { toast.error('Add at least one symbol'); return; }
 
     setIsRunning(true);
     try {
       const adapter = new AgentBacktestAdapter();
       const params: AgentBacktestParams = {
-        symbols: symbolList,
-        fromDate,
-        toDate,
-        initialCapital,
-        commission,
-        slippage,
+        symbols: symbolList, fromDate, toDate, initialCapital, commission, slippage,
         agentWeights: weights,
         verdictCutoffs: { take: takeCutoff, watch: watchCutoff },
         rebalanceFrequencyDays: rebalanceDays,
       };
-
       const result = await adapter.runAgentBacktest(params);
       setResults(result);
       setActiveResultTab('overview');
@@ -116,116 +100,137 @@ export const AgentBacktestPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Configuration */}
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Multi-Agent Portfolio Backtest</CardTitle>
-          </div>
-          <CardDescription>
-            Configure a multi-asset backtest powered by 4 autonomous agents: Analyst, Risk, Timing, and Portfolio.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Symbols & Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-3">
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Symbols (comma-separated)</label>
-              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="AAPL, MSFT, GOOGL" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">From</label>
-              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">To</label>
-              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Initial Capital ($)</label>
-              <Input type="number" value={initialCapital} onChange={(e) => setInitialCapital(Number(e.target.value))} />
-            </div>
-          </div>
+      {/* Hero Header */}
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
+          <Brain className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Multi-Agent Portfolio Engine</h2>
+          <p className="text-sm text-muted-foreground">4 autonomous agents score every trade opportunity. Adjust their influence in real-time.</p>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Commission (%)</label>
-              <Input type="number" step="0.01" value={commission} onChange={(e) => setCommission(Number(e.target.value))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Slippage (%)</label>
-              <Input type="number" step="0.01" value={slippage} onChange={(e) => setSlippage(Number(e.target.value))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Re-evaluate every (days)</label>
-              <Input type="number" value={rebalanceDays} onChange={(e) => setRebalanceDays(Number(e.target.value))} min={1} />
-            </div>
-          </div>
-
+      {/* Main Layout: Agents + Score Ring */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Agent Cards (2x2 grid) */}
+        <div className="lg:col-span-2">
           {/* Presets */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">Strategy Profile</label>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(PRESETS).map(([key, preset]) => (
-                <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-xs">
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {Object.entries(PRESETS).map(([key, preset]) => (
+              <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-xs">
+                {preset.label}
+              </Button>
+            ))}
+            {totalWeight !== 100 && (
+              <Badge variant="destructive" className="text-xs ml-auto">
+                Weights: {totalWeight}/100
+              </Badge>
+            )}
           </div>
 
-          {/* Agent Weight Sliders */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Agent Weights</label>
-              <span className={`text-xs ${totalWeight === 100 ? 'text-muted-foreground' : 'text-destructive font-medium'}`}>
-                Total: {totalWeight}/100
-              </span>
-            </div>
-            {AGENT_META.map(({ key, label, icon: Icon, color }) => (
-              <div key={key} className="flex items-center gap-3">
-                <Icon className={`h-4 w-4 ${color} shrink-0`} />
-                <span className="text-sm w-28 shrink-0">{label}</span>
-                <Slider
-                  value={[weights[key]]}
-                  onValueChange={([v]) => updateWeight(key, v)}
-                  min={0}
-                  max={50}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-sm font-mono w-8 text-right">{weights[key]}</span>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {AGENT_META.map((agent) => (
+              <AgentCard
+                key={agent.key}
+                agentKey={agent.key}
+                label={agent.label}
+                icon={agent.icon}
+                color={agent.color}
+                bgColor={agent.bgColor}
+                borderColor={agent.borderColor}
+                weight={weights[agent.key]}
+                onWeightChange={(v) => setWeights((prev) => ({ ...prev, [agent.key]: v }))}
+                description={agent.description}
+                factors={agent.factors}
+                liveScore={results?.agentScoreSummary ? weights[agent.key] * 0.72 : undefined}
+              />
             ))}
           </div>
+        </div>
 
-          {/* Verdict Cutoffs */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">TAKE threshold (≥)</label>
-              <Slider value={[takeCutoff]} onValueChange={([v]) => setTakeCutoff(v)} min={50} max={95} step={1} />
-              <span className="text-xs text-muted-foreground mt-1 block">{takeCutoff}</span>
+        {/* Right: Composite Score Ring */}
+        <div className="flex flex-col items-center justify-center">
+          <Card className="border-border bg-card w-full">
+            <CardContent className="pt-6 flex flex-col items-center">
+              <CompositeScoreRing
+                score={Math.round(simulatedComposite)}
+                takeCutoff={takeCutoff}
+                watchCutoff={watchCutoff}
+                agentBreakdown={simulatedBreakdown}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Verdict Zone Bar */}
+      <Card className="border-border bg-card">
+        <CardContent className="pt-6">
+          <VerdictZoneBar
+            takeCutoff={takeCutoff}
+            watchCutoff={watchCutoff}
+            onTakeChange={setTakeCutoff}
+            onWatchChange={setWatchCutoff}
+            currentScore={Math.round(simulatedComposite)}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Live Scenario Simulator */}
+      <Card className="border-border bg-card">
+        <CardContent className="pt-6">
+          <AgentImpactSimulator weights={weights} takeCutoff={takeCutoff} watchCutoff={watchCutoff} />
+        </CardContent>
+      </Card>
+
+      {/* Backtest Configuration */}
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm">Backtest Parameters</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-3">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Symbols</label>
+              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="AAPL, MSFT, GOOGL" className="text-sm" />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">WATCH threshold (≥)</label>
-              <Slider value={[watchCutoff]} onValueChange={([v]) => setWatchCutoff(v)} min={20} max={80} step={1} />
-              <span className="text-xs text-muted-foreground mt-1 block">{watchCutoff}</span>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">From</label>
+              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">To</label>
+              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Capital ($)</label>
+              <Input type="number" value={initialCapital} onChange={(e) => setInitialCapital(Number(e.target.value))} className="text-sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Commission (%)</label>
+              <Input type="number" step="0.01" value={commission} onChange={(e) => setCommission(Number(e.target.value))} className="text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Slippage (%)</label>
+              <Input type="number" step="0.01" value={slippage} onChange={(e) => setSlippage(Number(e.target.value))} className="text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Re-evaluate (days)</label>
+              <Input type="number" value={rebalanceDays} onChange={(e) => setRebalanceDays(Number(e.target.value))} min={1} className="text-sm" />
             </div>
           </div>
 
-          {/* Run Button */}
-          <Button onClick={handleRun} disabled={isRunning} className="w-full" size="lg">
+          <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full" size="lg">
             {isRunning ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Running Agent Backtest...
-              </>
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Running Agent Backtest...</>
             ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Run Multi-Agent Backtest
-              </>
+              <><Zap className="h-4 w-4 mr-2" />Run Multi-Agent Backtest</>
             )}
           </Button>
         </CardContent>
@@ -249,41 +254,24 @@ export const AgentBacktestPanel: React.FC = () => {
               </TabsList>
 
               <TabsContent value="overview">
-                {/* Score Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <MetricCard label="Net P&L" value={`${results.net_pnl > 0 ? '+' : ''}${results.net_pnl.toFixed(2)}%`} positive={results.net_pnl > 0} />
                   <MetricCard label="Sharpe" value={results.sharpe_ratio.toFixed(2)} positive={results.sharpe_ratio > 1} />
                   <MetricCard label="Max DD" value={`${results.max_drawdown.toFixed(2)}%`} positive={false} />
                   <MetricCard label="Trades" value={String(results.total_trades)} />
                 </div>
-
-                {/* Agent Score Summary */}
                 {results.agentScoreSummary && (
                   <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                     <h4 className="text-sm font-medium text-foreground">Decision Summary</h4>
-                    <div className="flex items-center gap-6 text-sm">
+                    <div className="flex items-center gap-6 text-sm flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground">Avg Score:</span>
                         <span className="font-mono font-medium">{results.agentScoreSummary.avgComposite}</span>
                       </div>
-                      <Badge className={VERDICT_COLORS.TAKE}>
-                        <CheckCircle className="h-3 w-3 mr-1" /> TAKE: {results.agentScoreSummary.takeCount}
-                      </Badge>
-                      <Badge className={VERDICT_COLORS.WATCH}>
-                        <Eye className="h-3 w-3 mr-1" /> WATCH: {results.agentScoreSummary.watchCount}
-                      </Badge>
-                      <Badge className={VERDICT_COLORS.SKIP}>
-                        <AlertTriangle className="h-3 w-3 mr-1" /> SKIP: {results.agentScoreSummary.skipCount}
-                      </Badge>
+                      <Badge className={VERDICT_COLORS.TAKE}><CheckCircle className="h-3 w-3 mr-1" /> TAKE: {results.agentScoreSummary.takeCount}</Badge>
+                      <Badge className={VERDICT_COLORS.WATCH}><Eye className="h-3 w-3 mr-1" /> WATCH: {results.agentScoreSummary.watchCount}</Badge>
+                      <Badge className={VERDICT_COLORS.SKIP}><AlertTriangle className="h-3 w-3 mr-1" /> SKIP: {results.agentScoreSummary.skipCount}</Badge>
                     </div>
-                  </div>
-                )}
-
-                {/* Equity Curve (simple text for now) */}
-                {results.equity_curve_data?.length > 0 && (
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    Equity curve: {results.equity_curve_data.length} data points from{' '}
-                    {results.equity_curve_data[0]?.date} to {results.equity_curve_data[results.equity_curve_data.length - 1]?.date}
                   </div>
                 )}
               </TabsContent>
@@ -317,12 +305,8 @@ export const AgentBacktestPanel: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-muted-foreground text-left border-b border-border">
-                        <th className="pb-2">Date</th>
-                        <th className="pb-2">Type</th>
-                        <th className="pb-2">Price</th>
-                        <th className="pb-2">Qty</th>
-                        <th className="pb-2">Score</th>
-                        <th className="pb-2">Verdict</th>
+                        <th className="pb-2">Date</th><th className="pb-2">Type</th><th className="pb-2">Price</th>
+                        <th className="pb-2">Qty</th><th className="pb-2">Score</th><th className="pb-2">Verdict</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -333,9 +317,7 @@ export const AgentBacktestPanel: React.FC = () => {
                           <td className="font-mono">${t.entry_price?.toFixed(2)}</td>
                           <td>{t.quantity}</td>
                           <td className="font-mono">{t.compositeScore?.toFixed(0) ?? '-'}</td>
-                          <td>
-                            {t.verdict && <Badge className={`${VERDICT_COLORS[t.verdict]} text-xs`}>{t.verdict}</Badge>}
-                          </td>
+                          <td>{t.verdict && <Badge className={`${VERDICT_COLORS[t.verdict]} text-xs`}>{t.verdict}</Badge>}</td>
                         </tr>
                       ))}
                     </tbody>
