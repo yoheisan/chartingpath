@@ -242,7 +242,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   </div>
                   <Slider
                     value={[weights[key]]}
-                    onValueChange={([v]) => setWeights((prev) => ({ ...prev, [key]: v }))}
+                    onValueChange={([v]) => { setWeights((prev) => ({ ...prev, [key]: v })); setActivePreset(''); }}
                     min={0}
                     max={50}
                     step={1}
