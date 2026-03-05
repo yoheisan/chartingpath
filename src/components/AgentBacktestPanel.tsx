@@ -8,9 +8,10 @@ import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBackt
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
   balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
@@ -51,6 +52,7 @@ export const AgentBacktestPanel: React.FC = () => {
   const [fromDate, setFromDate] = useState('2024-01-01');
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
+  const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [isRunning, setIsRunning] = useState(false);
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
@@ -138,6 +140,30 @@ export const AgentBacktestPanel: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Asset Class Filter */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-3 space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Asset Class</span>
+              <ToggleGroup
+                type="single"
+                value={assetClassFilter}
+                onValueChange={(v) => v && setAssetClassFilter(v as AssetClassFilter)}
+                className="flex flex-wrap gap-1"
+              >
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'stocks', label: 'Stocks' },
+                  { value: 'crypto', label: 'Crypto' },
+                  { value: 'forex', label: 'Forex' },
+                  { value: 'commodities', label: 'Cmdty' },
+                ].map((ac) => (
+                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-[11px] h-7 px-2.5">
+                    {ac.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </CardContent>
+          </Card>
           {/* Agent Sliders */}
           <Card className="border-border bg-card">
             <CardContent className="p-3 space-y-4">
@@ -222,6 +248,7 @@ export const AgentBacktestPanel: React.FC = () => {
                 weights={weights}
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
+                assetClassFilter={assetClassFilter}
               />
             </CardContent>
           </Card>
