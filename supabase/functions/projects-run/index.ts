@@ -1671,6 +1671,7 @@ serve(async (req) => {
         lookbackYears = 1,
         riskPerTrade = 1,
         instruments: directInstruments,
+        instrumentPatternMap,  // Optional: per-instrument pattern scoping from Agent Scoring
         holdings = [],
         rebalanceFrequency = 'quarterly',
         dcaAmount = 0,
@@ -1876,16 +1877,19 @@ serve(async (req) => {
               continue;
             }
             
-            for (const patternId of patterns) {
-              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-              if (!pattern) {
-                console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
-                continue;
-              }
+              // Use per-instrument pattern scoping if available (from Agent Scoring)
+              const instrumentPatterns = instrumentPatternMap?.[instrument] || patterns;
               
-              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-              allTrades.push(...trades);
-            }
+              for (const patternId of instrumentPatterns) {
+                const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+                if (!pattern) {
+                  console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
+                  continue;
+                }
+                
+                const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
+                allTrades.push(...trades);
+              }
           }
           
           // Update progress to 100% after all instruments processed
