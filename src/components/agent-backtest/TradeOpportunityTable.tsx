@@ -91,9 +91,47 @@ const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; labe
   </span>
 );
 
+type SortKey = 'symbol' | 'pattern' | 'direction' | 'timeframe' | 'rr' | 'analystScore' | 'riskScore' | 'timingScore' | 'portfolioScore' | 'composite' | 'verdict';
+type SortDir = 'asc' | 'desc';
+
+const SortableHeader: React.FC<{
+  sortKey: SortKey;
+  currentSort: SortKey;
+  currentDir: SortDir;
+  onSort: (key: SortKey) => void;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ sortKey, currentSort, currentDir, onSort, children, className = '' }) => (
+  <th
+    className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors ${className}`}
+    onClick={() => onSort(sortKey)}
+  >
+    <span className="inline-flex items-center gap-1">
+      {children}
+      {currentSort === sortKey ? (
+        currentDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-30" />
+      )}
+    </span>
+  </th>
+);
+
 export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
+  const [sortKey, setSortKey] = useState<SortKey>('composite');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+
   const scoredTrades = useMemo(() => {
-    return detections.map((d) => {
+    const scored = detections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d);
       const analystScore = analystRaw * weights.analyst;
       const riskScore = riskRaw * weights.risk;
@@ -117,8 +155,24 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         composite,
         verdict,
       };
-    }).sort((a, b) => b.composite - a.composite);
-  }, [detections, weights, takeCutoff, watchCutoff]);
+    });
+
+    const verdictOrder: Record<string, number> = { TAKE: 3, WATCH: 2, SKIP: 1 };
+    const mul = sortDir === 'asc' ? 1 : -1;
+
+    scored.sort((a, b) => {
+      const av = a[sortKey as keyof typeof a];
+      const bv = b[sortKey as keyof typeof b];
+      if (sortKey === 'verdict') {
+        return mul * ((verdictOrder[a.verdict] || 0) - (verdictOrder[b.verdict] || 0));
+      }
+      if (typeof av === 'string' && typeof bv === 'string') return mul * av.localeCompare(bv);
+      if (typeof av === 'number' && typeof bv === 'number') return mul * (av - bv);
+      return 0;
+    });
+
+    return scored;
+  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
