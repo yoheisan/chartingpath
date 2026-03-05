@@ -169,12 +169,22 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           <Card className="border-border bg-card">
             <CardContent className="p-3 space-y-4">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
-              {AGENTS.map(({ key, label, icon: Icon, color, barColor }) => (
+              {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
                 <div key={key} className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <Icon className={`h-3.5 w-3.5 ${color}`} />
                       <span className="text-xs font-medium text-foreground">{label}</span>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[220px] text-xs">
+                            {tooltip}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <span className={`text-sm font-mono font-bold ${color}`}>{weights[key]}</span>
                   </div>
