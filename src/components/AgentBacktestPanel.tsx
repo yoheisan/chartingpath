@@ -65,6 +65,9 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [backtestResult, setBacktestResult] = useState<(V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any }) | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
   const toggleBasket = (symbol: string) => {
     setBasketSymbols((prev) => {
       const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
