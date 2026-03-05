@@ -133,21 +133,23 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Quick Presets</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
-                    <p className="font-medium mb-1">Agent Weight Presets</p>
-                    <p>Each preset adjusts how the 4 AI agents (Analyst, Risk, Timing, Portfolio) are weighted when scoring trades.</p>
-                    <ul className="mt-1.5 space-y-1 list-disc pl-3">
-                      <li><strong>Balanced</strong> — Equal weight across all agents (25% each)</li>
-                      <li><strong>Conservative</strong> — Emphasizes Risk Manager (35%), requires higher score to TAKE</li>
-                      <li><strong>Aggressive</strong> — Emphasizes Analyst (35%), lower threshold to TAKE</li>
-                      <li><strong>Momentum</strong> — Boosts Analyst + Timing agents for trend-following setups</li>
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
+                      <p className="font-medium mb-1">Agent Weight Presets</p>
+                      <p>Each preset adjusts how the 4 AI agents (Analyst, Risk, Timing, Portfolio) are weighted when scoring trades.</p>
+                      <ul className="mt-1.5 space-y-1 list-disc pl-3">
+                        <li><strong>Balanced</strong> — Equal weight across all agents (25% each)</li>
+                        <li><strong>Conservative</strong> — Emphasizes Risk Manager (35%), requires higher score to TAKE</li>
+                        <li><strong>Aggressive</strong> — Emphasizes Analyst (35%), lower threshold to TAKE</li>
+                        <li><strong>Momentum</strong> — Boosts Analyst + Timing agents for trend-following setups</li>
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(PRESETS).map(([key, preset]) => (
