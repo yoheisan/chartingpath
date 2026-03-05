@@ -107,34 +107,34 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Title bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-            <Brain className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
+            <Brain className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Multi-Agent Trade Filter</h2>
-            <p className="text-xs text-muted-foreground">Adjust agent weights to dynamically filter trade opportunities</p>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Multi-Agent Trade Filter</h2>
+            <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically filter trade opportunities</p>
           </div>
         </div>
         {totalWeight !== 100 && (
-          <Badge variant="destructive" className="text-xs">Weights: {totalWeight}/100</Badge>
+          <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
         )}
       </div>
 
       {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
         {/* LEFT SIDEBAR: Agent Controls */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Presets */}
           <Card className="border-border bg-card">
-            <CardContent className="p-3 space-y-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quick Presets</span>
-              <div className="grid grid-cols-2 gap-1.5">
+            <CardContent className="p-4 space-y-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Quick Presets</span>
+              <div className="grid grid-cols-2 gap-2">
                 {Object.entries(PRESETS).map(([key, preset]) => (
-                  <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-[11px] h-7">
+                  <Button key={key} variant="outline" size="sm" onClick={() => applyPreset(key)} className="text-sm h-9">
                     {preset.label}
                   </Button>
                 ))}
@@ -144,13 +144,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
           {/* Asset Class Filter */}
           <Card className="border-border bg-card">
-            <CardContent className="p-3 space-y-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Asset Class</span>
+            <CardContent className="p-4 space-y-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Asset Class</span>
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
                 onValueChange={(v) => v && setAssetClassFilter(v as AssetClassFilter)}
-                className="flex flex-wrap gap-1"
+                className="flex flex-wrap gap-1.5"
               >
                 {[
                   { value: 'all', label: 'All' },
@@ -159,7 +159,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   { value: 'forex', label: 'Forex' },
                   { value: 'commodities', label: 'Cmdty' },
                 ].map((ac) => (
-                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-[11px] h-7 px-2.5">
+                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-sm h-9 px-3.5">
                     {ac.label}
                   </ToggleGroupItem>
                 ))}
@@ -168,35 +168,35 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           </Card>
           {/* Agent Sliders */}
           <Card className="border-border bg-card">
-            <CardContent className="p-3 space-y-4">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
+            <CardContent className="p-4 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Agent Weights</span>
                 <AgentWeightsFAQ
                   trigger={
                     <button className="inline-flex items-center">
-                      <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
                     </button>
                   }
                 />
               </div>
               {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
-                <div key={key} className="space-y-1.5">
+                <div key={key} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Icon className={`h-3.5 w-3.5 ${color}`} />
-                      <span className="text-xs font-medium text-foreground">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${color}`} />
+                      <span className="text-sm font-medium text-foreground">{label}</span>
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                            <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-[220px] text-xs">
+                          <TooltipContent side="right" className="max-w-[240px] text-xs">
                             {tooltip}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <span className={`text-sm font-mono font-bold ${color}`}>{weights[key]}</span>
+                    <span className={`text-base font-mono font-bold ${color}`}>{weights[key]}</span>
                   </div>
                   <Slider
                     value={[weights[key]]}
@@ -213,7 +213,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
           {/* Verdict Thresholds */}
           <Card className="border-border bg-card">
-            <CardContent className="p-3">
+            <CardContent className="p-4">
               <VerdictZoneBar
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
@@ -223,30 +223,30 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             </CardContent>
           </Card>
 
-          {/* Backtest Config (collapsed) */}
+          {/* Backtest Config */}
           <Card className="border-border bg-card">
-            <CardContent className="p-3 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <Settings2 className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Backtest</span>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Backtest</span>
               </div>
-              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Symbols" className="text-xs h-7" />
-              <div className="grid grid-cols-2 gap-1.5">
-                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-xs h-7" />
-                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-xs h-7" />
+              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Symbols" className="text-sm h-9" />
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm h-9" />
+                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm h-9" />
               </div>
-              <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full h-8 text-xs" size="sm">
-                {isRunning ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Running...</> : <><Zap className="h-3 w-3 mr-1" />Run Backtest</>}
+              <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full h-10 text-sm" size="default">
+                {isRunning ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Running...</> : <><Zap className="h-4 w-4 mr-1.5" />Run Backtest</>}
               </Button>
             </CardContent>
           </Card>
         </div>
 
         {/* RIGHT: Dashboard Content */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Gauges Row */}
           <Card className="border-border bg-card">
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               <AgentGauges
                 takeRate={gaugeStats.takeRate}
                 watchRate={gaugeStats.watchRate}
@@ -258,13 +258,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
           {/* Trade Opportunity Table */}
           <Card className="border-border bg-card">
-            <CardHeader className="pb-2 pt-4 px-4">
-              <CardTitle className="text-sm flex items-center gap-2">
+            <CardHeader className="pb-3 pt-5 px-5">
+              <CardTitle className="text-base flex items-center gap-2">
                 Trade Opportunities
-                <span className="text-[10px] font-normal text-muted-foreground">— scores update live as you adjust agents</span>
+                <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-5 pb-5">
               <TradeOpportunityTable
                 weights={weights}
                 takeCutoff={takeCutoff}
