@@ -180,7 +180,7 @@ const SharedBacktest = () => {
                 {error || t('sharedBacktest.invalidLink')}
               </p>
               <Button asChild>
-                <Link to="/strategy-workspace">
+                <Link to="/projects/pattern-lab/new">
                   {t('sharedBacktest.createOwn')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
