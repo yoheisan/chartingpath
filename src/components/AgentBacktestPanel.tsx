@@ -132,9 +132,20 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       }
     });
     
-    // Use timeframes from actual detections, not a hardcoded default
+    // Use timeframes from actual detections — require single timeframe for consistency
     const detectionTimeframes = [...new Set(relevantDetections.map((d) => d.timeframe))];
-    const tf = timeframeFilter !== 'all' ? timeframeFilter : (detectionTimeframes.length === 1 ? detectionTimeframes[0] : '1d');
+    let tf: string;
+    if (timeframeFilter !== 'all') {
+      tf = timeframeFilter;
+    } else if (detectionTimeframes.length === 1) {
+      tf = detectionTimeframes[0];
+    } else {
+      // Multiple timeframes detected — use the most common one and warn
+      const tfCounts = detectionTimeframes.map(t => ({ tf: t, count: relevantDetections.filter(d => d.timeframe === t).length }));
+      tfCounts.sort((a, b) => b.count - a.count);
+      tf = tfCounts[0].tf;
+      toast.info(`Multiple timeframes detected (${detectionTimeframes.join(', ')}). Using ${tf} for backtest. Use the Timeframe filter for precision.`);
+    }
     
     setIsRunning(true);
     try {
