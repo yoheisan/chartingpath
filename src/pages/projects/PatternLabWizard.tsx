@@ -403,6 +403,59 @@ const PatternLabWizard = () => {
     };
   }, [selectedInstruments, selectedPatterns, timeframe, lookbackYears, selectedGrades, session]);
   
+  // Data availability check — queries historical_prices to warn before credit spend
+  interface DataCoverage { symbol: string; bars: number; earliest: string | null; latest: string | null }
+  const [dataCoverage, setDataCoverage] = useState<DataCoverage[]>([]);
+  const [isCheckingData, setIsCheckingData] = useState(false);
+
+  useEffect(() => {
+    if (selectedInstruments.length === 0) { setDataCoverage([]); return; }
+    let cancelled = false;
+    const check = async () => {
+      setIsCheckingData(true);
+      try {
+        // Check each instrument's data availability for the selected timeframe
+        const results: DataCoverage[] = [];
+        for (const sym of selectedInstruments) {
+          const { count, data } = await supabase
+            .from('historical_prices')
+            .select('date', { count: 'exact', head: false })
+            .eq('symbol', sym)
+            .eq('timeframe', timeframe)
+            .order('date', { ascending: true })
+            .limit(1);
+          
+          const { data: latestData } = await supabase
+            .from('historical_prices')
+            .select('date')
+            .eq('symbol', sym)
+            .eq('timeframe', timeframe)
+            .order('date', { ascending: false })
+            .limit(1);
+          
+          if (!cancelled) {
+            results.push({
+              symbol: sym,
+              bars: count ?? 0,
+              earliest: data?.[0]?.date ?? null,
+              latest: latestData?.[0]?.date ?? null,
+            });
+          }
+        }
+        if (!cancelled) setDataCoverage(results);
+      } catch (e) {
+        console.error('Data coverage check failed:', e);
+      } finally {
+        if (!cancelled) setIsCheckingData(false);
+      }
+    };
+    const debounce = setTimeout(check, 500);
+    return () => { clearTimeout(debounce); cancelled = true; };
+  }, [selectedInstruments, timeframe]);
+  
+  const hasNoData = dataCoverage.some(d => d.bars === 0);
+  const hasLowData = dataCoverage.some(d => d.bars > 0 && d.bars < 50);
+
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
       prev.includes(symbol)
