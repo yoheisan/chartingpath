@@ -310,11 +310,11 @@ const ProjectRun = () => {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/projects/pattern-lab/new')}
+            onClick={() => navigate(fromAgentScoring ? '/tools/agent-scoring' : '/projects/pattern-lab/new')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Pattern Lab
+            {fromAgentScoring ? 'Back to Agent Scoring' : 'Back to Pattern Lab'}
           </Button>
           
           <Alert variant="destructive">
