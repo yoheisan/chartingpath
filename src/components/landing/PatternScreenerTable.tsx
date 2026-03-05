@@ -1081,6 +1081,21 @@ export default function PatternScreenerTable() {
                         </Tooltip>
                       </TooltipProvider>
                     </TableHead>
+                    <TableHead className="text-right whitespace-nowrap">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center justify-end gap-1 cursor-help">
+                              ROT
+                              <Info className="h-3 w-3 opacity-50" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Return on Time — R-multiple earned per bar of exposure (expectancy ÷ avg bars). Higher = more capital-efficient.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableHead>
                     <TableHead 
                       className="cursor-pointer select-none text-right whitespace-nowrap"
                       onClick={() => handleSort('signal')}
@@ -1098,7 +1113,7 @@ export default function PatternScreenerTable() {
                     <>
                       {/* Pattern Group Header */}
                       <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={9} className="py-2">
+                        <TableCell colSpan={10} className="py-2">
                           <span className="font-semibold text-sm">{t(`patternNames.${patternName}`, patternName)}</span>
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {setups.length}
@@ -1182,6 +1197,21 @@ export default function PatternScreenerTable() {
                                 } : null}
                                 isLocked={false}
                               />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {(() => {
+                                const perf = setup.historicalPerformance;
+                                if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                                  const rot = perf.avgRMultiple / perf.avgDurationBars;
+                                  const isHighEfficiency = rot >= 0.01;
+                                  return (
+                                    <span className={`font-mono text-xs font-medium ${isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                                      {rot.toFixed(4)}
+                                    </span>
+                                  );
+                                }
+                                return <span className="text-muted-foreground text-xs">—</span>;
+                              })()}
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`text-xs ${
