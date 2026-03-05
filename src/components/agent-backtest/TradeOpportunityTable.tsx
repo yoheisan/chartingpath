@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -90,9 +90,11 @@ interface Props {
   watchCutoff: number;
   assetClassFilter?: AssetClassFilter;
   onSendToBacktest?: (setup: TradeSetup) => void;
+  basketSymbols?: string[];
+  onToggleBasket?: (symbol: string) => void;
 }
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all', onSendToBacktest }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all', onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
   const scoredTrades = useMemo(() => {
     const filtered = assetClassFilter === 'all' ? MOCK_TRADES : MOCK_TRADES.filter((t) => t.assetClass === assetClassFilter);
     return filtered.map((trade) => {
@@ -154,6 +156,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/30 text-muted-foreground text-left">
+              {onToggleBasket && <th className="px-3 py-3 font-medium text-center w-10">
+                <HeaderWithInfo label="" tooltip="Add symbols to the backtest basket. Selected symbols will auto-populate the Run Backtest input." />
+              </th>}
               <th className="px-4 py-3 font-medium">Symbol</th>
               <th className="px-4 py-3 font-medium">Pattern</th>
               <th className="px-4 py-3 font-medium text-center">Dir</th>
@@ -188,6 +193,22 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                 key={trade.id}
                 className={`border-t border-border/50 transition-all duration-500 ${rowBg[trade.verdict]}`}
               >
+                {onToggleBasket && (
+                  <td className="px-3 py-3 text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-6 w-6 p-0 rounded-full transition-all ${
+                        basketSymbols.includes(trade.symbol)
+                          ? 'bg-primary text-primary-foreground hover:bg-primary/80'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      }`}
+                      onClick={() => onToggleBasket(trade.symbol)}
+                    >
+                      {basketSymbols.includes(trade.symbol) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                    </Button>
+                  </td>
+                )}
                 <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
                 <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
                 <td className="px-4 py-3 text-center">

@@ -56,6 +56,15 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [isRunning, setIsRunning] = useState(false);
+  const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+
+  const toggleBasket = (symbol: string) => {
+    setBasketSymbols((prev) => {
+      const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
+      setSymbols(next.join(', '));
+      return next;
+    });
+  };
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
 
@@ -245,11 +254,35 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           {/* Backtest Config */}
           <Card className="border-border bg-card">
             <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Backtest</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Backtest Basket</span>
+                </div>
+                {basketSymbols.length > 0 && (
+                  <button
+                    onClick={() => { setBasketSymbols([]); setSymbols(''); }}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Clear all
+                  </button>
+                )}
               </div>
-              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Symbols" className="text-sm h-9" />
+              {basketSymbols.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {basketSymbols.map((s) => (
+                    <Badge
+                      key={s}
+                      variant="secondary"
+                      className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive transition-colors"
+                      onClick={() => toggleBasket(s)}
+                    >
+                      {s} ✕
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Add symbols or pick from table +" className="text-sm h-9" />
               <div className="grid grid-cols-2 gap-2">
                 <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm h-9" />
                 <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm h-9" />
@@ -290,6 +323,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 watchCutoff={watchCutoff}
                 assetClassFilter={assetClassFilter}
                 onSendToBacktest={onSendToBacktest}
+                basketSymbols={basketSymbols}
+                onToggleBasket={toggleBasket}
               />
             </CardContent>
           </Card>
