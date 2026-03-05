@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartingPathManager } from './ChartingPathManager';
-import { CryptoPresetPanel } from './CryptoPresetPanel';
+
 import { 
   wedgeConfig, 
   getFullSymbol, 
