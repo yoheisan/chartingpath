@@ -1836,7 +1836,7 @@ serve(async (req) => {
         startDate.setFullYear(startDate.getFullYear() - effectiveLookbackYears);
 
         const executionStartedAt = Date.now();
-        const EXECUTION_BUDGET_MS = 95_000;
+        const EXECUTION_BUDGET_MS = 50_000; // Deno CPU limit ~2s; keep wall-clock tight to reduce risk
         const ensureBudget = (stage: string) => {
           if (Date.now() - executionStartedAt > EXECUTION_BUDGET_MS) {
             throw new Error(`Backtest timed out during ${stage}. Reduce instruments/patterns/lookback and retry.`);
