@@ -39,15 +39,19 @@ const MOCK_TRADES: TradeOpportunity[] = [
   { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
 ];
 
+export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';
+
 interface Props {
   weights: AgentWeights;
   takeCutoff: number;
   watchCutoff: number;
+  assetClassFilter?: AssetClassFilter;
 }
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all' }) => {
   const scoredTrades = useMemo(() => {
-    return MOCK_TRADES.map((trade) => {
+    const filtered = assetClassFilter === 'all' ? MOCK_TRADES : MOCK_TRADES.filter((t) => t.assetClass === assetClassFilter);
+    return filtered.map((trade) => {
       const analystScore = trade.analystRaw * weights.analyst;
       const riskScore = trade.riskRaw * weights.risk;
       const timingScore = trade.timingRaw * weights.timing;
