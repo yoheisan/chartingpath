@@ -327,6 +327,10 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                 <SelectItem value="elite">Elite</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={() => setIsCreateUserOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
           </div>
 
           {/* Users Table */}
