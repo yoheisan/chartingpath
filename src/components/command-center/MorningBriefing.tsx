@@ -151,9 +151,10 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
   const fetchBriefing = useCallback(async (force = false) => {
     if (!force && getCachedBriefing()) {
       const cached = getCachedBriefing()!.setups;
-      // Still run live outcome check on cached data
+      // Still run live outcome check on cached data, then keep only active setups
       const withOutcomes = await checkLiveOutcomes(cached);
-      setSetups(withOutcomes);
+      const actionable = withOutcomes.filter(s => !s.liveOutcome);
+      setSetups(actionable);
       setLoading(false);
       return;
     }
@@ -218,10 +219,11 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
       const scored = scoreAndSort(seededPatterns);
       const top = scored.slice(0, 5);
       
-      // Check live outcomes before caching
+      // Check live outcomes, then keep only active setups (hide resolved SL/TP)
       const withOutcomes = await checkLiveOutcomes(top);
-      setSetups(withOutcomes);
-      setCachedBriefing(withOutcomes);
+      const actionable = withOutcomes.filter(s => !s.liveOutcome);
+      setSetups(actionable);
+      setCachedBriefing(actionable);
     } catch (err) {
       console.error('[MorningBriefing] fetch error:', err);
     } finally {
@@ -233,11 +235,12 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
   const refreshOutcomes = useCallback(async () => {
     if (setups.length === 0) return;
     const updated = await checkLiveOutcomes(setups);
-    // Only update state if something changed
-    const changed = updated.some((s, i) => s.liveOutcome !== setups[i]?.liveOutcome);
+    const actionable = updated.filter(s => !s.liveOutcome);
+    // Only update state if visible active setups changed
+    const changed = actionable.length !== setups.length || actionable.some((s, i) => s.id !== setups[i]?.id);
     if (changed) {
-      setSetups(updated);
-      console.log('[MorningBriefing] Live outcome changed, updating strip');
+      setSetups(actionable);
+      console.log('[MorningBriefing] Active setup set changed, updating strip');
     }
   }, [setups]);
 
