@@ -6,7 +6,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical } from 'lucide-react';
+import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info } from 'lucide-react';
 import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { cn } from '@/lib/utils';
@@ -51,6 +57,21 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
           <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.grade')}</TableHead>
           <TableHead className="whitespace-nowrap">{t('teaserSignals.signal')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate')}</TableHead>
+          <TableHead className="text-right whitespace-nowrap">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-end gap-1 cursor-help">
+                    ROT
+                    <Info className="h-3 w-3 opacity-50" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.age')}</TableHead>
           <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.actions', 'Actions')}</TableHead>
           <TableHead className="w-10"></TableHead>
@@ -112,6 +133,24 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
+              </TableCell>
+              <TableCell className="text-right">
+                {(() => {
+                  const perf = setup.historicalPerformance;
+                  if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                    const rot = perf.avgRMultiple / perf.avgDurationBars;
+                    const isHighEfficiency = rot >= 0.01;
+                    return (
+                      <span className={cn(
+                        'font-mono text-xs font-medium',
+                        isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
+                      )}>
+                        {rot.toFixed(4)}
+                      </span>
+                    );
+                  }
+                  return <span className="text-muted-foreground text-xs">—</span>;
+                })()}
               </TableCell>
               <TableCell className="text-right text-muted-foreground text-sm">
                 {signalAge}

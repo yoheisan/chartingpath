@@ -64,6 +64,7 @@ function rowToLiveSetup(row: any): LiveSetup {
       avgRMultiple: histPerf.avgRMultiple ?? histPerf.avg_r_multiple ?? 0,
       sampleSize: histPerf.sampleSize ?? histPerf.sample_size ?? 0,
       profitFactor: histPerf.profitFactor ?? histPerf.profit_factor,
+      avgDurationBars: histPerf.avgDurationBars ?? histPerf.avg_duration_bars,
     } : undefined,
   };
 }
