@@ -29,7 +29,7 @@ export interface BriefingSetup {
 }
 
 const BRIEFING_CACHE_KEY = 'cp-morning-briefing';
-const BRIEFING_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
+const BRIEFING_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches scan cadence
 const LIVE_CHECK_MS = 60 * 1000; // Check SL/TP every 60 seconds
 
 interface CachedBriefing {
@@ -160,16 +160,9 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
 
     setLoading(true);
     try {
-      let query = supabase
-        .from('live_pattern_detections')
-        .select('id, instrument, pattern_name, direction, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators, first_detected_at, last_confirmed_at')
-        .eq('status', 'active')
-        .in('quality_score', ['A', 'B'])
-        .order('first_detected_at', { ascending: false })
-        .limit(50);
-
       let rawPatterns: any[] = [];
 
+      // If user has a watchlist, try watchlist-first
       if (userId) {
         const { data: wl } = await supabase
           .from('user_watchlist')
@@ -184,7 +177,7 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
             .from('live_pattern_detections')
             .select('id, instrument, pattern_name, direction, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators, first_detected_at, last_confirmed_at')
             .eq('status', 'active')
-            .in('quality_score', ['A', 'B'])
+            .in('quality_score', ['A', 'B', 'C'])
             .in('instrument', watchlistSymbols)
             .order('first_detected_at', { ascending: false })
             .limit(20);
@@ -195,10 +188,30 @@ export function MorningBriefing({ userId, onSymbolSelect, onPatternClick }: Morn
         }
       }
 
+      // Fallback: global top setups — prefer A/B but include C for pool depth
       if (rawPatterns.length === 0) {
-        const { data, error } = await query;
-        if (error) throw error;
-        rawPatterns = data || [];
+        // First try A/B only
+        const { data: abData } = await supabase
+          .from('live_pattern_detections')
+          .select('id, instrument, pattern_name, direction, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators, first_detected_at, last_confirmed_at')
+          .eq('status', 'active')
+          .in('quality_score', ['A', 'B'])
+          .order('first_detected_at', { ascending: false })
+          .limit(50);
+
+        rawPatterns = abData || [];
+
+        // If fewer than 5 A/B setups, widen to include C
+        if (rawPatterns.length < 5) {
+          const { data: abcData } = await supabase
+            .from('live_pattern_detections')
+            .select('id, instrument, pattern_name, direction, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, timeframe, trend_alignment, trend_indicators, first_detected_at, last_confirmed_at')
+            .eq('status', 'active')
+            .in('quality_score', ['A', 'B', 'C'])
+            .order('first_detected_at', { ascending: false })
+            .limit(50);
+          rawPatterns = abcData || [];
+        }
       }
 
       const seededPatterns = await filterSeededSetups(rawPatterns);
