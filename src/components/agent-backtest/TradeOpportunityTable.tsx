@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TradeOpportunity {
   id: string;
@@ -39,6 +41,31 @@ const MOCK_TRADES: TradeOpportunity[] = [
   { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
 ];
 
+// Map display pattern names to engine pattern IDs
+const PATTERN_NAME_TO_ID: Record<string, string> = {
+  'Bull Flag': 'bull_flag',
+  'Bear Flag': 'bear_flag',
+  'Ascending Triangle': 'ascending_triangle',
+  'Descending Triangle': 'descending_triangle',
+  'Head & Shoulders': 'head_and_shoulders',
+  'Inv Head & Shoulders': 'inverse_head_and_shoulders',
+  'Double Top': 'double_top',
+  'Double Bottom': 'double_bottom',
+  'Cup & Handle': 'cup_and_handle',
+  'Rising Wedge': 'rising_wedge',
+  'Descending Wedge': 'falling_wedge',
+  'Donchian Breakout': 'donchian_breakout_long',
+  'Symmetrical Triangle': 'ascending_triangle',
+  'Bull Pennant': 'bull_flag',
+};
+
+export interface TradeSetup {
+  symbol: string;
+  patternId: string;
+  pattern: string;
+  timeframe: string;
+}
+
 export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';
 
 interface Props {
@@ -46,9 +73,10 @@ interface Props {
   takeCutoff: number;
   watchCutoff: number;
   assetClassFilter?: AssetClassFilter;
+  onSendToBacktest?: (setup: TradeSetup) => void;
 }
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all' }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all', onSendToBacktest }) => {
   const scoredTrades = useMemo(() => {
     const filtered = assetClassFilter === 'all' ? MOCK_TRADES : MOCK_TRADES.filter((t) => t.assetClass === assetClassFilter);
     return filtered.map((trade) => {
@@ -129,6 +157,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               </th>
               <th className="px-3 py-2.5 font-medium text-center">Score</th>
               <th className="px-3 py-2.5 font-medium text-center">Verdict</th>
+              {onSendToBacktest && <th className="px-3 py-2.5 font-medium text-center w-16"></th>}
             </tr>
           </thead>
           <tbody>
@@ -171,6 +200,30 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                     {trade.verdict}
                   </Badge>
                 </td>
+                {onSendToBacktest && (
+                  <td className="px-3 py-2.5 text-center">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => onSendToBacktest({
+                            symbol: trade.symbol,
+                            patternId: PATTERN_NAME_TO_ID[trade.pattern] || 'bull_flag',
+                            pattern: trade.pattern,
+                            timeframe: trade.timeframe,
+                          })}
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">
+                        Send to Strategy Builder
+                      </TooltipContent>
+                    </Tooltip>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
