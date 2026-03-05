@@ -117,47 +117,47 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Summary strip */}
-      <div className="flex items-center gap-3 text-xs">
+      <div className="flex items-center gap-3 text-sm">
         <span className="text-muted-foreground">{scoredTrades.length} opportunities scanned</span>
         <span className="ml-auto" />
-        <Badge variant="outline" className={verdictStyles.TAKE}>
-          <TrendingUp className="h-3 w-3 mr-1" />TAKE: {counts.TAKE}
+        <Badge variant="outline" className={`text-xs ${verdictStyles.TAKE}`}>
+          <TrendingUp className="h-3.5 w-3.5 mr-1" />TAKE: {counts.TAKE}
         </Badge>
-        <Badge variant="outline" className={verdictStyles.WATCH}>
-          <Minus className="h-3 w-3 mr-1" />WATCH: {counts.WATCH}
+        <Badge variant="outline" className={`text-xs ${verdictStyles.WATCH}`}>
+          <Minus className="h-3.5 w-3.5 mr-1" />WATCH: {counts.WATCH}
         </Badge>
-        <Badge variant="outline" className={verdictStyles.SKIP}>
-          <TrendingDown className="h-3 w-3 mr-1" />SKIP: {counts.SKIP}
+        <Badge variant="outline" className={`text-xs ${verdictStyles.SKIP}`}>
+          <TrendingDown className="h-3.5 w-3.5 mr-1" />SKIP: {counts.SKIP}
         </Badge>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/30 text-muted-foreground text-left">
-              <th className="px-3 py-2.5 font-medium">Symbol</th>
-              <th className="px-3 py-2.5 font-medium">Pattern</th>
-              <th className="px-3 py-2.5 font-medium text-center">Dir</th>
-              <th className="px-3 py-2.5 font-medium text-center">TF</th>
-              <th className="px-3 py-2.5 font-medium text-center">R:R</th>
-              <th className="px-3 py-2.5 font-medium text-center">
-                <Brain className="h-3 w-3 inline text-blue-400" /> Analyst
+              <th className="px-4 py-3 font-medium">Symbol</th>
+              <th className="px-4 py-3 font-medium">Pattern</th>
+              <th className="px-4 py-3 font-medium text-center">Dir</th>
+              <th className="px-4 py-3 font-medium text-center">TF</th>
+              <th className="px-4 py-3 font-medium text-center">R:R</th>
+              <th className="px-4 py-3 font-medium text-center">
+                <Brain className="h-3.5 w-3.5 inline text-blue-400" /> Analyst
               </th>
-              <th className="px-3 py-2.5 font-medium text-center">
-                <Shield className="h-3 w-3 inline text-amber-400" /> Risk
+              <th className="px-4 py-3 font-medium text-center">
+                <Shield className="h-3.5 w-3.5 inline text-amber-400" /> Risk
               </th>
-              <th className="px-3 py-2.5 font-medium text-center">
-                <Clock className="h-3 w-3 inline text-purple-400" /> Timing
+              <th className="px-4 py-3 font-medium text-center">
+                <Clock className="h-3.5 w-3.5 inline text-purple-400" /> Timing
               </th>
-              <th className="px-3 py-2.5 font-medium text-center">
-                <Briefcase className="h-3 w-3 inline text-emerald-400" /> Portfolio
+              <th className="px-4 py-3 font-medium text-center">
+                <Briefcase className="h-3.5 w-3.5 inline text-emerald-400" /> Portfolio
               </th>
-              <th className="px-3 py-2.5 font-medium text-center">Score</th>
-              <th className="px-3 py-2.5 font-medium text-center">Verdict</th>
-              {onSendToBacktest && <th className="px-3 py-2.5 font-medium text-center w-16"></th>}
+              <th className="px-4 py-3 font-medium text-center">Score</th>
+              <th className="px-4 py-3 font-medium text-center">Verdict</th>
+              {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
             </tr>
           </thead>
           <tbody>
@@ -166,48 +166,48 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                 key={trade.id}
                 className={`border-t border-border/50 transition-all duration-500 ${rowBg[trade.verdict]}`}
               >
-                <td className="px-3 py-2.5 font-semibold text-foreground">{trade.symbol}</td>
-                <td className="px-3 py-2.5 text-muted-foreground">{trade.pattern}</td>
-                <td className="px-3 py-2.5 text-center">
+                <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
+                <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
+                <td className="px-4 py-3 text-center">
                   <span className={trade.direction === 'Long' ? 'text-emerald-400' : 'text-red-400'}>
                     {trade.direction === 'Long' ? '▲' : '▼'} {trade.direction}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 text-center text-muted-foreground">{trade.timeframe}</td>
-                <td className="px-3 py-2.5 text-center font-mono">{trade.rr.toFixed(1)}</td>
-                <td className="px-3 py-2.5 text-center">
+                <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
+                <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
+                <td className="px-4 py-3 text-center">
                   <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" />
                 </td>
-                <td className="px-3 py-2.5 text-center">
+                <td className="px-4 py-3 text-center">
                   <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
                 </td>
-                <td className="px-3 py-2.5 text-center">
+                <td className="px-4 py-3 text-center">
                   <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
                 </td>
-                <td className="px-3 py-2.5 text-center">
+                <td className="px-4 py-3 text-center">
                   <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
                 </td>
-                <td className="px-3 py-2.5 text-center">
-                  <span className={`font-mono font-bold text-sm ${
+                <td className="px-4 py-3 text-center">
+                  <span className={`font-mono font-bold text-base ${
                     trade.verdict === 'TAKE' ? 'text-emerald-400' :
                     trade.verdict === 'WATCH' ? 'text-amber-400' : 'text-red-400'
                   }`}>
                     {trade.composite.toFixed(0)}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 text-center">
-                  <Badge variant="outline" className={`text-[10px] ${verdictStyles[trade.verdict]}`}>
+                <td className="px-4 py-3 text-center">
+                  <Badge variant="outline" className={`text-xs ${verdictStyles[trade.verdict]}`}>
                     {trade.verdict}
                   </Badge>
                 </td>
                 {onSendToBacktest && (
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="px-4 py-3 text-center">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                          className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/10"
                           onClick={() => onSendToBacktest({
                             symbol: trade.symbol,
                             patternId: PATTERN_NAME_TO_ID[trade.pattern] || 'bull_flag',
@@ -215,7 +215,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                             timeframe: trade.timeframe,
                           })}
                         >
-                          <Play className="h-3.5 w-3.5" />
+                          <Play className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="left" className="text-xs">
@@ -242,14 +242,14 @@ const ScoreCell: React.FC<{ score: number; max: number; color: string }> = ({ sc
     emerald: 'bg-emerald-500',
   };
   return (
-    <div className="flex items-center gap-1.5 justify-center">
-      <div className="w-12 h-1.5 rounded-full bg-muted/40 overflow-hidden">
+    <div className="flex items-center gap-2 justify-center">
+      <div className="w-14 h-2 rounded-full bg-muted/40 overflow-hidden">
         <div
           className={`h-full rounded-full ${barColors[color]} transition-all duration-500`}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
-      <span className="font-mono text-muted-foreground w-5 text-right">{score.toFixed(0)}</span>
+      <span className="font-mono text-muted-foreground w-6 text-right text-sm">{score.toFixed(0)}</span>
     </div>
   );
 };
