@@ -248,6 +248,7 @@ export const AgentBacktestPanel: React.FC = () => {
                 weights={weights}
                 takeCutoff={takeCutoff}
                 watchCutoff={watchCutoff}
+                assetClassFilter={assetClassFilter}
               />
             </CardContent>
           </Card>
