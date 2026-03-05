@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AssetClassFilter } from '@/components/agent-backtest/TradeOpportunityTable';
 
-export type TimeframeFilter = 'all' | '1H' | '4H' | '1D' | '1W';
+export type TimeframeFilter = 'all' | '1h' | '4h' | '1d' | '1wk';
 
 const ASSET_TYPE_MAP: Record<string, string[]> = {
   stocks: ['stock', 'stocks'],

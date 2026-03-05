@@ -44,7 +44,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
-  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilter>('1D');
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilter>('all');
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
@@ -224,10 +224,10 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               >
                 {[
                   { value: 'all', label: 'All' },
-                  { value: '1H', label: '1H' },
-                  { value: '4H', label: '4H' },
-                  { value: '1D', label: '1D' },
-                  { value: '1W', label: '1W' },
+                  { value: '1h', label: '1H' },
+                  { value: '4h', label: '4H' },
+                  { value: '1d', label: '1D' },
+                  { value: '1wk', label: '1W' },
                 ].map((tf) => (
                   <ToggleGroupItem key={tf.value} value={tf.value} size="sm" className="text-sm h-9 px-3.5">
                     {tf.label}
