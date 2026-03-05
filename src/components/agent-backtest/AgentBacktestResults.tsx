@@ -84,48 +84,103 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
           ))}
         </div>
 
-        {/* Equity Curve */}
+        {/* Equity Curve & Drawdown — Stacked Panels */}
         {chartData.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">Equity Curve</h4>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.85} />
-                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.35} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={(v: string) => v?.slice(0, 7)} />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[minEquity - span * 0.15, maxEquity + span * 0.15]}
-                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                    labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="equity"
-                    connectNulls
-                    isAnimationActive={false}
-                    stroke="hsl(var(--foreground))"
-                    fill="url(#agentEquityGrad)"
-                    fillOpacity={1}
-                    strokeWidth={4}
-                    dot={isSinglePoint ? { r: 5, strokeWidth: 2, stroke: 'hsl(var(--foreground))', fill: 'hsl(var(--background))' } : false}
-                    activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--foreground))', fill: 'hsl(var(--background))' }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+          <div className="flex flex-col gap-1">
+            {/* Equity Curve — Top */}
+            <div>
+              <span className="text-[11px] font-medium text-muted-foreground ml-1">Equity</span>
+              <div className="h-36 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.85} />
+                        <stop offset="95%" stopColor={isProfit ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} stopOpacity={0.35} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <XAxis dataKey="date" hide />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={false}
+                      axisLine={false}
+                      domain={[minEquity - span * 0.15, maxEquity + span * 0.15]}
+                      tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                      width={50}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                      labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="equity"
+                      connectNulls
+                      isAnimationActive={false}
+                      stroke="hsl(var(--foreground))"
+                      fill="url(#agentEquityGrad)"
+                      fillOpacity={1}
+                      strokeWidth={2.5}
+                      dot={isSinglePoint ? { r: 5, strokeWidth: 2, stroke: 'hsl(var(--foreground))', fill: 'hsl(var(--background))' } : false}
+                      activeDot={{ r: 4, strokeWidth: 2, stroke: 'hsl(var(--foreground))', fill: 'hsl(var(--background))' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+
+            {/* Drawdown "Underwater" — Bottom */}
+            {chartData.some((d: any) => (d.drawdown ?? 0) > 0) && (
+              <div>
+                <span className="text-[11px] font-medium text-muted-foreground ml-1">Drawdown</span>
+                <div className="h-16 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="agentDdGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.6} />
+                          <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.08} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        axisLine={false}
+                        interval="preserveStartEnd"
+                        tickFormatter={(v: string) => v?.slice(0, 7)}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        axisLine={false}
+                        reversed
+                        domain={[0, Math.max(...chartData.map((d: any) => d.drawdown ?? 0)) * 1.3 || 0.05]}
+                        tickFormatter={(v: number) => `-${(v * 100).toFixed(0)}%`}
+                        width={50}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                        labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                        formatter={(value: number) => [`-${(value * 100).toFixed(2)}%`, 'Drawdown']}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="drawdown"
+                        stroke="hsl(var(--destructive))"
+                        strokeWidth={1.5}
+                        fill="url(#agentDdGrad)"
+                        dot={false}
+                        activeDot={{ r: 3, strokeWidth: 0 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
