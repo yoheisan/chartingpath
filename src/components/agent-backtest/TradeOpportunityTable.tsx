@@ -68,7 +68,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         verdict,
       };
     }).sort((a, b) => b.composite - a.composite);
-  }, [weights, takeCutoff, watchCutoff]);
+  }, [weights, takeCutoff, watchCutoff, assetClassFilter]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
