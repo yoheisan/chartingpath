@@ -334,6 +334,16 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               />
             </CardContent>
           </Card>
+
+          {/* Backtest Results */}
+          {backtestResult && (
+            <div ref={resultsRef}>
+              <AgentBacktestResults
+                result={backtestResult}
+                onClose={() => setBacktestResult(null)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
