@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
-import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
@@ -14,9 +14,8 @@ import { TradeOpportunityTable, AssetClassFilter, TradeSetup } from './agent-bac
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { AgentBacktestResults } from './agent-backtest/AgentBacktestResults';
-import { V2BacktestResult } from '@/adapters/backtesterV2';
 import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
+import { supabase } from '@/integrations/supabase/client';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
   balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
@@ -35,6 +34,7 @@ const AGENTS = [
 // Raw score derivation is now done inside TradeOpportunityTable from live data
 
 export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
+  const navigate = useNavigate();
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
@@ -48,8 +48,6 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
-  const [backtestResult, setBacktestResult] = useState<(V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any }) | null>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter);
 
@@ -105,20 +103,57 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     if (symbolList.length === 0) { toast.error('Add at least one symbol'); return; }
+    
+    // Derive patterns from detections matching the basket symbols
+    const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
+    const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
+    
+    if (uniquePatterns.length === 0) {
+      toast.error('No active patterns found for selected symbols. Pick symbols from the table.');
+      return;
+    }
+    
+    // Use the timeframe filter, or derive from detections
+    const tf = timeframeFilter !== 'all' ? timeframeFilter : '1d';
+    
     setIsRunning(true);
     try {
-      const adapter = new AgentBacktestAdapter();
-      const params: AgentBacktestParams = {
-        symbols: symbolList, fromDate, toDate, initialCapital,
-        commission: 0.1, slippage: 0.05,
-        agentWeights: weights,
-        verdictCutoffs: { take: takeCutoff, watch: watchCutoff },
-        rebalanceFrequencyDays: 1,
-      };
-      const result = await adapter.runAgentBacktest(params);
-      setBacktestResult(result);
-      toast.success(`Agent backtest complete — ${result.total_trades} trades`);
-      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Please sign in to run backtests');
+        setIsRunning(false);
+        return;
+      }
+      
+      const response = await fetch(
+        'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            projectType: 'pattern_lab',
+            inputs: {
+              instruments: symbolList,
+              patterns: uniquePatterns,
+              timeframe: tf,
+              lookbackYears: 2,
+              gradeFilter: ['A', 'B', 'C'],
+              riskPerTrade: 1,
+            },
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to start run');
+      
+      toast.success('Backtest started! Redirecting to results...');
+      navigate(`/projects/runs/${data.runId}`, {
+        state: { fromAgentScoring: true },
+      });
     } catch (err: any) {
       toast.error(err.message || 'Agent backtest failed');
     } finally {
@@ -388,15 +423,6 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             </CardContent>
           </Card>
 
-          {/* Backtest Results */}
-          {backtestResult && (
-            <div ref={resultsRef}>
-              <AgentBacktestResults
-                result={backtestResult}
-                onClose={() => setBacktestResult(null)}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>
