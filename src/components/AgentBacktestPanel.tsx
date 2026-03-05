@@ -22,10 +22,10 @@ const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: {
 };
 
 const AGENTS = [
-  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500' },
-  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500' },
-  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500' },
-  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500' },
+  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500', tooltip: 'Bayesian win-probability & historical hit-rates for the detected pattern. Higher weight → prioritize setups with strong statistical edge.' },
+  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500', tooltip: 'ATR-based stop placement, Kelly sizing & risk/reward quality. Higher weight → prioritize tight risk control with well-defined stops.' },
+  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500', tooltip: 'Macro/economic calendar proximity & market-session context. Higher weight → avoid entries near high-impact news or illiquid sessions.' },
+  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: 'Concentration risk, sector heat & directional exposure. Higher weight → penalize trades that over-concentrate in one asset or direction.' },
 ];
 
 // Simulated trade data for gauge calculations
