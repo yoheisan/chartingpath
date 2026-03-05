@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
