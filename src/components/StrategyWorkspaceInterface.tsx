@@ -967,14 +967,6 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
         </div>
       )}
 
-      {/* Crypto Preset Panel (Wedge Mode) */}
-      {wedgeConfig.wedgeEnabled && (
-        <CryptoPresetPanel 
-          onPresetLoad={handlePresetLoad} 
-          onOneClickBacktest={handleOneClickBacktest}
-          isBacktesting={isBacktesting}
-        />
-      )}
 
       {/* Result Summary with CTAs after backtest */}
       {backtestResults && wedgeConfig.wedgeEnabled && (
