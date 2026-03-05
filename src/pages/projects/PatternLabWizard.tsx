@@ -463,7 +463,7 @@ const PatternLabWizard = () => {
         {
           method: 'POST',
           headers,
-          body: JSON.stringify({
+           body: JSON.stringify({
             projectType: 'pattern_lab',
             inputs: {
               instruments: selectedInstruments,
@@ -471,7 +471,16 @@ const PatternLabWizard = () => {
               timeframe,
               lookbackYears,
               gradeFilter: selectedGrades,
-              riskPerTrade, // Professional tiers: 0.5%, 1%, 2%
+              riskPerTrade,
+              // Advanced strategy controls (when configured)
+              ...(advancedOpen && {
+                targetGainPercent,
+                stopLossPercent,
+                maxOpenPositions,
+                minRiskReward,
+                requireVolumeConfirm,
+                avoidEarnings,
+              }),
             },
           }),
         }
