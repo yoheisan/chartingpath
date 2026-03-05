@@ -243,12 +243,16 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 <div className="flex items-center gap-2">
                   <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Agent Weights</span>
                   <AgentWeightsFAQ
-                  trigger={
-                    <button className="inline-flex items-center">
-                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
-                    </button>
-                  }
-                />
+                    trigger={
+                      <button className="inline-flex items-center">
+                        <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                      </button>
+                    }
+                  />
+                </div>
+                <span className={`text-sm font-mono font-bold ${totalWeight === 100 ? 'text-emerald-400' : 'text-destructive'}`}>
+                  {totalWeight}/100
+                </span>
               </div>
               {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
                 <div key={key} className="space-y-2">
