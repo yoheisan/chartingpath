@@ -18,6 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { cn } from '@/lib/utils';
