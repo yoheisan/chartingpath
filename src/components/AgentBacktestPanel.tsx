@@ -134,17 +134,9 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically score and filter trade opportunities</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {totalWeight !== 100 && (
-            <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
-          )}
-          {onReset && (
-            <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground">
-              <RotateCcw className="h-4 w-4" />
-              Reset
-            </Button>
-          )}
-        </div>
+        {totalWeight !== 100 && (
+          <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
+        )}
       </div>
 
       {/* Dashboard Grid */}
@@ -325,10 +317,18 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           {/* Trade Opportunity Table */}
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 pt-5 px-5">
-              <CardTitle className="text-base flex items-center gap-2">
-                Trade Opportunities
-                <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  Trade Opportunities
+                  <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
+                </CardTitle>
+                {onReset && (
+                  <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground h-7">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Reset
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="px-5 pb-5">
               <TradeOpportunityTable
