@@ -21,6 +21,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
   const equityValues = chartData.map((d: any) => Number(d?.equity ?? 0)).filter((v: number) => Number.isFinite(v));
   const minEquity = equityValues.length ? Math.min(...equityValues) : 0;
   const maxEquity = equityValues.length ? Math.max(...equityValues) : 0;
+  const span = Math.max(maxEquity - minEquity, Math.max(1, minEquity * 0.02));
   const isSinglePoint = chartData.length === 1;
 
   const metrics = [
