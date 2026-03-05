@@ -4,6 +4,8 @@ import { StrategyWorkspaceInterface } from '@/components/StrategyWorkspaceInterf
 import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Brain, LineChart } from 'lucide-react';
+import { TradeSetup } from '@/components/agent-backtest/TradeOpportunityTable';
+import { toast } from 'sonner';
 
 const StrategyWorkspace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +19,20 @@ const StrategyWorkspace = () => {
       return next;
     }, { replace: true });
   }, [setSearchParams]);
+
+  const handleSendToBacktest = useCallback((setup: TradeSetup) => {
+    // Store trade setup in sessionStorage for the Strategy Builder to pick up
+    sessionStorage.setItem('shared_backtest_preset', JSON.stringify({
+      symbol: setup.symbol,
+      patternId: setup.patternId,
+      pattern: setup.pattern,
+      timeframe: setup.timeframe,
+      autoRun: true,
+    }));
+    // Switch to strategy builder mode
+    handleModeChange('strategy');
+    toast.success(`Loaded ${setup.symbol} ${setup.pattern} into Strategy Builder`);
+  }, [handleModeChange]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,7 +54,7 @@ const StrategyWorkspace = () => {
           </TabsContent>
 
           <TabsContent value="agent" className="mt-0">
-            <AgentBacktestPanel />
+            <AgentBacktestPanel onSendToBacktest={handleSendToBacktest} />
           </TabsContent>
         </Tabs>
       </div>
