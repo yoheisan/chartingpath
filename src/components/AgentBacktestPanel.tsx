@@ -39,7 +39,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
 
-  const [symbols, setSymbols] = useState('AAPL, MSFT, GOOGL');
+  const [symbols, setSymbols] = useState('');
   const [fromDate, setFromDate] = useState('2024-01-01');
   const [toDate, setToDate] = useState('2025-01-01');
   const [initialCapital, setInitialCapital] = useState(100000);
@@ -102,10 +102,14 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
-    if (symbolList.length === 0) { toast.error('Add at least one symbol'); return; }
     
-    // Derive patterns from detections matching the basket symbols
-    const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
+    // If no basket specified, use all symbols from live detections
+    const effectiveSymbols = symbolList.length > 0 ? symbolList : [...new Set(liveDetections.map((d) => d.instrument))];
+    
+    if (effectiveSymbols.length === 0) { toast.error('No active detections available to backtest'); return; }
+    
+    // Derive patterns from detections matching the effective symbols
+    const relevantDetections = liveDetections.filter((d) => effectiveSymbols.includes(d.instrument));
     const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
     
     if (uniquePatterns.length === 0) {
@@ -136,7 +140,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           body: JSON.stringify({
             projectType: 'pattern_lab',
             inputs: {
-              instruments: symbolList,
+              instruments: effectiveSymbols,
               patterns: uniquePatterns,
               timeframe: tf,
               lookbackYears: 2,
