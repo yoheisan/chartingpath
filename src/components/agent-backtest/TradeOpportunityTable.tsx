@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
 import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
