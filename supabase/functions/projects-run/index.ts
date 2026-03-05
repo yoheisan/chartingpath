@@ -2028,7 +2028,7 @@ serve(async (req) => {
 
           const computePatternResultsForTier = (tierKey: typeof tierKeys[number]) => {
             const results: any[] = [];
-            for (const patternId of patterns) {
+            for (const patternId of scannedPatternIds) {
               const pattern = WEDGE_PATTERN_REGISTRY[patternId];
               if (!pattern) continue;
 
