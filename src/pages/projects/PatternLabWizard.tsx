@@ -298,6 +298,15 @@ const PatternLabWizard = () => {
   const isValidate = mode === 'validate';
   const [paramsOpen, setParamsOpen] = useState(!isValidate && !urlInstrument);
   const [patternsOpen, setPatternsOpen] = useState(!isValidate && !urlPattern);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  
+  // Advanced strategy controls
+  const [targetGainPercent, setTargetGainPercent] = useState(3);
+  const [stopLossPercent, setStopLossPercent] = useState(1.5);
+  const [maxOpenPositions, setMaxOpenPositions] = useState(3);
+  const [requireVolumeConfirm, setRequireVolumeConfirm] = useState(true);
+  const [avoidEarnings, setAvoidEarnings] = useState(false);
+  const [minRiskReward, setMinRiskReward] = useState(2);
   
   // Use centralized auth context instead of local state
   const { isAuthenticated, isAuthLoading, session } = useAuth();
