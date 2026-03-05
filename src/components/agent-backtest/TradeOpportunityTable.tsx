@@ -41,6 +41,31 @@ const MOCK_TRADES: TradeOpportunity[] = [
   { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
 ];
 
+// Map display pattern names to engine pattern IDs
+const PATTERN_NAME_TO_ID: Record<string, string> = {
+  'Bull Flag': 'bull_flag',
+  'Bear Flag': 'bear_flag',
+  'Ascending Triangle': 'ascending_triangle',
+  'Descending Triangle': 'descending_triangle',
+  'Head & Shoulders': 'head_and_shoulders',
+  'Inv Head & Shoulders': 'inverse_head_and_shoulders',
+  'Double Top': 'double_top',
+  'Double Bottom': 'double_bottom',
+  'Cup & Handle': 'cup_and_handle',
+  'Rising Wedge': 'rising_wedge',
+  'Descending Wedge': 'falling_wedge',
+  'Donchian Breakout': 'donchian_breakout_long',
+  'Symmetrical Triangle': 'ascending_triangle',
+  'Bull Pennant': 'bull_flag',
+};
+
+export interface TradeSetup {
+  symbol: string;
+  patternId: string;
+  pattern: string;
+  timeframe: string;
+}
+
 export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';
 
 interface Props {
@@ -48,9 +73,10 @@ interface Props {
   takeCutoff: number;
   watchCutoff: number;
   assetClassFilter?: AssetClassFilter;
+  onSendToBacktest?: (setup: TradeSetup) => void;
 }
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all' }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all', onSendToBacktest }) => {
   const scoredTrades = useMemo(() => {
     const filtered = assetClassFilter === 'all' ? MOCK_TRADES : MOCK_TRADES.filter((t) => t.assetClass === assetClassFilter);
     return filtered.map((trade) => {
