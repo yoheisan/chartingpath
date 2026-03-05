@@ -3,7 +3,7 @@ import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TradeSetup } from '@/components/agent-backtest/TradeOpportunityTable';
-import { Button } from '@/components/ui/button';
+
 
 const AgentScoring = () => {
   const navigate = useNavigate();
