@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { TradeOpportunityTable, AssetClassFilter, TradeSetup } from './agent-bac
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { AgentBacktestResults } from './agent-backtest/AgentBacktestResults';
+import { V2BacktestResult } from '@/adapters/backtesterV2';
 
 const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
   balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
@@ -57,6 +59,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+  const [backtestResult, setBacktestResult] = useState<(V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any }) | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const toggleBasket = (symbol: string) => {
     setBasketSymbols((prev) => {
@@ -107,7 +111,9 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         rebalanceFrequencyDays: 1,
       };
       const result = await adapter.runAgentBacktest(params);
+      setBacktestResult(result);
       toast.success(`Agent backtest complete — ${result.total_trades} trades`);
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (err: any) {
       toast.error(err.message || 'Agent backtest failed');
     } finally {
@@ -328,6 +334,16 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               />
             </CardContent>
           </Card>
+
+          {/* Backtest Results */}
+          {backtestResult && (
+            <div ref={resultsRef}>
+              <AgentBacktestResults
+                result={backtestResult}
+                onClose={() => setBacktestResult(null)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
