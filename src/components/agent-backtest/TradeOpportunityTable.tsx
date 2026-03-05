@@ -157,6 +157,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               </th>
               <th className="px-3 py-2.5 font-medium text-center">Score</th>
               <th className="px-3 py-2.5 font-medium text-center">Verdict</th>
+              {onSendToBacktest && <th className="px-3 py-2.5 font-medium text-center w-16"></th>}
             </tr>
           </thead>
           <tbody>
@@ -199,6 +200,30 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                     {trade.verdict}
                   </Badge>
                 </td>
+                {onSendToBacktest && (
+                  <td className="px-3 py-2.5 text-center">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => onSendToBacktest({
+                            symbol: trade.symbol,
+                            patternId: PATTERN_NAME_TO_ID[trade.pattern] || 'bull_flag',
+                            pattern: trade.pattern,
+                            timeframe: trade.timeframe,
+                          })}
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">
+                        Send to Strategy Builder
+                      </TooltipContent>
+                    </Tooltip>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
