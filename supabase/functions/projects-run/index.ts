@@ -1948,7 +1948,7 @@ serve(async (req) => {
           console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
           
           // Calculate pattern-level stats
-          for (const patternId of patterns) {
+          for (const patternId of scannedPatternIds) {
             const pattern = WEDGE_PATTERN_REGISTRY[patternId];
             if (!pattern) continue;
             
