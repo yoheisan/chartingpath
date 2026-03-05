@@ -115,8 +115,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <Brain className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Multi-Agent Trade Filter</h2>
-            <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically filter trade opportunities</p>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Agent Scoring</h2>
+            <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically score and filter trade opportunities</p>
           </div>
         </div>
         {totalWeight !== 100 && (
