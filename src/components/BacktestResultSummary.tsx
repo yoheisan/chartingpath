@@ -116,6 +116,21 @@ const generateInterpretation = (results: BacktestResultData): string => {
   return `Mixed signals. Review risk-reward and consider demo trading first.`;
 };
 
+const AgentScoreButton: React.FC<{ symbol: string; pattern: string }> = ({ symbol, pattern }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      onClick={() => navigate(`/tools/agent-scoring?symbol=${encodeURIComponent(symbol)}&pattern=${encodeURIComponent(pattern)}`)}
+      variant="outline"
+      className="flex-1 gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+      size="lg"
+    >
+      <Bot className="h-4 w-4" />
+      Score with AI Agents
+    </Button>
+  );
+};
+
 export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   results,
   symbol,
