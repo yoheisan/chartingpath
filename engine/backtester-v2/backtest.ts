@@ -4,11 +4,13 @@ import { SimpleExecutionEngine, alignPriceData, forwardFillPrices } from "./exec
 import { SingleCrossTriggerStrategy, SingleCrossTriggerParams } from "./strategies/SingleCrossTrigger";
 import { PairZScoreStrategy, PairZScoreParams } from "./strategies/PairZScore";
 import { EqualWeightDCAPolicy, EqualWeightDCAParams } from "./policies/EqualWeightDCA";
+import { AgentOrchestratedPolicy, AgentOrchestratedParams } from "./policies/AgentOrchestrated";
+import { CompositeVerdict } from "./agents/types";
 import { PriceProvider } from "./data/provider";
 import { BacktestResult } from "./data/types";
 
 export interface BacktestConfig {
-  mode: "single" | "pair" | "basket";
+  mode: "single" | "pair" | "basket" | "agent";
   startDate: string;
   endDate: string;
   initialCapital: number;
@@ -29,6 +31,21 @@ export interface PairBacktestConfig extends BacktestConfig {
 export interface BasketBacktestConfig extends BacktestConfig {
   mode: "basket";
   policy: EqualWeightDCAParams;
+}
+
+export interface AgentBacktestConfig extends BacktestConfig {
+  mode: "agent";
+  policy: AgentOrchestratedParams;
+}
+
+export interface AgentBacktestResult extends BacktestResult {
+  verdicts: CompositeVerdict[];
+  agentScoreSummary: {
+    avgComposite: number;
+    takeCount: number;
+    watchCount: number;
+    skipCount: number;
+  };
 }
 
 export class BacktesterV2 {
