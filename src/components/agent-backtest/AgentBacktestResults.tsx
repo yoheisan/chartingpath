@@ -14,6 +14,15 @@ interface AgentBacktestResultsProps {
 export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ result, onClose }) => {
   const isProfit = result.net_pnl >= 0;
 
+  const chartData = (result.equity_curve_data || []).filter(
+    (_: any, i: number, arr: any[]) =>
+      i % Math.max(1, Math.floor(arr.length / 60)) === 0 || i === arr.length - 1
+  );
+  const equityValues = chartData.map((d: any) => Number(d?.equity ?? 0)).filter((v: number) => Number.isFinite(v));
+  const minEquity = equityValues.length ? Math.min(...equityValues) : 0;
+  const maxEquity = equityValues.length ? Math.max(...equityValues) : 0;
+  const span = Math.max(maxEquity - minEquity, Math.max(1, minEquity * 0.02));
+
   const metrics = [
     { label: 'Net P&L', value: `${isProfit ? '+' : ''}${result.net_pnl.toFixed(2)}%`, icon: isProfit ? TrendingUp : TrendingDown, color: isProfit ? 'text-emerald-400' : 'text-red-400' },
     { label: 'Total Trades', value: result.total_trades.toString(), icon: BarChart3, color: 'text-blue-400' },
