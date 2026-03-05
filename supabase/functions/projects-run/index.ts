@@ -2299,7 +2299,7 @@ serve(async (req) => {
             // Include inputs for reproducing/editing the run
             inputs: {
               instruments,
-              patterns,
+              patterns: scannedPatternIds,
               gradeFilter,
               riskPerTrade, // Professional tiers: 0.5%, 1%, 2%
             },
