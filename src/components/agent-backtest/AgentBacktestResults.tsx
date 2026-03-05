@@ -63,7 +63,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
             <h4 className="text-sm font-medium text-muted-foreground mb-3">Equity Curve</h4>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={result.equity_curve_data}>
+                <AreaChart data={result.equity_curve_data.filter((_: any, i: number) => i % Math.max(1, Math.floor(result.equity_curve_data.length / 60)) === 0 || i === result.equity_curve_data.length - 1)}>
                   <defs>
                     <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.3} />
@@ -71,7 +71,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={(v: string) => v?.slice(0, 7)} />
                   <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                   <RechartsTooltip
                     contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
