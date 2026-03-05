@@ -47,7 +47,7 @@ const MOCK_RAW_SCORES = [
   { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
 ];
 
-export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void }> = ({ onSendToBacktest }) => {
+export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
