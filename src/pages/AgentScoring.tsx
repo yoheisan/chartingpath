@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TradeSetup } from '@/components/agent-backtest/TradeOpportunityTable';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
 
 const AgentScoring = () => {
   const navigate = useNavigate();
