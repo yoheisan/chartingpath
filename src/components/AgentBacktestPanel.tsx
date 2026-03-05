@@ -158,6 +158,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             inputs: {
               instruments: symbolList,
               patterns: uniquePatterns,
+              instrumentPatternMap,
               timeframe: tf,
               lookbackYears: 2,
               gradeFilter: ['A', 'B', 'C'],
