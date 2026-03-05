@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
@@ -47,7 +47,7 @@ const MOCK_RAW_SCORES = [
   { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
 ];
 
-export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void }> = ({ onSendToBacktest }) => {
+export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
@@ -134,9 +134,17 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically score and filter trade opportunities</p>
           </div>
         </div>
-        {totalWeight !== 100 && (
-          <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
-        )}
+        <div className="flex items-center gap-3">
+          {totalWeight !== 100 && (
+            <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
+          )}
+          {onReset && (
+            <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground">
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Dashboard Grid */}

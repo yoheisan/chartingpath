@@ -3,8 +3,7 @@ import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TradeSetup } from '@/components/agent-backtest/TradeOpportunityTable';
-import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+
 
 const AgentScoring = () => {
   const navigate = useNavigate();
@@ -30,13 +29,7 @@ const AgentScoring = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-7xl px-4 md:px-8 pt-6 pb-12">
-        <div className="flex justify-end mb-4">
-          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5 text-muted-foreground">
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
-        </div>
-        <AgentBacktestPanel key={resetKey} onSendToBacktest={handleSendToBacktest} />
+        <AgentBacktestPanel key={resetKey} onSendToBacktest={handleSendToBacktest} onReset={handleReset} />
       </div>
     </div>
   );
