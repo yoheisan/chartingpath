@@ -56,6 +56,15 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [isRunning, setIsRunning] = useState(false);
+  const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+
+  const toggleBasket = (symbol: string) => {
+    setBasketSymbols((prev) => {
+      const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
+      setSymbols(next.join(', '));
+      return next;
+    });
+  };
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
 
@@ -290,6 +299,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 watchCutoff={watchCutoff}
                 assetClassFilter={assetClassFilter}
                 onSendToBacktest={onSendToBacktest}
+                basketSymbols={basketSymbols}
+                onToggleBasket={toggleBasket}
               />
             </CardContent>
           </Card>
