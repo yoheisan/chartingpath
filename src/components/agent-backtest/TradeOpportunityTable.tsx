@@ -1,45 +1,78 @@
 import React, { useMemo } from 'react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { LiveDetectionRow } from '@/hooks/useAgentScoringDetections';
 
-interface TradeOpportunity {
-  id: string;
+// Map display pattern names to engine pattern IDs
+const PATTERN_NAME_TO_ID: Record<string, string> = {
+  'Bull Flag': 'bull_flag',
+  'Bear Flag': 'bear_flag',
+  'Ascending Triangle': 'ascending_triangle',
+  'Descending Triangle': 'descending_triangle',
+  'Head & Shoulders': 'head_and_shoulders',
+  'Inv Head & Shoulders': 'inverse_head_and_shoulders',
+  'Double Top': 'double_top',
+  'Double Bottom': 'double_bottom',
+  'Cup & Handle': 'cup_and_handle',
+  'Rising Wedge': 'rising_wedge',
+  'Descending Wedge': 'falling_wedge',
+  'Falling Wedge': 'falling_wedge',
+  'Donchian Breakout': 'donchian_breakout_long',
+  'Donchian Breakout Long': 'donchian_breakout_long',
+  'Donchian Breakout Short': 'donchian_breakout_short',
+  'Symmetrical Triangle': 'ascending_triangle',
+  'Bull Pennant': 'bull_flag',
+  'Triple Top': 'triple_top',
+  'Triple Bottom': 'triple_bottom',
+};
+
+export interface TradeSetup {
   symbol: string;
+  patternId: string;
   pattern: string;
-  direction: 'Long' | 'Short';
   timeframe: string;
-  assetClass: 'stocks' | 'crypto' | 'forex' | 'commodities';
-  entryPrice: number;
-  stopLoss: number;
-  takeProfit: number;
-  rr: number;
-  analystRaw: number;
-  riskRaw: number;
-  timingRaw: number;
-  portfolioRaw: number;
 }
 
-const MOCK_TRADES: TradeOpportunity[] = [
-  { id: '1', symbol: 'AAPL', pattern: 'Bull Flag', direction: 'Long', timeframe: '1D', assetClass: 'stocks', entryPrice: 189.50, stopLoss: 185.20, takeProfit: 198.40, rr: 2.1, analystRaw: 0.92, riskRaw: 0.88, timingRaw: 0.75, portfolioRaw: 0.80 },
-  { id: '2', symbol: 'MSFT', pattern: 'Ascending Triangle', direction: 'Long', timeframe: '4H', assetClass: 'stocks', entryPrice: 415.00, stopLoss: 408.50, takeProfit: 432.00, rr: 2.6, analystRaw: 0.85, riskRaw: 0.72, timingRaw: 0.80, portfolioRaw: 0.65 },
-  { id: '3', symbol: 'TSLA', pattern: 'Head & Shoulders', direction: 'Short', timeframe: '1D', assetClass: 'stocks', entryPrice: 245.00, stopLoss: 258.00, takeProfit: 218.00, rr: 2.1, analystRaw: 0.60, riskRaw: 0.45, timingRaw: 0.55, portfolioRaw: 0.70 },
-  { id: '4', symbol: 'NVDA', pattern: 'Cup & Handle', direction: 'Long', timeframe: '1W', assetClass: 'stocks', entryPrice: 875.00, stopLoss: 840.00, takeProfit: 950.00, rr: 2.1, analystRaw: 0.95, riskRaw: 0.82, timingRaw: 0.60, portfolioRaw: 0.40 },
-  { id: '5', symbol: 'META', pattern: 'Double Bottom', direction: 'Long', timeframe: '1D', assetClass: 'stocks', entryPrice: 505.00, stopLoss: 492.00, takeProfit: 535.00, rr: 2.3, analystRaw: 0.78, riskRaw: 0.90, timingRaw: 0.85, portfolioRaw: 0.75 },
-  { id: '6', symbol: 'AMZN', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'stocks', entryPrice: 185.50, stopLoss: 180.00, takeProfit: 196.00, rr: 1.9, analystRaw: 0.72, riskRaw: 0.68, timingRaw: 0.40, portfolioRaw: 0.85 },
-  { id: '7', symbol: 'GOOGL', pattern: 'Bear Flag', direction: 'Short', timeframe: '1D', assetClass: 'stocks', entryPrice: 152.00, stopLoss: 157.50, takeProfit: 140.00, rr: 2.2, analystRaw: 0.55, riskRaw: 0.50, timingRaw: 0.30, portfolioRaw: 0.60 },
-  { id: '8', symbol: 'AMD', pattern: 'Inv Head & Shoulders', direction: 'Long', timeframe: '1D', assetClass: 'stocks', entryPrice: 165.00, stopLoss: 158.00, takeProfit: 182.00, rr: 2.4, analystRaw: 0.88, riskRaw: 0.75, timingRaw: 0.70, portfolioRaw: 0.55 },
-  { id: '9', symbol: 'JPM', pattern: 'Bull Pennant', direction: 'Long', timeframe: '1D', assetClass: 'stocks', entryPrice: 198.00, stopLoss: 193.00, takeProfit: 210.00, rr: 2.4, analystRaw: 0.82, riskRaw: 0.92, timingRaw: 0.65, portfolioRaw: 0.90 },
-  { id: '10', symbol: 'BTC/USD', pattern: 'Donchian Breakout', direction: 'Long', timeframe: '1H', assetClass: 'crypto', entryPrice: 67500, stopLoss: 65800, takeProfit: 71200, rr: 2.2, analystRaw: 0.70, riskRaw: 0.55, timingRaw: 0.15, portfolioRaw: 0.50 },
-  { id: '11', symbol: 'ETH/USD', pattern: 'Symmetrical Triangle', direction: 'Long', timeframe: '4H', assetClass: 'crypto', entryPrice: 3450, stopLoss: 3320, takeProfit: 3720, rr: 2.1, analystRaw: 0.65, riskRaw: 0.60, timingRaw: 0.45, portfolioRaw: 0.35 },
-  { id: '12', symbol: 'SPY', pattern: 'Rising Wedge', direction: 'Short', timeframe: '1D', assetClass: 'stocks', entryPrice: 510.00, stopLoss: 518.00, takeProfit: 494.00, rr: 2.0, analystRaw: 0.48, riskRaw: 0.40, timingRaw: 0.20, portfolioRaw: 0.55 },
-  { id: '13', symbol: 'EUR/USD', pattern: 'Double Top', direction: 'Short', timeframe: '4H', assetClass: 'forex', entryPrice: 1.0920, stopLoss: 1.0960, takeProfit: 1.0830, rr: 2.3, analystRaw: 0.74, riskRaw: 0.80, timingRaw: 0.65, portfolioRaw: 0.70 },
-  { id: '14', symbol: 'GBP/USD', pattern: 'Ascending Triangle', direction: 'Long', timeframe: '1D', assetClass: 'forex', entryPrice: 1.2680, stopLoss: 1.2620, takeProfit: 1.2800, rr: 2.0, analystRaw: 0.68, riskRaw: 0.72, timingRaw: 0.58, portfolioRaw: 0.62 },
-  { id: '15', symbol: 'GOLD', pattern: 'Bull Flag', direction: 'Long', timeframe: '1D', assetClass: 'commodities', entryPrice: 2340, stopLoss: 2305, takeProfit: 2410, rr: 2.0, analystRaw: 0.80, riskRaw: 0.85, timingRaw: 0.72, portfolioRaw: 0.68 },
-  { id: '16', symbol: 'OIL', pattern: 'Descending Wedge', direction: 'Long', timeframe: '4H', assetClass: 'commodities', entryPrice: 78.50, stopLoss: 76.80, takeProfit: 82.00, rr: 2.1, analystRaw: 0.62, riskRaw: 0.58, timingRaw: 0.50, portfolioRaw: 0.45 },
-];
+export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';
+
+interface Props {
+  weights: AgentWeights;
+  takeCutoff: number;
+  watchCutoff: number;
+  detections: LiveDetectionRow[];
+  isLoading?: boolean;
+  onSendToBacktest?: (setup: TradeSetup) => void;
+  basketSymbols?: string[];
+  onToggleBasket?: (symbol: string) => void;
+}
+
+/** Generate deterministic agent raw scores from detection data */
+function deriveRawScores(d: LiveDetectionRow) {
+  const hp = d.historical_performance as any;
+  const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
+  const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
+
+  // Analyst: Bayesian-adjusted win probability
+  const analystRaw = Math.min(1, winRate * 0.7 + Math.min(sampleSize / 100, 1) * 0.3);
+
+  // Risk: R:R quality + stop distance ratio
+  const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
+  const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
+  const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
+
+  // Timing: trend alignment proxy
+  const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
+  const timingRaw = trendScore;
+
+  // Portfolio: quality grade proxy
+  const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
+  const portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
+
+  return { analystRaw, riskRaw, timingRaw, portfolioRaw };
+}
 
 const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; label: string; tooltip: string }) => (
   <span className="inline-flex items-center gap-1 justify-center">
@@ -57,64 +90,34 @@ const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; labe
   </span>
 );
 
-// Map display pattern names to engine pattern IDs
-const PATTERN_NAME_TO_ID: Record<string, string> = {
-  'Bull Flag': 'bull_flag',
-  'Bear Flag': 'bear_flag',
-  'Ascending Triangle': 'ascending_triangle',
-  'Descending Triangle': 'descending_triangle',
-  'Head & Shoulders': 'head_and_shoulders',
-  'Inv Head & Shoulders': 'inverse_head_and_shoulders',
-  'Double Top': 'double_top',
-  'Double Bottom': 'double_bottom',
-  'Cup & Handle': 'cup_and_handle',
-  'Rising Wedge': 'rising_wedge',
-  'Descending Wedge': 'falling_wedge',
-  'Donchian Breakout': 'donchian_breakout_long',
-  'Symmetrical Triangle': 'ascending_triangle',
-  'Bull Pennant': 'bull_flag',
-};
-
-export interface TradeSetup {
-  symbol: string;
-  patternId: string;
-  pattern: string;
-  timeframe: string;
-}
-
-export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';
-
-interface Props {
-  weights: AgentWeights;
-  takeCutoff: number;
-  watchCutoff: number;
-  assetClassFilter?: AssetClassFilter;
-  onSendToBacktest?: (setup: TradeSetup) => void;
-  basketSymbols?: string[];
-  onToggleBasket?: (symbol: string) => void;
-}
-
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, assetClassFilter = 'all', onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
   const scoredTrades = useMemo(() => {
-    const filtered = assetClassFilter === 'all' ? MOCK_TRADES : MOCK_TRADES.filter((t) => t.assetClass === assetClassFilter);
-    return filtered.map((trade) => {
-      const analystScore = trade.analystRaw * weights.analyst;
-      const riskScore = trade.riskRaw * weights.risk;
-      const timingScore = trade.timingRaw * weights.timing;
-      const portfolioScore = trade.portfolioRaw * weights.portfolio;
+    return detections.map((d) => {
+      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d);
+      const analystScore = analystRaw * weights.analyst;
+      const riskScore = riskRaw * weights.risk;
+      const timingScore = timingRaw * weights.timing;
+      const portfolioScore = portfolioRaw * weights.portfolio;
       const composite = analystScore + riskScore + timingScore + portfolioScore;
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
+
+      const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+
       return {
-        ...trade,
-        analystScore,
-        riskScore,
-        timingScore,
-        portfolioScore,
+        id: d.id,
+        symbol: d.instrument,
+        pattern: d.pattern_name,
+        patternId: d.pattern_id,
+        direction,
+        timeframe: d.timeframe,
+        rr: d.risk_reward_ratio,
+        analystRaw, riskRaw, timingRaw, portfolioRaw,
+        analystScore, riskScore, timingScore, portfolioScore,
         composite,
         verdict,
       };
     }).sort((a, b) => b.composite - a.composite);
-  }, [weights, takeCutoff, watchCutoff, assetClassFilter]);
+  }, [detections, weights, takeCutoff, watchCutoff]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
@@ -134,11 +137,29 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     SKIP: 'opacity-40 hover:opacity-60',
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span className="text-sm">Loading live detections…</span>
+      </div>
+    );
+  }
+
+  if (detections.length === 0) {
+    return (
+      <div className="text-center py-16 text-muted-foreground">
+        <p className="text-sm">No active detections for this filter combination.</p>
+        <p className="text-xs mt-1">Try changing the asset class or timeframe filter.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Summary strip */}
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">{scoredTrades.length} opportunities scanned</span>
+        <span className="text-muted-foreground">{scoredTrades.length} opportunities scored</span>
         <span className="ml-auto" />
         <Badge variant="outline" className={`text-xs ${verdictStyles.TAKE}`}>
           <TrendingUp className="h-3.5 w-3.5 mr-1" />TAKE: {counts.TAKE}
@@ -253,7 +274,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                           className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/10"
                           onClick={() => onSendToBacktest({
                             symbol: trade.symbol,
-                            patternId: PATTERN_NAME_TO_ID[trade.pattern] || 'bull_flag',
+                            patternId: PATTERN_NAME_TO_ID[trade.pattern] || trade.patternId || 'bull_flag',
                             pattern: trade.pattern,
                             timeframe: trade.timeframe,
                           })}
