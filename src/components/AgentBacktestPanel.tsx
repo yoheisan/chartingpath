@@ -115,7 +115,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     }
     
     // Derive patterns from detections matching the effective symbols
-    const relevantDetections = liveDetections.filter((d) => effectiveSymbols.includes(d.instrument));
+    const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
     const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
     
     if (uniquePatterns.length === 0) {
