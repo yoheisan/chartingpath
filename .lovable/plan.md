@@ -1,97 +1,102 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Backtesting Multi-Agent Orchestration for Portfolio Management
 
-## Data Summary
+## Current State
 
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+The BacktesterV2 engine already supports three modes that map well to this use case:
 
----
+| Mode | Class | Multi-Asset | Current Use |
+|------|-------|-------------|-------------|
+| `single` | `SingleCrossTriggerStrategy` | No | Single instrument threshold trading |
+| `pair` | `PairZScoreStrategy` | 2 assets | Statistical arbitrage |
+| `basket` | `EqualWeightDCAPolicy` | N assets | DCA + rebalancing |
 
-## Priority 1: Auth Page (75 views, 0 signups)
+The engine has a clean architecture: `Strategy/Policy` → `SignalSet` → `ExecutionEngine` → `Portfolio`. The `Portfolio` class already tracks multi-asset positions, weights, exposures, and P&L. The `basket` mode with `EqualWeightDCAPolicy` already handles N-asset rebalancing with drift thresholds.
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
-
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
-
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+**The gap**: There is no strategy/policy that maps agent-scored verdicts into trading signals. The existing strategies use technical indicators (thresholds, z-scores), not composite decision scores.
 
 ---
 
-## Priority 2: Screener (101 views, 18s avg dwell)
+## Plan: Agent-Orchestrated Portfolio Strategy
 
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+### 1. New strategy: `AgentOrchestratedPolicy` (`engine/backtester-v2/policies/AgentOrchestrated.ts`)
 
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+A new policy class that replaces indicator-based logic with the multi-agent scoring pipeline. For each date and each symbol in the portfolio:
 
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+- **Analyst sub-agent**: Reads from pre-computed `pattern_hit_rates` data (win probability, expectancy) passed as a config lookup table
+- **Risk sub-agent**: Computes ATR-based stop loss from price history, Kelly-fraction sizing, validates R:R
+- **Timing sub-agent**: Checks a pre-loaded economic events calendar for high-impact events within N bars
+- **Portfolio sub-agent**: Checks current weights, concentration, directional heat
+
+Each sub-agent returns a 0-25 score. The composite (0-100) determines the signal:
+- **>=70 (TAKE)**: Generate BUY signal with Kelly-sized position
+- **50-69 (WATCH)**: No action
+- **<50 (SKIP)**: Generate CLOSE signal if position exists
+
+The policy implements the same `generateSignals(date, prices, portfolioValue, currentWeights)` interface as `EqualWeightDCAPolicy`, so it plugs directly into `BacktesterV2.runBasket()`.
+
+### 2. New backtest mode config: `AgentBacktestConfig`
+
+```typescript
+interface AgentBacktestConfig extends BacktestConfig {
+  mode: "agent";
+  policy: AgentOrchestratedParams;
+}
+```
+
+Where `AgentOrchestratedParams` includes:
+- `symbols: string[]` — the portfolio universe
+- `agentWeights: { analyst, risk, timing, portfolio }` — user-overridable weights (default 25 each)
+- `agentThresholds` — per-agent tunable parameters (min R:R, Kelly cap, drift threshold, etc.)
+- `verdictCutoffs: { take: 70, watch: 50 }` — user-overridable
+- `rebalanceFrequency` — how often the orchestrator re-evaluates
+- `patternStats` — pre-loaded lookup of symbol-level hit rates/expectancy (from `pattern_hit_rates` or `instrument_pattern_stats_mv`)
+- `economicEvents` — pre-loaded calendar events for the backtest period
+
+### 3. Add `runAgent()` to `BacktesterV2`
+
+A new method mirroring `runBasket()` but using `AgentOrchestratedPolicy`. It outputs the standard `BacktestResult` plus additional metadata:
+- `agentScores`: Per-date, per-symbol breakdown of each agent's score
+- `verdicts`: Array of `{ date, symbol, verdict, compositeScore }` for auditability
+
+### 4. Extend `BacktesterV2Adapter` for UI integration
+
+Add an `runAgentBacktest()` method that:
+- Pre-loads `pattern_hit_rates` data for the selected symbols from Supabase
+- Pre-loads `economic_events` for the date range
+- Converts these into the lookup tables the policy expects
+- Calls `backtester.runAgent(config)`
+- Returns `V2BacktestResult` with agent score metadata attached
+
+### 5. UI: Agent Backtest tab in Strategy Workspace
+
+A new section in the workspace that lets users:
+- Select a basket of symbols (multi-asset)
+- Adjust agent weights via sliders (or pick a preset: Conservative, Balanced, Aggressive)
+- Set verdict cutoffs
+- Run the backtest and see equity curve, drawdown, per-trade agent score breakdown
 
 ---
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+## Why This Works with Existing Infrastructure
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+- **Portfolio class** already handles N-asset positions, weights, exposures — no changes needed
+- **ExecutionEngine** already handles multi-symbol `SignalSet` with slippage/cost — no changes needed
+- **Metrics** (`calculateMetrics`) already work on any equity curve — no changes needed
+- **PriceProvider** already loads multi-symbol EOD data — no changes needed
+- The agent scoring is **pure math** (no LLM calls), so backtests run at the same speed as existing modes
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+## Files to Create/Modify
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
-
----
-
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
-
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
-
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
-
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
-
----
-
-## Priority 5: Shared Links (8 views, 7 pattern views)
-
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
-
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
-
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
-
----
-
-## Implementation Sequence
-
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+| Action | File |
+|--------|------|
+| Create | `engine/backtester-v2/policies/AgentOrchestrated.ts` |
+| Create | `engine/backtester-v2/agents/AnalystAgent.ts` |
+| Create | `engine/backtester-v2/agents/RiskAgent.ts` |
+| Create | `engine/backtester-v2/agents/TimingAgent.ts` |
+| Create | `engine/backtester-v2/agents/PortfolioAgent.ts` |
+| Modify | `engine/backtester-v2/backtest.ts` — add `AgentBacktestConfig` + `runAgent()` |
+| Modify | `src/adapters/backtesterV2.ts` — add `runAgentBacktest()` |
+| Create | UI component for agent backtest configuration and results |
 
