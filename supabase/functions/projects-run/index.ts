@@ -1879,8 +1879,11 @@ serve(async (req) => {
           const equity: { date: string; value: number; drawdown: number }[] = [];
           
           // Fetch data and run backtests
+          let completedPatternScans = 0;
           for (let instIdx = 0; instIdx < instruments.length; instIdx++) {
+            ensureBudget(`instrument preflight (${instIdx + 1}/${instruments.length})`);
             const instrument = instruments[instIdx];
+            const instrumentPatterns = effectivePatternMap[instrument] || [];
             console.log(`[PatternLab] Processing ${instrument}... (${instIdx + 1}/${instruments.length})`);
             
             // Update progress in execution_metadata
@@ -1888,11 +1891,12 @@ serve(async (req) => {
               .from('project_runs')
               .update({ 
                 execution_metadata: { 
-                  progress: Math.round(((instIdx) / instruments.length) * 100),
+                  progress: totalPatternScans > 0 ? Math.round((completedPatternScans / totalPatternScans) * 100) : 0,
                   currentStep: `Scanning ${instrument}`,
                   instrumentsProcessed: instIdx,
                   instrumentsTotal: instruments.length,
-                  patternsTotal: patterns.length,
+                  patternsTotal: totalPatternScans,
+                  scansCompleted: completedPatternScans,
                 } 
               })
               .eq('id', run.id);
@@ -1905,25 +1909,27 @@ serve(async (req) => {
             );
             
             if (bars.length < 50) {
+              completedPatternScans += instrumentPatterns.length;
               console.log(`[PatternLab] Insufficient data for ${instrument}: ${bars.length} bars`);
               continue;
             }
-            
-              // Use per-instrument pattern scoping if available (from Agent Scoring)
-              const instrumentPatterns = instrumentPatternMap?.[instrument] || patterns;
-              
-              for (const patternId of instrumentPatterns) {
-                const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-                if (!pattern) {
-                  console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
-                  continue;
-                }
-                
-                const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-                allTrades.push(...trades);
+
+            for (const patternId of instrumentPatterns) {
+              ensureBudget(`pattern scan ${instrument}:${patternId}`);
+              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
+              if (!pattern) {
+                console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
+                completedPatternScans += 1;
+                continue;
               }
+              
+              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
+              allTrades.push(...trades);
+              completedPatternScans += 1;
+            }
           }
           
+          ensureBudget('result computation preflight');
           // Update progress to 100% after all instruments processed
           await supabase
             .from('project_runs')
@@ -1933,7 +1939,8 @@ serve(async (req) => {
                 currentStep: 'Computing results',
                 instrumentsProcessed: instruments.length,
                 instrumentsTotal: instruments.length,
-                patternsTotal: patterns.length,
+                patternsTotal: totalPatternScans,
+                scansCompleted: totalPatternScans,
               } 
             })
             .eq('id', run.id);
