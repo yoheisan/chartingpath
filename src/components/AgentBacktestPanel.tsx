@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2 } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBacktestAdapter';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
@@ -21,10 +22,10 @@ const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: {
 };
 
 const AGENTS = [
-  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500' },
-  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500' },
-  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500' },
-  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500' },
+  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500', tooltip: 'Bayesian win-probability & historical hit-rates for the detected pattern. Higher weight → prioritize setups with strong statistical edge.' },
+  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500', tooltip: 'ATR-based stop placement, Kelly sizing & risk/reward quality. Higher weight → prioritize tight risk control with well-defined stops.' },
+  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500', tooltip: 'Macro/economic calendar proximity & market-session context. Higher weight → avoid entries near high-impact news or illiquid sessions.' },
+  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: 'Concentration risk, sector heat & directional exposure. Higher weight → penalize trades that over-concentrate in one asset or direction.' },
 ];
 
 // Simulated trade data for gauge calculations
@@ -168,12 +169,22 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           <Card className="border-border bg-card">
             <CardContent className="p-3 space-y-4">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Agent Weights</span>
-              {AGENTS.map(({ key, label, icon: Icon, color, barColor }) => (
+              {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
                 <div key={key} className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <Icon className={`h-3.5 w-3.5 ${color}`} />
                       <span className="text-xs font-medium text-foreground">{label}</span>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[220px] text-xs">
+                            {tooltip}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <span className={`text-sm font-mono font-bold ${color}`}>{weights[key]}</span>
                   </div>
