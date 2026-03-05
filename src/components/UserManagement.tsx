@@ -33,6 +33,13 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUserRole, setNewUserRole] = useState("");
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [tempPassword, setTempPassword] = useState("");
+  const [newUserPlan, setNewUserPlan] = useState("starter");
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createdUserInfo, setCreatedUserInfo] = useState<{ email: string; password: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
