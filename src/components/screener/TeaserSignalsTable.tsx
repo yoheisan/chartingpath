@@ -57,6 +57,21 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
           <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.grade')}</TableHead>
           <TableHead className="whitespace-nowrap">{t('teaserSignals.signal')}</TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate')}</TableHead>
+          <TableHead className="text-right whitespace-nowrap">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-end gap-1 cursor-help">
+                    ROT
+                    <Info className="h-3 w-3 opacity-50" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TableHead>
           <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.age')}</TableHead>
           <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.actions', 'Actions')}</TableHead>
           <TableHead className="w-10"></TableHead>
