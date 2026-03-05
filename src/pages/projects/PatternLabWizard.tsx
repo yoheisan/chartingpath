@@ -622,9 +622,9 @@ const PatternLabWizard = () => {
                 <p className="text-sm font-medium text-muted-foreground mb-3">{t('patternLabWizard.quickStart', 'Quick Start — try a backtest in one click')}</p>
                 <div className="grid sm:grid-cols-3 gap-3">
                   {[
-                    { instrument: 'AAPL', pattern: 'double-bottom', timeframe: '1d', label: 'Double Bottom on AAPL', emoji: '🍎' },
-                    { instrument: 'BTC-USD', pattern: 'head-and-shoulders', timeframe: '4h', label: 'H&S on Bitcoin', emoji: '₿' },
-                    { instrument: 'EURUSD=X', pattern: 'falling-wedge', timeframe: '1d', label: 'Falling Wedge on EUR/USD', emoji: '💱' },
+                    { instrument: 'AAPL', pattern: 'double-bottom', timeframe: '1d', labelKey: 'patternLabWizard.quickStartApple', labelFallback: 'Double Bottom on AAPL', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
+                    { instrument: 'BTC-USD', pattern: 'head-and-shoulders', timeframe: '4h', labelKey: 'patternLabWizard.quickStartBtc', labelFallback: 'H&S on Bitcoin', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
+                    { instrument: 'EURUSD=X', pattern: 'falling-wedge', timeframe: '1d', labelKey: 'patternLabWizard.quickStartEurusd', labelFallback: 'Falling Wedge on EUR/USD', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
                   ].map((example) => (
                     <button
                       key={example.label}
@@ -640,10 +640,10 @@ const PatternLabWizard = () => {
                       className="group text-left p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
                     >
                       <div className="mb-1"><InstrumentLogo instrument={example.instrument} size="sm" /></div>
-                      <p className="text-sm font-medium">{example.label}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Daily • 3 year lookback</p>
+                      <p className="text-sm font-medium">{t(example.labelKey, example.labelFallback)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t(example.subtitleKey, example.subtitleFallback)}</p>
                       <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        Run backtest <ArrowRight className="h-3 w-3" />
+                        {t('patternLabWizard.runBacktest', 'Run backtest')} <ArrowRight className="h-3 w-3" />
                       </div>
                     </button>
                   ))}
