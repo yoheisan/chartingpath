@@ -67,27 +67,33 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
         </div>
 
         {/* Equity Curve */}
-        {result.equity_curve_data && result.equity_curve_data.length > 0 && (
+        {chartData.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-3">Equity Curve</h4>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={result.equity_curve_data.filter((_: any, i: number) => i % Math.max(1, Math.floor(result.equity_curve_data.length / 60)) === 0 || i === result.equity_curve_data.length - 1)}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="agentEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0} />
+                      <stop offset="5%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.5} />
+                      <stop offset="95%" stopColor={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} stopOpacity={0.08} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" tickFormatter={(v: string) => v?.slice(0, 7)} />
-                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[minEquity - span * 0.15, maxEquity + span * 0.15]}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  />
                   <RechartsTooltip
                     contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                     labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
                   />
-                  <Area type="monotone" dataKey="equity" stroke={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} fill="url(#agentEquityGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="equity" stroke={isProfit ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'} fill="url(#agentEquityGrad)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
