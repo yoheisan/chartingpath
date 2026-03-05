@@ -193,7 +193,10 @@ const Index = () => {
           {/* Ticker Search — prominent */}
           <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
             <UniversalSymbolSearch
-              onSelect={(symbol) => navigate(`/instruments/${symbol}`)}
+              onSelect={(symbol) => {
+                trackEvent('landing.search_select', { symbol });
+                navigate('/members/dashboard', { state: { initialSymbol: symbol } });
+              }}
               trigger={
                 <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-primary/30 bg-card/80 backdrop-blur-sm hover:border-primary/60 transition-all shadow-lg hover:shadow-primary/10 group cursor-pointer">
                   <Search className="h-5 w-5 text-primary" />
