@@ -8,7 +8,7 @@ import { AgentBacktestAdapter, AgentBacktestParams } from '@/adapters/agentBackt
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable, AssetClassFilter } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter, TradeSetup } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -43,7 +43,7 @@ const MOCK_RAW_SCORES = [
   { analyst: 0.48, risk: 0.40, timing: 0.20, portfolio: 0.55 },
 ];
 
-export const AgentBacktestPanel: React.FC = () => {
+export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void }> = ({ onSendToBacktest }) => {
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
   const [watchCutoff, setWatchCutoff] = useState(DEFAULT_CUTOFFS.watch);
