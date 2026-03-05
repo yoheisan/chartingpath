@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera, ChevronDown, Brain } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, Camera, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import html2canvas from 'html2canvas';
 import {
