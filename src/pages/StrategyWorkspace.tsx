@@ -34,7 +34,7 @@ const StrategyWorkspace = () => {
           </TabsList>
 
           <TabsContent value="strategy" className="mt-0">
-            <StrategyWorkspaceInterface initialTab={initialTab} />
+            <StrategyWorkspaceInterface initialTab={initialTab} onSwitchToAgent={() => handleModeChange('agent')} />
           </TabsContent>
 
           <TabsContent value="agent" className="mt-0">
