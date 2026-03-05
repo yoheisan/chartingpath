@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Layers, Database, Clock } from "lucide-react";
+import { BarChart3, Layers, Database, Clock, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MetricProps {
@@ -69,7 +69,7 @@ export const MetricStrip = () => {
     fetch();
   }, []);
 
-  const metrics: MetricProps[] = [
+  const metrics: (MetricProps & { decimals?: number })[] = [
     { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments Scanned"), icon: BarChart3 },
     { value: 17, suffix: "", label: t("metrics.patterns", "Pattern Types"), icon: Layers },
     { value: 320000, suffix: "+", label: t("metrics.trades", "Historical Trades"), icon: Database },
