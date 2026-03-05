@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { GuidedStrategyAnswers } from './GuidedStrategyBuilder';
 import { GuidedStrategyManager } from './GuidedStrategyManager';
-import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera, ChevronDown } from 'lucide-react';
+import { Save, SaveAll, Edit, FolderOpen, MoreVertical, Globe, Target, TrendingUp, TrendingDown, BarChart3, Camera, ChevronDown, Brain } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import html2canvas from 'html2canvas';
 import {
@@ -56,7 +56,7 @@ interface SavedChartingPathStrategy {
   backtest_results?: any;
 }
 
-export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ initialTab = 'builder' }) => {
+export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitchToAgent?: () => void }> = ({ initialTab = 'builder', onSwitchToAgent }) => {
   const { user, subscriptionPlan } = useUserProfile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -876,6 +876,14 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string }> = ({ 
               )}
             </div>
             
+            {/* Agent Backtest switch */}
+            {onSwitchToAgent && (
+              <Button variant="outline" size="sm" className="gap-2" onClick={onSwitchToAgent}>
+                <Brain className="w-4 h-4" />
+                <span className="hidden sm:inline">Agent Backtest</span>
+              </Button>
+            )}
+
             {/* Strategy Actions Menu - Hidden in wedge mode for MVP simplicity */}
             {!wedgeConfig.wedgeEnabled && (
               <DropdownMenu>
