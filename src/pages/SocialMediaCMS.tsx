@@ -11,7 +11,8 @@ import { EducationalContentManager } from "@/components/cms/EducationalContentMa
 import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
 import { DiscoveryManager } from "@/components/cms/DiscoveryManager";
 import { SignalPostGenerator } from "@/components/cms/SignalPostGenerator";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap } from "lucide-react";
+import { FAQContentGenerator } from "@/components/cms/FAQContentGenerator";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap, HelpCircle } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("signals");
@@ -29,10 +30,14 @@ export default function SocialMediaCMS() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="signals" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             <span className="hidden sm:inline">Signals</span>
+          </TabsTrigger>
+          <TabsTrigger value="faq-content" className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">FAQ</span>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -66,6 +71,10 @@ export default function SocialMediaCMS() {
 
         <TabsContent value="signals" className="space-y-4">
           <SignalPostGenerator />
+        </TabsContent>
+
+        <TabsContent value="faq-content" className="space-y-4">
+          <FAQContentGenerator />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
