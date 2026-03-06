@@ -126,7 +126,10 @@ export function calculateOptimalPriceMargins(
 
   // Overlays need extra room for SL/TP labels outside the candle range
   if (hasOverlays) {
-    margin = Math.min(margin + 0.04, 0.15);
+    const topMargin = Math.min(margin + 0.04, 0.15);
+    // Extra bottom margin to prevent ENTRY/TP labels from clipping below candles
+    const bottomMargin = Math.min(margin + 0.08, 0.18);
+    return { top: topMargin, bottom: bottomMargin };
   }
 
   return { top: margin, bottom: margin };
