@@ -42,6 +42,7 @@ const resources = {
   tr: { translation: trTranslations },
   nl: { translation: nlTranslations },
   pl: { translation: plTranslations },
+  vi: { translation: viTranslations },
 };
 
 const SUPPORTED_LANGS = Object.keys(resources);
