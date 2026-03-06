@@ -57,7 +57,15 @@ const normalizeAuthCallbackPath = () => {
 
 normalizeAuthCallbackPath();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,    // 1 min — prevent refetch on every mount
+      gcTime: 300_000,      // 5 min — keep cache alive across navigations
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

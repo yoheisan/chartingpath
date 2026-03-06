@@ -209,30 +209,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       updatePriceData(cached);
       setLoading(false);
       setError(null);
-      
-      // Background revalidate after showing cached data
-      setTimeout(async () => {
-        try {
-          const { barLimit } = getChartDataLimits(timeframe as Timeframe);
-          const { data } = await supabase
-            .from('historical_prices')
-            .select('date, open, high, low, close, volume')
-            .eq('symbol', symbol)
-            .eq('timeframe', timeframe)
-            .order('date', { ascending: true })
-            .limit(barLimit);
-          
-          if (data && data.length > cached.length) {
-            const freshBars = data.map(row => ({
-              t: row.date, o: row.open, h: row.high, l: row.low, c: row.close, v: row.volume || 0,
-            }));
-            symbolDataCache.set(cacheKey, freshBars);
-            setBars(freshBars);
-            updatePriceData(freshBars);
-            console.debug(`[CommandCenterChart] Background revalidated ${cacheKey}: ${freshBars.length} bars`);
-          }
-        } catch {}
-      }, 1000);
+      // No immediate background revalidation — the 60s polling handles staleness
       return;
     }
 
@@ -273,7 +250,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         
         console.log(`[CommandCenterChart] Using EODHD→Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${lookbackDays} days)`);
 
-        // Add timeout to prevent indefinite hanging on edge function calls
+        // 8s timeout to fail fast to fallback
         const fetchWithTimeout = Promise.race([
           fetchMarketBars({
             symbol,
@@ -281,7 +258,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             endDate: endDate.toISOString().split('T')[0],
             interval: timeframe,
           }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 15000)),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 8000)),
         ]);
 
         let fetchedBars: CompressedBar[] = [];
@@ -367,10 +344,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     });
   };
 
-  useEffect(() => {
-    fetchChartData();
-  }, [fetchChartData]);
-
   // Fetch active live patterns + recent historical for this symbol/timeframe
   const fetchAutoPatterns = useCallback(async () => {
     // Skip pattern fetch for auth-gated timeframes
@@ -436,7 +409,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           };
         }),
         ...(historicalData || []).map(p => {
-          // For historical patterns without a resolved outcome, derive one from current bars
           const existingOutcome = p.outcome;
           const isAlreadyResolved = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(existingOutcome || '').toLowerCase());
           const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcomeForPattern(p, true);
@@ -450,7 +422,6 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       ];
 
       // Deduplicate same occurrence across live/historical datasets.
-      // Prefer resolved historical records when both variants exist.
       const bySignature = new Map<string, any>();
       for (const pattern of combinedPatterns) {
         const detectedAt = getDetectedAt(pattern);
@@ -481,13 +452,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       const pivotsFitTimeframe = (pattern: any): boolean => {
         const pivots = pattern.visual_spec?.pivots;
-        if (!Array.isArray(pivots) || pivots.length < 2) return true; // no pivots to validate
+        if (!Array.isArray(pivots) || pivots.length < 2) return true;
         const timestamps = pivots
           .map((p: any) => p.timestamp ? new Date(p.timestamp).getTime() : NaN)
           .filter(Number.isFinite)
           .sort((a: number, b: number) => a - b);
         if (timestamps.length < 2) return true;
-        // Check that the structural pivots (first and last) are separated enough
         const span = timestamps[timestamps.length - 1] - timestamps[0];
         return span >= minSepMs;
       };
@@ -505,16 +475,22 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     }
   }, [symbol, timeframe, userId]);
 
+  // Unified fetch: chart data + auto-patterns in parallel, then start polling
   useEffect(() => {
-    fetchAutoPatterns();
+    let intervalId: number | undefined;
 
-    // Keep TP/SL current while user stays on the dashboard
-    const intervalId = window.setInterval(() => {
-      fetchAutoPatterns();
-    }, 60_000);
+    // Fire both in parallel
+    Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
+      // Start 60s polling AFTER initial fetch settles
+      intervalId = window.setInterval(() => {
+        fetchAutoPatterns();
+      }, 60_000);
+    });
 
-    return () => window.clearInterval(intervalId);
-  }, [fetchAutoPatterns]);
+    return () => {
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+    };
+  }, [fetchChartData, fetchAutoPatterns]);
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';

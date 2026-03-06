@@ -28,6 +28,7 @@ export interface BriefingSetup {
 
 const BRIEFING_CACHE_KEY = 'cp-morning-briefing-v2';
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes for instant paint
 const MAX_SETUPS = 8;
 
 // Minimum quality: A, B, C allowed. Never D.
@@ -46,7 +47,7 @@ function getCachedBriefing(): CachedBriefing | null {
     const parsed: CachedBriefing = JSON.parse(raw);
     const today = new Date().toISOString().slice(0, 10);
     if (parsed.date !== today) return null;
-    if (Date.now() - parsed.ts > AUTO_REFRESH_MS) return null;
+    if (Date.now() - parsed.ts > CACHE_VALIDITY_MS) return null;
     return parsed;
   } catch {
     return null;

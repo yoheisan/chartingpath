@@ -82,6 +82,8 @@ interface DashboardPatternStudyProps {
   timeframe: string;
   onPatternSelect?: (pattern: PatternOccurrence) => void;
   selectedPatternId?: string | null;
+  /** When false, skip data fetching (panel is hidden) */
+  active?: boolean;
 }
 
 export function DashboardPatternStudy({
@@ -89,6 +91,7 @@ export function DashboardPatternStudy({
   timeframe,
   onPatternSelect,
   selectedPatternId,
+  active = true,
 }: DashboardPatternStudyProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -100,8 +103,11 @@ export function DashboardPatternStudy({
 
   const timeframeLabel = timeframe.toUpperCase();
 
-  // Fetch data — skip for auth-gated timeframes when not logged in
+  // Fetch data — skip when panel is inactive (hidden) or auth-gated
   useEffect(() => {
+    if (!active) {
+      return; // Panel hidden — don't fetch
+    }
     if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !user) {
       setLoading(false);
       setHistoricalPatterns([]);
@@ -183,7 +189,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe, user]);
+  }, [symbol, timeframe, user, active]);
 
   // Performance stats
   const stats = useMemo(() => {

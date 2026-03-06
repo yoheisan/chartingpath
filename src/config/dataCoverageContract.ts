@@ -222,12 +222,12 @@ export function getChartDataLimits(timeframe: Timeframe): {
     case '8h':
       return { barLimit: 500, minBarsRequired: 50, daysBack: 730 }; // 2 years max (aggregated from 1h)
     case '1wk':
-      return { barLimit: 365, minBarsRequired: 100, daysBack: 2555 }; // ~7 years
+      return { barLimit: 365, minBarsRequired: 30, daysBack: 2555 }; // ~7 years
     case '1M':
       return { barLimit: 120, minBarsRequired: 24, daysBack: 3650 }; // ~10 years
     case '1d':
     default:
-      return { barLimit: 1260, minBarsRequired: 250, daysBack: 1825 }; // ~5 years
+      return { barLimit: 1260, minBarsRequired: 50, daysBack: 1825 }; // ~5 years
   }
 }
 
