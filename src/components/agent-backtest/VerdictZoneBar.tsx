@@ -1,5 +1,6 @@
 import React from 'react';
 import { Slider } from '@/components/ui/slider';
+import { useTranslation } from 'react-i18next';
 
 interface VerdictZoneBarProps {
   takeCutoff: number;
@@ -12,9 +13,11 @@ interface VerdictZoneBarProps {
 export const VerdictZoneBar: React.FC<VerdictZoneBarProps> = ({
   takeCutoff, watchCutoff, onTakeChange, onWatchChange, currentScore,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4">
-      <label className="text-sm font-semibold text-foreground">Verdict Zones</label>
+      <label className="text-sm font-semibold text-foreground">{t('agentScoring.verdictZones')}</label>
 
       {/* Visual zone bar */}
       <div className="relative h-10 rounded-lg overflow-hidden flex">
@@ -22,22 +25,21 @@ export const VerdictZoneBar: React.FC<VerdictZoneBarProps> = ({
           className="bg-red-500/20 border-r border-red-500/40 flex items-center justify-center"
           style={{ width: `${watchCutoff}%` }}
         >
-          <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Skip</span>
+          <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">{t('agentScoring.skip')}</span>
         </div>
         <div
           className="bg-amber-500/20 border-r border-amber-500/40 flex items-center justify-center"
           style={{ width: `${takeCutoff - watchCutoff}%` }}
         >
-          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Watch</span>
+          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{t('agentScoring.watch')}</span>
         </div>
         <div
           className="bg-emerald-500/20 flex items-center justify-center"
           style={{ width: `${100 - takeCutoff}%` }}
         >
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Take</span>
+          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">{t('agentScoring.take')}</span>
         </div>
 
-        {/* Score marker */}
         {currentScore != null && (
           <div
             className="absolute top-0 bottom-0 w-0.5 bg-foreground transition-all duration-500"

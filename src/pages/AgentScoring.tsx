@@ -3,9 +3,10 @@ import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TradeSetup } from '@/components/agent-backtest/TradeOpportunityTable';
-
+import { useTranslation } from 'react-i18next';
 
 const AgentScoring = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [resetKey, setResetKey] = useState(0);
 
@@ -18,12 +19,12 @@ const AgentScoring = () => {
       autoRun: true,
     }));
     navigate('/projects/pattern-lab/new');
-    toast.success(`Loaded ${setup.symbol} ${setup.pattern} into Pattern Lab`);
+    toast.success(t('agentScoring.loadedIntoPatternLab', { symbol: setup.symbol, pattern: setup.pattern }));
   };
 
   const handleReset = () => {
     setResetKey((k) => k + 1);
-    toast.info('Page reset');
+    toast.info(t('agentScoring.pageReset'));
   };
 
   return (

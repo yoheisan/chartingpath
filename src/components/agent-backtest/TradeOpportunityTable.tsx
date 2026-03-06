@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LiveDetectionRow } from '@/hooks/useAgentScoringDetections';
+import { useTranslation } from 'react-i18next';
 
-// Map display pattern names to engine pattern IDs
 const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Bull Flag': 'bull_flag',
   'Bear Flag': 'bear_flag',
@@ -50,28 +50,18 @@ interface Props {
   onToggleBasket?: (symbol: string) => void;
 }
 
-/** Generate deterministic agent raw scores from detection data */
 function deriveRawScores(d: LiveDetectionRow) {
   const hp = d.historical_performance as any;
   const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
   const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
-
-  // Analyst: Bayesian-adjusted win probability
   const analystRaw = Math.min(1, winRate * 0.7 + Math.min(sampleSize / 100, 1) * 0.3);
-
-  // Risk: R:R quality + stop distance ratio
   const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
   const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
   const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
-
-  // Timing: trend alignment proxy
   const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
   const timingRaw = trendScore;
-
-  // Portfolio: quality grade proxy
   const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
   const portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
-
   return { analystRaw, riskRaw, timingRaw, portfolioRaw };
 }
 
@@ -118,6 +108,7 @@ const SortableHeader: React.FC<{
 );
 
 export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
+  const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -139,38 +130,25 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const portfolioScore = portfolioRaw * weights.portfolio;
       const composite = analystScore + riskScore + timingScore + portfolioScore;
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
-
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
-
       return {
-        id: d.id,
-        symbol: d.instrument,
-        pattern: d.pattern_name,
-        patternId: d.pattern_id,
-        direction,
-        timeframe: d.timeframe,
-        rr: d.risk_reward_ratio,
+        id: d.id, symbol: d.instrument, pattern: d.pattern_name, patternId: d.pattern_id,
+        direction, timeframe: d.timeframe, rr: d.risk_reward_ratio,
         analystRaw, riskRaw, timingRaw, portfolioRaw,
-        analystScore, riskScore, timingScore, portfolioScore,
-        composite,
-        verdict,
+        analystScore, riskScore, timingScore, portfolioScore, composite, verdict,
       };
     });
 
     const verdictOrder: Record<string, number> = { TAKE: 3, WATCH: 2, SKIP: 1 };
     const mul = sortDir === 'asc' ? 1 : -1;
-
     scored.sort((a, b) => {
       const av = a[sortKey as keyof typeof a];
       const bv = b[sortKey as keyof typeof b];
-      if (sortKey === 'verdict') {
-        return mul * ((verdictOrder[a.verdict] || 0) - (verdictOrder[b.verdict] || 0));
-      }
+      if (sortKey === 'verdict') return mul * ((verdictOrder[a.verdict] || 0) - (verdictOrder[b.verdict] || 0));
       if (typeof av === 'string' && typeof bv === 'string') return mul * av.localeCompare(bv);
       if (typeof av === 'number' && typeof bv === 'number') return mul * (av - bv);
       return 0;
     });
-
     return scored;
   }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir]);
 
@@ -196,7 +174,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />
-        <span className="text-sm">Loading live detections…</span>
+        <span className="text-sm">{t('agentScoring.loadingDetections')}</span>
       </div>
     );
   }
@@ -204,8 +182,8 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
   if (detections.length === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground">
-        <p className="text-sm">No active detections for this filter combination.</p>
-        <p className="text-xs mt-1">Try changing the asset class or timeframe filter.</p>
+        <p className="text-sm">{t('agentScoring.noDetections')}</p>
+        <p className="text-xs mt-1">{t('agentScoring.noDetectionsHint')}</p>
       </div>
     );
   }
@@ -214,7 +192,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     <div className="space-y-4">
       {/* Summary strip */}
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">{scoredTrades.length} opportunities scored</span>
+        <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredTrades.length })}</span>
         <span className="ml-auto" />
         <Badge variant="outline" className={`text-xs ${verdictStyles.TAKE}`}>
           <TrendingUp className="h-3.5 w-3.5 mr-1" />TAKE: {counts.TAKE}
@@ -233,32 +211,32 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
           <thead>
             <tr className="bg-muted/30 text-muted-foreground text-left">
               {onToggleBasket && <th className="px-3 py-3 font-medium text-center w-10">
-                <HeaderWithInfo label="" tooltip="Add symbols to the backtest basket. Selected symbols will auto-populate the Run Backtest input." />
+                <HeaderWithInfo label="" tooltip={t('agentScoring.basketTooltip')} />
               </th>}
-              <SortableHeader sortKey="symbol" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>Symbol</SortableHeader>
-              <SortableHeader sortKey="pattern" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>Pattern</SortableHeader>
-              <SortableHeader sortKey="direction" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">Dir</SortableHeader>
+              <SortableHeader sortKey="symbol" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>{t('agentScoring.symbol')}</SortableHeader>
+              <SortableHeader sortKey="pattern" currentSort={sortKey} currentDir={sortDir} onSort={handleSort}>{t('setupFilters.pattern')}</SortableHeader>
+              <SortableHeader sortKey="direction" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">{t('agentScoring.dir')}</SortableHeader>
               <SortableHeader sortKey="timeframe" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">TF</SortableHeader>
               <SortableHeader sortKey="rr" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo label="R:R" tooltip="Risk-to-Reward ratio. How much potential profit per unit of risk. Higher is better — 2.0+ is the baseline." />
+                <HeaderWithInfo label="R:R" tooltip={t('agentScoring.rrTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="analystScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Brain className="h-3.5 w-3.5 inline text-blue-400" />} label="Analyst" tooltip="Bayesian win-probability score based on historical pattern hit rates, quality grade, and sample size for this specific instrument." />
+                <HeaderWithInfo icon={<Brain className="h-3.5 w-3.5 inline text-blue-400" />} label={t('agentScoring.analyst')} tooltip={t('agentScoring.analystHeaderTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="riskScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Shield className="h-3.5 w-3.5 inline text-amber-400" />} label="Risk" tooltip="Risk Manager score evaluating ATR-based stop placement, Kelly criterion sizing, and whether the trade fits within acceptable drawdown limits." />
+                <HeaderWithInfo icon={<Shield className="h-3.5 w-3.5 inline text-amber-400" />} label={t('agentScoring.riskMgr')} tooltip={t('agentScoring.riskHeaderTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="timingScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label="Timing" tooltip="Macro timing score factoring in upcoming economic events, market session overlap, and whether the setup aligns with current trend momentum." />
+                <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label={t('agentScoring.timing')} tooltip={t('agentScoring.timingHeaderTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="portfolioScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label="Portfolio" tooltip="Portfolio-level score checking for concentration risk, directional bias, and correlation with existing positions to prevent over-exposure." />
+                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label={t('agentScoring.portfolio')} tooltip={t('agentScoring.portfolioHeaderTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="composite" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo label="Score" tooltip="Weighted composite score (0–100) combining all four agent scores based on your preset weights. This drives the final verdict." />
+                <HeaderWithInfo label={t('agentScoring.score')} tooltip={t('agentScoring.scoreTooltip')} />
               </SortableHeader>
               <SortableHeader sortKey="verdict" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo label="Verdict" tooltip="Final decision: TAKE (≥70) = actionable, WATCH (50–69) = monitor, SKIP (<50) = pass. Thresholds adjust based on your selected preset." />
+                <HeaderWithInfo label={t('agentScoring.verdict')} tooltip={t('agentScoring.verdictTooltip')} />
               </SortableHeader>
               {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
             </tr>
@@ -338,7 +316,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="left" className="text-xs">
-                        Send to Strategy Builder
+                        {t('agentScoring.sendToStrategyBuilder')}
                       </TooltipContent>
                     </Tooltip>
                   </td>

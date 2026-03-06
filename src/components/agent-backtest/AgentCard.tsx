@@ -1,6 +1,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { useTranslation } from 'react-i18next';
 
 interface AgentCardProps {
   agentKey: string;
@@ -20,6 +21,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   label, icon: Icon, color, bgColor, borderColor,
   weight, onWeightChange, description, liveScore, factors,
 }) => {
+  const { t } = useTranslation();
   const scorePercent = liveScore != null ? (liveScore / weight) * 100 : 0;
 
   return (
@@ -37,7 +39,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         </div>
         <div className="text-right">
           <div className={`text-2xl font-mono font-bold ${color}`}>{weight}</div>
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">weight</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('agentScoring.weight')}</div>
         </div>
       </div>
 
@@ -57,7 +59,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       {liveScore != null && (
         <div className="mb-2">
           <div className="flex items-center justify-between text-[11px] mb-1">
-            <span className="text-muted-foreground">Last Score</span>
+            <span className="text-muted-foreground">{t('agentScoring.lastScore')}</span>
             <span className={`font-mono font-semibold ${color}`}>{liveScore.toFixed(1)}/{weight}</span>
           </div>
           <div className="h-2 rounded-full bg-muted/50 overflow-hidden">

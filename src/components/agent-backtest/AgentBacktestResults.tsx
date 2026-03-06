@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, BarChart3, Activity, Target, ShieldAlert, X } from 'lucide-react';
 import { V2BacktestResult } from '@/adapters/backtesterV2';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface AgentBacktestResultsProps {
   result: V2BacktestResult & { verdicts?: any[]; agentScoreSummary?: any };
@@ -12,23 +13,20 @@ interface AgentBacktestResultsProps {
 }
 
 export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ result, onClose }) => {
+  const { t } = useTranslation();
   const isProfit = result.net_pnl >= 0;
 
-  // Debug: log what equity data we actually receive
   console.log('[AgentBacktestResults] equity_curve_data length:', result.equity_curve_data?.length, 'sample:', result.equity_curve_data?.slice(0, 3));
 
-  // Build chart data: use real equity curve if available, otherwise synthesize from initial capital + net pnl
   let rawChartData = result.equity_curve_data || [];
   
   if (rawChartData.length === 0 && result.initial_capital) {
-    // Synthesize a simple 2-point equity curve as fallback
     const startEquity = result.initial_capital;
     const endEquity = startEquity * (1 + result.net_pnl / 100);
     rawChartData = [
       { date: result.from_date, equity: startEquity, drawdown: 0 },
       { date: result.to_date, equity: endEquity, drawdown: 0 },
     ];
-    console.log('[AgentBacktestResults] Synthesized fallback equity curve:', rawChartData);
   }
 
   const chartData = rawChartData.filter(
@@ -42,12 +40,12 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
   const isSinglePoint = chartData.length === 1;
 
   const metrics = [
-    { label: 'Net P&L', value: `${isProfit ? '+' : ''}${result.net_pnl.toFixed(2)}%`, icon: isProfit ? TrendingUp : TrendingDown, color: isProfit ? 'text-emerald-400' : 'text-red-400' },
-    { label: 'Total Trades', value: result.total_trades.toString(), icon: BarChart3, color: 'text-blue-400' },
-    { label: 'Sharpe Ratio', value: result.sharpe_ratio.toFixed(2), icon: Activity, color: 'text-purple-400' },
-    { label: 'Max Drawdown', value: `${result.max_drawdown.toFixed(2)}%`, icon: ShieldAlert, color: 'text-amber-400' },
-    { label: 'Win Rate', value: `${result.win_rate.toFixed(1)}%`, icon: Target, color: 'text-emerald-400' },
-    { label: 'Profit Factor', value: result.profit_factor.toFixed(2), icon: BarChart3, color: 'text-blue-400' },
+    { label: t('agentScoring.netPnl'), value: `${isProfit ? '+' : ''}${result.net_pnl.toFixed(2)}%`, icon: isProfit ? TrendingUp : TrendingDown, color: isProfit ? 'text-emerald-400' : 'text-red-400' },
+    { label: t('agentScoring.totalTrades'), value: result.total_trades.toString(), icon: BarChart3, color: 'text-blue-400' },
+    { label: t('agentScoring.sharpeRatio'), value: result.sharpe_ratio.toFixed(2), icon: Activity, color: 'text-purple-400' },
+    { label: t('agentScoring.maxDrawdown'), value: `${result.max_drawdown.toFixed(2)}%`, icon: ShieldAlert, color: 'text-amber-400' },
+    { label: t('agentScoring.winRate'), value: `${result.win_rate.toFixed(1)}%`, icon: Target, color: 'text-emerald-400' },
+    { label: t('agentScoring.profitFactor'), value: result.profit_factor.toFixed(2), icon: BarChart3, color: 'text-blue-400' },
   ];
 
   return (
@@ -56,9 +54,9 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              Backtest Results
+              {t('agentScoring.backtestResults')}
               <Badge variant="outline" className={`text-xs ${isProfit ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-red-500/15 text-red-400 border-red-500/30'}`}>
-                {isProfit ? '▲ Profitable' : '▼ Loss'}
+                {isProfit ? `▲ ${t('agentScoring.profitable')}` : `▼ ${t('agentScoring.loss')}`}
               </Badge>
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
@@ -84,12 +82,11 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
           ))}
         </div>
 
-        {/* Equity Curve & Drawdown — Stacked Panels */}
+        {/* Equity Curve & Drawdown */}
         {chartData.length > 0 && (
           <div className="flex flex-col gap-1">
-            {/* Equity Curve — Top */}
             <div>
-              <span className="text-[11px] font-medium text-muted-foreground ml-1">Equity</span>
+              <span className="text-[11px] font-medium text-muted-foreground ml-1">{t('agentScoring.equity')}</span>
               <div className="h-36 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
@@ -112,7 +109,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                     <RechartsTooltip
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                       labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Equity']}
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, t('agentScoring.equity')]}
                     />
                     <Area
                       type="monotone"
@@ -131,10 +128,9 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
               </div>
             </div>
 
-            {/* Drawdown "Underwater" — Bottom */}
             {chartData.some((d: any) => (d.drawdown ?? 0) > 0) && (
               <div>
-                <span className="text-[11px] font-medium text-muted-foreground ml-1">Drawdown</span>
+                <span className="text-[11px] font-medium text-muted-foreground ml-1">{t('agentScoring.drawdown')}</span>
                 <div className="h-16 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
@@ -165,7 +161,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                       <RechartsTooltip
                         contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                         labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                        formatter={(value: number) => [`-${(value * 100).toFixed(2)}%`, 'Drawdown']}
+                        formatter={(value: number) => [`-${(value * 100).toFixed(2)}%`, t('agentScoring.drawdown')]}
                       />
                       <Area
                         type="monotone"
@@ -184,22 +180,22 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
           </div>
         )}
 
-        {/* Trade Log (last 10) */}
+        {/* Trade Log */}
         {result.trade_log && result.trade_log.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-3">
-              Recent Trades <span className="text-xs font-normal">({result.trade_log.length} total)</span>
+              {t('agentScoring.recentTrades')} <span className="text-xs font-normal">({result.trade_log.length} {t('agentScoring.total')})</span>
             </h4>
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-muted/30 text-muted-foreground">
-                    <th className="px-3 py-2 text-left font-medium">Date</th>
-                    <th className="px-3 py-2 text-left font-medium">Type</th>
-                    <th className="px-3 py-2 text-right font-medium">Price</th>
-                    <th className="px-3 py-2 text-right font-medium">Qty</th>
-                    <th className="px-3 py-2 text-center font-medium">Score</th>
-                    <th className="px-3 py-2 text-center font-medium">Verdict</th>
+                    <th className="px-3 py-2 text-left font-medium">{t('agentScoring.date')}</th>
+                    <th className="px-3 py-2 text-left font-medium">{t('agentScoring.type')}</th>
+                    <th className="px-3 py-2 text-right font-medium">{t('agentScoring.price')}</th>
+                    <th className="px-3 py-2 text-right font-medium">{t('agentScoring.qty')}</th>
+                    <th className="px-3 py-2 text-center font-medium">{t('agentScoring.score')}</th>
+                    <th className="px-3 py-2 text-center font-medium">{t('agentScoring.verdict')}</th>
                   </tr>
                 </thead>
                 <tbody>
