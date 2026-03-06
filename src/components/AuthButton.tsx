@@ -40,6 +40,9 @@ const AuthButton = () => {
         fetchUserRole(session.user.id);
       }
       setLoading(false);
+    }).catch((err) => {
+      console.error('AuthButton getSession error:', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
