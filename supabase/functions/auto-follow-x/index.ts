@@ -179,18 +179,17 @@ serve(async (req) => {
     }
 
     // ── ACTION: follow_next (default, called by cron) ──────────────
-    // Pick the oldest pending row
-    const { data: next, error: fetchErr } = await supabase
+    const BATCH_SIZE = body.batch_size || 20;
+    const { data: batch, error: fetchErr } = await supabase
       .from("x_follow_queue")
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .limit(BATCH_SIZE);
 
     if (fetchErr) throw fetchErr;
 
-    if (!next) {
+    if (!batch?.length) {
       console.log("[auto-follow-x] No pending users in queue.");
       return new Response(
         JSON.stringify({ message: "Queue empty" }),
@@ -198,65 +197,78 @@ serve(async (req) => {
       );
     }
 
-    let targetUserId = next.target_user_id;
+    const myId = await getMyUserId();
+    const results: Array<{ target: string; username: string | null; status: string }> = [];
+    let rateLimited = false;
 
-    // If target_user_id is not numeric, resolve it to a numeric ID
-    if (!/^\d+$/.test(targetUserId)) {
-      console.log(`[auto-follow-x] Resolving non-numeric ID: ${targetUserId}`);
-      const resolvedId = await resolveUsernameToId(targetUserId);
-      if (!resolvedId) {
-        console.log(`[auto-follow-x] Could not resolve ${targetUserId}, skipping.`);
+    for (const next of batch) {
+      if (rateLimited) break;
+
+      let targetUserId = next.target_user_id;
+
+      // If target_user_id is not numeric, resolve it
+      if (!/^\d+$/.test(targetUserId)) {
+        console.log(`[auto-follow-x] Resolving non-numeric ID: ${targetUserId}`);
+        const resolvedId = await resolveUsernameToId(targetUserId);
+        if (!resolvedId) {
+          console.log(`[auto-follow-x] Could not resolve ${targetUserId}, skipping.`);
+          await supabase
+            .from("x_follow_queue")
+            .update({
+              status: "skipped",
+              error_message: `Could not resolve username: ${targetUserId}`,
+              attempted_at: new Date().toISOString(),
+            })
+            .eq("id", next.id);
+          results.push({ target: targetUserId, username: next.target_username, status: "skipped" });
+          continue;
+        }
+        targetUserId = resolvedId;
         await supabase
           .from("x_follow_queue")
-          .update({
-            status: "skipped",
-            error_message: `Could not resolve username: ${targetUserId}`,
-            attempted_at: new Date().toISOString(),
-          })
+          .update({ target_user_id: resolvedId, target_username: next.target_user_id.replace(/^@/, "") })
           .eq("id", next.id);
-        return new Response(
-          JSON.stringify({ target: targetUserId, status: "skipped", reason: "unresolvable_username" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
       }
-      // Update the queue row with the resolved numeric ID
-      targetUserId = resolvedId;
+
+      console.log(`[auto-follow-x] Processing: ${targetUserId} (@${next.target_username || "?"})`);
+
+      const result = await followUser(myId, targetUserId);
+
+      if (result.error === "rate_limited") {
+        console.log("[auto-follow-x] Rate limited, stopping batch.");
+        rateLimited = true;
+        results.push({ target: targetUserId, username: next.target_username, status: "rate_limited" });
+        break;
+      }
+
+      const newStatus = result.ok ? "followed" : result.skip ? "skipped" : "failed";
+
       await supabase
         .from("x_follow_queue")
-        .update({ target_user_id: resolvedId, target_username: next.target_user_id.replace(/^@/, "") })
+        .update({
+          status: newStatus,
+          error_message: result.error || null,
+          attempted_at: new Date().toISOString(),
+        })
         .eq("id", next.id);
-      console.log(`[auto-follow-x] Resolved to numeric ID: ${resolvedId}`);
+
+      results.push({ target: next.target_user_id, username: next.target_username, status: newStatus });
+
+      // Small delay between follows to avoid triggering spam detection
+      if (batch.indexOf(next) < batch.length - 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     }
 
-    console.log(`[auto-follow-x] Processing: ${targetUserId} (@${next.target_username || "?"})`);
-
-    const myId = await getMyUserId();
-    const result = await followUser(myId, targetUserId);
-
-    if (result.error === "rate_limited") {
-      console.log("[auto-follow-x] Rate limited, will retry next cycle.");
-      return new Response(
-        JSON.stringify({ message: "Rate limited, retrying later", target: targetUserId }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const newStatus = result.ok ? "followed" : result.skip ? "skipped" : "failed";
-
-    await supabase
-      .from("x_follow_queue")
-      .update({
-        status: newStatus,
-        error_message: result.error || null,
-        attempted_at: new Date().toISOString(),
-      })
-      .eq("id", next.id);
+    const followed = results.filter((r) => r.status === "followed").length;
+    console.log(`[auto-follow-x] Batch done: ${followed}/${results.length} followed${rateLimited ? " (rate limited)" : ""}`);
 
     return new Response(
       JSON.stringify({
-        target: next.target_user_id,
-        username: next.target_username,
-        status: newStatus,
+        processed: results.length,
+        followed,
+        rate_limited: rateLimited,
+        results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
