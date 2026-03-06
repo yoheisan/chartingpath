@@ -460,7 +460,6 @@ Return ONLY the JSON object, no markdown, no explanation.`
 
         // Add remaining count to summary
         ;(summary[langCode] as any).remaining = remainingAfter
-        }
 
       } catch (langError) {
         console.error(`Language ${langCode} error:`, langError)
