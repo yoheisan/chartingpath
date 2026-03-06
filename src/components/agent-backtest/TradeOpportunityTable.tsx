@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LiveDetectionRow } from '@/hooks/useAgentScoringDetections';
 import { useTranslation } from 'react-i18next';
+import { UpcomingEconomicEvent, computeTimingFromEvents } from '@/hooks/useUpcomingEconomicEvents';
+import { computePortfolioScore } from '@/hooks/usePortfolioExposure';
 
 const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Bull Flag': 'bull_flag',
@@ -49,9 +51,16 @@ interface Props {
   onSendToBacktest?: (setup: TradeSetup) => void;
   basketSymbols?: string[];
   onToggleBasket?: (symbol: string) => void;
+  economicEvents?: UpcomingEconomicEvent[];
 }
 
-function deriveRawScores(d: LiveDetectionRow) {
+export interface ScoringContext {
+  economicEvents: UpcomingEconomicEvent[];
+  basketSymbols: string[];
+  allDetections: LiveDetectionRow[];
+}
+
+export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   const hp = d.historical_performance as any;
   const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
   const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
@@ -59,11 +68,35 @@ function deriveRawScores(d: LiveDetectionRow) {
   const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
   const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
   const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
+
+  // --- Timing: blend trend alignment + economic event proximity ---
   const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
-  const timingRaw = trendScore;
-  const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
-  const portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
-  return { analystRaw, riskRaw, timingRaw, portfolioRaw };
+  let timingRaw = trendScore;
+  let timingDetails: { eventCount?: number; highCount?: number; nearestEvent?: string | null } = {};
+  if (ctx?.economicEvents && ctx.economicEvents.length > 0) {
+    const eventTiming = computeTimingFromEvents(d.instrument, d.asset_type, ctx.economicEvents);
+    // Blend: 50% trend alignment + 50% economic calendar
+    timingRaw = trendScore * 0.5 + eventTiming.score * 0.5;
+    timingDetails = { eventCount: eventTiming.eventCount, highCount: eventTiming.highCount, nearestEvent: eventTiming.nearestEvent };
+  }
+
+  // --- Portfolio: real exposure if basket context available, else quality proxy ---
+  let portfolioRaw: number;
+  let portfolioDetails: any = {};
+  if (ctx && ctx.basketSymbols.length > 0) {
+    const portfolioResult = computePortfolioScore(
+      d.instrument, d.direction, d.asset_type,
+      ctx.basketSymbols,
+      ctx.allDetections.map(det => ({ instrument: det.instrument, direction: det.direction, asset_type: det.asset_type }))
+    );
+    portfolioRaw = portfolioResult.score;
+    portfolioDetails = portfolioResult.details;
+  } else {
+    const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
+    portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
+  }
+
+  return { analystRaw, riskRaw, timingRaw, portfolioRaw, timingDetails, portfolioDetails };
 }
 
 const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; label: string; tooltip: string }) => (
@@ -108,7 +141,7 @@ const SortableHeader: React.FC<{
   </th>
 );
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket, economicEvents = [] }) => {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -122,9 +155,15 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     }
   };
 
+  const scoringCtx: ScoringContext = useMemo(() => ({
+    economicEvents,
+    basketSymbols,
+    allDetections: detections,
+  }), [economicEvents, basketSymbols, detections]);
+
   const scoredTrades = useMemo(() => {
     const scored = detections.map((d) => {
-      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d);
+      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
       const analystScore = analystRaw * weights.analyst;
       const riskScore = riskRaw * weights.risk;
       const timingScore = timingRaw * weights.timing;

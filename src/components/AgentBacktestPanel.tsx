@@ -10,7 +10,7 @@ import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable, AssetClassFilter, TradeSetup } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
 import { SettingsManager } from './agent-backtest/SettingsManager';
 import { SubFilters, AgentScoringSettingsData } from '@/hooks/useAgentScoringSettings';
+import { useUpcomingEconomicEvents } from '@/hooks/useUpcomingEconomicEvents';
 
 const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
 
@@ -57,6 +58,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
+  const { data: economicEvents = [] } = useUpcomingEconomicEvents();
 
   const toggleBasket = (symbol: string) => {
     setBasketSymbols((prev) => {
@@ -102,18 +104,10 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const gaugeStats = useMemo(() => {
     if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
     
+    const ctx: ScoringContext = { economicEvents, basketSymbols, allDetections: liveDetections };
     const composites = liveDetections.map((d) => {
-      const hp = d.historical_performance as any;
-      const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
-      const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
-      const analystRaw = Math.min(1, winRate * 0.7 + Math.min(sampleSize / 100, 1) * 0.3);
-      const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
-      const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
-      const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
-      const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
-      const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
-      const portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
-      return analystRaw * weights.analyst + riskRaw * weights.risk + trendScore * weights.timing + portfolioRaw * weights.portfolio;
+      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, ctx);
+      return analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
     });
     const total = composites.length;
     const takes = composites.filter((c) => c >= takeCutoff).length;
@@ -126,7 +120,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       skipRate: (skips / total) * 100,
       avgScore: avg,
     };
-  }, [liveDetections, weights, takeCutoff, watchCutoff]);
+  }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSymbols]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
@@ -483,6 +477,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             onSendToBacktest={onSendToBacktest}
             basketSymbols={basketSymbols}
             onToggleBasket={toggleBasket}
+            economicEvents={economicEvents}
           />
         </CardContent>
       </Card>
