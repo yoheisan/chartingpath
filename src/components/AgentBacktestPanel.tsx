@@ -477,6 +477,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             onSendToBacktest={onSendToBacktest}
             basketSymbols={basketSymbols}
             onToggleBasket={toggleBasket}
+            economicEvents={economicEvents}
           />
         </CardContent>
       </Card>
