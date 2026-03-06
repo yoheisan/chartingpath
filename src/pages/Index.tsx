@@ -175,7 +175,7 @@ const Index = () => {
         />
         
         {/* Content */}
-        <div className="relative z-10 container mx-auto max-w-4xl text-center px-6">
+        <div className="relative z-10 container mx-auto max-w-6xl text-center px-6">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
             <span className="text-foreground">
               {t('hero.headline1', 'Find Chart Pattern Setups')}
@@ -283,7 +283,7 @@ const Index = () => {
 
       {/* Choose Your Action */}
       <section ref={actionsRef} className="py-16 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-3">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
             <p className="text-muted-foreground">{t('landing.chooseActionSubtitle', 'Pick an activity based on your current goal')}</p>
@@ -308,7 +308,7 @@ const Index = () => {
 
       {/* Disclaimer */}
       <section className="py-8 px-6 border-t">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container mx-auto max-w-7xl">
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <p>

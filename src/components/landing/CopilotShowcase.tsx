@@ -65,7 +65,7 @@ export const CopilotShowcase = () => {
 
   return (
     <section className="py-20 px-6">
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="text-center mb-14">
           <Badge variant="secondary" className="mb-4 gap-1.5">
@@ -99,7 +99,7 @@ export const CopilotShowcase = () => {
         </div>
 
         {/* Demo Conversation */}
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h3 className="text-lg font-semibold mb-4 text-center">{t('copilotShowcase.seeItInAction')}</h3>
           <div className="rounded-xl border bg-card overflow-hidden">
             {/* Chat header */}
