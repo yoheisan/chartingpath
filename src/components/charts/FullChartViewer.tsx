@@ -525,6 +525,13 @@ export default function FullChartViewer({
         let overlaySlPrice = tradeResolved ? undefined : tradePlan?.stopLoss;
         let overlayTpPrice = tradeResolved ? undefined : tradePlan?.takeProfit;
 
+        // Distance guard: current price for proximity checks
+        const latestClose = chartData.length > 0 ? Number((chartData[chartData.length - 1] as any).close) : null;
+        const pctDist = (price: number | undefined) => {
+          if (!price || !latestClose || !Number.isFinite(price) || !Number.isFinite(latestClose)) return Infinity;
+          return Math.abs((price - latestClose) / latestClose) * 100;
+        };
+
         if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
@@ -552,6 +559,12 @@ export default function FullChartViewer({
                 title = 'TP';
                 overlayTpPrice = overlay.price;
               }
+
+              // Distance guard: suppress lines too far from current price
+              // Entry ≤ 20%, SL/TP ≤ 25% (matches StudyChart thresholds)
+              const dist = pctDist(overlay.price);
+              const maxDist = isEntry ? 20 : 25;
+              if (dist > maxDist) return;
 
               candleSeries.createPriceLine({
                 price: overlay.price,
