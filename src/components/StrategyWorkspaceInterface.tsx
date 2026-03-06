@@ -98,7 +98,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
   const [renameName, setRenameName] = useState('');
   const builderRef = useRef<ChartingPathStrategyBuilderRef | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
-  const pendingSharedPresetRef = useRef<{ symbol: string; pattern?: string; patternId?: string; timeframe: string; autoRun?: boolean } | null>(null);
+  const pendingSharedPresetRef = useRef<{ symbol: string; pattern?: string; patternId?: string; timeframe: string; assetType?: string; autoRun?: boolean } | null>(null);
   const [summaryData, setSummaryData] = useState<{
     instrument?: string;
     timeframes?: string[];
@@ -500,7 +500,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
   };
 
   // Handle preset load from CryptoPresetPanel - SYNCS BOTH market AND patterns
-  const handlePresetLoad = (preset: { symbol: string; patternId: string; timeframe: string }) => {
+  const handlePresetLoad = (preset: { symbol: string; patternId: string; timeframe: string; instrumentCategory?: string }) => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
       // Create pattern instance from the patternId
@@ -545,7 +545,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
         ...strategy,
         market: {
           ...strategy.market,
-          instrumentCategory: 'crypto' as const,
+          instrumentCategory: preset.instrumentCategory || 'stocks',
           instrument: preset.symbol,
           timeframes: [preset.timeframe],
         },
@@ -580,10 +580,20 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
       console.log('[StrategyWorkspaceInterface] Processing shared preset (builder ready):', preset);
       
       // Load the preset - convert legacy pattern to patternId if needed
+      // Map asset_type from DB to instrumentCategory
+      const assetTypeToCategory: Record<string, string> = {
+        stock: 'stocks', stocks: 'stocks',
+        crypto: 'crypto', cryptocurrency: 'crypto',
+        forex: 'forex', fx: 'forex',
+        commodity: 'commodities', commodities: 'commodities',
+      };
+      const instrumentCategory = assetTypeToCategory[preset.assetType?.toLowerCase() || ''] || 'stocks';
+      
       handlePresetLoad({
         symbol: preset.symbol,
         patternId: preset.patternId || preset.pattern || 'donchian_breakout_long',
-        timeframe: preset.timeframe
+        timeframe: preset.timeframe,
+        instrumentCategory,
       });
 
       // If autoRun is requested, trigger the backtest after state updates
