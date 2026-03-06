@@ -73,6 +73,10 @@ export default function SocialMediaCMS() {
           <SignalPostGenerator />
         </TabsContent>
 
+        <TabsContent value="faq-content" className="space-y-4">
+          <FAQContentGenerator />
+        </TabsContent>
+
         <TabsContent value="schedule" className="space-y-4">
           <MarketReportScheduler />
           <Card className="p-6">
