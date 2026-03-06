@@ -578,7 +578,14 @@ export default function FullChartViewer({
           });
         }
 
-        // Candle-level pivot confirmation markers
+        // Suppress overlay prices entirely when entry is too far from current price
+        // This prevents zones, triangles, and other derived visuals from rendering out of sync
+        if (pctDist(overlayEntryPrice) > 20) {
+          overlayEntryPrice = undefined;
+          overlaySlPrice = undefined;
+          overlayTpPrice = undefined;
+        }
+
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
         // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
         const timeSet = new Set<number>(chartData.map((d) => d.time as number));
