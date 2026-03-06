@@ -88,6 +88,7 @@ export const TranslationManagement = () => {
   const [articleCoverageLoading, setArticleCoverageLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isStatusRefreshing = coverageLoading || articleCoverageLoading;
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -330,6 +331,37 @@ export const TranslationManagement = () => {
       setArticleCoverageLoading(false);
     }
   };
+
+  const refreshStatusSnapshots = async (showToast = false) => {
+    await Promise.all([loadCoverageStats(showToast), loadArticleCoverage()]);
+  };
+
+  useEffect(() => {
+    if (!isAdmin || activeTab !== 'coverage') return;
+
+    const refresh = () => {
+      if (!coverageLoading && !articleCoverageLoading) {
+        refreshStatusSnapshots().catch((err) => console.error('Background status refresh failed:', err));
+      }
+    };
+
+    const intervalId = window.setInterval(refresh, 15000);
+    const onFocus = () => refresh();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refresh();
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [isAdmin, activeTab, coverageLoading, articleCoverageLoading]);
 
   const handleSyncArticleTranslations = async (targetLangCode?: string) => {
     setArticleSyncing(true);
@@ -819,10 +851,10 @@ export const TranslationManagement = () => {
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => loadCoverageStats(true)}
+                      onClick={() => refreshStatusSnapshots(true)}
                       variant="outline"
                       size="sm"
-                      disabled={coverageLoading}
+                      disabled={isStatusRefreshing}
                     >
                       <RefreshCw className={`h-4 w-4 mr-1 ${coverageLoading ? 'animate-spin' : ''}`} />
                       {coverageLoading ? 'Refreshing...' : 'Refresh'}
@@ -972,10 +1004,10 @@ export const TranslationManagement = () => {
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => loadArticleCoverage()}
+                      onClick={() => refreshStatusSnapshots(false)}
                       variant="outline"
                       size="sm"
-                      disabled={articleCoverageLoading}
+                      disabled={isStatusRefreshing}
                     >
                       <RefreshCw className={`h-4 w-4 mr-1 ${articleCoverageLoading ? 'animate-spin' : ''}`} />
                       Refresh
