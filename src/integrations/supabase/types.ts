@@ -89,6 +89,51 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_scoring_settings: {
+        Row: {
+          asset_class_filter: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          sub_filters: Json
+          take_cutoff: number
+          timeframe_filter: string
+          updated_at: string
+          user_id: string
+          watch_cutoff: number
+          weights: Json
+        }
+        Insert: {
+          asset_class_filter?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sub_filters?: Json
+          take_cutoff?: number
+          timeframe_filter?: string
+          updated_at?: string
+          user_id: string
+          watch_cutoff?: number
+          weights?: Json
+        }
+        Update: {
+          asset_class_filter?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sub_filters?: Json
+          take_cutoff?: number
+          timeframe_filter?: string
+          updated_at?: string
+          user_id?: string
+          watch_cutoff?: number
+          weights?: Json
+        }
+        Relationships: []
+      }
       alert_outcomes: {
         Row: {
           alert_log_id: string
