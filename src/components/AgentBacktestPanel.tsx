@@ -194,7 +194,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Title bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -211,58 +211,51 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         )}
       </div>
 
-      {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-        {/* LEFT SIDEBAR: Agent Controls */}
-        <div className="space-y-4">
-          {/* Presets */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Quick Presets</span>
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
-                      <p className="font-medium mb-1">Agent Weight Presets</p>
-                      <p>Each preset adjusts how the 4 AI agents (Analyst, Risk, Timing, Portfolio) are weighted when scoring trades.</p>
-                      <ul className="mt-1.5 space-y-1 list-disc pl-3">
-                        <li><strong>Balanced</strong> — Equal weight across all agents (25% each)</li>
-                        <li><strong>Conservative</strong> — Emphasizes Risk Manager (35%), requires higher score to TAKE</li>
-                        <li><strong>Aggressive</strong> — Emphasizes Analyst (35%), lower threshold to TAKE</li>
-                        <li><strong>Momentum</strong> — Boosts Analyst + Timing agents for trend-following setups</li>
-                      </ul>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(PRESETS).map(([key, preset]) => (
-                  <Button
-                    key={key}
-                    variant={activePreset === key ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => applyPreset(key)}
-                    className={`text-sm h-9 ${activePreset === key ? 'ring-2 ring-primary/40' : ''}`}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Controls — horizontal strip using full width */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+        {/* Presets */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-4 space-y-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Quick Presets</span>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+                    <p className="font-medium mb-1">Agent Weight Presets</p>
+                    <p>Each preset adjusts how the 4 AI agents are weighted when scoring trades.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(PRESETS).map(([key, preset]) => (
+                <Button
+                  key={key}
+                  variant={activePreset === key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => applyPreset(key)}
+                  className={`text-xs h-8 ${activePreset === key ? 'ring-2 ring-primary/40' : ''}`}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Asset Class Filter */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4 space-y-3">
+        {/* Asset Class + Timeframe combined */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-4 space-y-3">
+            <div className="space-y-2.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Asset Class</span>
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
                 onValueChange={(v) => v && setAssetClassFilter(v as AssetClassFilter)}
-                className="flex flex-wrap gap-1.5"
+                className="flex flex-wrap gap-1"
               >
                 {[
                   { value: 'all', label: 'All' },
@@ -271,23 +264,19 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   { value: 'forex', label: 'Forex' },
                   { value: 'commodities', label: 'Cmdty' },
                 ].map((ac) => (
-                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-sm h-9 px-3.5">
+                  <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-xs h-7 px-2.5">
                     {ac.label}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-            </CardContent>
-          </Card>
-
-          {/* Timeframe Filter */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4 space-y-3">
+            </div>
+            <div className="space-y-2.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Timeframe</span>
               <ToggleGroup
                 type="single"
                 value={timeframeFilter}
                 onValueChange={(v) => v && setTimeframeFilter(v as TimeframeFilter)}
-                className="flex flex-wrap gap-1.5"
+                className="flex flex-wrap gap-1"
               >
                 {[
                   { value: 'all', label: 'All' },
@@ -296,49 +285,52 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   { value: '1d', label: '1D' },
                   { value: '1wk', label: '1W' },
                 ].map((tf) => (
-                  <ToggleGroupItem key={tf.value} value={tf.value} size="sm" className="text-sm h-9 px-3.5">
+                  <ToggleGroupItem key={tf.value} value={tf.value} size="sm" className="text-xs h-7 px-2.5">
                     {tf.label}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-            </CardContent>
-          </Card>
-          {/* Agent Sliders */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4 space-y-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Agent Weights</span>
-                  <AgentWeightsFAQ
-                    trigger={
-                      <button className="inline-flex items-center">
-                        <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
-                      </button>
-                    }
-                  />
-                </div>
-                <span className={`text-sm font-mono font-bold ${totalWeight === 100 ? 'text-emerald-400' : 'text-destructive'}`}>
-                  {totalWeight}/100
-                </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Agent Sliders — spans 2 columns on xl */}
+        <Card className="border-border bg-card col-span-2">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Agent Weights</span>
+                <AgentWeightsFAQ
+                  trigger={
+                    <button className="inline-flex items-center">
+                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                    </button>
+                  }
+                />
               </div>
-              {AGENTS.map(({ key, label, icon: Icon, color, barColor, tooltip }) => (
-                <div key={key} className="space-y-2">
+              <span className={`text-sm font-mono font-bold ${totalWeight === 100 ? 'text-emerald-400' : 'text-destructive'}`}>
+                {totalWeight}/100
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              {AGENTS.map(({ key, label, icon: Icon, color, tooltip }) => (
+                <div key={key} className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${color}`} />
-                      <span className="text-sm font-medium text-foreground">{label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <Icon className={`h-3.5 w-3.5 ${color}`} />
+                      <span className="text-xs font-medium text-foreground">{label}</span>
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                            <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-[240px] text-xs">
+                          <TooltipContent side="top" className="max-w-[240px] text-xs">
                             {tooltip}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <span className={`text-base font-mono font-bold ${color}`}>{weights[key]}</span>
+                    <span className={`text-sm font-mono font-bold ${color}`}>{weights[key]}</span>
                   </div>
                   <Slider
                     value={[weights[key]]}
@@ -350,27 +342,23 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   />
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Verdict Thresholds */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4">
-              <VerdictZoneBar
-                takeCutoff={takeCutoff}
-                watchCutoff={watchCutoff}
-                onTakeChange={setTakeCutoff}
-                onWatchChange={setWatchCutoff}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Backtest Config */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-4 space-y-3">
+        {/* Verdict Thresholds + Backtest Basket */}
+        <Card className="border-border bg-card col-span-2 xl:col-span-2">
+          <CardContent className="p-4 space-y-3">
+            <VerdictZoneBar
+              takeCutoff={takeCutoff}
+              watchCutoff={watchCutoff}
+              onTakeChange={setTakeCutoff}
+              onWatchChange={setWatchCutoff}
+            />
+            <div className="border-t border-border/40 pt-3 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Backtest Basket</span>
                 </div>
                 {basketSymbols.length > 0 && (
@@ -383,7 +371,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 )}
               </div>
               {basketSymbols.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {basketSymbols.map((s) => (
                     <Badge
                       key={s}
@@ -396,67 +384,61 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   ))}
                 </div>
               )}
-              <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Add symbols or pick from table +" className="text-sm h-9" />
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm h-9" />
-                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm h-9" />
+              <div className="flex gap-2">
+                <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Add symbols or pick from table +" className="text-xs h-8 flex-1" />
+                <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="h-8 text-xs px-3 shrink-0" size="sm">
+                  {isRunning ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />Running...</> : <><Zap className="h-3.5 w-3.5 mr-1" />Run Backtest</>}
+                </Button>
               </div>
-              <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="w-full h-10 text-sm" size="default">
-                {isRunning ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Running...</> : <><Zap className="h-4 w-4 mr-1.5" />Run Backtest</>}
-              </Button>
               {totalWeight !== 100 && (
-                <p className="text-xs text-destructive text-center">Weights must total 100 to run ({totalWeight} currently)</p>
+                <p className="text-xs text-destructive">Weights must total 100 ({totalWeight} currently)</p>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* RIGHT: Dashboard Content */}
-        <div className="space-y-6">
-          {/* Gauges Row */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-5">
-              <AgentGauges
-                takeRate={gaugeStats.takeRate}
-                watchRate={gaugeStats.watchRate}
-                skipRate={gaugeStats.skipRate}
-                avgScore={gaugeStats.avgScore}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Trade Opportunity Table */}
-          <Card className="border-border bg-card">
-            <CardHeader className="pb-3 pt-5 px-5">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  Trade Opportunities
-                  <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
-                </CardTitle>
-                {onReset && (
-                  <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground h-7">
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Reset
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <TradeOpportunityTable
-                weights={weights}
-                takeCutoff={takeCutoff}
-                watchCutoff={watchCutoff}
-                detections={liveDetections}
-                isLoading={detectionsLoading}
-                onSendToBacktest={onSendToBacktest}
-                basketSymbols={basketSymbols}
-                onToggleBasket={toggleBasket}
-              />
-            </CardContent>
-          </Card>
-
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Gauges Row — full width */}
+      <Card className="border-border bg-card">
+        <CardContent className="p-5">
+          <AgentGauges
+            takeRate={gaugeStats.takeRate}
+            watchRate={gaugeStats.watchRate}
+            skipRate={gaugeStats.skipRate}
+            avgScore={gaugeStats.avgScore}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Trade Opportunity Table — full width, maximum space */}
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-3 pt-5 px-5">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              Trade Opportunities
+              <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
+            </CardTitle>
+            {onReset && (
+              <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground h-7">
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="px-5 pb-5">
+          <TradeOpportunityTable
+            weights={weights}
+            takeCutoff={takeCutoff}
+            watchCutoff={watchCutoff}
+            detections={liveDetections}
+            isLoading={detectionsLoading}
+            onSendToBacktest={onSendToBacktest}
+            basketSymbols={basketSymbols}
+            onToggleBasket={toggleBasket}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };

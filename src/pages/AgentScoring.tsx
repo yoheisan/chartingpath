@@ -28,7 +28,7 @@ const AgentScoring = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto max-w-7xl px-4 md:px-8 pt-6 pb-12">
+      <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
         <AgentBacktestPanel key={resetKey} onSendToBacktest={handleSendToBacktest} onReset={handleReset} />
       </div>
     </div>
