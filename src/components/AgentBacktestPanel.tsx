@@ -165,14 +165,15 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       toast.info(`Multiple timeframes detected (${detectionTimeframes.join(', ')}). Using ${tf} for backtest. Use the Timeframe filter for precision.`);
     }
     
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      toast.error(t('agentScoring.signInToRun'));
+      navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } });
+      return;
+    }
+
     setIsRunning(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast.error(t('agentScoring.signInToRun'));
-        setIsRunning(false);
-        return;
-      }
       
       const payload = {
         projectType: 'pattern_lab',
