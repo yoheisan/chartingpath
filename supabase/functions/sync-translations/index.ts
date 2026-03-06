@@ -321,8 +321,8 @@ Deno.serve(async (req) => {
 
         // Batch translate (20 keys per batch)
         const BATCH_SIZE = 20
-        for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
-          const batch = keysToTranslate.slice(i, i + BATCH_SIZE)
+        for (let i = 0; i < keysThisRun.length; i += BATCH_SIZE) {
+          const batch = keysThisRun.slice(i, i + BATCH_SIZE)
 
           const keysForPrompt = batch.map(k => `"${k.key}": "${k.value}"`).join('\n')
           const toneExamples = toneContext?.map(t => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
