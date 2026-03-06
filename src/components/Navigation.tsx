@@ -167,7 +167,7 @@ const Navigation = () => {
   if (wedgeConfig.wedgeEnabled) {
     return (
       <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b ${dashboardMobileCompact ? 'pt-safe' : ''}`}>
-        <div className={`mx-auto px-3 sm:px-6 ${dashboardMobileCompact ? 'py-1.5' : 'py-3 sm:py-4'} ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
+        <div className={`mx-auto px-3 sm:px-6 ${dashboardMobileCompact ? 'py-1.5' : 'py-3 sm:py-4'} w-full`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className={`${dashboardMobileCompact ? 'p-1.5' : 'p-1.5 sm:p-2'} rounded-lg bg-gradient-to-r from-primary to-accent`}>
