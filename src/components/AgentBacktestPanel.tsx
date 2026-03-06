@@ -174,36 +174,74 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         return;
       }
       
-      const response = await fetch(
-        'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            projectType: 'pattern_lab',
-            inputs: {
-              instruments: symbolList,
-              patterns: uniquePatterns,
-              instrumentPatternMap,
-              timeframe: tf,
-              lookbackYears: 2,
-              gradeFilter: ['A', 'B', 'C'],
-              riskPerTrade: 1,
-            },
-          }),
+      const payload = {
+        projectType: 'pattern_lab',
+        inputs: {
+          instruments: symbolList,
+          patterns: uniquePatterns,
+          instrumentPatternMap,
+          timeframe: tf,
+          lookbackYears: 2,
+          gradeFilter: ['A', 'B', 'C'],
+          riskPerTrade: 1,
+        },
+      };
+
+      // Retry up to 2 times with 30s timeout per attempt
+      const MAX_RETRIES = 2;
+      const TIMEOUT_MS = 30_000;
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+        try {
+          if (attempt > 0) {
+            toast.info(`Retrying backtest... (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+            await new Promise(r => setTimeout(r, 2000)); // brief pause before retry
+          }
+
+          const response = await fetch(
+            'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            }
+          );
+
+          clearTimeout(timeoutId);
+
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Failed to start run');
+
+          toast.success(t('agentScoring.backtestStarted'));
+          navigate(`/projects/runs/${data.runId}`, {
+            state: { fromAgentScoring: true },
+          });
+          return; // success — exit early
+        } catch (err: any) {
+          clearTimeout(timeoutId);
+          lastError = err;
+
+          if (err.name === 'AbortError') {
+            console.warn(`[AgentBacktest] Attempt ${attempt + 1} timed out after ${TIMEOUT_MS}ms`);
+            lastError = new Error('Request timed out — the server may be busy. Please try again.');
+          } else if (attempt < MAX_RETRIES && (err.message === 'Failed to fetch' || err.message?.includes('network'))) {
+            console.warn(`[AgentBacktest] Attempt ${attempt + 1} failed:`, err.message);
+            continue; // retry on network errors
+          } else {
+            break; // don't retry on non-network errors
+          }
         }
-      );
-      
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to start run');
-      
-      toast.success(t('agentScoring.backtestStarted'));
-      navigate(`/projects/runs/${data.runId}`, {
-        state: { fromAgentScoring: true },
-      });
+      }
+
+      toast.error(lastError?.message || t('agentScoring.backtestFailed'));
     } catch (err: any) {
       toast.error(err.message || t('agentScoring.backtestFailed'));
     } finally {
