@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LiveDetectionRow } from '@/hooks/useAgentScoringDetections';
 import { useTranslation } from 'react-i18next';
+import { UpcomingEconomicEvent, computeTimingFromEvents } from '@/hooks/useUpcomingEconomicEvents';
+import { computePortfolioScore } from '@/hooks/usePortfolioExposure';
 
 const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Bull Flag': 'bull_flag',
