@@ -497,11 +497,17 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Translation management error:', error)
+    const rawMsg = error?.message ?? 'Unknown error';
+    // Detect upstream HTML error pages (e.g. Cloudflare 502) and return a clean message
+    const isHtml = rawMsg.includes('<!DOCTYPE') || rawMsg.includes('<html');
+    const safeMsg = isHtml
+      ? 'Upstream service temporarily unavailable (502). Please retry in a moment.'
+      : rawMsg;
+    console.error('Translation management error:', { message: safeMsg });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: safeMsg }),
       { 
-        status: 400,
+        status: isHtml ? 502 : 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
