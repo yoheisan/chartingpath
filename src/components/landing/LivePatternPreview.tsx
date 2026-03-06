@@ -49,7 +49,7 @@ export default function LivePatternPreview() {
   if (loading) {
     return (
       <section className="py-12 px-6">
-        <div className="container mx-auto max-w-5xl">
+        <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -80,7 +80,7 @@ export default function LivePatternPreview() {
   if (error || patterns.length === 0) {
     return (
       <section className="py-12 px-6">
-        <div className="container mx-auto max-w-5xl">
+        <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -108,7 +108,7 @@ export default function LivePatternPreview() {
 
   return (
     <section className="py-12 px-6 bg-muted/20">
-      <div className="container mx-auto max-w-5xl">
+      <div className="container mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
