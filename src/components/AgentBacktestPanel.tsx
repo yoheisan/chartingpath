@@ -192,8 +192,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      toast.error(t('agentScoring.signInToRun'));
-      navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } });
+      // Guest: check if they already used their free backtest
+      if (hasUsedGuestBacktest()) {
+        setShowAuthGate(true);
+        return;
+      }
+      // First-time guest: show auth gate with "free first backtest" messaging
+      setShowAuthGate(true);
       return;
     }
 
