@@ -15,9 +15,9 @@ const PatternLibraryPage = () => {
           </Link>
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">{t('patternLibrary.title')}</h1>
-          <p className="text-xl text-muted-foreground">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold mb-2">{t('patternLibrary.title')}</h1>
+          <p className="text-sm text-muted-foreground">
             {t('patternLibrary.subtitle')}
           </p>
         </div>

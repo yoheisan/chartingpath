@@ -68,14 +68,13 @@ export const CopilotShowcase = () => {
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="text-center mb-14">
-          <Badge variant="secondary" className="mb-4 gap-1.5">
-            <Bot className="h-3.5 w-3.5" />
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
             {t('copilotShowcase.badge')}
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          </p>
+          <h2 className="text-3xl font-bold mb-3">
             {t('copilotShowcase.title')}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.subtitle') }} />
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.subtitle') }} />
         </div>
 
         {/* 6-Card Moat Grid */}

@@ -280,7 +280,7 @@ const MemberScripts = () => {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl">
+    <div className="container mx-auto px-6 py-8 max-w-7xl">
       {/* Back Navigation */}
       <div className="mb-6">
          <Link to={isFromPatternLab ? "/projects/pattern-lab/new" : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -306,16 +306,14 @@ const MemberScripts = () => {
       )}
 
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <ScanSearch className="h-6 w-6 text-primary" />
-          </div>
-           <h1 className="text-3xl font-bold">{t('scripts.title')}</h1>
-         </div>
-         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-           {t('scripts.subtitle')}
-         </p>
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <ScanSearch className="h-5 w-5 text-primary" />
+          <h1 className="text-2xl font-bold">{t('scripts.title')}</h1>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-2xl">
+          {t('scripts.subtitle')}
+        </p>
       </div>
 
       {/* Pattern Lab Context Banner */}

@@ -1,6 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { track } from "@/services/analytics";
@@ -44,50 +42,47 @@ export const ActionCard = ({
     : ctaLink;
 
   return (
-    <Card className="group hover:border-primary/50 transition-all duration-300 h-full flex flex-col bg-card/50 backdrop-blur-sm">
-      <CardContent className="p-6 flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-            <Icon className="h-5 w-5" />
-          </div>
-          <Badge variant="secondary" className="text-xs">
-            {bestFor}
-          </Badge>
-        </div>
-
-        {/* Title & Description */}
-        <h3 className="text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors">
+    <div className="group flex flex-col h-full rounded-xl border border-border/30 bg-card/30 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 p-5">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-3">
+        <Icon className="h-4.5 w-4.5 text-primary shrink-0" />
+        <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {description}
-        </p>
+        <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium whitespace-nowrap">
+          {bestFor}
+        </span>
+      </div>
 
-        {/* Bullets */}
-        <ul className="space-y-2 mb-6 flex-grow">
-          {bullets.map((bullet, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
-              {bullet}
-            </li>
-          ))}
-        </ul>
+      {/* Description */}
+      <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+        {description}
+      </p>
 
-        {/* CTA */}
-        <Button 
-          asChild 
-          className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-          variant="outline"
-          onClick={handleClick}
-        >
-          <Link to={effectiveLink}>
-            {ctaText}
-            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+      {/* Bullets */}
+      <ul className="space-y-1.5 mb-5 flex-grow">
+        {bullets.map((bullet, idx) => (
+          <li key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="w-1 h-1 rounded-full bg-primary/40 flex-shrink-0" />
+            {bullet}
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA */}
+      <Button 
+        asChild 
+        variant="ghost"
+        size="sm"
+        className="w-full justify-between text-xs font-medium text-muted-foreground hover:text-primary"
+        onClick={handleClick}
+      >
+        <Link to={effectiveLink}>
+          {ctaText}
+          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+      </Button>
+    </div>
   );
 };
 
