@@ -16,13 +16,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const LANGUAGES = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl']
+const LANGUAGES = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
 
 const LANGUAGE_NAMES: Record<string, string> = {
   es: 'Spanish', pt: 'Portuguese', fr: 'French', zh: 'Chinese (Simplified)',
   de: 'German', hi: 'Hindi', id: 'Indonesian', it: 'Italian',
   ja: 'Japanese', ru: 'Russian', ar: 'Arabic', af: 'Afrikaans',
   ko: 'Korean', tr: 'Turkish', nl: 'Dutch', pl: 'Polish',
+  vi: 'Vietnamese',
 }
 
 const TECHNICAL_TERMS = [
