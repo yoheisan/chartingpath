@@ -162,6 +162,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
       
       // Load directly into the inline PatternOverlayChart (not modal)
       // Create a synthetic occurrence for the inline view matching PatternOccurrence interface
+      setStudyPanelCollapsed(true); // Auto-collapse to maximize chart space for replay
       setSelectedOccurrence({
         id: initialPlaybackPattern.occurrenceId,
         pattern_name: initialPlaybackPattern.patternName,
@@ -392,6 +393,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
     });
 
     setSelectedOccurrence(occurrence);
+    setStudyPanelCollapsed(true); // Auto-collapse to maximize chart space for replay
     setLoadingOccurrence(true);
     setOccurrenceSetup(null);
 
