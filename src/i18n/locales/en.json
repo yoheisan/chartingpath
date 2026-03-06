@@ -4764,7 +4764,8 @@
     "actions": {
       "validatePatternLab": "Validate in Pattern Lab",
       "findActiveSignals": "Find Active Signals",
-      "exportScript": "Export Script"
+      "exportScript": "Export Script",
+      "scoreTrade": "Score Trade"
     },
     "instrumentStats": "Instrument Stats",
     "instrumentStatsDesc": "See how this pattern performs on this specific ticker",
