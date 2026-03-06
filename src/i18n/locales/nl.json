@@ -42,6 +42,8 @@
     "placeholder": "Vraag over patronen, waarschuwingen of scripts...",
     "disclaimer": "Alleen voor educatieve doeleinden. Geen financieel advies.",
     "moreBelow": "Meer hieronder",
+    "agentScoring": "Trades scoren",
+    "agentScoringPrompt": "Voer Agent Scoring uit op de beste actieve patronen en laat zien welke TAKE, WATCH of SKIP zijn",
     "chartAnalysis": "Grafiekanalyse",
     "rateLimited": "AI verwerkt andere verzoeken. Wacht 10 seconden en probeer opnieuw.",
     "creditsDepleted": "AI-tegoed op. Voeg tegoed toe om door te gaan.",
