@@ -22,33 +22,85 @@ function isCryptoSymbol(symbol: string): boolean {
   return /^[A-Z0-9]+-USD$/i.test(symbol) || symbol.toUpperCase().endsWith('USDT');
 }
 
+/** Check if interval is intraday (EODHD doesn't reliably support these) */
+function isIntradayInterval(interval: string): boolean {
+  return ['1m', '5m', '15m', '30m', '1h'].includes(interval);
+}
+
+// ── Provider Health Tracker ──────────────────────────────────────────
+// Tracks failures per provider; if a provider fails 3+ times in 5 min,
+// skip it and go directly to fallback.
+interface ProviderHealth {
+  failures: number;
+  lastFailureAt: number;
+}
+
+const providerHealth = new Map<string, ProviderHealth>();
+const HEALTH_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_FAILURES = 3;
+
+function recordProviderFailure(provider: string) {
+  const now = Date.now();
+  const entry = providerHealth.get(provider);
+  if (!entry || now - entry.lastFailureAt > HEALTH_WINDOW_MS) {
+    providerHealth.set(provider, { failures: 1, lastFailureAt: now });
+  } else {
+    entry.failures++;
+    entry.lastFailureAt = now;
+  }
+}
+
+function recordProviderSuccess(provider: string) {
+  providerHealth.delete(provider);
+}
+
+function isProviderHealthy(provider: string): boolean {
+  const entry = providerHealth.get(provider);
+  if (!entry) return true;
+  if (Date.now() - entry.lastFailureAt > HEALTH_WINDOW_MS) {
+    providerHealth.delete(provider);
+    return true;
+  }
+  return entry.failures < MAX_FAILURES;
+}
+
 /**
  * Fetch OHLC bars with provider routing:
  * - Crypto → Binance-first, Yahoo-fallback (skip EODHD entirely)
- * - Everything else → EODHD-first, Yahoo-fallback
+ * - Intraday non-crypto → Yahoo directly (EODHD returns 403/empty for these)
+ * - Daily/weekly non-crypto → EODHD-first, Yahoo-fallback
+ * - Provider health tracking: skip providers with 3+ failures in last 5 min
  */
 export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]> {
   const { symbol, startDate, endDate, interval, includeOhlc = true } = opts;
 
   // --- Crypto path: Binance → Yahoo (skip EODHD) ---
   if (isCryptoSymbol(symbol)) {
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-binance', {
-        body: { symbol, startDate, endDate, interval, includeOhlc },
-      });
+    if (isProviderHealthy('binance')) {
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-binance', {
+          body: { symbol, startDate, endDate, interval, includeOhlc },
+        });
 
-      if (!error && data?.bars?.length > 0) {
-        console.log(`[fetchMarketBars] Binance returned ${data.bars.length} bars for ${symbol}`);
-        return normaliseBars(data.bars);
-      }
+        if (!error && data?.bars?.length > 0) {
+          console.log(`[fetchMarketBars] Binance returned ${data.bars.length} bars for ${symbol}`);
+          recordProviderSuccess('binance');
+          return normaliseBars(data.bars);
+        }
 
-      if (error) {
-        console.warn(`[fetchMarketBars] Binance error for ${symbol}, falling back to Yahoo:`, error.message ?? error);
-      } else {
-        console.warn(`[fetchMarketBars] Binance returned 0 bars for ${symbol}, falling back to Yahoo`);
+        if (error) {
+          console.warn(`[fetchMarketBars] Binance error for ${symbol}:`, error.message ?? error);
+          recordProviderFailure('binance');
+        } else {
+          console.warn(`[fetchMarketBars] Binance returned 0 bars for ${symbol}`);
+          recordProviderFailure('binance');
+        }
+      } catch (e: any) {
+        console.warn(`[fetchMarketBars] Binance exception for ${symbol}:`, e?.message ?? e);
+        recordProviderFailure('binance');
       }
-    } catch (e: any) {
-      console.warn(`[fetchMarketBars] Binance exception for ${symbol}:`, e?.message ?? e);
+    } else {
+      console.log(`[fetchMarketBars] Skipping Binance (unhealthy) for ${symbol}`);
     }
 
     // Crypto fallback: Yahoo
@@ -61,24 +113,44 @@ export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]
     return bars;
   }
 
-  // --- Non-crypto path: EODHD → Yahoo ---
-  try {
-    const { data, error } = await supabase.functions.invoke('fetch-eodhd', {
+  // --- Non-crypto intraday: skip EODHD entirely, go straight to Yahoo ---
+  if (isIntradayInterval(interval)) {
+    console.log(`[fetchMarketBars] Intraday ${interval} for ${symbol} — using Yahoo directly (skip EODHD)`);
+    const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
       body: { symbol, startDate, endDate, interval, includeOhlc },
     });
+    if (error) throw new Error(error.message || `Failed to fetch bars for ${symbol}`);
+    const bars = normaliseBars(data?.bars ?? []);
+    console.log(`[fetchMarketBars] Yahoo returned ${bars.length} bars for ${symbol}`);
+    return bars;
+  }
 
-    if (!error && data?.bars?.length > 0) {
-      console.log(`[fetchMarketBars] EODHD returned ${data.bars.length} bars for ${symbol}`);
-      return normaliseBars(data.bars);
-    }
+  // --- Non-crypto daily/weekly: EODHD → Yahoo ---
+  if (isProviderHealthy('eodhd')) {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-eodhd', {
+        body: { symbol, startDate, endDate, interval, includeOhlc },
+      });
 
-    if (error) {
-      console.warn(`[fetchMarketBars] EODHD error for ${symbol}, falling back to Yahoo:`, error.message ?? error);
-    } else {
-      console.warn(`[fetchMarketBars] EODHD returned 0 bars for ${symbol}, falling back to Yahoo`);
+      if (!error && data?.bars?.length > 0) {
+        console.log(`[fetchMarketBars] EODHD returned ${data.bars.length} bars for ${symbol}`);
+        recordProviderSuccess('eodhd');
+        return normaliseBars(data.bars);
+      }
+
+      if (error) {
+        console.warn(`[fetchMarketBars] EODHD error for ${symbol}:`, error.message ?? error);
+        recordProviderFailure('eodhd');
+      } else {
+        console.warn(`[fetchMarketBars] EODHD returned 0 bars for ${symbol}`);
+        recordProviderFailure('eodhd');
+      }
+    } catch (e: any) {
+      console.warn(`[fetchMarketBars] EODHD exception for ${symbol}:`, e?.message ?? e);
+      recordProviderFailure('eodhd');
     }
-  } catch (e: any) {
-    console.warn(`[fetchMarketBars] EODHD exception for ${symbol}:`, e?.message ?? e);
+  } else {
+    console.log(`[fetchMarketBars] Skipping EODHD (unhealthy) for ${symbol}`);
   }
 
   // Non-crypto fallback: Yahoo
