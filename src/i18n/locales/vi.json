@@ -1,0 +1,14 @@
+{
+  "accountMenu": {
+    "login": "Đăng nhập",
+    "account": "Tài khoản",
+    "accountSettings": "Cài đặt tài khoản",
+    "memberDashboard": "Bảng điều khiển",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "signOut": "Đăng xuất",
+    "member": "Thành viên",
+    "admin": "Quản trị viên",
+    "superAdmin": "Quản trị viên cấp cao"
+  }
+}

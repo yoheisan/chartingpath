@@ -22,6 +22,7 @@ import koTranslations from './locales/ko.json';
 import trTranslations from './locales/tr.json';
 import nlTranslations from './locales/nl.json';
 import plTranslations from './locales/pl.json';
+import viTranslations from './locales/vi.json';
 
 const resources = {
   en: { translation: enTranslations },
