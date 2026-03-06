@@ -525,6 +525,13 @@ export default function FullChartViewer({
         let overlaySlPrice = tradeResolved ? undefined : tradePlan?.stopLoss;
         let overlayTpPrice = tradeResolved ? undefined : tradePlan?.takeProfit;
 
+        // Distance guard: current price for proximity checks
+        const latestClose = chartData.length > 0 ? Number((chartData[chartData.length - 1] as any).close) : null;
+        const pctDist = (price: number | undefined) => {
+          if (!price || !latestClose || !Number.isFinite(price) || !Number.isFinite(latestClose)) return Infinity;
+          return Math.abs((price - latestClose) / latestClose) * 100;
+        };
+
         if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
           visualSpec.overlays.forEach((overlay) => {
             if (overlay.type === 'hline') {
@@ -553,6 +560,12 @@ export default function FullChartViewer({
                 overlayTpPrice = overlay.price;
               }
 
+              // Distance guard: suppress lines too far from current price
+              // Entry ≤ 20%, SL/TP ≤ 25% (matches StudyChart thresholds)
+              const dist = pctDist(overlay.price);
+              const maxDist = isEntry ? 20 : 25;
+              if (dist > maxDist) return;
+
               candleSeries.createPriceLine({
                 price: overlay.price,
                 color,
@@ -565,7 +578,14 @@ export default function FullChartViewer({
           });
         }
 
-        // Candle-level pivot confirmation markers
+        // Suppress overlay prices entirely when entry is too far from current price
+        // This prevents zones, triangles, and other derived visuals from rendering out of sync
+        if (pctDist(overlayEntryPrice) > 20) {
+          overlayEntryPrice = undefined;
+          overlaySlPrice = undefined;
+          overlayTpPrice = undefined;
+        }
+
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
         // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
         const timeSet = new Set<number>(chartData.map((d) => d.time as number));
