@@ -84,6 +84,7 @@ export async function fetchMissingKeysForLanguage(langCode: string): Promise<DBG
       .from('translations')
       .select('key')
       .eq('language_code', langCode)
+      .in('status', ['approved', 'auto_translated'])
       .range(from, from + PAGE - 1);
     if (error || !data || data.length === 0) break;
     data.forEach(r => translatedSet.add(r.key));

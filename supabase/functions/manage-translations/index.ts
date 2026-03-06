@@ -428,41 +428,59 @@ Deno.serve(async (req) => {
 
         const totalKeys = totalEnKeys || 0
 
-        // For each language, count how many keys have translations
+        // For each language, count distinct translated keys (not raw rows/versions)
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
         const coverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {}
 
+        const collectDistinctKeys = async (
+          lang: string,
+          statuses?: string[],
+          staleOnly = false
+        ): Promise<Set<string>> => {
+          const keys = new Set<string>()
+          let from = 0
+          const PAGE_SIZE = 1000
+
+          while (true) {
+            let query = supabase
+              .from('translations')
+              .select('key, source_hash')
+              .eq('language_code', lang)
+              .range(from, from + PAGE_SIZE - 1)
+
+            if (statuses && statuses.length > 0) {
+              query = query.in('status', statuses)
+            }
+
+            if (staleOnly) {
+              query = query.is('source_hash', null)
+            }
+
+            const { data, error } = await query
+            if (error) throw error
+            if (!data || data.length === 0) break
+
+            data.forEach((row: { key: string }) => keys.add(row.key))
+
+            if (data.length < PAGE_SIZE) break
+            from += PAGE_SIZE
+          }
+
+          return keys
+        }
+
         for (const lang of targetLanguages) {
-          // Use exact counts to avoid the 1000-row default limit
-          const { count: translatedCount } = await supabase
-            .from('translations')
-            .select('*', { count: 'exact', head: true })
-            .eq('language_code', lang)
-
-          const { count: approvedCount } = await supabase
-            .from('translations')
-            .select('*', { count: 'exact', head: true })
-            .eq('language_code', lang)
-            .eq('status', 'approved')
-
-          const { count: autoTranslatedCount } = await supabase
-            .from('translations')
-            .select('*', { count: 'exact', head: true })
-            .eq('language_code', lang)
-            .eq('status', 'auto_translated')
-
-          const { count: staleCount } = await supabase
-            .from('translations')
-            .select('*', { count: 'exact', head: true })
-            .eq('language_code', lang)
-            .is('source_hash', null)
+          const translatedKeys = await collectDistinctKeys(lang, ['approved', 'auto_translated'])
+          const approvedKeys = await collectDistinctKeys(lang, ['approved'])
+          const autoTranslatedKeys = await collectDistinctKeys(lang, ['auto_translated'])
+          const staleKeys = await collectDistinctKeys(lang, ['approved', 'auto_translated'], true)
 
           coverage[lang] = {
             total: totalKeys,
-            translated: translatedCount || 0,
-            approved: approvedCount || 0,
-            auto_translated: autoTranslatedCount || 0,
-            stale: staleCount || 0
+            translated: translatedKeys.size,
+            approved: approvedKeys.size,
+            auto_translated: autoTranslatedKeys.size,
+            stale: staleKeys.size
           }
         }
 
