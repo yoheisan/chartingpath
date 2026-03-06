@@ -55,7 +55,8 @@
     "actions": {
       "validatePatternLab": "Valideren in Pattern Lab",
       "findActiveSignals": "Actieve signalen zoeken",
-      "exportScript": "Script exporteren"
+      "exportScript": "Script exporteren",
+      "scoreTrade": "Trade scoren"
     },
     "instrumentStats": "Instrumentstatistieken",
     "instrumentStatsDesc": "Bekijk hoe dit patroon presteert op dit specifieke instrument",
