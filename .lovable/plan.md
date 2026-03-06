@@ -1,97 +1,108 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Efficient & Stable Dashboard Chart Loading Strategy
 
-## Data Summary
+## Problem Analysis
 
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+The dashboard currently suffers from slow chart loading due to several compounding issues:
 
----
+1. **Sequential waterfall fetches**: When `CommandCenterChart` mounts, it hits the DB first, finds insufficient data (e.g., 0 bars for ABBV on 15m), then sequentially tries EODHD (which returns 403/empty), then finally Yahoo — each with its own network round-trip.
 
-## Priority 1: Auth Page (75 views, 0 signups)
+2. **Redundant parallel requests**: `CommandCenterChart`, `DashboardPatternStudy`, and `MorningBriefing` all independently query Supabase on mount, creating 5+ concurrent requests before the chart even renders.
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+3. **No request deduplication across components**: Switching symbols triggers fresh fetches in both the chart AND the pattern study panel independently.
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+4. **Background revalidation competes with initial load**: The SWR logic in `CommandCenterChart` schedules a `setTimeout` revalidation at 1s that can conflict with still-loading initial data.
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+5. **60-second polling intervals** for `fetchAutoPatterns` adds unnecessary load.
 
----
+6. **`minBarsRequired: 250` for daily timeframe** is too aggressive — the chart shows "no data" when the DB has 50–249 bars, forcing an external API call.
 
-## Priority 2: Screener (101 views, 18s avg dwell)
+## Plan
 
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+### 1. Optimize `CommandCenterChart` fetch pipeline
 
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+**File**: `src/components/command-center/CommandCenterChart.tsx`
 
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+- **Lower `minBarsRequired` for 1d from 250 to 50** in `getChartDataLimits` — if the DB has 50+ daily bars, render them immediately instead of calling external APIs. This alone eliminates the slowest path for most symbols.
+- **Skip EODHD for intraday timeframes** (15m, 1h) — EODHD consistently returns 403/empty for these. Go directly to Yahoo to save one network round-trip (~2-3s).
+- **Add an `AbortController` + 8s timeout** on the initial external fetch (currently 15s) — if the first provider is slow, fail faster to the fallback.
+- **Remove the 1-second background revalidation `setTimeout`** on cache hits — it triggers a DB query immediately after rendering, competing with other mount-time fetches. Replace with the existing 60s polling interval which already covers staleness.
 
----
+### 2. Parallelize chart data + pattern fetch
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+**File**: `src/components/command-center/CommandCenterChart.tsx`
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+- Combine `fetchChartData` and `fetchAutoPatterns` into a single `useEffect` that runs them with `Promise.allSettled` instead of two separate effects. This prevents the pattern query from waiting for the chart data to complete.
+- Move the 60s pattern poll to only start AFTER the initial fetch settles.
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+### 3. Defer `DashboardPatternStudy` fetch until panel opens
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+**File**: `src/components/command-center/CommandCenterLayout.tsx` + `DashboardPatternStudy.tsx`
 
----
+- The study panel starts **collapsed** (`studyPanelCollapsed = true`), but `DashboardPatternStudy` still fires its `useEffect` fetch on mount because it's rendered in the DOM (just `hidden`).
+- Add a `active` prop to `DashboardPatternStudy` tied to `!studyPanelCollapsed`. Skip the fetch when `active === false`. This eliminates 2 DB queries on initial dashboard load.
 
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+### 4. Smart provider routing in `fetchMarketBars`
 
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+**File**: `src/lib/fetchMarketBars.ts`
 
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+- For intraday intervals (15m, 1h), skip EODHD entirely for non-crypto symbols (it doesn't support them reliably). Call Yahoo directly.
+- Add a simple in-memory "provider health" tracker: if a provider returned 0 bars or errors 3+ times in the last 5 minutes, skip it and go directly to the fallback. This implements the "max resilience" strategy with adaptive routing.
 
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
+### 5. Reduce `minBarsRequired` thresholds
 
----
+**File**: `src/config/dataCoverageContract.ts`
 
-## Priority 5: Shared Links (8 views, 7 pattern views)
+- Change `1d` `minBarsRequired` from `250` to `50`. Most symbols have 50+ daily bars seeded locally; the 250 threshold forces unnecessary external calls.
+- Change `1wk` `minBarsRequired` from `100` to `30`.
+- These changes mean the DB-first path succeeds far more often, avoiding external API latency entirely.
 
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+### 6. Stabilize `MorningBriefing` loading
 
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+**File**: `src/components/command-center/MorningBriefing.tsx`
 
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+- Increase the `localStorage` cache validity from 5 minutes to **15 minutes** for initial paint. The background auto-refresh at 5 minutes still runs, but the cached data renders instantly on mount without blocking.
+- This ensures the briefing strip never shows skeletons on page reload within 15 minutes.
 
----
+### 7. Configure `QueryClient` with sensible defaults
 
-## Implementation Sequence
+**File**: `src/main.tsx`
 
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+- Set `staleTime: 60_000` and `gcTime: 300_000` on the global `QueryClient` to prevent React Query from refetching on every component mount. Currently it uses defaults (staleTime: 0), meaning every mount triggers a refetch.
+
+## Technical Details
+
+```text
+BEFORE (waterfall):
+  Mount → MorningBriefing DB query (200ms)
+        → CommandCenterChart DB query (200ms)
+          → DB returns <250 bars → EODHD call (2-3s, returns empty)
+            → Yahoo call (2-4s)
+        → DashboardPatternStudy 2x DB queries (400ms)
+        → fetchAutoPatterns 2x DB queries (400ms)
+        → Background revalidation at 1s (200ms)
+  Total: ~5-8 seconds, 8+ network requests
+
+AFTER (parallel, optimized):
+  Mount → MorningBriefing (from localStorage cache, 0ms)
+        → CommandCenterChart DB query (200ms)
+          → DB returns ≥50 bars → render immediately ✓
+          → OR Yahoo direct (skip EODHD for intraday)
+        → fetchAutoPatterns (parallel with chart, 200ms)
+        → DashboardPatternStudy DEFERRED until panel opened
+  Total: ~200-500ms for cached, ~2-3s for cache miss, 3-4 requests
+```
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/config/dataCoverageContract.ts` | Lower `minBarsRequired` for 1d (250→50), 1wk (100→30) |
+| `src/components/command-center/CommandCenterChart.tsx` | Merge fetch effects, remove 1s revalidation, parallelize chart+patterns |
+| `src/components/command-center/DashboardPatternStudy.tsx` | Add `active` prop, skip fetch when hidden |
+| `src/components/command-center/CommandCenterLayout.tsx` | Pass `active={!studyPanelCollapsed}` to DashboardPatternStudy |
+| `src/lib/fetchMarketBars.ts` | Skip EODHD for intraday non-crypto, add provider health tracking |
+| `src/components/command-center/MorningBriefing.tsx` | Extend cache validity to 15min for instant paint |
+| `src/main.tsx` | Set QueryClient staleTime/gcTime defaults |
 
