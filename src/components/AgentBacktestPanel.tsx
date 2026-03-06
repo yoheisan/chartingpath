@@ -550,6 +550,33 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           />
         </CardContent>
       </Card>
+      {/* Auth Gate Dialog for guest backtest */}
+      <AlertDialog open={showAuthGate} onOpenChange={setShowAuthGate}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <Lock className="h-5 w-5 text-primary" />
+              {hasUsedGuestBacktest()
+                ? t('agentScoring.authGateTitle', 'Sign in to continue backtesting')
+                : t('agentScoring.authGateFreeTitle', 'Create a free account to backtest')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {hasUsedGuestBacktest()
+                ? t('agentScoring.authGateDesc', 'You\'ve used your free backtest. Sign in or create a free account to unlock more backtests and save your results.')
+                : t('agentScoring.authGateFreeDesc', 'Agent Scoring is free to use. Create a free account to run your first backtest and validate your trade ideas with historical data.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-muted-foreground">{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } })}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {t('agentScoring.authGateCta', 'Sign up free')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
