@@ -142,7 +142,8 @@ Deno.serve(async (req) => {
       throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false }: SyncRequest = body
+    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false, max_keys = 60 }: SyncRequest = body
+    const KEY_LIMIT = Math.min(max_keys, 200) // Cap at 200 to stay within timeout
 
     if (!en_content || typeof en_content !== 'object') {
       throw new Error('en_content (English JSON content) is required')
