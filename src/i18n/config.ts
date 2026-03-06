@@ -22,6 +22,7 @@ import koTranslations from './locales/ko.json';
 import trTranslations from './locales/tr.json';
 import nlTranslations from './locales/nl.json';
 import plTranslations from './locales/pl.json';
+import viTranslations from './locales/vi.json';
 
 const resources = {
   en: { translation: enTranslations },
@@ -41,6 +42,7 @@ const resources = {
   tr: { translation: trTranslations },
   nl: { translation: nlTranslations },
   pl: { translation: plTranslations },
+  vi: { translation: viTranslations },
 };
 
 const SUPPORTED_LANGS = Object.keys(resources);
