@@ -1902,8 +1902,8 @@ Agent Scoring UI (/tools/agent-scoring)
               {[
                 ["Analyst", "35%", "historical_pattern_occurrences, Edge Atlas rankings", "Win rate, expectancy, sample size confidence"],
                 ["Risk Manager", "25%", "ATR calculations, position sizing models", "Kelly fraction, max position %, stop distance"],
-                ["Timing", "20%", "economic_events, market session data", "Event proximity, session alignment, macro backdrop"],
-                ["Portfolio", "20%", "paper_portfolios, open positions", "Concentration risk, sector heat, correlation"],
+                ["Timing", "20%", "economic_events table (3-day lookahead), trend_alignment field, country→currency mapping", "High/medium-impact event count, currency-specific event penalty, trend alignment score. Formula: 50% trend + 50% economic calendar."],
+                ["Portfolio", "20%", "Basket selections (user-selected symbols), live_pattern_detections (all active), currency correlation groups", "Asset-class concentration %, correlated position count, directional skew %. Falls back to quality_score grade when basket is empty."],
               ].map(([agent, weight, sources, metrics]) => (
                 <tr key={agent}>
                   <td className="px-3 py-2 border-b font-medium text-xs">{agent}</td>
@@ -1914,6 +1914,32 @@ Agent Scoring UI (/tools/agent-scoring)
               ))}
             </tbody>
           </table>
+        </div>
+
+        <SectionHeader icon={Cpu} title="Enriched Agent Methodology (v2)" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-3">
+          <div>
+            <p className="font-semibold text-primary mb-1">Timing Agent — Economic Calendar Integration</p>
+            <p className="text-xs text-muted-foreground mb-1">The Timing Agent queries the <code className="text-xs bg-background px-1 rounded">economic_events</code> table for high/medium-impact events within a 3-day lookahead window. Events are matched to instruments via a country→currency mapping (e.g., US events → USD → all USD pairs, commodities, and US stocks).</p>
+            <p className="text-xs text-muted-foreground mb-1"><strong>Scoring formula:</strong> <code className="text-xs bg-background px-1 rounded">timingRaw = trendAlignment × 0.5 + economicCalendar × 0.5</code></p>
+            <p className="text-xs text-muted-foreground mb-1"><strong>Event penalties:</strong> Each high-impact event = -0.15, each medium = -0.06 (capped at 1.0 total penalty).</p>
+            <p className="text-xs text-muted-foreground"><strong>Example:</strong> EUR/USD with NFP + CPI in next 3 days: trend=0.85 (with_trend), calendar=0.70 (2 high events). Final: 0.85×0.5 + 0.70×0.5 = 0.775 (vs 0.85 without economic context).</p>
+          </div>
+          <div>
+            <p className="font-semibold text-primary mb-1">Portfolio Agent — Real Exposure Analysis</p>
+            <p className="text-xs text-muted-foreground mb-1">When the user's backtest basket contains symbols, the Portfolio Agent performs genuine concentration analysis instead of using the quality grade proxy:</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5 ml-4 list-disc">
+              <li><strong>Asset-class concentration (35%):</strong> Penalizes when basket is dominated by one asset class (e.g., 5 FX pairs, no diversification).</li>
+              <li><strong>Currency correlation (35%):</strong> Detects shared currency exposure (AUD/USD + NZD/USD both expose to USD and risk-on currencies).</li>
+              <li><strong>Directional skew (20%):</strong> Penalizes when &gt;50% of positions are in the same direction (all longs or all shorts).</li>
+              <li><strong>Position count (10%):</strong> Diminishing returns penalty — each additional position adds 3% penalty up to 30%.</li>
+            </ul>
+            <p className="text-xs text-muted-foreground mt-1"><strong>Fallback:</strong> When basket is empty, reverts to quality grade mapping (A=0.95, B=0.78, C=0.55, D=0.35, F=0.15) for baseline scoring.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-primary mb-1">Key Differentiator from Screener</p>
+            <p className="text-xs text-muted-foreground">The Screener displays raw signal data (pattern, quality, R:R, trend). Agent Scoring adds two layers of <strong>external context</strong> the Screener cannot provide: (1) economic calendar awareness — "NFP in 2 hours, don't enter EUR/USD" and (2) portfolio-level exposure — "you're already overweight USD longs." These require knowledge of the calendar and the user's positions, making Agent Scoring a genuinely distinct decision tool.</p>
+          </div>
         </div>
 
         <SectionHeader icon={TrendingUp} title="Quick Presets" />
@@ -1962,8 +1988,10 @@ Agent Scoring UI (/tools/agent-scoring)
 
         <SectionHeader icon={Database} title="User Preferences" />
         <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
-          <p>• Custom weights stored in <code className="text-xs bg-background px-1 rounded">user_agent_preferences</code> table</p>
+          <p>• Custom weights & filters stored in <code className="text-xs bg-background px-1 rounded">agent_scoring_settings</code> table (Supabase + localStorage fallback)</p>
+          <p>• Saveable presets with rename/delete support via SettingsManager component</p>
           <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
+          <p>• Sub-filters: FX (major/minor/exotic), Stocks (exchange), Crypto (major/alt)</p>
           <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
           <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
         </div>
@@ -2235,18 +2263,22 @@ ar, de, es, fr, hi, id, it, ja, ko, ms, nl, pl, pt, ru, sv, th, tr, uk, vi, zh
 
 # 7. AGENT SCORING SYSTEM — 5-Agent Decision Pipeline
 
-| Agent | Weight | Purpose |
-|-------|--------|---------|
-| Analyst | 25% | Pattern quality, R:R ratio, historical win rate |
-| Risk | 25% | Position sizing, correlation, portfolio heat |
-| Timing | 20% | Entry timing, market session, economic calendar |
-| Portfolio | 15% | Diversification, sector balance, exposure limits |
-| Orchestrator | 15% | Final synthesis, conflict resolution, verdict |
+| Agent | Weight | Purpose | Data Source |
+|-------|--------|---------|-------------|
+| Analyst | 25% | Pattern quality, R:R ratio, historical win rate | historical_pattern_occurrences, Edge Atlas |
+| Risk | 25% | Position sizing, stop distance, Kelly criterion | ATR calculations, position sizing models |
+| Timing | 25% | Trend alignment + economic calendar proximity | trend_alignment field + economic_events table (3-day lookahead). 50% trend + 50% calendar. High-impact events (NFP, CPI) matched via country→currency mapping. |
+| Portfolio | 25% | Real exposure analysis when basket has symbols | Basket selections, live_pattern_detections. Checks asset-class concentration, currency correlation, directional skew. Falls back to quality grade when basket is empty. |
 
 ## Verdict System
 - **TAKE** (≥70 composite): Strong conviction — execute trade
 - **WATCH** (50–69): Monitor — conditions may improve
 - **SKIP** (<50): Pass — insufficient edge
+
+## Key Differentiator from Screener
+Screener shows raw signal data. Agent Scoring adds two layers of external context:
+1. **Economic calendar awareness** — upcoming high-impact events penalize timing scores for affected currencies
+2. **Portfolio exposure analysis** — basket selections reveal concentration risk, correlation, and directional skew
 
 ---
 
