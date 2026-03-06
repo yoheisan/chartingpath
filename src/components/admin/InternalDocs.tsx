@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar, Globe, Bot } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const OverviewTab = () => (
       <CardHeader>
         <CardTitle className="text-base">Platform Architecture — Executive Summary</CardTitle>
         <CardDescription>
-          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-04.
+          Audit-ready overview of the Global Operations pipeline. Last updated: 2026-03-06.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -52,11 +52,28 @@ const OverviewTab = () => (
             { label: "Seeded instruments", value: "817+" },
             { label: "Searchable universe", value: "100,000+" },
             { label: "Validation throughput", value: "150k / hr" },
-            { label: "Daily cron jobs", value: "47" },
+            { label: "Daily cron jobs", value: "50+" },
+            { label: "Languages supported", value: "20+" },
+            { label: "Translation keys", value: "4,700+" },
           ].map(({ label, value }) => (
-            <div key={label} className="text-center p-3 bg-muted rounded-lg">
+           <div key={label} className="text-center p-3 bg-muted rounded-lg">
               <p className="text-xl font-bold">{value}</p>
               <p className="text-xs text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Activity} title="Recent Updates (v2.9)" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { title: "1H Scanning → 5-min Cadence", desc: "1H chart pattern scans now run every 5 minutes (up from 15 min) with asset-class staggering to keep 'Today's Top Setups' fresh." },
+            { title: "DB-First i18n Architecture", desc: "20+ language support via automated Gemini 2.0 Flash translation pipeline. Daily sync at 14:00 UTC with chunked processing (60 keys/batch) to avoid edge function timeouts." },
+            { title: "Agent Scoring System", desc: "5-agent autonomous trade decision pipeline (Analyst, Risk, Timing, Portfolio, Orchestrator) producing TAKE/WATCH/SKIP verdicts with customizable weights." },
+            { title: "Backtest v2 Safeguards", desc: "50-95s execution budget, 90s heartbeat, 20-instrument cap, and auto-skip of secondary analytics above 300 trades." },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>
@@ -148,8 +165,10 @@ const CronTab = () => (
      ^04:00 purge
                   ^05:00──────────────11:30 SEEDING WINDOW────────────────^
                                                            ^12:00 VALIDATION GATE OPENS
+     [─── scan-live-1h (every 5 min, staggered by asset class) ─────────────]
      [─────────────────────── scan-live-patterns (every 15 min) ─────────────]
-                                                                (12:00–04:45)`}</CodeBlock>
+                                                                 (12:00–04:45)
+                                                  ^14:00 sync-translations (daily)`}</CodeBlock>
 
         <SectionHeader icon={Clock} title="Registered pg_cron Jobs (47 total)" />
         <div className="overflow-x-auto">
@@ -181,7 +200,9 @@ const CronTab = () => (
                 ["every min, 12:00–04:45", "backfill-validation-crypto", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-forex", "backfill-validation", "active"],
                 ["every min, 12:00–04:45", "backfill-validation-indices", "backfill-validation", "active"],
+                ["every 5 min (1H), staggered", "scan-live-1h-stocks / indices / fx / etf / crypto", "scan-live-patterns", "active"],
                 ["every 15 min, 12:00–04:45", "scan-live-patterns-scheduled (ID: 134)", "scan-live-patterns", "active"],
+                ["14:00 daily", "sync-translations", "sync-translations", "active"],
                 ["01:00 daily", "process-scan-requests-nightly (ID: 185)", "process-scan-requests", "active"],
               ].map(([time, job, fn, status]) => (
                 <tr key={job}>
@@ -1707,6 +1728,322 @@ ScanNotificationListener (global, main.tsx)
   </div>
 );
 
+// ─── Tab: i18n System ──────────────────────────────────────────────────────────
+
+const I18nTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Internationalization (i18n) — DB-First Architecture</CardTitle>
+        <CardDescription>
+          Automated translation pipeline supporting 20+ languages via Gemini 2.0 Flash. Added 2026-03-06.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Activity} title="Architecture Overview" />
+        <CodeBlock>{`en.json (canonical source, 4,700+ keys)
+  │
+  ▼
+[sync-translations] ← cron: 14:00 UTC daily (or manual trigger)
+  │  1. Flatten en.json to dot-notation keys
+  │  2. Upsert to translation_keys table
+  │  3. Prune orphan keys no longer in en.json
+  │  4. For each target language:
+  │     a. Fetch existing translations (paginated)
+  │     b. Identify missing + stale keys (source_hash mismatch)
+  │     c. Batch translate via Gemini 2.0 Flash (20 keys/batch)
+  │     d. Upsert to translations table
+  │
+  ▼
+translations table (language_code, key, value, status, source_hash)
+  │
+  ▼
+[dbTranslationLoader] ← app startup (i18n.init)
+  │  Fetches approved translations for user's language
+  │  Falls back to static en.json if DB unavailable
+  │
+  ▼
+react-i18next t() calls in components`}</CodeBlock>
+
+        <SectionHeader icon={Database} title="Supported Languages (20+)" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {[
+            "🇪🇸 Spanish", "🇵🇹 Portuguese", "🇫🇷 French", "🇨🇳 Chinese",
+            "🇩🇪 German", "🇮🇳 Hindi", "🇮🇩 Indonesian", "🇮🇹 Italian",
+            "🇯🇵 Japanese", "🇷🇺 Russian", "🇸🇦 Arabic", "🇿🇦 Afrikaans",
+            "🇰🇷 Korean", "🇹🇷 Turkish", "🇳🇱 Dutch", "🇵🇱 Polish",
+            "🇻🇳 Vietnamese", "🇹🇭 Thai", "🇲🇾 Malay", "🇰🇪 Swahili",
+          ].map(lang => (
+            <div key={lang} className="text-center p-2 bg-muted rounded text-xs">{lang}</div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Cpu} title="Chunked Sync — Timeout Prevention" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Parameter", "Value", "Notes"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Chunk size (max_keys)", "60", "Keys per edge function invocation"],
+                ["Hard cap", "200", "Absolute maximum per invocation"],
+                ["Batch size (Gemini)", "20", "Keys per API call"],
+                ["Inter-batch delay", "500ms", "Rate limit protection"],
+                ["Frontend loop", "while (remaining > 0)", "Auto-continues until all keys translated"],
+                ["Max chunks per sync", "100", "Safety cap to prevent infinite loops"],
+                ["Stale detection", "source_hash mismatch", "Re-translates when English source changes"],
+                ["Manual override", "is_manual_override = true", "Skipped during auto-sync"],
+              ].map(([p, v, n]) => (
+                <tr key={p}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{p}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{v}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Database} title="Database Tables" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            {
+              title: "translation_keys",
+              desc: "Canonical key registry. Fields: key (unique), description, category, page_context, element_context. Auto-populated from en.json during sync.",
+            },
+            {
+              title: "translations",
+              desc: "Per-language values. Fields: key (FK), language_code, value, status (auto_translated/approved), source_hash, is_manual_override, automation_source, original_automated_value.",
+            },
+            {
+              title: "user_language_preferences",
+              desc: "Per-user language selection. Fields: user_id (unique), language_code, detected_country, is_manual_selection. Set via set_user_language() RPC.",
+            },
+            {
+              title: "country_language_mapping",
+              desc: "Geo-detection mapping. Fields: country_code, country_name, primary_language_code, secondary_language_codes[].",
+            },
+          ].map(({ title, desc }) => (
+            <div key={title} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1 font-mono">{title}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={Shield} title="Translation-First Coding Discipline" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p>• All user-facing strings <strong>MUST</strong> use <code className="text-xs bg-background px-1 rounded">t()</code> calls via <code className="text-xs bg-background px-1 rounded">useTranslation()</code></p>
+          <p>• New keys added to <code className="text-xs bg-background px-1 rounded">src/i18n/locales/en.json</code> as canonical source</p>
+          <p>• Static JSON fallback ensures reliability if DB is unreachable</p>
+          <p>• Admin dashboard at <code className="text-xs bg-background px-1 rounded">/admin/translation-management</code> shows per-language coverage stats</p>
+          <p>• Gap analysis powered by <code className="text-xs bg-background px-1 rounded">dbTranslationGapAnalysis.ts</code> querying DB directly</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// ─── Tab: Agent Scoring ────────────────────────────────────────────────────────
+
+const AgentScoringTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Agent Scoring — Multi-Agent Trade Decision System</CardTitle>
+        <CardDescription>
+          5-agent autonomous pipeline producing deterministic TAKE/WATCH/SKIP verdicts. Added 2026-03-06.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Activity} title="Architecture Overview" />
+        <CodeBlock>{`User selects symbol + pattern (from Screener or Pattern Lab)
+  │
+  ▼
+[trade-decision-engine] (Edge Function)
+  │
+  ├─► Analyst Agent     (35% weight) ──► Bayesian win-probability from Edge Atlas
+  ├─► Risk Agent        (25% weight) ──► ATR-stops, Kelly sizing, max drawdown
+  ├─► Timing Agent      (20% weight) ──► Economic calendar, session alignment
+  └─► Portfolio Agent   (20% weight) ──► Concentration, heat, correlation check
+  │
+  ▼
+Orchestrator Agent
+  │  Weighted composite score (0–100)
+  │  ├── ≥70 → TAKE  (green, actionable)
+  │  ├── 50–69 → WATCH (amber, monitor)
+  │  └── <50 → SKIP  (red, avoid)
+  │
+  ▼
+Agent Scoring UI (/tools/agent-scoring)
+  ├── VerdictZoneBar (visual score gauge)
+  ├── AgentGauges (per-agent breakdown)
+  ├── AgentImpactSimulator (weight adjustment)
+  ├── AgentBacktestResults (historical validation)
+  └── TradeOpportunityTable (scored opportunities)`}</CodeBlock>
+
+        <SectionHeader icon={Cpu} title="Agent Details" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Agent", "Default Weight", "Data Sources", "Key Metrics"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Analyst", "35%", "historical_pattern_occurrences, Edge Atlas rankings", "Win rate, expectancy, sample size confidence"],
+                ["Risk Manager", "25%", "ATR calculations, position sizing models", "Kelly fraction, max position %, stop distance"],
+                ["Timing", "20%", "economic_events, market session data", "Event proximity, session alignment, macro backdrop"],
+                ["Portfolio", "20%", "paper_portfolios, open positions", "Concentration risk, sector heat, correlation"],
+              ].map(([agent, weight, sources, metrics]) => (
+                <tr key={agent}>
+                  <td className="px-3 py-2 border-b font-medium text-xs">{agent}</td>
+                  <td className="px-3 py-2 border-b text-xs text-primary">{weight}</td>
+                  <td className="px-3 py-2 border-b text-xs text-muted-foreground">{sources}</td>
+                  <td className="px-3 py-2 border-b text-xs">{metrics}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={TrendingUp} title="Quick Presets" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { preset: "Balanced", weights: "35/25/20/20", desc: "Default — equal consideration of all factors" },
+            { preset: "Conservative", weights: "25/35/20/20", desc: "Risk-first — higher weight on risk management" },
+            { preset: "Aggressive", weights: "40/15/25/20", desc: "Signal-first — prioritizes analyst conviction" },
+            { preset: "Momentum", weights: "30/20/30/20", desc: "Timing-first — session and macro alignment" },
+          ].map(({ preset, weights, desc }) => (
+            <div key={preset} className="p-3 border rounded-lg bg-card">
+              <p className="font-semibold text-sm mb-1">{preset}</p>
+              <p className="text-xs font-mono text-primary mb-1">{weights}</p>
+              <p className="text-[10px] text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <SectionHeader icon={GitBranch} title="Integration Points" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Entry Point", "Location", "Action"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Screener 'Score' button", "Homepage active patterns table", "Opens Agent Scoring with symbol + pattern pre-filled"],
+                ["Pattern Lab 'Analyze' button", "Backtest results page", "Passes validated pattern to Agent Scoring"],
+                ["Direct navigation", "/tools/agent-scoring", "Manual symbol + pattern entry"],
+                ["URL params", "?symbol=AAPL&pattern=double_bottom", "Deep-link from any surface"],
+                ["Session storage", "agentScoringContext", "Context preserved across navigation"],
+              ].map(([entry, loc, action]) => (
+                <tr key={entry}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{entry}</td>
+                  <td className="px-4 py-2 border-b text-xs">{loc}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{action}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Database} title="User Preferences" />
+        <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
+          <p>• Custom weights stored in <code className="text-xs bg-background px-1 rounded">user_agent_preferences</code> table</p>
+          <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
+          <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
+          <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// ─── Tab: Backtest Safeguards ──────────────────────────────────────────────────
+
+const BacktestSafeguardsTab = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Backtest Execution Engine — Performance Safeguards</CardTitle>
+        <CardDescription>
+          Critical guardrails for the projects-run edge function to handle high-CPU workloads. Updated 2026-03-06.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SectionHeader icon={Shield} title="Execution Guardrails" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-muted">
+              <tr>
+                {["Guardrail", "Value", "Behavior"].map(h => (
+                  <th key={h} className="px-4 py-2 text-left border-b">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Execution budget", "50–95 seconds", "Watchdog timer aborts run if exceeded"],
+                ["Heartbeat", "90 seconds", "Auto-fails hung runs that stop reporting progress"],
+                ["Instrument cap", "20 per run", "Hard limit enforced before execution starts"],
+                ["Trade optimization", ">300 trades", "Skips secondary analytics (Monte Carlo, decay) to prioritize core results"],
+                ["Timeframe alignment", "Auto-selected", "Uses most frequent TF in basket for single-TF strategy consistency"],
+                ["Yahoo Finance timeout", "15 seconds", "Per-request with retry logic for transient errors"],
+                ["instrumentPatternMap", "Strict scoping", "Each symbol only backtested against its specific detected patterns"],
+              ].map(([guard, value, behavior]) => (
+                <tr key={guard}>
+                  <td className="px-4 py-2 border-b font-medium text-xs">{guard}</td>
+                  <td className="px-4 py-2 border-b text-xs text-primary">{value}</td>
+                  <td className="px-4 py-2 border-b text-xs text-muted-foreground">{behavior}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SectionHeader icon={Activity} title="Execution Flow" />
+        <CodeBlock>{`projects-run (edge function)
+  │
+  ├─► Pre-flight checks
+  │     ├── check_project_run_allowed (credits, daily cap, instrument limit)
+  │     ├── increment_backtester_v2_usage
+  │     └── instrumentPatternMap construction
+  │
+  ├─► Data fetch (parallel, per instrument)
+  │     ├── historical_prices (DB-first, read-from-DB)
+  │     ├── Yahoo Finance fallback (15s timeout, retry)
+  │     └── Binance fallback (crypto)
+  │
+  ├─► Execution loop (per instrument × pattern)
+  │     ├── EXECUTION_BUDGET_MS watchdog (50-95s)
+  │     ├── Pattern detector → signal generation
+  │     ├── Trade simulation (entry, SL, TP, R:R)
+  │     └── If trades > 300 → skip Monte Carlo / decay
+  │
+  ├─► Results compilation
+  │     ├── Core: win_rate, expectancy, profit_factor, max_drawdown
+  │     ├── Optional: equity_curve, drawdown_data, trade_log
+  │     └── Audit: run_duration_seconds, bars_processed, engine_version
+  │
+  └─► Heartbeat (90s)
+        └── Auto-fails if no progress update received`}</CodeBlock>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
@@ -1729,6 +2066,9 @@ export const InternalDocs = () => {
           <TabsTrigger value="validation">Validation Shards</TabsTrigger>
           <TabsTrigger value="infra">Infrastructure</TabsTrigger>
           <TabsTrigger value="hybrid-search">Hybrid Search</TabsTrigger>
+          <TabsTrigger value="i18n">i18n System</TabsTrigger>
+          <TabsTrigger value="agent-scoring">Agent Scoring</TabsTrigger>
+          <TabsTrigger value="backtest-safeguards">Backtest Engine</TabsTrigger>
           <TabsTrigger value="apac">APAC Expansion</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="copilot-ai">Copilot AI</TabsTrigger>
@@ -1741,6 +2081,9 @@ export const InternalDocs = () => {
         <TabsContent value="validation" className="mt-4"><ValidationTab /></TabsContent>
         <TabsContent value="infra" className="mt-4"><InfraTab /></TabsContent>
         <TabsContent value="hybrid-search" className="mt-4"><HybridSearchTab /></TabsContent>
+        <TabsContent value="i18n" className="mt-4"><I18nTab /></TabsContent>
+        <TabsContent value="agent-scoring" className="mt-4"><AgentScoringTab /></TabsContent>
+        <TabsContent value="backtest-safeguards" className="mt-4"><BacktestSafeguardsTab /></TabsContent>
         <TabsContent value="apac" className="mt-4"><APACTab /></TabsContent>
         <TabsContent value="notifications" className="mt-4"><NotificationTab /></TabsContent>
         <TabsContent value="copilot-ai" className="mt-4"><CopilotAITab /></TabsContent>
@@ -1750,7 +2093,7 @@ export const InternalDocs = () => {
       </Tabs>
 
       <p className="text-xs text-muted-foreground pt-2 border-t">
-        Last updated: 2026-03-04 · Version 2.8
+        Last updated: 2026-03-06 · Version 2.9
       </p>
     </div>
   );
