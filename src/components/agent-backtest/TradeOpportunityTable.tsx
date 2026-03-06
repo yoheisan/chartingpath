@@ -35,6 +35,7 @@ export interface TradeSetup {
   patternId: string;
   pattern: string;
   timeframe: string;
+  assetType?: string;
 }
 
 export type AssetClassFilter = 'all' | 'stocks' | 'crypto' | 'forex' | 'commodities';

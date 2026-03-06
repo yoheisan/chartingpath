@@ -16,6 +16,7 @@ const AgentScoring = () => {
       patternId: setup.patternId,
       pattern: setup.pattern,
       timeframe: setup.timeframe,
+      assetType: setup.assetType,
       autoRun: true,
     }));
     navigate('/projects/pattern-lab/new');
