@@ -30,10 +30,14 @@ export default function SocialMediaCMS() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="signals" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             <span className="hidden sm:inline">Signals</span>
+          </TabsTrigger>
+          <TabsTrigger value="faq-content" className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">FAQ</span>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
