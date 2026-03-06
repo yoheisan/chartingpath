@@ -141,7 +141,7 @@ const SortableHeader: React.FC<{
   </th>
 );
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket, economicEvents = [] }) => {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -155,9 +155,15 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     }
   };
 
+  const scoringCtx: ScoringContext = useMemo(() => ({
+    economicEvents,
+    basketSymbols,
+    allDetections: detections,
+  }), [economicEvents, basketSymbols, detections]);
+
   const scoredTrades = useMemo(() => {
     const scored = detections.map((d) => {
-      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d);
+      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
       const analystScore = analystRaw * weights.analyst;
       const riskScore = riskRaw * weights.risk;
       const timingScore = timingRaw * weights.timing;
