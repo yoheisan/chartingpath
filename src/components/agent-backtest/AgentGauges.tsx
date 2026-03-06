@@ -6,21 +6,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const GAUGE_TOOLTIPS: Record<string, string> = {
-  'Take Rate': 'Percentage of scanned setups that scored ≥70 (TAKE verdict). A high Take Rate means your current weights are accepting more trades — good for aggressive styles, but watch for quality dilution.',
-  'Watch Rate': 'Percentage of setups scoring 50–69 (WATCH verdict). These are borderline opportunities worth monitoring but not yet actionable. A high Watch Rate suggests many setups are close to your threshold.',
-  'Skip Rate': 'Percentage of setups scoring below 50 (SKIP verdict). A high Skip Rate means your agents are filtering aggressively — typical of conservative presets. This protects capital but may miss opportunities.',
-  'Avg Score': 'The mean composite score (0–100) across all scanned setups, weighted by your agent configuration. Compare this across presets to see how your weighting strategy shifts overall market sentiment.',
-};
+import { useTranslation } from 'react-i18next';
 
 interface GaugeProps {
   value: number;
   label: string;
+  tooltip: string;
   color: string;
 }
 
-const Gauge: React.FC<GaugeProps> = ({ value, label, color }) => {
+const Gauge: React.FC<GaugeProps> = ({ value, label, tooltip, color }) => {
   const radius = 44;
   const circumference = Math.PI * radius;
   const progress = (value / 100) * circumference;
@@ -32,31 +27,11 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, color }) => {
     blue: 'hsl(217, 91%, 60%)',
   };
 
-  const tooltip = GAUGE_TOOLTIPS[label];
-
   return (
     <div className="flex flex-col items-center">
       <svg width="120" height="70" viewBox="0 0 120 70">
-        {/* Background arc */}
-        <path
-          d="M 12 62 A 48 48 0 0 1 108 62"
-          fill="none"
-          stroke="hsl(var(--muted))"
-          strokeWidth="7"
-          opacity="0.3"
-          strokeLinecap="round"
-        />
-        {/* Value arc */}
-        <path
-          d="M 12 62 A 48 48 0 0 1 108 62"
-          fill="none"
-          stroke={strokeColors[color] || strokeColors.blue}
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={`${progress} ${circumference}`}
-          className="transition-all duration-700 ease-out"
-        />
-        {/* Center value */}
+        <path d="M 12 62 A 48 48 0 0 1 108 62" fill="none" stroke="hsl(var(--muted))" strokeWidth="7" opacity="0.3" strokeLinecap="round" />
+        <path d="M 12 62 A 48 48 0 0 1 108 62" fill="none" stroke={strokeColors[color] || strokeColors.blue} strokeWidth="7" strokeLinecap="round" strokeDasharray={`${progress} ${circumference}`} className="transition-all duration-700 ease-out" />
         <text x="60" y="55" textAnchor="middle" className="fill-foreground text-base font-bold font-mono">
           {value.toFixed(0)}%
         </text>
@@ -88,12 +63,13 @@ interface AgentGaugesProps {
 }
 
 export const AgentGauges: React.FC<AgentGaugesProps> = ({ takeRate, watchRate, skipRate, avgScore }) => {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-4 gap-4">
-      <Gauge value={takeRate} label="Take Rate" color="emerald" />
-      <Gauge value={watchRate} label="Watch Rate" color="amber" />
-      <Gauge value={skipRate} label="Skip Rate" color="red" />
-      <Gauge value={avgScore} label="Avg Score" color="blue" />
+      <Gauge value={takeRate} label={t('agentScoring.takeRate')} tooltip={t('agentScoring.takeRateTooltip')} color="emerald" />
+      <Gauge value={watchRate} label={t('agentScoring.watchRate')} tooltip={t('agentScoring.watchRateTooltip')} color="amber" />
+      <Gauge value={skipRate} label={t('agentScoring.skipRate')} tooltip={t('agentScoring.skipRateTooltip')} color="red" />
+      <Gauge value={avgScore} label={t('agentScoring.avgScore')} tooltip={t('agentScoring.avgScoreTooltip')} color="blue" />
     </div>
   );
 };

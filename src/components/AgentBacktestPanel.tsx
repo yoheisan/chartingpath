@@ -16,24 +16,26 @@ import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
-const PRESETS: Record<string, { label: string; weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
-  balanced: { label: '⚖️ Balanced', weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
-  conservative: { label: '🛡️ Conservative', weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 }, cutoffs: { take: 80, watch: 60 } },
-  aggressive: { label: '🔥 Aggressive', weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 }, cutoffs: { take: 60, watch: 40 } },
-  momentum: { label: '⚡ Momentum', weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 }, cutoffs: { take: 65, watch: 45 } },
+const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
+
+const PRESETS: Record<string, { weights: AgentWeights; cutoffs: { take: number; watch: number } }> = {
+  balanced: { weights: { analyst: 25, risk: 25, timing: 25, portfolio: 25 }, cutoffs: { take: 70, watch: 50 } },
+  conservative: { weights: { analyst: 20, risk: 35, timing: 25, portfolio: 20 }, cutoffs: { take: 80, watch: 60 } },
+  aggressive: { weights: { analyst: 35, risk: 15, timing: 25, portfolio: 25 }, cutoffs: { take: 60, watch: 40 } },
+  momentum: { weights: { analyst: 30, risk: 20, timing: 30, portfolio: 20 }, cutoffs: { take: 65, watch: 45 } },
 };
 
-const AGENTS = [
-  { key: 'analyst' as const, label: 'Analyst', icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500', tooltip: 'Bayesian win-probability & historical hit-rates for the detected pattern. Higher weight → prioritize setups with strong statistical edge.' },
-  { key: 'risk' as const, label: 'Risk Mgr', icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500', tooltip: 'ATR-based stop placement, Kelly sizing & risk/reward quality. Higher weight → prioritize tight risk control with well-defined stops.' },
-  { key: 'timing' as const, label: 'Timing', icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500', tooltip: 'Macro/economic calendar proximity & market-session context. Higher weight → avoid entries near high-impact news or illiquid sessions.' },
-  { key: 'portfolio' as const, label: 'Portfolio', icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: 'Concentration risk, sector heat & directional exposure. Higher weight → penalize trades that over-concentrate in one asset or direction.' },
-];
-
-// Raw score derivation is now done inside TradeOpportunityTable from live data
+const PRESET_EMOJIS: Record<string, string> = {
+  balanced: '⚖️',
+  conservative: '🛡️',
+  aggressive: '🔥',
+  momentum: '⚡',
+};
 
 export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetup) => void; onReset?: () => void }> = ({ onSendToBacktest, onReset }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [weights, setWeights] = useState<AgentWeights>({ ...DEFAULT_WEIGHTS });
   const [takeCutoff, setTakeCutoff] = useState(DEFAULT_CUTOFFS.take);
@@ -69,11 +71,17 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     setActivePreset(key);
   };
 
+  const AGENTS = [
+    { key: 'analyst' as const, label: t('agentScoring.analyst'), icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500', tooltip: t('agentScoring.analystTooltip') },
+    { key: 'risk' as const, label: t('agentScoring.riskMgr'), icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500', tooltip: t('agentScoring.riskTooltip') },
+    { key: 'timing' as const, label: t('agentScoring.timing'), icon: Clock, color: 'text-purple-400', barColor: 'bg-purple-500', tooltip: t('agentScoring.timingTooltip') },
+    { key: 'portfolio' as const, label: t('agentScoring.portfolio'), icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: t('agentScoring.portfolioTooltip') },
+  ];
+
   // Compute gauge stats from live detections
   const gaugeStats = useMemo(() => {
     if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
     
-    // Simple heuristic: derive raw scores inline (mirrors TradeOpportunityTable logic)
     const composites = liveDetections.map((d) => {
       const hp = d.historical_performance as any;
       const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
@@ -104,26 +112,24 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     
     if (symbolList.length === 0) {
-      toast.error('Add symbols to the basket first. Click + next to rows in the table.');
+      toast.error(t('agentScoring.addSymbolsFirst'));
       return;
     }
     
     const MAX_INSTRUMENTS = 20;
     if (symbolList.length > MAX_INSTRUMENTS) {
-      toast.error(`Too many instruments (${symbolList.length}). Maximum is ${MAX_INSTRUMENTS} per run. Remove some from the basket.`);
+      toast.error(t('agentScoring.tooManyInstruments', { count: symbolList.length, max: MAX_INSTRUMENTS }));
       return;
     }
     
-    // Derive exact (instrument, pattern, timeframe) tuples from basket detections
     const relevantDetections = liveDetections.filter((d) => symbolList.includes(d.instrument));
     const uniquePatterns = [...new Set(relevantDetections.map((d) => d.pattern_id))];
     
     if (uniquePatterns.length === 0) {
-      toast.error('No active patterns found for selected symbols. Pick symbols from the table.');
+      toast.error(t('agentScoring.noActivePatterns'));
       return;
     }
     
-    // Build per-instrument pattern map so each symbol only backtests its own patterns
     const instrumentPatternMap: Record<string, string[]> = {};
     relevantDetections.forEach((d) => {
       if (!instrumentPatternMap[d.instrument]) instrumentPatternMap[d.instrument] = [];
@@ -132,7 +138,6 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       }
     });
     
-    // Use timeframes from actual detections — require single timeframe for consistency
     const detectionTimeframes = [...new Set(relevantDetections.map((d) => d.timeframe))];
     let tf: string;
     if (timeframeFilter !== 'all') {
@@ -140,7 +145,6 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     } else if (detectionTimeframes.length === 1) {
       tf = detectionTimeframes[0];
     } else {
-      // Multiple timeframes detected — use the most common one and warn
       const tfCounts = detectionTimeframes.map(t => ({ tf: t, count: relevantDetections.filter(d => d.timeframe === t).length }));
       tfCounts.sort((a, b) => b.count - a.count);
       tf = tfCounts[0].tf;
@@ -151,7 +155,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        toast.error('Please sign in to run backtests');
+        toast.error(t('agentScoring.signInToRun'));
         setIsRunning(false);
         return;
       }
@@ -182,12 +186,12 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to start run');
       
-      toast.success('Backtest started! Redirecting to results...');
+      toast.success(t('agentScoring.backtestStarted'));
       navigate(`/projects/runs/${data.runId}`, {
         state: { fromAgentScoring: true },
       });
     } catch (err: any) {
-      toast.error(err.message || 'Agent backtest failed');
+      toast.error(err.message || t('agentScoring.backtestFailed'));
     } finally {
       setIsRunning(false);
     }
@@ -202,12 +206,12 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <Brain className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Agent Scoring</h2>
-            <p className="text-sm text-muted-foreground">Adjust agent weights to dynamically score and filter trade opportunities</p>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">{t('agentScoring.title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('agentScoring.subtitle')}</p>
           </div>
         </div>
         {totalWeight !== 100 && (
-          <Badge variant="destructive" className="text-sm px-3 py-1">Weights: {totalWeight}/100</Badge>
+          <Badge variant="destructive" className="text-sm px-3 py-1">{t('agentScoring.weightsLabel')}: {totalWeight}/100</Badge>
         )}
       </div>
 
@@ -217,21 +221,21 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         <Card className="border-border bg-card">
           <CardContent className="p-4 space-y-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Quick Presets</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.quickPresets')}</span>
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
-                    <p className="font-medium mb-1">Agent Weight Presets</p>
-                    <p>Each preset adjusts how the 4 AI agents are weighted when scoring trades.</p>
+                    <p className="font-medium mb-1">{t('agentScoring.presetTooltipTitle')}</p>
+                    <p>{t('agentScoring.presetTooltipDesc')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              {Object.entries(PRESETS).map(([key, preset]) => (
+              {PRESETS_KEYS.map((key) => (
                 <Button
                   key={key}
                   variant={activePreset === key ? 'default' : 'outline'}
@@ -239,7 +243,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   onClick={() => applyPreset(key)}
                   className={`text-xs h-8 ${activePreset === key ? 'ring-2 ring-primary/40' : ''}`}
                 >
-                  {preset.label}
+                  {PRESET_EMOJIS[key]} {t(`agentScoring.${key}`)}
                 </Button>
               ))}
             </div>
@@ -250,7 +254,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         <Card className="border-border bg-card">
           <CardContent className="p-4 space-y-3">
             <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Asset Class</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.assetClass')}</span>
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
@@ -258,11 +262,11 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 className="flex flex-wrap gap-1"
               >
                 {[
-                  { value: 'all', label: 'All' },
-                  { value: 'stocks', label: 'Stocks' },
-                  { value: 'crypto', label: 'Crypto' },
-                  { value: 'forex', label: 'Forex' },
-                  { value: 'commodities', label: 'Cmdty' },
+                  { value: 'all', label: t('agentScoring.allAssets') },
+                  { value: 'stocks', label: t('agentScoring.stocks') },
+                  { value: 'crypto', label: t('agentScoring.crypto') },
+                  { value: 'forex', label: t('agentScoring.forex') },
+                  { value: 'commodities', label: t('agentScoring.commodities') },
                 ].map((ac) => (
                   <ToggleGroupItem key={ac.value} value={ac.value} size="sm" className="text-xs h-7 px-2.5">
                     {ac.label}
@@ -271,7 +275,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               </ToggleGroup>
             </div>
             <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Timeframe</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.timeframe')}</span>
               <ToggleGroup
                 type="single"
                 value={timeframeFilter}
@@ -279,7 +283,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 className="flex flex-wrap gap-1"
               >
                 {[
-                  { value: 'all', label: 'All' },
+                  { value: 'all', label: t('agentScoring.allAssets') },
                   { value: '1h', label: '1H' },
                   { value: '4h', label: '4H' },
                   { value: '1d', label: '1D' },
@@ -299,7 +303,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Agent Weights</span>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.agentWeights')}</span>
                 <AgentWeightsFAQ
                   trigger={
                     <button className="inline-flex items-center">
@@ -359,14 +363,14 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Backtest Basket</span>
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.backtestBasket')}</span>
                 </div>
                 {basketSymbols.length > 0 && (
                   <button
                     onClick={() => { setBasketSymbols([]); setSymbols(''); }}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Clear all
+                    {t('agentScoring.clearAll')}
                   </button>
                 )}
               </div>
@@ -385,13 +389,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 </div>
               )}
               <div className="flex gap-2">
-                <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder="Add symbols or pick from table +" className="text-xs h-8 flex-1" />
+                <Input value={symbols} onChange={(e) => setSymbols(e.target.value)} placeholder={t('agentScoring.addSymbolsPlaceholder')} className="text-xs h-8 flex-1" />
                 <Button onClick={handleRun} disabled={isRunning || totalWeight !== 100} className="h-8 text-xs px-3 shrink-0" size="sm">
-                  {isRunning ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />Running...</> : <><Zap className="h-3.5 w-3.5 mr-1" />Run Backtest</>}
+                  {isRunning ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />{t('agentScoring.running')}</> : <><Zap className="h-3.5 w-3.5 mr-1" />{t('agentScoring.runBacktest')}</>}
                 </Button>
               </div>
               {totalWeight !== 100 && (
-                <p className="text-xs text-destructive">Weights must total 100 ({totalWeight} currently)</p>
+                <p className="text-xs text-destructive">{t('agentScoring.weightsMustTotal', { current: totalWeight })}</p>
               )}
             </div>
           </CardContent>
@@ -415,13 +419,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         <CardHeader className="pb-3 pt-5 px-5">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              Trade Opportunities
-              <span className="text-xs font-normal text-muted-foreground">— scores update live as you adjust agents</span>
+              {t('agentScoring.tradeOpportunities')}
+              <span className="text-xs font-normal text-muted-foreground">{t('agentScoring.scoresUpdateLive')}</span>
             </CardTitle>
             {onReset && (
               <Button variant="ghost" size="sm" onClick={onReset} className="gap-1.5 text-muted-foreground h-7">
                 <RotateCcw className="h-3.5 w-3.5" />
-                Reset
+                {t('agentScoring.reset')}
               </Button>
             )}
           </div>
