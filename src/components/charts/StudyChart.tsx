@@ -1323,7 +1323,13 @@ const StudyChart = memo(({
     const persistedTimeRange = persistedVisibleRangeRef.current;
     const maxRightPaddingBars = 30;
 
-    if (persistedLogical && totalBars > 0) {
+    const shouldFitAllVisibleBars = !!initialVisibleBars && totalBars > 0 && initialVisibleBars >= totalBars;
+
+    if (shouldFitAllVisibleBars) {
+      // Playback mode / fit-all mode: always keep first + last visible candles in frame.
+      const to = totalBars + 2;
+      chart.timeScale().setVisibleLogicalRange({ from: 0, to });
+    } else if (persistedLogical && totalBars > 0) {
       const rawWidth = Math.max(10, persistedLogical.to - persistedLogical.from);
       const clampedTo = Math.min(persistedLogical.to, totalBars + maxRightPaddingBars);
       const clampedFrom = clampedTo - rawWidth;
@@ -1350,7 +1356,6 @@ const StudyChart = memo(({
       chart.timeScale().setVisibleRange(persistedTimeRange);
     } else if (initialVisibleBars && totalBars > 0) {
       // Zoom to recent N bars — latest bar anchored near the right edge
-      const totalBars = safeChartData.length;
       const visibleCount = Math.min(totalBars, initialVisibleBars);
       const from = totalBars - visibleCount;
       // Minimal right margin (2 bars) so latest candle isn't flush against the edge
