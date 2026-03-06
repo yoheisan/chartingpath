@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,9 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
+import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
+import { SettingsManager } from './agent-backtest/SettingsManager';
+import { SubFilters, AgentScoringSettingsData } from '@/hooks/useAgentScoringSettings';
 
 const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
 
@@ -47,11 +50,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [initialCapital, setInitialCapital] = useState(100000);
   const [assetClassFilter, setAssetClassFilter] = useState<AssetClassFilter>('all');
   const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilter>('all');
+  const [subFilters, setSubFilters] = useState<SubFilters>({});
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+  const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
 
-  const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter);
+  const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
 
   const toggleBasket = (symbol: string) => {
     setBasketSymbols((prev) => {
@@ -71,6 +76,22 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     setActivePreset(key);
   };
 
+  const handleLoadSetting = (setting: AgentScoringSettingsData) => {
+    setWeights({ ...setting.weights });
+    setTakeCutoff(setting.takeCutoff);
+    setWatchCutoff(setting.watchCutoff);
+    setAssetClassFilter(setting.assetClassFilter);
+    setTimeframeFilter(setting.timeframeFilter);
+    setSubFilters(setting.subFilters || {});
+    setActivePreset('');
+  };
+
+  // Reset sub-filters when asset class changes
+  const handleAssetClassChange = (v: AssetClassFilter) => {
+    setAssetClassFilter(v);
+    setSubFilters({});
+  };
+
   const AGENTS = [
     { key: 'analyst' as const, label: t('agentScoring.analyst'), icon: Brain, color: 'text-blue-400', barColor: 'bg-blue-500', tooltip: t('agentScoring.analystTooltip') },
     { key: 'risk' as const, label: t('agentScoring.riskMgr'), icon: Shield, color: 'text-amber-400', barColor: 'bg-amber-500', tooltip: t('agentScoring.riskTooltip') },
@@ -78,7 +99,6 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     { key: 'portfolio' as const, label: t('agentScoring.portfolio'), icon: Briefcase, color: 'text-emerald-400', barColor: 'bg-emerald-500', tooltip: t('agentScoring.portfolioTooltip') },
   ];
 
-  // Compute gauge stats from live detections
   const gaugeStats = useMemo(() => {
     if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
     
@@ -200,7 +220,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   return (
     <div className="space-y-5">
       {/* Title bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-4">
           <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
             <Brain className="h-6 w-6 text-primary" />
@@ -210,9 +230,24 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             <p className="text-sm text-muted-foreground">{t('agentScoring.subtitle')}</p>
           </div>
         </div>
-        {totalWeight !== 100 && (
-          <Badge variant="destructive" className="text-sm px-3 py-1">{t('agentScoring.weightsLabel')}: {totalWeight}/100</Badge>
-        )}
+        <div className="flex items-center gap-3">
+          <SettingsManager
+            currentSettings={{
+              weights,
+              takeCutoff,
+              watchCutoff,
+              assetClassFilter,
+              timeframeFilter,
+              subFilters,
+            }}
+            onLoad={handleLoadSetting}
+            activeSettingId={activeSettingId}
+            setActiveSettingId={setActiveSettingId}
+          />
+          {totalWeight !== 100 && (
+            <Badge variant="destructive" className="text-sm px-3 py-1">{t('agentScoring.weightsLabel')}: {totalWeight}/100</Badge>
+          )}
+        </div>
       </div>
 
       {/* Controls — horizontal strip using full width */}
@@ -250,15 +285,15 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           </CardContent>
         </Card>
 
-        {/* Asset Class + Timeframe combined */}
-        <Card className="border-border bg-card">
+        {/* Asset Class + Timeframe + Sub-filters */}
+        <Card className="border-border bg-card col-span-2 lg:col-span-1">
           <CardContent className="p-4 space-y-3">
             <div className="space-y-2.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.assetClass')}</span>
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
-                onValueChange={(v) => v && setAssetClassFilter(v as AssetClassFilter)}
+                onValueChange={(v) => v && handleAssetClassChange(v as AssetClassFilter)}
                 className="flex flex-wrap gap-1"
               >
                 {[
@@ -274,6 +309,14 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                 ))}
               </ToggleGroup>
             </div>
+
+            {/* Sub-filters */}
+            <InstrumentSubFilters
+              assetClass={assetClassFilter}
+              subFilters={subFilters}
+              onChange={setSubFilters}
+            />
+
             <div className="space-y-2.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.timeframe')}</span>
               <ToggleGroup
@@ -402,7 +445,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         </Card>
       </div>
 
-      {/* Gauges Row — full width */}
+      {/* Gauges Row */}
       <Card className="border-border bg-card">
         <CardContent className="p-5">
           <AgentGauges
@@ -414,7 +457,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         </CardContent>
       </Card>
 
-      {/* Trade Opportunity Table — full width, maximum space */}
+      {/* Trade Opportunity Table */}
       <Card className="border-border bg-card">
         <CardHeader className="pb-3 pt-5 px-5">
           <div className="flex items-center justify-between">
