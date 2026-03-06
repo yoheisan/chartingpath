@@ -90,6 +90,7 @@ const QUICK_ACTION_KEYS = [
   { labelKey: "copilot.generateScript", promptKey: "copilot.generateScriptPrompt", icon: Code },
   { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
   { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+  { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
 ];
 
 const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
