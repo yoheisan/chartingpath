@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw, Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
@@ -21,6 +21,30 @@ import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
 import { SettingsManager } from './agent-backtest/SettingsManager';
 import { SubFilters, AgentScoringSettingsData } from '@/hooks/useAgentScoringSettings';
 import { useUpcomingEconomicEvents } from '@/hooks/useUpcomingEconomicEvents';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+const GUEST_BACKTEST_KEY = 'agent_scoring_guest_backtest';
+
+function hasUsedGuestBacktest(): boolean {
+  try {
+    return localStorage.getItem(GUEST_BACKTEST_KEY) === 'used';
+  } catch { return false; }
+}
+
+function markGuestBacktestUsed(): void {
+  try {
+    localStorage.setItem(GUEST_BACKTEST_KEY, 'used');
+  } catch {}
+}
 
 const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
 
