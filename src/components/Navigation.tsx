@@ -96,6 +96,12 @@ const Navigation = () => {
         {t('navigation.screener', 'Screener')}
       </Link>
       
+      {/* 1b. Agent Scoring - Score signals */}
+      <Link to="/tools/agent-scoring" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
+        <Bot className="h-5 w-5 text-amber-500" />
+        {t('navigation.agentScoring', 'Agent Scoring')}
+      </Link>
+      
       {/* 2. Pattern Lab */}
       <Link to="/projects/pattern-lab/new" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <FlaskConical className="h-5 w-5 text-violet-500" />
@@ -156,7 +162,6 @@ const Navigation = () => {
           <Link to="/tools/pip-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.pipCalculator', 'Pip Calculator')}</Link>
           <Link to="/tools/risk-calculator" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.riskCalculator', 'Risk Calculator')}</Link>
           <Link to="/tools/economic-calendar" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.economicCalendar', 'Economic Calendar')}</Link>
-          <Link to="/tools/agent-scoring" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.agentScoring', 'Agent Scoring')}</Link>
           <Link to="/chart-patterns/quiz" onClick={closeMobileMenu} className="text-sm text-muted-foreground py-1">{t('navigation.patternQuiz', 'Pattern Quizzes')}</Link>
         </div>
       </div>
@@ -196,6 +201,12 @@ const Navigation = () => {
             <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
               <Activity className="h-4 w-4 text-amber-500" />
               {t('navigation.screener', 'Screener')}
+            </Link>
+            
+            {/* 1b. Agent Scoring - Score signals */}
+            <Link to="/tools/agent-scoring" className={navLinkClass('/tools/agent-scoring')}>
+              <Bot className="h-4 w-4 text-amber-500" />
+              {t('navigation.agentScoring', 'Agent Scoring')}
             </Link>
             
             {/* 2. Pattern Lab - Backtest historically */}
@@ -310,12 +321,6 @@ const Navigation = () => {
                       <Link to="/features/trading-copilot" className="flex items-center gap-2">
                         <Bot className="h-4 w-4 text-primary" />
                         {t('navigation.aiCopilot', 'AI Copilot')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/tools/agent-scoring" className="flex items-center gap-2">
-                        <Bot className="h-4 w-4 text-amber-500" />
-                        {t('navigation.agentScoring', 'Agent Scoring')}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
