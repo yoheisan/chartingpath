@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +89,12 @@ export const TranslationManagement = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isStatusRefreshing = coverageLoading || articleCoverageLoading;
+  const loadingRef = useRef(false);
+
+  // Keep ref in sync so interval/focus callbacks see latest value
+  useEffect(() => {
+    loadingRef.current = isStatusRefreshing;
+  }, [isStatusRefreshing]);
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -145,18 +151,6 @@ export const TranslationManagement = () => {
   const loadCoverageStats = async (showToast = false) => {
     setCoverageLoading(true);
     try {
-      // When manually refreshing, sync en.json keys into translation_keys table first
-      // so the total count reflects the latest source file
-      if (showToast) {
-        await supabase.functions.invoke('sync-translations', {
-          body: {
-            en_content: enTranslations,
-            target_languages: [],
-            prepare_keys_only: true
-          }
-        });
-      }
-
       const { data, error } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'get_coverage_stats' }
       });
@@ -340,7 +334,7 @@ export const TranslationManagement = () => {
     if (!isAdmin || activeTab !== 'coverage') return;
 
     const refresh = () => {
-      if (!coverageLoading && !articleCoverageLoading) {
+      if (!loadingRef.current) {
         refreshStatusSnapshots().catch((err) => console.error('Background status refresh failed:', err));
       }
     };
@@ -361,7 +355,7 @@ export const TranslationManagement = () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [isAdmin, activeTab, coverageLoading, articleCoverageLoading]);
+  }, [isAdmin, activeTab]);
 
   const handleSyncArticleTranslations = async (targetLangCode?: string) => {
     setArticleSyncing(true);
