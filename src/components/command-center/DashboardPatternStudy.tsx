@@ -82,6 +82,8 @@ interface DashboardPatternStudyProps {
   timeframe: string;
   onPatternSelect?: (pattern: PatternOccurrence) => void;
   selectedPatternId?: string | null;
+  /** When false, skip data fetching (panel is hidden) */
+  active?: boolean;
 }
 
 export function DashboardPatternStudy({
@@ -89,6 +91,7 @@ export function DashboardPatternStudy({
   timeframe,
   onPatternSelect,
   selectedPatternId,
+  active = true,
 }: DashboardPatternStudyProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
