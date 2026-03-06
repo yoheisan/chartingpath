@@ -627,6 +627,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 timeframe={selectedTimeframe}
                 onPatternSelect={handleOccurrenceSelect}
                 selectedPatternId={selectedOccurrence?.id}
+                active={!studyPanelCollapsed}
               />
             </div>
           </div>
