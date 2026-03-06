@@ -89,6 +89,12 @@ export const TranslationManagement = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isStatusRefreshing = coverageLoading || articleCoverageLoading;
+  const loadingRef = useRef(false);
+
+  // Keep ref in sync so interval/focus callbacks see latest value
+  useEffect(() => {
+    loadingRef.current = isStatusRefreshing;
+  }, [isStatusRefreshing]);
 
   useEffect(() => {
     checkAuthAndLoadData();
