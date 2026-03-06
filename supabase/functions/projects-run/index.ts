@@ -2510,7 +2510,7 @@ serve(async (req) => {
 
       const { data: runRow, error: runError } = await supabaseAdmin
         .from('project_runs')
-        .select('id,status,credits_estimated,credits_used,error_message,started_at,finished_at,execution_metadata,project_id, projects(id,name,type,user_id)')
+        .select('id,status,credits_estimated,credits_used,error_message,started_at,finished_at,execution_metadata,created_at,project_id, projects(id,name,type,user_id)')
         .eq('id', runId)
         .single();
 
@@ -2539,7 +2539,31 @@ serve(async (req) => {
         });
       }
 
-      // Recover from edge-runtime crashes that can leave runs stuck in "running"
+      // Recover from edge-runtime crashes that can leave runs stuck.
+      // Case 1: queued but never started.
+      if (runRow.status === 'queued' && runRow.created_at) {
+        const queuedForMs = Date.now() - new Date(runRow.created_at).getTime();
+        const queuedThresholdMs = 45 * 1000;
+
+        if (!Number.isNaN(queuedForMs) && queuedForMs > queuedThresholdMs) {
+          const timeoutMessage = 'Run did not start in time. Please retry with fewer instruments/patterns or try again in a minute.';
+          await supabaseAdmin
+            .from('project_runs')
+            .update({
+              status: 'failed',
+              finished_at: new Date().toISOString(),
+              error_message: timeoutMessage,
+            })
+            .eq('id', runId)
+            .eq('status', 'queued');
+
+          runRow.status = 'failed';
+          runRow.finished_at = new Date().toISOString();
+          runRow.error_message = timeoutMessage;
+        }
+      }
+
+      // Case 2: running but heartbeat is stale.
       if (runRow.status === 'running' && runRow.started_at) {
         const startedAt = new Date(runRow.started_at).getTime();
         const metadata = (runRow.execution_metadata ?? {}) as Record<string, unknown>;
@@ -2585,6 +2609,7 @@ serve(async (req) => {
           creditsEstimated: runRow.credits_estimated,
           creditsUsed: runRow.credits_used,
           errorMessage: runRow.error_message,
+          createdAt: runRow.created_at,
           startedAt: runRow.started_at,
           finishedAt: runRow.finished_at,
           executionMetadata: runRow.execution_metadata,
