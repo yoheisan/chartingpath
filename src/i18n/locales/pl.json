@@ -42,6 +42,8 @@
     "placeholder": "Zapytaj o formacje, alerty lub skrypty...",
     "disclaimer": "Wyłącznie w celach edukacyjnych. To nie jest porada finansowa.",
     "moreBelow": "Więcej poniżej",
+    "agentScoring": "Oceń transakcje",
+    "agentScoringPrompt": "Uruchom Agent Scoring na najlepszych aktywnych formacjach i pokaż które są TAKE, WATCH lub SKIP",
     "chartAnalysis": "Analiza wykresu",
     "rateLimited": "AI przetwarza inne żądania. Poczekaj 10 sekund i spróbuj ponownie.",
     "creditsDepleted": "Kredyty AI wyczerpane. Dodaj kredyty, aby kontynuować.",

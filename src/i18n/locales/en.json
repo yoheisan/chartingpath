@@ -4748,6 +4748,8 @@
     "learnPatternsPrompt": "Explain how to identify and trade a head and shoulders pattern",
     "marketBreadth": "Market breadth",
     "marketBreadthPrompt": "What is the current market breadth? Show me the advance/decline ratio and sentiment",
+    "agentScoring": "Score trades",
+    "agentScoringPrompt": "Run Agent Scoring on the top active patterns right now and show me which ones are TAKE, WATCH, or SKIP",
     "placeholder": "Ask about patterns, alerts, or scripts...",
     "disclaimer": "For educational purposes only. Not financial advice.",
     "moreBelow": "More below",
