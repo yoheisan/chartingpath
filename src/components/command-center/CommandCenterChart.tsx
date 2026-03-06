@@ -209,30 +209,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       updatePriceData(cached);
       setLoading(false);
       setError(null);
-      
-      // Background revalidate after showing cached data
-      setTimeout(async () => {
-        try {
-          const { barLimit } = getChartDataLimits(timeframe as Timeframe);
-          const { data } = await supabase
-            .from('historical_prices')
-            .select('date, open, high, low, close, volume')
-            .eq('symbol', symbol)
-            .eq('timeframe', timeframe)
-            .order('date', { ascending: true })
-            .limit(barLimit);
-          
-          if (data && data.length > cached.length) {
-            const freshBars = data.map(row => ({
-              t: row.date, o: row.open, h: row.high, l: row.low, c: row.close, v: row.volume || 0,
-            }));
-            symbolDataCache.set(cacheKey, freshBars);
-            setBars(freshBars);
-            updatePriceData(freshBars);
-            console.debug(`[CommandCenterChart] Background revalidated ${cacheKey}: ${freshBars.length} bars`);
-          }
-        } catch {}
-      }, 1000);
+      // No immediate background revalidation — the 60s polling handles staleness
       return;
     }
 
@@ -273,7 +250,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         
         console.log(`[CommandCenterChart] Using EODHD→Yahoo fallback: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]} (${lookbackDays} days)`);
 
-        // Add timeout to prevent indefinite hanging on edge function calls
+        // 8s timeout to fail fast to fallback
         const fetchWithTimeout = Promise.race([
           fetchMarketBars({
             symbol,
@@ -281,7 +258,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
             endDate: endDate.toISOString().split('T')[0],
             interval: timeframe,
           }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 15000)),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout fetching market data')), 8000)),
         ]);
 
         let fetchedBars: CompressedBar[] = [];
@@ -367,154 +344,22 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     });
   };
 
+  // Unified fetch: chart data + auto-patterns in parallel, then start polling
   useEffect(() => {
-    fetchChartData();
-  }, [fetchChartData]);
+    let intervalId: number | undefined;
 
-  // Fetch active live patterns + recent historical for this symbol/timeframe
-  const fetchAutoPatterns = useCallback(async () => {
-    // Skip pattern fetch for auth-gated timeframes
-    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
-      setAutoPatterns([]);
-      return;
-    }
+    // Fire both in parallel
+    Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
+      // Start 60s polling AFTER initial fetch settles
+      intervalId = window.setInterval(() => {
+        fetchAutoPatterns();
+      }, 60_000);
+    });
 
-    const upperSymbol = symbol.toUpperCase();
-    const isResolvedOutcome = (outcome?: string | null) =>
-      ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(outcome || '').toLowerCase());
-    const getDetectedAt = (pattern: any) => pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
-
-    try {
-      // Fetch recent live patterns (active + expired)
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      const { data: liveData } = await supabase
-        .from('live_pattern_detections')
-        .select('id, pattern_id, pattern_name, direction, first_detected_at, last_confirmed_at, current_price, entry_price, stop_loss_price, take_profit_price, visual_spec, bars, status')
-        .eq('instrument', upperSymbol)
-        .eq('timeframe', timeframe)
-        .in('status', ['active', 'expired'])
-        .gte('first_detected_at', ninetyDaysAgo.toISOString())
-        .order('last_confirmed_at', { ascending: false })
-        .limit(20);
-
-      // Fetch historical patterns (last 365 days for full chart coverage)
-      const oneYearAgo = new Date();
-      oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-      const { data: historicalData } = await supabase
-        .from('historical_pattern_occurrences')
-        .select('id, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, outcome, visual_spec, bars')
-        .eq('symbol', upperSymbol)
-        .eq('timeframe', timeframe)
-        .gte('detected_at', oneYearAgo.toISOString())
-        .order('detected_at', { ascending: false })
-        .limit(50);
-
-      // Derive outcome for live patterns using shared utility
-      const deriveLiveOutcomeForPattern = (p: any, skipStatusCheck = false): string | null => {
-        if (!skipStatusCheck && p.status !== 'active' && p.status !== 'expired') return null;
-        const currentBars = symbolDataCache.get(`${symbol}:${timeframe}`) || [];
-        return deriveLiveOutcomeUtil({
-          direction: p.direction,
-          entryPrice: Number(p.entry_price),
-          stopLossPrice: Number(p.stop_loss_price),
-          takeProfitPrice: Number(p.take_profit_price),
-          detectedAt: p.last_confirmed_at || p.first_detected_at || '',
-          bars: currentBars,
-          status: p.status,
-        });
-      };
-
-      const combinedPatterns = [
-        ...(liveData || []).map(p => {
-          const derivedOutcome = deriveLiveOutcomeForPattern(p);
-          return {
-            ...p,
-            outcome: derivedOutcome,
-            isActive: p.status === 'active' && !derivedOutcome,
-            _derivedOutcome: derivedOutcome,
-          };
-        }),
-        ...(historicalData || []).map(p => {
-          // For historical patterns without a resolved outcome, derive one from current bars
-          const existingOutcome = p.outcome;
-          const isAlreadyResolved = ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(existingOutcome || '').toLowerCase());
-          const derivedOutcome = isAlreadyResolved ? null : deriveLiveOutcomeForPattern(p, true);
-          return {
-            ...p,
-            outcome: derivedOutcome || existingOutcome,
-            isActive: false,
-            _derivedOutcome: derivedOutcome,
-          };
-        }),
-      ];
-
-      // Deduplicate same occurrence across live/historical datasets.
-      // Prefer resolved historical records when both variants exist.
-      const bySignature = new Map<string, any>();
-      for (const pattern of combinedPatterns) {
-        const detectedAt = getDetectedAt(pattern);
-        const dayKey = detectedAt ? detectedAt.split('T')[0] : 'unknown';
-        const key = `${pattern.pattern_id}|${pattern.direction}|${dayKey}`;
-        const existing = bySignature.get(key);
-
-        if (!existing) {
-          bySignature.set(key, pattern);
-          continue;
-        }
-
-        if (isResolvedOutcome(pattern.outcome) && !isResolvedOutcome(existing.outcome)) {
-          bySignature.set(key, pattern);
-        }
-      }
-
-      // Filter out patterns whose pivots are too close for this chart timeframe
-      const tfMinSeparationMs: Record<string, number> = {
-        '15m': 2 * 15 * 60_000,
-        '1h': 2 * 60 * 60_000,
-        '4h': 2 * 4 * 60 * 60_000,
-        '8h': 2 * 8 * 60 * 60_000,
-        '1d': 2 * 24 * 60 * 60_000,
-        '1wk': 2 * 7 * 24 * 60 * 60_000,
-      };
-      const minSepMs = tfMinSeparationMs[timeframe] || 2 * 4 * 60 * 60_000;
-
-      const pivotsFitTimeframe = (pattern: any): boolean => {
-        const pivots = pattern.visual_spec?.pivots;
-        if (!Array.isArray(pivots) || pivots.length < 2) return true; // no pivots to validate
-        const timestamps = pivots
-          .map((p: any) => p.timestamp ? new Date(p.timestamp).getTime() : NaN)
-          .filter(Number.isFinite)
-          .sort((a: number, b: number) => a - b);
-        if (timestamps.length < 2) return true;
-        // Check that the structural pivots (first and last) are separated enough
-        const span = timestamps[timestamps.length - 1] - timestamps[0];
-        return span >= minSepMs;
-      };
-
-      const deduped = [...bySignature.values()]
-        .filter(pivotsFitTimeframe)
-        .sort(
-          (a, b) => new Date(getDetectedAt(b)).getTime() - new Date(getDetectedAt(a)).getTime()
-        );
-
-      setAutoPatterns(deduped);
-    } catch (err) {
-      console.error('[CommandCenterChart] auto-pattern fetch error:', err);
-      setAutoPatterns([]);
-    }
-  }, [symbol, timeframe, userId]);
-
-  useEffect(() => {
-    fetchAutoPatterns();
-
-    // Keep TP/SL current while user stays on the dashboard
-    const intervalId = window.setInterval(() => {
-      fetchAutoPatterns();
-    }, 60_000);
-
-    return () => window.clearInterval(intervalId);
-  }, [fetchAutoPatterns]);
+    return () => {
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+    };
+  }, [fetchChartData, fetchAutoPatterns]);
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
