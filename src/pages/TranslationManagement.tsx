@@ -151,18 +151,6 @@ export const TranslationManagement = () => {
   const loadCoverageStats = async (showToast = false) => {
     setCoverageLoading(true);
     try {
-      // When manually refreshing, sync en.json keys into translation_keys table first
-      // so the total count reflects the latest source file
-      if (showToast) {
-        await supabase.functions.invoke('sync-translations', {
-          body: {
-            en_content: enTranslations,
-            target_languages: [],
-            prepare_keys_only: true
-          }
-        });
-      }
-
       const { data, error } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'get_coverage_stats' }
       });
@@ -346,7 +334,7 @@ export const TranslationManagement = () => {
     if (!isAdmin || activeTab !== 'coverage') return;
 
     const refresh = () => {
-      if (!coverageLoading && !articleCoverageLoading) {
+      if (!loadingRef.current) {
         refreshStatusSnapshots().catch((err) => console.error('Background status refresh failed:', err));
       }
     };
@@ -367,7 +355,7 @@ export const TranslationManagement = () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [isAdmin, activeTab, coverageLoading, articleCoverageLoading]);
+  }, [isAdmin, activeTab]);
 
   const handleSyncArticleTranslations = async (targetLangCode?: string) => {
     setArticleSyncing(true);
