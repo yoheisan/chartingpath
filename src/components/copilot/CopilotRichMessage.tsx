@@ -40,6 +40,7 @@ const KNOWN_PREFIXES = new Set([
   'STOP','LOSS','TAKE','RISK','RATE','OPEN','CLOSE','CALL','DIR','AVG','MAX',
   'MIN','NET','PNL','VOL','ADX','RSI','MACD','EMA','SMA','ATR','USD','EUR',
   'GBP','JPY','AUD','CAD','NZD','CHF','VWAP','OHLC',
+  'WATCH','SKIP','DONE','BEST','GOOD','POOR','WEAK','PASS','FAIL','NONE',
 ]);
 
 function isLikelyTicker(word: string): boolean {
