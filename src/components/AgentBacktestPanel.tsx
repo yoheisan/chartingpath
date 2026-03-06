@@ -10,7 +10,7 @@ import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable, AssetClassFilter, TradeSetup } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
 import { SettingsManager } from './agent-backtest/SettingsManager';
 import { SubFilters, AgentScoringSettingsData } from '@/hooks/useAgentScoringSettings';
+import { useUpcomingEconomicEvents } from '@/hooks/useUpcomingEconomicEvents';
 
 const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
 
