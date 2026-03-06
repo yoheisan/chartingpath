@@ -163,14 +163,36 @@ export function useStockExchanges() {
   return useQuery({
     queryKey: ['stock-exchanges'],
     queryFn: async () => {
+      // Try instruments table first
       const { data, error } = await supabase
         .from('instruments')
         .select('exchange')
         .eq('asset_type', 'stock')
         .eq('is_active', true);
-      if (error) throw error;
-      const exchanges = [...new Set((data || []).map((r: any) => r.exchange).filter(Boolean))].sort();
-      return exchanges as string[];
+      
+      let exchanges: string[] = [];
+      if (!error && data && data.length > 0) {
+        exchanges = [...new Set(data.map((r: any) => r.exchange).filter(Boolean))].sort();
+      }
+      
+      // Fallback: derive from live_pattern_detections if instruments table has no stocks
+      if (exchanges.length === 0) {
+        const { data: lpd } = await supabase
+          .from('live_pattern_detections')
+          .select('exchange')
+          .eq('asset_type', 'stock')
+          .eq('status', 'active');
+        if (lpd && lpd.length > 0) {
+          exchanges = [...new Set(lpd.map((r: any) => r.exchange).filter(Boolean))].sort();
+        }
+      }
+
+      // Final fallback: hardcoded common exchanges
+      if (exchanges.length === 0) {
+        exchanges = ['NYSE', 'NASDAQ', 'LSE', 'HKEX', 'TSE', 'SET'];
+      }
+      
+      return exchanges;
     },
     staleTime: 300_000,
   });
