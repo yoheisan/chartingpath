@@ -1948,6 +1948,13 @@ serve(async (req) => {
               timeframe
             );
             
+            // Cap bars to prevent CPU timeout on large intraday datasets
+            const MAX_BARS_PER_INSTRUMENT = 5000;
+            if (bars.length > MAX_BARS_PER_INSTRUMENT) {
+              console.log(`[PatternLab] Capping ${instrument} bars from ${bars.length} to ${MAX_BARS_PER_INSTRUMENT}`);
+              bars.splice(0, bars.length - MAX_BARS_PER_INSTRUMENT);
+            }
+
             if (bars.length < 50) {
               completedPatternScans += instrumentPatterns.length;
               console.log(`[PatternLab] Insufficient data for ${instrument}: ${bars.length} bars`);
