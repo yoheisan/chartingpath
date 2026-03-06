@@ -108,29 +108,51 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
     if (!open || allLoaded) return;
     setLoading(true);
 
+    let cancelled = false;
+
     const loadInstruments = async () => {
-      let all: Instrument[] = [];
-      let from = 0;
-      const PAGE = 1000;
-      while (true) {
-        const { data, error } = await supabase
-          .from('instruments')
-          .select('symbol, name, asset_type, exchange, country, currency')
-          .eq('is_active', true)
-          .order('symbol')
-          .range(from, from + PAGE - 1);
-        if (error) { console.error('Instrument load error:', error); break; }
-        if (!data || data.length === 0) break;
-        all = all.concat(data as Instrument[]);
-        if (data.length < PAGE) break;
-        from += PAGE;
+      try {
+        let all: Instrument[] = [];
+        let from = 0;
+        const PAGE = 1000;
+        const MAX_PAGES = 10; // safety cap
+        let page = 0;
+        while (page < MAX_PAGES) {
+          page++;
+          const { data, error } = await supabase
+            .from('instruments')
+            .select('symbol, name, asset_type, exchange, country, currency')
+            .eq('is_active', true)
+            .order('symbol')
+            .range(from, from + PAGE - 1);
+          if (error) { console.error('Instrument load error:', error); break; }
+          if (!data || data.length === 0) break;
+          all = all.concat(data as Instrument[]);
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+        if (!cancelled) {
+          setInstruments(all);
+          setAllLoaded(true);
+        }
+      } catch (err) {
+        console.error('Instrument load failed:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setInstruments(all);
-      setAllLoaded(true);
-      setLoading(false);
     };
 
-    loadInstruments();
+    // Add a 15s timeout fallback so loading never hangs forever
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        console.warn('[UniversalSymbolSearch] Instrument load timed out');
+        setLoading(false);
+      }
+    }, 15000);
+
+    loadInstruments().then(() => clearTimeout(timeout));
+
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [open, allLoaded]);
 
   // Focus input when dialog opens
