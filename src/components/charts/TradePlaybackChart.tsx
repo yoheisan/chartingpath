@@ -118,6 +118,7 @@ export const TradePlaybackChart = memo(function TradePlaybackChart({
         symbol={symbol}
         height={height}
         tradePlan={tradePlan}
+        initialVisibleBars={playback.visibleBars.length}
       />
       
       <TradePlaybackControls
