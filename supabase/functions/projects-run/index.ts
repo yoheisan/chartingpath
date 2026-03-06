@@ -1848,7 +1848,15 @@ serve(async (req) => {
       // Update to running
       await supabase
         .from('project_runs')
-        .update({ status: 'running', started_at: new Date().toISOString() })
+        .update({
+          status: 'running',
+          started_at: new Date().toISOString(),
+          execution_metadata: {
+            progress: 0,
+            currentStep: 'Initializing scan',
+            heartbeatAt: new Date().toISOString(),
+          },
+        })
         .eq('id', runId);
       
       try {
@@ -1928,6 +1936,7 @@ serve(async (req) => {
                   instrumentsTotal: instruments.length,
                   patternsTotal: totalPatternScans,
                   scansCompleted: completedPatternScans,
+                  heartbeatAt: new Date().toISOString(),
                 } 
               })
               .eq('id', run.id);
@@ -1972,6 +1981,7 @@ serve(async (req) => {
                 instrumentsTotal: instruments.length,
                 patternsTotal: totalPatternScans,
                 scansCompleted: totalPatternScans,
+                heartbeatAt: new Date().toISOString(),
               } 
             })
             .eq('id', run.id);
@@ -2525,8 +2535,15 @@ serve(async (req) => {
       // Recover from edge-runtime crashes that can leave runs stuck in "running"
       if (runRow.status === 'running' && runRow.started_at) {
         const startedAt = new Date(runRow.started_at).getTime();
-        const staleThresholdMs = 3 * 60 * 1000;
-        if (!Number.isNaN(startedAt) && Date.now() - startedAt > staleThresholdMs) {
+        const metadata = (runRow.execution_metadata ?? {}) as Record<string, unknown>;
+        const heartbeatRaw = typeof metadata.heartbeatAt === 'string' ? metadata.heartbeatAt : null;
+        const heartbeatAt = heartbeatRaw ? new Date(heartbeatRaw).getTime() : NaN;
+
+        // Keep this close to execution budget so hung runs fail fast in UI.
+        const staleThresholdMs = 90 * 1000;
+        const lastActivityAt = Number.isFinite(heartbeatAt) ? heartbeatAt : startedAt;
+
+        if (!Number.isNaN(lastActivityAt) && Date.now() - lastActivityAt > staleThresholdMs) {
           const timeoutMessage = 'Run timed out before completion. Please retry with fewer instruments/patterns or a shorter lookback.';
           await supabaseAdmin
             .from('project_runs')
