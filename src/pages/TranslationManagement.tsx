@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, Clock, Download, Upload, Globe, ArrowLeft, Search, Edit, Eye, Filter, RefreshCw, Scan, Zap, BarChart3, BookOpen, FileSearch, Bug } from 'lucide-react';
 import i18n, { languages } from '@/i18n/config';
+import { reloadLanguageFromDB } from '@/i18n/dbTranslationLoader';
 import { useNavigate, Link } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { SiteStringScanner } from '@/components/SiteStringScanner';
@@ -328,6 +329,7 @@ export const TranslationManagement = () => {
 
   const refreshStatusSnapshots = async (showToast = false) => {
     await Promise.all([loadCoverageStats(showToast), loadArticleCoverage()]);
+    await reloadLanguageFromDB(i18n.language || 'en');
   };
 
   useEffect(() => {

@@ -67,17 +67,30 @@ async function fetchLanguageFromDB(langCode: string): Promise<Record<string, any
  * Load a single language from DB and merge into i18n runtime.
  * Skips if already loaded or if language is English (static source).
  */
-export async function loadLanguageFromDB(langCode: string): Promise<boolean> {
+async function loadLanguageBundle(langCode: string, forceReload = false): Promise<boolean> {
   if (langCode === 'en') return true;
-  if (loadedLanguages.has(langCode)) return true;
+  if (!forceReload && loadedLanguages.has(langCode)) return true;
 
   const bundle = await fetchLanguageFromDB(langCode);
   if (!bundle) return false;
 
+  if (forceReload) {
+    i18n.removeResourceBundle(langCode, 'translation');
+  }
+
   i18n.addResourceBundle(langCode, 'translation', bundle, true, true);
   loadedLanguages.add(langCode);
-  console.log(`[i18n-loader] Loaded ${langCode} from DB`);
+  console.log(`[i18n-loader] ${forceReload ? 'Reloaded' : 'Loaded'} ${langCode} from DB`);
   return true;
+}
+
+export async function loadLanguageFromDB(langCode: string): Promise<boolean> {
+  return loadLanguageBundle(langCode, false);
+}
+
+/** Force-refresh a language from DB even if it was previously cached */
+export async function reloadLanguageFromDB(langCode: string): Promise<boolean> {
+  return loadLanguageBundle(langCode, true);
 }
 
 /** 
