@@ -55,7 +55,8 @@
     "actions": {
       "validatePatternLab": "Zweryfikuj w Pattern Lab",
       "findActiveSignals": "Znajdź aktywne sygnały",
-      "exportScript": "Eksportuj skrypt"
+      "exportScript": "Eksportuj skrypt",
+      "scoreTrade": "Oceń transakcję"
     },
     "instrumentStats": "Statystyki instrumentu",
     "instrumentStatsDesc": "Zobacz jak ta formacja wypada na tym konkretnym instrumencie",
