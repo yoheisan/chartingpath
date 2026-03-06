@@ -6,9 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, RefreshCw, Loader2, Users, CheckCircle, XCircle, Clock, SkipForward } from "lucide-react";
-import { format } from "date-fns";
+import { UserPlus, RefreshCw, Loader2, Users, CheckCircle, XCircle, Clock, SkipForward, TrendingUp, Calendar } from "lucide-react";
+import { format, subDays } from "date-fns";
 
 interface QueueItem {
   id: string;
@@ -20,37 +23,86 @@ interface QueueItem {
   created_at: string;
 }
 
+interface DailyFollow {
+  day: string;
+  count: number;
+}
+
 export function AutoFollowQueueManager() {
   const [bulkInput, setBulkInput] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch queue stats
+  // Fetch queue stats (use count queries instead of fetching all rows)
   const { data: stats } = useQuery({
     queryKey: ["x-follow-queue-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("x_follow_queue")
-        .select("status");
-      if (error) throw error;
-      const counts = { pending: 0, followed: 0, skipped: 0, failed: 0, total: 0 };
-      data?.forEach((row: { status: string }) => {
-        counts.total++;
-        if (row.status in counts) counts[row.status as keyof typeof counts]++;
-      });
-      return counts;
+      const statuses = ["pending", "followed", "skipped", "failed"];
+      const results: Record<string, number> = {};
+      
+      await Promise.all(
+        statuses.map(async (status) => {
+          const { count, error } = await supabase
+            .from("x_follow_queue")
+            .select("*", { count: "exact", head: true })
+            .eq("status", status);
+          if (!error) results[status] = count ?? 0;
+        })
+      );
+
+      const total = Object.values(results).reduce((a, b) => a + b, 0);
+      return { ...results, total } as { pending: number; followed: number; skipped: number; failed: number; total: number };
     },
   });
 
-  // Fetch recent queue items
-  const { data: recentItems, isLoading } = useQuery({
-    queryKey: ["x-follow-queue-recent"],
+  // Fetch daily follow velocity (last 7 days)
+  const { data: dailyFollows } = useQuery({
+    queryKey: ["x-follow-daily-velocity"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const days: DailyFollow[] = [];
+      for (let i = 0; i < 7; i++) {
+        const dayStart = subDays(new Date(), i);
+        dayStart.setUTCHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setUTCHours(23, 59, 59, 999);
+
+        const { count } = await supabase
+          .from("x_follow_queue")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "followed")
+          .gte("attempted_at", dayStart.toISOString())
+          .lte("attempted_at", dayEnd.toISOString());
+
+        days.push({
+          day: format(dayStart, "MMM d"),
+          count: count ?? 0,
+        });
+      }
+      return days.reverse();
+    },
+  });
+
+  // Fetch items by tab filter
+  const { data: filteredItems, isLoading } = useQuery({
+    queryKey: ["x-follow-queue-list", activeTab],
+    queryFn: async () => {
+      let query = supabase
         .from("x_follow_queue")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
+
+      if (activeTab !== "all") {
+        query = query.eq("status", activeTab);
+      }
+
+      if (activeTab === "followed") {
+        query = query.order("attempted_at", { ascending: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as QueueItem[];
     },
@@ -71,13 +123,18 @@ export function AutoFollowQueueManager() {
         description: `${data.inserted} new users added to queue (${data.total_submitted} submitted)`,
       });
       setBulkInput("");
-      queryClient.invalidateQueries({ queryKey: ["x-follow-queue-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["x-follow-queue-recent"] });
+      invalidateAll();
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["x-follow-queue-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["x-follow-queue-list"] });
+    queryClient.invalidateQueries({ queryKey: ["x-follow-daily-velocity"] });
+  };
 
   const handleBulkAdd = () => {
     const lines = bulkInput.trim().split("\n").filter(Boolean);
@@ -105,9 +162,101 @@ export function AutoFollowQueueManager() {
     );
   };
 
+  const followedPct = stats && stats.total > 0
+    ? Math.round(((stats.followed ?? 0) / stats.total) * 100)
+    : 0;
+
+  const todayFollows = dailyFollows?.[dailyFollows.length - 1]?.count ?? 0;
+  const avgDaily = dailyFollows
+    ? Math.round(dailyFollows.reduce((s, d) => s + d.count, 0) / dailyFollows.length)
+    : 0;
+  const estimatedDaysLeft = avgDaily > 0 && stats?.pending
+    ? Math.ceil(stats.pending / avgDaily)
+    : null;
+
   return (
     <div className="space-y-6">
-      {/* Stats */}
+      {/* Progress Overview */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Follow Queue Progress</CardTitle>
+            <Button variant="outline" size="sm" onClick={invalidateAll}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Progress bar */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                {stats?.followed ?? 0} followed of {stats?.total ?? 0} total
+              </span>
+              <span className="font-medium">{followedPct}%</span>
+            </div>
+            <Progress value={followedPct} className="h-3" />
+          </div>
+
+          {/* Key metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-orange-500">{stats?.pending ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Pending</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-green-500">{stats?.followed ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Followed</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold">{todayFollows}</p>
+              <p className="text-xs text-muted-foreground">Today</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold">{avgDaily}</p>
+              <p className="text-xs text-muted-foreground">Avg/Day (7d)</p>
+            </div>
+          </div>
+
+          {/* Estimated completion */}
+          {estimatedDaysLeft !== null && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
+              <Calendar className="h-4 w-4" />
+              <span>
+                At current rate ({avgDaily}/day), the queue will complete in ~<strong className="text-foreground">{estimatedDaysLeft} days</strong>
+              </span>
+            </div>
+          )}
+
+          {/* 7-day velocity chart (simple bar) */}
+          {dailyFollows && dailyFollows.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="h-4 w-4" />
+                Follow Velocity (7 days)
+              </div>
+              <div className="flex items-end gap-1 h-16">
+                {dailyFollows.map((d) => {
+                  const maxCount = Math.max(...dailyFollows.map((x) => x.count), 1);
+                  const heightPct = (d.count / maxCount) * 100;
+                  return (
+                    <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground">{d.count}</span>
+                      <div
+                        className="w-full bg-primary/70 rounded-t-sm min-h-[2px]"
+                        style={{ height: `${Math.max(heightPct, 3)}%` }}
+                      />
+                      <span className="text-[9px] text-muted-foreground">{d.day.split(" ")[1]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { label: "Total", value: stats?.total ?? 0, icon: Users },
@@ -120,7 +269,7 @@ export function AutoFollowQueueManager() {
             <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
               <Icon className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-2xl font-bold">{value.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>
               </div>
             </CardContent>
@@ -157,66 +306,104 @@ export function AutoFollowQueueManager() {
         </CardContent>
       </Card>
 
-      {/* Recent Queue */}
+      {/* Queue List with Tab Filters */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">Recent Queue</CardTitle>
-            <CardDescription>Last 50 entries</CardDescription>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Queue Accounts</CardTitle>
+              <CardDescription>Browse accounts by status</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={invalidateAll}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["x-follow-queue-stats"] });
-              queryClient.invalidateQueries({ queryKey: ["x-follow-queue-recent"] });
-            }}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User ID</TableHead>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Attempted</TableHead>
-                    <TableHead>Error</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentItems?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-mono text-xs">{item.target_user_id}</TableCell>
-                      <TableCell>{item.target_username ? `@${item.target_username}` : "—"}</TableCell>
-                      <TableCell>{statusBadge(item.status)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {item.attempted_at ? format(new Date(item.attempted_at), "MMM d, HH:mm") : "—"}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                        {item.error_message || "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!recentItems?.length && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Queue is empty
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="pending" className="gap-1">
+                <Clock className="h-3 w-3" /> Pending
+                <Badge variant="outline" className="ml-1 text-[10px] px-1.5">{stats?.pending?.toLocaleString() ?? 0}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="followed" className="gap-1">
+                <CheckCircle className="h-3 w-3" /> Followed
+                <Badge variant="outline" className="ml-1 text-[10px] px-1.5">{stats?.followed?.toLocaleString() ?? 0}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="skipped" className="gap-1">
+                <SkipForward className="h-3 w-3" /> Skipped
+              </TabsTrigger>
+              <TabsTrigger value="failed" className="gap-1">
+                <XCircle className="h-3 w-3" /> Failed
+              </TabsTrigger>
+              <TabsTrigger value="all" className="gap-1">
+                <Users className="h-3 w-3" /> All
+              </TabsTrigger>
+            </TabsList>
+
+            {["pending", "followed", "skipped", "failed", "all"].map((tab) => (
+              <TabsContent key={tab} value={tab}>
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Username</TableHead>
+                          <TableHead>User ID</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>{tab === "followed" ? "Followed At" : "Added"}</TableHead>
+                          {(tab === "failed" || tab === "all") && <TableHead>Error</TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredItems?.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">
+                              {item.target_username ? (
+                                <a
+                                  href={`https://x.com/${item.target_username}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                >
+                                  @{item.target_username}
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">{item.target_user_id}</TableCell>
+                            <TableCell>{statusBadge(item.status)}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {tab === "followed" && item.attempted_at
+                                ? format(new Date(item.attempted_at), "MMM d, HH:mm")
+                                : format(new Date(item.created_at), "MMM d")}
+                            </TableCell>
+                            {(tab === "failed" || tab === "all") && (
+                              <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                                {item.error_message || "—"}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                        {!filteredItems?.length && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                              No {tab === "all" ? "" : tab} accounts
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
     </div>
