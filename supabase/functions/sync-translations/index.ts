@@ -448,14 +448,18 @@ Return ONLY the JSON object, no markdown, no explanation.`
             }
 
             // Small delay between batches to respect rate limits
-            if (i + BATCH_SIZE < keysToTranslate.length) {
-              await new Promise(resolve => setTimeout(resolve, 1000))
+            if (i + BATCH_SIZE < keysThisRun.length) {
+              await new Promise(resolve => setTimeout(resolve, 500))
             }
 
           } catch (batchError) {
             console.error(`Batch error for ${langCode}:`, batchError)
             summary[langCode].errors += batch.length
           }
+        }
+
+        // Add remaining count to summary
+        ;(summary[langCode] as any).remaining = remainingAfter
         }
 
       } catch (langError) {
