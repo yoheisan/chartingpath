@@ -454,21 +454,36 @@ export const TranslationManagement = () => {
       });
       if (prepError) console.error('Key prep error:', prepError);
 
-      // Translate the gaps
-      const { data, error } = await supabase.functions.invoke('sync-translations', {
-        body: {
-          en_content: partialEnContent,
-          target_languages: [langCode],
-          skip_key_creation: true
-        }
-      });
+      // Translate the gaps in chunks to avoid edge function timeout
+      let totalTranslated = 0;
+      let totalErrors = 0;
+      let totalSkipped = 0;
+      let remaining = Infinity;
+      let chunkNum = 0;
 
-      if (error) throw error;
+      while (remaining > 0 && chunkNum < 100) {
+        chunkNum++;
+        const { data, error } = await supabase.functions.invoke('sync-translations', {
+          body: {
+            en_content: partialEnContent,
+            target_languages: [langCode],
+            skip_key_creation: true,
+            max_keys: 60
+          }
+        });
 
-      const langStats = data?.summary?.[langCode];
-      const translated = langStats?.translated || 0;
-      const errors = langStats?.errors || 0;
-      const skipped = langStats?.skipped || 0;
+        if (error) throw error;
+
+        const langStats = data?.summary?.[langCode];
+        totalTranslated += langStats?.translated || 0;
+        totalErrors += langStats?.errors || 0;
+        totalSkipped += langStats?.skipped || 0;
+        remaining = langStats?.remaining ?? 0;
+      }
+
+      const translated = totalTranslated;
+      const errors = totalErrors;
+      const skipped = totalSkipped;
 
       // Re-export locale bundle from DB (always, even if 0 new translations —
       // the DB may already have keys the static JSON file is missing)
