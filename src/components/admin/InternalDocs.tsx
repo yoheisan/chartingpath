@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar, Globe, Bot } from "lucide-react";
+import { Database, TrendingUp, Server, DollarSign, Clock, Shield, Activity, Cpu, GitBranch, BarChart3, Wallet, Share2, Search, Radar, Globe, Bot, Download } from "lucide-react";
 
 // ─── Sub-sections ──────────────────────────────────────────────────────────────
 
@@ -2047,16 +2048,293 @@ const BacktestSafeguardsTab = () => (
 // ─── Main Export ───────────────────────────────────────────────────────────────
 
 export const InternalDocs = () => {
+  const handleDownloadAll = () => {
+    const doc = `# System Architecture — Audit Document
+## Version 2.9 | Last Updated: 2026-03-06
+### Confidential — For Engineering & Audit Use Only
+
+---
+
+# 1. PLATFORM OVERVIEW — Executive Summary
+
+The platform operates a fully automated, multi-stage data pipeline responsible for detecting, seeding, validating and surfacing institutional-grade chart patterns across 8,500+ global instruments (stocks, ETFs, forex, crypto, indices, commodities). With the Hybrid Instrument Search, users can discover and chart 100,000+ tickers globally via live Yahoo Finance fallback, with on-demand pattern scanning for non-seeded instruments.
+
+**Key Metrics:**
+- Seeded instruments: 817+
+- Searchable universe: 100,000+
+- Validation throughput: 150k / hr
+- Daily cron jobs: 50+
+- Languages supported: 20+
+- Translation keys: 4,700+
+
+## Recent Updates (v2.9)
+- **1H Scanning → 5-min Cadence**: 1H chart pattern scans now run every 5 minutes (up from 15 min) with asset-class staggering.
+- **DB-First i18n Architecture**: 20+ language support via automated Gemini 2.0 Flash translation pipeline. Daily sync at 14:00 UTC with chunked processing (60 keys/batch).
+- **Agent Scoring System**: 5-agent autonomous trade decision pipeline (Analyst, Risk, Timing, Portfolio, Orchestrator) producing TAKE/WATCH/SKIP verdicts.
+- **Backtest v2 Safeguards**: 50-95s execution budget, 90s heartbeat, 20-instrument cap, auto-skip secondary analytics above 300 trades.
+
+## Three-Layer Validation Pipeline
+| Layer | Name | Logic | Where Applied |
+|-------|------|-------|---------------|
+| 1 | Structural (Bulkowski) | Pattern geometry: symmetry, touchpoints, tolerance | Seeder + live scanner |
+| 2 | Contextual | Trend alignment, volume, ADX, quality grade (A–F) | backfill-validation worker |
+| 3 | MTF Confluence | Multi-timeframe momentum agreement | validate-mtf-confluence |
+
+## Pipeline Flow
+\`\`\`
+EODHD API / Yahoo Finance
+        │
+        ▼
+[seed-historical-patterns] ──► historical_pattern_occurrences (status: pending)
+        │
+        ▼  (12:00 UTC gate opens)
+[backfill-validation] ─── 5 parallel shards ──► validate-pattern-context (Layer 2)
+        │                                               └──► validate-mtf-confluence (Layer 3)
+        ▼
+historical_pattern_occurrences (status: validated / rejected)
+        │
+        ▼
+[scan-live-patterns] ──► live_pattern_detections (active signals shown to users)
+        │
+        ▼
+[check-alert-matches] ──► alerts_log + send-pattern-alert (Email + Push)
+        │
+        ├─► [auto-paper-trade] ──► paper_trades (if enabled)
+        └─► [fire-signal-webhook] ──► External platforms (if configured)
+
+═══ ON-DEMAND PATH (user-triggered) ═══
+
+User Search ──► [search-symbols] ──► Yahoo Finance autocomplete (100k+ tickers)
+        │                                └──► Upserts to instruments table
+        ▼
+/instruments/:symbol ──► "Request Pattern Scan" button
+        │
+        ▼
+scan_requests (status: pending) ──► [process-scan-requests] (01:00 UTC cron)
+        │                                 └──► Fetches 5yr OHLCV + Runs 8 pattern detectors
+        ▼
+historical_pattern_occurrences ──► Toast notification on next visit
+\`\`\`
+
+---
+
+# 2. CRON SCHEDULE (UTC)
+
+All times UTC. Managed via pg_cron in Supabase SQL Editor.
+
+## Daily Timeline
+\`\`\`
+UTC  00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+     [  APAC session          ]
+                    [  EU session              ]
+                                        [  US session                    ]
+     ^04:00 purge
+                  ^05:00──────────────11:30 SEEDING WINDOW
+                                                           ^12:00 VALIDATION GATE OPENS
+     [─── scan-live-1h (every 5 min, staggered by asset class) ─────────────]
+     [─────────────────────── scan-live-patterns (every 15 min) ─────────────]
+                                                  ^14:00 sync-translations (daily)
+\`\`\`
+
+## Registered pg_cron Jobs (47 total)
+| Time (UTC) | Job Name | Edge Function | Status |
+|------------|----------|---------------|--------|
+| 04:00 daily | purge-stale-patterns | purge-stale-patterns | ACTIVE |
+| 05:00–05:40 daily | seed-fx-1h/4h/8h/1d/1wk | seed-historical-patterns | ACTIVE |
+| 05:50 daily | seed-crypto-1h … 1wk (×5) | seed-historical-patterns | ACTIVE |
+| 06:40 daily | seed-commodities-1h … 1wk (×5) | seed-historical-patterns | ACTIVE |
+| 07:30 daily | seed-indices-1h … 1wk (×5) | seed-historical-patterns | ACTIVE |
+| 08:10 daily | seed-etf-1h … 1wk (×5) | seed-historical-patterns | ACTIVE |
+| 09:10–10:50 daily | seed-stocks-ag/ho/pz (×15) | seed-historical-patterns | ACTIVE |
+| every min, 12:00–04:45 | backfill-validation (×5 shards) | backfill-validation | ACTIVE |
+| every 5 min, staggered | scan-live-1h (×5 asset classes) | scan-live-patterns | ACTIVE |
+| every 15 min, 12:00–04:45 | scan-live-patterns-scheduled (ID: 134) | scan-live-patterns | ACTIVE |
+| 14:00 daily | sync-translations | sync-translations | ACTIVE |
+| 01:00 daily | process-scan-requests-nightly (ID: 185) | process-scan-requests | ACTIVE |
+
+---
+
+# 3. VALIDATION SHARDS — 5-Shard Parallel Architecture
+
+Replaces single-worker (3,000 rec/hr) with 150,000 rec/hr across 5 shards.
+
+| Shard | Asset Types | Throughput | Advisory Lock |
+|-------|-------------|------------|---------------|
+| stocks | stocks, stock, equity | 30,000/hr | lock:stocks |
+| etf | etf, ETF | 30,000/hr | lock:etf |
+| crypto | crypto, cryptocurrency | 30,000/hr | lock:crypto |
+| forex | forex, fx, currency | 30,000/hr | lock:forex |
+| indices | indices, index, indice | 30,000/hr | lock:indices |
+
+## Fault-Tolerance
+- **Advisory Locks**: pg_try_advisory_lock per shard prevents duplicate concurrent execution.
+- **Watermarks**: Each shard persists last_watermark in worker_runs. Resumable, gap-free processing.
+- **Circuit Breaker**: Opens for 30 min after 3 consecutive failures. One shard failing never blocks others.
+
+---
+
+# 4. INFRASTRUCTURE
+
+- **Runtime**: Supabase (PostgreSQL 15 + Edge Functions on Deno)
+- **Hosting**: Supabase Pro plan — Medium compute add-on
+- **CDN/Frontend**: Lovable → Netlify (auto-deploy from GitHub)
+- **Market Data**: EODHD API (primary), Yahoo Finance (fallback for search & on-demand)
+
+## Edge Function Inventory
+| Function | Trigger | Purpose |
+|----------|---------|---------|
+| seed-historical-patterns | pg_cron | OHLCV fetch + 8-pattern detection |
+| backfill-validation | pg_cron | Layer 2+3 validation (sharded) |
+| validate-pattern-context | HTTP (internal) | Single-pattern Layer 2 check |
+| validate-mtf-confluence | HTTP (internal) | Multi-timeframe Layer 3 check |
+| scan-live-patterns | pg_cron | Live 1H/4H/1D pattern detection |
+| check-alert-matches | pg_cron | Alert matching + email dispatch |
+| purge-stale-patterns | pg_cron | TTL cleanup for expired patterns |
+| search-symbols | HTTP (user) | Yahoo Finance autocomplete proxy |
+| process-scan-requests | pg_cron | On-demand scan for user-requested tickers |
+| sync-translations | pg_cron + manual | Gemini 2.0 Flash translation (chunked) |
+
+---
+
+# 5. HYBRID INSTRUMENT SEARCH
+
+Two-tier architecture combining local DB with live Yahoo Finance fallback.
+
+\`\`\`
+User types query
+     │
+     ▼
+[instruments table] ──► ilike '%query%' on symbol + name
+     │
+     ├── Results found? ──► Return DB results (instant)
+     └── No results? ──► Yahoo Finance autocomplete API
+                              ├──► Returns live results to user
+                              └──► Upserts new instruments to DB
+\`\`\`
+
+---
+
+# 6. i18n SYSTEM — DB-First Translation Architecture
+
+- **Source of Truth**: translations table in Supabase (language_code, namespace, key, value)
+- **Source Keys**: Extracted from en.json static file (4,700+ keys)
+- **Translation Engine**: Google Gemini 2.0 Flash via edge function
+- **Sync Strategy**: Chunked processing — 60 keys per invocation (150s timeout safe)
+- **Automated Schedule**: Daily at 14:00 UTC via pg_cron
+- **Manual Trigger**: Admin dashboard "Sync Gaps" button with progress tracking
+
+## Supported Languages (20+)
+ar, de, es, fr, hi, id, it, ja, ko, ms, nl, pl, pt, ru, sv, th, tr, uk, vi, zh
+
+## Frontend Integration
+- React i18next with DB-backed namespace loading
+- Automatic language detection via browser locale + country mapping
+- Fallback chain: DB translation → en.json static → key name
+
+---
+
+# 7. AGENT SCORING SYSTEM — 5-Agent Decision Pipeline
+
+| Agent | Weight | Purpose |
+|-------|--------|---------|
+| Analyst | 25% | Pattern quality, R:R ratio, historical win rate |
+| Risk | 25% | Position sizing, correlation, portfolio heat |
+| Timing | 20% | Entry timing, market session, economic calendar |
+| Portfolio | 15% | Diversification, sector balance, exposure limits |
+| Orchestrator | 15% | Final synthesis, conflict resolution, verdict |
+
+## Verdict System
+- **TAKE** (≥70 composite): Strong conviction — execute trade
+- **WATCH** (50–69): Monitor — conditions may improve
+- **SKIP** (<50): Pass — insufficient edge
+
+---
+
+# 8. BACKTEST ENGINE v2 — Safeguards
+
+- **Watchdog Timer**: 50–95s budget (scales with instrument count)
+- **Heartbeat**: 90s heartbeat to prevent zombie runs
+- **Instrument Cap**: 20 instruments max per backtest run
+- **Trade Analytics**: Auto-skip secondary analytics (Sharpe, Sortino) above 300 trades
+- **Position Sizing**: Fixed percentage, Kelly criterion, or custom
+- **Fee Modeling**: Commission & slippage modeling, multi-timeframe support (1H–1W)
+
+---
+
+# 9. APAC EXPANSION
+
+Market coverage: Tokyo (TSE), Hong Kong (HKEX), Shanghai (SSE), Mumbai (BSE/NSE), Sydney (ASX), Singapore (SGX), Seoul (KRX).
+
+---
+
+# 10. NOTIFICATIONS & ALERTS
+
+- Email alerts via Resend (pattern matches, economic events)
+- Webhook integration for external platforms
+- Auto paper-trade on alert trigger (optional)
+- Telegram & Twitter notification channels (configurable)
+
+---
+
+# 11. COPILOT AI
+
+- Context-aware trading assistant with conversation memory
+- Learned rules system for recurring query patterns
+- Platform context injection (live patterns, user portfolio, market conditions)
+- Training pair collection for DPO fine-tuning pipeline
+- Feedback loop: thumbs up/down → quality scoring → content gap identification
+
+---
+
+# 12. ANALYTICS
+
+- Instrument search analytics (query tracking, conversion rates)
+- Article view/like tracking with author attribution
+- Community engagement metrics (messages, responses, sentiment)
+- KPI dashboard with subscription-based email reports
+- GA4 integration for traffic and behavior analytics
+
+---
+
+# 13. SOCIAL CMS & AUTOMATION
+
+- Content library with automated posting schedule
+- Educational content series (chunked from learning articles)
+- Market region-aware scheduling (APAC/EU/US optimal times)
+- Hashtag management and link-back URL tracking
+
+---
+
+*Document Version: 2.9 | Generated: ${new Date().toISOString().split('T')[0]} | Confidential*
+`;
+
+    const blob = new Blob([doc], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `system-architecture-audit-v2.9-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Database className="h-5 w-5 text-primary" />
-        <div>
-          <h2 className="text-lg font-bold">System Architecture — Audit Document</h2>
-          <p className="text-sm text-muted-foreground">
-            Internal technical reference. Confidential — for engineering & audit use only.
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Database className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-lg font-bold">System Architecture — Audit Document</h2>
+            <p className="text-sm text-muted-foreground">
+              Internal technical reference. Confidential — for engineering & audit use only.
+            </p>
+          </div>
         </div>
+        <Button onClick={handleDownloadAll} variant="outline" size="sm" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Download Full Document
+        </Button>
       </div>
 
       <Tabs defaultValue="overview">
