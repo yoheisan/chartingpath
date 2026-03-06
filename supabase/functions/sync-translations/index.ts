@@ -49,6 +49,7 @@ interface SyncRequest {
   dry_run?: boolean
   prepare_keys_only?: boolean
   skip_key_creation?: boolean
+  max_keys?: number // Limit keys per invocation to avoid timeout
 }
 
 Deno.serve(async (req) => {
