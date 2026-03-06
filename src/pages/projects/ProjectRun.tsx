@@ -29,6 +29,7 @@ interface ProjectRun {
   creditsEstimated: number;
   creditsUsed: number | null;
   errorMessage: string | null;
+  createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
   executionMetadata: ExecutionMetadata | null;
@@ -164,20 +165,32 @@ const ProjectRun = () => {
       
       console.log(`[ProjectRun] fetch #${fetchCountRef.current}: status=${data.run?.status}, progress=${data.run?.executionMetadata?.progress ?? '-'}`);
       
-      // Client-side stale heartbeat detection: if heartbeat hasn't updated in 60s, show timeout
+      // Client-side stale detection: fail fast if run is stuck in queued/running.
+      if (data.run?.status === 'queued' && data.run?.createdAt) {
+        const queuedAge = Date.now() - new Date(data.run.createdAt).getTime();
+        if (queuedAge > 45_000) {
+          console.warn(`[ProjectRun] Queued run stale (${Math.round(queuedAge / 1000)}s old).`);
+          setRun({
+            ...data.run,
+            status: 'failed',
+            errorMessage: 'Run did not start in time. Please retry with fewer instruments/patterns or try again shortly.',
+          });
+          runRef.current = { ...data.run, status: 'failed' };
+          return;
+        }
+      }
+
       if (data.run?.status === 'running' && data.run?.executionMetadata?.heartbeatAt) {
         const heartbeatAge = Date.now() - new Date(data.run.executionMetadata.heartbeatAt).getTime();
         if (heartbeatAge > 60_000) {
           console.warn(`[ProjectRun] Stale heartbeat detected (${Math.round(heartbeatAge / 1000)}s old). Run likely timed out.`);
-          // Force a status update on the server by fetching one more time after threshold
-          // The server-side 90s check will mark it failed. Show user feedback immediately.
           setRun({
             ...data.run,
             status: 'failed',
             errorMessage: 'Run timed out — the server stopped responding. Try fewer instruments or a shorter lookback period.',
           });
           runRef.current = { ...data.run, status: 'failed' };
-          return; // Stop polling
+          return;
         }
       }
       
