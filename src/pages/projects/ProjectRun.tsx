@@ -164,6 +164,23 @@ const ProjectRun = () => {
       
       console.log(`[ProjectRun] fetch #${fetchCountRef.current}: status=${data.run?.status}, progress=${data.run?.executionMetadata?.progress ?? '-'}`);
       
+      // Client-side stale heartbeat detection: if heartbeat hasn't updated in 60s, show timeout
+      if (data.run?.status === 'running' && data.run?.executionMetadata?.heartbeatAt) {
+        const heartbeatAge = Date.now() - new Date(data.run.executionMetadata.heartbeatAt).getTime();
+        if (heartbeatAge > 60_000) {
+          console.warn(`[ProjectRun] Stale heartbeat detected (${Math.round(heartbeatAge / 1000)}s old). Run likely timed out.`);
+          // Force a status update on the server by fetching one more time after threshold
+          // The server-side 90s check will mark it failed. Show user feedback immediately.
+          setRun({
+            ...data.run,
+            status: 'failed',
+            errorMessage: 'Run timed out — the server stopped responding. Try fewer instruments or a shorter lookback period.',
+          });
+          runRef.current = { ...data.run, status: 'failed' };
+          return; // Stop polling
+        }
+      }
+      
     } catch (err) {
       console.error('[ProjectRun] Fetch error:', err);
       if (!isMountedRef.current) return;
