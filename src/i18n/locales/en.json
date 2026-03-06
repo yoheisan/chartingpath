@@ -2867,7 +2867,12 @@
     "automateGet2": "Setup optimizer with exit models",
     "automateGet3": "Repeatable winners / losers analysis",
     "automateGet4": "Export Pine Script v6 / MQL4/5",
-    "patterns": "Patterns"
+    "patterns": "Patterns",
+    "quickStart": "Quick Start — try a backtest in one click",
+    "quickStartApple": "Double Bottom on AAPL",
+    "quickStartBtc": "H&S on Bitcoin",
+    "quickStartEurusd": "Falling Wedge on EUR/USD",
+    "quickStartDaily3y": "Daily • 3 year lookback"
   },
   "patternNames": {
     "Bull Flag": "Bull Flag",
