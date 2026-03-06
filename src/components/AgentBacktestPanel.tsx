@@ -252,6 +252,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           if (!response.ok) throw new Error(data.error || 'Failed to start run');
 
           toast.success(t('agentScoring.backtestStarted'));
+          markGuestBacktestUsed(); // Track that user has run at least one backtest
           navigate(`/projects/runs/${data.runId}`, {
             state: { fromAgentScoring: true },
           });
