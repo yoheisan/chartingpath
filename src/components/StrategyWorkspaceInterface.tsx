@@ -500,7 +500,7 @@ export const StrategyWorkspaceInterface: React.FC<{ initialTab?: string; onSwitc
   };
 
   // Handle preset load from CryptoPresetPanel - SYNCS BOTH market AND patterns
-  const handlePresetLoad = (preset: { symbol: string; patternId: string; timeframe: string }) => {
+  const handlePresetLoad = (preset: { symbol: string; patternId: string; timeframe: string; instrumentCategory?: string }) => {
     const strategy = builderRef.current?.getStrategy();
     if (strategy && builderRef.current) {
       // Create pattern instance from the patternId

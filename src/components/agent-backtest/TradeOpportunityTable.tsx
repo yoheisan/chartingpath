@@ -134,7 +134,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
       return {
         id: d.id, symbol: d.instrument, pattern: d.pattern_name, patternId: d.pattern_id,
-        direction, timeframe: d.timeframe, rr: d.risk_reward_ratio,
+        direction, timeframe: d.timeframe, rr: d.risk_reward_ratio, assetType: d.asset_type,
         analystRaw, riskRaw, timingRaw, portfolioRaw,
         analystScore, riskScore, timingScore, portfolioScore, composite, verdict,
       };
@@ -311,6 +311,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                             patternId: PATTERN_NAME_TO_ID[trade.pattern] || trade.patternId || 'bull_flag',
                             pattern: trade.pattern,
                             timeframe: trade.timeframe,
+                            assetType: trade.assetType,
                           })}
                         >
                           <Play className="h-4 w-4" />
