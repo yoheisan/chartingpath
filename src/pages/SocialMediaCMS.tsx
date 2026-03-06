@@ -11,7 +11,8 @@ import { EducationalContentManager } from "@/components/cms/EducationalContentMa
 import { AutoFollowQueueManager } from "@/components/cms/AutoFollowQueueManager";
 import { DiscoveryManager } from "@/components/cms/DiscoveryManager";
 import { SignalPostGenerator } from "@/components/cms/SignalPostGenerator";
-import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap } from "lucide-react";
+import { FAQContentGenerator } from "@/components/cms/FAQContentGenerator";
+import { Calendar, Library, Settings, TrendingUp, ArrowLeft, GraduationCap, UserPlus, Radar, Zap, HelpCircle } from "lucide-react";
 
 export default function SocialMediaCMS() {
   const [activeTab, setActiveTab] = useState("signals");
