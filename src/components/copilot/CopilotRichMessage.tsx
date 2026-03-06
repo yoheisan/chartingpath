@@ -8,7 +8,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink, Sparkles } from 'lucide-react';
 
 interface CopilotRichMessageProps {
   content: string;
@@ -21,6 +21,7 @@ const SERVICE_LINKS: { pattern: RegExp; path: string; label: string }[] = [
   { pattern: /\bEdge\s*Atlas\b/gi, path: '/patterns/live', label: 'Edge Atlas' },
   { pattern: /\bScript(?:s|\s+Generator)?\b/gi, path: '/members/scripts', label: 'Scripts' },
   { pattern: /\bDashboard\b/gi, path: '/members/dashboard', label: 'Dashboard' },
+  { pattern: /\bAgent\s*Scor(?:ing|e)\b/gi, path: '/tools/agent-scoring', label: 'Agent Scoring' },
 ];
 
 // Known ticker patterns (stocks, crypto, forex, indices)
@@ -261,6 +262,19 @@ function extractActionButtons(content: string): ActionButton[] {
       labelKey: 'copilot.actions.exportScript',
       icon: <FileCode className="h-3.5 w-3.5" />,
       to: `/members/scripts?${scriptParams.toString()}`,
+    });
+  }
+
+  // Agent Scoring button — show when response mentions TAKE/WATCH/SKIP or scoring
+  const scoringParams = new URLSearchParams();
+  if (firstTicker) scoringParams.set('symbol', firstTicker);
+  if (firstPattern) scoringParams.set('pattern', firstPattern);
+
+  if (/\b(TAKE|WATCH|SKIP)\b/.test(content) || /agent\s*scor/i.test(lc) || /confidence\s*score/i.test(lc)) {
+    buttons.push({
+      labelKey: 'copilot.actions.scoreTrade',
+      icon: <Sparkles className="h-3.5 w-3.5" />,
+      to: `/tools/agent-scoring${scoringParams.toString() ? '?' + scoringParams.toString() : ''}`,
     });
   }
 
