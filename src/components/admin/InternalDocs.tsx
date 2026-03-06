@@ -2312,7 +2312,7 @@ Market coverage: Tokyo (TSE), Hong Kong (HKEX), Shanghai (SSE), Mumbai (BSE/NSE)
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = \`system-architecture-audit-v2.9-\${new Date().toISOString().split('T')[0]}.md\`;
+    a.download = `system-architecture-audit-v2.9-${new Date().toISOString().split('T')[0]}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
