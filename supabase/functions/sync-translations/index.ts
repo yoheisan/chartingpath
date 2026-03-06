@@ -298,10 +298,16 @@ Deno.serve(async (req) => {
           continue
         }
 
-        console.log(`${langCode}: ${keysToTranslate.length} keys to translate`)
+        const totalRemaining = keysToTranslate.length
+        // Chunk: only process up to KEY_LIMIT keys per invocation
+        const keysThisRun = keysToTranslate.slice(0, KEY_LIMIT)
+        const remainingAfter = totalRemaining - keysThisRun.length
+
+        console.log(`${langCode}: ${keysThisRun.length}/${totalRemaining} keys this run (${remainingAfter} remaining)`)
 
         if (dry_run) {
-          summary[langCode].translated = keysToTranslate.length
+          summary[langCode].translated = keysThisRun.length
+          ;(summary[langCode] as any).remaining = remainingAfter
           continue
         }
 
