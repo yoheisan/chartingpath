@@ -80,6 +80,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
