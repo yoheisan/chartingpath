@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, Loader2, Zap, Settings2, Info, RotateCcw, Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
@@ -21,6 +21,30 @@ import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
 import { SettingsManager } from './agent-backtest/SettingsManager';
 import { SubFilters, AgentScoringSettingsData } from '@/hooks/useAgentScoringSettings';
 import { useUpcomingEconomicEvents } from '@/hooks/useUpcomingEconomicEvents';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+const GUEST_BACKTEST_KEY = 'agent_scoring_guest_backtest';
+
+function hasUsedGuestBacktest(): boolean {
+  try {
+    return localStorage.getItem(GUEST_BACKTEST_KEY) === 'used';
+  } catch { return false; }
+}
+
+function markGuestBacktestUsed(): void {
+  try {
+    localStorage.setItem(GUEST_BACKTEST_KEY, 'used');
+  } catch {}
+}
 
 const PRESETS_KEYS = ['balanced', 'conservative', 'aggressive', 'momentum'] as const;
 
@@ -56,6 +80,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [isRunning, setIsRunning] = useState(false);
   const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
@@ -167,8 +192,13 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      toast.error(t('agentScoring.signInToRun'));
-      navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } });
+      // Guest: check if they already used their free backtest
+      if (hasUsedGuestBacktest()) {
+        setShowAuthGate(true);
+        return;
+      }
+      // First-time guest: show auth gate with "free first backtest" messaging
+      setShowAuthGate(true);
       return;
     }
 
@@ -222,6 +252,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           if (!response.ok) throw new Error(data.error || 'Failed to start run');
 
           toast.success(t('agentScoring.backtestStarted'));
+          markGuestBacktestUsed(); // Track that user has run at least one backtest
           navigate(`/projects/runs/${data.runId}`, {
             state: { fromAgentScoring: true },
           });
@@ -520,6 +551,33 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           />
         </CardContent>
       </Card>
+      {/* Auth Gate Dialog for guest backtest */}
+      <AlertDialog open={showAuthGate} onOpenChange={setShowAuthGate}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <Lock className="h-5 w-5 text-primary" />
+              {hasUsedGuestBacktest()
+                ? t('agentScoring.authGateTitle', 'Sign in to continue backtesting')
+                : t('agentScoring.authGateFreeTitle', 'Create a free account to backtest')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {hasUsedGuestBacktest()
+                ? t('agentScoring.authGateDesc', 'You\'ve used your free backtest. Sign in or create a free account to unlock more backtests and save your results.')
+                : t('agentScoring.authGateFreeDesc', 'Agent Scoring is free to use. Create a free account to run your first backtest and validate your trade ideas with historical data.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-muted-foreground">{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } })}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {t('agentScoring.authGateCta', 'Sign up free')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
