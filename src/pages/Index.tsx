@@ -156,37 +156,30 @@ const Index = () => {
       <WebApplicationJsonLd />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-card to-background">
-          <div className="absolute inset-0 opacity-15"
+      <section ref={heroRef} className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+        {/* Background — subtle grid only */}
+        <div className="absolute inset-0 bg-background">
+          <div className="absolute inset-0 opacity-[0.03]"
             style={{
-              backgroundImage: 'radial-gradient(circle at 30% 40%, hsl(var(--primary)) 0%, transparent 50%), radial-gradient(circle at 70% 60%, hsl(var(--accent)) 0%, transparent 50%)',
+              backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+              backgroundSize: '80px 80px',
             }}
           />
         </div>
         
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'linear-gradient(hsl(var(--primary) / 0.2) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.2) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-        
         {/* Content */}
-        <div className="relative z-10 container mx-auto max-w-6xl text-center px-6">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in">
+        <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
+          <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
               {t('hero.headline1', 'Find Chart Pattern Setups')}
             </span>
             <br />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="text-primary">
               {t('hero.headline2', 'Before They Break Out')}
             </span>
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
             {t('hero.subtitle', `Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.`)}
           </p>
           
@@ -235,24 +228,24 @@ const Index = () => {
           </div>
           
           {/* Trust Block */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.3s' }}>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle className="h-3 w-3 text-primary/60" />
               <span>{t('hero.trustSignals', 'Signals on closed candles')}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-1.5">
+              <CheckCircle className="h-3 w-3 text-primary/60" />
               <span>{t('hero.trustAssumptions', 'Assumptions documented')}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-1.5">
+              <CheckCircle className="h-3 w-3 text-primary/60" />
               <span>{t('hero.trustRepeatability', 'Built for repeatability')}</span>
             </div>
           </div>
 
           {/* Copilot hint */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground/70 animate-fade-in" style={{ animationDelay: '0.35s' }}>
-            <Bot className="h-3.5 w-3.5" />
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+            <Bot className="h-3 w-3" />
             <span>{t('hero.copilotHint', 'Powered by AI Trading Copilot — press ⌘K anywhere')}</span>
           </div>
 
@@ -261,13 +254,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works — moved to position 2 */}
-      <div ref={howItWorksRef}>
+      {/* How It Works */}
+      <div ref={howItWorksRef} className="border-t border-border/20">
         <HowItWorks />
       </div>
 
-      {/* AI Copilot — moved up for visibility */}
-      <div ref={copilotRef}>
+      {/* AI Copilot */}
+      <div ref={copilotRef} className="border-t border-border/20">
         <CopilotShowcase />
       </div>
 
@@ -282,11 +275,11 @@ const Index = () => {
       </div>
 
       {/* Choose Your Action */}
-      <section ref={actionsRef} className="py-16 px-6 bg-muted/30">
+      <section ref={actionsRef} className="py-20 px-6 border-t border-border/20">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
-            <p className="text-muted-foreground">{t('landing.chooseActionSubtitle', 'Pick an activity based on your current goal')}</p>
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Tools</p>
+            <h2 className="text-3xl font-bold">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

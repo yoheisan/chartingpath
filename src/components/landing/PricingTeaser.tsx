@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Check, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { track } from "@/services/analytics";
@@ -27,8 +26,7 @@ export const PricingTeaser = () => {
         t('pricingTeaser.activeAlerts', { count: 5 }),
         t('pricingTeaser.timeframe4h'),
       ],
-      highlighted: false,
-      price: "$12/mo",
+      price: "$12",
     },
     {
       name: t('pricingTeaser.pro'),
@@ -39,7 +37,7 @@ export const PricingTeaser = () => {
         t('pricingTeaser.allTimeframes'),
       ],
       highlighted: true,
-      price: "$79/mo",
+      price: "$79",
     },
   ];
 
@@ -49,42 +47,46 @@ export const PricingTeaser = () => {
   };
 
   return (
-    <section className="py-16 px-6">
+    <section className="py-20 px-6">
       <div className="container mx-auto max-w-7xl">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">{t('pricingTeaser.title')}</h2>
-          <p className="text-muted-foreground">
+        <div className="text-center mb-12">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Pricing</p>
+          <h2 className="text-3xl font-bold mb-2">{t('pricingTeaser.title')}</h2>
+          <p className="text-sm text-muted-foreground">
             {t('pricingTeaser.subtitle')}
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 gap-px bg-border/30 rounded-xl overflow-hidden border border-border/30 mb-10">
           {plans.map((plan) => (
-            <Card 
-              key={plan.name} 
-              className={`text-center ${plan.highlighted ? 'border-primary ring-1 ring-primary/20' : ''}`}
+            <div
+              key={plan.name}
+              className={`p-6 bg-card/30 ${plan.highlighted ? 'bg-primary/[0.03]' : ''}`}
             >
-              <CardContent className="p-6">
-                <div className="text-lg font-bold mb-1">{plan.name}</div>
-                <div className="text-sm text-primary mb-4">{plan.tagline}</div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 justify-center">
-                      <Check className="h-3.5 w-3.5 text-primary" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-lg font-bold">{plan.name}</span>
+                {plan.price && (
+                  <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/mo</span></span>
+                )}
+              </div>
+              <div className="text-xs text-primary font-medium mb-4">{plan.tagline}</div>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <Check className="h-3 w-3 text-primary shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
 
         <div className="text-center">
-          <Button asChild size="lg" variant="outline" onClick={handlePricingClick}>
+          <Button asChild variant="outline" size="sm" onClick={handlePricingClick} className="gap-2">
             <Link to="/pricing">
               {t('pricingTeaser.seeFullPricing')}
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>

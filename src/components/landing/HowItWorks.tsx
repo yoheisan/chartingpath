@@ -1,5 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, FlaskConical, TrendingUp, FileCode, ChevronRight } from "lucide-react";
+import { Search, FlaskConical, TrendingUp, FileCode } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
@@ -15,7 +14,6 @@ export const HowItWorks = () => {
       description: t('howItWorks.discoverDesc'),
       icon: Search,
       link: "/patterns/live",
-      color: "from-blue-500 to-cyan-500",
     },
     {
       stage: 2,
@@ -24,7 +22,6 @@ export const HowItWorks = () => {
       description: t('howItWorks.researchDesc'),
       icon: FlaskConical,
       link: "/projects/pattern-lab/new",
-      color: "from-purple-500 to-pink-500",
     },
     {
       stage: 3,
@@ -33,7 +30,6 @@ export const HowItWorks = () => {
       description: t('howItWorks.executeDesc'),
       icon: TrendingUp,
       link: "/patterns/live",
-      color: "from-green-500 to-emerald-500",
     },
     {
       stage: 4,
@@ -42,46 +38,39 @@ export const HowItWorks = () => {
       description: t('howItWorks.automateDesc'),
       icon: FileCode,
       link: "/members/scripts",
-      color: "from-orange-500 to-amber-500",
     },
   ];
 
   return (
-    <section className="py-16 px-6 bg-muted/20">
+    <section className="py-20 px-6">
       <div className="container mx-auto max-w-7xl">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">{t('howItWorks.sectionTitle')}</h2>
-          <p className="text-muted-foreground">{t('howItWorks.sectionSubtitle')}</p>
+        <div className="text-center mb-12">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('howItWorks.sectionTitle')}</p>
+          <h2 className="text-3xl font-bold">{t('howItWorks.sectionSubtitle')}</h2>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-4">
-          {stages.map((item, idx) => (
-            <Link key={item.stage} to={item.link} className="block group" onClick={() => trackEvent('landing.cta_click', { button: `how_it_works_step_${item.stage}`, label: item.title })}>
-              <Card className="text-center h-full hover:border-primary/50 transition-all duration-300 relative overflow-hidden">
-                <CardContent className="p-5">
-                  <div className={`absolute top-0 left-0 w-8 h-8 bg-gradient-to-br ${item.color} flex items-center justify-center text-white text-xs font-bold rounded-br-lg`}>
-                    {item.stage}
-                  </div>
-                  <div className="flex items-center justify-center mb-3 mt-2">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${item.color} bg-opacity-10 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <item.icon className="h-5 w-5 text-foreground" />
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-lg mb-0.5 group-hover:text-primary transition-colors">{item.title}</h3>
-                  <div className="text-xs text-primary font-medium mb-2">{item.subtitle}</div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
-                  {idx < stages.length - 1 && (
-                    <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10">
-                      <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+        <div className="grid md:grid-cols-4 gap-px bg-border/30 rounded-xl overflow-hidden border border-border/30">
+          {stages.map((item) => (
+            <Link
+              key={item.stage}
+              to={item.link}
+              className="group bg-card hover:bg-muted/40 transition-colors p-6 relative"
+              onClick={() => trackEvent('landing.cta_click', { button: `how_it_works_step_${item.stage}`, label: item.title })}
+            >
+              <div className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest mb-4">
+                Step {item.stage}
+              </div>
+              <div className="mb-3">
+                <item.icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors">{item.title}</h3>
+              <div className="text-xs text-primary/80 font-medium mb-2">{item.subtitle}</div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
             </Link>
           ))}
         </div>
         
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-muted-foreground/60 mt-6">
           {t('howItWorks.footerNote')}
         </p>
       </div>

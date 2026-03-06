@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Layers, Database, Clock, Timer } from "lucide-react";
+import { BarChart3, Layers, Database, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MetricProps {
@@ -42,14 +42,12 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
   }, [value]);
 
   return (
-    <div ref={ref} className="flex items-center gap-2 px-4 py-2">
-      <Icon className="h-4 w-4 text-primary flex-shrink-0" />
-      <div className="text-center">
-        <div className="text-lg font-bold text-foreground">
-          {display.toLocaleString()}{suffix}
-        </div>
-        <div className="text-xs text-muted-foreground whitespace-nowrap">{label}</div>
+    <div ref={ref} className="flex flex-col items-center gap-1 px-6 py-3">
+      <Icon className="h-4 w-4 text-muted-foreground/60 mb-0.5" />
+      <div className="text-2xl font-bold font-mono text-foreground tracking-tight">
+        {display.toLocaleString()}{suffix}
       </div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
     </div>
   );
 };
@@ -69,15 +67,15 @@ export const MetricStrip = () => {
     fetch();
   }, []);
 
-  const metrics: (MetricProps & { decimals?: number })[] = [
-    { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments Scanned"), icon: BarChart3 },
-    { value: 17, suffix: "", label: t("metrics.patterns", "Pattern Types"), icon: Layers },
+  const metrics: MetricProps[] = [
+    { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
+    { value: 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
     { value: 320000, suffix: "+", label: t("metrics.trades", "Historical Trades"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Refresh Cycle"), icon: Clock },
   ];
 
   return (
-    <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-8 animate-fade-in" style={{ animationDelay: "0.4s" }}>
+    <div className="flex flex-wrap justify-center divide-x divide-border/30 mt-10 animate-fade-in" style={{ animationDelay: "0.4s" }}>
       {metrics.map((m) => (
         <AnimatedMetric key={m.label} {...m} />
       ))}
