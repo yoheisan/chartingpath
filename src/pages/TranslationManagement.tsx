@@ -212,44 +212,62 @@ export const TranslationManagement = () => {
       console.error('Key prep error:', e);
     }
 
-    // Second pass: translate one language at a time
+    // Second pass: translate one language at a time, with chunked calls
     for (let i = 0; i < langs.length; i++) {
       const langCode = langs[i];
       const langName = languages.find(l => l.code === langCode)?.name || langCode;
       currentStep++;
       setSyncPercent(Math.round((currentStep / totalSteps) * 100));
-      setSyncProgress(`Translating ${langName} (${i + 1}/${langs.length})...`);
       setSyncLangResults(prev => ({ ...prev, [langCode]: { ...prev[langCode], status: 'syncing' } }));
 
+      let langTranslated = 0;
+      let langErrors = 0;
+      let remaining = Infinity;
+      let chunkNum = 0;
+      const MAX_CHUNKS = 100; // Safety limit
+
       try {
-        const { data, error } = await supabase.functions.invoke('sync-translations', {
-          body: {
-            en_content: enTranslations,
-            target_languages: [langCode],
-            skip_key_creation: true
+        while (remaining > 0 && chunkNum < MAX_CHUNKS) {
+          chunkNum++;
+          setSyncProgress(`Translating ${langName} (${i + 1}/${langs.length}) — chunk ${chunkNum}...`);
+
+          const { data, error } = await supabase.functions.invoke('sync-translations', {
+            body: {
+              en_content: enTranslations,
+              target_languages: [langCode],
+              skip_key_creation: true,
+              max_keys: 60
+            }
+          });
+
+          if (error) {
+            console.error(`Sync error for ${langCode} chunk ${chunkNum}:`, error);
+            langErrors++;
+            break;
           }
-        });
 
-        if (error) {
-          console.error(`Sync error for ${langCode}:`, error);
-          totalErrors++;
-          setSyncLangResults(prev => ({ ...prev, [langCode]: { translated: 0, errors: 1, status: 'error' } }));
-          continue;
-        }
+          const langStats = data?.summary?.[langCode];
+          if (langStats) {
+            langTranslated += langStats.translated || 0;
+            langErrors += langStats.errors || 0;
+            remaining = langStats.remaining ?? 0;
+          } else {
+            remaining = 0;
+          }
 
-        const langStats = data?.summary?.[langCode];
-        if (langStats) {
-          totalTranslated += langStats.translated || 0;
-          totalErrors += langStats.errors || 0;
           setSyncLangResults(prev => ({
             ...prev,
-            [langCode]: { translated: langStats.translated || 0, errors: langStats.errors || 0, status: 'done' }
+            [langCode]: { translated: langTranslated, errors: langErrors, status: 'syncing' }
           }));
-        } else {
-          setSyncLangResults(prev => ({ ...prev, [langCode]: { translated: 0, errors: 0, status: 'done' } }));
         }
 
-        // Refresh coverage after each language so user sees live progress
+        totalTranslated += langTranslated;
+        totalErrors += langErrors;
+        setSyncLangResults(prev => ({
+          ...prev,
+          [langCode]: { translated: langTranslated, errors: langErrors, status: langErrors > 0 && langTranslated === 0 ? 'error' : 'done' }
+        }));
+
         await loadCoverageStats();
       } catch (error) {
         console.error(`Sync error for ${langCode}:`, error);
@@ -436,21 +454,36 @@ export const TranslationManagement = () => {
       });
       if (prepError) console.error('Key prep error:', prepError);
 
-      // Translate the gaps
-      const { data, error } = await supabase.functions.invoke('sync-translations', {
-        body: {
-          en_content: partialEnContent,
-          target_languages: [langCode],
-          skip_key_creation: true
-        }
-      });
+      // Translate the gaps in chunks to avoid edge function timeout
+      let totalTranslated = 0;
+      let totalErrors = 0;
+      let totalSkipped = 0;
+      let remaining = Infinity;
+      let chunkNum = 0;
 
-      if (error) throw error;
+      while (remaining > 0 && chunkNum < 100) {
+        chunkNum++;
+        const { data, error } = await supabase.functions.invoke('sync-translations', {
+          body: {
+            en_content: partialEnContent,
+            target_languages: [langCode],
+            skip_key_creation: true,
+            max_keys: 60
+          }
+        });
 
-      const langStats = data?.summary?.[langCode];
-      const translated = langStats?.translated || 0;
-      const errors = langStats?.errors || 0;
-      const skipped = langStats?.skipped || 0;
+        if (error) throw error;
+
+        const langStats = data?.summary?.[langCode];
+        totalTranslated += langStats?.translated || 0;
+        totalErrors += langStats?.errors || 0;
+        totalSkipped += langStats?.skipped || 0;
+        remaining = langStats?.remaining ?? 0;
+      }
+
+      const translated = totalTranslated;
+      const errors = totalErrors;
+      const skipped = totalSkipped;
 
       // Re-export locale bundle from DB (always, even if 0 new translations —
       // the DB may already have keys the static JSON file is missing)

@@ -49,6 +49,7 @@ interface SyncRequest {
   dry_run?: boolean
   prepare_keys_only?: boolean
   skip_key_creation?: boolean
+  max_keys?: number // Limit keys per invocation to avoid timeout
 }
 
 Deno.serve(async (req) => {
@@ -141,7 +142,8 @@ Deno.serve(async (req) => {
       throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false }: SyncRequest = body
+    const { en_content, target_languages, dry_run = false, prepare_keys_only = false, skip_key_creation = false, max_keys = 60 }: SyncRequest = body
+    const KEY_LIMIT = Math.min(max_keys, 200) // Cap at 200 to stay within timeout
 
     if (!en_content || typeof en_content !== 'object') {
       throw new Error('en_content (English JSON content) is required')
@@ -296,10 +298,16 @@ Deno.serve(async (req) => {
           continue
         }
 
-        console.log(`${langCode}: ${keysToTranslate.length} keys to translate`)
+        const totalRemaining = keysToTranslate.length
+        // Chunk: only process up to KEY_LIMIT keys per invocation
+        const keysThisRun = keysToTranslate.slice(0, KEY_LIMIT)
+        const remainingAfter = totalRemaining - keysThisRun.length
+
+        console.log(`${langCode}: ${keysThisRun.length}/${totalRemaining} keys this run (${remainingAfter} remaining)`)
 
         if (dry_run) {
-          summary[langCode].translated = keysToTranslate.length
+          summary[langCode].translated = keysThisRun.length
+          ;(summary[langCode] as any).remaining = remainingAfter
           continue
         }
 
@@ -313,8 +321,8 @@ Deno.serve(async (req) => {
 
         // Batch translate (20 keys per batch)
         const BATCH_SIZE = 20
-        for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
-          const batch = keysToTranslate.slice(i, i + BATCH_SIZE)
+        for (let i = 0; i < keysThisRun.length; i += BATCH_SIZE) {
+          const batch = keysThisRun.slice(i, i + BATCH_SIZE)
 
           const keysForPrompt = batch.map(k => `"${k.key}": "${k.value}"`).join('\n')
           const toneExamples = toneContext?.map(t => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
@@ -440,8 +448,8 @@ Return ONLY the JSON object, no markdown, no explanation.`
             }
 
             // Small delay between batches to respect rate limits
-            if (i + BATCH_SIZE < keysToTranslate.length) {
-              await new Promise(resolve => setTimeout(resolve, 1000))
+            if (i + BATCH_SIZE < keysThisRun.length) {
+              await new Promise(resolve => setTimeout(resolve, 500))
             }
 
           } catch (batchError) {
@@ -449,6 +457,9 @@ Return ONLY the JSON object, no markdown, no explanation.`
             summary[langCode].errors += batch.length
           }
         }
+
+        // Add remaining count to summary
+        ;(summary[langCode] as any).remaining = remainingAfter
 
       } catch (langError) {
         console.error(`Language ${langCode} error:`, langError)
