@@ -164,7 +164,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             .slice(-20)
             .map(m => ({ role: m.role, content: m.content })),
           language: i18n.language,
-          context: context?.domain || "agent_scoring",
+          ...(context?.domain && { context: context.domain }),
           ...(context?.route && { route: context.route }),
           ...(prewarmedCtx.ready && {
             prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
