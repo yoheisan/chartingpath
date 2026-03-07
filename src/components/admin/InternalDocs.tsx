@@ -569,10 +569,10 @@ const CopilotAITab = () => (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Copilot Full Integration & Self-Improvement Architecture</CardTitle>
-        <CardDescription>15 active tools across 6 data domains. Combined analysis strategy. Last updated: 2026-02-26.</CardDescription>
+        <CardDescription>17 active tools across 7 data domains. Combined analysis strategy. Last updated: 2026-03-07.</CardDescription>
       </CardHeader>
       <CardContent>
-        <SectionHeader icon={Database} title="Tool Inventory — 15 Active Tools" />
+        <SectionHeader icon={Database} title="Tool Inventory — 17 Active Tools" />
         <div className="overflow-x-auto">
           <table className="w-full text-sm border">
             <thead className="bg-muted">
@@ -599,6 +599,8 @@ const CopilotAITab = () => (
                 ["get_user_alerts", "alerts table", "Yes", "Personal"],
                 ["get_paper_portfolio", "paper_portfolios + paper_trades", "Yes", "Personal"],
                 ["get_user_watchlist", "User watchlist read", "Yes", "Personal"],
+                ["get_agent_scoring_settings", "agent_scoring_settings", "Yes", "Scoring"],
+                ["adjust_agent_scoring", "agent_scoring_settings (R/W)", "Yes", "Scoring"],
               ].map(([tool, source, auth, domain]) => (
                 <tr key={tool}>
                   <td className="px-3 py-2 border-b font-mono text-xs text-primary">{tool}</td>
@@ -1988,12 +1990,13 @@ Agent Scoring UI (/tools/agent-scoring)
 
         <SectionHeader icon={Database} title="User Preferences" />
         <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
-          <p>• Custom weights & filters stored in <code className="text-xs bg-background px-1 rounded">agent_scoring_settings</code> table (Supabase + localStorage fallback)</p>
-          <p>• Saveable presets with rename/delete support via SettingsManager component</p>
-          <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
-          <p>• Sub-filters: FX (major/minor/exotic), Stocks (exchange), Crypto (major/alt)</p>
-          <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
-          <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
+           <p>• Custom weights & filters stored in <code className="text-xs bg-background px-1 rounded">agent_scoring_settings</code> table (Supabase + localStorage fallback)</p>
+           <p>• Saveable presets with rename/delete support via SettingsManager component</p>
+           <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
+           <p>• Sub-filters: FX (major/minor/exotic), Stocks (exchange), Crypto (major/alt)</p>
+           <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
+           <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
+           <p>• <strong>Copilot Integration (2026-03-07):</strong> Two new tools — <code className="text-xs bg-background px-1 rounded">get_agent_scoring_settings</code> (read) and <code className="text-xs bg-background px-1 rounded">adjust_agent_scoring</code> (write) — let users modify scoring weights, cutoffs, and filters via natural language in the AI Copilot. Supports suggest-first (default) and direct-apply modes with before/after comparison.</p>
         </div>
       </CardContent>
     </Card>
@@ -2279,6 +2282,13 @@ ar, de, es, fr, hi, id, it, ja, ko, ms, nl, pl, pt, ru, sv, th, tr, uk, vi, zh
 Screener shows raw signal data. Agent Scoring adds two layers of external context:
 1. **Economic calendar awareness** — upcoming high-impact events penalize timing scores for affected currencies
 2. **Portfolio exposure analysis** — basket selections reveal concentration risk, correlation, and directional skew
+
+## Copilot Integration (Added 2026-03-07)
+The AI Copilot can now read and modify Agent Scoring settings via natural language:
+- **get_agent_scoring_settings** — reads user's current weights, cutoffs, and filters
+- **adjust_agent_scoring** — modifies settings with suggest-first (default) or direct-apply mode
+- Example: "Increase my take rate by 5% without increasing risk" → lowers TAKE cutoff while preserving risk weight
+- Weights auto-normalize to sum=100; validation ensures WATCH < TAKE
 
 ---
 
