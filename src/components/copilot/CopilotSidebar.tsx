@@ -153,11 +153,42 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
     if (convoId) saveMessage(convoId, "user", userMessage);
 
     let assistantContent = "";
+    const requestController = new AbortController();
+    const REQUEST_TIMEOUT_MS = 45000;
+    const STREAM_STALL_TIMEOUT_MS = 15000;
+    let requestTimeoutId: number | undefined;
+    let stallTimeoutId: number | undefined;
+
+    const clearTimeoutGuards = () => {
+      if (requestTimeoutId !== undefined) window.clearTimeout(requestTimeoutId);
+      if (stallTimeoutId !== undefined) window.clearTimeout(stallTimeoutId);
+    };
+
+    const resetStallTimeout = () => {
+      if (stallTimeoutId !== undefined) window.clearTimeout(stallTimeoutId);
+      stallTimeoutId = window.setTimeout(() => {
+        requestController.abort(new DOMException("Stream stalled", "AbortError"));
+      }, STREAM_STALL_TIMEOUT_MS);
+    };
 
     try {
+      requestTimeoutId = window.setTimeout(() => {
+        requestController.abort(new DOMException("Request timed out", "AbortError"));
+      }, REQUEST_TIMEOUT_MS);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+      };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const resp = await fetch(chatUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        headers,
+        signal: requestController.signal,
         body: JSON.stringify({
           messages: [...messages, userMsg]
             .filter(m => m.role === "user" || m.content.trim().length > 0)
@@ -187,9 +218,11 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
       const assistantId = crypto.randomUUID();
       setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
 
+      resetStallTimeout();
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
+        resetStallTimeout();
         textBuffer += decoder.decode(value, { stream: true });
         let newlineIndex: number;
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
@@ -239,15 +272,27 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
     } catch (error) {
       console.error("Chat error:", error);
       const isKnownError = error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted");
-      if (!isKnownError) toast.error(t('copilot.errorResponse'));
+      const isTimeout = error instanceof DOMException && error.name === "AbortError";
+      if (isTimeout) toast.error(t('copilot.timeout', 'Copilot request timed out. Please try again.'));
+      if (!isKnownError && !isTimeout) toast.error(t('copilot.errorResponse'));
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "user") {
-          return [...prev, { id: crypto.randomUUID(), role: "assistant" as const, content: isKnownError ? t('copilot.rateLimitedMsg') : t('copilot.errorMsg'), timestamp: new Date() }];
+          return [...prev, {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: isKnownError
+              ? t('copilot.rateLimitedMsg')
+              : isTimeout
+                ? t('copilot.timeoutMsg', 'The request timed out. Please try again with a shorter prompt.')
+                : t('copilot.errorMsg'),
+            timestamp: new Date()
+          }];
         }
         return prev;
       });
     } finally {
+      clearTimeoutGuards();
       setIsLoading(false);
     }
   };
