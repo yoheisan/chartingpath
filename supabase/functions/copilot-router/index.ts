@@ -221,11 +221,13 @@ serve(async (req) => {
     });
 
     if (!downstreamResp.ok) {
-      // Pass through error status from trading-copilot
-      const errBody = await downstreamResp.text();
-      return new Response(errBody, {
+      return new Response(downstreamResp.body, {
         status: downstreamResp.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type":
+            downstreamResp.headers.get("Content-Type") ?? "application/json",
+        },
       });
     }
 
