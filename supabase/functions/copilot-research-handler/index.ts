@@ -24,16 +24,7 @@ const FX_CROSSES = [
   "CADJPY", "CADCHF", "CHFJPY",
 ];
 
-// ============================================
-// SESSION-LEVEL BACKTEST COUNTER
-// ============================================
-
-const backtestCounters = new Map<string, number>();
 const BACKTEST_SESSION_LIMIT = 3;
-
-function getSessionKey(userId: string | null, reqId: string): string {
-  return userId || reqId;
-}
 
 // ============================================
 // TOOL DEFINITIONS
@@ -235,7 +226,6 @@ async function executeRunBacktest(
   supabase: any,
   args: any,
   userId: string | null,
-  sessionKey: string
 ): Promise<any> {
   if (!userId) {
     return {
@@ -244,14 +234,20 @@ async function executeRunBacktest(
     };
   }
 
-  // Check session limit
-  const currentCount = backtestCounters.get(sessionKey) || 0;
-  if (currentCount >= BACKTEST_SESSION_LIMIT) {
+  // Check daily backtest limit from DB
+  const today = new Date().toISOString().split('T')[0];
+  const { count } = await supabase
+    .from('copilot_training_pairs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('domain', 'research')
+    .like('intent_classification', '%backtest%')
+    .gte('created_at', today);
+
+  if ((count ?? 0) >= BACKTEST_SESSION_LIMIT) {
     return {
-      error: "session_limit_reached",
-      message: "You have reached the 3-backtest limit for this session. Please review the results so far.",
-      backtestsRun: currentCount,
-      limit: BACKTEST_SESSION_LIMIT,
+      error: 'session_limit_reached',
+      message: 'You have reached the 3-backtest limit for today. Please review the results so far.',
     };
   }
 
@@ -305,9 +301,8 @@ async function executeRunBacktest(
 
     const result = await response.json();
 
-    // Increment session counter
-    backtestCounters.set(sessionKey, currentCount + 1);
-    const remaining = BACKTEST_SESSION_LIMIT - (currentCount + 1);
+    const used = (count ?? 0) + 1;
+    const remaining = BACKTEST_SESSION_LIMIT - used;
 
     return {
       success: true,
@@ -325,11 +320,11 @@ async function executeRunBacktest(
         expectancy: result.expectancy,
         avgRR: result.avg_rr ?? result.avgRR,
       },
-      sessionBacktestsUsed: currentCount + 1,
-      sessionBacktestsRemaining: remaining,
+      backtestsUsedToday: used,
+      backtestsRemainingToday: remaining,
       message: remaining > 0
-        ? `Backtest complete. You have ${remaining} backtest${remaining === 1 ? "" : "s"} remaining this session.`
-        : "Backtest complete. You have reached the 3-backtest limit for this session.",
+        ? `Backtest complete. You have ${remaining} backtest${remaining === 1 ? "" : "s"} remaining today.`
+        : "Backtest complete. You have reached the 3-backtest limit for today.",
       patternLabUrl: "/pattern-lab",
     };
   } catch (err: any) {
@@ -347,14 +342,13 @@ async function executeTool(
   args: any,
   supabase: any,
   userId: string | null,
-  sessionKey: string
 ) {
   console.log(`[copilot-research] Executing tool: ${toolName}`, args);
   switch (toolName) {
     case "query_edge_atlas":
       return await executeQueryEdgeAtlas(supabase, args);
     case "run_backtest":
-      return await executeRunBacktest(supabase, args, userId, sessionKey);
+      return await executeRunBacktest(supabase, args, userId);
     case "check_backtest_quota":
       return await executeCheckBacktestQuota(supabase, userId);
     default:
@@ -393,9 +387,6 @@ serve(async (req) => {
       } catch {}
     }
 
-    // Generate a session key for backtest limiting
-    const reqId = crypto.randomUUID();
-    const sessionKey = getSessionKey(userId, reqId);
 
     const langCode = (language || "en").toLowerCase();
     const langInstruction = langCode !== "en"
@@ -442,7 +433,7 @@ serve(async (req) => {
           assistantMessage.tool_calls.map(async (tc: any) => {
             let toolArgs: any = {};
             try { toolArgs = JSON.parse(tc.function.arguments || "{}"); } catch { toolArgs = {}; }
-            const toolResult = await executeTool(tc.function.name, toolArgs, supabase, userId, sessionKey);
+            const toolResult = await executeTool(tc.function.name, toolArgs, supabase, userId);
             return { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) };
           })
         );
