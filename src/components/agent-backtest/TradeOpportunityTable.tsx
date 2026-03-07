@@ -87,11 +87,14 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   // --- Portfolio: real exposure if basket context available, else quality proxy ---
   let portfolioRaw: number;
   let portfolioDetails: any = {};
-  if (ctx && ctx.basketSymbols.length > 0) {
+  if (ctx && ctx.basketSelectionKeys.length > 0) {
+    const selectedKeySet = new Set(ctx.basketSelectionKeys);
+    const selectedDetections = ctx.allDetections.filter((det) => selectedKeySet.has(buildDetectionSelectionKey(det)));
     const portfolioResult = computePortfolioScore(
-      d.instrument, d.direction, d.asset_type,
-      ctx.basketSymbols,
-      ctx.allDetections.map(det => ({ instrument: det.instrument, direction: det.direction, asset_type: det.asset_type }))
+      d.instrument,
+      d.direction,
+      d.asset_type,
+      selectedDetections.map(det => ({ instrument: det.instrument, direction: det.direction, asset_type: det.asset_type }))
     );
     portfolioRaw = portfolioResult.score;
     portfolioDetails = portfolioResult.details;
