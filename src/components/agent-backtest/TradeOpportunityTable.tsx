@@ -79,10 +79,38 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   const hp = d.historical_performance as any;
   const winRate = hp?.winRate ?? hp?.win_rate ?? 0.5;
   const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 10;
-  const analystRaw = Math.min(1, winRate * 0.7 + Math.min(sampleSize / 100, 1) * 0.3);
-  const rrNorm = Math.min(d.risk_reward_ratio / 4, 1);
+  // Analyst: 3-component score matching AnalystAgent engine logic
+  // Win-rate component (0–10)
+  const winRateScore = Math.min(10, winRate * 10);
+  // Expectancy component (0–10): avgRMultiple of 1.0+ → full marks
+  const expectancyR = hp?.avgRMultiple ?? hp?.expectancyR ?? 0;
+  const expectancyScore = Math.min(10, Math.max(0, expectancyR) * 10);
+  // Sample confidence (0–5): log2 scale matching AnalystAgent
+  const MIN_SAMPLE = 30;
+  const confidenceScore = sampleSize >= MIN_SAMPLE
+    ? Math.min(5, Math.log2(sampleSize / MIN_SAMPLE + 1) * 2)
+    : Math.min(5, Math.log2(sampleSize / MIN_SAMPLE + 1) * 2) * 0.5;
+  // Normalise to 0–1 (max possible = 25)
+  const analystRaw = Math.min(1, (winRateScore + expectancyScore + confidenceScore) / 25);
+
+  // Risk: 3-component score matching RiskAgent engine logic
+  const MIN_RR = 1.5;
+  const KELLY_CAP = 0.25;
+  // R:R adequacy (0–10): RR >= MIN_RR*2 → 10, == MIN_RR → 5
+  const rrRatio = d.risk_reward_ratio / MIN_RR;
+  const rrScore = Math.min(10, Math.max(0, rrRatio * 5));
+  // ATR stability proxy (0–8): use stop distance as volatility proxy
+  // tighter stop relative to price = more stable = higher score
   const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
-  const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
+  const stabilityScore = Math.max(0, 8 * (1 - Math.min(1, stopDist / 0.05)));
+  // Kelly sizing (0–7): Kelly = winRate - (1-winRate) / RR
+  const kelly = d.risk_reward_ratio > 0
+    ? winRate - (1 - winRate) / d.risk_reward_ratio
+    : 0;
+  const cappedKelly = Math.min(KELLY_CAP, Math.max(0, kelly));
+  const kellyScore = (cappedKelly / KELLY_CAP) * 7;
+  // Normalise to 0–1 (max possible = 25)
+  const riskRaw = Math.min(1, (rrScore + stabilityScore + kellyScore) / 25);
 
   const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
   let timingRaw = trendScore;
