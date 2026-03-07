@@ -66,8 +66,9 @@ const buildServiceRegistry = (): ServiceDefinition[] => [
     category: "core",
     shortDescription: "AI-powered trade scoring that rates every signal TAKE / WATCH / SKIP.",
     faqs: [
-      { q: "What is Agent Scoring?", a: "Agent Scoring is our AI trade evaluator. It weights pattern quality, trend alignment, risk/reward, and historical win-rate to give every signal a TAKE, WATCH, or SKIP verdict — so you focus on the best setups." },
-      { q: "Can I adjust the scoring weights?", a: "Absolutely. Customise how much weight each factor (quality, trend, R:R, win-rate) gets. Save multiple presets for different strategies. You can even ask the AI Copilot to adjust them for you!" },
+      { q: "What is Agent Scoring?", a: "Agent Scoring is our AI trade evaluator. Four specialized agents — Analyst (win rate & expectancy), Risk Manager (R:R, stop distance, Kelly Criterion), Timing (50% trend alignment + 50% economic calendar within 48h), and Portfolio (concentration & correlation) — independently score every signal. The weighted composite (0–100) determines a TAKE, WATCH, or SKIP verdict so you focus on the best setups." },
+      { q: "How does the Timing Agent work?", a: "The Timing Agent blends two components 50/50: (1) Trend alignment — with_trend scores 0.85, neutral 0.55, counter_trend 0.30, based on MACD, EMA 50/200, RSI & ADX. (2) Economic calendar — starts at 1.0, then deducts −0.15 per high-impact event (FOMC, NFP, CPI) and −0.06 per medium-impact event within 48 hours, matched by currency to your instrument. Clear calendar + with-trend = highest timing score." },
+      { q: "Can I adjust the scoring weights?", a: "Absolutely. Customise how much weight each agent (Analyst, Risk, Timing, Portfolio) gets — they auto-normalise to sum 100. Save multiple presets for different strategies. You can even ask the AI Copilot to adjust them for you!" },
       { q: "Can the AI Copilot change my Agent Scoring?", a: "Yes! Just tell the Copilot what you want — 'increase take rate by 5%' or 'make scoring more conservative'. It reads your settings, suggests changes, and applies them when you confirm." },
       { q: "Is Agent Scoring free to use?", a: "Yes! Anyone can score signals. Backtesting your custom weights requires a free account (50 credits included)." },
     ],
