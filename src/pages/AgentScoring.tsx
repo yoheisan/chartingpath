@@ -18,15 +18,13 @@ const AgentScoring = () => {
   const isMobile = useIsMobile();
 
   const handleSendToBacktest = (setup: TradeSetup) => {
-    sessionStorage.setItem('shared_backtest_preset', JSON.stringify({
-      symbol: setup.symbol,
-      patternId: setup.patternId,
-      pattern: setup.pattern,
+    const params = new URLSearchParams({
+      instrument: setup.symbol,
+      pattern: setup.patternId,
       timeframe: setup.timeframe,
-      assetType: setup.assetType,
-      autoRun: true,
-    }));
-    navigate('/projects/pattern-lab/new');
+      mode: 'validate',
+    });
+    navigate(`/projects/pattern-lab/new?${params.toString()}`);
     toast.success(t('agentScoring.loadedIntoPatternLab', { symbol: setup.symbol, pattern: setup.pattern }));
   };
 
