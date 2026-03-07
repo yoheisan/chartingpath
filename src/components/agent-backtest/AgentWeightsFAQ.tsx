@@ -126,13 +126,30 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">⏱️ Timing Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Monitors <strong>macro/economic calendar proximity</strong> and market-session context. It checks for
-                    upcoming high-impact events (FOMC, NFP, CPI), evaluates whether the current session is liquid enough
-                    for the trade's timeframe, and considers weekend/holiday gaps.
+                    Produces a blended score from two equally-weighted components (50/50):
                   </p>
-                  <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize event-aware entries — avoiding trades right before major announcements
-                    or during illiquid after-hours sessions. Essential for news-sensitive instruments.
+                  <ul className="text-xs text-muted-foreground leading-relaxed space-y-1 list-disc pl-4">
+                    <li>
+                      <strong>Trend Score</strong> — based on the detection's trend alignment tag (MACD, EMA 50/200, RSI, ADX):
+                      <strong> with_trend = 0.85</strong>, neutral = 0.55, counter_trend = 0.30.
+                    </li>
+                    <li>
+                      <strong>Event Score</strong> — starts at <strong>1.0</strong> (clear calendar). The system queries the
+                      <code className="text-[10px] bg-muted/60 px-1 rounded">economic_events</code> table for events within a
+                      <strong> 48-hour lookahead window</strong>, then matches them to the instrument by currency
+                      (e.g., GBPJPY is affected by both GB and JP events). Each relevant <strong>high-impact</strong> event
+                      (FOMC, NFP, CPI, rate decisions) deducts <strong>−0.15</strong>; each <strong>medium-impact</strong> event
+                      (PMI, retail sales) deducts <strong>−0.06</strong>. Floors at 0.
+                    </li>
+                  </ul>
+                  <div className="bg-muted/40 border border-border rounded-lg p-2 mt-1">
+                    <code className="text-[11px] text-foreground font-mono">
+                      Timing = trendScore × 0.5 + eventScore × 0.5
+                    </code>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/80 italic mt-1">
+                    High weight → You prioritize event-aware, trend-aligned entries — avoiding trades right before major
+                    announcements or against the prevailing trend. Essential for news-sensitive instruments like forex.
                   </p>
                 </div>
               </div>
