@@ -167,3 +167,68 @@ This ensures every answer is **more specific and data-backed** than what users c
 ## Files Modified
 
 - `supabase/functions/trading-copilot/index.ts` — All tool definitions, handlers, context builder, system prompt
+
+---
+
+## Copilot Orchestration Layer — v2.0 (March 2026)
+
+### What Changed
+
+The monolithic `trading-copilot` edge function has been extended with a domain routing layer. The original function is **unchanged and untouched** — it now serves as the `general` domain fallback.
+
+### New Architecture
+
+User message → CopilotSidebar (frontend) → copilot-router (intent classifier) → copilot-scoring-handler (domain: scoring) → copilot-screener-handler (domain: screener) → copilot-research-handler (domain: research) → trading-copilot (domain: general — unchanged) → SSE stream piped back to user → Classification logged to copilot_training_pairs
+
+### New Edge Functions
+
+| Function | Purpose |
+|---|---|
+| `copilot-router` | Classifies intent via Gemini Flash Lite into 4 domains. Confidence < 0.6 → general. Logs domain + intent to `copilot_training_pairs`. Pipes SSE stream without buffering. |
+| `copilot-scoring-handler` | Specialist for agent scoring. Tools: `get_agent_scoring_settings`, `adjust_agent_scoring`. Suggest-before-apply pattern. |
+| `copilot-screener-handler` | Specialist for pattern search. Tools: `search_patterns`, `query_edge_atlas`. NL filter builder. Includes `last_scanned_at` for data freshness. Auto-fallback on empty results. |
+| `copilot-research-handler` | Specialist for instrument research and backtesting. Tools: `query_edge_atlas`, `run_backtest`, `check_backtest_quota`. Hard limit: 3 backtests per day per user (DB-backed counter). |
+| `copilot-outcome` | RLHF feedback loop. Accepts `{ training_pair_id, outcome }` and updates `copilot_training_pairs.outcome_signals`. Fires when user sends follow-up message. |
+
+### Database Changes
+
+**Table: `copilot_training_pairs` — 3 new columns added:**
+| Column | Type | Purpose |
+|---|---|---|
+| `domain` | TEXT | Which handler processed the request |
+| `intent_classification` | TEXT | Router's sub-intent label |
+| `parameters_used` | JSONB | Structured parameters + classification confidence |
+
+**New table: `copilot_model_versions`**
+Tracks fine-tuned model versions (model_type, version_tag, training_date, accuracy_metrics, is_active). RLS locked to admin + service_role only.
+
+### Frontend Changes
+
+`CopilotSidebar.tsx` — Optional `context` prop added:
+- No context passed = routes to `trading-copilot` (unchanged behaviour)
+- Context passed = routes to `copilot-router` with domain hint and quick prompt chips
+
+Pages updated:
+| Page | Domain | Quick Prompts |
+|---|---|---|
+| `AgentScoring.tsx` | scoring | Make conservative, Optimise win rate, Show settings |
+| `LivePatternsPage.tsx` | screener | What's working now, A-grade crypto, Best forex today |
+| `PatternLabWizard.tsx` | research | Most profitable pattern, >60% win rate, Check quota |
+
+### RLHF Data Pipeline (Active)
+
+Every routed message now logs `domain` and `intent_classification` to `copilot_training_pairs`. Outcome signals fire when users send follow-up messages (`clicked_through`). This data accumulates toward the 10K labeled interaction threshold required for Phase 3 fine-tuning of a proprietary intent classifier.
+
+### Files Added
+
+| File | Action |
+|---|---|
+| `supabase/functions/copilot-router/index.ts` | New |
+| `supabase/functions/copilot-scoring-handler/index.ts` | New |
+| `supabase/functions/copilot-screener-handler/index.ts` | New |
+| `supabase/functions/copilot-research-handler/index.ts` | New |
+| `supabase/functions/copilot-outcome/index.ts` | New |
+
+### Files Unchanged
+
+`supabase/functions/trading-copilot/index.ts` — untouched. Serves as general domain fallback.
