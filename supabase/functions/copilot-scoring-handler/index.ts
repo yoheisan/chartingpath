@@ -323,14 +323,13 @@ serve(async (req) => {
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[copilot-scoring] AI round ${round}`);
 
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/chat/completions?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "gemini-2.5-flash",
           messages: convoMessages,
           tools,
           tool_choice: "auto",
