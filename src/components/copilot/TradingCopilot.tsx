@@ -446,28 +446,26 @@ export function TradingCopilot({
 
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-accent/10">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-accent text-white">
           <div className="flex items-center gap-2">
             {!isMobile && isAuthenticated && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowHistory(v => !v)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10" onClick={() => setShowHistory(v => !v)}>
                 {showHistory ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
               </Button>
             )}
-            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
+            <Sparkles className="h-5 w-5 text-white/90" />
             <div>
-              <h3 className="font-semibold text-sm">{t('copilot.title')}</h3>
-              <p className="text-xs text-muted-foreground">{t('copilot.subtitle')}</p>
+              <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
+              <p className="text-xs text-white/70">{t('copilot.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
-              <Button variant="ghost" size="icon" onClick={handleNewChat} title={t('copilot.home', 'Home')}>
+              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={handleNewChat} title={t('copilot.home', 'Home')}>
                 <Home className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onToggle}>
+            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onToggle}>
               <X className="h-4 w-4" />
             </Button>
           </div>

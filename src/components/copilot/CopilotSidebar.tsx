@@ -313,23 +313,21 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   return (
     <div className="flex flex-col h-full bg-background border-r border-border">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/10 to-accent/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary to-accent text-white">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-            <Sparkles className="h-3.5 w-3.5 text-white" />
-          </div>
+          <Sparkles className="h-4 w-4 text-white/90" />
           <div>
-            <h3 className="font-semibold text-sm">{t('copilot.title', 'AI Copilot')}</h3>
-            <p className="text-[10px] text-muted-foreground">{t('copilot.agentScoringContext', 'Agent Scoring mode')}</p>
+            <h3 className="font-semibold text-sm text-white">{t('copilot.title', 'AI Copilot')}</h3>
+            <p className="text-[10px] text-white/70">{t('copilot.agentScoringContext', 'Agent Scoring mode')}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNewChat} title="New chat">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10" onClick={handleNewChat} title="New chat">
               <Home className="h-3.5 w-3.5" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10" onClick={onClose}>
             <PanelLeftClose className="h-3.5 w-3.5" />
           </Button>
         </div>
