@@ -1221,6 +1221,39 @@ export type Database = {
           },
         ]
       }
+      copilot_model_versions: {
+        Row: {
+          accuracy_metrics: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          model_type: string
+          training_date: string
+          training_rows_count: number | null
+          version_tag: string
+        }
+        Insert: {
+          accuracy_metrics?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_type: string
+          training_date?: string
+          training_rows_count?: number | null
+          version_tag: string
+        }
+        Update: {
+          accuracy_metrics?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_type?: string
+          training_date?: string
+          training_rows_count?: number | null
+          version_tag?: string
+        }
+        Relationships: []
+      }
       copilot_platform_context: {
         Row: {
           computed_at: string
@@ -1248,10 +1281,13 @@ export type Database = {
       copilot_training_pairs: {
         Row: {
           created_at: string
+          domain: string | null
           dpo_eligible: boolean | null
           id: string
+          intent_classification: string | null
           is_preferred: boolean | null
           outcome_signals: Json | null
+          parameters_used: Json | null
           prompt: string
           response: string
           reward_score: number | null
@@ -1262,10 +1298,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          domain?: string | null
           dpo_eligible?: boolean | null
           id?: string
+          intent_classification?: string | null
           is_preferred?: boolean | null
           outcome_signals?: Json | null
+          parameters_used?: Json | null
           prompt: string
           response: string
           reward_score?: number | null
@@ -1276,10 +1315,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          domain?: string | null
           dpo_eligible?: boolean | null
           id?: string
+          intent_classification?: string | null
           is_preferred?: boolean | null
           outcome_signals?: Json | null
+          parameters_used?: Json | null
           prompt?: string
           response?: string
           reward_score?: number | null
