@@ -9,7 +9,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
 // ============================================
 // TOOL DEFINITIONS
@@ -323,21 +324,38 @@ serve(async (req) => {
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[copilot-scoring] AI round ${round}`);
 
-      const aiResp = await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GEMINI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.5-flash",
-          messages: convoMessages,
-          tools,
-          tool_choice: "auto",
-          stream: false,
-          max_tokens: 4096,
-        }),
-      });
+      const aiRequestBody = {
+        model: "google/gemini-2.5-flash",
+        messages: convoMessages,
+        tools,
+        tool_choice: "auto",
+        stream: false,
+        max_tokens: 4096,
+      };
+
+      const aiResp = LOVABLE_API_KEY
+        ? await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(aiRequestBody),
+            signal: AbortSignal.timeout(25000),
+          })
+        : GEMINI_API_KEY
+          ? await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${GEMINI_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ...aiRequestBody, model: "gemini-2.5-flash" }),
+              signal: AbortSignal.timeout(25000),
+            })
+          : (() => {
+              throw new Error("Neither LOVABLE_API_KEY nor GEMINI_API_KEY is configured");
+            })();
 
       if (!aiResp.ok) {
         const errText = await aiResp.text().catch(() => "");
