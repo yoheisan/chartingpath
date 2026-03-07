@@ -1875,6 +1875,205 @@ async function executeGetPaperPortfolio(supabase: any, userId: string | null) {
 }
 
 // ============================================
+// AGENT SCORING SETTINGS TOOLS
+// ============================================
+
+async function executeGetAgentScoringSettings(supabase: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to view your Agent Scoring settings.',
+      suggestion: 'Log in first, then I can read and adjust your scoring preferences.',
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('agent_scoring_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[trading-copilot] Agent scoring settings error:', error);
+    return { error: 'Failed to fetch settings' };
+  }
+
+  if (!data?.length) {
+    return {
+      message: 'No saved Agent Scoring presets found. Using defaults.',
+      defaults: {
+        weights: { analyst: 30, risk: 25, timing: 20, portfolio: 25 },
+        takeCutoff: 70,
+        watchCutoff: 50,
+        assetClassFilter: 'all',
+        timeframeFilter: 'all',
+        subFilters: {}
+      },
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  return {
+    count: data.length,
+    settings: data.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      isDefault: s.is_default,
+      weights: s.weights,
+      takeCutoff: s.take_cutoff,
+      watchCutoff: s.watch_cutoff,
+      assetClassFilter: s.asset_class_filter,
+      timeframeFilter: s.timeframe_filter,
+      subFilters: s.sub_filters,
+    })),
+    settingsUrl: '/tools/agent-scoring'
+  };
+}
+
+async function executeAdjustAgentScoring(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to adjust Agent Scoring settings.',
+      suggestion: 'Log in first, then I can modify your scoring preferences.',
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  const action = args.action || 'suggest';
+
+  // Get current settings
+  const { data: existing } = await supabase
+    .from('agent_scoring_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('is_default', { ascending: false })
+    .limit(1);
+
+  const current = existing?.[0];
+  const currentWeights = current?.weights || { analyst: 30, risk: 25, timing: 20, portfolio: 25 };
+  const currentTake = current?.take_cutoff ?? 70;
+  const currentWatch = current?.watch_cutoff ?? 50;
+
+  // Build new values
+  const newWeights = {
+    analyst: args.analyst_weight ?? currentWeights.analyst,
+    risk: args.risk_weight ?? currentWeights.risk,
+    timing: args.timing_weight ?? currentWeights.timing,
+    portfolio: args.portfolio_weight ?? currentWeights.portfolio,
+  };
+
+  // Normalize weights to sum to 100
+  const totalW = newWeights.analyst + newWeights.risk + newWeights.timing + newWeights.portfolio;
+  if (totalW > 0 && totalW !== 100) {
+    const factor = 100 / totalW;
+    newWeights.analyst = Math.round(newWeights.analyst * factor * 10) / 10;
+    newWeights.risk = Math.round(newWeights.risk * factor * 10) / 10;
+    newWeights.timing = Math.round(newWeights.timing * factor * 10) / 10;
+    newWeights.portfolio = Math.round(newWeights.portfolio * factor * 10) / 10;
+  }
+
+  const newTake = args.take_cutoff ?? currentTake;
+  const newWatch = args.watch_cutoff ?? currentWatch;
+  const newAssetClass = args.asset_class_filter ?? current?.asset_class_filter ?? 'all';
+  const newTimeframe = args.timeframe_filter ?? current?.timeframe_filter ?? 'all';
+
+  // Validation
+  if (newWatch >= newTake) {
+    return {
+      error: `WATCH cutoff (${newWatch}) must be lower than TAKE cutoff (${newTake}). Adjust the values.`,
+      currentSettings: { weights: currentWeights, takeCutoff: currentTake, watchCutoff: currentWatch }
+    };
+  }
+
+  const changes: string[] = [];
+  if (args.analyst_weight != null || args.risk_weight != null || args.timing_weight != null || args.portfolio_weight != null) {
+    changes.push(`Weights: Analyst ${currentWeights.analyst}→${newWeights.analyst}, Risk ${currentWeights.risk}→${newWeights.risk}, Timing ${currentWeights.timing}→${newWeights.timing}, Portfolio ${currentWeights.portfolio}→${newWeights.portfolio}`);
+  }
+  if (args.take_cutoff != null) changes.push(`TAKE cutoff: ${currentTake}→${newTake}`);
+  if (args.watch_cutoff != null) changes.push(`WATCH cutoff: ${currentWatch}→${newWatch}`);
+  if (args.asset_class_filter) changes.push(`Asset class: ${current?.asset_class_filter || 'all'}→${newAssetClass}`);
+  if (args.timeframe_filter) changes.push(`Timeframe: ${current?.timeframe_filter || 'all'}→${newTimeframe}`);
+
+  if (action === 'suggest') {
+    return {
+      mode: 'suggestion',
+      message: 'Here are the recommended changes. Ask me to "apply" them if you agree.',
+      changes,
+      proposed: {
+        weights: newWeights,
+        takeCutoff: newTake,
+        watchCutoff: newWatch,
+        assetClassFilter: newAssetClass,
+        timeframeFilter: newTimeframe,
+      },
+      current: {
+        weights: currentWeights,
+        takeCutoff: currentTake,
+        watchCutoff: currentWatch,
+        assetClassFilter: current?.asset_class_filter || 'all',
+        timeframeFilter: current?.timeframe_filter || 'all',
+      },
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  // Apply the changes
+  const presetName = args.preset_name || current?.name || 'Copilot Adjusted';
+  const row = {
+    name: presetName,
+    weights: newWeights,
+    take_cutoff: newTake,
+    watch_cutoff: newWatch,
+    asset_class_filter: newAssetClass,
+    timeframe_filter: newTimeframe,
+    sub_filters: current?.sub_filters || {},
+    is_default: current?.is_default ?? true,
+    updated_at: new Date().toISOString(),
+  };
+
+  let resultId: string;
+  if (current?.id) {
+    const { error } = await supabase
+      .from('agent_scoring_settings')
+      .update(row)
+      .eq('id', current.id);
+    if (error) {
+      console.error('[trading-copilot] Update scoring settings error:', error);
+      return { error: 'Failed to update settings. Please try via the Agent Scoring page.' };
+    }
+    resultId = current.id;
+  } else {
+    const { data: inserted, error } = await supabase
+      .from('agent_scoring_settings')
+      .insert({ ...row, user_id: userId })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[trading-copilot] Insert scoring settings error:', error);
+      return { error: 'Failed to save settings. Please try via the Agent Scoring page.' };
+    }
+    resultId = inserted.id;
+  }
+
+  return {
+    mode: 'applied',
+    message: `Settings updated successfully! Preset: "${presetName}"`,
+    changes,
+    applied: {
+      id: resultId,
+      name: presetName,
+      weights: newWeights,
+      takeCutoff: newTake,
+      watchCutoff: newWatch,
+      assetClassFilter: newAssetClass,
+      timeframeFilter: newTimeframe,
+    },
+    settingsUrl: '/tools/agent-scoring',
+    tip: 'Open Agent Scoring to see the updated results. You may need to refresh the page.'
+  };
+}
+
+// ============================================
 // DYNAMIC PROMPT PATCHING — Self-Improvement Layer
 // ============================================
 
