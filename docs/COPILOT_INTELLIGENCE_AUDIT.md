@@ -91,6 +91,30 @@ The Trading Copilot has been upgraded from a basic pattern-lookup chatbot to a *
 
 ---
 
+## Pillar 5: Agent Scoring Copilot Control (`get_agent_scoring_settings` + `adjust_agent_scoring`)
+
+**Problem solved**: Users had to manually navigate to the Agent Scoring page and tweak sliders to change scoring behavior. Now they can simply tell the Copilot what they want in natural language.
+
+**Tools**:
+| Tool | Purpose |
+|---|---|
+| `get_agent_scoring_settings` | Reads user's current weights, cutoffs, filters, and presets |
+| `adjust_agent_scoring` | Modifies settings with suggest-first (default) or direct-apply mode |
+
+**Capabilities**:
+- Adjust agent weights (Analyst, Risk, Timing, Portfolio) — auto-normalized to sum=100
+- Modify TAKE/WATCH cutoff thresholds with validation (WATCH must be < TAKE)
+- Change asset class and timeframe filters
+- Two modes: **suggest** (shows before/after comparison) and **apply** (saves directly)
+- Creates or updates presets in `agent_scoring_settings` table
+
+**Example interactions**:
+- "Increase take rate by 5% without increasing risk" → lowers TAKE cutoff by ~3-5 points, keeps risk weight unchanged
+- "Make scoring more conservative" → raises TAKE cutoff, increases risk weight
+- "Only show forex signals" → sets asset_class_filter to 'fx'
+
+---
+
 ## Tool Inventory (Full)
 
 | Tool | Category | New? | Description |
