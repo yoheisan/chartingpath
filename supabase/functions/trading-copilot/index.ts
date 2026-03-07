@@ -564,14 +564,16 @@ async function executeSearchPatterns(supabase: any, args: any) {
     return { error: 'Failed to search patterns', patterns: [] };
   }
 
-  // Auto-fallback: if no results and quality filter was strict, broaden to B/C
-  if ((!data || data.length === 0) && args.min_quality === 'A') {
-    console.log('[trading-copilot] No A-quality results, falling back to B+C quality');
+  // Auto-fallback: if no results and quality filter was A or B, broaden progressively
+  if ((!data || data.length === 0) && (args.min_quality === 'A' || args.min_quality === 'B')) {
+    const fallbackGrades = args.min_quality === 'A' ? ['B'] : ['C'];
+    const fallbackLabel = args.min_quality === 'A' ? 'B-quality' : 'C-quality';
+    console.log(`[trading-copilot] No ${args.min_quality}-quality results, falling back to ${fallbackLabel}`);
     let fallbackQuery = supabase
       .from('live_pattern_detections')
       .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
       .eq('status', 'active')
-      .in('quality_score', ['B', 'C'])
+      .in('quality_score', fallbackGrades)
       .order('first_detected_at', { ascending: false })
       .limit(args.limit || 10);
 
@@ -585,7 +587,7 @@ async function executeSearchPatterns(supabase: any, args: any) {
     return {
       count: fallbackData?.length || 0,
       fallbackApplied: true,
-      fallbackReason: 'No A-quality patterns found. Showing best available B/C-quality setups instead.',
+      fallbackReason: `No ${args.min_quality}-quality patterns found. Showing best available ${fallbackLabel} setups instead.`,
       patterns: formatPatterns(fallbackData)
     };
   }
