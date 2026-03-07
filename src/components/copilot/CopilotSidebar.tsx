@@ -355,7 +355,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
           <Sparkles className="h-4 w-4 text-white/90" />
           <div>
             <h3 className="font-semibold text-sm text-white">{t('copilot.title', 'AI Copilot')}</h3>
-            <p className="text-[10px] text-white/70">{t('copilot.agentScoringContext', 'Agent Scoring mode')}</p>
+            <p className="text-xs text-white/70">{t('copilot.agentScoringContext', 'Agent Scoring mode')}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -385,11 +385,11 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <p className="text-[10px] text-muted-foreground font-medium px-1">{t('copilot.trySaying', 'Try saying:')}</p>
+                <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.trySaying', 'Try saying:')}</p>
                 {QUICK_PROMPTS.map((p) => (
                   <button
                     key={p.label}
-                    className="w-full text-left text-xs px-3 py-2 rounded-md border border-border/50 hover:bg-muted/50 hover:border-border transition-colors"
+                    className="w-full text-left text-sm px-3 py-2 rounded-md border border-border/50 hover:bg-muted/50 hover:border-border transition-colors"
                     onClick={() => { if (!guestLimitReached) { if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount()); streamChat(p.label); } }}
                     disabled={isLoading}
                   >
@@ -403,7 +403,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               {messages.map((message) => (
                 <div key={message.id} className={cn("flex flex-col gap-1", message.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(
-                    "rounded-lg px-3 py-2 text-xs leading-relaxed",
+                    "rounded-lg px-3 py-2 text-sm leading-relaxed",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground max-w-[90%]"
                       : "bg-muted w-full"
@@ -463,7 +463,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
         <div className="p-3 border-t bg-background">
           {!isAuthenticated && guestMsgCount > 0 && (
             <div className="flex justify-center mb-1.5">
-              <Badge variant="secondary" className="text-[10px] font-normal">
+              <Badge variant="secondary" className="text-xs font-normal">
                 {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free left
               </Badge>
             </div>
@@ -474,7 +474,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                 <button
                   key={prompt}
                   type="button"
-                  className="text-[10px] px-2 py-1 rounded-full border border-border/50 bg-muted/30 hover:bg-muted hover:border-border text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs px-2 py-1 rounded-full border border-border/50 bg-muted/30 hover:bg-muted hover:border-border text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setInput(prompt)}
                   disabled={isLoading}
                 >
@@ -491,7 +491,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }}
               placeholder={t('copilot.agentScoringPlaceholder', 'e.g. "increase take rate by 5%"')}
               disabled={isLoading}
-              className="flex-1 min-h-[3rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 min-h-[3rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
               rows={2}
             />
             <Button type="submit" size="icon" className="h-auto self-end" disabled={isLoading || !input.trim()}>
