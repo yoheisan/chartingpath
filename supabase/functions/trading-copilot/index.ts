@@ -298,6 +298,42 @@ const tools = [
         required: []
       }
     }
+  },
+  // ===== AGENT SCORING ADJUSTMENT TOOLS =====
+  {
+    type: "function",
+    function: {
+      name: "get_agent_scoring_settings",
+      description: "Get the authenticated user's current Agent Scoring settings including weights (Analyst, Risk, Timing, Portfolio), verdict cutoffs (TAKE/WATCH thresholds), asset class filter, timeframe filter, and sub-filters. Use when users ask about their current scoring settings or before making adjustments. Requires login.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "adjust_agent_scoring",
+      description: "Adjust the user's Agent Scoring settings based on their natural language request. Can modify agent weights (Analyst 0-100, Risk 0-100, Timing 0-100, Portfolio 0-100 — they auto-normalize to sum=100), TAKE cutoff (0-100, higher = stricter), WATCH cutoff (0-100), asset class filter, timeframe filter, and sub-filters. Use when users say things like 'increase take rate', 'reduce risk', 'make scoring more aggressive', 'only show forex', etc. Requires login. IMPORTANT: Always call get_agent_scoring_settings first to see current values before adjusting.",
+      parameters: {
+        type: "object",
+        properties: {
+          preset_name: { type: "string", description: "Name for the new or updated preset. If omitted, updates the user's default preset." },
+          analyst_weight: { type: "number", description: "New Analyst agent weight (0-100). Controls pattern quality analysis influence." },
+          risk_weight: { type: "number", description: "New Risk agent weight (0-100). Controls ATR-based risk assessment influence." },
+          timing_weight: { type: "number", description: "New Timing agent weight (0-100). Controls trend alignment and economic calendar influence." },
+          portfolio_weight: { type: "number", description: "New Portfolio agent weight (0-100). Controls diversification analysis influence." },
+          take_cutoff: { type: "number", description: "TAKE verdict threshold (0-100). Signals scoring >= this get TAKE. Higher = stricter/fewer TAKE signals." },
+          watch_cutoff: { type: "number", description: "WATCH verdict threshold (0-100). Signals scoring >= this but < take_cutoff get WATCH. Must be < take_cutoff." },
+          asset_class_filter: { type: "string", enum: ["all", "fx", "crypto", "stocks", "indices", "commodities"], description: "Filter scoring to specific asset class." },
+          timeframe_filter: { type: "string", enum: ["all", "1h", "4h", "8h", "1d", "1wk"], description: "Filter scoring to specific timeframe." },
+          action: { type: "string", enum: ["apply", "suggest"], description: "Whether to directly apply changes ('apply') or just suggest them ('suggest'). Default 'suggest' unless user explicitly asks to change/set/update." }
+        },
+        required: []
+      }
+    }
   }
 ];
 
