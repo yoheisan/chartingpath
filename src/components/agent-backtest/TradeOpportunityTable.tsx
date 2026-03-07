@@ -49,16 +49,20 @@ interface Props {
   detections: LiveDetectionRow[];
   isLoading?: boolean;
   onSendToBacktest?: (setup: TradeSetup) => void;
-  basketSymbols?: string[];
-  onToggleBasket?: (symbol: string) => void;
+  basketSelections?: string[];
+  onToggleBasket?: (selectionKey: string) => void;
   economicEvents?: UpcomingEconomicEvent[];
 }
 
 export interface ScoringContext {
   economicEvents: UpcomingEconomicEvent[];
-  basketSymbols: string[];
+  basketSelectionKeys: string[];
   allDetections: LiveDetectionRow[];
 }
+
+export const buildDetectionSelectionKey = (d: Pick<LiveDetectionRow, 'instrument' | 'pattern_id' | 'direction' | 'timeframe'>): string => {
+  return `${d.instrument}__${d.pattern_id}__${(d.direction || '').toLowerCase()}__${d.timeframe}`;
+};
 
 export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   const hp = d.historical_performance as any;
@@ -83,11 +87,14 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   // --- Portfolio: real exposure if basket context available, else quality proxy ---
   let portfolioRaw: number;
   let portfolioDetails: any = {};
-  if (ctx && ctx.basketSymbols.length > 0) {
+  if (ctx && ctx.basketSelectionKeys.length > 0) {
+    const selectedKeySet = new Set(ctx.basketSelectionKeys);
+    const selectedDetections = ctx.allDetections.filter((det) => selectedKeySet.has(buildDetectionSelectionKey(det)));
     const portfolioResult = computePortfolioScore(
-      d.instrument, d.direction, d.asset_type,
-      ctx.basketSymbols,
-      ctx.allDetections.map(det => ({ instrument: det.instrument, direction: det.direction, asset_type: det.asset_type }))
+      d.instrument,
+      d.direction,
+      d.asset_type,
+      selectedDetections.map(det => ({ instrument: det.instrument, direction: det.direction, asset_type: det.asset_type }))
     );
     portfolioRaw = portfolioResult.score;
     portfolioDetails = portfolioResult.details;
@@ -141,7 +148,7 @@ const SortableHeader: React.FC<{
   </th>
 );
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket, economicEvents = [] }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSelections = [], onToggleBasket, economicEvents = [] }) => {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -157,9 +164,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
 
   const scoringCtx: ScoringContext = useMemo(() => ({
     economicEvents,
-    basketSymbols,
+    basketSelectionKeys: basketSelections,
     allDetections: detections,
-  }), [economicEvents, basketSymbols, detections]);
+  }), [economicEvents, basketSelections, detections]);
 
   const scoredTrades = useMemo(() => {
     const scored = detections.map((d) => {
@@ -172,8 +179,15 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
       return {
-        id: d.id, symbol: d.instrument, pattern: d.pattern_name, patternId: d.pattern_id,
-        direction, timeframe: d.timeframe, rr: d.risk_reward_ratio, assetType: d.asset_type,
+        id: d.id,
+        symbol: d.instrument,
+        pattern: d.pattern_name,
+        patternId: d.pattern_id,
+        selectionKey: buildDetectionSelectionKey(d),
+        direction,
+        timeframe: d.timeframe,
+        rr: d.risk_reward_ratio,
+        assetType: d.asset_type,
         analystRaw, riskRaw, timingRaw, portfolioRaw,
         analystScore, riskScore, timingScore, portfolioScore, composite, verdict,
       };
@@ -293,13 +307,13 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                       variant="ghost"
                       size="sm"
                       className={`h-6 w-6 p-0 rounded-full transition-all ${
-                        basketSymbols.includes(trade.symbol)
+                        basketSelections.includes(trade.selectionKey)
                           ? 'bg-primary text-primary-foreground hover:bg-primary/80'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
-                      onClick={() => onToggleBasket(trade.symbol)}
+                      onClick={() => onToggleBasket(trade.selectionKey)}
                     >
-                      {basketSymbols.includes(trade.symbol) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                      {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                     </Button>
                   </td>
                 )}

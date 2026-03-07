@@ -31,11 +31,8 @@ export function computePortfolioScore(
   symbol: string,
   direction: string,
   assetType: string,
-  basketSymbols: string[],
-  allDetections: Array<{ instrument: string; direction: string; asset_type: string }>
+  basketDetections: Array<{ instrument: string; direction: string; asset_type: string }>
 ): { score: number; details: PortfolioExposureContext } {
-  // Get basket detections for context
-  const basketDetections = allDetections.filter(d => basketSymbols.includes(d.instrument));
   const totalPositions = basketDetections.length;
 
   if (totalPositions === 0) {

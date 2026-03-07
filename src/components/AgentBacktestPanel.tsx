@@ -10,7 +10,7 @@ import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext, buildDetectionSelectionKey } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -78,17 +78,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [subFilters, setSubFilters] = useState<SubFilters>({});
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
-  const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+  const [basketSelections, setBasketSelections] = useState<string[]>([]);
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
 
-  const toggleBasket = (symbol: string) => {
-    setBasketSymbols((prev) => {
-      const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
-      setSymbols(next.join(', '));
+  const selectedDetections = useMemo(() => {
+    const keySet = new Set(basketSelections);
+    return liveDetections.filter((d) => keySet.has(buildDetectionSelectionKey(d)));
+  }, [liveDetections, basketSelections]);
+
+  const toggleBasket = (selectionKey: string) => {
+    setBasketSelections((prev) => {
+      const next = prev.includes(selectionKey)
+        ? prev.filter((s) => s !== selectionKey)
+        : [...prev, selectionKey];
+
+      const nextKeySet = new Set(next);
+      const nextSymbols = liveDetections
+        .filter((d) => nextKeySet.has(buildDetectionSelectionKey(d)))
+        .map((d) => d.instrument);
+      const uniqueSymbols = [...new Set(nextSymbols)];
+      setSymbols(uniqueSymbols.join(', '));
+
       return next;
     });
   };
@@ -128,8 +142,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
   const gaugeStats = useMemo(() => {
     if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
-    
-    const ctx: ScoringContext = { economicEvents, basketSymbols, allDetections: liveDetections };
+
+    const ctx: ScoringContext = { economicEvents, basketSelectionKeys: basketSelections, allDetections: liveDetections };
     const composites = liveDetections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, ctx);
       return analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
@@ -145,7 +159,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       skipRate: (skips / total) * 100,
       avgScore: avg,
     };
-  }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSymbols]);
+  }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSelections]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
@@ -472,27 +486,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.backtestBasket')}</span>
                 </div>
-                {basketSymbols.length > 0 && (
+                {basketSelections.length > 0 && (
                   <button
-                    onClick={() => { setBasketSymbols([]); setSymbols(''); }}
+                    onClick={() => { setBasketSelections([]); setSymbols(''); }}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {t('agentScoring.clearAll')}
                   </button>
                 )}
               </div>
-              {basketSymbols.length > 0 && (
+              {basketSelections.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {basketSymbols.map((s) => (
-                    <Badge
-                      key={s}
-                      variant="secondary"
-                      className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive transition-colors"
-                      onClick={() => toggleBasket(s)}
-                    >
-                      {s} ✕
-                    </Badge>
-                  ))}
+                  {selectedDetections.map((d) => {
+                    const key = buildDetectionSelectionKey(d);
+                    const directionLabel = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+                    return (
+                      <Badge
+                        key={key}
+                        variant="secondary"
+                        className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive transition-colors"
+                        onClick={() => toggleBasket(key)}
+                      >
+                        {d.instrument} • {d.pattern_name} {directionLabel} ✕
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
               <div className="flex gap-2">
@@ -545,7 +563,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             detections={liveDetections}
             isLoading={detectionsLoading}
             onSendToBacktest={onSendToBacktest}
-            basketSymbols={basketSymbols}
+            basketSelections={basketSelections}
             onToggleBasket={toggleBasket}
             economicEvents={economicEvents}
           />
