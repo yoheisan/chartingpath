@@ -323,9 +323,10 @@ serve(async (req) => {
     for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
       console.log(`[copilot-scoring] AI round ${round}`);
 
-      const aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/chat/completions?key=${GEMINI_API_KEY}`, {
+      const aiResp = await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${GEMINI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
