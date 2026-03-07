@@ -1,0 +1,400 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  TrendingUp,
+  ChevronDown,
+  ThumbsUp,
+  ThumbsDown,
+  Home,
+  PanelLeftClose,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { CopilotRichMessage } from "./CopilotRichMessage";
+import { CopilotAuthGate } from "./CopilotAuthGate";
+import { useCopilotConversations } from "@/hooks/useCopilotConversations";
+import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
+import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
+import { Badge } from "@/components/ui/badge";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
+const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
+
+const GUEST_MSG_KEY = "copilot_guest_msgs";
+const GUEST_MSG_LIMIT = 3;
+
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function getGuestMsgCount(): number {
+  try {
+    const raw = localStorage.getItem(GUEST_MSG_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (parsed.date !== getTodayKey()) return 0;
+    return parsed.count || 0;
+  } catch { return 0; }
+}
+function incrementGuestMsgCount(): number {
+  const next = getGuestMsgCount() + 1;
+  try { localStorage.setItem(GUEST_MSG_KEY, JSON.stringify({ date: getTodayKey(), count: next })); } catch {}
+  return next;
+}
+
+const QUICK_PROMPTS = [
+  { label: "Increase take rate by 5%", icon: TrendingUp },
+  { label: "Make scoring more conservative", icon: Sparkles },
+  { label: "Show current scoring weights", icon: Sparkles },
+];
+
+interface CopilotSidebarProps {
+  onClose: () => void;
+}
+
+export function CopilotSidebar({ onClose }: CopilotSidebarProps) {
+  const { t, i18n } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const {
+    activeConversationId,
+    createConversation,
+    saveMessage,
+    startNewChat,
+    isAuthenticated,
+  } = useCopilotConversations();
+
+  const { trackQuestion } = useCopilotFeedback();
+  const activeConvoRef = useRef<string | null>(null);
+  const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
+
+  const logFeedback = useCallback(async (responseContent: string, helpful: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('copilot_feedback').insert({
+        question: messages.find(m => m.role === 'user')?.content || '',
+        response: responseContent.slice(0, 1000),
+        response_helpful: helpful,
+        session_id: null,
+        user_id: user?.id || null,
+      });
+    } catch (err) {
+      console.error('[CopilotFeedback] error:', err);
+    }
+  }, [messages]);
+
+  const checkScrollPosition = useCallback(() => {
+    const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    if (!viewport) return;
+    const { scrollTop, scrollHeight, clientHeight } = viewport;
+    setShowScrollDown(scrollHeight - scrollTop - clientHeight > 60);
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+        viewport.addEventListener('scroll', checkScrollPosition);
+        setTimeout(checkScrollPosition, 100);
+        return () => viewport.removeEventListener('scroll', checkScrollPosition);
+      }
+    }
+  }, [messages, checkScrollPosition]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const streamChat = async (userMessage: string) => {
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: userMessage,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+    setInput("");
+
+    let convoId = activeConvoRef.current;
+    if (!convoId && isAuthenticated) {
+      convoId = await createConversation(userMessage.slice(0, 60));
+      activeConvoRef.current = convoId;
+    }
+    if (convoId) saveMessage(convoId, "user", userMessage);
+
+    let assistantContent = "";
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          messages: [...messages, userMsg]
+            .filter(m => m.role === "user" || m.content.trim().length > 0)
+            .slice(-20)
+            .map(m => ({ role: m.role, content: m.content })),
+          language: i18n.language,
+          context: "agent_scoring",
+          ...(prewarmedCtx.ready && {
+            prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
+          }),
+        }),
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        if (resp.status === 429) { toast.error(t('copilot.rateLimited')); throw new Error("Rate limited"); }
+        if (resp.status === 402) { toast.error(t('copilot.creditsDepleted')); throw new Error("Credits depleted"); }
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      if (!resp.body) throw new Error("No response body");
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+      const assistantId = crypto.randomUUID();
+      setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      if (convoId && assistantContent) saveMessage(convoId, "assistant", assistantContent);
+      if (assistantContent) trackQuestion(userMessage, assistantContent);
+    } catch (error) {
+      console.error("Chat error:", error);
+      const isKnownError = error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted");
+      if (!isKnownError) toast.error(t('copilot.errorResponse'));
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "user") {
+          return [...prev, { id: crypto.randomUUID(), role: "assistant" as const, content: isKnownError ? t('copilot.rateLimitedMsg') : t('copilot.errorMsg'), timestamp: new Date() }];
+        }
+        return prev;
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading || guestLimitReached) return;
+    if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
+    streamChat(input.trim());
+  };
+
+  const handleNewChat = useCallback(() => {
+    startNewChat();
+    activeConvoRef.current = null;
+    setMessages([]);
+  }, [startNewChat]);
+
+  return (
+    <div className="flex flex-col h-full bg-background border-r border-border">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/10 to-accent/10">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
+            <Sparkles className="h-3.5 w-3.5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">{t('copilot.title', 'AI Copilot')}</h3>
+            <p className="text-[10px] text-muted-foreground">{t('copilot.agentScoringContext', 'Agent Scoring mode')}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNewChat} title="New chat">
+              <Home className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 relative min-h-0">
+        <ScrollArea className="h-full p-3" ref={scrollRef}>
+          {messages.length === 0 ? (
+            <div className="space-y-4 pt-4">
+              <div className="text-center py-4">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-3">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-semibold text-sm mb-1">{t('copilot.agentScoringWelcome', 'Adjust your scoring')}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {t('copilot.agentScoringDesc', 'Type natural language commands to tweak weights, cutoffs, and filters.')}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-muted-foreground font-medium px-1">{t('copilot.trySaying', 'Try saying:')}</p>
+                {QUICK_PROMPTS.map((p) => (
+                  <button
+                    key={p.label}
+                    className="w-full text-left text-xs px-3 py-2 rounded-md border border-border/50 hover:bg-muted/50 hover:border-border transition-colors"
+                    onClick={() => { if (!guestLimitReached) { if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount()); streamChat(p.label); } }}
+                    disabled={isLoading}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {messages.map((message) => (
+                <div key={message.id} className={cn("flex flex-col gap-1", message.role === "user" ? "items-end" : "items-start")}>
+                  <div className={cn(
+                    "rounded-lg px-3 py-2 text-xs leading-relaxed",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground max-w-[90%]"
+                      : "bg-muted w-full"
+                  )}>
+                    {message.role === "assistant" ? (
+                      <CopilotRichMessage content={message.content || "..."} />
+                    ) : (
+                      message.content
+                    )}
+                  </div>
+                  {message.role === "assistant" && message.content && message.content !== "..." && (
+                    <div className="flex items-center gap-1 ml-1">
+                      <button
+                        onClick={() => { logFeedback(message.content, true); toast.success(t('copilot.feedbackThanks', 'Thanks!')); }}
+                        className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-green-500 transition-colors"
+                      >
+                        <ThumbsUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => { logFeedback(message.content, false); toast.info(t('copilot.feedbackNoted', 'Noted!')); }}
+                        className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
+                      >
+                        <ThumbsDown className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {isLoading && messages[messages.length - 1]?.role === "user" && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-lg px-3 py-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </ScrollArea>
+
+        {showScrollDown && (
+          <button
+            onClick={() => {
+              const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+              if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+            }}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 p-1.5 rounded-md bg-background/80 border border-border/50 text-muted-foreground shadow-md backdrop-blur-sm hover:text-foreground transition-all"
+          >
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+          </button>
+        )}
+      </div>
+
+      {/* Input */}
+      {guestLimitReached ? (
+        <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
+      ) : (
+        <div className="p-3 border-t bg-background">
+          {!isAuthenticated && guestMsgCount > 0 && (
+            <div className="flex justify-center mb-1.5">
+              <Badge variant="secondary" className="text-[10px] font-normal">
+                {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free left
+              </Badge>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="flex gap-1.5">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }}
+              placeholder={t('copilot.agentScoringPlaceholder', 'e.g. "increase take rate by 5%"')}
+              disabled={isLoading}
+              className="flex-1 min-h-[3rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+              rows={2}
+            />
+            <Button type="submit" size="icon" className="h-auto self-end" disabled={isLoading || !input.trim()}>
+              {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            </Button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
