@@ -2,15 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ContactSupportDialog } from '@/components/support/ContactSupportDialog';
 import { Mail, MessageSquare, Clock, Shield } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 
 const SupportPage = () => {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <main className="container mx-auto px-4 py-16 max-w-3xl">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold mb-3">
@@ -67,7 +64,6 @@ const SupportPage = () => {
           </CardContent>
         </Card>
       </main>
-      <Footer />
     </div>
   );
 };
