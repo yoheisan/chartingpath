@@ -460,9 +460,9 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
       {guestLimitReached ? (
         <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
       ) : (
-        <div className="p-3 border-t bg-background">
+        <div className="px-4 py-3 border-t bg-background">
           {!isAuthenticated && guestMsgCount > 0 && (
-            <div className="flex justify-center mb-1.5">
+            <div className="flex justify-start mb-1.5">
               <Badge variant="secondary" className="text-xs font-normal">
                 {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free left
               </Badge>
