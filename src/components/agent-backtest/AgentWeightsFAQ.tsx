@@ -161,6 +161,83 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
 
             <Separator />
 
+            {/* Kelly Criterion Deep-Dive */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Shield className="h-4 w-4 text-amber-400" />
+                Kelly Criterion — Why It Matters
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The <strong>Kelly Criterion</strong> is a mathematical formula that calculates the optimal fraction of capital
+                to risk on a trade, given its win rate and reward-to-risk ratio. In the Risk Agent, it acts as an
+                <strong> edge filter</strong>: if the Kelly value is zero or negative, the setup has no statistical edge —
+                regardless of how clean the pattern looks — and scores <strong>0 of 7</strong> possible points.
+              </p>
+
+              {/* Formula */}
+              <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-1">
+                <code className="text-xs text-foreground font-mono block">
+                  K = winRate − (1 − winRate) / R:R
+                </code>
+                <p className="text-[11px] text-muted-foreground">
+                  A positive K means the trade has a genuine mathematical edge. A negative K means losses outpace wins over time.
+                </p>
+              </div>
+
+              {/* Cap explanation */}
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-1">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong>25% Cap</strong> — Even when the formula suggests risking more, the system caps Kelly at
+                  <strong> 25%</strong> to prevent over-betting. A Kelly of 25%+ earns the full 7 points; lower values
+                  scale linearly (e.g., 12.5% Kelly → 3.5 pts).
+                </p>
+              </div>
+
+              {/* Examples */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-foreground">Example Scenarios</p>
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="bg-muted/40">
+                        <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground">Win Rate</th>
+                        <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground">R:R</th>
+                        <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground">Kelly %</th>
+                        <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground">Score</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-muted-foreground">
+                      <tr className="border-t border-border">
+                        <td className="px-2.5 py-1.5">60%</td>
+                        <td className="px-2.5 py-1.5">2:1</td>
+                        <td className="px-2.5 py-1.5 text-emerald-400">10%</td>
+                        <td className="px-2.5 py-1.5">2.8 / 7</td>
+                      </tr>
+                      <tr className="border-t border-border">
+                        <td className="px-2.5 py-1.5">50%</td>
+                        <td className="px-2.5 py-1.5">1.5:1</td>
+                        <td className="px-2.5 py-1.5 text-emerald-400">16.7%</td>
+                        <td className="px-2.5 py-1.5">4.7 / 7</td>
+                      </tr>
+                      <tr className="border-t border-border">
+                        <td className="px-2.5 py-1.5">40%</td>
+                        <td className="px-2.5 py-1.5">1.5:1</td>
+                        <td className="px-2.5 py-1.5 text-red-400">−0.7%</td>
+                        <td className="px-2.5 py-1.5">0 / 7</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground/80 italic leading-relaxed">
+                Key takeaway: Kelly ensures only setups with a genuine mathematical edge contribute to a passing Risk score,
+                filtering out patterns that "look good but don't pay" over a large sample.
+              </p>
+            </section>
+
+            <Separator />
+
             {/* Verdicts */}
             <section className="space-y-2">
               <h3 className="text-sm font-semibold text-foreground">Verdict Labels</h3>
