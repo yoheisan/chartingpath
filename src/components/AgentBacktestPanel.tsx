@@ -14,7 +14,7 @@ import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, S
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useAgentScoringDetections, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
+import { useAgentScoringDetections, useAgentScores, TimeframeFilter } from '@/hooks/useAgentScoringDetections';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { InstrumentSubFilters } from './agent-backtest/InstrumentSubFilters';
@@ -83,6 +83,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
+  const { data: agentScores = [] } = useAgentScores();
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
 
   const selectedDetections = useMemo(() => {
@@ -571,6 +572,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             basketSelections={basketSelections}
             onToggleBasket={toggleBasket}
             economicEvents={economicEvents}
+            agentScores={agentScores}
+            lastScoredAt={agentScores[0]?.scored_at}
           />
         </CardContent>
       </Card>

@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LiveDetectionRow } from '@/hooks/useAgentScoringDetections';
+import { AgentScoreRow } from '@/hooks/useAgentScoringDetections';
 import { useTranslation } from 'react-i18next';
 import { UpcomingEconomicEvent, computeTimingFromEvents } from '@/hooks/useUpcomingEconomicEvents';
 import { computePortfolioScore } from '@/hooks/usePortfolioExposure';
+import { formatDistanceToNow } from 'date-fns';
 
 const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Bull Flag': 'bull_flag',
@@ -63,6 +65,8 @@ interface Props {
   basketSelections?: string[];
   onToggleBasket?: (selectionKey: string) => void;
   economicEvents?: UpcomingEconomicEvent[];
+  agentScores?: AgentScoreRow[];
+  lastScoredAt?: string;
 }
 
 export interface ScoringContext {
@@ -184,11 +188,17 @@ const SortableHeader: React.FC<{
   </th>
 );
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSelections = [], onToggleBasket, economicEvents = [] }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSelections = [], onToggleBasket, economicEvents = [], agentScores, lastScoredAt }) => {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showEmerging, setShowEmerging] = useState(false);
+
+  const scoreMap = useMemo(() => {
+    const map = new Map<string, AgentScoreRow>();
+    agentScores?.forEach(s => map.set(s.detection_id, s));
+    return map;
+  }, [agentScores]);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -206,11 +216,35 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
   }), [economicEvents, basketSelections, detections]);
 
   const { scoredProven, emergingDetections } = useMemo(() => {
-    const provenDetections = detections.filter(d => isProven(d));
-    const emerging = detections.filter(d => !isProven(d));
+    const provenDetections = detections.filter(d => {
+      const precomputed = scoreMap.get(d.id);
+      return precomputed ? precomputed.is_proven : isProven(d);
+    });
+    const emerging = detections.filter(d => {
+      const precomputed = scoreMap.get(d.id);
+      return precomputed ? !precomputed.is_proven : !isProven(d);
+    });
 
     const scored = provenDetections.map((d) => {
-      const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
+      const precomputed = scoreMap.get(d.id);
+      let analystRaw: number, riskRaw: number, timingRaw: number, portfolioRaw: number | null;
+
+      if (precomputed) {
+        // Use pre-computed scores from edge function
+        analystRaw = precomputed.analyst_raw;
+        riskRaw = precomputed.risk_raw;
+        timingRaw = precomputed.timing_raw;
+        // Always recalculate portfolio live (basket context is per-user)
+        const fullScores = deriveRawScores(d, scoringCtx);
+        portfolioRaw = fullScores.portfolioRaw;
+      } else {
+        // Fallback to full inline calculation
+        const fullScores = deriveRawScores(d, scoringCtx);
+        analystRaw = fullScores.analystRaw;
+        riskRaw = fullScores.riskRaw;
+        timingRaw = fullScores.timingRaw;
+        portfolioRaw = fullScores.portfolioRaw;
+      }
       const hasBasket = portfolioRaw !== null;
       let composite: number;
       if (hasBasket) {
@@ -274,7 +308,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     });
 
     return { scoredProven: scored, emergingDetections: emergingMapped };
-  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir, scoringCtx]);
+  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir, scoringCtx, scoreMap]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
@@ -316,8 +350,13 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     <div className="space-y-4">
       {/* Summary strip */}
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
-        <span className="ml-auto" />
+      <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
+        {lastScoredAt && (
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            Scored {formatDistanceToNow(new Date(lastScoredAt))} ago
+          </span>
+        )}
+        {!lastScoredAt && <span className="ml-auto" />}
         <Badge variant="outline" className={`text-xs ${verdictStyles.TAKE}`}>
           <TrendingUp className="h-3.5 w-3.5 mr-1" />TAKE: {counts.TAKE}
         </Badge>
