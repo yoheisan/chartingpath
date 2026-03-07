@@ -9,7 +9,10 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+const CLASSIFICATION_TIMEOUT_MS = 12000;
+const DOWNSTREAM_TIMEOUT_MS = 30000;
 
 const VALID_DOMAINS = ["scoring", "screener", "research", "general"] as const;
 type Domain = (typeof VALID_DOMAINS)[number];
@@ -20,14 +23,74 @@ interface ClassificationResult {
   intent: string;
 }
 
+function normalizeContextDomain(context?: string): Domain | null {
+  if (!context) return null;
+  const c = context.toLowerCase().trim();
+  if (VALID_DOMAINS.includes(c as Domain)) return c as Domain;
+  if (c.includes("scor")) return "scoring";
+  if (c.includes("screen") || c.includes("live")) return "screener";
+  if (c.includes("research") || c.includes("pattern-lab") || c.includes("project")) return "research";
+  return null;
+}
+
+function classifyByHeuristics(userMessage: string, context?: string): ClassificationResult {
+  const ctxDomain = normalizeContextDomain(context);
+  if (ctxDomain) {
+    return {
+      domain: ctxDomain,
+      confidence: 0.95,
+      intent: "context_routed",
+    };
+  }
+
+  const text = userMessage.toLowerCase();
+
+  const scoringPatterns = [
+    "take rate", "watch rate", "cutoff", "weights", "weight", "agent scoring", "conservative", "aggressive", "risk weight", "timing weight", "portfolio weight",
+  ];
+  if (scoringPatterns.some((p) => text.includes(p))) {
+    return { domain: "scoring", confidence: 0.8, intent: "heuristic_scoring" };
+  }
+
+  const screenerPatterns = [
+    "find patterns", "show patterns", "live patterns", "setups", "screener", "bull flag", "scan",
+  ];
+  if (screenerPatterns.some((p) => text.includes(p))) {
+    return { domain: "screener", confidence: 0.75, intent: "heuristic_screener" };
+  }
+
+  const researchPatterns = [
+    "backtest", "historical", "expectancy", "win rate", "analyze", "research", "instrument",
+  ];
+  if (researchPatterns.some((p) => text.includes(p))) {
+    return { domain: "research", confidence: 0.72, intent: "heuristic_research" };
+  }
+
+  return { domain: "general", confidence: 0.7, intent: "heuristic_general" };
+}
+
 /**
- * Classify the user's latest message into one of 4 domains using a single
- * Gemini Flash call with tool-calling for structured output.
+ * Classify the user's latest message into one of 4 domains using Gemini,
+ * with deterministic fallback to context + keyword heuristics.
  */
 async function classifyIntent(
   userMessage: string,
   context?: string
 ): Promise<ClassificationResult> {
+  const forcedDomain = normalizeContextDomain(context);
+  if (forcedDomain) {
+    return {
+      domain: forcedDomain,
+      confidence: 1,
+      intent: "forced_by_context",
+    };
+  }
+
+  if (!LOVABLE_API_KEY) {
+    console.warn("[copilot-router] LOVABLE_API_KEY missing, using heuristic classifier");
+    return classifyByHeuristics(userMessage, context);
+  }
+
   const systemPrompt = `You are an intent classifier for a trading platform copilot.
 Classify the user's message into exactly ONE domain:
 - "scoring": adjusting agent scoring weights, cutoffs, take rates, watch rates, filters
@@ -93,6 +156,7 @@ Consider the context hint if provided. Be precise — only classify as a specifi
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(CLASSIFICATION_TIMEOUT_MS),
       }
     );
 
@@ -101,7 +165,7 @@ Consider the context hint if provided. Be precise — only classify as a specifi
         "[copilot-router] classification request failed:",
         resp.status
       );
-      return { domain: "general", confidence: 0, intent: "classification_error" };
+      return classifyByHeuristics(userMessage, context);
     }
 
     const data = await resp.json();
@@ -109,25 +173,23 @@ Consider the context hint if provided. Be precise — only classify as a specifi
 
     if (!toolCall?.function?.arguments) {
       console.warn("[copilot-router] no tool call in classification response");
-      return { domain: "general", confidence: 0, intent: "no_tool_call" };
+      return classifyByHeuristics(userMessage, context);
     }
 
     const parsed = JSON.parse(toolCall.function.arguments) as ClassificationResult;
 
-    // Validate domain
     if (!VALID_DOMAINS.includes(parsed.domain)) {
-      parsed.domain = "general";
+      return classifyByHeuristics(userMessage, context);
     }
 
-    // Confidence gate: below 0.6 → always general
     if (typeof parsed.confidence !== "number" || parsed.confidence < 0.6) {
-      parsed.domain = "general";
+      return classifyByHeuristics(userMessage, context);
     }
 
     return parsed;
   } catch (err) {
     console.error("[copilot-router] classification error:", err);
-    return { domain: "general", confidence: 0, intent: "classification_exception" };
+    return classifyByHeuristics(userMessage, context);
   }
 }
 
@@ -173,13 +235,11 @@ serve(async (req) => {
       );
     }
 
-    // Extract the latest user message for classification
     const lastUserMsg = [...messages]
       .reverse()
       .find((m: { role: string }) => m.role === "user");
     const userText = lastUserMsg?.content || "";
 
-    // Extract user ID from Authorization header if present
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
@@ -193,40 +253,65 @@ serve(async (req) => {
       }
     }
 
-    // Step 1: Classify intent
     const classification = await classifyIntent(userText, context);
     console.log(
       `[copilot-router] domain=${classification.domain} confidence=${classification.confidence} intent="${classification.intent}"`
     );
 
-    // Step 2: Log classification (non-blocking)
     logClassification(userText, classification, userId);
 
-    // Step 3: Route to dedicated domain handler
     const handlerMap: Record<string, string> = {
-      scoring: 'copilot-scoring-handler',
-      screener: 'copilot-screener-handler',
-      research: 'copilot-research-handler',
-      general: 'trading-copilot',
+      scoring: "copilot-scoring-handler",
+      screener: "copilot-screener-handler",
+      research: "copilot-research-handler",
+      general: "trading-copilot",
     };
-    const handlerName = handlerMap[classification.domain] ?? 'trading-copilot';
+    const handlerName = handlerMap[classification.domain] ?? "trading-copilot";
     const handlerUrl = `${SUPABASE_URL}/functions/v1/${handlerName}`;
 
     const forwardHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      apikey: Deno.env.get('SUPABASE_ANON_KEY') || '',
+      "Content-Type": "application/json",
+      apikey: Deno.env.get("SUPABASE_ANON_KEY") || "",
     };
     if (authHeader) {
-      forwardHeaders['Authorization'] = authHeader;
+      forwardHeaders.Authorization = authHeader;
     }
 
-    const downstreamResp = await fetch(handlerUrl, {
-      method: 'POST',
-      headers: forwardHeaders,
-      body: JSON.stringify({ messages, language, context, prewarmed }),
-    });
+    let downstreamResp: Response;
+    try {
+      downstreamResp = await fetch(handlerUrl, {
+        method: "POST",
+        headers: forwardHeaders,
+        body: JSON.stringify({ messages, language, context, prewarmed }),
+        signal: AbortSignal.timeout(DOWNSTREAM_TIMEOUT_MS),
+      });
+    } catch (fetchError) {
+      const isAbort = fetchError instanceof DOMException && fetchError.name === "TimeoutError";
+      return new Response(
+        JSON.stringify({
+          error: isAbort
+            ? `Downstream handler timed out after ${DOWNSTREAM_TIMEOUT_MS}ms`
+            : "Failed to reach downstream copilot handler",
+        }),
+        {
+          status: isAbort ? 504 : 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     if (!downstreamResp.ok) {
+      const contentType = downstreamResp.headers.get("Content-Type") || "";
+      if (contentType.includes("text/html")) {
+        return new Response(
+          JSON.stringify({ error: "Upstream service temporarily unavailable" }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       return new Response(downstreamResp.body, {
         status: downstreamResp.status,
         headers: {
@@ -237,7 +322,6 @@ serve(async (req) => {
       });
     }
 
-    // Step 4: Pipe SSE stream directly — no buffering
     return new Response(downstreamResp.body, {
       headers: {
         ...corsHeaders,
