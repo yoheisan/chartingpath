@@ -93,3 +93,34 @@ export function useAgentScoringDetections(
     refetchInterval: 120_000,
   });
 }
+
+export interface AgentScoreRow {
+  detection_id: string;
+  analyst_raw: number;
+  risk_raw: number;
+  timing_raw: number;
+  portfolio_raw: number;
+  analyst_details: any;
+  risk_details: any;
+  timing_details: any;
+  is_proven: boolean;
+  sample_size: number;
+  win_rate: number;
+  expectancy_r: number;
+  scored_at: string;
+}
+
+export function useAgentScores() {
+  return useQuery({
+    queryKey: ['agent_scores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_scores')
+        .select('detection_id, analyst_raw, risk_raw, timing_raw, portfolio_raw, analyst_details, risk_details, timing_details, is_proven, sample_size, win_rate, expectancy_r, scored_at');
+      if (error) throw error;
+      return (data ?? []) as AgentScoreRow[];
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+  });
+}
