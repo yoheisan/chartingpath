@@ -352,8 +352,8 @@ When answering, PROACTIVELY combine multiple tools for insights NO generic AI ca
 → Call get_market_breadth. ALWAYS start by stating the "dataAsOf" timestamp from the response so the user knows exactly when the data is from (e.g., "As of 2026-03-04 20:15 UTC, NYSE:" or "Based on the last trading session close on 2026-03-01, NYSE. Markets are currently closed for the weekend."). Present with 🟢🟡🔴 indicators and markdown tables.
 
 **"What should I trade?" / "Best setups right now":**
-→ Call search_patterns (quality A/B) + query_edge_atlas (top setups) + get_economic_events + get_market_breadth
-→ If user is authenticated, cross-reference with their portfolio to avoid over-concentration.
+→ Call search_patterns (min_quality B — "quality" means A and B only, never C or below) + query_edge_atlas (top setups) + get_economic_events + get_market_breadth
+→ Results are automatically sorted from highest quality to lowest. If user is authenticated, cross-reference with their portfolio to avoid over-concentration.
 
 **"How does this pattern perform on X?" / "Compare performance":**
 → Call compare_pattern_performance + get_instrument_stats to show ticker-specific vs market-wide stats.
@@ -425,10 +425,14 @@ For a single pattern, you may use this inline format:
 - **Quality:** A | **Direction:** Bullish | **R:R:** 2.5:1
 - **Entry:** $185.50 | **Stop:** $182.00 | **Target:** $194.25
 
-## When No A-Quality Patterns Exist
+## Quality Definition
+"Quality patterns" = A and B grades ONLY (higher than C). When users ask for "quality patterns", "best setups", or "top signals", ALWAYS use min_quality=B.
+Present results sorted from highest quality (A) to lowest. Show as many as available — don't limit artificially.
+
+## When No A/B-Quality Patterns Exist
 Don't apologize! Instead say something like:
-"No A-quality patterns are active right now, but here are the strongest B-quality setups forming..."
-If the fallbackApplied flag is true in pattern results, acknowledge it naturally and present the alternatives.
+"No high-quality (A/B) patterns are active right now, but here are the strongest setups forming..."
+If the fallbackApplied flag is true in pattern results, acknowledge it naturally and present the C-grade alternatives.
 
 ## Pine Script Generation
 When users ask for **alerts** specifically:
@@ -546,6 +550,9 @@ async function executeSearchPatterns(supabase: any, args: any) {
       query = query.in('quality_score', qualityOrder.slice(0, minIndex + 1));
     }
   }
+
+  // Always sort by quality (A first, then B, then C) to show best patterns first
+  // Note: We re-sort in JS after fetch since Supabase doesn't support custom enum ordering
   if (args.exchange) {
     query = query.eq('exchange', args.exchange.toUpperCase());
   }
@@ -557,14 +564,16 @@ async function executeSearchPatterns(supabase: any, args: any) {
     return { error: 'Failed to search patterns', patterns: [] };
   }
 
-  // Auto-fallback: if no results and quality filter was strict, broaden to B/C
-  if ((!data || data.length === 0) && args.min_quality === 'A') {
-    console.log('[trading-copilot] No A-quality results, falling back to B+C quality');
+  // Auto-fallback: if no results and quality filter was A or B, broaden progressively
+  if ((!data || data.length === 0) && (args.min_quality === 'A' || args.min_quality === 'B')) {
+    const fallbackGrades = args.min_quality === 'A' ? ['B'] : ['C'];
+    const fallbackLabel = args.min_quality === 'A' ? 'B-quality' : 'C-quality';
+    console.log(`[trading-copilot] No ${args.min_quality}-quality results, falling back to ${fallbackLabel}`);
     let fallbackQuery = supabase
       .from('live_pattern_detections')
       .select('id, instrument, pattern_name, direction, timeframe, quality_score, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, trend_alignment, current_price, change_percent, first_detected_at')
       .eq('status', 'active')
-      .in('quality_score', ['B', 'C'])
+      .in('quality_score', fallbackGrades)
       .order('first_detected_at', { ascending: false })
       .limit(args.limit || 10);
 
@@ -578,7 +587,7 @@ async function executeSearchPatterns(supabase: any, args: any) {
     return {
       count: fallbackData?.length || 0,
       fallbackApplied: true,
-      fallbackReason: 'No A-quality patterns found. Showing best available B/C-quality setups instead.',
+      fallbackReason: `No ${args.min_quality}-quality patterns found. Showing best available ${fallbackLabel} setups instead.`,
       patterns: formatPatterns(fallbackData)
     };
   }
@@ -608,9 +617,18 @@ async function executeSearchPatterns(supabase: any, args: any) {
     }
   }
 
+  // Sort by quality grade (A → B → C) then by detection time (newest first)
+  const qualityRank: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2 };
+  const sorted = (data || []).sort((a: any, b: any) => {
+    const qA = qualityRank[a.quality_score] ?? 9;
+    const qB = qualityRank[b.quality_score] ?? 9;
+    if (qA !== qB) return qA - qB;
+    return new Date(b.first_detected_at).getTime() - new Date(a.first_detected_at).getTime();
+  });
+
   return {
-    count: data?.length || 0,
-    patterns: formatPatterns(data)
+    count: sorted.length,
+    patterns: formatPatterns(sorted)
   };
 }
 
