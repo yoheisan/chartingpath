@@ -4937,7 +4937,7 @@
   },
   "agentScoring": {
     "title": "Agent Scoring",
-    "subtitle": "Proof-gated scoring — only signals with a proven historical edge (≥15 trades, ≥45% win rate) are scored. Emerging signals are separated below.",
+    "subtitle": "Proof-gated scoring — only signals with a proven historical edge (≥15 trades, ≥45% win rate) are scored. Unproven signals can be expanded via the Emerging toggle.",
     "weightsLabel": "Weights",
     "quickPresets": "Quick Presets",
     "presetTooltipTitle": "Agent Weight Presets",
