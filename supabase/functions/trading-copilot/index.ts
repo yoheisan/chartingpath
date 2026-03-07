@@ -373,6 +373,8 @@ You have access to ChartingPath's proprietary databases that NO other AI has:
 - **get_user_backtests**: User's personal backtest results.
 - **get_user_alerts**: User's active pattern alerts.
 - **get_paper_portfolio**: User's paper trading portfolio (balance, P&L, open trades).
+- **get_agent_scoring_settings**: Read user's current Agent Scoring weights, cutoffs, and filters.
+- **adjust_agent_scoring**: Modify Agent Scoring settings (weights, cutoffs, filters) via natural language.
 
 ## ENHANCED Analysis Strategy — Always Combine Tools
 When answering, PROACTIVELY combine multiple tools for insights NO generic AI can provide:
