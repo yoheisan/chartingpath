@@ -968,7 +968,44 @@ export default function LivePatternsPage() {
   };
 
   return (
+    <div className="min-h-screen bg-background flex">
+      {/* Copilot Sidebar */}
+      {showCopilot && !isMobile && (
+        <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
+          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
+        </div>
+      )}
+
+      <div className="flex-1 min-w-0">
     <div className="container mx-auto px-6 py-12 max-w-6xl">
+      {/* Copilot toggle */}
+      {!showCopilot && !isMobile && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mb-4 gap-2 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40"
+          onClick={() => setShowCopilot(true)}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+          </span>
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
+        </Button>
+      )}
+
+      {isMobile && (
+        <Button
+          variant="default"
+          size="sm"
+          className="fixed bottom-20 right-4 z-40 rounded-full shadow-xl gap-1.5 bg-gradient-to-r from-primary to-accent"
+          onClick={() => setShowCopilot(v => !v)}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-xs">AI</span>
+        </Button>
+      )}
       {/* First-visit guidance banner */}
       {showWelcome && !loading && patterns.length > 0 && (
         <div className="mb-6 p-4 rounded-lg border border-primary/30 bg-primary/5 relative">
@@ -1641,6 +1678,18 @@ export default function LivePatternsPage() {
           }}
           isCreatingAlert={creatingAlertInline}
         />
+      )}
+    </div>
+      </div>
+
+      {/* Mobile: bottom sheet copilot */}
+      {showCopilot && isMobile && (
+        <div className="fixed inset-0 z-50 flex flex-col">
+          <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
+          <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
+          </div>
+        </div>
       )}
     </div>
   );
