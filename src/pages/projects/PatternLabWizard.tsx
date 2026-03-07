@@ -1545,6 +1545,5 @@ const PatternLabWizard = () => {
     </div>
   );
 };
-};
 
 export default PatternLabWizard;
