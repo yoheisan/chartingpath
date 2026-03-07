@@ -146,7 +146,12 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     const ctx: ScoringContext = { economicEvents, basketSelectionKeys: basketSelections, allDetections: liveDetections };
     const composites = liveDetections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, ctx);
-      return analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
+      if (portfolioRaw !== null) {
+        return analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
+      }
+      const baseSum = weights.analyst + weights.risk + weights.timing;
+      const scale = baseSum > 0 ? (baseSum + weights.portfolio) / baseSum : 1;
+      return (analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing) * scale;
     });
     const total = composites.length;
     const takes = composites.filter((c) => c >= takeCutoff).length;
