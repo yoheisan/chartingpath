@@ -83,9 +83,11 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">🧠 Analyst Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Evaluates <strong>Bayesian win-probability</strong> and historical hit-rates for the detected chart pattern
-                    on the specific instrument. It cross-references the pattern's sample size, expectancy (avg R-multiple),
-                    and win rate from the historical database. Only scored for signals that pass the Proof Gate.
+                    Scores each signal using three independent components: <strong>Win Rate</strong> (0–10 pts, linear scale
+                    from the pattern's historical win rate on this instrument), <strong>Expectancy</strong> (0–10 pts, based
+                    on the average R-multiple — an expectancyR of 1.0+ earns full marks), and <strong>Sample Confidence</strong>
+                    (0–5 pts, log₂ scale of sample size relative to the 30-trade minimum). Signals below the Proof Gate
+                    threshold receive a 50% confidence penalty. Only scored for proven signals.
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
                     High weight → You prioritize setups with a proven statistical edge — patterns that have historically delivered
@@ -102,9 +104,12 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">🛡️ Risk Manager Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Assesses <strong>ATR-based stop placement</strong>, Kelly criterion position sizing, and the trade's
-                    risk/reward ratio quality. It penalizes setups with wide stops (high risk per trade), poor R:R ratios,
-                    or situations where Kelly sizing suggests over-betting.
+                    Scores each signal using three independent components: <strong>R:R Adequacy</strong> (0–10 pts — an R:R
+                    of 1.5 earns 5 pts, 3.0+ earns the maximum), <strong>Volatility Stability</strong> (0–8 pts — tighter
+                    stops relative to price indicate lower volatility and score higher; stops beyond 5% of entry price
+                    score zero), and <strong>Kelly Sizing</strong> (0–7 pts — applies the Kelly Criterion formula
+                    <em> K = winRate − (1−winRate)/R:R</em>, capped at 25% to prevent over-betting). Higher combined
+                    score means the trade has a well-defined risk bracket with room for sensible position sizing.
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
                     High weight → You prioritize tight risk control — only taking setups with well-defined stops and
