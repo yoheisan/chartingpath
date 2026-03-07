@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
+import { Brain, Shield, Clock, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -93,9 +93,9 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
     timingDetails = { eventCount: eventTiming.eventCount, highCount: eventTiming.highCount, nearestEvent: eventTiming.nearestEvent };
   }
 
-  let portfolioRaw: number;
+  let portfolioRaw: number | null;
   let portfolioDetails: any = {};
-  if (ctx && ctx.basketSelectionKeys.length > 0) {
+  if (ctx && ctx.basketSelectionKeys.length > 1) {
     const selectedKeySet = new Set(ctx.basketSelectionKeys);
     const selectedDetections = ctx.allDetections.filter((det) => selectedKeySet.has(buildDetectionSelectionKey(det)));
     const portfolioResult = computePortfolioScore(
@@ -107,8 +107,8 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
     portfolioRaw = portfolioResult.score;
     portfolioDetails = portfolioResult.details;
   } else {
-    const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
-    portfolioRaw = gradeMap[d.quality_score || 'C'] || 0.55;
+    // No basket or single selection — portfolio agent not applicable
+    portfolioRaw = null;
   }
 
   return { analystRaw, riskRaw, timingRaw, portfolioRaw, timingDetails, portfolioDetails };
@@ -130,7 +130,7 @@ const HeaderWithInfo = ({ icon, label, tooltip }: { icon?: React.ReactNode; labe
   </span>
 );
 
-type SortKey = 'symbol' | 'pattern' | 'direction' | 'timeframe' | 'rr' | 'analystScore' | 'riskScore' | 'timingScore' | 'portfolioScore' | 'composite' | 'verdict';
+type SortKey = 'symbol' | 'pattern' | 'direction' | 'timeframe' | 'rr' | 'analystScore' | 'riskScore' | 'timingScore' | 'composite' | 'verdict';
 type SortDir = 'asc' | 'desc';
 
 const SortableHeader: React.FC<{
@@ -183,11 +183,20 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
 
     const scored = provenDetections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
+      const hasBasket = portfolioRaw !== null;
+      let composite: number;
+      if (hasBasket) {
+        // Portfolio agent active — use all 4 weights as-is
+        composite = analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
+      } else {
+        // No basket — redistribute portfolio weight proportionally to other 3 agents
+        const baseSum = weights.analyst + weights.risk + weights.timing;
+        const scale = baseSum > 0 ? (baseSum + weights.portfolio) / baseSum : 1;
+        composite = (analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing) * scale;
+      }
       const analystScore = analystRaw * weights.analyst;
       const riskScore = riskRaw * weights.risk;
       const timingScore = timingRaw * weights.timing;
-      const portfolioScore = portfolioRaw * weights.portfolio;
-      const composite = analystScore + riskScore + timingScore + portfolioScore;
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
       return {
@@ -200,8 +209,8 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         timeframe: d.timeframe,
         rr: d.risk_reward_ratio,
         assetType: d.asset_type,
-        analystRaw, riskRaw, timingRaw, portfolioRaw,
-        analystScore, riskScore, timingScore, portfolioScore, composite, verdict,
+        analystRaw, riskRaw, timingRaw,
+        analystScore, riskScore, timingScore, composite, verdict,
       };
     });
 
@@ -218,10 +227,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
 
     // Map emerging detections for table display
     const emergingMapped = emerging.map((d) => {
-      const { riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
+      const { riskRaw, timingRaw } = deriveRawScores(d, scoringCtx);
       const riskScore = riskRaw * weights.risk;
       const timingScore = timingRaw * weights.timing;
-      const portfolioScore = portfolioRaw * weights.portfolio;
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
       return {
         id: d.id,
@@ -233,7 +241,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         timeframe: d.timeframe,
         rr: d.risk_reward_ratio,
         assetType: d.asset_type,
-        riskScore, timingScore, portfolioScore,
+        riskScore, timingScore,
       };
     });
 
@@ -323,9 +331,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               <SortableHeader sortKey="timingScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label={t('agentScoring.timing')} tooltip={t('agentScoring.timingHeaderTooltip')} />
               </SortableHeader>
-              <SortableHeader sortKey="portfolioScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label={t('agentScoring.portfolio')} tooltip={t('agentScoring.portfolioHeaderTooltip')} />
-              </SortableHeader>
               <SortableHeader sortKey="composite" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo label={t('agentScoring.score')} tooltip={t('agentScoring.scoreTooltip')} />
               </SortableHeader>
@@ -381,9 +386,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`font-mono font-bold text-base ${
@@ -458,9 +460,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   <th className="px-4 py-3 font-medium text-center">
                     <Clock className="h-3.5 w-3.5 inline text-purple-400/50" /> {t('agentScoring.timing')}
                   </th>
-                  <th className="px-4 py-3 font-medium text-center">
-                    <Briefcase className="h-3.5 w-3.5 inline text-emerald-400/50" /> {t('agentScoring.portfolio')}
-                  </th>
                   <th className="px-4 py-3 font-medium text-center">{t('agentScoring.score')}</th>
                   <th className="px-4 py-3 font-medium text-center">{t('agentScoring.verdict')}</th>
                   {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
@@ -505,9 +504,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                     </td>
                     <td className="px-4 py-3 text-center">
                       <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-muted-foreground/50 font-mono">—</span>
