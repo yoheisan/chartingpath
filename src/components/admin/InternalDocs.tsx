@@ -1990,12 +1990,13 @@ Agent Scoring UI (/tools/agent-scoring)
 
         <SectionHeader icon={Database} title="User Preferences" />
         <div className="p-4 bg-muted rounded-lg text-sm space-y-1">
-          <p>• Custom weights & filters stored in <code className="text-xs bg-background px-1 rounded">agent_scoring_settings</code> table (Supabase + localStorage fallback)</p>
-          <p>• Saveable presets with rename/delete support via SettingsManager component</p>
-          <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
-          <p>• Sub-filters: FX (major/minor/exotic), Stocks (exchange), Crypto (major/alt)</p>
-          <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
-          <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
+           <p>• Custom weights & filters stored in <code className="text-xs bg-background px-1 rounded">agent_scoring_settings</code> table (Supabase + localStorage fallback)</p>
+           <p>• Saveable presets with rename/delete support via SettingsManager component</p>
+           <p>• Threshold overrides: users can adjust TAKE/WATCH/SKIP boundaries</p>
+           <p>• Sub-filters: FX (major/minor/exotic), Stocks (exchange), Crypto (major/alt)</p>
+           <p>• All i18n keys under <code className="text-xs bg-background px-1 rounded">agentScoring.*</code> namespace (fully translatable)</p>
+           <p>• Decision workflow: <strong>Discover → Score → Validate</strong> funnel</p>
+           <p>• <strong>Copilot Integration (2026-03-07):</strong> Two new tools — <code className="text-xs bg-background px-1 rounded">get_agent_scoring_settings</code> (read) and <code className="text-xs bg-background px-1 rounded">adjust_agent_scoring</code> (write) — let users modify scoring weights, cutoffs, and filters via natural language in the AI Copilot. Supports suggest-first (default) and direct-apply modes with before/after comparison.</p>
         </div>
       </CardContent>
     </Card>
