@@ -32,7 +32,8 @@ interface Message {
 
 const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
-const CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
+const DEFAULT_CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
+const ROUTER_CHAT_URL = `${SUPABASE_URL}/functions/v1/copilot-router`;
 
 const GUEST_MSG_KEY = "copilot_guest_msgs";
 const GUEST_MSG_LIMIT = 3;
@@ -61,11 +62,19 @@ const QUICK_PROMPTS = [
   { label: "Show current scoring weights", icon: Sparkles },
 ];
 
-interface CopilotSidebarProps {
-  onClose: () => void;
+interface CopilotContext {
+  domain?: string;
+  route?: string;
+  quickPrompts?: string[];
 }
 
-export function CopilotSidebar({ onClose }: CopilotSidebarProps) {
+interface CopilotSidebarProps {
+  onClose: () => void;
+  context?: CopilotContext;
+}
+
+export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
+  const chatUrl = context ? ROUTER_CHAT_URL : DEFAULT_CHAT_URL;
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -146,7 +155,7 @@ export function CopilotSidebar({ onClose }: CopilotSidebarProps) {
     let assistantContent = "";
 
     try {
-      const resp = await fetch(CHAT_URL, {
+      const resp = await fetch(chatUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
         body: JSON.stringify({
@@ -155,7 +164,8 @@ export function CopilotSidebar({ onClose }: CopilotSidebarProps) {
             .slice(-20)
             .map(m => ({ role: m.role, content: m.content })),
           language: i18n.language,
-          context: "agent_scoring",
+          context: context?.domain || "agent_scoring",
+          ...(context?.route && { route: context.route }),
           ...(prewarmedCtx.ready && {
             prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
           }),
@@ -376,6 +386,21 @@ export function CopilotSidebar({ onClose }: CopilotSidebarProps) {
               <Badge variant="secondary" className="text-[10px] font-normal">
                 {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free left
               </Badge>
+            </div>
+          )}
+          {context?.quickPrompts && context.quickPrompts.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {context.quickPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="text-[10px] px-2 py-1 rounded-full border border-border/50 bg-muted/30 hover:bg-muted hover:border-border text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setInput(prompt)}
+                  disabled={isLoading}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           )}
           <form onSubmit={handleSubmit} className="flex gap-1.5">
