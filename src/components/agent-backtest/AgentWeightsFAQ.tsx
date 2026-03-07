@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, Shield, Clock, Briefcase, Info, HelpCircle } from 'lucide-react';
+import { Brain, Shield, Clock, Briefcase, Info, HelpCircle, FlaskConical } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigger }) => {
@@ -22,11 +22,35 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
             <section className="space-y-2">
               <h3 className="text-sm font-semibold text-foreground">What are Agent Weights?</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                The Multi-Agent Trade Filter uses four specialized AI agents that independently evaluate every trade opportunity. 
-                Each agent scores a setup from 0 to 1 based on its domain expertise. <strong>Agent Weights</strong> control 
-                how much influence each agent has on the final <strong>Composite Score (0–100)</strong> that determines whether 
-                a trade is labeled <strong>TAKE</strong>, <strong>WATCH</strong>, or <strong>SKIP</strong>.
+                The Multi-Agent Trade Filter uses four specialized AI agents that independently evaluate every trade opportunity.
+                Before scoring, each signal must pass the <strong>Proof Gate</strong> — only setups backed by ≥15 historical trades
+                with a ≥45% win rate are scored. Signals that don't meet this threshold are labeled <strong>UNPROVEN</strong> and
+                shown in a separate Emerging Signals section. <strong>Agent Weights</strong> control how much influence each agent
+                has on the final <strong>Composite Score (0–100)</strong> that determines whether a proven trade is labeled
+                <strong> TAKE</strong>, <strong>WATCH</strong>, or <strong>SKIP</strong>.
               </p>
+            </section>
+
+            {/* Proof Gate */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <FlaskConical className="h-4 w-4 text-primary" />
+                Proof Gate
+              </h3>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The Proof Gate ensures you only act on signals with a <strong>verified statistical edge</strong>. A signal must have:
+                </p>
+                <ul className="text-xs text-muted-foreground leading-relaxed space-y-1 list-disc pl-4">
+                  <li>At least <strong>15 resolved historical trades</strong> for that pattern + instrument combination</li>
+                  <li>A win rate of <strong>≥45%</strong></li>
+                </ul>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Signals failing either criterion are classified as <strong>Emerging</strong> — they are still visible but not scored.
+                  Their Analyst and Composite columns show "—" with an <strong>UNPROVEN</strong> badge. Send emerging signals to
+                  Pattern Lab to investigate their potential.
+                </p>
+              </div>
             </section>
 
             {/* Formula */}
@@ -38,9 +62,10 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 </code>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                The four weights must sum to <strong>100</strong>. Each agent's raw score (0–1) is multiplied by its weight, 
-                and the results are summed to produce the composite. A composite of 70+ defaults to <strong>TAKE</strong>, 
+                The four weights must sum to <strong>100</strong>. Each agent's raw score (0–1) is multiplied by its weight,
+                and the results are summed to produce the composite. A composite of 70+ defaults to <strong>TAKE</strong>,
                 50–69 to <strong>WATCH</strong>, and below 50 to <strong>SKIP</strong> (thresholds are adjustable).
+                Only proven signals (those passing the Proof Gate) receive a composite score.
               </p>
             </section>
 
@@ -58,12 +83,12 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">🧠 Analyst Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Evaluates <strong>Bayesian win-probability</strong> and historical hit-rates for the detected chart pattern 
-                    on the specific instrument. It cross-references the pattern's sample size, expectancy (avg R-multiple), 
-                    and win rate from the historical database.
+                    Evaluates <strong>Bayesian win-probability</strong> and historical hit-rates for the detected chart pattern
+                    on the specific instrument. It cross-references the pattern's sample size, expectancy (avg R-multiple),
+                    and win rate from the historical database. Only scored for signals that pass the Proof Gate.
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize setups with a proven statistical edge — patterns that have historically delivered 
+                    High weight → You prioritize setups with a proven statistical edge — patterns that have historically delivered
                     consistent returns on this specific ticker.
                   </p>
                 </div>
@@ -77,12 +102,12 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">🛡️ Risk Manager Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Assesses <strong>ATR-based stop placement</strong>, Kelly criterion position sizing, and the trade's 
-                    risk/reward ratio quality. It penalizes setups with wide stops (high risk per trade), poor R:R ratios, 
+                    Assesses <strong>ATR-based stop placement</strong>, Kelly criterion position sizing, and the trade's
+                    risk/reward ratio quality. It penalizes setups with wide stops (high risk per trade), poor R:R ratios,
                     or situations where Kelly sizing suggests over-betting.
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize tight risk control — only taking setups with well-defined stops and 
+                    High weight → You prioritize tight risk control — only taking setups with well-defined stops and
                     favorable risk-to-reward (typically 2:1 or better). Recommended for capital preservation strategies.
                   </p>
                 </div>
@@ -96,12 +121,12 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">⏱️ Timing Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Monitors <strong>macro/economic calendar proximity</strong> and market-session context. It checks for 
-                    upcoming high-impact events (FOMC, NFP, CPI), evaluates whether the current session is liquid enough 
+                    Monitors <strong>macro/economic calendar proximity</strong> and market-session context. It checks for
+                    upcoming high-impact events (FOMC, NFP, CPI), evaluates whether the current session is liquid enough
                     for the trade's timeframe, and considers weekend/holiday gaps.
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize event-aware entries — avoiding trades right before major announcements 
+                    High weight → You prioritize event-aware entries — avoiding trades right before major announcements
                     or during illiquid after-hours sessions. Essential for news-sensitive instruments.
                   </p>
                 </div>
@@ -115,15 +140,35 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">💼 Portfolio Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Evaluates <strong>concentration risk</strong>, sector heat (total portfolio exposure), and directional 
-                    skew across all existing positions. It penalizes adding a trade that would over-concentrate your portfolio 
+                    Evaluates <strong>concentration risk</strong>, sector heat (total portfolio exposure), and directional
+                    skew across all existing positions. It penalizes adding a trade that would over-concentrate your portfolio
                     in a single asset, sector, or direction (all-long / all-short).
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize portfolio balance — ensuring no single position dominates and your book 
+                    High weight → You prioritize portfolio balance — ensuring no single position dominates and your book
                     maintains healthy diversification. Critical for multi-asset portfolios.
                   </p>
                 </div>
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Verdicts */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Verdict Labels</h3>
+              <div className="space-y-2">
+                {[
+                  { badge: 'TAKE', color: 'text-emerald-400', desc: 'Composite ≥70 — actionable edge backed by proven history.' },
+                  { badge: 'WATCH', color: 'text-amber-400', desc: 'Composite 50–69 — monitor for improving conditions.' },
+                  { badge: 'SKIP', color: 'text-red-400', desc: 'Composite <50 — insufficient edge, pass.' },
+                  { badge: 'UNPROVEN', color: 'text-muted-foreground', desc: 'Failed Proof Gate — fewer than 15 historical trades or win rate below 45%. Not scored.' },
+                ].map((v) => (
+                  <div key={v.badge} className="flex gap-2 items-start">
+                    <span className={`text-xs font-mono font-bold shrink-0 w-20 ${v.color}`}>{v.badge}</span>
+                    <p className="text-[11px] text-muted-foreground">{v.desc}</p>
+                  </div>
+                ))}
               </div>
             </section>
 
@@ -162,6 +207,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <li>The <strong>Verdict Thresholds</strong> (TAKE/WATCH cutoffs) work in tandem with weights — tightening the TAKE cutoff to 80+ produces fewer but higher-conviction signals.</li>
                 <li>For volatile assets (crypto), consider increasing <strong>Risk Mgr</strong> and <strong>Timing</strong> weights to filter out noisy setups.</li>
                 <li>For diversified portfolios (10+ positions), increase <strong>Portfolio</strong> weight to prevent over-concentration.</li>
+                <li><strong>Emerging signals</strong> can be sent to Pattern Lab to build historical data — once they accumulate ≥15 trades with ≥45% win rate, they'll automatically graduate to the scored table.</li>
               </ul>
             </section>
 
