@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AgentWeights } from '../../../engine/backtester-v2/agents/types';
-import { Brain, Shield, Clock, Briefcase, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
+import { Brain, Shield, Clock, TrendingUp, TrendingDown, Minus, Play, Info, Plus, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
