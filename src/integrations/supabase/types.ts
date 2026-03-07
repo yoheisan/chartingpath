@@ -89,6 +89,83 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_scores: {
+        Row: {
+          analyst_details: Json | null
+          analyst_raw: number
+          asset_type: string | null
+          created_at: string
+          detection_id: string
+          direction: string | null
+          expectancy_r: number | null
+          id: string
+          instrument: string
+          is_proven: boolean
+          pattern_id: string
+          portfolio_raw: number
+          risk_details: Json | null
+          risk_raw: number
+          sample_size: number | null
+          scored_at: string
+          timeframe: string
+          timing_details: Json | null
+          timing_raw: number
+          win_rate: number | null
+        }
+        Insert: {
+          analyst_details?: Json | null
+          analyst_raw?: number
+          asset_type?: string | null
+          created_at?: string
+          detection_id: string
+          direction?: string | null
+          expectancy_r?: number | null
+          id?: string
+          instrument: string
+          is_proven?: boolean
+          pattern_id: string
+          portfolio_raw?: number
+          risk_details?: Json | null
+          risk_raw?: number
+          sample_size?: number | null
+          scored_at?: string
+          timeframe: string
+          timing_details?: Json | null
+          timing_raw?: number
+          win_rate?: number | null
+        }
+        Update: {
+          analyst_details?: Json | null
+          analyst_raw?: number
+          asset_type?: string | null
+          created_at?: string
+          detection_id?: string
+          direction?: string | null
+          expectancy_r?: number | null
+          id?: string
+          instrument?: string
+          is_proven?: boolean
+          pattern_id?: string
+          portfolio_raw?: number
+          risk_details?: Json | null
+          risk_raw?: number
+          sample_size?: number | null
+          scored_at?: string
+          timeframe?: string
+          timing_details?: Json | null
+          timing_raw?: number
+          win_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_scores_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "live_pattern_detections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_scoring_settings: {
         Row: {
           asset_class_filter: string
