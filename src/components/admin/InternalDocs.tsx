@@ -2283,6 +2283,13 @@ Screener shows raw signal data. Agent Scoring adds two layers of external contex
 1. **Economic calendar awareness** — upcoming high-impact events penalize timing scores for affected currencies
 2. **Portfolio exposure analysis** — basket selections reveal concentration risk, correlation, and directional skew
 
+## Copilot Integration (Added 2026-03-07)
+The AI Copilot can now read and modify Agent Scoring settings via natural language:
+- **get_agent_scoring_settings** — reads user's current weights, cutoffs, and filters
+- **adjust_agent_scoring** — modifies settings with suggest-first (default) or direct-apply mode
+- Example: "Increase my take rate by 5% without increasing risk" → lowers TAKE cutoff while preserving risk weight
+- Weights auto-normalize to sum=100; validation ensures WATCH < TAKE
+
 ---
 
 # 8. BACKTEST ENGINE v2 — Safeguards

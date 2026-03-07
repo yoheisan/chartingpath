@@ -67,7 +67,8 @@ const buildServiceRegistry = (): ServiceDefinition[] => [
     shortDescription: "AI-powered trade scoring that rates every signal TAKE / WATCH / SKIP.",
     faqs: [
       { q: "What is Agent Scoring?", a: "Agent Scoring is our AI trade evaluator. It weights pattern quality, trend alignment, risk/reward, and historical win-rate to give every signal a TAKE, WATCH, or SKIP verdict — so you focus on the best setups." },
-      { q: "Can I adjust the scoring weights?", a: "Absolutely. Customise how much weight each factor (quality, trend, R:R, win-rate) gets. Save multiple presets for different strategies." },
+      { q: "Can I adjust the scoring weights?", a: "Absolutely. Customise how much weight each factor (quality, trend, R:R, win-rate) gets. Save multiple presets for different strategies. You can even ask the AI Copilot to adjust them for you!" },
+      { q: "Can the AI Copilot change my Agent Scoring?", a: "Yes! Just tell the Copilot what you want — 'increase take rate by 5%' or 'make scoring more conservative'. It reads your settings, suggests changes, and applies them when you confirm." },
       { q: "Is Agent Scoring free to use?", a: "Yes! Anyone can score signals. Backtesting your custom weights requires a free account (50 credits included)." },
     ],
     hashtags: ["#AITrading", "#TradeScoring", "#AgentScoring"],
@@ -225,6 +226,7 @@ const buildServiceRegistry = (): ServiceDefinition[] => [
     faqs: [
       { q: "What can the AI Trading Copilot do?", a: "Ask it anything — 'Show me bullish wedges on forex', 'Score this EURUSD pattern', or 'What's my best-performing setup?' It understands ChartingPath features and guides you to the right tool." },
       { q: "Is the Copilot just ChatGPT?", a: "No — it's purpose-built for ChartingPath. It has real-time access to your signals, scoring data, and platform context. It doesn't hallucinate trade data." },
+      { q: "Can the Copilot adjust my Agent Scoring?", a: "Yes! Say 'increase take rate by 5% without more risk' and it reads your current settings, suggests optimised changes, and applies them when you confirm. No manual slider tweaking needed." },
     ],
     hashtags: ["#AICopilot", "#AITrading", "#TradingAssistant"],
   },
