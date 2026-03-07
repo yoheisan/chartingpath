@@ -113,6 +113,8 @@ The Trading Copilot has been upgraded from a basic pattern-lookup chatbot to a *
 | `get_instrument_stats` | **Intelligence** | **Yes** | Ticker-specific pattern performance |
 | `compare_pattern_performance` | **Intelligence** | **Yes** | Ticker vs market average comparison |
 | `get_decision_confidence` | **Intelligence** | **Yes** | Composite 0–100 confidence score |
+| `get_agent_scoring_settings` | **Scoring** | **Yes** | Read user's Agent Scoring weights, cutoffs & filters |
+| `adjust_agent_scoring` | **Scoring** | **Yes** | Modify Agent Scoring settings via natural language |
 
 ---
 
