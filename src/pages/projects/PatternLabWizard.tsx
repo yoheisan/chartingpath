@@ -566,13 +566,13 @@ const PatternLabWizard = () => {
     <div className="min-h-screen bg-background flex">
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
-        <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
+        <div className="w-[340px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">
           <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'research', route: '/projects/pattern-lab', quickPrompts: [t('copilot.ctx.researchPrompt1'), t('copilot.ctx.researchPrompt2'), t('copilot.ctx.researchPrompt3')] }} />
         </div>
       )}
 
       <div className="flex-1 min-w-0">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
         {/* Copilot toggle */}
         {!showCopilot && !isMobile && (
           <Button
@@ -587,6 +587,7 @@ const PatternLabWizard = () => {
             </span>
             <Sparkles className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
+            <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
           </Button>
         )}
 

@@ -971,13 +971,13 @@ export default function LivePatternsPage() {
     <div className="min-h-screen bg-background flex">
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
-        <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
+        <div className="w-[340px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">
           <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
         </div>
       )}
 
       <div className="flex-1 min-w-0">
-    <div className="container mx-auto px-6 py-12 max-w-6xl">
+    <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
       {/* Copilot toggle */}
       {!showCopilot && !isMobile && (
         <Button
@@ -992,6 +992,7 @@ export default function LivePatternsPage() {
           </span>
           <Sparkles className="h-3.5 w-3.5" />
           <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
+          <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
         </Button>
       )}
 
