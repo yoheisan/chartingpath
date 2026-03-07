@@ -78,17 +78,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [subFilters, setSubFilters] = useState<SubFilters>({});
   const [activePreset, setActivePreset] = useState<string>('balanced');
   const [isRunning, setIsRunning] = useState(false);
-  const [basketSymbols, setBasketSymbols] = useState<string[]>([]);
+  const [basketSelections, setBasketSelections] = useState<string[]>([]);
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
 
-  const toggleBasket = (symbol: string) => {
-    setBasketSymbols((prev) => {
-      const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
-      setSymbols(next.join(', '));
+  const selectedDetections = useMemo(() => {
+    const keySet = new Set(basketSelections);
+    return liveDetections.filter((d) => keySet.has(buildDetectionSelectionKey(d)));
+  }, [liveDetections, basketSelections]);
+
+  const toggleBasket = (selectionKey: string) => {
+    setBasketSelections((prev) => {
+      const next = prev.includes(selectionKey)
+        ? prev.filter((s) => s !== selectionKey)
+        : [...prev, selectionKey];
+
+      const nextKeySet = new Set(next);
+      const nextSymbols = liveDetections
+        .filter((d) => nextKeySet.has(buildDetectionSelectionKey(d)))
+        .map((d) => d.instrument);
+      const uniqueSymbols = [...new Set(nextSymbols)];
+      setSymbols(uniqueSymbols.join(', '));
+
       return next;
     });
   };
