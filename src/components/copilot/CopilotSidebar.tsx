@@ -283,7 +283,24 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
       }
 
       if (convoId && assistantContent) saveMessage(convoId, "assistant", assistantContent);
-      if (assistantContent) trackQuestion(userMessage, assistantContent);
+      if (assistantContent) {
+        trackQuestion(userMessage, assistantContent);
+        // Capture latest training pair ID for outcome tracking (background, best-effort)
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            const { data: pairs } = await supabase
+              .from('copilot_training_pairs')
+              .select('id')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+            if (pairs?.[0]?.id) {
+              lastTrainingPairIdRef.current = pairs[0].id;
+            }
+          }
+        } catch { /* non-critical */ }
+      }
     } catch (error) {
       console.error("Chat error:", error);
       const isKnownError = error instanceof Error && (error.message === "Rate limited" || error.message === "Credits depleted");
@@ -315,6 +332,11 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || guestLimitReached) return;
+    // Fire clicked_through outcome if user sends a follow-up after an assistant response
+    if (lastTrainingPairIdRef.current && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+      fireOutcome(lastTrainingPairIdRef.current, 'clicked_through');
+      lastTrainingPairIdRef.current = null;
+    }
     if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
     streamChat(input.trim());
   };
