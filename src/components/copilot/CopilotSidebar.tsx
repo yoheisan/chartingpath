@@ -34,6 +34,7 @@ const SUPABASE_URL = "https://dgznlsckoamseqcpzfqm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8";
 const DEFAULT_CHAT_URL = `${SUPABASE_URL}/functions/v1/trading-copilot`;
 const ROUTER_CHAT_URL = `${SUPABASE_URL}/functions/v1/copilot-router`;
+const OUTCOME_URL = `${SUPABASE_URL}/functions/v1/copilot-outcome`;
 
 const GUEST_MSG_KEY = "copilot_guest_msgs";
 const GUEST_MSG_LIMIT = 3;
@@ -94,7 +95,21 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
 
   const { trackQuestion } = useCopilotFeedback();
   const activeConvoRef = useRef<string | null>(null);
+  const lastTrainingPairIdRef = useRef<string | null>(null);
   const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
+
+  // Fire outcome tracking (background, non-blocking)
+  const fireOutcome = useCallback(async (trainingPairId: string, outcome: 'applied' | 'dismissed' | 'clicked_through') => {
+    try {
+      await fetch(OUTCOME_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ training_pair_id: trainingPairId, outcome }),
+      });
+    } catch (err) {
+      console.error('[CopilotOutcome] fire error:', err);
+    }
+  }, []);
 
   const logFeedback = useCallback(async (responseContent: string, helpful: boolean) => {
     try {
