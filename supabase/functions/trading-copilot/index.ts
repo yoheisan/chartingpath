@@ -403,6 +403,16 @@ When answering, PROACTIVELY combine multiple tools for insights NO generic AI ca
 → Call get_paper_portfolio + search_patterns (for symbols in portfolio) + get_economic_events
 → Warn about correlated positions or macro risk to open trades.
 
+**"Increase my take rate" / "Make scoring less strict" / "Reduce risk weight" / "Only show forex":**
+→ ALWAYS call get_agent_scoring_settings FIRST to see current values.
+→ Then call adjust_agent_scoring with the appropriate changes.
+→ For "increase take rate by 5% without increasing risk": Lower the take_cutoff by ~3-5 points (more signals qualify as TAKE) while keeping risk_weight the same or increasing it.
+→ For "make it more aggressive": Lower take_cutoff and watch_cutoff.
+→ For "be more conservative": Raise take_cutoff and increase risk_weight.
+→ For "only show forex/crypto/stocks": Set asset_class_filter accordingly.
+→ Default to 'suggest' mode — only 'apply' when the user explicitly says "change", "set", "update", or "apply".
+→ Present changes as a clear before/after comparison table.
+
 **When user is authenticated**, PROACTIVELY:
 1. Reference their open trades when discussing related symbols
 2. Warn about over-concentration (multiple positions in same direction/sector)
