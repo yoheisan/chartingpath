@@ -32,6 +32,17 @@ const PATTERN_NAME_TO_ID: Record<string, string> = {
   'Triple Bottom': 'triple_bottom',
 };
 
+const PROOF_GATE_MIN_SAMPLE = 15;
+const PROOF_GATE_MIN_WIN_RATE = 0.45;
+
+export function isProven(d: LiveDetectionRow): boolean {
+  const hp = d.historical_performance as any;
+  if (!hp) return false;
+  const sampleSize = hp.sampleSize ?? hp.sample_size ?? 0;
+  const winRate = hp.winRate ?? hp.win_rate ?? 0;
+  return sampleSize >= PROOF_GATE_MIN_SAMPLE && winRate >= PROOF_GATE_MIN_WIN_RATE;
+}
+
 export interface TradeSetup {
   symbol: string;
   patternId: string;
@@ -73,18 +84,15 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   const stopDist = Math.abs(d.entry_price - d.stop_loss_price) / d.entry_price;
   const riskRaw = rrNorm * 0.6 + Math.min(stopDist / 0.05, 1) * 0.4;
 
-  // --- Timing: blend trend alignment + economic event proximity ---
   const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
   let timingRaw = trendScore;
   let timingDetails: { eventCount?: number; highCount?: number; nearestEvent?: string | null } = {};
   if (ctx?.economicEvents && ctx.economicEvents.length > 0) {
     const eventTiming = computeTimingFromEvents(d.instrument, d.asset_type, ctx.economicEvents);
-    // Blend: 50% trend alignment + 50% economic calendar
     timingRaw = trendScore * 0.5 + eventTiming.score * 0.5;
     timingDetails = { eventCount: eventTiming.eventCount, highCount: eventTiming.highCount, nearestEvent: eventTiming.nearestEvent };
   }
 
-  // --- Portfolio: real exposure if basket context available, else quality proxy ---
   let portfolioRaw: number;
   let portfolioDetails: any = {};
   if (ctx && ctx.basketSelectionKeys.length > 0) {
@@ -152,6 +160,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [showEmerging, setShowEmerging] = useState(false);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -168,8 +177,11 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     allDetections: detections,
   }), [economicEvents, basketSelections, detections]);
 
-  const scoredTrades = useMemo(() => {
-    const scored = detections.map((d) => {
+  const { scoredProven, emergingDetections } = useMemo(() => {
+    const provenDetections = detections.filter(d => isProven(d));
+    const emerging = detections.filter(d => !isProven(d));
+
+    const scored = provenDetections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
       const analystScore = analystRaw * weights.analyst;
       const riskScore = riskRaw * weights.risk;
@@ -203,14 +215,36 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       if (typeof av === 'number' && typeof bv === 'number') return mul * (av - bv);
       return 0;
     });
-    return scored;
-  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir]);
+
+    // Map emerging detections for table display
+    const emergingMapped = emerging.map((d) => {
+      const { riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, scoringCtx);
+      const riskScore = riskRaw * weights.risk;
+      const timingScore = timingRaw * weights.timing;
+      const portfolioScore = portfolioRaw * weights.portfolio;
+      const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+      return {
+        id: d.id,
+        symbol: d.instrument,
+        pattern: d.pattern_name,
+        patternId: d.pattern_id,
+        selectionKey: buildDetectionSelectionKey(d),
+        direction,
+        timeframe: d.timeframe,
+        rr: d.risk_reward_ratio,
+        assetType: d.asset_type,
+        riskScore, timingScore, portfolioScore,
+      };
+    });
+
+    return { scoredProven: scored, emergingDetections: emergingMapped };
+  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir, scoringCtx]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
-    scoredTrades.forEach((t) => c[t.verdict as keyof typeof c]++);
+    scoredProven.forEach((t) => c[t.verdict as keyof typeof c]++);
     return c;
-  }, [scoredTrades]);
+  }, [scoredProven]);
 
   const verdictStyles: Record<string, string> = {
     TAKE: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
@@ -246,7 +280,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     <div className="space-y-4">
       {/* Summary strip */}
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredTrades.length })}</span>
+        <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
         <span className="ml-auto" />
         <Badge variant="outline" className={`text-xs ${verdictStyles.TAKE}`}>
           <TrendingUp className="h-3.5 w-3.5 mr-1" />TAKE: {counts.TAKE}
@@ -257,9 +291,15 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         <Badge variant="outline" className={`text-xs ${verdictStyles.SKIP}`}>
           <TrendingDown className="h-3.5 w-3.5 mr-1" />SKIP: {counts.SKIP}
         </Badge>
+        <button
+          onClick={() => setShowEmerging(v => !v)}
+          className="text-xs text-muted-foreground border border-border/50 rounded px-2 py-0.5 hover:border-border transition-colors"
+        >
+          Emerging: {emergingDetections.length} {showEmerging ? '↑' : '↓'}
+        </button>
       </div>
 
-      {/* Table */}
+      {/* Proven signals table */}
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
@@ -296,91 +336,219 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
             </tr>
           </thead>
           <tbody>
-            {scoredTrades.map((trade) => (
-              <tr
-                key={trade.id}
-                className={`border-t border-border/50 transition-all duration-500 ${rowBg[trade.verdict]}`}
-              >
-                {onToggleBasket && (
-                  <td className="px-3 py-3 text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-6 w-6 p-0 rounded-full transition-all ${
-                        basketSelections.includes(trade.selectionKey)
-                          ? 'bg-primary text-primary-foreground hover:bg-primary/80'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      }`}
-                      onClick={() => onToggleBasket(trade.selectionKey)}
-                    >
-                      {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                    </Button>
-                  </td>
-                )}
-                <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
-                <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className={trade.direction === 'Long' ? 'text-emerald-400' : 'text-red-400'}>
-                    {trade.direction === 'Long' ? '▲' : '▼'} {trade.direction}
-                  </span>
+            {scoredProven.length === 0 ? (
+              <tr>
+                <td colSpan={99} className="px-4 py-10 text-center text-muted-foreground text-sm">
+                  No proven signals found. {emergingDetections.length > 0 && 'Check emerging signals below.'}
                 </td>
-                <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
-                <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
-                <td className="px-4 py-3 text-center">
-                  <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" />
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`font-mono font-bold text-base ${
-                    trade.verdict === 'TAKE' ? 'text-emerald-400' :
-                    trade.verdict === 'WATCH' ? 'text-amber-400' : 'text-red-400'
-                  }`}>
-                    {trade.composite.toFixed(0)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <Badge variant="outline" className={`text-xs ${verdictStyles[trade.verdict]}`}>
-                    {trade.verdict}
-                  </Badge>
-                </td>
-                {onSendToBacktest && (
-                  <td className="px-4 py-3 text-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/10"
-                          onClick={() => onSendToBacktest({
-                            symbol: trade.symbol,
-                            patternId: PATTERN_NAME_TO_ID[trade.pattern] || trade.patternId || 'bull_flag',
-                            pattern: trade.pattern,
-                            timeframe: trade.timeframe,
-                            assetType: trade.assetType,
-                          })}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="text-xs">
-                        {t('agentScoring.sendToStrategyBuilder')}
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                )}
               </tr>
-            ))}
+            ) : (
+              scoredProven.map((trade) => (
+                <tr
+                  key={trade.id}
+                  className={`border-t border-border/50 transition-all duration-500 ${rowBg[trade.verdict]}`}
+                >
+                  {onToggleBasket && (
+                    <td className="px-3 py-3 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-6 w-6 p-0 rounded-full transition-all ${
+                          basketSelections.includes(trade.selectionKey)
+                            ? 'bg-primary text-primary-foreground hover:bg-primary/80'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        }`}
+                        onClick={() => onToggleBasket(trade.selectionKey)}
+                      >
+                        {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                      </Button>
+                    </td>
+                  )}
+                  <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={trade.direction === 'Long' ? 'text-emerald-400' : 'text-red-400'}>
+                      {trade.direction === 'Long' ? '▲' : '▼'} {trade.direction}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
+                  <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`font-mono font-bold text-base ${
+                      trade.verdict === 'TAKE' ? 'text-emerald-400' :
+                      trade.verdict === 'WATCH' ? 'text-amber-400' : 'text-red-400'
+                    }`}>
+                      {trade.composite.toFixed(0)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge variant="outline" className={`text-xs ${verdictStyles[trade.verdict]}`}>
+                      {trade.verdict}
+                    </Badge>
+                  </td>
+                  {onSendToBacktest && (
+                    <td className="px-4 py-3 text-center">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => onSendToBacktest({
+                              symbol: trade.symbol,
+                              patternId: PATTERN_NAME_TO_ID[trade.pattern] || trade.patternId || 'bull_flag',
+                              pattern: trade.pattern,
+                              timeframe: trade.timeframe,
+                              assetType: trade.assetType,
+                            })}
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs">
+                          {t('agentScoring.sendToStrategyBuilder')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Emerging Signals section */}
+      {showEmerging && emergingDetections.length > 0 && (
+        <div className="space-y-2">
+          <div className="px-1">
+            <h3 className="text-sm font-medium text-muted-foreground">Emerging Signals — No Historical Edge Yet</h3>
+            <p className="text-xs text-muted-foreground/70">
+              These patterns lack sufficient trade history (&lt;{PROOF_GATE_MIN_SAMPLE} trades or win rate &lt;{Math.round(PROOF_GATE_MIN_WIN_RATE * 100)}%). Send to Pattern Lab to investigate.
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border/50">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/20 text-muted-foreground text-left">
+                  {onToggleBasket && <th className="px-3 py-3 font-medium text-center w-10"></th>}
+                  <th className="px-4 py-3 font-medium">{t('agentScoring.symbol')}</th>
+                  <th className="px-4 py-3 font-medium">{t('setupFilters.pattern')}</th>
+                  <th className="px-4 py-3 font-medium text-center">{t('agentScoring.dir')}</th>
+                  <th className="px-4 py-3 font-medium text-center">TF</th>
+                  <th className="px-4 py-3 font-medium text-center">R:R</th>
+                  <th className="px-4 py-3 font-medium text-center">
+                    <Brain className="h-3.5 w-3.5 inline text-blue-400/50" /> {t('agentScoring.analyst')}
+                  </th>
+                  <th className="px-4 py-3 font-medium text-center">
+                    <Shield className="h-3.5 w-3.5 inline text-amber-400/50" /> {t('agentScoring.riskMgr')}
+                  </th>
+                  <th className="px-4 py-3 font-medium text-center">
+                    <Clock className="h-3.5 w-3.5 inline text-purple-400/50" /> {t('agentScoring.timing')}
+                  </th>
+                  <th className="px-4 py-3 font-medium text-center">
+                    <Briefcase className="h-3.5 w-3.5 inline text-emerald-400/50" /> {t('agentScoring.portfolio')}
+                  </th>
+                  <th className="px-4 py-3 font-medium text-center">{t('agentScoring.score')}</th>
+                  <th className="px-4 py-3 font-medium text-center">{t('agentScoring.verdict')}</th>
+                  {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {emergingDetections.map((trade) => (
+                  <tr
+                    key={trade.id}
+                    className="border-t border-border/30 opacity-50 hover:opacity-70 transition-opacity"
+                  >
+                    {onToggleBasket && (
+                      <td className="px-3 py-3 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-6 w-6 p-0 rounded-full transition-all ${
+                            basketSelections.includes(trade.selectionKey)
+                              ? 'bg-primary text-primary-foreground hover:bg-primary/80'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                          onClick={() => onToggleBasket(trade.selectionKey)}
+                        >
+                          {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        </Button>
+                      </td>
+                    )}
+                    <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={trade.direction === 'Long' ? 'text-emerald-400' : 'text-red-400'}>
+                        {trade.direction === 'Long' ? '▲' : '▼'} {trade.direction}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
+                    <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-muted-foreground/50 font-mono">—</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-muted-foreground/50 font-mono">—</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border">
+                        UNPROVEN
+                      </Badge>
+                    </td>
+                    {onSendToBacktest && (
+                      <td className="px-4 py-3 text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                              onClick={() => onSendToBacktest({
+                                symbol: trade.symbol,
+                                patternId: PATTERN_NAME_TO_ID[trade.pattern] || trade.patternId || 'bull_flag',
+                                pattern: trade.pattern,
+                                timeframe: trade.timeframe,
+                                assetType: trade.assetType,
+                              })}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs">
+                            {t('agentScoring.sendToStrategyBuilder')}
+                          </TooltipContent>
+                        </Tooltip>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
