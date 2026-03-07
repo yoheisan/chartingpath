@@ -202,20 +202,26 @@ serve(async (req) => {
     // Step 2: Log classification (non-blocking)
     logClassification(userText, classification, userId);
 
-    // Step 3: Route to backend — currently ALL domains go to trading-copilot
-    const tradingCopilotUrl = `${SUPABASE_URL}/functions/v1/trading-copilot`;
+    // Step 3: Route to dedicated domain handler
+    const handlerMap: Record<string, string> = {
+      scoring: 'copilot-scoring-handler',
+      screener: 'copilot-screener-handler',
+      research: 'copilot-research-handler',
+      general: 'trading-copilot',
+    };
+    const handlerName = handlerMap[classification.domain] ?? 'trading-copilot';
+    const handlerUrl = `${SUPABASE_URL}/functions/v1/${handlerName}`;
 
     const forwardHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-      apikey: Deno.env.get("SUPABASE_ANON_KEY") || "",
+      'Content-Type': 'application/json',
+      apikey: Deno.env.get('SUPABASE_ANON_KEY') || '',
     };
-    // Forward Authorization header verbatim
     if (authHeader) {
-      forwardHeaders["Authorization"] = authHeader;
+      forwardHeaders['Authorization'] = authHeader;
     }
 
-    const downstreamResp = await fetch(tradingCopilotUrl, {
-      method: "POST",
+    const downstreamResp = await fetch(handlerUrl, {
+      method: 'POST',
       headers: forwardHeaders,
       body: JSON.stringify({ messages, language, context, prewarmed }),
     });
