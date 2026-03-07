@@ -140,13 +140,15 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-foreground">💼 Portfolio Agent</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Evaluates <strong>concentration risk</strong>, sector heat (total portfolio exposure), and directional
-                    skew across all existing positions. It penalizes adding a trade that would over-concentrate your portfolio
-                    in a single asset, sector, or direction (all-long / all-short).
+                    Evaluates <strong>concentration risk</strong>, currency correlation, and directional skew — but only
+                    among the signals currently in your <strong>Basket</strong>, not your real-world brokerage holdings.
+                    When the basket has multiple symbols, it checks asset-class overlap, shared currency exposure
+                    (e.g. multiple USD pairs), and whether too many signals lean the same direction (all-long / all-short).
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 italic">
-                    High weight → You prioritize portfolio balance — ensuring no single position dominates and your book
-                    maintains healthy diversification. Critical for multi-asset portfolios.
+                    Without a basket (single signal), the score falls back to a quality-grade proxy.
+                    Add multiple symbols to the basket for meaningful diversification analysis.
+                    High weight → You prioritize basket balance — useful when screening many setups at once.
                   </p>
                 </div>
               </div>
