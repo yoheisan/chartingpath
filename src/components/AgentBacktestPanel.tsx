@@ -10,7 +10,7 @@ import { AgentWeightsFAQ } from './agent-backtest/AgentWeightsFAQ';
 import { toast } from 'sonner';
 import { AgentWeights, DEFAULT_WEIGHTS, DEFAULT_CUTOFFS } from '../../engine/backtester-v2/agents/types';
 import { Slider } from '@/components/ui/slider';
-import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext } from './agent-backtest/TradeOpportunityTable';
+import { TradeOpportunityTable, AssetClassFilter, TradeSetup, deriveRawScores, ScoringContext, buildDetectionSelectionKey } from './agent-backtest/TradeOpportunityTable';
 import { AgentGauges } from './agent-backtest/AgentGauges';
 import { VerdictZoneBar } from './agent-backtest/VerdictZoneBar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
