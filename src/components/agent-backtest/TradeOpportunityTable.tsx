@@ -331,9 +331,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
               <SortableHeader sortKey="timingScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo icon={<Clock className="h-3.5 w-3.5 inline text-purple-400" />} label={t('agentScoring.timing')} tooltip={t('agentScoring.timingHeaderTooltip')} />
               </SortableHeader>
-              <SortableHeader sortKey="portfolioScore" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
-                <HeaderWithInfo icon={<Briefcase className="h-3.5 w-3.5 inline text-emerald-400" />} label={t('agentScoring.portfolio')} tooltip={t('agentScoring.portfolioHeaderTooltip')} />
-              </SortableHeader>
               <SortableHeader sortKey="composite" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-center">
                 <HeaderWithInfo label={t('agentScoring.score')} tooltip={t('agentScoring.scoreTooltip')} />
               </SortableHeader>
@@ -389,9 +386,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`font-mono font-bold text-base ${
@@ -466,9 +460,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   <th className="px-4 py-3 font-medium text-center">
                     <Clock className="h-3.5 w-3.5 inline text-purple-400/50" /> {t('agentScoring.timing')}
                   </th>
-                  <th className="px-4 py-3 font-medium text-center">
-                    <Briefcase className="h-3.5 w-3.5 inline text-emerald-400/50" /> {t('agentScoring.portfolio')}
-                  </th>
                   <th className="px-4 py-3 font-medium text-center">{t('agentScoring.score')}</th>
                   <th className="px-4 py-3 font-medium text-center">{t('agentScoring.verdict')}</th>
                   {onSendToBacktest && <th className="px-4 py-3 font-medium text-center w-16"></th>}
@@ -513,9 +504,6 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                     </td>
                     <td className="px-4 py-3 text-center">
                       <ScoreCell score={trade.timingScore} max={weights.timing} color="purple" />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <ScoreCell score={trade.portfolioScore} max={weights.portfolio} color="emerald" />
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-muted-foreground/50 font-mono">—</span>
