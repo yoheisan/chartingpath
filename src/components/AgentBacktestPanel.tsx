@@ -486,27 +486,31 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t('agentScoring.backtestBasket')}</span>
                 </div>
-                {basketSymbols.length > 0 && (
+                {basketSelections.length > 0 && (
                   <button
-                    onClick={() => { setBasketSymbols([]); setSymbols(''); }}
+                    onClick={() => { setBasketSelections([]); setSymbols(''); }}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {t('agentScoring.clearAll')}
                   </button>
                 )}
               </div>
-              {basketSymbols.length > 0 && (
+              {basketSelections.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {basketSymbols.map((s) => (
-                    <Badge
-                      key={s}
-                      variant="secondary"
-                      className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive transition-colors"
-                      onClick={() => toggleBasket(s)}
-                    >
-                      {s} ✕
-                    </Badge>
-                  ))}
+                  {selectedDetections.map((d) => {
+                    const key = buildDetectionSelectionKey(d);
+                    const directionLabel = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+                    return (
+                      <Badge
+                        key={key}
+                        variant="secondary"
+                        className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive transition-colors"
+                        onClick={() => toggleBasket(key)}
+                      >
+                        {d.instrument} • {d.pattern_name} {directionLabel} ✕
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
               <div className="flex gap-2">
@@ -559,7 +563,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
             detections={liveDetections}
             isLoading={detectionsLoading}
             onSendToBacktest={onSendToBacktest}
-            basketSymbols={basketSymbols}
+            basketSelections={basketSelections}
             onToggleBasket={toggleBasket}
             economicEvents={economicEvents}
           />
