@@ -148,7 +148,7 @@ const SortableHeader: React.FC<{
   </th>
 );
 
-export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSymbols = [], onToggleBasket, economicEvents = [] }) => {
+export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSelections = [], onToggleBasket, economicEvents = [] }) => {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -164,9 +164,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
 
   const scoringCtx: ScoringContext = useMemo(() => ({
     economicEvents,
-    basketSymbols,
+    basketSelectionKeys: basketSelections,
     allDetections: detections,
-  }), [economicEvents, basketSymbols, detections]);
+  }), [economicEvents, basketSelections, detections]);
 
   const scoredTrades = useMemo(() => {
     const scored = detections.map((d) => {
@@ -179,8 +179,15 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
       return {
-        id: d.id, symbol: d.instrument, pattern: d.pattern_name, patternId: d.pattern_id,
-        direction, timeframe: d.timeframe, rr: d.risk_reward_ratio, assetType: d.asset_type,
+        id: d.id,
+        symbol: d.instrument,
+        pattern: d.pattern_name,
+        patternId: d.pattern_id,
+        selectionKey: buildDetectionSelectionKey(d),
+        direction,
+        timeframe: d.timeframe,
+        rr: d.risk_reward_ratio,
+        assetType: d.asset_type,
         analystRaw, riskRaw, timingRaw, portfolioRaw,
         analystScore, riskScore, timingScore, portfolioScore, composite, verdict,
       };
