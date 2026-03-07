@@ -563,7 +563,15 @@ const PatternLabWizard = () => {
   };
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
+      {/* Copilot Sidebar */}
+      {showCopilot && !isMobile && (
+        <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
+          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'research', route: '/projects/pattern-lab', quickPrompts: [t('copilot.ctx.researchPrompt1'), t('copilot.ctx.researchPrompt2'), t('copilot.ctx.researchPrompt3')] }} />
+        </div>
+      )}
+
+      <div className="flex-1 min-w-0">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
