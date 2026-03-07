@@ -1872,7 +1872,7 @@ const AgentScoringTab = () => (
   │
   ├─► Analyst Agent     (35% weight) ──► Bayesian win-probability from Edge Atlas
   ├─► Risk Agent        (25% weight) ──► ATR-stops, Kelly sizing, max drawdown
-  ├─► Timing Agent      (20% weight) ──► Economic calendar, session alignment
+  ├─► Timing Agent      (20% weight) ──► 50% trend alignment + 50% economic calendar (48h lookahead)
   └─► Portfolio Agent   (20% weight) ──► Concentration, heat, correlation check
   │
   ▼
@@ -1904,7 +1904,7 @@ Agent Scoring UI (/tools/agent-scoring)
               {[
                 ["Analyst", "35%", "historical_pattern_occurrences, Edge Atlas rankings", "Win rate, expectancy, sample size confidence"],
                 ["Risk Manager", "25%", "ATR calculations, position sizing models", "Kelly fraction, max position %, stop distance"],
-                ["Timing", "20%", "economic_events table (3-day lookahead), trend_alignment field, country→currency mapping", "High/medium-impact event count, currency-specific event penalty, trend alignment score. Formula: 50% trend + 50% economic calendar."],
+                ["Timing", "20%", "trend_alignment field (MACD, EMA 50/200, RSI, ADX), economic_events table (48h lookahead), country→currency mapping", "Trend alignment score (with=0.85, neutral=0.55, counter=0.30), high-impact event penalty (−0.15), medium penalty (−0.06). Formula: 50% trend + 50% economic calendar. Floors at 0."],
                 ["Portfolio", "20%", "Basket selections (user-selected symbols), live_pattern_detections (all active), currency correlation groups", "Asset-class concentration %, correlated position count, directional skew %. Falls back to quality_score grade when basket is empty."],
               ].map(([agent, weight, sources, metrics]) => (
                 <tr key={agent}>
@@ -1921,11 +1921,15 @@ Agent Scoring UI (/tools/agent-scoring)
         <SectionHeader icon={Cpu} title="Enriched Agent Methodology (v2)" />
         <div className="p-4 bg-muted rounded-lg text-sm space-y-3">
           <div>
-            <p className="font-semibold text-primary mb-1">Timing Agent — Economic Calendar Integration</p>
-            <p className="text-xs text-muted-foreground mb-1">The Timing Agent queries the <code className="text-xs bg-background px-1 rounded">economic_events</code> table for high/medium-impact events within a 3-day lookahead window. Events are matched to instruments via a country→currency mapping (e.g., US events → USD → all USD pairs, commodities, and US stocks).</p>
-            <p className="text-xs text-muted-foreground mb-1"><strong>Scoring formula:</strong> <code className="text-xs bg-background px-1 rounded">timingRaw = trendAlignment × 0.5 + economicCalendar × 0.5</code></p>
-            <p className="text-xs text-muted-foreground mb-1"><strong>Event penalties:</strong> Each high-impact event = -0.15, each medium = -0.06 (capped at 1.0 total penalty).</p>
-            <p className="text-xs text-muted-foreground"><strong>Example:</strong> EUR/USD with NFP + CPI in next 3 days: trend=0.85 (with_trend), calendar=0.70 (2 high events). Final: 0.85×0.5 + 0.70×0.5 = 0.775 (vs 0.85 without economic context).</p>
+            <p className="font-semibold text-primary mb-1">Timing Agent — Trend + Economic Calendar (50/50 Blend)</p>
+            <p className="text-xs text-muted-foreground mb-1">The Timing Agent produces a blended score from two equally-weighted components:</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5 ml-4 list-disc mb-2">
+              <li><strong>Trend Score (50%):</strong> Based on the detection's <code className="text-xs bg-background px-1 rounded">trend_alignment</code> field (weighted MACD + EMA 50/200 + RSI + ADX): <code className="text-xs bg-background px-1 rounded">with_trend = 0.85</code>, <code className="text-xs bg-background px-1 rounded">neutral = 0.55</code>, <code className="text-xs bg-background px-1 rounded">counter_trend = 0.30</code>.</li>
+              <li><strong>Event Score (50%):</strong> Starts at 1.0 (clear calendar). Queries <code className="text-xs bg-background px-1 rounded">economic_events</code> table within a <strong>48-hour lookahead window</strong>. Events are matched to instruments via currency (e.g., GBPJPY is affected by both GB and JP events).</li>
+            </ul>
+            <p className="text-xs text-muted-foreground mb-1"><strong>Event penalties:</strong> Each high-impact event (FOMC, NFP, CPI, rate decisions) = <strong>−0.15</strong>, each medium-impact (PMI, retail sales) = <strong>−0.06</strong>. Floors at 0.</p>
+            <p className="text-xs text-muted-foreground mb-1"><strong>Formula:</strong> <code className="text-xs bg-background px-1 rounded">timingRaw = trendScore × 0.5 + eventScore × 0.5</code></p>
+            <p className="text-xs text-muted-foreground"><strong>Example:</strong> EUR/USD with 2 high-impact events in 48h: trend=0.85 (with_trend), calendar=1.0−0.15−0.15=0.70. Final: 0.85×0.5 + 0.70×0.5 = <strong>0.775</strong>. Counter-trend same events: 0.30×0.5 + 0.70×0.5 = <strong>0.50</strong>.</p>
           </div>
           <div>
             <p className="font-semibold text-primary mb-1">Portfolio Agent — Real Exposure Analysis</p>
