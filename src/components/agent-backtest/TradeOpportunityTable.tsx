@@ -49,16 +49,20 @@ interface Props {
   detections: LiveDetectionRow[];
   isLoading?: boolean;
   onSendToBacktest?: (setup: TradeSetup) => void;
-  basketSymbols?: string[];
-  onToggleBasket?: (symbol: string) => void;
+  basketSelections?: string[];
+  onToggleBasket?: (selectionKey: string) => void;
   economicEvents?: UpcomingEconomicEvent[];
 }
 
 export interface ScoringContext {
   economicEvents: UpcomingEconomicEvent[];
-  basketSymbols: string[];
+  basketSelectionKeys: string[];
   allDetections: LiveDetectionRow[];
 }
+
+export const buildDetectionSelectionKey = (d: Pick<LiveDetectionRow, 'instrument' | 'pattern_id' | 'direction' | 'timeframe'>): string => {
+  return `${d.instrument}__${d.pattern_id}__${(d.direction || '').toLowerCase()}__${d.timeframe}`;
+};
 
 export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
   const hp = d.historical_performance as any;
