@@ -40,7 +40,7 @@ const AgentScoring = () => {
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
         <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
-          <CopilotSidebar onClose={() => setShowCopilot(false)} />
+          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'scoring', route: '/tools/agent-scoring', quickPrompts: [t('copilot.ctx.scoringPrompt1'), t('copilot.ctx.scoringPrompt2'), t('copilot.ctx.scoringPrompt3')] }} />
         </div>
       )}
 
@@ -87,7 +87,7 @@ const AgentScoring = () => {
         <div className="fixed inset-0 z-50 flex flex-col">
           <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
           <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
-            <CopilotSidebar onClose={() => setShowCopilot(false)} />
+            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'scoring', route: '/tools/agent-scoring', quickPrompts: [t('copilot.ctx.scoringPrompt1'), t('copilot.ctx.scoringPrompt2'), t('copilot.ctx.scoringPrompt3')] }} />
           </div>
         </div>
       )}
