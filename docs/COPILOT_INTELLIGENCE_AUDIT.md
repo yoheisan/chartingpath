@@ -1,10 +1,10 @@
 # Trading Copilot — Enhanced Intelligence Audit
 
-> Last updated: 2026-03-02
+> Last updated: 2026-03-07
 
 ## Overview
 
-The Trading Copilot has been upgraded from a basic pattern-lookup chatbot to a **portfolio-aware, data-moat-powered research assistant** that delivers answers no generic AI (ChatGPT, Gemini) can replicate. The enhancements fall into four pillars.
+The Trading Copilot has been upgraded from a basic pattern-lookup chatbot to a **portfolio-aware, data-moat-powered research assistant** that delivers answers no generic AI (ChatGPT, Gemini) can replicate. The enhancements fall into five pillars.
 
 ---
 
