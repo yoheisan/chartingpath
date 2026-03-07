@@ -308,7 +308,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
     });
 
     return { scoredProven: scored, emergingDetections: emergingMapped };
-  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir, scoringCtx]);
+  }, [detections, weights, takeCutoff, watchCutoff, sortKey, sortDir, scoringCtx, scoreMap]);
 
   const counts = useMemo(() => {
     const c = { TAKE: 0, WATCH: 0, SKIP: 0 };
