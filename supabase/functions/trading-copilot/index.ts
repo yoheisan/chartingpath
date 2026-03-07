@@ -2622,6 +2622,11 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeGetUserAlerts(supabase, args, userId);
     case 'get_paper_portfolio':
       return await executeGetPaperPortfolio(supabase, userId);
+    // ===== AGENT SCORING ADJUSTMENT TOOLS =====
+    case 'get_agent_scoring_settings':
+      return await executeGetAgentScoringSettings(supabase, userId);
+    case 'adjust_agent_scoring':
+      return await executeAdjustAgentScoring(supabase, args, userId);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
