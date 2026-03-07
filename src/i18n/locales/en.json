@@ -4793,7 +4793,18 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "ctx": {
+      "scoringPrompt1": "Make my scoring more conservative",
+      "scoringPrompt2": "Optimise for win rate",
+      "scoringPrompt3": "Show my current settings",
+      "screenerPrompt1": "What's working right now?",
+      "screenerPrompt2": "Show me A-grade crypto setups",
+      "screenerPrompt3": "Best forex patterns today",
+      "researchPrompt1": "Find the most profitable pattern for this symbol",
+      "researchPrompt2": "What wins >60% on EURUSD?",
+      "researchPrompt3": "Check my backtest quota"
+    }
   },
   "commandPalette": {
     "searchMobile": "Search or ask AI...",

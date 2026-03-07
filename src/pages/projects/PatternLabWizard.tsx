@@ -12,7 +12,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye, ChevronDown, Zap, Code2, ArrowRight, CheckCircle2, Settings } from 'lucide-react';
+import { ArrowLeft, FlaskConical, AlertCircle, Loader2, Coins, Database, TrendingUp, TrendingDown, Lock, Search, X, Shield, Flame, Target, Info, Eye, ChevronDown, Zap, Code2, ArrowRight, CheckCircle2, Settings, Sparkles } from 'lucide-react';
+import { CopilotSidebar } from '@/components/copilot/CopilotSidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -219,6 +221,8 @@ const PatternLabWizard = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
+  const [showCopilot, setShowCopilot] = useState(false);
+  const isMobile = useIsMobile();
   
   // Check if we have prefilled state from a previous run
   const prefilledState = location.state as {
@@ -559,9 +563,44 @@ const PatternLabWizard = () => {
   };
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
+      {/* Copilot Sidebar */}
+      {showCopilot && !isMobile && (
+        <div className="w-[340px] shrink-0 h-screen sticky top-0 border-r border-border animate-in slide-in-from-left-4 duration-200">
+          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'research', route: '/projects/pattern-lab', quickPrompts: [t('copilot.ctx.researchPrompt1'), t('copilot.ctx.researchPrompt2'), t('copilot.ctx.researchPrompt3')] }} />
+        </div>
+      )}
+
+      <div className="flex-1 min-w-0">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
+        {/* Copilot toggle */}
+        {!showCopilot && !isMobile && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mb-4 gap-2 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40"
+            onClick={() => setShowCopilot(true)}
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+            </span>
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
+          </Button>
+        )}
+
+        {isMobile && (
+          <Button
+            variant="default"
+            size="sm"
+            className="fixed bottom-20 right-4 z-40 rounded-full shadow-xl gap-1.5 bg-gradient-to-r from-primary to-accent"
+            onClick={() => setShowCopilot(v => !v)}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="text-xs">AI</span>
+          </Button>
+        )}
         <div className="mb-8">
           {prefilledState?.backUrl && (
             <button
@@ -1492,6 +1531,17 @@ const PatternLabWizard = () => {
         </div>
       </div>
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="backtesting" />
+      </div>
+
+      {/* Mobile: bottom sheet copilot */}
+      {showCopilot && isMobile && (
+        <div className="fixed inset-0 z-50 flex flex-col">
+          <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
+          <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
+            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'research', route: '/projects/pattern-lab', quickPrompts: [t('copilot.ctx.researchPrompt1'), t('copilot.ctx.researchPrompt2'), t('copilot.ctx.researchPrompt3')] }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
