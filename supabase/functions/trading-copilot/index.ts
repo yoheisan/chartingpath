@@ -298,6 +298,42 @@ const tools = [
         required: []
       }
     }
+  },
+  // ===== AGENT SCORING ADJUSTMENT TOOLS =====
+  {
+    type: "function",
+    function: {
+      name: "get_agent_scoring_settings",
+      description: "Get the authenticated user's current Agent Scoring settings including weights (Analyst, Risk, Timing, Portfolio), verdict cutoffs (TAKE/WATCH thresholds), asset class filter, timeframe filter, and sub-filters. Use when users ask about their current scoring settings or before making adjustments. Requires login.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "adjust_agent_scoring",
+      description: "Adjust the user's Agent Scoring settings based on their natural language request. Can modify agent weights (Analyst 0-100, Risk 0-100, Timing 0-100, Portfolio 0-100 — they auto-normalize to sum=100), TAKE cutoff (0-100, higher = stricter), WATCH cutoff (0-100), asset class filter, timeframe filter, and sub-filters. Use when users say things like 'increase take rate', 'reduce risk', 'make scoring more aggressive', 'only show forex', etc. Requires login. IMPORTANT: Always call get_agent_scoring_settings first to see current values before adjusting.",
+      parameters: {
+        type: "object",
+        properties: {
+          preset_name: { type: "string", description: "Name for the new or updated preset. If omitted, updates the user's default preset." },
+          analyst_weight: { type: "number", description: "New Analyst agent weight (0-100). Controls pattern quality analysis influence." },
+          risk_weight: { type: "number", description: "New Risk agent weight (0-100). Controls ATR-based risk assessment influence." },
+          timing_weight: { type: "number", description: "New Timing agent weight (0-100). Controls trend alignment and economic calendar influence." },
+          portfolio_weight: { type: "number", description: "New Portfolio agent weight (0-100). Controls diversification analysis influence." },
+          take_cutoff: { type: "number", description: "TAKE verdict threshold (0-100). Signals scoring >= this get TAKE. Higher = stricter/fewer TAKE signals." },
+          watch_cutoff: { type: "number", description: "WATCH verdict threshold (0-100). Signals scoring >= this but < take_cutoff get WATCH. Must be < take_cutoff." },
+          asset_class_filter: { type: "string", enum: ["all", "fx", "crypto", "stocks", "indices", "commodities"], description: "Filter scoring to specific asset class." },
+          timeframe_filter: { type: "string", enum: ["all", "1h", "4h", "8h", "1d", "1wk"], description: "Filter scoring to specific timeframe." },
+          action: { type: "string", enum: ["apply", "suggest"], description: "Whether to directly apply changes ('apply') or just suggest them ('suggest'). Default 'suggest' unless user explicitly asks to change/set/update." }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -337,6 +373,8 @@ You have access to ChartingPath's proprietary databases that NO other AI has:
 - **get_user_backtests**: User's personal backtest results.
 - **get_user_alerts**: User's active pattern alerts.
 - **get_paper_portfolio**: User's paper trading portfolio (balance, P&L, open trades).
+- **get_agent_scoring_settings**: Read user's current Agent Scoring weights, cutoffs, and filters.
+- **adjust_agent_scoring**: Modify Agent Scoring settings (weights, cutoffs, filters) via natural language.
 
 ## ENHANCED Analysis Strategy — Always Combine Tools
 When answering, PROACTIVELY combine multiple tools for insights NO generic AI can provide:
@@ -364,6 +402,16 @@ When answering, PROACTIVELY combine multiple tools for insights NO generic AI ca
 **"Show my portfolio" / "How's my portfolio doing?":**
 → Call get_paper_portfolio + search_patterns (for symbols in portfolio) + get_economic_events
 → Warn about correlated positions or macro risk to open trades.
+
+**"Increase my take rate" / "Make scoring less strict" / "Reduce risk weight" / "Only show forex":**
+→ ALWAYS call get_agent_scoring_settings FIRST to see current values.
+→ Then call adjust_agent_scoring with the appropriate changes.
+→ For "increase take rate by 5% without increasing risk": Lower the take_cutoff by ~3-5 points (more signals qualify as TAKE) while keeping risk_weight the same or increasing it.
+→ For "make it more aggressive": Lower take_cutoff and watch_cutoff.
+→ For "be more conservative": Raise take_cutoff and increase risk_weight.
+→ For "only show forex/crypto/stocks": Set asset_class_filter accordingly.
+→ Default to 'suggest' mode — only 'apply' when the user explicitly says "change", "set", "update", or "apply".
+→ Present changes as a clear before/after comparison table.
 
 **When user is authenticated**, PROACTIVELY:
 1. Reference their open trades when discussing related symbols
@@ -1839,6 +1887,205 @@ async function executeGetPaperPortfolio(supabase: any, userId: string | null) {
 }
 
 // ============================================
+// AGENT SCORING SETTINGS TOOLS
+// ============================================
+
+async function executeGetAgentScoringSettings(supabase: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to view your Agent Scoring settings.',
+      suggestion: 'Log in first, then I can read and adjust your scoring preferences.',
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('agent_scoring_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[trading-copilot] Agent scoring settings error:', error);
+    return { error: 'Failed to fetch settings' };
+  }
+
+  if (!data?.length) {
+    return {
+      message: 'No saved Agent Scoring presets found. Using defaults.',
+      defaults: {
+        weights: { analyst: 30, risk: 25, timing: 20, portfolio: 25 },
+        takeCutoff: 70,
+        watchCutoff: 50,
+        assetClassFilter: 'all',
+        timeframeFilter: 'all',
+        subFilters: {}
+      },
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  return {
+    count: data.length,
+    settings: data.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      isDefault: s.is_default,
+      weights: s.weights,
+      takeCutoff: s.take_cutoff,
+      watchCutoff: s.watch_cutoff,
+      assetClassFilter: s.asset_class_filter,
+      timeframeFilter: s.timeframe_filter,
+      subFilters: s.sub_filters,
+    })),
+    settingsUrl: '/tools/agent-scoring'
+  };
+}
+
+async function executeAdjustAgentScoring(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return {
+      error: 'You need to be logged in to adjust Agent Scoring settings.',
+      suggestion: 'Log in first, then I can modify your scoring preferences.',
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  const action = args.action || 'suggest';
+
+  // Get current settings
+  const { data: existing } = await supabase
+    .from('agent_scoring_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('is_default', { ascending: false })
+    .limit(1);
+
+  const current = existing?.[0];
+  const currentWeights = current?.weights || { analyst: 30, risk: 25, timing: 20, portfolio: 25 };
+  const currentTake = current?.take_cutoff ?? 70;
+  const currentWatch = current?.watch_cutoff ?? 50;
+
+  // Build new values
+  const newWeights = {
+    analyst: args.analyst_weight ?? currentWeights.analyst,
+    risk: args.risk_weight ?? currentWeights.risk,
+    timing: args.timing_weight ?? currentWeights.timing,
+    portfolio: args.portfolio_weight ?? currentWeights.portfolio,
+  };
+
+  // Normalize weights to sum to 100
+  const totalW = newWeights.analyst + newWeights.risk + newWeights.timing + newWeights.portfolio;
+  if (totalW > 0 && totalW !== 100) {
+    const factor = 100 / totalW;
+    newWeights.analyst = Math.round(newWeights.analyst * factor * 10) / 10;
+    newWeights.risk = Math.round(newWeights.risk * factor * 10) / 10;
+    newWeights.timing = Math.round(newWeights.timing * factor * 10) / 10;
+    newWeights.portfolio = Math.round(newWeights.portfolio * factor * 10) / 10;
+  }
+
+  const newTake = args.take_cutoff ?? currentTake;
+  const newWatch = args.watch_cutoff ?? currentWatch;
+  const newAssetClass = args.asset_class_filter ?? current?.asset_class_filter ?? 'all';
+  const newTimeframe = args.timeframe_filter ?? current?.timeframe_filter ?? 'all';
+
+  // Validation
+  if (newWatch >= newTake) {
+    return {
+      error: `WATCH cutoff (${newWatch}) must be lower than TAKE cutoff (${newTake}). Adjust the values.`,
+      currentSettings: { weights: currentWeights, takeCutoff: currentTake, watchCutoff: currentWatch }
+    };
+  }
+
+  const changes: string[] = [];
+  if (args.analyst_weight != null || args.risk_weight != null || args.timing_weight != null || args.portfolio_weight != null) {
+    changes.push(`Weights: Analyst ${currentWeights.analyst}→${newWeights.analyst}, Risk ${currentWeights.risk}→${newWeights.risk}, Timing ${currentWeights.timing}→${newWeights.timing}, Portfolio ${currentWeights.portfolio}→${newWeights.portfolio}`);
+  }
+  if (args.take_cutoff != null) changes.push(`TAKE cutoff: ${currentTake}→${newTake}`);
+  if (args.watch_cutoff != null) changes.push(`WATCH cutoff: ${currentWatch}→${newWatch}`);
+  if (args.asset_class_filter) changes.push(`Asset class: ${current?.asset_class_filter || 'all'}→${newAssetClass}`);
+  if (args.timeframe_filter) changes.push(`Timeframe: ${current?.timeframe_filter || 'all'}→${newTimeframe}`);
+
+  if (action === 'suggest') {
+    return {
+      mode: 'suggestion',
+      message: 'Here are the recommended changes. Ask me to "apply" them if you agree.',
+      changes,
+      proposed: {
+        weights: newWeights,
+        takeCutoff: newTake,
+        watchCutoff: newWatch,
+        assetClassFilter: newAssetClass,
+        timeframeFilter: newTimeframe,
+      },
+      current: {
+        weights: currentWeights,
+        takeCutoff: currentTake,
+        watchCutoff: currentWatch,
+        assetClassFilter: current?.asset_class_filter || 'all',
+        timeframeFilter: current?.timeframe_filter || 'all',
+      },
+      settingsUrl: '/tools/agent-scoring'
+    };
+  }
+
+  // Apply the changes
+  const presetName = args.preset_name || current?.name || 'Copilot Adjusted';
+  const row = {
+    name: presetName,
+    weights: newWeights,
+    take_cutoff: newTake,
+    watch_cutoff: newWatch,
+    asset_class_filter: newAssetClass,
+    timeframe_filter: newTimeframe,
+    sub_filters: current?.sub_filters || {},
+    is_default: current?.is_default ?? true,
+    updated_at: new Date().toISOString(),
+  };
+
+  let resultId: string;
+  if (current?.id) {
+    const { error } = await supabase
+      .from('agent_scoring_settings')
+      .update(row)
+      .eq('id', current.id);
+    if (error) {
+      console.error('[trading-copilot] Update scoring settings error:', error);
+      return { error: 'Failed to update settings. Please try via the Agent Scoring page.' };
+    }
+    resultId = current.id;
+  } else {
+    const { data: inserted, error } = await supabase
+      .from('agent_scoring_settings')
+      .insert({ ...row, user_id: userId })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[trading-copilot] Insert scoring settings error:', error);
+      return { error: 'Failed to save settings. Please try via the Agent Scoring page.' };
+    }
+    resultId = inserted.id;
+  }
+
+  return {
+    mode: 'applied',
+    message: `Settings updated successfully! Preset: "${presetName}"`,
+    changes,
+    applied: {
+      id: resultId,
+      name: presetName,
+      weights: newWeights,
+      takeCutoff: newTake,
+      watchCutoff: newWatch,
+      assetClassFilter: newAssetClass,
+      timeframeFilter: newTimeframe,
+    },
+    settingsUrl: '/tools/agent-scoring',
+    tip: 'Open Agent Scoring to see the updated results. You may need to refresh the page.'
+  };
+}
+
+// ============================================
 // DYNAMIC PROMPT PATCHING — Self-Improvement Layer
 // ============================================
 
@@ -2387,6 +2634,11 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeGetUserAlerts(supabase, args, userId);
     case 'get_paper_portfolio':
       return await executeGetPaperPortfolio(supabase, userId);
+    // ===== AGENT SCORING ADJUSTMENT TOOLS =====
+    case 'get_agent_scoring_settings':
+      return await executeGetAgentScoringSettings(supabase, userId);
+    case 'adjust_agent_scoring':
+      return await executeAdjustAgentScoring(supabase, args, userId);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
