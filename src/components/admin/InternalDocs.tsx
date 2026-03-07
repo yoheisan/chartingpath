@@ -569,10 +569,10 @@ const CopilotAITab = () => (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Copilot Full Integration & Self-Improvement Architecture</CardTitle>
-        <CardDescription>15 active tools across 6 data domains. Combined analysis strategy. Last updated: 2026-02-26.</CardDescription>
+        <CardDescription>17 active tools across 7 data domains. Combined analysis strategy. Last updated: 2026-03-07.</CardDescription>
       </CardHeader>
       <CardContent>
-        <SectionHeader icon={Database} title="Tool Inventory — 15 Active Tools" />
+        <SectionHeader icon={Database} title="Tool Inventory — 17 Active Tools" />
         <div className="overflow-x-auto">
           <table className="w-full text-sm border">
             <thead className="bg-muted">
@@ -599,6 +599,8 @@ const CopilotAITab = () => (
                 ["get_user_alerts", "alerts table", "Yes", "Personal"],
                 ["get_paper_portfolio", "paper_portfolios + paper_trades", "Yes", "Personal"],
                 ["get_user_watchlist", "User watchlist read", "Yes", "Personal"],
+                ["get_agent_scoring_settings", "agent_scoring_settings", "Yes", "Scoring"],
+                ["adjust_agent_scoring", "agent_scoring_settings (R/W)", "Yes", "Scoring"],
               ].map(([tool, source, auth, domain]) => (
                 <tr key={tool}>
                   <td className="px-3 py-2 border-b font-mono text-xs text-primary">{tool}</td>
