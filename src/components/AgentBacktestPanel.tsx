@@ -142,8 +142,8 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
 
   const gaugeStats = useMemo(() => {
     if (liveDetections.length === 0) return { takeRate: 0, watchRate: 0, skipRate: 0, avgScore: 0 };
-    
-    const ctx: ScoringContext = { economicEvents, basketSymbols, allDetections: liveDetections };
+
+    const ctx: ScoringContext = { economicEvents, basketSelectionKeys: basketSelections, allDetections: liveDetections };
     const composites = liveDetections.map((d) => {
       const { analystRaw, riskRaw, timingRaw, portfolioRaw } = deriveRawScores(d, ctx);
       return analystRaw * weights.analyst + riskRaw * weights.risk + timingRaw * weights.timing + portfolioRaw * weights.portfolio;
@@ -159,7 +159,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
       skipRate: (skips / total) * 100,
       avgScore: avg,
     };
-  }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSymbols]);
+  }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSelections]);
 
   const handleRun = async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
