@@ -307,13 +307,13 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                       variant="ghost"
                       size="sm"
                       className={`h-6 w-6 p-0 rounded-full transition-all ${
-                        basketSymbols.includes(trade.symbol)
+                        basketSelections.includes(trade.selectionKey)
                           ? 'bg-primary text-primary-foreground hover:bg-primary/80'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
-                      onClick={() => onToggleBasket(trade.symbol)}
+                      onClick={() => onToggleBasket(trade.selectionKey)}
                     >
-                      {basketSymbols.includes(trade.symbol) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                      {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                     </Button>
                   </td>
                 )}
