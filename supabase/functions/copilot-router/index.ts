@@ -14,7 +14,7 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const CLASSIFICATION_TIMEOUT_MS = 12000;
 const DOWNSTREAM_TIMEOUT_MS = 30000;
 
-const VALID_DOMAINS = ["scoring", "screener", "research", "general"] as const;
+const VALID_DOMAINS = ["scoring", "screener", "research", "navigation", "general"] as const;
 type Domain = (typeof VALID_DOMAINS)[number];
 
 interface ClassificationResult {
@@ -96,6 +96,7 @@ Classify the user's message into exactly ONE domain:
 - "scoring": adjusting agent scoring weights, cutoffs, take rates, watch rates, filters
 - "screener": searching for patterns, filtering live signals, finding setups
 - "research": asking about a specific instrument, pattern stats, historical data, market analysis
+- "navigation": user wants to navigate to a different page or section of the app
 - "general": everything else — greetings, help, off-topic, ambiguous
 
 Consider the context hint if provided. Be precise — only classify as a specific domain if the intent is clear.`;
@@ -123,7 +124,7 @@ Consider the context hint if provided. Be precise — only classify as a specifi
             properties: {
               domain: {
                 type: "string",
-                enum: ["scoring", "screener", "research", "general"],
+                enum: ["scoring", "screener", "research", "navigation", "general"],
                 description: "The classified domain.",
               },
               confidence: {
@@ -253,6 +254,27 @@ serve(async (req) => {
       }
     }
 
+    // Fast-path: regex-based navigation detection before LLM call
+    const NAV_PATTERNS = [
+      /\b(go to|open|navigate to|take me to|show me the page|switch to)\b/i,
+    ];
+    const isNavIntent = NAV_PATTERNS.some((p) => p.test(userText));
+    if (isNavIntent) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      supabase.from("copilot_training_pairs").insert({
+        prompt: userText,
+        response: "",
+        domain: "navigation",
+        intent_classification: "navigate",
+        parameters_used: {},
+        user_id: userId,
+      });
+      return new Response(
+        JSON.stringify({ domain: "navigation", confidence: 0.95, intent: "navigate" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const classification = await classifyIntent(userText, context);
     console.log(
       `[copilot-router] domain=${classification.domain} confidence=${classification.confidence} intent="${classification.intent}"`
@@ -264,6 +286,7 @@ serve(async (req) => {
       scoring: "copilot-scoring-handler",
       screener: "copilot-screener-handler",
       research: "copilot-research-handler",
+      navigation: "trading-copilot",
       general: "trading-copilot",
     };
     const handlerName = handlerMap[classification.domain] ?? "trading-copilot";
