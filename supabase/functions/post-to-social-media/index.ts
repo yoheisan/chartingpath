@@ -212,6 +212,39 @@ serve(async (req) => {
       }
     }
 
+    // Self-healing: if educational post has empty content, re-fetch from source piece
+    if (post.post_type === 'educational' && (!content || content.trim().length < 20)) {
+      const pieceId = post.report_config?.piece_id;
+      if (pieceId) {
+        console.log(`[post-to-social-media] Educational content empty, re-fetching piece ${pieceId}`);
+        const { data: piece } = await supabaseClient
+          .from('educational_content_pieces')
+          .select('content, hashtags')
+          .eq('id', pieceId)
+          .single();
+
+        if (piece?.content && piece.content.trim().length >= 20) {
+          const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
+          content = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
+          console.log(`[post-to-social-media] Recovered content (${content.length} chars)`);
+          // Update DB so history records the real content
+          await supabaseClient
+            .from('scheduled_posts')
+            .update({ content })
+            .eq('id', scheduledPostId);
+        } else {
+          throw new Error(`Source educational piece ${pieceId} has no content`);
+        }
+      } else {
+        throw new Error('Educational post has empty content and no piece_id in report_config');
+      }
+    }
+
+    // Final guard: never send empty content to any platform
+    if (!content || content.trim().length < 10) {
+      throw new Error(`Content is empty or too short (${content?.length || 0} chars) — refusing to post`);
+    }
+
     if (!account || !account.is_active) {
       throw new Error('Social media account not found or inactive');
     }
