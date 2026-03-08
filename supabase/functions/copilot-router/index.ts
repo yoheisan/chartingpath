@@ -33,7 +33,7 @@ function normalizeContextDomain(context?: string): Domain | null {
   return null;
 }
 
-function classifyByHeuristics(userMessage: string, context?: string): ClassificationResult {
+function classifyByHeuristics(userMessage: string, context?: string | Record<string, unknown>): ClassificationResult {
   const ctxDomain = normalizeContextDomain(context);
   if (ctxDomain) {
     return {
