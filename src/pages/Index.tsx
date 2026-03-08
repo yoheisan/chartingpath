@@ -171,28 +171,45 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
-              {t('hero.headline1', 'Find Chart Pattern Setups')}
+              Find high-probability chart patterns
             </span>
             <br />
             <span className="text-primary">
-              {t('hero.headline2', 'Before They Break Out')}
+              before they break
             </span>
           </h1>
           
-          <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitle', `Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments. Validate with 320,000+ historical trades. Get entry, stop-loss, and target — in seconds.`)}
+          <p className="text-lg text-muted-foreground mb-3 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
+            Backtested across years of real market data. Entry, stop-loss, and target — in seconds.
           </p>
           
-          {/* Ticker Search — prominent */}
-          <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+          <p className="text-sm text-muted-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+            Used by traders in Singapore, UK, US and 20+ countries. Free to start.
+          </p>
+
+          {/* Single prominent CTA */}
+          <div className="mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <Button 
+              size="lg" 
+              onClick={handleScreenerClick}
+              className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
+            >
+              <TrendingUp className="h-6 w-6 mr-3" />
+              See Live Patterns Free
+              <ArrowRight className="h-6 w-6 ml-3" />
+            </Button>
+          </div>
+          
+          {/* Ticker Search */}
+          <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
             <UniversalSymbolSearch
               onSelect={(symbol) => {
                 trackEvent('landing.search_select', { symbol });
                 navigate('/members/dashboard', { state: { initialSymbol: symbol } });
               }}
               trigger={
-                <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-primary/30 bg-card/80 backdrop-blur-sm hover:border-primary/60 transition-all shadow-lg hover:shadow-primary/10 group cursor-pointer">
-                  <Search className="h-5 w-5 text-primary" />
+                <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/40 transition-all group cursor-pointer">
+                  <Search className="h-5 w-5 text-muted-foreground" />
                   <span className="text-muted-foreground text-base group-hover:text-foreground transition-colors">
                     Search any ticker — AAPL, BTC, EUR/USD…
                   </span>
@@ -204,18 +221,8 @@ const Index = () => {
             />
           </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <Button 
-              size="lg" 
-              onClick={handleScreenerClick}
-              className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-            >
-              <TrendingUp className="h-5 w-5 mr-2" />
-              {t('hero.cta', "See Today's Setups")}
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
-            
+          {/* Secondary CTA */}
+          <div className="flex justify-center mb-10 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button 
               size="lg" 
               variant="outline"
@@ -228,7 +235,7 @@ const Index = () => {
           </div>
           
           {/* Trust Block */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.3s' }}>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.35s' }}>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
               <span>{t('hero.trustSignals', 'Signals on closed candles')}</span>
@@ -244,7 +251,7 @@ const Index = () => {
           </div>
 
           {/* Copilot hint */}
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <Bot className="h-3 w-3" />
             <span>{t('hero.copilotHint', 'Powered by AI Trading Copilot — press ⌘K anywhere')}</span>
           </div>
