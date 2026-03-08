@@ -286,6 +286,7 @@ serve(async (req) => {
       scoring: "copilot-scoring-handler",
       screener: "copilot-screener-handler",
       research: "copilot-research-handler",
+      navigation: "trading-copilot",
       general: "trading-copilot",
     };
     const handlerName = handlerMap[classification.domain] ?? "trading-copilot";
