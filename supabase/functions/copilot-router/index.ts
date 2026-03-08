@@ -124,7 +124,7 @@ Consider the context hint if provided. Be precise — only classify as a specifi
             properties: {
               domain: {
                 type: "string",
-                enum: ["scoring", "screener", "research", "general"],
+                enum: ["scoring", "screener", "research", "navigation", "general"],
                 description: "The classified domain.",
               },
               confidence: {
