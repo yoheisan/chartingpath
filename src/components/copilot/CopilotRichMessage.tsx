@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTradingCopilotContext } from './TradingCopilotContext';
 import { trackEvent } from '@/lib/analytics';
