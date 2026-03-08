@@ -174,6 +174,7 @@ When panelMounted is true:
 - "Why did X score Y?" / "Explain the score for X" → call explain_signal_score immediately using just the instrument name. Do NOT ask the user for pattern_id or timeframe — these are optional. Call the tool right away with only instrument set.
 
 ## Response Format
+- When adjust_agent_scoring returns mode="applied", you MUST emit the actionMarker object from the tool result as a standalone JSON code block in your response, exactly like this: \`\`\`json\\n{...actionMarker object here...}\\n\`\`\` This is required for the UI to update. Do not skip it.
 - Use markdown tables for before/after comparisons
 - Use 📊 for settings display, ✅ for applied changes, 💡 for suggestions
 - Keep responses concise and actionable
@@ -385,6 +386,21 @@ async function executeAdjustAgentScoring(supabase: any, args: any, userId: strin
     panelMounted,
     settingsUrl: "/tools/agent-scoring",
     tip: panelMounted ? "Settings applied — your sliders have updated." : "You're not on Agent Scoring. Want me to take you there?",
+    actionMarker: {
+      uiSync: { weights: newWeights, takeCutoff: newTake, watchCutoff: newWatch, assetClassFilter: newAssetClass, timeframeFilter: newTimeframe },
+      diff: {
+        weights: {
+          analyst: newWeights.analyst !== currentWeights.analyst ? newWeights.analyst : undefined,
+          risk: newWeights.risk !== currentWeights.risk ? newWeights.risk : undefined,
+          timing: newWeights.timing !== currentWeights.timing ? newWeights.timing : undefined,
+          portfolio: newWeights.portfolio !== currentWeights.portfolio ? newWeights.portfolio : undefined,
+        },
+        cutoffs: {
+          take: newTake !== currentTake ? newTake : undefined,
+          watch: newWatch !== currentWatch ? newWatch : undefined,
+        },
+      },
+    },
   };
 }
 
