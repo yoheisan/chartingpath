@@ -96,6 +96,7 @@ Classify the user's message into exactly ONE domain:
 - "scoring": adjusting agent scoring weights, cutoffs, take rates, watch rates, filters
 - "screener": searching for patterns, filtering live signals, finding setups
 - "research": asking about a specific instrument, pattern stats, historical data, market analysis
+- "navigation": user wants to navigate to a different page or section of the app
 - "general": everything else — greetings, help, off-topic, ambiguous
 
 Consider the context hint if provided. Be precise — only classify as a specific domain if the intent is clear.`;
