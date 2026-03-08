@@ -10,6 +10,8 @@ import {
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
