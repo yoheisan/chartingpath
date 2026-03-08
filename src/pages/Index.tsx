@@ -188,10 +188,13 @@ const Index = () => {
           </p>
 
           {/* Single prominent CTA */}
-          <div className="mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Button 
               size="lg" 
-              onClick={handleScreenerClick}
+              onClick={() => {
+                (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
+                handleScreenerClick();
+              }}
               className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
             >
               <TrendingUp className="h-6 w-6 mr-3" />
@@ -199,6 +202,23 @@ const Index = () => {
               <ArrowRight className="h-6 w-6 ml-3" />
             </Button>
           </div>
+
+          {/* Sign Up CTA — prominent for guests */}
+          {!isAuthenticated && (
+            <div className="mb-10 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+              <Button
+                size="lg"
+                onClick={() => {
+                  (window as any).gtag?.('event', 'cta_click', { location: 'hero_signup' });
+                  navigate('/auth?mode=signup');
+                }}
+                className="px-8 py-6 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Create Free Account
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          )}
           
           {/* Ticker Search */}
           <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>

@@ -241,14 +241,28 @@ const Auth = () => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const user = session.user;
-        // Track OAuth / auto sign-in (password logins tracked separately)
         const provider = user.app_metadata?.provider;
+
+        // Detect first-ever login (new signup via OAuth)
+        const isNewUser =
+          user.created_at &&
+          user.last_sign_in_at &&
+          Math.abs(new Date(user.created_at).getTime() - new Date(user.last_sign_in_at).getTime()) < 10_000;
+
+        if (isNewUser && provider && provider !== "email") {
+          (window as any).gtag?.('event', 'sign_up', { method: provider });
+        }
+
+        // Track OAuth / auto sign-in (password logins tracked separately)
         if (provider && provider !== "email") {
           trackLoginAttempt({ email: user.email, success: true, method: provider, user_id: user.id });
         }
+
         setTimeout(() => {
           void ensureProfileForUser(user).finally(() => {
-            navigate(redirectPath);
+            // New OAuth users → dashboard; returning users → redirect path
+            const dest = isNewUser ? '/members/dashboard' : redirectPath;
+            navigate(dest);
           });
         }, 0);
       } else if (event === "PASSWORD_RECOVERY") {
@@ -438,6 +452,9 @@ const Auth = () => {
         }
 
         trackLoginAttempt({ email, success: true, method: "password", user_id: data.user?.id });
+
+        // Fire GA4 login event
+        (window as any).gtag?.('event', 'login', { method: 'email' });
 
         toast({
           title: t('auth.toastWelcomeBack'),
