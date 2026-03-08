@@ -496,11 +496,11 @@ async function executeExplainSignalScore(supabase: any, args: any) {
   }
   const s = data[0];
 
-  const analystRaw = s.analyst_raw ?? 0;
-  const riskRaw = s.risk_raw ?? 0;
-  const timingRaw = s.timing_raw ?? 0;
-  const portfolioRaw = s.portfolio_raw ?? 0;
-  const composite = (analystRaw * 25 + riskRaw * 25 + timingRaw * 25 + portfolioRaw * 25) / 100;
+  const analystRaw = (s.analyst_raw ?? 0) * 100;
+  const riskRaw = (s.risk_raw ?? 0) * 100;
+  const timingRaw = (s.timing_raw ?? 0) * 100;
+  const portfolioRaw = (s.portfolio_raw ?? 0) * 100;
+  const composite = (analystRaw + riskRaw + timingRaw + portfolioRaw) / 4;
   const verdict = composite >= 70 ? "TAKE" : composite >= 50 ? "WATCH" : "SKIP";
 
   const ad = s.analyst_details ?? {};
