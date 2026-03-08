@@ -92,6 +92,78 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const { data: agentScores = [] } = useAgentScores();
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
 
+  // Register/unregister panel mount for Copilot panel detection
+  useEffect(() => {
+    registerPanel('agentScoring');
+    return () => unregisterPanel('agentScoring');
+  }, []);
+
+  // Consume pending Copilot action on mount
+  useEffect(() => {
+    async function consumePendingAction() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const { data } = await supabase
+        .from('pending_copilot_actions')
+        .select('*')
+        .is('applied_at', null)
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!data) return;
+      if (data.action_type === 'scoring_update') {
+        const p = data.payload;
+        if (p.weights) setWeights(p.weights);
+        if (p.takeCutoff !== undefined) setTakeCutoff(p.takeCutoff);
+        if (p.watchCutoff !== undefined) setWatchCutoff(p.watchCutoff);
+        if (p.assetClassFilter) setAssetClassFilter(p.assetClassFilter);
+        if (p.timeframeFilter) setTimeframeFilter(p.timeframeFilter);
+        if (p.subFilters) setSubFilters(p.subFilters);
+        toast.success(`Copilot applied: ${data.payload.description || 'settings updated'}`);
+      }
+      await supabase
+        .from('pending_copilot_actions')
+        .update({ applied_at: new Date().toISOString() })
+        .eq('id', data.id);
+      if (data.auto_run) {
+        setTimeout(() => handleRun(), 1200);
+      }
+    }
+    consumePendingAction();
+  }, []);
+
+  // Listen for Copilot scoring update events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const payload = (e as CustomEvent<ScoringUpdatePayload>).detail;
+      const { originatedAt, diff, description, ...settings } = payload;
+      // Conflict check: skip if user has made manual changes after this event originated
+      if (lastManualInteraction.current > originatedAt) {
+        toast.warning('Copilot update skipped — you have unsaved manual changes. Type "apply copilot changes" to override.');
+        return;
+      }
+      if (settings.weights) setWeights(settings.weights);
+      if (settings.takeCutoff !== undefined) setTakeCutoff(settings.takeCutoff);
+      if (settings.watchCutoff !== undefined) setWatchCutoff(settings.watchCutoff);
+      if (settings.assetClassFilter) setAssetClassFilter(settings.assetClassFilter as AssetClassFilter);
+      if (settings.timeframeFilter) setTimeframeFilter(settings.timeframeFilter as TimeframeFilter);
+      if (settings.subFilters) setSubFilters(settings.subFilters);
+      if (settings.presetId) setActiveSettingId(settings.presetId);
+      setActivePreset('');
+      const diffSummary = diff ? buildDiffSummary(diff) : '';
+      toast.success(`✅ ${description ?? 'Copilot update applied'}${diffSummary ? `  ·  ${diffSummary}` : ''}`);
+    };
+    window.addEventListener('copilot:scoring-update', handler);
+    return () => window.removeEventListener('copilot:scoring-update', handler);
+  }, []);
+
+  // Listen for Copilot run backtest events
+  useEffect(() => {
+    const handler = () => handleRun();
+    window.addEventListener('copilot:run-backtest', handler);
+    return () => window.removeEventListener('copilot:run-backtest', handler);
+  }, []);
+
   const selectedDetections = useMemo(() => {
     const keySet = new Set(basketSelections);
     return liveDetections.filter((d) => keySet.has(buildDetectionSelectionKey(d)));
