@@ -6,6 +6,7 @@ import { TradingCopilot, useTradingCopilotContext } from "./copilot";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { GuestSignupNudge } from "./GuestSignupNudge";
 
 interface LayoutProps {
   children: ReactNode;
@@ -67,6 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
           onContextConsumed={copilot.consumePendingContext}
         />
       )}
+      <GuestSignupNudge />
     </div>
   );
 };

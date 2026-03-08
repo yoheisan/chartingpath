@@ -87,12 +87,15 @@ const AuthButton = () => {
 
   if (!user) {
     return (
-      <Button asChild variant="outline">
-        <Link to="/auth">
-          <LogIn className="h-4 w-4 mr-2" />
-          {t('accountMenu.login')}
-        </Link>
-      </Button>
+      <div className="flex flex-col items-center gap-0.5">
+        <Button asChild variant="outline">
+          <Link to="/auth">
+            <LogIn className="h-4 w-4 mr-2" />
+            {t('accountMenu.login')}
+          </Link>
+        </Button>
+        <span className="text-[10px] text-muted-foreground/60">Join 1,300+ traders</span>
+      </div>
     );
   }
 

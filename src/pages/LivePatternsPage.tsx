@@ -10,6 +10,8 @@ import {
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
@@ -712,6 +714,26 @@ export default function LivePatternsPage() {
     });
     return Array.from(groups.entries());
   }, [sortedPatterns]);
+
+  // Guest preview: limit visible rows to ~30%
+  const { isAuthenticated: isAuthed } = useAuth();
+  const totalRowCount = sortedPatterns.length;
+  const GUEST_VISIBLE = 3;
+  const guestLimited = !isAuthed && totalRowCount > GUEST_VISIBLE;
+
+  const visibleGroupedPatterns = useMemo(() => {
+    if (!guestLimited) return groupedPatterns;
+    // Show only the first GUEST_VISIBLE rows across all groups
+    let remaining = GUEST_VISIBLE;
+    const limited: [string, LiveSetup[]][] = [];
+    for (const [name, setups] of groupedPatterns) {
+      if (remaining <= 0) break;
+      const slice = setups.slice(0, remaining);
+      limited.push([name, slice]);
+      remaining -= slice.length;
+    }
+    return limited;
+  }, [groupedPatterns, guestLimited]);
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
     if (sortKey !== columnKey) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
@@ -1439,7 +1461,7 @@ export default function LivePatternsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groupedPatterns.map(([patternName, setups]) => (
+                {visibleGroupedPatterns.map(([patternName, setups]) => (
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
@@ -1591,6 +1613,11 @@ export default function LivePatternsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Guest overlay when rows are limited */}
+          {guestLimited && (
+            <GuestScreenerOverlay totalCount={totalRowCount} visibleCount={GUEST_VISIBLE} />
+          )}
         </div>
         </>
       )}

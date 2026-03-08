@@ -406,6 +406,9 @@ const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
+          // Fire GA4 signup conversion event
+          (window as any).gtag?.('event', 'sign_up', { method: 'email' });
+
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
