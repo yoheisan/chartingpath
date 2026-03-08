@@ -75,7 +75,7 @@ function classifyByHeuristics(userMessage: string, context?: string | Record<str
  */
 async function classifyIntent(
   userMessage: string,
-  context?: string
+  context?: string | Record<string, unknown>
 ): Promise<ClassificationResult> {
   const forcedDomain = normalizeContextDomain(context);
   if (forcedDomain) {
