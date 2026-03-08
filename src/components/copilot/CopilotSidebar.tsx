@@ -22,6 +22,15 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  dispatchScoringUpdate,
+  dispatchRunBacktest,
+  dispatchNavigate,
+  isPanelMounted,
+} from '@/lib/copilotEvents';
+import { fuzzyMatchRoute } from '@/lib/navigationRoutes';
 
 interface Message {
   id: string;
@@ -94,6 +103,8 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const activeConvoRef = useRef<string | null>(null);
   const lastTrainingPairIdRef = useRef<string | null>(null);
   const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
@@ -210,8 +221,12 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             .slice(-20)
             .map(m => ({ role: m.role, content: m.content })),
           language: i18n.language,
-          ...(context?.domain && { context: context.domain }),
-          ...(context?.route && { route: context.route }),
+          context: {
+            domain: context?.domain,
+            route: context?.route,
+            panelMounted: isPanelMounted('agentScoring'),
+            currentPath: window.location.pathname,
+          },
           ...(prewarmedCtx.ready && {
             prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
           }),
@@ -279,6 +294,83 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
             }
           } catch { /* ignore */ }
+        }
+      }
+
+      // ── Client-side navigation intent detection (fast path, no edge function needed)
+      const NAV_REGEX = /\b(go to|open|navigate to|take me to|switch to)\s+(.+)/i;
+      const navMatch = userMessage.match(NAV_REGEX);
+      if (navMatch) {
+        const destination = navMatch[2].replace(/[.!?]$/, '').trim();
+        const route = fuzzyMatchRoute(destination);
+        if (route) {
+          navigate(route.path);
+          toast.success(`Navigated to ${route.label}`);
+        }
+      }
+
+      // ── Action marker parsing — scan final assistant message for structured actions
+      if (assistantContent) {
+        const jsonBlockRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```|(\{[^{}]*"(?:uiSync|runBacktest|navigateTo|saved|undone|loaded)"[^{}]*\})/g;
+        let match;
+        while ((match = jsonBlockRegex.exec(assistantContent)) !== null) {
+          const jsonStr = match[1] || match[2];
+          if (!jsonStr) continue;
+          try {
+            const block = JSON.parse(jsonStr);
+
+            // Scoring update — dispatch to AgentBacktestPanel
+            if (block.uiSync) {
+              dispatchScoringUpdate({
+                ...block.uiSync,
+                originatedAt: Date.now(),
+                diff: block.diff,
+                description: block.changeDescription,
+              });
+            }
+
+            // Navigate action
+            if (block.navigateTo) {
+              const route = fuzzyMatchRoute(block.navigateTo) ?? { path: block.navigateTo, label: block.navigateTo };
+              setTimeout(() => {
+                navigate(route.path);
+                dispatchNavigate({ path: route.path, label: route.label, pendingAction: block.pendingAction ?? false });
+                toast.success(`Navigated to ${route.label}`);
+              }, 300);
+            }
+
+            // Run backtest trigger
+            if (block.runBacktest === true) {
+              setTimeout(() => dispatchRunBacktest(), 800);
+            }
+
+            // Preset saved — invalidate settings cache
+            if (block.saved && block.presetId) {
+              queryClient.invalidateQueries({ queryKey: ['agent-scoring-settings'] });
+              toast.success(`Preset "${block.presetName}" saved`);
+            }
+
+            // Undo applied — dispatch uiSync
+            if (block.undone && block.uiSync) {
+              dispatchScoringUpdate({
+                ...block.uiSync,
+                originatedAt: Date.now(),
+                description: block.message,
+              });
+            }
+
+            // Preset loaded — dispatch uiSync
+            if (block.loaded && block.uiSync) {
+              dispatchScoringUpdate({
+                ...block.uiSync,
+                originatedAt: Date.now(),
+                description: `Loaded preset: ${block.uiSync.presetName}`,
+              });
+              queryClient.invalidateQueries({ queryKey: ['agent-scoring-settings'] });
+            }
+          } catch {
+            // Invalid JSON block — skip
+          }
         }
       }
 
