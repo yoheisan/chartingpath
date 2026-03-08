@@ -174,6 +174,7 @@ When panelMounted is true:
 - "Why did X score Y?" / "Explain the score for X" → call explain_signal_score immediately using just the instrument name. Do NOT ask the user for pattern_id or timeframe — these are optional. Call the tool right away with only instrument set.
 
 ## Response Format
+- When adjust_agent_scoring returns mode="applied", you MUST emit the actionMarker object from the tool result as a standalone JSON code block in your response, exactly like this: \`\`\`json\\n{...actionMarker object here...}\\n\`\`\` This is required for the UI to update. Do not skip it.
 - Use markdown tables for before/after comparisons
 - Use 📊 for settings display, ✅ for applied changes, 💡 for suggestions
 - Keep responses concise and actionable
