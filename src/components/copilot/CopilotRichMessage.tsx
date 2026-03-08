@@ -647,8 +647,59 @@ function ScoreExplanationCard({ explanation }: { explanation: AgentScoreExplanat
   );
 }
 
+// ─── Confirmation question detection ───
+const CONFIRM_PATTERNS = [
+  /would you like (?:to|me to) apply/i,
+  /shall i apply/i,
+  /do you want (?:to|me to) apply/i,
+  /would you like (?:to|me to) (?:proceed|continue|go ahead|make this change|update)/i,
+  /shall i (?:proceed|continue|go ahead|make this change|update)/i,
+  /do you want (?:to|me to) (?:proceed|continue|go ahead|make this change|update)/i,
+  /ready to apply\??/i,
+  /apply (?:this|these) changes?\??/i,
+];
+
+function hasConfirmationQuestion(content: string): boolean {
+  return CONFIRM_PATTERNS.some(p => p.test(content));
+}
+
+function ConfirmationButtons({ onQuickReply }: { onQuickReply: (text: string) => void }) {
+  const { t } = useTranslation();
+  const [clicked, setClicked] = useState<string | null>(null);
+
+  const handle = (answer: string) => {
+    setClicked(answer);
+    onQuickReply(answer);
+  };
+
+  if (clicked) return null;
+
+  return (
+    <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+      <Button
+        variant="default"
+        size="sm"
+        className="h-8 text-xs gap-1.5"
+        onClick={() => handle('Yes, apply it')}
+      >
+        <Check className="h-3.5 w-3.5" />
+        {t('copilot.confirm.yes', 'Yes, apply')}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 text-xs gap-1.5"
+        onClick={() => handle('No, don\'t apply')}
+      >
+        <X className="h-3.5 w-3.5" />
+        {t('copilot.confirm.no', 'No, cancel')}
+      </Button>
+    </div>
+  );
+}
+
 // ─── Main component ───
-export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
+export function CopilotRichMessage({ content, onQuickReply }: CopilotRichMessageProps) {
   const cleanedContent = useMemo(() => 
     content
       .replace(/```(?:json)?\s*\{"scoreExplanation"[\s\S]*?```/g, '')
@@ -664,6 +715,7 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
   }, [cleanedContent, hasTable]);
   const actionButtons = useMemo(() => extractActionButtons(cleanedContent), [cleanedContent]);
   const scoreExplanation = useMemo(() => parseScoreExplanation(content), [content]);
+  const showConfirmation = useMemo(() => hasConfirmationQuestion(cleanedContent), [cleanedContent]);
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80 prose-headings:text-foreground">
@@ -676,6 +728,9 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
         return <EnrichedMarkdown key={i} content={segment.content} />;
       })}
       <ActionButtons buttons={actionButtons} />
+      {showConfirmation && onQuickReply && (
+        <ConfirmationButtons onQuickReply={onQuickReply} />
+      )}
     </div>
   );
 }
