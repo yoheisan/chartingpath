@@ -495,7 +495,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               {messages.map((message) => (
                 <div key={message.id} className={cn("flex flex-col gap-1", message.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(
-                    "rounded-lg px-3 py-2 text-sm leading-relaxed",
+                    "rounded-lg px-3 py-2 text-sm leading-relaxed break-words [overflow-wrap:anywhere]",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground max-w-[90%]"
                       : "bg-muted w-full"
