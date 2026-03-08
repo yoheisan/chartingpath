@@ -291,6 +291,33 @@ const Index = () => {
         <CopilotShowcase />
       </div>
 
+      {/* Mid-page Signup CTA */}
+      {!isAuthenticated && (
+        <section className="py-16 px-6 border-t border-border/20">
+          <div className="container mx-auto max-w-3xl">
+            <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 text-center">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Ready to find your next setup?
+              </h2>
+              <p className="text-muted-foreground mb-8">
+                Free account. No credit card required.
+              </p>
+              <Button
+                size="lg"
+                onClick={() => {
+                  (window as any).gtag?.('event', 'cta_click', { location: 'mid_page' });
+                  navigate('/auth?mode=signup');
+                }}
+                className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+              >
+                Create Free Account
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Pattern Screener Table */}
       <div ref={screenerRef}>
         <PatternScreenerTeaser />

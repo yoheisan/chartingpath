@@ -62,8 +62,13 @@ export const PricingTeaser = () => {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`p-6 bg-card/30 ${plan.highlighted ? 'bg-primary/[0.03]' : ''}`}
+              className={`p-6 bg-card/30 relative ${plan.highlighted ? 'bg-primary/[0.03]' : ''} ${plan.popular ? 'ring-1 ring-primary/50' : ''}`}
             >
+              {plan.popular && (
+                <span className="absolute -top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
+                  Most Popular
+                </span>
+              )}
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-lg font-bold">{plan.name}</span>
                 {plan.price && (
