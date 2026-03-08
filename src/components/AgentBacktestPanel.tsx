@@ -31,7 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
+import {
+  registerPanel,
+  unregisterPanel,
+  buildDiffSummary,
+  ScoringUpdatePayload,
+} from '@/lib/copilotEvents';
 const GUEST_BACKTEST_KEY = 'agent_scoring_guest_backtest';
 
 function hasUsedGuestBacktest(): boolean {
