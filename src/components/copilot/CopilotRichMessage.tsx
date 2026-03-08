@@ -8,7 +8,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink, Sparkles } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink, Sparkles, Brain, Shield, Clock, Briefcase } from 'lucide-react';
 
 interface CopilotRichMessageProps {
   content: string;
@@ -526,6 +526,126 @@ function EnrichedMarkdown({ content }: { content: string }) {
   );
 }
 
+// ─── Signal score explanation card ───
+interface AgentScoreExplanation {
+  instrument: string;
+  pattern: string;
+  timeframe: string;
+  composite: number;
+  verdict: string;
+  analyst: { score: number; winRate?: number; avgR?: number; trades?: number };
+  risk: { score: number; rr?: number; kelly?: number };
+  timing: { score: number; trend?: string; hasEvents?: boolean };
+  portfolio: { score: number; note?: string };
+}
+
+function parseScoreExplanation(content: string): AgentScoreExplanation | null {
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+  if (!jsonMatch) return null;
+  try {
+    const parsed = JSON.parse(jsonMatch[1]);
+    if (!parsed.scoreExplanation) return null;
+    return parsed.scoreExplanation as AgentScoreExplanation;
+  } catch {
+    return null;
+  }
+}
+
+function ScoreExplanationCard({ explanation }: { explanation: AgentScoreExplanation }) {
+  const verdictColor = {
+    TAKE: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    WATCH: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    SKIP: 'text-red-400 bg-red-400/10 border-red-400/20',
+  }[explanation.verdict] ?? 'text-muted-foreground bg-muted/10 border-border';
+
+  const agents = [
+    {
+      key: 'analyst',
+      label: 'Analyst',
+      icon: <Brain className="h-3.5 w-3.5 text-blue-400" />,
+      score: explanation.analyst.score,
+      detail: [
+        explanation.analyst.winRate !== undefined && `Win rate ${(explanation.analyst.winRate * 100).toFixed(0)}%`,
+        explanation.analyst.avgR !== undefined && `Avg R ${explanation.analyst.avgR.toFixed(2)}`,
+        explanation.analyst.trades !== undefined && `${explanation.analyst.trades} trades`,
+      ].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'risk',
+      label: 'Risk',
+      icon: <Shield className="h-3.5 w-3.5 text-amber-400" />,
+      score: explanation.risk.score,
+      detail: [
+        explanation.risk.rr !== undefined && `R:R ${explanation.risk.rr.toFixed(1)}`,
+        explanation.risk.kelly !== undefined && `Kelly ${(explanation.risk.kelly * 100).toFixed(0)}%`,
+      ].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'timing',
+      label: 'Timing',
+      icon: <Clock className="h-3.5 w-3.5 text-purple-400" />,
+      score: explanation.timing.score,
+      detail: [
+        explanation.timing.trend && `${explanation.timing.trend} trend`,
+        explanation.timing.hasEvents !== undefined && (explanation.timing.hasEvents ? '⚠️ Events nearby' : '✅ No events'),
+      ].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'portfolio',
+      label: 'Portfolio',
+      icon: <Briefcase className="h-3.5 w-3.5 text-emerald-400" />,
+      score: explanation.portfolio.score,
+      detail: explanation.portfolio.note ?? '',
+    },
+  ];
+
+  return (
+    <Card className="my-3 border-border bg-card overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">
+            {explanation.instrument} · {explanation.pattern} · {explanation.timeframe}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={cn('text-xs font-bold px-2 py-0.5 rounded border', verdictColor)}>
+            {explanation.verdict}
+          </span>
+          <span className="text-lg font-bold text-foreground">
+            {explanation.composite.toFixed(0)}
+            <span className="text-xs text-muted-foreground font-normal">/100</span>
+          </span>
+        </div>
+      </div>
+      <div className="divide-y divide-border/30">
+        {agents.map((agent) => {
+          const pct = Math.min(Math.max(agent.score, 0), 100);
+          const barColor = pct >= 70 ? 'bg-emerald-500' : pct >= 45 ? 'bg-amber-500' : 'bg-red-500';
+          return (
+            <div key={agent.key} className="px-4 py-2.5 flex items-center gap-3">
+              <div className="flex items-center gap-1.5 w-20 shrink-0">
+                {agent.icon}
+                <span className="text-xs font-medium text-foreground">{agent.label}</span>
+              </div>
+              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className={cn('h-full rounded-full transition-all', barColor)} style={{ width: `${pct}%` }} />
+              </div>
+              <span className="text-xs font-mono font-bold text-foreground w-8 text-right">
+                {pct.toFixed(0)}
+              </span>
+              {agent.detail && (
+                <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[200px]">
+                  {agent.detail}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 // ─── Main component ───
 export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
   const segments = useMemo(() => segmentContent(content), [content]);
@@ -535,9 +655,11 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
     return extractStatMetrics(content);
   }, [content, hasTable]);
   const actionButtons = useMemo(() => extractActionButtons(content), [content]);
+  const scoreExplanation = useMemo(() => parseScoreExplanation(content), [content]);
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80 prose-headings:text-foreground">
+      {scoreExplanation && <ScoreExplanationCard explanation={scoreExplanation} />}
       {statMetrics.length > 0 && <StatCards metrics={statMetrics} />}
       {segments.map((segment, i) => {
         if (segment.type === 'table' && segment.parsed) {
