@@ -12,6 +12,7 @@ import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConica
 
 interface CopilotRichMessageProps {
   content: string;
+  onQuickReply?: (text: string) => void;
 }
 
 // ─── Platform route mapping for service keywords ───
