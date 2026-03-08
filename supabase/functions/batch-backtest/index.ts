@@ -36,7 +36,6 @@ serve(async (req) => {
     });
   }
 
-  // Auth: get calling user
   const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error: authError } = await userClient.auth.getUser(token);
@@ -49,7 +48,6 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const body: BatchRequest = await req.json();
 
-  // Resolve items — either passed directly or derived from verdict_filter
   let items: BatchItem[] = [];
 
   if (body.items && body.items.length > 0) {
@@ -77,7 +75,6 @@ serve(async (req) => {
     });
   }
 
-  // Insert all items into backtest_queue as 'queued'
   const { data: queueRows, error: insertError } = await supabase
     .from('backtest_queue')
     .insert(
@@ -99,18 +96,15 @@ serve(async (req) => {
     });
   }
 
-  // Process sequentially — not parallel
   const results: Array<{ id: string; instrument: string; status: string; run_id?: string; error?: string }> = [];
 
   for (const row of queueRows) {
-    // Mark as running
     await supabase
       .from('backtest_queue')
       .update({ status: 'running', started_at: new Date().toISOString() })
       .eq('id', row.id);
 
     try {
-      // Build payload matching projects-run/run signature exactly
       const payload = {
         projectType: 'pattern_lab',
         inputs: {
@@ -129,10 +123,7 @@ serve(async (req) => {
 
       const response = await fetch(PROJECTS_RUN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: authHeader,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
@@ -149,10 +140,10 @@ serve(async (req) => {
 
       await supabase
         .from('backtest_queue')
-        .update({ status: 'complete', run_id: runId, completed_at: new Date().toISOString() })
+        .update({ run_id: runId })
         .eq('id', row.id);
 
-      results.push({ id: row.id, instrument: row.instrument, status: 'complete', run_id: runId });
+      results.push({ id: row.id, instrument: row.instrument, status: 'running', run_id: runId });
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -164,7 +155,6 @@ serve(async (req) => {
       results.push({ id: row.id, instrument: row.instrument, status: 'failed', error: message });
     }
 
-    // Small pause between runs to avoid hammering the engine
     await new Promise((r) => setTimeout(r, 500));
   }
 
