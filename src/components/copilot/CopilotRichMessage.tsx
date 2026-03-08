@@ -649,7 +649,11 @@ function ScoreExplanationCard({ explanation }: { explanation: AgentScoreExplanat
 // ─── Main component ───
 export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
   const cleanedContent = useMemo(() => 
-    content.replace(/```json\s*\{"scoreExplanation"[\s\S]*?```/g, '').trim(),
+    content
+      .replace(/```(?:json)?\s*\{"scoreExplanation"[\s\S]*?```/g, '')
+      .replace(/```(?:json)?\s*\{"(?:diff|uiSync|actionMarker|runBacktest|navigateTo|saved|undone|loaded)"[\s\S]*?```/g, '')
+      .replace(/\{"(?:diff|uiSync|actionMarker)":\s*\{[\s\S]*?\}\s*\}/g, '')
+      .trim(),
   [content]);
   const segments = useMemo(() => segmentContent(cleanedContent), [cleanedContent]);
   const hasTable = segments.some(s => s.type === 'table');
