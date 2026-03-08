@@ -186,6 +186,33 @@ async function processPost(supabaseClient: any, post: any, now: Date) {
     }
   }
 
+  // Self-healing: if educational post has empty content, re-fetch from the source piece
+  if (post.post_type === 'educational' && (!content || content.trim().length < 20)) {
+    const pieceId = post.report_config?.piece_id;
+    if (pieceId) {
+      console.log(`Post ${post.id}: educational content empty, re-fetching piece ${pieceId}`);
+      const { data: piece } = await supabaseClient
+        .from('educational_content_pieces')
+        .select('content, hashtags')
+        .eq('id', pieceId)
+        .single();
+
+      if (piece?.content && piece.content.trim().length >= 20) {
+        const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
+        content = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
+        console.log(`Post ${post.id}: recovered content (${content.length} chars)`);
+      } else {
+        console.error(`Post ${post.id}: piece ${pieceId} also has no content, skipping`);
+        // Mark as failed so we don't retry endlessly
+        await supabaseClient
+          .from('scheduled_posts')
+          .update({ status: 'failed', error_message: 'Source educational piece has no content' })
+          .eq('id', post.id);
+        return;
+      }
+    }
+  }
+
   // Ensure link_back_url is appended
   let finalContent = content;
   if (post.link_back_url && !content?.includes(post.link_back_url)) {

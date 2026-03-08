@@ -102,7 +102,14 @@ serve(async (req) => {
       if (pieceError || !piece) {
         console.warn(`No piece found at position ${position} for ${market.market_region}:`, pieceError?.message);
       } else if (!piece.content || piece.content.trim().length < 10) {
-        console.warn(`Piece at position ${position} has empty/short content, skipping ${market.market_region}`);
+        console.warn(`Piece at position ${position} has empty/short content, skipping ${market.market_region}. Will advance position to avoid getting stuck.`);
+        // Advance position so we don't get stuck on this empty piece forever
+        const nextPosition = market.current_position + 1;
+        await supabase
+          .from('educational_schedule_state')
+          .update({ current_position: nextPosition, last_scheduled_at: new Date().toISOString() })
+          .eq('id', market.id);
+        console.log(`[schedule-edu] Advanced ${market.market_region} position to ${nextPosition} to skip empty piece`);
       } else {
         // Build the scheduled time: tomorrow at the optimal time
         const timeStr = market.optimal_post_time_utc;
@@ -113,7 +120,7 @@ serve(async (req) => {
         const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
         const fullContent = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
 
-        if (fullContent && fullContent.trim().length > 0) {
+        if (fullContent && fullContent.trim().length >= 20) {
           scheduledPosts.push({
             account_id: account.id,
             post_type: 'educational',
