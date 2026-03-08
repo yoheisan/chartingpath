@@ -1461,7 +1461,7 @@ export default function LivePatternsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groupedPatterns.map(([patternName, setups]) => (
+                {visibleGroupedPatterns.map(([patternName, setups]) => (
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
@@ -1613,6 +1613,11 @@ export default function LivePatternsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Guest overlay when rows are limited */}
+          {guestLimited && (
+            <GuestScreenerOverlay totalCount={totalRowCount} visibleCount={GUEST_VISIBLE} />
+          )}
         </div>
         </>
       )}
