@@ -4790,6 +4790,42 @@ export type Database = {
           },
         ]
       }
+      user_email_preferences: {
+        Row: {
+          alert_emails: boolean | null
+          created_at: string | null
+          getting_started_sent: boolean | null
+          id: string
+          unsubscribed: boolean | null
+          updated_at: string | null
+          user_id: string
+          weekly_digest: boolean | null
+          welcome_sent: boolean | null
+        }
+        Insert: {
+          alert_emails?: boolean | null
+          created_at?: string | null
+          getting_started_sent?: boolean | null
+          id?: string
+          unsubscribed?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          weekly_digest?: boolean | null
+          welcome_sent?: boolean | null
+        }
+        Update: {
+          alert_emails?: boolean | null
+          created_at?: string | null
+          getting_started_sent?: boolean | null
+          id?: string
+          unsubscribed?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_digest?: boolean | null
+          welcome_sent?: boolean | null
+        }
+        Relationships: []
+      }
       user_language_preferences: {
         Row: {
           created_at: string
