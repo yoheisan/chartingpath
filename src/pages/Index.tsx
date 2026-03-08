@@ -156,7 +156,7 @@ const Index = () => {
       <WebApplicationJsonLd />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[55vh] flex items-center justify-center overflow-hidden">
         {/* Background — subtle grid only */}
         <div className="absolute inset-0 bg-background">
           <div className="absolute inset-0 opacity-[0.03]"
