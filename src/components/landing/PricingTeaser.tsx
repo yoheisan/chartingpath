@@ -58,7 +58,7 @@ export const PricingTeaser = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-px bg-border/30 rounded-xl overflow-hidden border border-border/30 mb-10">
+        <div className="grid md:grid-cols-3 gap-px bg-border/30 rounded-xl overflow-visible border border-border/30 mb-10 pt-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
