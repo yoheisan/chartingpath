@@ -87,14 +87,26 @@ const AuthButton = () => {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center gap-0.5">
-        <Button asChild variant="outline">
+      <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="sm">
           <Link to="/auth">
-            <LogIn className="h-4 w-4 mr-2" />
+            <LogIn className="h-4 w-4 mr-1" />
             {t('accountMenu.login')}
           </Link>
         </Button>
-        <span className="text-[10px] text-muted-foreground/60">Join 1,300+ traders</span>
+        <Button
+          asChild
+          size="sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+        >
+          <Link
+            to="/auth?mode=signup"
+            onClick={() => (window as any).gtag?.('event', 'cta_click', { location: 'navbar_signup' })}
+          >
+            Sign Up Free
+          </Link>
+        </Button>
+        <span className="text-[10px] text-muted-foreground/60 hidden sm:inline">Join 1,300+ traders</span>
       </div>
     );
   }

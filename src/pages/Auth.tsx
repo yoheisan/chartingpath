@@ -439,6 +439,9 @@ const Auth = () => {
 
         trackLoginAttempt({ email, success: true, method: "password", user_id: data.user?.id });
 
+        // Fire GA4 login event
+        (window as any).gtag?.('event', 'login', { method: 'email' });
+
         toast({
           title: t('auth.toastWelcomeBack'),
           description: t('auth.toastSignedIn'),
