@@ -455,7 +455,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
-                onValueChange={(v) => v && handleAssetClassChange(v as AssetClassFilter)}
+                onValueChange={(v) => { lastManualInteraction.current = Date.now(); if (v) handleAssetClassChange(v as AssetClassFilter); }}
                 className="flex flex-wrap gap-1"
               >
                 {[
