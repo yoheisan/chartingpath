@@ -577,38 +577,68 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // Pattern source for visual overlays (polyline/zones/TP-SL lines):
   // Only show active patterns or live-derived outcomes (not yet backend-confirmed).
   // Resolved/historical/stale patterns show nothing on chart.
+  // Compute chart price range for overlay validation
+  const chartPriceRange = useMemo(() => {
+    if (bars.length === 0) return null;
+    let min = Infinity, max = -Infinity;
+    // Use last 120 bars (visible window) for range calculation
+    const visibleBars = bars.slice(-120);
+    for (const b of visibleBars) {
+      if (b.l < min) min = b.l;
+      if (b.h > max) max = b.h;
+    }
+    return Number.isFinite(min) && Number.isFinite(max) && max > min ? { min, max, span: max - min } : null;
+  }, [bars]);
+
   const overlayPattern = useMemo(() => {
     if (sortedPatterns.length === 0) return null;
 
     const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
     const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
     const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
-    // Fall back to the latest unresolved pattern, then the most recent overall
     const isResolved = (o?: string | null) => ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(o || '').toLowerCase());
     const latestUnresolved = sortedPatterns.find((p) => !isResolved(p.outcome));
     const preferred = activePattern || derivedOutcomePattern || latestUnresolved || sortedPatterns[0];
     if (!preferred) return null;
 
-    // Price-range sanity check: reject patterns whose entry price is wildly
-    // inconsistent with the current chart bars. This guards against stale
-    // patterns from a previous symbol briefly rendering on a new symbol's chart
-    // during async fetch transitions.
-    const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
-    const latestClose = Number(lastBar?.c);
-    const entryPrice = Number(preferred.entry_price);
-    if (Number.isFinite(latestClose) && latestClose > 0 && Number.isFinite(entryPrice) && entryPrice > 0) {
-      const driftPct = Math.abs((entryPrice - latestClose) / latestClose) * 100;
-      if (driftPct > 35) {
-        console.warn('[CommandCenterChart] overlayPattern rejected: entry price drift too large', {
-          symbol, entryPrice, latestClose, driftPct: driftPct.toFixed(1),
-        });
-        return null;
+    // Price-range overlap check: reject patterns whose entry/SL/TP levels
+    // fall entirely outside the chart's visible candle range.
+    // This catches stale patterns from weeks/months ago where price has moved
+    // significantly but the percentage drift is still within naive thresholds.
+    if (chartPriceRange) {
+      const entry = Number(preferred.entry_price);
+      const sl = Number(preferred.stop_loss_price);
+      const tp = Number(preferred.take_profit_price);
+      
+      if (Number.isFinite(entry) && entry > 0) {
+        // Allow a margin of 1x the chart's price span above/below the range
+        const margin = chartPriceRange.span;
+        const extendedMin = chartPriceRange.min - margin;
+        const extendedMax = chartPriceRange.max + margin;
+        
+        // If entry price is outside the extended range, the pattern is clearly stale
+        if (entry < extendedMin || entry > extendedMax) {
+          console.warn('[CommandCenterChart] overlayPattern rejected: entry outside chart range', {
+            symbol, entry, chartRange: `${chartPriceRange.min.toFixed(4)}-${chartPriceRange.max.toFixed(4)}`,
+          });
+          return null;
+        }
+        
+        // If ALL trade levels (entry, SL, TP) are outside the candle range, suppress
+        const levels = [entry, sl, tp].filter(v => Number.isFinite(v) && v > 0);
+        const allOutside = levels.every(l => l < chartPriceRange.min || l > chartPriceRange.max);
+        if (allOutside && levels.length > 0) {
+          console.warn('[CommandCenterChart] overlayPattern rejected: all levels outside visible range', {
+            symbol, levels, chartRange: `${chartPriceRange.min.toFixed(4)}-${chartPriceRange.max.toFixed(4)}`,
+          });
+          return null;
+        }
       }
     }
 
     // Prefer a pivot-bearing pattern so ZigZag/zone can render.
     return hasPivots(preferred) ? preferred : preferred;
-  }, [sortedPatterns, bars, symbol]);
+  }, [sortedPatterns, bars, symbol, chartPriceRange]);
 
   // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
@@ -641,20 +671,39 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   }, [overlayPattern, bars]);
 
   // Derive formation overlays from selected overlay pattern
-  // Formation overlays (zigzag, pivots) render independently of trade plan levels
-  // They don't affect Y-axis scaling, so no extreme price filter needed
+  // Formation overlays use the pattern's own bars for time mapping, so we validate
+  // that pivot prices fall within the chart's visible price range.
   const formationOverlays: FormationOverlayData[] = useMemo(() => {
     if (!overlayPattern || bars.length === 0) return [];
 
     const vs = overlayPattern.visual_spec as any;
     const pivots = vs?.pivots;
 
+    // Validate pivot prices against chart range to prevent zigzag rendering
+    // at completely disconnected price levels
+    if (chartPriceRange && Array.isArray(pivots) && pivots.length >= 2) {
+      const pivotPrices = pivots.map((p: any) => Number(p.price)).filter(Number.isFinite);
+      if (pivotPrices.length > 0) {
+        const pivotMin = Math.min(...pivotPrices);
+        const pivotMax = Math.max(...pivotPrices);
+        const margin = chartPriceRange.span;
+        // If the entire pivot range is outside the extended chart range, skip
+        if (pivotMax < chartPriceRange.min - margin || pivotMin > chartPriceRange.max + margin) {
+          console.warn('[CommandCenterChart] formationOverlay rejected: pivots outside chart range', {
+            symbol, pivotRange: `${pivotMin.toFixed(4)}-${pivotMax.toFixed(4)}`,
+            chartRange: `${chartPriceRange.min.toFixed(4)}-${chartPriceRange.max.toFixed(4)}`,
+          });
+          return [];
+        }
+      }
+    }
+
     const patternBars = overlayPattern.bars as CompressedBar[] | undefined;
     const barsToUse = patternBars && patternBars.length > 0 ? patternBars : bars;
     const formation = deriveFormationOverlay(pivots, barsToUse, vs?.patternId || overlayPattern.pattern_id);
 
     return formation ? [formation] : [];
-  }, [overlayPattern, bars]);
+  }, [overlayPattern, bars, chartPriceRange]);
 
   // Pass selected overlay pattern for TP/SL lines, zigzag, and zones
   const historicalPatternOverlays: HistoricalPatternOverlay[] = useMemo(() => {
