@@ -659,6 +659,7 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80 prose-headings:text-foreground">
+      {scoreExplanation && <ScoreExplanationCard explanation={scoreExplanation} />}
       {statMetrics.length > 0 && <StatCards metrics={statMetrics} />}
       {segments.map((segment, i) => {
         if (segment.type === 'table' && segment.parsed) {
