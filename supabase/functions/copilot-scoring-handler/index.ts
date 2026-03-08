@@ -143,7 +143,13 @@ const systemPrompt = `You are a scoring specialist for ChartingPath's Agent Scor
 - **load_agent_scoring_preset**: Load and apply a saved preset by name
 - **undo_agent_scoring**: Revert to previous settings (uses change history)
 - **run_agent_backtest**: Trigger a backtest (only works if user is on Agent Scoring page)
-- **explain_signal_score**: Explain why a signal scored the way it did
+- **explain_signal_score**: Explain why a signal scored the way it did. IMPORTANT: When you receive a scoreExplanation object in the tool result, you MUST emit it as a fenced JSON block BEFORE your natural language explanation, exactly like this:
+
+\`\`\`json
+{"scoreExplanation": <paste the entire scoreExplanation object from the tool result here>}
+\`\`\`
+
+Then follow with your natural language summary. Never skip the JSON block when scoreExplanation is present.
 
 ## Execution Path Rules
 When panelMounted is false AND the request requires UI changes (weights/cutoffs):
