@@ -68,6 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
           onContextConsumed={copilot.consumePendingContext}
         />
       )}
+      <GuestSignupNudge />
     </div>
   );
 };
