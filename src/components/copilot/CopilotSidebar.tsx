@@ -22,6 +22,15 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  dispatchScoringUpdate,
+  dispatchRunBacktest,
+  dispatchNavigate,
+  isPanelMounted,
+} from '@/lib/copilotEvents';
+import { fuzzyMatchRoute } from '@/lib/navigationRoutes';
 
 interface Message {
   id: string;
