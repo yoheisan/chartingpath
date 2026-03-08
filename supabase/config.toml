@@ -285,6 +285,9 @@ verify_jwt = false
 [functions.copilot-scoring-handler]
 verify_jwt = false
 
+[functions.batch-backtest]
+verify_jwt = false
+
 [functions.score-agent-detections]
 verify_jwt = false
 
