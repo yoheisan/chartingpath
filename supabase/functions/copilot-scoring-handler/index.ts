@@ -173,7 +173,7 @@ When panelMounted is true:
 - "Save this as X" → call save_agent_scoring_preset
 - "Load X" / "Use my X preset" → call load_agent_scoring_preset
 - "Run backtest" → call run_agent_backtest
-- "Why did X score Y?" → call explain_signal_score
+- "Why did X score Y?" / "Explain the score for X" → call explain_signal_score immediately using just the instrument name. Do NOT ask the user for pattern_id or timeframe — these are optional. Call the tool right away with only instrument set.
 
 ## Response Format
 - Use markdown tables for before/after comparisons
