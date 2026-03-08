@@ -8,7 +8,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink, Sparkles } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Percent, Hash, FlaskConical, FileCode, Activity, ExternalLink, Sparkles, Brain, Shield, Clock, Briefcase } from 'lucide-react';
 
 interface CopilotRichMessageProps {
   content: string;
