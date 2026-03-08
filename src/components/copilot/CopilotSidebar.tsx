@@ -501,7 +501,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                       : "bg-muted w-full"
                   )}>
                     {message.role === "assistant" ? (
-                      <CopilotRichMessage content={message.content || "..."} />
+                      <CopilotRichMessage content={message.content || "..."} onQuickReply={(text) => { if (!isLoading) streamChat(text); }} />
                     ) : (
                       message.content
                     )}

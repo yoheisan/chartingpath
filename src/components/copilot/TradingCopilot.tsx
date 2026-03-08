@@ -540,7 +540,7 @@ export function TradingCopilot({
                         : "bg-muted w-full"
                     )}>
                       {message.role === "assistant" ? (
-                        <CopilotRichMessage content={message.content || "..."} />
+                        <CopilotRichMessage content={message.content || "..."} onQuickReply={(text) => { if (!isLoading) streamChat(text); }} />
                       ) : message.analysisData ? (
                         <span className="text-xs opacity-80">{t('chartAnalysisDialog.analyzeSymbol', { symbol: message.analysisData.symbol, timeframe: message.analysisData.timeframe })}</span>
                       ) : (
