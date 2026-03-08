@@ -585,7 +585,7 @@ export function TradingCopilot({
                       </div>
                     )}
                   </div>
-                ))}
+                )})}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <div className="flex justify-start">
                     <div className="bg-muted rounded-lg px-3 py-2">
