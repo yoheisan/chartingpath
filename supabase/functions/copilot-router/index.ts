@@ -23,9 +23,12 @@ interface ClassificationResult {
   intent: string;
 }
 
-function normalizeContextDomain(context?: string): Domain | null {
+function normalizeContextDomain(context?: string | Record<string, unknown>): Domain | null {
   if (!context) return null;
-  const c = context.toLowerCase().trim();
+  // Extract domain string from object or use directly if string
+  const raw = typeof context === "object" ? (context.domain as string | undefined) : context;
+  if (!raw || typeof raw !== "string") return null;
+  const c = raw.toLowerCase().trim();
   if (VALID_DOMAINS.includes(c as Domain)) return c as Domain;
   if (c.includes("scor")) return "scoring";
   if (c.includes("screen") || c.includes("live")) return "screener";
