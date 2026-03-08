@@ -38,21 +38,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check admin status using setTimeout to avoid deadlock
         if (session?.user) {
+          const user = session.user;
           setTimeout(async () => {
             try {
-              const { data } = await supabase.rpc('is_admin', { _user_id: session.user.id });
+              const { data } = await supabase.rpc('is_admin', { _user_id: user.id });
               if (mounted) setIsAdmin(data === true);
             } catch {
               if (mounted) setIsAdmin(false);
             }
             // Load user's saved language preference from DB
             try {
-              const { data: lang } = await supabase.rpc('get_user_language', { p_user_id: session.user.id });
+              const { data: lang } = await supabase.rpc('get_user_language', { p_user_id: user.id });
               if (mounted && lang && lang !== i18n.language) {
                 await i18n.changeLanguage(lang);
                 try { localStorage.setItem('cp_language', lang); } catch {}
               }
             } catch {}
+
+            // Send welcome email for new signups
+            if (event === 'SIGNED_IN' && user.created_at) {
+              const isNewUser = Date.now() - new Date(user.created_at).getTime() < 60000;
+              if (isNewUser) {
+                try {
+                  const { data: prefs } = await supabase
+                    .from('user_email_preferences')
+                    .select('welcome_sent')
+                    .eq('user_id', user.id)
+                    .single();
+
+                  if (!prefs?.welcome_sent) {
+                    const SUPABASE_URL = 'https://dgznlsckoamseqcpzfqm.supabase.co';
+                    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnem5sc2Nrb2Ftc2VxY3B6ZnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MzA2MzcsImV4cCI6MjA3MTMwNjYzN30.qvXqakZccAMJK7pFpcxHRFu-mrGEA4R1Zo21uzjcMt8';
+
+                    await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        apikey: SUPABASE_ANON_KEY,
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({
+                        to: user.email,
+                        subject: 'Welcome to ChartingPath 👋',
+                        template: 'welcome',
+                        data: {
+                          name: user.user_metadata?.full_name?.split(' ')[0] ||
+                                user.user_metadata?.display_name?.split(' ')[0] ||
+                                user.email?.split('@')[0],
+                        },
+                      }),
+                    });
+
+                    await supabase.from('user_email_preferences').upsert({
+                      user_id: user.id,
+                      welcome_sent: true,
+                    });
+
+                    (window as any).gtag?.('event', 'sign_up', {
+                      method: user.app_metadata?.provider || 'email',
+                    });
+
+                    console.log('[AuthContext] Welcome email sent to', user.email);
+                  }
+                } catch (err) {
+                  console.error('[AuthContext] Welcome email error:', err);
+                }
+              }
+            }
           }, 0);
         } else {
           setIsAdmin(false);
