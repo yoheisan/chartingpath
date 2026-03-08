@@ -377,7 +377,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [symbols, liveDetections, timeframeFilter, weights, takeCutoff, watchCutoff, navigate, t]);
 
   return (
     <div className="space-y-5">
