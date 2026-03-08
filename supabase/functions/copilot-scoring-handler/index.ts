@@ -489,20 +489,57 @@ async function executeExplainSignalScore(supabase: any, args: any) {
     return { error: `No score found for ${args.instrument}${args.pattern_id ? ` (${args.pattern_id})` : ""}.` };
   }
   const s = data[0];
-  return {
+
+  const analystRaw = s.analyst_raw ?? 0;
+  const riskRaw = s.risk_raw ?? 0;
+  const timingRaw = s.timing_raw ?? 0;
+  const portfolioRaw = s.portfolio_raw ?? 0;
+  const composite = (analystRaw * 25 + riskRaw * 25 + timingRaw * 25 + portfolioRaw * 25) / 100;
+  const verdict = composite >= 70 ? "TAKE" : composite >= 50 ? "WATCH" : "SKIP";
+
+  const ad = s.analyst_details ?? {};
+  const rd = s.risk_details ?? {};
+  const td = s.timing_details ?? {};
+
+  const scoreExplanation = {
     instrument: s.instrument,
-    pattern_id: s.pattern_id,
+    pattern: s.pattern_id,
     timeframe: s.timeframe,
-    is_proven: s.is_proven,
-    sample_size: s.sample_size,
-    win_rate: s.win_rate,
-    scores: {
-      analyst: { raw: s.analyst_raw, details: s.analyst_details },
-      risk: { raw: s.risk_raw, details: s.risk_details },
-      timing: { raw: s.timing_raw, details: s.timing_details },
-      portfolio: { raw: s.portfolio_raw },
+    composite: Math.round(composite * 10) / 10,
+    verdict,
+    analyst: {
+      score: Math.round(analystRaw),
+      winRate: s.win_rate ?? ad.winRate ?? undefined,
+      avgR: ad.avgR ?? ad.expectancy ?? undefined,
+      trades: s.sample_size ?? ad.sampleSize ?? undefined,
     },
-    scored_at: s.scored_at,
+    risk: {
+      score: Math.round(riskRaw),
+      rr: rd.rr ?? rd.rewardRisk ?? undefined,
+      kelly: rd.kelly ?? undefined,
+    },
+    timing: {
+      score: Math.round(timingRaw),
+      trend: td.trend ?? undefined,
+      hasEvents: td.hasEvents ?? td.economicEvents ?? undefined,
+    },
+    portfolio: {
+      score: Math.round(portfolioRaw),
+      note: portfolioRaw >= 60 ? "Strong basket fit" : portfolioRaw >= 40 ? "Neutral basket position" : "No basket selected — neutral score applied",
+    },
+  };
+
+  return {
+    scoreExplanation,
+    raw: {
+      instrument: s.instrument,
+      pattern_id: s.pattern_id,
+      timeframe: s.timeframe,
+      is_proven: s.is_proven,
+      sample_size: s.sample_size,
+      win_rate: s.win_rate,
+      scored_at: s.scored_at,
+    },
   };
 }
 
