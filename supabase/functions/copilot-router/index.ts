@@ -33,7 +33,7 @@ function normalizeContextDomain(context?: string): Domain | null {
   return null;
 }
 
-function classifyByHeuristics(userMessage: string, context?: string): ClassificationResult {
+function classifyByHeuristics(userMessage: string, context?: string | Record<string, unknown>): ClassificationResult {
   const ctxDomain = normalizeContextDomain(context);
   if (ctxDomain) {
     return {
@@ -75,7 +75,7 @@ function classifyByHeuristics(userMessage: string, context?: string): Classifica
  */
 async function classifyIntent(
   userMessage: string,
-  context?: string
+  context?: string | Record<string, unknown>
 ): Promise<ClassificationResult> {
   const forcedDomain = normalizeContextDomain(context);
   if (forcedDomain) {
