@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
+import {
+  registerPanel,
+  unregisterPanel,
+  buildDiffSummary,
+  ScoringUpdatePayload,
+} from '@/lib/copilotEvents';
 const GUEST_BACKTEST_KEY = 'agent_scoring_guest_backtest';
 
 function hasUsedGuestBacktest(): boolean {
@@ -81,10 +86,83 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
   const [basketSelections, setBasketSelections] = useState<string[]>([]);
   const [activeSettingId, setActiveSettingId] = useState<string | undefined>();
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const lastManualInteraction = useRef<number>(0);
 
   const { data: liveDetections = [], isLoading: detectionsLoading } = useAgentScoringDetections(assetClassFilter, timeframeFilter, subFilters);
   const { data: agentScores = [] } = useAgentScores();
   const { data: economicEvents = [] } = useUpcomingEconomicEvents();
+
+  // Register/unregister panel mount for Copilot panel detection
+  useEffect(() => {
+    registerPanel('agentScoring');
+    return () => unregisterPanel('agentScoring');
+  }, []);
+
+  // Consume pending Copilot action on mount
+  useEffect(() => {
+    async function consumePendingAction() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const { data } = await supabase
+        .from('pending_copilot_actions')
+        .select('*')
+        .is('applied_at', null)
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!data) return;
+      if (data.action_type === 'scoring_update') {
+        const p = data.payload as Record<string, any>;
+        if (p.weights) setWeights(p.weights);
+        if (p.takeCutoff !== undefined) setTakeCutoff(p.takeCutoff);
+        if (p.watchCutoff !== undefined) setWatchCutoff(p.watchCutoff);
+        if (p.assetClassFilter) setAssetClassFilter(p.assetClassFilter);
+        if (p.timeframeFilter) setTimeframeFilter(p.timeframeFilter);
+        if (p.subFilters) setSubFilters(p.subFilters);
+        toast.success(`Copilot applied: ${p.description || 'settings updated'}`);
+      }
+      await supabase
+        .from('pending_copilot_actions')
+        .update({ applied_at: new Date().toISOString() })
+        .eq('id', data.id);
+      if (data.auto_run) {
+        setTimeout(() => handleRun(), 1200);
+      }
+    }
+    consumePendingAction();
+  }, []);
+
+  // Listen for Copilot scoring update events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const payload = (e as CustomEvent<ScoringUpdatePayload>).detail;
+      const { originatedAt, diff, description, ...settings } = payload;
+      // Conflict check: skip if user has made manual changes after this event originated
+      if (lastManualInteraction.current > originatedAt) {
+        toast.warning('Copilot update skipped — you have unsaved manual changes. Type "apply copilot changes" to override.');
+        return;
+      }
+      if (settings.weights) setWeights(settings.weights);
+      if (settings.takeCutoff !== undefined) setTakeCutoff(settings.takeCutoff);
+      if (settings.watchCutoff !== undefined) setWatchCutoff(settings.watchCutoff);
+      if (settings.assetClassFilter) setAssetClassFilter(settings.assetClassFilter as AssetClassFilter);
+      if (settings.timeframeFilter) setTimeframeFilter(settings.timeframeFilter as TimeframeFilter);
+      if (settings.subFilters) setSubFilters(settings.subFilters);
+      if (settings.presetId) setActiveSettingId(settings.presetId);
+      setActivePreset('');
+      const diffSummary = diff ? buildDiffSummary(diff) : '';
+      toast.success(`✅ ${description ?? 'Copilot update applied'}${diffSummary ? `  ·  ${diffSummary}` : ''}`);
+    };
+    window.addEventListener('copilot:scoring-update', handler);
+    return () => window.removeEventListener('copilot:scoring-update', handler);
+  }, []);
+
+  // Listen for Copilot run backtest events
+  useEffect(() => {
+    const handler = () => handleRun();
+    window.addEventListener('copilot:run-backtest', handler);
+    return () => window.removeEventListener('copilot:run-backtest', handler);
+  }, []);
 
   const selectedDetections = useMemo(() => {
     const keySet = new Set(basketSelections);
@@ -167,7 +245,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     };
   }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSelections]);
 
-  const handleRun = async () => {
+  const handleRun = useCallback(async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     
     if (symbolList.length === 0) {
@@ -299,7 +377,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [symbols, liveDetections, timeframeFilter, weights, takeCutoff, watchCutoff, navigate, t]);
 
   return (
     <div className="space-y-5">
@@ -377,7 +455,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <ToggleGroup
                 type="single"
                 value={assetClassFilter}
-                onValueChange={(v) => v && handleAssetClassChange(v as AssetClassFilter)}
+                onValueChange={(v) => { lastManualInteraction.current = Date.now(); if (v) handleAssetClassChange(v as AssetClassFilter); }}
                 className="flex flex-wrap gap-1"
               >
                 {[
@@ -406,7 +484,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <ToggleGroup
                 type="single"
                 value={timeframeFilter}
-                onValueChange={(v) => v && setTimeframeFilter(v as TimeframeFilter)}
+                onValueChange={(v) => { lastManualInteraction.current = Date.now(); if (v) setTimeframeFilter(v as TimeframeFilter); }}
                 className="flex flex-wrap gap-1"
               >
                 {[
@@ -465,7 +543,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                   </div>
                   <Slider
                     value={[weights[key]]}
-                    onValueChange={([v]) => { setWeights((prev) => ({ ...prev, [key]: v })); setActivePreset(''); }}
+                    onValueChange={([v]) => { lastManualInteraction.current = Date.now(); setWeights((prev) => ({ ...prev, [key]: v })); setActivePreset(''); }}
                     min={0}
                     max={50}
                     step={1}
