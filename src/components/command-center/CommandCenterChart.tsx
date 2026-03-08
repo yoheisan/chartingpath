@@ -475,6 +475,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     }
   }, [symbol, timeframe, userId]);
 
+  // Clear stale overlays immediately when symbol or timeframe changes
+  // This prevents rendering old-symbol pattern overlays on new-symbol candles
+  useEffect(() => {
+    setAutoPatterns([]);
+  }, [symbol, timeframe]);
+
   // Unified fetch: chart data + auto-patterns in parallel, then start polling
   useEffect(() => {
     let intervalId: number | undefined;
@@ -583,9 +589,26 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     const preferred = activePattern || derivedOutcomePattern || latestUnresolved || sortedPatterns[0];
     if (!preferred) return null;
 
+    // Price-range sanity check: reject patterns whose entry price is wildly
+    // inconsistent with the current chart bars. This guards against stale
+    // patterns from a previous symbol briefly rendering on a new symbol's chart
+    // during async fetch transitions.
+    const lastBar = bars.length > 0 ? bars[bars.length - 1] : null;
+    const latestClose = Number(lastBar?.c);
+    const entryPrice = Number(preferred.entry_price);
+    if (Number.isFinite(latestClose) && latestClose > 0 && Number.isFinite(entryPrice) && entryPrice > 0) {
+      const driftPct = Math.abs((entryPrice - latestClose) / latestClose) * 100;
+      if (driftPct > 35) {
+        console.warn('[CommandCenterChart] overlayPattern rejected: entry price drift too large', {
+          symbol, entryPrice, latestClose, driftPct: driftPct.toFixed(1),
+        });
+        return null;
+      }
+    }
+
     // Prefer a pivot-bearing pattern so ZigZag/zone can render.
     return hasPivots(preferred) ? preferred : preferred;
-  }, [sortedPatterns]);
+  }, [sortedPatterns, bars, symbol]);
 
   // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
