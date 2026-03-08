@@ -120,7 +120,7 @@ serve(async (req) => {
         const hashtags = (piece.hashtags || []).slice(0, 3).map((h: string) => `#${h}`).join(' ');
         const fullContent = hashtags ? `${piece.content}\n\n${hashtags}` : piece.content;
 
-        if (fullContent && fullContent.trim().length > 0) {
+        if (fullContent && fullContent.trim().length >= 20) {
           scheduledPosts.push({
             account_id: account.id,
             post_type: 'educational',
