@@ -385,6 +385,21 @@ async function executeAdjustAgentScoring(supabase: any, args: any, userId: strin
     panelMounted,
     settingsUrl: "/tools/agent-scoring",
     tip: panelMounted ? "Settings applied — your sliders have updated." : "You're not on Agent Scoring. Want me to take you there?",
+    actionMarker: {
+      uiSync: { weights: newWeights, takeCutoff: newTake, watchCutoff: newWatch, assetClassFilter: newAssetClass, timeframeFilter: newTimeframe },
+      diff: {
+        weights: {
+          analyst: newWeights.analyst !== currentWeights.analyst ? newWeights.analyst : undefined,
+          risk: newWeights.risk !== currentWeights.risk ? newWeights.risk : undefined,
+          timing: newWeights.timing !== currentWeights.timing ? newWeights.timing : undefined,
+          portfolio: newWeights.portfolio !== currentWeights.portfolio ? newWeights.portfolio : undefined,
+        },
+        cutoffs: {
+          take: newTake !== currentTake ? newTake : undefined,
+          watch: newWatch !== currentWatch ? newWatch : undefined,
+        },
+      },
+    },
   };
 }
 
