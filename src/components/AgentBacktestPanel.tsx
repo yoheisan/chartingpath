@@ -484,7 +484,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
               <ToggleGroup
                 type="single"
                 value={timeframeFilter}
-                onValueChange={(v) => v && setTimeframeFilter(v as TimeframeFilter)}
+                onValueChange={(v) => { lastManualInteraction.current = Date.now(); if (v) setTimeframeFilter(v as TimeframeFilter); }}
                 className="flex flex-wrap gap-1"
               >
                 {[
