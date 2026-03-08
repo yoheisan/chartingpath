@@ -103,6 +103,8 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const activeConvoRef = useRef<string | null>(null);
   const lastTrainingPairIdRef = useRef<string | null>(null);
   const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
