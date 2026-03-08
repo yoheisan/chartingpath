@@ -112,14 +112,14 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
         .maybeSingle();
       if (!data) return;
       if (data.action_type === 'scoring_update') {
-        const p = data.payload;
+        const p = data.payload as Record<string, any>;
         if (p.weights) setWeights(p.weights);
         if (p.takeCutoff !== undefined) setTakeCutoff(p.takeCutoff);
         if (p.watchCutoff !== undefined) setWatchCutoff(p.watchCutoff);
         if (p.assetClassFilter) setAssetClassFilter(p.assetClassFilter);
         if (p.timeframeFilter) setTimeframeFilter(p.timeframeFilter);
         if (p.subFilters) setSubFilters(p.subFilters);
-        toast.success(`Copilot applied: ${data.payload.description || 'settings updated'}`);
+        toast.success(`Copilot applied: ${p.description || 'settings updated'}`);
       }
       await supabase
         .from('pending_copilot_actions')
