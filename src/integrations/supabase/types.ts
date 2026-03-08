@@ -166,6 +166,48 @@ export type Database = {
           },
         ]
       }
+      agent_scoring_history: {
+        Row: {
+          asset_class_filter: string
+          change_description: string | null
+          change_source: string
+          created_at: string
+          id: string
+          sub_filters: Json | null
+          take_cutoff: number
+          timeframe_filter: string
+          user_id: string
+          watch_cutoff: number
+          weights: Json
+        }
+        Insert: {
+          asset_class_filter?: string
+          change_description?: string | null
+          change_source?: string
+          created_at?: string
+          id?: string
+          sub_filters?: Json | null
+          take_cutoff: number
+          timeframe_filter?: string
+          user_id: string
+          watch_cutoff: number
+          weights: Json
+        }
+        Update: {
+          asset_class_filter?: string
+          change_description?: string | null
+          change_source?: string
+          created_at?: string
+          id?: string
+          sub_filters?: Json | null
+          take_cutoff?: number
+          timeframe_filter?: string
+          user_id?: string
+          watch_cutoff?: number
+          weights?: Json
+        }
+        Relationships: []
+      }
       agent_scoring_settings: {
         Row: {
           asset_class_filter: string
@@ -547,6 +589,54 @@ export type Database = {
           parameters?: Json
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      backtest_queue: {
+        Row: {
+          completed_at: string | null
+          composite_score: number | null
+          error_message: string | null
+          id: string
+          instrument: string
+          pattern_id: string
+          queued_at: string
+          run_id: string | null
+          started_at: string | null
+          status: string
+          timeframe: string
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          composite_score?: number | null
+          error_message?: string | null
+          id?: string
+          instrument: string
+          pattern_id: string
+          queued_at?: string
+          run_id?: string | null
+          started_at?: string | null
+          status?: string
+          timeframe: string
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          composite_score?: number | null
+          error_message?: string | null
+          id?: string
+          instrument?: string
+          pattern_id?: string
+          queued_at?: string
+          run_id?: string | null
+          started_at?: string | null
+          status?: string
+          timeframe?: string
+          user_id?: string
+          verdict?: string | null
         }
         Relationships: []
       }
@@ -3069,6 +3159,36 @@ export type Database = {
           name?: string
           timeout_ms?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      pending_copilot_actions: {
+        Row: {
+          action_type: string
+          applied_at: string | null
+          auto_run: boolean
+          created_at: string
+          id: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          applied_at?: string | null
+          auto_run?: boolean
+          created_at?: string
+          id?: string
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          applied_at?: string | null
+          auto_run?: boolean
+          created_at?: string
+          id?: string
+          payload?: Json
+          user_id?: string
         }
         Relationships: []
       }
