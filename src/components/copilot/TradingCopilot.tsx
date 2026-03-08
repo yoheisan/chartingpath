@@ -520,7 +520,9 @@ export function TradingCopilot({
                 </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((message) => (
+                {messages.map((message, idx) => {
+                  const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
+                  return (
                   <div key={message.id} className={cn("flex flex-col gap-2", message.role === "user" ? "items-end" : "items-start")}>
                     {message.role === "user" && message.analysisData && (
                       <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
@@ -540,7 +542,7 @@ export function TradingCopilot({
                         : "bg-muted w-full"
                     )}>
                       {message.role === "assistant" ? (
-                        <CopilotRichMessage content={message.content || "..."} onQuickReply={(text) => { if (!isLoading) streamChat(text); }} />
+                        <CopilotRichMessage content={message.content || "..."} onQuickReply={isLastAssistant ? (text) => { if (!isLoading) streamChat(text); } : undefined} />
                       ) : message.analysisData ? (
                         <span className="text-xs opacity-80">{t('chartAnalysisDialog.analyzeSymbol', { symbol: message.analysisData.symbol, timeframe: message.analysisData.timeframe })}</span>
                       ) : (
