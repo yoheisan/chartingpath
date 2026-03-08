@@ -655,6 +655,7 @@ export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
     return extractStatMetrics(content);
   }, [content, hasTable]);
   const actionButtons = useMemo(() => extractActionButtons(content), [content]);
+  const scoreExplanation = useMemo(() => parseScoreExplanation(content), [content]);
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-primary/80 prose-headings:text-foreground">
