@@ -245,7 +245,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
     };
   }, [liveDetections, weights, takeCutoff, watchCutoff, economicEvents, basketSelections]);
 
-  const handleRun = async () => {
+  const handleRun = useCallback(async () => {
     const symbolList = symbols.split(',').map((s) => s.trim()).filter(Boolean);
     
     if (symbolList.length === 0) {
