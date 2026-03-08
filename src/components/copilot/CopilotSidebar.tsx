@@ -492,7 +492,9 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {messages.map((message) => (
+              {messages.map((message, idx) => {
+                const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
+                return (
                 <div key={message.id} className={cn("flex flex-col gap-1", message.role === "user" ? "items-end" : "items-start")}>
                   <div className={cn(
                     "rounded-lg px-3 py-2 text-sm leading-relaxed break-words [overflow-wrap:anywhere]",
@@ -501,7 +503,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                       : "bg-muted w-full"
                   )}>
                     {message.role === "assistant" ? (
-                      <CopilotRichMessage content={message.content || "..."} />
+                      <CopilotRichMessage content={message.content || "..."} onQuickReply={isLastAssistant ? (text) => { if (!isLoading) streamChat(text); } : undefined} />
                     ) : (
                       message.content
                     )}
@@ -523,7 +525,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-lg px-3 py-2">
