@@ -475,6 +475,12 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     }
   }, [symbol, timeframe, userId]);
 
+  // Clear stale overlays immediately when symbol or timeframe changes
+  // This prevents rendering old-symbol pattern overlays on new-symbol candles
+  useEffect(() => {
+    setAutoPatterns([]);
+  }, [symbol, timeframe]);
+
   // Unified fetch: chart data + auto-patterns in parallel, then start polling
   useEffect(() => {
     let intervalId: number | undefined;
