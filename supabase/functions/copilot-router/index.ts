@@ -14,7 +14,7 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const CLASSIFICATION_TIMEOUT_MS = 12000;
 const DOWNSTREAM_TIMEOUT_MS = 30000;
 
-const VALID_DOMAINS = ["scoring", "screener", "research", "general"] as const;
+const VALID_DOMAINS = ["scoring", "screener", "research", "navigation", "general"] as const;
 type Domain = (typeof VALID_DOMAINS)[number];
 
 interface ClassificationResult {
