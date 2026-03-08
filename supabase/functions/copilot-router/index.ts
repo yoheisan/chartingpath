@@ -254,6 +254,27 @@ serve(async (req) => {
       }
     }
 
+    // Fast-path: regex-based navigation detection before LLM call
+    const NAV_PATTERNS = [
+      /\b(go to|open|navigate to|take me to|show me the page|switch to)\b/i,
+    ];
+    const isNavIntent = NAV_PATTERNS.some((p) => p.test(userText));
+    if (isNavIntent) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      supabase.from("copilot_training_pairs").insert({
+        prompt: userText,
+        response: "",
+        domain: "navigation",
+        intent_classification: "navigate",
+        parameters_used: {},
+        user_id: userId,
+      });
+      return new Response(
+        JSON.stringify({ domain: "navigation", confidence: 0.95, intent: "navigate" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const classification = await classifyIntent(userText, context);
     console.log(
       `[copilot-router] domain=${classification.domain} confidence=${classification.confidence} intent="${classification.intent}"`
