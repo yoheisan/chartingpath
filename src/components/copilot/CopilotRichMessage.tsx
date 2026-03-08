@@ -648,13 +648,16 @@ function ScoreExplanationCard({ explanation }: { explanation: AgentScoreExplanat
 
 // ─── Main component ───
 export function CopilotRichMessage({ content }: CopilotRichMessageProps) {
-  const segments = useMemo(() => segmentContent(content), [content]);
+  const cleanedContent = useMemo(() => 
+    content.replace(/```json\s*\{"scoreExplanation"[\s\S]*?```/g, '').trim(),
+  [content]);
+  const segments = useMemo(() => segmentContent(cleanedContent), [cleanedContent]);
   const hasTable = segments.some(s => s.type === 'table');
   const statMetrics = useMemo(() => {
     if (hasTable) return [];
-    return extractStatMetrics(content);
-  }, [content, hasTable]);
-  const actionButtons = useMemo(() => extractActionButtons(content), [content]);
+    return extractStatMetrics(cleanedContent);
+  }, [cleanedContent, hasTable]);
+  const actionButtons = useMemo(() => extractActionButtons(cleanedContent), [cleanedContent]);
   const scoreExplanation = useMemo(() => parseScoreExplanation(content), [content]);
 
   return (
