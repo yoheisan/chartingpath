@@ -27,6 +27,7 @@ export const PricingTeaser = () => {
         t('pricingTeaser.timeframe4h'),
       ],
       price: "$12",
+      popular: true,
     },
     {
       name: t('pricingTeaser.pro'),
