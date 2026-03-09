@@ -288,10 +288,10 @@ Deno.serve(async (req) => {
 
         const toneExamples = toneContext?.map((t: any) => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
 
-        // Batch translate (20 keys per batch)
-        const BATCH_SIZE = 20
-        for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
-          const batch = keysToTranslate.slice(i, i + BATCH_SIZE)
+        // Batch translate (40 keys per batch for speed)
+        const BATCH_SIZE = 40
+        for (let i = 0; i < thisRunKeys.length; i += BATCH_SIZE) {
+          const batch = thisRunKeys.slice(i, i + BATCH_SIZE)
 
           try {
             const translations = await translateBatch(
@@ -300,61 +300,52 @@ Deno.serve(async (req) => {
               toneExamples
             )
 
+            // Batch upsert instead of individual inserts
+            const upsertRows: any[] = []
             for (const item of batch) {
               const translatedValue = translations[item.key]
               if (!translatedValue) { summary[langCode].errors++; continue }
 
               const sourceHash = md5Hash(item.value)
+              upsertRows.push({
+                key: item.key,
+                language_code: langCode,
+                value: translatedValue,
+                source_hash: sourceHash,
+                status: 'auto_translated',
+                automation_source: 'auto-sync-cron',
+                original_automated_value: translatedValue,
+                is_manual_override: false
+              })
+            }
 
-              if (item.isStale) {
-                const { error } = await supabase
-                  .from('translations')
-                  .update({
-                    value: translatedValue,
-                    source_hash: sourceHash,
-                    status: 'auto_translated',
-                    automation_source: 'auto-sync-cron',
-                    original_automated_value: translatedValue,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('key', item.key)
-                  .eq('language_code', langCode)
-                if (error) { summary[langCode].errors++ } else { summary[langCode].translated++ }
+            if (upsertRows.length > 0) {
+              const { error } = await supabase
+                .from('translations')
+                .upsert(upsertRows, { onConflict: 'key,language_code' })
+              if (error) {
+                console.error(`Upsert error for ${langCode}:`, error)
+                summary[langCode].errors += upsertRows.length
               } else {
-                await supabase
-                  .from('translation_keys')
-                  .upsert({ key: item.key, description: item.value, category: item.key.split('.')[0] || 'general' }, { onConflict: 'key', ignoreDuplicates: true })
-
-                const { error } = await supabase
-                  .from('translations')
-                  .insert({
-                    key: item.key,
-                    language_code: langCode,
-                    value: translatedValue,
-                    source_hash: sourceHash,
-                    status: 'auto_translated',
-                    automation_source: 'auto-sync-cron',
-                    original_automated_value: translatedValue,
-                    is_manual_override: false
-                  })
-                if (error) { summary[langCode].errors++ } else { summary[langCode].translated++ }
+                summary[langCode].translated += upsertRows.length
               }
             }
 
-            if (i + BATCH_SIZE < keysToTranslate.length) {
-              await new Promise(r => setTimeout(r, 2000))
+            // Short delay between batches
+            if (i + BATCH_SIZE < thisRunKeys.length) {
+              await new Promise(r => setTimeout(r, 500))
             }
           } catch (batchError) {
             console.error(`Batch error for ${langCode}:`, batchError)
             summary[langCode].errors += batch.length
           }
         }
-
-        totalNewTranslations += summary[langCode].translated
-      } catch (langError) {
-        console.error(`Language ${langCode} error:`, langError)
-        summary[langCode].errors++
       }
+
+      totalNewTranslations += summary[langCode].translated
+    } catch (langError) {
+      console.error(`Language ${langCode} error:`, langError)
+      summary[langCode].errors++
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
