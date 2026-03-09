@@ -226,47 +226,57 @@ Deno.serve(async (req) => {
       ? allLanguages.filter(l => requestedLanguages!.includes(l))
       : allLanguages
 
-    // Limit to MAX_LANGS_PER_RUN to stay within edge function timeout
-    const MAX_LANGS_PER_RUN = 2
-    const thisRunLanguages = languagesToProcess.slice(0, MAX_LANGS_PER_RUN)
-    const remainingLanguages = requestedLanguages
-      ? languagesToProcess.slice(MAX_LANGS_PER_RUN)
-      : allLanguages.filter(l => !thisRunLanguages.includes(l))
-
-    console.log(`[auto-sync] Processing ${thisRunLanguages.length} languages this run: ${thisRunLanguages.join(',')}. ${remainingLanguages.length} remaining.`)
+    // Process ONE language at a time, limited keys per run
+    const MAX_KEYS_PER_RUN = 200
+    const currentLang = languagesToProcess[0]
+    const remainingLanguages = languagesToProcess.slice(1)
 
     const summary: Record<string, { translated: number; skipped: number; errors: number }> = {}
     let totalNewTranslations = 0
 
-    for (const langCode of thisRunLanguages) {
-      const langName = LANGUAGE_NAMES[langCode]
-      summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
+    if (!currentLang) {
+      return new Response(JSON.stringify({
+        success: true, has_more: false, remaining_languages: [],
+        message: 'No languages to process'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
-      try {
-        const existing = await paginatedSelect(supabase, 'translations', 'key, value, source_hash, is_manual_override', { language_code: langCode })
-        const existingMap = new Map<string, any>()
-        existing.forEach(t => existingMap.set(t.key, t))
+    const langCode = currentLang
+    const langName = LANGUAGE_NAMES[langCode]
+    summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
 
-        const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
+    try {
+      const existing = await paginatedSelect(supabase, 'translations', 'key, value, source_hash, is_manual_override', { language_code: langCode })
+      const existingMap = new Map<string, any>()
+      existing.forEach(t => existingMap.set(t.key, t))
 
-        for (const [key, value] of enMap) {
-          const ex = existingMap.get(key)
-          const currentHash = md5Hash(value)
+      const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
 
-          if (!ex) {
-            keysToTranslate.push({ key, value, isStale: false })
-          } else if (ex.is_manual_override) {
-            summary[langCode].skipped++
-          } else if (ex.source_hash && ex.source_hash !== currentHash) {
-            keysToTranslate.push({ key, value, isStale: true })
-          } else {
-            summary[langCode].skipped++
-          }
+      for (const [key, value] of enMap) {
+        const ex = existingMap.get(key)
+        const currentHash = md5Hash(value)
+
+        if (!ex) {
+          keysToTranslate.push({ key, value, isStale: false })
+        } else if (ex.is_manual_override) {
+          summary[langCode].skipped++
+        } else if (ex.source_hash && ex.source_hash !== currentHash) {
+          keysToTranslate.push({ key, value, isStale: true })
+        } else {
+          summary[langCode].skipped++
         }
+      }
 
-        if (keysToTranslate.length === 0) continue
+      const totalForLang = keysToTranslate.length
+      const thisRunKeys = keysToTranslate.slice(0, MAX_KEYS_PER_RUN)
+      const keysRemaining = totalForLang - thisRunKeys.length
+      // If there are still keys left for this language, re-include it
+      const langsDone = keysRemaining === 0
+      const effectiveRemaining = langsDone ? remainingLanguages : [currentLang, ...remainingLanguages]
 
-        console.log(`[auto-sync] ${langCode}: ${keysToTranslate.length} keys to translate`)
+      console.log(`[auto-sync] ${langCode}: ${totalForLang} total keys to translate, processing ${thisRunKeys.length} this run, ${keysRemaining} remaining for this lang`)
+
+      if (thisRunKeys.length > 0) {
 
         // Get tone context
         const { data: toneContext } = await supabase
