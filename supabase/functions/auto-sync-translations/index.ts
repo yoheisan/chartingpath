@@ -124,7 +124,19 @@ Deno.serve(async (req) => {
   }
 
   const startTime = Date.now()
-  console.log('[auto-sync] ▶ Starting one-shot translation pipeline')
+
+  // Support resumable runs: caller can specify which languages to process
+  let requestedLanguages: string[] | null = null
+  try {
+    const body = await req.json()
+    if (body?.languages && Array.isArray(body.languages)) {
+      requestedLanguages = body.languages
+    }
+  } catch {
+    // No body or invalid JSON — process all languages
+  }
+
+  console.log('[auto-sync] ▶ Starting translation pipeline', requestedLanguages ? `for languages: ${requestedLanguages.join(',')}` : '(all languages)')
 
   try {
     const supabase = createClient(
