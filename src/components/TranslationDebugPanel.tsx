@@ -53,7 +53,7 @@ export function TranslationDebugPanel() {
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={toggleCollector}>
                 {enabled ? (
-                  <ToggleRight className="w-4 h-4 mr-1 text-green-500" />
+                  <ToggleRight className="w-4 h-4 mr-1 text-primary" />
                 ) : (
                   <ToggleLeft className="w-4 h-4 mr-1" />
                 )}
