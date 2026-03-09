@@ -359,6 +359,9 @@ Deno.serve(async (req) => {
       total_english_keys: enMap.size,
       total_new_translations: totalNewTranslations,
       duration_seconds: parseFloat(duration),
+      languages_processed: thisRunLanguages,
+      remaining_languages: remainingLanguages,
+      has_more: remainingLanguages.length > 0,
       summary
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
