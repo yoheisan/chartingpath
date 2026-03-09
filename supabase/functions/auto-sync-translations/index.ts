@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     const summary: Record<string, { translated: number; skipped: number; errors: number }> = {}
     let totalNewTranslations = 0
 
-    for (const langCode of languages) {
+    for (const langCode of thisRunLanguages) {
       const langName = LANGUAGE_NAMES[langCode]
       summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
 
