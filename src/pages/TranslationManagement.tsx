@@ -18,6 +18,7 @@ import { SiteStringScanner } from '@/components/SiteStringScanner';
 import enTranslations from '@/i18n/locales/en.json';
 import { TranslationGapAnalysis } from '@/components/TranslationGapAnalysis';
 import { TranslationDebugPanel } from '@/components/TranslationDebugPanel';
+import { TranslationOverrideSearch } from '@/components/TranslationOverrideSearch';
 
 interface PendingTranslation {
   id: string;
