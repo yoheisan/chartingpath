@@ -19,6 +19,10 @@ const TECHNICAL_TERMS = [
   'JSON', 'API', 'URL', 'USD', 'EUR', 'GBP'
 ]
 
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/nicholasb4711/chartingpath/main/src/i18n/locales/en.json'
+
+// ── helpers ──────────────────────────────────────────────────────────
+
 function md5Hash(str: string): string {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -29,11 +33,21 @@ function md5Hash(str: string): string {
   return Math.abs(hash).toString(16)
 }
 
+function flattenObject(obj: Record<string, any>, prefix = ''): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const key of Object.keys(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      Object.assign(result, flattenObject(obj[key], fullKey))
+    } else {
+      result[fullKey] = String(obj[key])
+    }
+  }
+  return result
+}
+
 async function paginatedSelect(
-  supabase: any,
-  table: string,
-  selectCols: string,
-  filters?: Record<string, string>
+  supabase: any, table: string, selectCols: string, filters?: Record<string, string>
 ): Promise<any[]> {
   const results: any[] = []
   let from = 0
@@ -41,9 +55,7 @@ async function paginatedSelect(
   while (true) {
     let query = supabase.from(table).select(selectCols).range(from, from + PAGE - 1)
     if (filters) {
-      for (const [col, val] of Object.entries(filters)) {
-        query = query.eq(col, val)
-      }
+      for (const [col, val] of Object.entries(filters)) query = query.eq(col, val)
     }
     const { data, error } = await query
     if (error) { console.error(`Paginated fetch ${table} error:`, error); break }
@@ -55,13 +67,64 @@ async function paginatedSelect(
   return results
 }
 
+async function translateBatch(
+  geminiKey: string, langCode: string, langName: string,
+  batch: Array<{ key: string; value: string }>,
+  toneExamples: string
+): Promise<Record<string, string>> {
+  const keysForPrompt = batch.map(k => `"${k.key}": "${k.value.replace(/"/g, '\\"')}"`).join('\n')
+
+  const prompt = `Translate the following English UI strings to ${langName} (${langCode}).
+
+RULES:
+- Return ONLY a valid JSON object with the same keys and translated values
+- Preserve technical terms unchanged: ${TECHNICAL_TERMS.join(', ')}
+- Preserve any HTML tags, variables like {count}, {{name}}, etc.
+- Keep translations concise and natural for UI elements
+- Match the tone of these existing ${langName} translations:
+${toneExamples}
+
+STRINGS TO TRANSLATE:
+${keysForPrompt}
+
+Return ONLY the JSON object, no markdown, no explanation.`
+
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+      })
+    }
+  )
+
+  if (!resp.ok) throw new Error(`Gemini ${resp.status}: ${await resp.text()}`)
+
+  const data = await resp.json()
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) throw new Error('No JSON in Gemini response')
+
+  const sanitized = jsonMatch[0].replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').replace(/\t/g, ' ')
+  try {
+    return JSON.parse(sanitized)
+  } catch {
+    return JSON.parse(jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, ' '))
+  }
+}
+
+// ── main handler ─────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   const startTime = Date.now()
-  console.log('[auto-sync-translations] Starting automated translation sync')
+  console.log('[auto-sync] ▶ Starting one-shot translation pipeline')
 
   try {
     const supabase = createClient(
@@ -72,29 +135,79 @@ Deno.serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
 
-    // Step 1: Build English source from translation_keys (authoritative source)
-    // translation_keys.description stores the English value synced from en.json
-    const allKeys = await paginatedSelect(supabase, 'translation_keys', 'key, description')
-    
+    // ─── STEP 0: Fetch en.json and sync keys to translation_keys ────
+    console.log('[auto-sync] Step 0: Fetching en.json from GitHub...')
+    let enJsonContent: Record<string, any>
+    try {
+      const ghResp = await fetch(GITHUB_RAW_URL, {
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      if (!ghResp.ok) throw new Error(`GitHub ${ghResp.status}`)
+      enJsonContent = await ghResp.json()
+    } catch (e) {
+      console.warn('[auto-sync] GitHub fetch failed, falling back to DB keys:', e)
+      enJsonContent = {}
+    }
+
+    const flatEnglish = flattenObject(enJsonContent)
+    const flatKeys = Object.keys(flatEnglish)
+    console.log(`[auto-sync] Flattened ${flatKeys.length} keys from en.json`)
+
+    // Upsert all keys into translation_keys
+    let keysCreated = 0
+    let keysUpdated = 0
+    const UPSERT_BATCH = 100
+
+    for (let i = 0; i < flatKeys.length; i += UPSERT_BATCH) {
+      const batch = flatKeys.slice(i, i + UPSERT_BATCH).map(key => ({
+        key,
+        description: flatEnglish[key],
+        category: key.split('.')[0] || 'general'
+      }))
+
+      const { error } = await supabase
+        .from('translation_keys')
+        .upsert(batch, { onConflict: 'key' })
+
+      if (error) {
+        console.error('[auto-sync] Key upsert error:', error)
+      } else {
+        keysCreated += batch.length
+      }
+    }
+
+    // Check for description changes (stale English text)
+    const existingKeys = await paginatedSelect(supabase, 'translation_keys', 'key, description')
+    for (const ek of existingKeys) {
+      if (flatEnglish[ek.key] && flatEnglish[ek.key] !== ek.description) {
+        keysUpdated++
+      }
+    }
+
+    console.log(`[auto-sync] Step 0 done: ${keysCreated} keys upserted, ${keysUpdated} descriptions changed`)
+
+    // ─── STEP 1: Build English source map ────────────────────────────
     const enMap = new Map<string, string>()
+
+    // Primary source: translation_keys.description (just synced from en.json)
+    const allKeys = await paginatedSelect(supabase, 'translation_keys', 'key, description')
     for (const k of allKeys) {
       if (k.description) enMap.set(k.key, k.description)
     }
 
-    // Overlay any explicit English translations (rare but possible)
+    // Overlay explicit English translations
     const enTranslations = await paginatedSelect(supabase, 'translations', 'key, value', { language_code: 'en' })
-    for (const t of enTranslations) {
-      enMap.set(t.key, t.value)
-    }
-    console.log(`[auto-sync-translations] ${enMap.size} English source keys`)
+    for (const t of enTranslations) enMap.set(t.key, t.value)
+
+    console.log(`[auto-sync] Step 1: ${enMap.size} English source keys`)
 
     if (enMap.size === 0) {
-      return new Response(JSON.stringify({ success: true, message: 'No English keys found, nothing to sync' }), {
+      return new Response(JSON.stringify({ success: true, message: 'No English keys found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Step 2: For each language, find missing translations and fill gaps
+    // ─── STEP 2: Translate each language ─────────────────────────────
     const languages = Object.keys(LANGUAGE_NAMES)
     const summary: Record<string, { translated: number; skipped: number; errors: number }> = {}
     let totalNewTranslations = 0
@@ -104,12 +217,10 @@ Deno.serve(async (req) => {
       summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
 
       try {
-        // Get existing translations for this language
         const existing = await paginatedSelect(supabase, 'translations', 'key, value, source_hash, is_manual_override', { language_code: langCode })
         const existingMap = new Map<string, any>()
         existing.forEach(t => existingMap.set(t.key, t))
 
-        // Find missing and stale keys
         const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
 
         for (const [key, value] of enMap) {
@@ -127,11 +238,9 @@ Deno.serve(async (req) => {
           }
         }
 
-        if (keysToTranslate.length === 0) {
-          continue
-        }
+        if (keysToTranslate.length === 0) continue
 
-        console.log(`[auto-sync-translations] ${langCode}: ${keysToTranslate.length} keys to translate`)
+        console.log(`[auto-sync] ${langCode}: ${keysToTranslate.length} keys to translate`)
 
         // Get tone context
         const { data: toneContext } = await supabase
@@ -141,65 +250,19 @@ Deno.serve(async (req) => {
           .eq('status', 'approved')
           .limit(3)
 
+        const toneExamples = toneContext?.map((t: any) => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
+
         // Batch translate (20 keys per batch)
         const BATCH_SIZE = 20
         for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
           const batch = keysToTranslate.slice(i, i + BATCH_SIZE)
-          const keysForPrompt = batch.map(k => `"${k.key}": "${k.value}"`).join('\n')
-          const toneExamples = toneContext?.map(t => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
-
-          const prompt = `Translate the following English UI strings to ${langName} (${langCode}).
-
-RULES:
-- Return ONLY a valid JSON object with the same keys and translated values
-- Preserve technical terms unchanged: ${TECHNICAL_TERMS.join(', ')}
-- Preserve any HTML tags, variables like {count}, {{name}}, etc.
-- Keep translations concise and natural for UI elements
-- Match the tone of these existing ${langName} translations:
-${toneExamples}
-
-STRINGS TO TRANSLATE:
-${keysForPrompt}
-
-Return ONLY the JSON object, no markdown, no explanation.`
 
           try {
-            const geminiResponse = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: prompt }] }],
-                  generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
-                })
-              }
+            const translations = await translateBatch(
+              GEMINI_API_KEY, langCode, langName,
+              batch.map(b => ({ key: b.key, value: b.value })),
+              toneExamples
             )
-
-            if (!geminiResponse.ok) {
-              console.error(`Gemini error for ${langCode}:`, await geminiResponse.text())
-              summary[langCode].errors += batch.length
-              continue
-            }
-
-            const geminiData = await geminiResponse.json()
-            const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-            if (!jsonMatch) {
-              summary[langCode].errors += batch.length
-              continue
-            }
-
-            const sanitized = jsonMatch[0]
-              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-              .replace(/\t/g, ' ')
-            let translations: Record<string, string>
-            try {
-              translations = JSON.parse(sanitized)
-            } catch {
-              const aggressive = jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, ' ')
-              translations = JSON.parse(aggressive)
-            }
 
             for (const item of batch) {
               const translatedValue = translations[item.key]
@@ -222,7 +285,6 @@ Return ONLY the JSON object, no markdown, no explanation.`
                   .eq('language_code', langCode)
                 if (error) { summary[langCode].errors++ } else { summary[langCode].translated++ }
               } else {
-                // Ensure key exists in translation_keys
                 await supabase
                   .from('translation_keys')
                   .upsert({ key: item.key, description: item.value, category: item.key.split('.')[0] || 'general' }, { onConflict: 'key', ignoreDuplicates: true })
@@ -243,11 +305,9 @@ Return ONLY the JSON object, no markdown, no explanation.`
               }
             }
 
-            // Rate limit pause between batches (2s to avoid Gemini 429s)
             if (i + BATCH_SIZE < keysToTranslate.length) {
               await new Promise(r => setTimeout(r, 2000))
             }
-
           } catch (batchError) {
             console.error(`Batch error for ${langCode}:`, batchError)
             summary[langCode].errors += batch.length
@@ -255,7 +315,6 @@ Return ONLY the JSON object, no markdown, no explanation.`
         }
 
         totalNewTranslations += summary[langCode].translated
-
       } catch (langError) {
         console.error(`Language ${langCode} error:`, langError)
         summary[langCode].errors++
@@ -263,10 +322,14 @@ Return ONLY the JSON object, no markdown, no explanation.`
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
-    console.log(`[auto-sync-translations] Completed in ${duration}s. Total new: ${totalNewTranslations}`)
+    console.log(`[auto-sync] ✓ Completed in ${duration}s. Keys synced: ${flatKeys.length}, New translations: ${totalNewTranslations}`)
 
     return new Response(JSON.stringify({
       success: true,
+      steps: {
+        step0_keys_from_github: flatKeys.length,
+        step0_keys_updated: keysUpdated,
+      },
       total_english_keys: enMap.size,
       total_new_translations: totalNewTranslations,
       duration_seconds: parseFloat(duration),
@@ -276,7 +339,7 @@ Return ONLY the JSON object, no markdown, no explanation.`
     })
 
   } catch (error) {
-    console.error('[auto-sync-translations] Fatal error:', error)
+    console.error('[auto-sync] Fatal error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
