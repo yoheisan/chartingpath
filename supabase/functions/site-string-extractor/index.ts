@@ -19,7 +19,9 @@ interface StringExtractionRequest {
     | 'get_scan_status'
     | 'get_scan_results'
     | 'compare_versions'
-    | 'approve_strings';
+    | 'approve_strings'
+    | 'diff_missing_translations'
+    | 'auto_approve_and_translate';
   scan_session_id?: string;
   base_url?: string;
   old_version?: number;
@@ -27,16 +29,15 @@ interface StringExtractionRequest {
   string_ids?: string[];
   strings?: DomStringPayload[];
   error_message?: string;
+  language_codes?: string[];
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -47,12 +48,10 @@ Deno.serve(async (req: Request) => {
     const { action, scan_session_id, base_url, old_version, new_version, string_ids, strings, error_message } = body;
 
     switch (action) {
+      // ─── Start Scan ─────────────────────────────────────────
       case 'start_scan': {
-        if (!base_url) {
-          throw new Error('Base URL is required for scanning');
-        }
+        if (!base_url) throw new Error('Base URL is required for scanning');
 
-        // Get the latest version number
         const { data: latestSession } = await supabase
           .from('site_scan_sessions')
           .select('version_number')
@@ -62,7 +61,6 @@ Deno.serve(async (req: Request) => {
 
         const newVersionNumber = (latestSession?.version_number || 0) + 1;
 
-        // Create new scan session
         const { data: scanSession, error: sessionError } = await supabase
           .from('site_scan_sessions')
           .insert({
@@ -75,27 +73,20 @@ Deno.serve(async (req: Request) => {
 
         if (sessionError) throw sessionError;
 
-        return new Response(
-          JSON.stringify({
-            scan_session_id: scanSession.id,
-            version_number: newVersionNumber,
-            status: 'started',
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+        return jsonResponse({
+          scan_session_id: scanSession.id,
+          version_number: newVersionNumber,
+          status: 'started',
+        });
       }
 
+      // ─── Ingest Strings ─────────────────────────────────────
       case 'ingest_strings': {
         if (!scan_session_id) throw new Error('Scan session ID is required');
         if (!Array.isArray(strings) || strings.length === 0) {
-          return new Response(JSON.stringify({ success: true, inserted: 0 }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          return jsonResponse({ success: true, inserted: 0 });
         }
 
-        // Deduplicate within this request
         const seen = new Set<string>();
         const rows: any[] = [];
 
@@ -108,7 +99,6 @@ Deno.serve(async (req: Request) => {
           const selector = (s?.selector || '').toString();
           const path = (s?.path || '').toString();
 
-          // Key should be stable across pages; use element as context, not the URL
           const stringKey = generateStringKey(text, element);
           const stringHash = await generateHash(text);
 
@@ -130,7 +120,6 @@ Deno.serve(async (req: Request) => {
           });
         }
 
-        // Insert in batches
         const BATCH = 500;
         for (let i = 0; i < rows.length; i += BATCH) {
           const slice = rows.slice(i, i + BATCH);
@@ -141,11 +130,10 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        return new Response(JSON.stringify({ success: true, inserted: rows.length }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse({ success: true, inserted: rows.length });
       }
 
+      // ─── Complete Scan ──────────────────────────────────────
       case 'complete_scan': {
         if (!scan_session_id) throw new Error('Scan session ID is required');
 
@@ -163,11 +151,10 @@ Deno.serve(async (req: Request) => {
           })
           .eq('id', scan_session_id);
 
-        return new Response(JSON.stringify({ success: true, total_strings_found: count || 0 }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse({ success: true, total_strings_found: count || 0 });
       }
 
+      // ─── Mark Failed ────────────────────────────────────────
       case 'mark_failed': {
         if (!scan_session_id) throw new Error('Scan session ID is required');
 
@@ -180,15 +167,12 @@ Deno.serve(async (req: Request) => {
           })
           .eq('id', scan_session_id);
 
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse({ success: true });
       }
 
+      // ─── Get Scan Status ────────────────────────────────────
       case 'get_scan_status': {
-        if (!scan_session_id) {
-          throw new Error('Scan session ID is required');
-        }
+        if (!scan_session_id) throw new Error('Scan session ID is required');
 
         const { data: session, error } = await supabase
           .from('site_scan_sessions')
@@ -198,47 +182,44 @@ Deno.serve(async (req: Request) => {
 
         if (error) throw error;
 
-        // Get extracted strings count
         const { count: extractedCount } = await supabase
           .from('extracted_strings')
           .select('*', { count: 'exact', head: true })
           .eq('scan_session_id', scan_session_id);
 
-        return new Response(
-          JSON.stringify({
-            ...session,
-            current_extracted_count: extractedCount,
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+        return jsonResponse({ ...session, current_extracted_count: extractedCount });
       }
 
+      // ─── Get Scan Results (paginated) ───────────────────────
       case 'get_scan_results': {
-        if (!scan_session_id) {
-          throw new Error('Scan session ID is required');
+        if (!scan_session_id) throw new Error('Scan session ID is required');
+
+        // Paginate to avoid 1000-row limit
+        const allStrings: any[] = [];
+        let from = 0;
+        const PAGE = 1000;
+        while (true) {
+          const { data, error } = await supabase
+            .from('extracted_strings')
+            .select('*')
+            .eq('scan_session_id', scan_session_id)
+            .order('created_at', { ascending: false })
+            .range(from, from + PAGE - 1);
+
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allStrings.push(...data);
+          if (data.length < PAGE) break;
+          from += PAGE;
         }
 
-        const { data: strings, error } = await supabase
-          .from('extracted_strings')
-          .select('*')
-          .eq('scan_session_id', scan_session_id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        return new Response(JSON.stringify(strings), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse(allStrings);
       }
 
+      // ─── Compare Versions ──────────────────────────────────
       case 'compare_versions': {
-        if (!old_version || !new_version) {
-          throw new Error('Both old and new version numbers are required');
-        }
+        if (!old_version || !new_version) throw new Error('Both old and new version numbers are required');
 
-        // Get scan sessions for both versions
         const { data: oldSession } = await supabase
           .from('site_scan_sessions')
           .select('id')
@@ -252,7 +233,6 @@ Deno.serve(async (req: Request) => {
           .single();
 
         if (!oldSession || !newSession) {
-          // Provide helpful info about which versions exist
           const { data: availableVersions } = await supabase
             .from('site_scan_sessions')
             .select('version_number, scan_status, created_at')
@@ -261,15 +241,12 @@ Deno.serve(async (req: Request) => {
 
           throw new Error(
             `Version(s) not found. Requested: v${old_version} and v${new_version}. ` +
-              `Available versions: ${availableVersions?.map((v: any) => `v${v.version_number} (${v.scan_status})`).join(', ') || 'none'}. ` +
-              `You need at least 2 completed scans to compare.`
+              `Available versions: ${availableVersions?.map((v: any) => `v${v.version_number} (${v.scan_status})`).join(', ') || 'none'}.`
           );
         }
 
-        // Perform comparison and create change log
         await compareAndLogChanges(supabase, oldSession.id, newSession.id);
 
-        // Get the changes
         const { data: changes, error } = await supabase
           .from('string_change_log')
           .select('*')
@@ -277,18 +254,13 @@ Deno.serve(async (req: Request) => {
           .eq('new_scan_session_id', newSession.id);
 
         if (error) throw error;
-
-        return new Response(JSON.stringify(changes), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return jsonResponse(changes);
       }
 
+      // ─── Approve Strings ───────────────────────────────────
       case 'approve_strings': {
-        if (!string_ids || string_ids.length === 0) {
-          throw new Error('String IDs are required for approval');
-        }
+        if (!string_ids || string_ids.length === 0) throw new Error('String IDs are required for approval');
 
-        // Update review status for selected strings
         const { error } = await supabase
           .from('extracted_strings')
           .update({
@@ -299,11 +271,146 @@ Deno.serve(async (req: Request) => {
 
         if (error) throw error;
 
-        // Create translation keys and initial translations for approved strings
         await createTranslationKeysFromStrings(supabase, string_ids);
 
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        return jsonResponse({ success: true });
+      }
+
+      // ─── NEW: Diff Missing Translations ─────────────────────
+      // Finds extracted strings from the latest completed scan that
+      // do NOT yet exist in `translation_keys`. These are the gaps.
+      case 'diff_missing_translations': {
+        // Get latest completed scan
+        const { data: latestScan } = await supabase
+          .from('site_scan_sessions')
+          .select('id')
+          .eq('scan_status', 'completed')
+          .order('version_number', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!latestScan) {
+          return jsonResponse({ missing: [], message: 'No completed scans found' });
+        }
+
+        // Get all extracted string_keys from that scan
+        const extractedKeys = new Set<string>();
+        let from = 0;
+        const PAGE = 1000;
+        while (true) {
+          const { data } = await supabase
+            .from('extracted_strings')
+            .select('string_key')
+            .eq('scan_session_id', latestScan.id)
+            .range(from, from + PAGE - 1);
+          if (!data || data.length === 0) break;
+          data.forEach((r: any) => extractedKeys.add(r.string_key));
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+
+        // Get all existing translation_keys
+        const existingKeys = new Set<string>();
+        from = 0;
+        while (true) {
+          const { data } = await supabase
+            .from('translation_keys')
+            .select('key')
+            .range(from, from + PAGE - 1);
+          if (!data || data.length === 0) break;
+          data.forEach((r: any) => existingKeys.add(r.key));
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+
+        // Diff: keys in extracted but not in translation_keys
+        const missing = [...extractedKeys].filter(k => !existingKeys.has(k));
+
+        console.log(`[diff_missing] Extracted: ${extractedKeys.size}, Existing keys: ${existingKeys.size}, Missing: ${missing.length}`);
+
+        return jsonResponse({
+          scan_session_id: latestScan.id,
+          total_extracted: extractedKeys.size,
+          total_existing_keys: existingKeys.size,
+          missing_count: missing.length,
+          missing_keys: missing.slice(0, 500), // cap response size
+        });
+      }
+
+      // ─── NEW: Auto-Approve and Translate ────────────────────
+      // Server-side action: takes the latest scan, approves all pending
+      // strings that pass quality checks, creates translation keys, and
+      // triggers auto-translation. Designed to be called by a cron job.
+      case 'auto_approve_and_translate': {
+        // Get latest completed scan
+        const { data: latestScan } = await supabase
+          .from('site_scan_sessions')
+          .select('id')
+          .eq('scan_status', 'completed')
+          .order('version_number', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!latestScan) {
+          return jsonResponse({ success: false, message: 'No completed scans found' });
+        }
+
+        // Find all pending strings from this scan
+        const pendingIds: string[] = [];
+        let from = 0;
+        const PAGE = 1000;
+        while (true) {
+          const { data } = await supabase
+            .from('extracted_strings')
+            .select('id, original_text')
+            .eq('scan_session_id', latestScan.id)
+            .eq('review_status', 'pending')
+            .eq('is_translatable', true)
+            .range(from, from + PAGE - 1);
+          if (!data || data.length === 0) break;
+          // Additional quality filter: at least 3 chars and contains a word
+          for (const row of data) {
+            if (row.original_text?.trim().length >= 3 && /[a-zA-Z]{2,}/.test(row.original_text)) {
+              pendingIds.push(row.id);
+            }
+          }
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+
+        if (pendingIds.length === 0) {
+          return jsonResponse({ success: true, approved: 0, message: 'No pending strings to approve' });
+        }
+
+        console.log(`[auto_approve] Approving ${pendingIds.length} strings from scan ${latestScan.id}`);
+
+        // Approve in batches
+        const APPROVE_BATCH = 200;
+        for (let i = 0; i < pendingIds.length; i += APPROVE_BATCH) {
+          const batch = pendingIds.slice(i, i + APPROVE_BATCH);
+          await supabase
+            .from('extracted_strings')
+            .update({
+              review_status: 'approved',
+              reviewed_at: new Date().toISOString(),
+            })
+            .in('id', batch);
+        }
+
+        // Create translation keys + auto-translate
+        // Process in chunks to avoid timeouts
+        const TRANSLATE_BATCH = 50;
+        for (let i = 0; i < pendingIds.length; i += TRANSLATE_BATCH) {
+          const batch = pendingIds.slice(i, i + TRANSLATE_BATCH);
+          await createTranslationKeysFromStrings(supabase, batch);
+        }
+
+        console.log(`[auto_approve] Done. Approved and translated ${pendingIds.length} strings.`);
+
+        return jsonResponse({
+          success: true,
+          approved: pendingIds.length,
+          scan_session_id: latestScan.id,
         });
       }
 
@@ -319,33 +426,35 @@ Deno.serve(async (req: Request) => {
   }
 });
 
+// ─── Helpers ──────────────────────────────────────────────
+
+function jsonResponse(data: any) {
+  return new Response(JSON.stringify(data), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 function isTranslatableText(text: string): boolean {
   if (!text || typeof text !== 'string') return false;
-
-  // Skip if it's mostly numbers or special characters
   if (/^[\d\s\-_.,!@#$%^&*()+=\[\]{}|\\:";'<>?/~`]*$/.test(text)) return false;
 
-  // Skip common technical strings
   const technicalPatterns = [
-    /^[a-z]+\.[a-z]+$/i, // domain names
-    /^https?:\/\//i, // URLs
-    /^[a-f0-9]{8,}$/i, // hex strings
-    /^\d{4}-\d{2}-\d{2}/, // dates
-    /^[\w\-_.]+@[\w\-_.]+\.\w+$/i, // emails
+    /^[a-z]+\.[a-z]+$/i,
+    /^https?:\/\//i,
+    /^[a-f0-9]{8,}$/i,
+    /^\d{4}-\d{2}-\d{2}/,
+    /^[\w\-_.]+@[\w\-_.]+\.\w+$/i,
   ];
 
   for (const pattern of technicalPatterns) {
     if (pattern.test(text.trim())) return false;
   }
 
-  // Must contain at least one letter
   if (!/[a-zA-Z]/.test(text)) return false;
-
   return true;
 }
 
 function generateStringKey(text: string, context: string): string {
-  // Create a human-readable key based on the text and context
   const cleanText = text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
@@ -370,7 +479,6 @@ async function generateHash(text: string): Promise<string> {
 }
 
 async function compareAndLogChanges(supabase: any, oldSessionId: string, newSessionId: string) {
-  // Get strings from both sessions
   const { data: oldStrings } = await supabase
     .from('extracted_strings')
     .select('string_key, original_text, string_hash')
@@ -389,7 +497,6 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
 
   const changes: any[] = [];
 
-  // Find added strings
   for (const [key, newString] of newMap) {
     if (!oldMap.has(key)) {
       changes.push({
@@ -401,7 +508,6 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
         new_hash: newString.string_hash,
       });
     } else {
-      // Check for modifications
       const oldString = oldMap.get(key);
       if (oldString.string_hash !== newString.string_hash) {
         changes.push({
@@ -418,7 +524,6 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
     }
   }
 
-  // Find removed strings
   for (const [key, oldString] of oldMap) {
     if (!newMap.has(key)) {
       changes.push({
@@ -432,12 +537,10 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
     }
   }
 
-  // Insert all changes
   if (changes.length > 0) {
     await supabase.from('string_change_log').insert(changes);
   }
 
-  // Update scan session with change counts
   await supabase
     .from('site_scan_sessions')
     .update({
@@ -448,13 +551,11 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
 }
 
 async function createTranslationKeysFromStrings(supabase: any, stringIds: string[]) {
-  // Get the approved strings
   const { data: strings } = await supabase.from('extracted_strings').select('*').in('id', stringIds);
 
   const newKeys: Array<{ key: string; value: string }> = [];
 
   for (const string of strings || []) {
-    // Create translation key if it doesn't exist
     const { error: keyError } = await supabase.from('translation_keys').upsert({
       key: string.string_key,
       description: `Auto-extracted: ${string.original_text.substring(0, 100)}`,
@@ -468,7 +569,6 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
       continue;
     }
 
-    // Create initial English translation
     await supabase.from('translations').upsert({
       key: string.string_key,
       language_code: 'en',
@@ -482,7 +582,6 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
     newKeys.push({ key: string.string_key, value: string.original_text });
   }
 
-  // Auto-translate the newly approved strings into all target languages
   if (newKeys.length > 0) {
     await autoTranslateStrings(supabase, newKeys);
   }
@@ -514,7 +613,6 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
 
   console.log(`Auto-translating ${keys.length} strings into ${Object.keys(TARGET_LANGUAGES).length} languages`);
 
-  // Build a simple key→value map for the prompt
   const sourceMap: Record<string, string> = {};
   for (const k of keys) {
     sourceMap[k.key] = k.value;
@@ -545,14 +643,11 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
       const result = await response.json();
       let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-      // Strip markdown fences
       rawText = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      // Strip control characters
       rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => (ch === '\n' || ch === '\t' ? ch : ''));
 
       const translated: Record<string, string> = JSON.parse(rawText);
 
-      // Upsert translations
       for (const [key, value] of Object.entries(translated)) {
         if (typeof value !== 'string' || !value.trim()) continue;
 
