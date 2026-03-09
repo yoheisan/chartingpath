@@ -1257,6 +1257,11 @@ export const TranslationManagement = () => {
           <TranslationGapAnalysis onSyncGaps={handleSyncGaps} syncing={gapSyncing} />
         )}
 
+        {/* Override Tab */}
+        {activeTab === 'override' && (
+          <TranslationOverrideSearch />
+        )}
+
         {/* Site Scanner Tab */}
         {activeTab === 'scanner' && (
           <SiteStringScanner />
