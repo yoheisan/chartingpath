@@ -18,6 +18,7 @@ import { SiteStringScanner } from '@/components/SiteStringScanner';
 import enTranslations from '@/i18n/locales/en.json';
 import { TranslationGapAnalysis } from '@/components/TranslationGapAnalysis';
 import { TranslationDebugPanel } from '@/components/TranslationDebugPanel';
+import { TranslationOverrideSearch } from '@/components/TranslationOverrideSearch';
 
 interface PendingTranslation {
   id: string;
@@ -74,7 +75,7 @@ export const TranslationManagement = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps' | 'debug'>('coverage');
+  const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps' | 'debug' | 'override'>('coverage');
   const [gapSyncing, setGapSyncing] = useState(false);
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [coverageLoading, setCoverageLoading] = useState(false);
@@ -794,6 +795,14 @@ export const TranslationManagement = () => {
             Coverage & Sync
           </Button>
           <Button
+            variant={activeTab === 'override' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('override')}
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Override
+          </Button>
+          <Button
             variant={activeTab === 'search' ? 'default' : 'outline'}
             onClick={() => setActiveTab('search')}
             className="flex items-center gap-2"
@@ -1246,6 +1255,11 @@ export const TranslationManagement = () => {
         {/* Gap Analysis Tab */}
         {activeTab === 'gaps' && (
           <TranslationGapAnalysis onSyncGaps={handleSyncGaps} syncing={gapSyncing} />
+        )}
+
+        {/* Override Tab */}
+        {activeTab === 'override' && (
+          <TranslationOverrideSearch />
         )}
 
         {/* Site Scanner Tab */}
