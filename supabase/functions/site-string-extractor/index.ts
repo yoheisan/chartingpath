@@ -355,61 +355,66 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ success: false, message: 'No completed scans found' });
         }
 
-        // Find all pending strings from this scan
-        const pendingIds: string[] = [];
+        // Find all pending OR approved strings (approved ones may not have been translated yet)
+        const targetIds: string[] = [];
+        const newlyApprovedIds: string[] = [];
         let from = 0;
         const PAGE = 1000;
         while (true) {
           const { data } = await supabase
             .from('extracted_strings')
-            .select('id, original_text')
+            .select('id, original_text, review_status')
             .eq('scan_session_id', latestScan.id)
-            .eq('review_status', 'pending')
+            .in('review_status', ['pending', 'approved'])
             .eq('is_translatable', true)
             .range(from, from + PAGE - 1);
           if (!data || data.length === 0) break;
-          // Additional quality filter: at least 3 chars and contains a word
           for (const row of data) {
             if (row.original_text?.trim().length >= 3 && /[a-zA-Z]{2,}/.test(row.original_text)) {
-              pendingIds.push(row.id);
+              targetIds.push(row.id);
+              if (row.review_status === 'pending') {
+                newlyApprovedIds.push(row.id);
+              }
             }
           }
           if (data.length < PAGE) break;
           from += PAGE;
         }
 
-        if (pendingIds.length === 0) {
-          return jsonResponse({ success: true, approved: 0, message: 'No pending strings to approve' });
+        if (targetIds.length === 0) {
+          return jsonResponse({ success: true, approved: 0, translated: 0, message: 'No strings to process' });
         }
 
-        console.log(`[auto_approve] Approving ${pendingIds.length} strings from scan ${latestScan.id}`);
+        console.log(`[auto_approve] Processing ${targetIds.length} strings (${newlyApprovedIds.length} newly approved) from scan ${latestScan.id}`);
 
-        // Approve in batches
-        const APPROVE_BATCH = 200;
-        for (let i = 0; i < pendingIds.length; i += APPROVE_BATCH) {
-          const batch = pendingIds.slice(i, i + APPROVE_BATCH);
-          await supabase
-            .from('extracted_strings')
-            .update({
-              review_status: 'approved',
-              reviewed_at: new Date().toISOString(),
-            })
-            .in('id', batch);
+        // Approve pending ones in batches
+        if (newlyApprovedIds.length > 0) {
+          const APPROVE_BATCH = 200;
+          for (let i = 0; i < newlyApprovedIds.length; i += APPROVE_BATCH) {
+            const batch = newlyApprovedIds.slice(i, i + APPROVE_BATCH);
+            await supabase
+              .from('extracted_strings')
+              .update({
+                review_status: 'approved',
+                reviewed_at: new Date().toISOString(),
+              })
+              .in('id', batch);
+          }
         }
 
-        // Create translation keys + auto-translate
-        // Process in chunks to avoid timeouts
+        // Create translation keys + auto-translate for ALL target strings
         const TRANSLATE_BATCH = 50;
-        for (let i = 0; i < pendingIds.length; i += TRANSLATE_BATCH) {
-          const batch = pendingIds.slice(i, i + TRANSLATE_BATCH);
+        for (let i = 0; i < targetIds.length; i += TRANSLATE_BATCH) {
+          const batch = targetIds.slice(i, i + TRANSLATE_BATCH);
           await createTranslationKeysFromStrings(supabase, batch);
         }
 
-        console.log(`[auto_approve] Done. Approved and translated ${pendingIds.length} strings.`);
+        console.log(`[auto_approve] Done. Approved ${newlyApprovedIds.length}, translated ${targetIds.length} strings.`);
 
         return jsonResponse({
           success: true,
-          approved: pendingIds.length,
+          approved: newlyApprovedIds.length,
+          translated: targetIds.length,
           scan_session_id: latestScan.id,
         });
       }
