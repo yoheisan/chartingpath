@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,19 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Scan, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  RefreshCw,
-  Search,
+import {
+  Scan,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   Eye,
   CheckSquare,
   Square,
   GitCompare,
   FileText,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 interface ScanSession {
@@ -53,6 +51,63 @@ interface StringChange {
   new_text: string | null;
 }
 
+type DomStringPayload = {
+  text: string;
+  path: string;
+  element: string;
+  selector: string;
+};
+
+const SKIP_PATTERNS: RegExp[] = [
+  /^\d+$/,
+  /^\d+[.,%]?\d*$/,
+  /^[A-Z]{2,6}\/[A-Z]{2,6}$/,
+  /^[A-Z]{1,5}$/,
+  /^https?:\/\//,
+  /^[@#]/,
+  /^[→←↑↓•·|—–\-+×÷=<>≤≥≈∞%$€£¥₹]+$/,
+  /^\s*$/,
+  /^[0-9a-f]{8}-/,
+  /^\d{1,2}:\d{2}/,
+  /^\d{4}-\d{2}/,
+];
+
+const DEFAULT_SCAN_PATHS = [
+  '/',
+  '/about',
+  '/tools/pip-calculator',
+  '/tools/risk-calculator',
+  '/tools/market-breadth',
+  '/tools/economic-calendar',
+  '/chart-patterns/generator',
+  '/chart-patterns/library',
+  '/patterns/live',
+  '/chart-patterns/strategies',
+  '/chart-patterns/quiz',
+  '/quiz/pattern-identification',
+  '/quiz/trading-knowledge',
+  '/quiz/stock-market',
+  '/quiz/forex',
+  '/quiz/crypto',
+  '/quiz/commodities',
+  '/learn',
+  '/community',
+  '/projects/pricing',
+  '/projects/pattern-lab/new',
+  '/members/dashboard',
+  '/members/scripts',
+  '/members/downloads',
+  '/members/alerts',
+  '/members/account',
+  '/admin/dashboard',
+  '/admin/content',
+  '/admin/cron-monitor',
+  '/faq',
+  '/support',
+  '/terms',
+  '/privacy',
+];
+
 export const SiteStringScanner = () => {
   const [scanSessions, setScanSessions] = useState<ScanSession[]>([]);
   const [currentScan, setCurrentScan] = useState<ScanSession | null>(null);
@@ -66,8 +121,34 @@ export const SiteStringScanner = () => {
   const [compareVersionsState, setCompareVersionsState] = useState<{ old: number; new: number }>({ old: 1, new: 2 });
   const { toast } = useToast();
 
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
   useEffect(() => {
     loadScanSessions();
+  }, []);
+
+  useEffect(() => {
+    // Create a hidden iframe we can reuse to render routes and extract DOM text
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-99999px';
+    iframe.style.top = '0';
+    iframe.style.width = '1280px';
+    iframe.style.height = '720px';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    document.body.appendChild(iframe);
+    iframeRef.current = iframe;
+
+    return () => {
+      iframe.remove();
+      iframeRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -82,10 +163,7 @@ export const SiteStringScanner = () => {
 
   const loadScanSessions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('site_scan_sessions')
-        .select('*')
-        .order('version_number', { ascending: false });
+      const { data, error } = await supabase.from('site_scan_sessions').select('*').order('version_number', { ascending: false });
 
       if (error) throw error;
       setScanSessions(data || []);
@@ -94,17 +172,30 @@ export const SiteStringScanner = () => {
       toast({
         title: 'Error',
         description: 'Failed to load scan sessions',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
 
   const startScan = async () => {
     if (!baseUrl) {
+      toast({ title: 'Error', description: 'Please enter a base URL to scan', variant: 'destructive' });
+      return;
+    }
+
+    let origin = '';
+    try {
+      origin = new URL(baseUrl).origin;
+    } catch {
+      toast({ title: 'Error', description: 'Invalid base URL', variant: 'destructive' });
+      return;
+    }
+
+    if (origin !== window.location.origin) {
       toast({
-        title: 'Error',
-        description: 'Please enter a base URL to scan',
-        variant: 'destructive'
+        title: 'Same-origin required',
+        description: 'To extract rendered UI strings, scan must run against the current app origin (use the prefilled URL).',
+        variant: 'destructive',
       });
       return;
     }
@@ -116,19 +207,18 @@ export const SiteStringScanner = () => {
       const { data, error } = await supabase.functions.invoke('site-string-extractor', {
         body: {
           action: 'start_scan',
-          base_url: baseUrl
-        }
+          base_url: origin,
+        },
       });
 
       if (error) throw error;
 
-      toast({
-        title: 'Scan Started',
-        description: `Site scan initiated for version ${data.version_number}`
-      });
+      toast({ title: 'Scan Started', description: `Rendering & extracting strings for version ${data.version_number}` });
+
+      const scanSessionId: string = data.scan_session_id;
 
       setCurrentScan({
-        id: data.scan_session_id,
+        id: scanSessionId,
         version_number: data.version_number,
         scan_status: 'in_progress',
         total_strings_found: 0,
@@ -136,17 +226,34 @@ export const SiteStringScanner = () => {
         modified_strings_count: 0,
         scan_date: new Date().toISOString(),
         completed_at: null,
-        scan_metadata: { base_url: baseUrl }
+        scan_metadata: { base_url: origin },
       });
 
       await loadScanSessions();
+
+      // Run the client-side rendered DOM scan (this is what captures React strings)
+      await runRenderedDomScan(scanSessionId, origin);
+
+      // Mark scan complete in DB and refresh
+      await supabase.functions.invoke('site-string-extractor', {
+        body: { action: 'complete_scan', scan_session_id: scanSessionId },
+      });
+
+      await checkScanProgress();
+      await loadScanSessions();
+
+      toast({ title: 'Scan Complete', description: 'Strings extracted and stored in extracted_strings.' });
     } catch (error) {
       console.error('Error starting scan:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to start site scan',
-        variant: 'destructive'
-      });
+      const message = error instanceof Error ? error.message : 'Failed to start scan';
+
+      if (currentScan?.id) {
+        await supabase.functions.invoke('site-string-extractor', {
+          body: { action: 'mark_failed', scan_session_id: currentScan.id, error_message: message },
+        });
+      }
+
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -159,29 +266,15 @@ export const SiteStringScanner = () => {
       const { data, error } = await supabase.functions.invoke('site-string-extractor', {
         body: {
           action: 'get_scan_status',
-          scan_session_id: currentScan.id
-        }
+          scan_session_id: currentScan.id,
+        },
       });
 
       if (error) throw error;
 
       setCurrentScan(data);
-      setScanProgress(data.scan_status === 'completed' ? 100 : 
-                     data.scan_status === 'failed' ? 0 : 50);
-
-      if (data.scan_status === 'completed') {
-        toast({
-          title: 'Scan Complete',
-          description: `Found ${data.total_strings_found} translatable strings`
-        });
-        await loadScanSessions();
-      } else if (data.scan_status === 'failed') {
-        toast({
-          title: 'Scan Failed',
-          description: 'The site scan encountered an error',
-          variant: 'destructive'
-        });
-      }
+      if (data.scan_status === 'completed') setScanProgress(100);
+      if (data.scan_status === 'failed') setScanProgress(0);
     } catch (error) {
       console.error('Error checking scan progress:', error);
     }
@@ -193,8 +286,8 @@ export const SiteStringScanner = () => {
       const { data, error } = await supabase.functions.invoke('site-string-extractor', {
         body: {
           action: 'get_scan_results',
-          scan_session_id: scanSessionId
-        }
+          scan_session_id: scanSessionId,
+        },
       });
 
       if (error) throw error;
@@ -202,11 +295,7 @@ export const SiteStringScanner = () => {
       setActiveView('results');
     } catch (error) {
       console.error('Error loading scan results:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load scan results',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to load scan results', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -214,11 +303,7 @@ export const SiteStringScanner = () => {
 
   const performVersionComparison = async () => {
     if (!compareVersionsState.old || !compareVersionsState.new) {
-      toast({
-        title: 'Error',
-        description: 'Please select both versions to compare',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Please select both versions to compare', variant: 'destructive' });
       return;
     }
 
@@ -228,28 +313,29 @@ export const SiteStringScanner = () => {
         body: {
           action: 'compare_versions',
           old_version: compareVersionsState.old,
-          new_version: compareVersionsState.new
-        }
+          new_version: compareVersionsState.new,
+        },
       });
 
       if (error) throw error;
       setStringChanges(data || []);
       setActiveView('comparison');
 
-      toast({
-        title: 'Comparison Complete',
-        description: `Found ${data?.length || 0} changes between versions`
-      });
+      toast({ title: 'Comparison Complete', description: `Found ${data?.length || 0} changes between versions` });
     } catch (error) {
       console.error('Error comparing versions:', error);
-      const errorMsg = error instanceof Error ? error.message : 
-        (typeof error === 'object' && error !== null && 'message' in error) ? String((error as any).message) : 'Failed to compare versions';
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as any).message)
+            : 'Failed to compare versions';
       toast({
         title: 'Error',
-        description: errorMsg.includes('Version(s) not found') 
+        description: errorMsg.includes('Version(s) not found')
           ? 'You need at least 2 completed scans before you can compare versions. Run another scan first.'
           : 'Failed to compare versions',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -268,11 +354,7 @@ export const SiteStringScanner = () => {
 
   const approveSelectedStrings = async () => {
     if (selectedStrings.size === 0) {
-      toast({
-        title: 'Error',
-        description: 'Please select strings to approve',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Please select strings to approve', variant: 'destructive' });
       return;
     }
 
@@ -281,29 +363,21 @@ export const SiteStringScanner = () => {
       const { error } = await supabase.functions.invoke('site-string-extractor', {
         body: {
           action: 'approve_strings',
-          string_ids: Array.from(selectedStrings)
-        }
+          string_ids: Array.from(selectedStrings),
+        },
       });
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: `${selectedStrings.size} strings approved and added to translations`
-      });
+      toast({ title: 'Success', description: `${selectedStrings.size} strings approved and added to translations` });
 
       setSelectedStrings(new Set());
-      // Refresh the current results
       if (currentScan) {
         await loadScanResults(currentScan.id);
       }
     } catch (error) {
       console.error('Error approving strings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to approve strings',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to approve strings', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -374,7 +448,7 @@ export const SiteStringScanner = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Scan className="w-5 h-5" />
-                Site String Extractor
+                Site String Extractor (Rendered DOM)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -382,20 +456,19 @@ export const SiteStringScanner = () => {
                 <label className="text-sm font-medium mb-2 block">Base URL</label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="https://your-site.com"
+                    placeholder={window.location.origin}
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
                     className="flex-1"
                   />
-                  <Button 
-                    onClick={startScan}
-                    disabled={loading || !baseUrl}
-                    className="flex items-center gap-2"
-                  >
+                  <Button onClick={startScan} disabled={loading || !baseUrl} className="flex items-center gap-2">
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}
                     Start Scan
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This scan loads key routes in a hidden iframe (same-origin) so it can capture React-rendered UI strings.
+                </p>
               </div>
 
               {currentScan && currentScan.scan_status === 'in_progress' && (
@@ -420,9 +493,7 @@ export const SiteStringScanner = () => {
             </CardHeader>
             <CardContent>
               {scanSessions.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No scans performed yet. Start your first scan above.
-                </p>
+                <p className="text-muted-foreground text-center py-8">No scans performed yet. Start your first scan above.</p>
               ) : (
                 <div className="space-y-3">
                   {scanSessions.map((session) => (
@@ -432,9 +503,7 @@ export const SiteStringScanner = () => {
                           {getStatusIcon(session.scan_status)}
                           <div>
                             <div className="font-medium">Version {session.version_number}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {new Date(session.scan_date).toLocaleString()}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{new Date(session.scan_date).toLocaleString()}</div>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -487,7 +556,7 @@ export const SiteStringScanner = () => {
                   <Input
                     type="number"
                     value={compareVersionsState.old}
-                    onChange={(e) => setCompareVersionsState(prev => ({ ...prev, old: parseInt(e.target.value) }))}
+                    onChange={(e) => setCompareVersionsState((prev) => ({ ...prev, old: parseInt(e.target.value) }))}
                   />
                 </div>
                 <div>
@@ -495,14 +564,10 @@ export const SiteStringScanner = () => {
                   <Input
                     type="number"
                     value={compareVersionsState.new}
-                    onChange={(e) => setCompareVersionsState(prev => ({ ...prev, new: parseInt(e.target.value) }))}
+                    onChange={(e) => setCompareVersionsState((prev) => ({ ...prev, new: parseInt(e.target.value) }))}
                   />
                 </div>
-                <Button 
-                  onClick={performVersionComparison}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
+                <Button onClick={performVersionComparison} disabled={loading} className="flex items-center gap-2">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitCompare className="h-4 w-4" />}
                   Compare
                 </Button>
@@ -526,25 +591,19 @@ export const SiteStringScanner = () => {
                     if (selectedStrings.size === extractedStrings.length) {
                       setSelectedStrings(new Set());
                     } else {
-                      setSelectedStrings(new Set(extractedStrings.map(s => s.id)));
+                      setSelectedStrings(new Set(extractedStrings.map((s) => s.id)));
                     }
                   }}
                 >
                   {selectedStrings.size === extractedStrings.length ? 'Deselect All' : 'Select All'}
                 </Button>
                 {selectedStrings.size > 0 && (
-                  <Button
-                    onClick={approveSelectedStrings}
-                    disabled={loading}
-                    className="flex items-center gap-2"
-                  >
+                  <Button onClick={approveSelectedStrings} disabled={loading} className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
                     Approve {selectedStrings.size} Strings
                   </Button>
                 )}
-                <Badge variant="secondary">
-                  {extractedStrings.length} strings found
-                </Badge>
+                <Badge variant="secondary">{extractedStrings.length} strings found</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -552,23 +611,17 @@ export const SiteStringScanner = () => {
                 {extractedStrings.map((string) => (
                   <div key={string.id} className="border rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <button
-                        onClick={() => toggleStringSelection(string.id)}
-                        className="mt-1"
-                      >
-                        {selectedStrings.has(string.id) ? 
-                          <CheckSquare className="h-4 w-4 text-primary" /> :
+                      <button onClick={() => toggleStringSelection(string.id)} className="mt-1">
+                        {selectedStrings.has(string.id) ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
                           <Square className="h-4 w-4 text-muted-foreground" />
-                        }
+                        )}
                       </button>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
-                            {string.string_key}
-                          </code>
-                          <Badge variant={string.review_status === 'approved' ? 'default' : 'outline'}>
-                            {string.review_status}
-                          </Badge>
+                          <code className="bg-muted px-2 py-1 rounded text-sm font-mono">{string.string_key}</code>
+                          <Badge variant={string.review_status === 'approved' ? 'default' : 'outline'}>{string.review_status}</Badge>
                           <Badge variant="secondary">{string.context_element}</Badge>
                         </div>
                         <div className="text-sm mb-2">
@@ -605,28 +658,20 @@ export const SiteStringScanner = () => {
                   {stringChanges.map((change) => (
                     <div key={change.id} className="border rounded-lg p-4">
                       <div className="flex items-start gap-3 mb-3">
-                        <Badge className={getChangeTypeColor(change.change_type)}>
-                          {change.change_type.toUpperCase()}
-                        </Badge>
-                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
-                          {change.string_key}
-                        </code>
+                        <Badge className={getChangeTypeColor(change.change_type)}>{change.change_type.toUpperCase()}</Badge>
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">{change.string_key}</code>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         {change.old_text && (
                           <div>
                             <div className="font-medium text-muted-foreground mb-1">Old Text:</div>
-                            <div className="bg-red-50 border border-red-200 p-2 rounded">
-                              {change.old_text}
-                            </div>
+                            <div className="bg-red-50 border border-red-200 p-2 rounded">{change.old_text}</div>
                           </div>
                         )}
                         {change.new_text && (
                           <div>
                             <div className="font-medium text-muted-foreground mb-1">New Text:</div>
-                            <div className="bg-green-50 border border-green-200 p-2 rounded">
-                              {change.new_text}
-                            </div>
+                            <div className="bg-green-50 border border-green-200 p-2 rounded">{change.new_text}</div>
                           </div>
                         )}
                       </div>
@@ -640,4 +685,141 @@ export const SiteStringScanner = () => {
       )}
     </div>
   );
+
+  async function runRenderedDomScan(scanSessionId: string, origin: string) {
+    const iframe = iframeRef.current;
+    if (!iframe) throw new Error('Scanner iframe not initialized');
+
+    const globalSeen = new Set<string>();
+    let pagesScanned = 0;
+
+    for (let i = 0; i < DEFAULT_SCAN_PATHS.length; i++) {
+      const path = DEFAULT_SCAN_PATHS[i];
+      const url = `${origin}${path}`;
+
+      await loadUrlInIframe(iframe, url);
+
+      // Let React + data fetches settle
+      await sleep(1200);
+
+      const doc = iframe.contentDocument;
+      if (!doc?.body) continue;
+
+      const extracted = extractStringsFromDocument(doc, path);
+
+      // Deduplicate across the whole scan run
+      const uniqueForPage: DomStringPayload[] = [];
+      for (const s of extracted) {
+        const key = `${s.text.toLowerCase()}|${s.element}|${s.selector}|${s.path}`;
+        if (globalSeen.has(key)) continue;
+        globalSeen.add(key);
+        uniqueForPage.push(s);
+      }
+
+      if (uniqueForPage.length > 0) {
+        await supabase.functions.invoke('site-string-extractor', {
+          body: {
+            action: 'ingest_strings',
+            scan_session_id: scanSessionId,
+            strings: uniqueForPage,
+          },
+        });
+      }
+
+      pagesScanned++;
+      setScanProgress(Math.round((pagesScanned / DEFAULT_SCAN_PATHS.length) * 100));
+    }
+  }
 };
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function loadUrlInIframe(iframe: HTMLIFrameElement, url: string) {
+  return new Promise<void>((resolve, reject) => {
+    const onLoad = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error(`Failed to load ${url}`));
+    };
+    const cleanup = () => {
+      iframe.removeEventListener('load', onLoad);
+      iframe.removeEventListener('error', onError as any);
+    };
+
+    iframe.addEventListener('load', onLoad);
+    iframe.addEventListener('error', onError as any);
+    iframe.src = url;
+  });
+}
+
+function extractStringsFromDocument(doc: Document, path: string): DomStringPayload[] {
+  const results: DomStringPayload[] = [];
+  const seen = new Set<string>();
+
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      const text = node.textContent?.trim();
+      if (!text || text.length < 2) return NodeFilter.FILTER_REJECT;
+      const parent = (node as any).parentElement as Element | null;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      const tag = parent.tagName?.toLowerCase();
+      if (['script', 'style', 'noscript', 'code', 'pre'].includes(tag)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+
+  while (walker.nextNode()) {
+    const text = walker.currentNode.textContent?.trim() || '';
+    if (SKIP_PATTERNS.some((p) => p.test(text))) continue;
+
+    const lower = text.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+
+    const parent = (walker.currentNode as any).parentElement as Element | null;
+    if (!parent) continue;
+
+    // Skip hidden
+    const style = doc.defaultView?.getComputedStyle(parent);
+    if (style && (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0')) continue;
+    if ((parent as any).closest?.('[aria-hidden="true"], [hidden]')) continue;
+
+    results.push({
+      text: text.substring(0, 300),
+      element: parent.tagName.toLowerCase(),
+      selector: getSelector(parent),
+      path,
+    });
+  }
+
+  return results;
+}
+
+function getSelector(el: Element | null): string {
+  if (!el) return '';
+  const parts: string[] = [];
+  let current: Element | null = el;
+  while (current && current !== current.ownerDocument.body && parts.length < 4) {
+    let part = current.tagName.toLowerCase();
+    if ((current as HTMLElement).id) {
+      part += `#${(current as HTMLElement).id}`;
+      parts.unshift(part);
+      break;
+    }
+    const className = (current as HTMLElement).className;
+    if (className && typeof className === 'string') {
+      const firstClass = className.split(' ')[0];
+      if (firstClass && !firstClass.startsWith('__')) {
+        part += `.${firstClass}`;
+      }
+    }
+    parts.unshift(part);
+    current = current.parentElement;
+  }
+  return parts.join(' > ');
+}
