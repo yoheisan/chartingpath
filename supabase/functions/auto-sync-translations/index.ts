@@ -220,7 +220,21 @@ Deno.serve(async (req) => {
     }
 
     // ─── STEP 2: Translate each language ─────────────────────────────
-    const languages = Object.keys(LANGUAGE_NAMES)
+    const allLanguages = Object.keys(LANGUAGE_NAMES)
+    // If specific languages requested, use those; otherwise process all
+    const languagesToProcess = requestedLanguages
+      ? allLanguages.filter(l => requestedLanguages!.includes(l))
+      : allLanguages
+
+    // Limit to MAX_LANGS_PER_RUN to stay within edge function timeout
+    const MAX_LANGS_PER_RUN = 2
+    const thisRunLanguages = languagesToProcess.slice(0, MAX_LANGS_PER_RUN)
+    const remainingLanguages = requestedLanguages
+      ? languagesToProcess.slice(MAX_LANGS_PER_RUN)
+      : allLanguages.filter(l => !thisRunLanguages.includes(l))
+
+    console.log(`[auto-sync] Processing ${thisRunLanguages.length} languages this run: ${thisRunLanguages.join(',')}. ${remainingLanguages.length} remaining.`)
+
     const summary: Record<string, { translated: number; skipped: number; errors: number }> = {}
     let totalNewTranslations = 0
 
