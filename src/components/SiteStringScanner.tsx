@@ -17,96 +17,10 @@ import {
   GitCompare,
   FileText,
   Loader2,
+  Zap,
+  Search,
 } from 'lucide-react';
-
-interface ScanSession {
-  id: string;
-  version_number: number;
-  scan_status: string;
-  total_strings_found: number;
-  new_strings_count: number;
-  modified_strings_count: number;
-  scan_date: string;
-  completed_at: string | null;
-  scan_metadata: any;
-  current_extracted_count?: number;
-}
-
-interface ExtractedString {
-  id: string;
-  string_key: string;
-  original_text: string;
-  context_path: string;
-  context_element: string;
-  context_selector: string;
-  review_status: string;
-  is_translatable: boolean;
-}
-
-interface StringChange {
-  id: string;
-  string_key: string;
-  change_type: 'added' | 'modified' | 'removed';
-  old_text: string | null;
-  new_text: string | null;
-}
-
-type DomStringPayload = {
-  text: string;
-  path: string;
-  element: string;
-  selector: string;
-};
-
-const SKIP_PATTERNS: RegExp[] = [
-  /^\d+$/,
-  /^\d+[.,%]?\d*$/,
-  /^[A-Z]{2,6}\/[A-Z]{2,6}$/,
-  /^[A-Z]{1,5}$/,
-  /^https?:\/\//,
-  /^[@#]/,
-  /^[→←↑↓•·|—–\-+×÷=<>≤≥≈∞%$€£¥₹]+$/,
-  /^\s*$/,
-  /^[0-9a-f]{8}-/,
-  /^\d{1,2}:\d{2}/,
-  /^\d{4}-\d{2}/,
-];
-
-const DEFAULT_SCAN_PATHS = [
-  '/',
-  '/about',
-  '/tools/pip-calculator',
-  '/tools/risk-calculator',
-  '/tools/market-breadth',
-  '/tools/economic-calendar',
-  '/chart-patterns/generator',
-  '/chart-patterns/library',
-  '/patterns/live',
-  '/chart-patterns/strategies',
-  '/chart-patterns/quiz',
-  '/quiz/pattern-identification',
-  '/quiz/trading-knowledge',
-  '/quiz/stock-market',
-  '/quiz/forex',
-  '/quiz/crypto',
-  '/quiz/commodities',
-  '/learn',
-  '/community',
-  '/projects/pricing',
-  '/projects/pattern-lab/new',
-  '/members/dashboard',
-  '/members/scripts',
-  '/members/downloads',
-  '/members/alerts',
-  '/members/account',
-  '/admin/dashboard',
-  '/admin/content',
-  '/admin/cron-monitor',
-  '/faq',
-  '/support',
-  '/terms',
-  '/privacy',
-];
+import { APP_SCAN_ROUTES, getRoutesForRole } from '@/utils/appRoutes';
 
 export const SiteStringScanner = () => {
   const [scanSessions, setScanSessions] = useState<ScanSession[]>([]);
