@@ -1,15 +1,32 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+interface DomStringPayload {
+  text: string;
+  path: string;
+  element: string;
+  selector: string;
+}
+
 interface StringExtractionRequest {
-  action: 'start_scan' | 'get_scan_status' | 'get_scan_results' | 'compare_versions' | 'approve_strings';
+  action:
+    | 'start_scan'
+    | 'ingest_strings'
+    | 'complete_scan'
+    | 'mark_failed'
+    | 'get_scan_status'
+    | 'get_scan_results'
+    | 'compare_versions'
+    | 'approve_strings';
   scan_session_id?: string;
   base_url?: string;
   old_version?: number;
   new_version?: number;
   string_ids?: string[];
+  strings?: DomStringPayload[];
+  error_message?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -22,11 +39,12 @@ Deno.serve(async (req: Request) => {
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, scan_session_id, base_url, old_version, new_version, string_ids }: StringExtractionRequest = await req.json();
+    const body: StringExtractionRequest = await req.json();
+    const { action, scan_session_id, base_url, old_version, new_version, string_ids, strings, error_message } = body;
 
     switch (action) {
       case 'start_scan': {
@@ -50,35 +68,119 @@ Deno.serve(async (req: Request) => {
           .insert({
             version_number: newVersionNumber,
             scan_status: 'in_progress',
-            scan_metadata: { base_url }
+            scan_metadata: { base_url },
           })
           .select()
           .single();
 
         if (sessionError) throw sessionError;
 
-        // Start the background scanning process
-        const scanPromise = performSiteScan(supabase, scanSession.id, base_url);
-        
-        // Don't await - let it run in background
-        scanPromise.catch(error => {
-          console.error('Background scan failed:', error);
-          // Update scan status to failed
-          supabase
-            .from('site_scan_sessions')
-            .update({ 
-              scan_status: 'failed',
-              completed_at: new Date().toISOString(),
-              scan_metadata: { base_url, error: error.message }
-            })
-            .eq('id', scanSession.id);
-        });
+        return new Response(
+          JSON.stringify({
+            scan_session_id: scanSession.id,
+            version_number: newVersionNumber,
+            status: 'started',
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
 
-        return new Response(JSON.stringify({
-          scan_session_id: scanSession.id,
-          version_number: newVersionNumber,
-          status: 'started'
-        }), {
+      case 'ingest_strings': {
+        if (!scan_session_id) throw new Error('Scan session ID is required');
+        if (!Array.isArray(strings) || strings.length === 0) {
+          return new Response(JSON.stringify({ success: true, inserted: 0 }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Deduplicate within this request
+        const seen = new Set<string>();
+        const rows: any[] = [];
+
+        for (const s of strings) {
+          const text = (s?.text || '').trim();
+          if (!text || text.length < 2) continue;
+          if (!isTranslatableText(text)) continue;
+
+          const element = (s?.element || 'text').toString();
+          const selector = (s?.selector || '').toString();
+          const path = (s?.path || '').toString();
+
+          // Key should be stable across pages; use element as context, not the URL
+          const stringKey = generateStringKey(text, element);
+          const stringHash = await generateHash(text);
+
+          const unique = `${stringKey}_${stringHash}_${path}`;
+          if (seen.has(unique)) continue;
+          seen.add(unique);
+
+          rows.push({
+            scan_session_id,
+            string_key: stringKey,
+            original_text: text,
+            context_path: path,
+            context_element: element,
+            context_selector: selector,
+            string_hash: stringHash,
+            extraction_method: 'dom',
+            is_translatable: true,
+            review_status: 'pending',
+          });
+        }
+
+        // Insert in batches
+        const BATCH = 500;
+        for (let i = 0; i < rows.length; i += BATCH) {
+          const slice = rows.slice(i, i + BATCH);
+          const { error } = await supabase.from('extracted_strings').insert(slice);
+          if (error) {
+            console.error('Insert extracted_strings batch error:', error);
+            throw error;
+          }
+        }
+
+        return new Response(JSON.stringify({ success: true, inserted: rows.length }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'complete_scan': {
+        if (!scan_session_id) throw new Error('Scan session ID is required');
+
+        const { count } = await supabase
+          .from('extracted_strings')
+          .select('*', { count: 'exact', head: true })
+          .eq('scan_session_id', scan_session_id);
+
+        await supabase
+          .from('site_scan_sessions')
+          .update({
+            scan_status: 'completed',
+            total_strings_found: count || 0,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', scan_session_id);
+
+        return new Response(JSON.stringify({ success: true, total_strings_found: count || 0 }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'mark_failed': {
+        if (!scan_session_id) throw new Error('Scan session ID is required');
+
+        await supabase
+          .from('site_scan_sessions')
+          .update({
+            scan_status: 'failed',
+            completed_at: new Date().toISOString(),
+            scan_metadata: { error: error_message || 'unknown' },
+          })
+          .eq('id', scan_session_id);
+
+        return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -102,12 +204,15 @@ Deno.serve(async (req: Request) => {
           .select('*', { count: 'exact', head: true })
           .eq('scan_session_id', scan_session_id);
 
-        return new Response(JSON.stringify({
-          ...session,
-          current_extracted_count: extractedCount
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({
+            ...session,
+            current_extracted_count: extractedCount,
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       case 'get_scan_results': {
@@ -156,8 +261,8 @@ Deno.serve(async (req: Request) => {
 
           throw new Error(
             `Version(s) not found. Requested: v${old_version} and v${new_version}. ` +
-            `Available versions: ${availableVersions?.map((v: any) => `v${v.version_number} (${v.scan_status})`).join(', ') || 'none'}. ` +
-            `You need at least 2 completed scans to compare.`
+              `Available versions: ${availableVersions?.map((v: any) => `v${v.version_number} (${v.scan_status})`).join(', ') || 'none'}. ` +
+              `You need at least 2 completed scans to compare.`
           );
         }
 
@@ -188,7 +293,7 @@ Deno.serve(async (req: Request) => {
           .from('extracted_strings')
           .update({
             review_status: 'approved',
-            reviewed_at: new Date().toISOString()
+            reviewed_at: new Date().toISOString(),
           })
           .in('id', string_ids);
 
@@ -205,217 +310,54 @@ Deno.serve(async (req: Request) => {
       default:
         throw new Error(`Unknown action: ${action}`);
     }
-
   } catch (error) {
     console.error('Error in site-string-extractor:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message 
-    }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-async function performSiteScan(supabase: any, scanSessionId: string, baseUrl: string) {
-  console.log(`Starting site scan for: ${baseUrl}`);
-  
-  try {
-    // Get the site's sitemap or start with the home page
-    const urlsToScan = await discoverUrls(baseUrl);
-    const extractedStrings = new Set();
-    let totalFound = 0;
-
-    for (const url of urlsToScan) {
-      try {
-        console.log(`Scanning URL: ${url}`);
-        const response = await fetch(url);
-        const html = await response.text();
-        
-        // Extract strings from HTML
-        const strings = extractStringsFromHtml(html, url);
-        
-        for (const stringData of strings) {
-          const stringKey = generateStringKey(stringData.text, stringData.context);
-          const stringHash = await generateHash(stringData.text);
-          
-          // Check if we've already processed this exact string
-          const uniqueKey = `${stringKey}_${stringHash}`;
-          if (!extractedStrings.has(uniqueKey)) {
-            extractedStrings.add(uniqueKey);
-            
-            // Insert into database
-            await supabase
-              .from('extracted_strings')
-              .insert({
-                scan_session_id: scanSessionId,
-                string_key: stringKey,
-                original_text: stringData.text,
-                context_path: stringData.path,
-                context_element: stringData.element,
-                context_selector: stringData.selector,
-                string_hash: stringHash,
-                extraction_method: 'automated'
-              });
-            
-            totalFound++;
-          }
-        }
-        
-        // Add small delay to avoid overwhelming the server
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error(`Error scanning ${url}:`, error);
-      }
-    }
-
-    // Update scan session as completed
-    await supabase
-      .from('site_scan_sessions')
-      .update({
-        scan_status: 'completed',
-        total_strings_found: totalFound,
-        completed_at: new Date().toISOString()
-      })
-      .eq('id', scanSessionId);
-
-    console.log(`Scan completed. Found ${totalFound} unique strings.`);
-  } catch (error) {
-    console.error('Error in performSiteScan:', error);
-    throw error;
-  }
-}
-
-async function discoverUrls(baseUrl: string): Promise<string[]> {
-  // Start with basic pages - in a real implementation, you might:
-  // 1. Fetch and parse sitemap.xml
-  // 2. Crawl internal links
-  // 3. Use a more sophisticated discovery method
-  
-  const urls = [baseUrl];
-  
-  try {
-    // Try to fetch sitemap
-    const sitemapResponse = await fetch(`${baseUrl}/sitemap.xml`);
-    if (sitemapResponse.ok) {
-      const sitemapText = await sitemapResponse.text();
-      // Simple regex to extract URLs from sitemap
-      const urlMatches = sitemapText.match(/<loc>(.*?)<\/loc>/g);
-      if (urlMatches) {
-        for (const match of urlMatches) {
-          const url = match.replace(/<\/?loc>/g, '');
-          if (url.startsWith(baseUrl)) {
-            urls.push(url);
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.log('No sitemap found, using basic discovery');
-  }
-  
-  // Add common pages if not found in sitemap
-  const commonPaths = ['/', '/about', '/contact', '/pricing', '/services'];
-  for (const path of commonPaths) {
-    const url = `${baseUrl}${path}`;
-    if (!urls.includes(url)) {
-      urls.push(url);
-    }
-  }
-  
-  return urls;
-}
-
-function extractStringsFromHtml(html: string, url: string): Array<{
-  text: string;
-  path: string;
-  element: string;
-  selector: string;
-  context: string;
-}> {
-  const strings = [];
-  
-  // Remove script and style tags
-  const cleanHtml = html.replace(/<script[^>]*>.*?<\/script>/gi, '')
-                       .replace(/<style[^>]*>.*?<\/style>/gi, '');
-  
-  // Extract text from common elements
-  const textRegexes = [
-    // Title tags
-    { regex: /<title[^>]*>(.*?)<\/title>/gi, element: 'title' },
-    // Meta descriptions
-    { regex: /<meta[^>]*name=['""]description['""][^>]*content=['""]([^'""]*)['""]/gi, element: 'meta[description]' },
-    // Headings
-    { regex: /<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, element: 'heading' },
-    // Paragraphs
-    { regex: /<p[^>]*>(.*?)<\/p>/gi, element: 'paragraph' },
-    // Buttons
-    { regex: /<button[^>]*>(.*?)<\/button>/gi, element: 'button' },
-    // Links
-    { regex: /<a[^>]*>(.*?)<\/a>/gi, element: 'link' },
-    // Labels
-    { regex: /<label[^>]*>(.*?)<\/label>/gi, element: 'label' },
-    // Spans with text
-    { regex: /<span[^>]*>(.*?)<\/span>/gi, element: 'span' }
-  ];
-  
-  for (const { regex, element } of textRegexes) {
-    let match;
-    while ((match = regex.exec(cleanHtml)) !== null) {
-      const text = match[1]?.replace(/<[^>]*>/g, '').trim();
-      if (text && text.length > 2 && text.length < 500 && isTranslatableText(text)) {
-        strings.push({
-          text,
-          path: url,
-          element,
-          selector: `${element}:contains("${text.substring(0, 30)}...")`,
-          context: `${element} on ${url}`
-        });
-      }
-    }
-  }
-  
-  return strings;
-}
-
 function isTranslatableText(text: string): boolean {
-  // Filter out non-translatable content
   if (!text || typeof text !== 'string') return false;
-  
+
   // Skip if it's mostly numbers or special characters
   if (/^[\d\s\-_.,!@#$%^&*()+=\[\]{}|\\:";'<>?/~`]*$/.test(text)) return false;
-  
+
   // Skip common technical strings
   const technicalPatterns = [
     /^[a-z]+\.[a-z]+$/i, // domain names
-    /^https?:\/\//i, // URLs  
+    /^https?:\/\//i, // URLs
     /^[a-f0-9]{8,}$/i, // hex strings
     /^\d{4}-\d{2}-\d{2}/, // dates
     /^[\w\-_.]+@[\w\-_.]+\.\w+$/i, // emails
   ];
-  
+
   for (const pattern of technicalPatterns) {
     if (pattern.test(text.trim())) return false;
   }
-  
+
   // Must contain at least one letter
   if (!/[a-zA-Z]/.test(text)) return false;
-  
+
   return true;
 }
 
 function generateStringKey(text: string, context: string): string {
   // Create a human-readable key based on the text and context
-  const cleanText = text.toLowerCase()
+  const cleanText = text
+    .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, '_')
     .substring(0, 50);
-  
-  const contextKey = context.toLowerCase()
+
+  const contextKey = context
+    .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, '_')
     .substring(0, 20);
-  
+
   return `${contextKey}_${cleanText}`;
 }
 
@@ -424,7 +366,7 @@ async function generateHash(text: string): Promise<string> {
   const data = encoder.encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function compareAndLogChanges(supabase: any, oldSessionId: string, newSessionId: string) {
@@ -441,12 +383,12 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
 
   const oldMap = new Map();
   const newMap = new Map();
-  
-  oldStrings?.forEach(s => oldMap.set(s.string_key, s));
-  newStrings?.forEach(s => newMap.set(s.string_key, s));
-  
-  const changes = [];
-  
+
+  oldStrings?.forEach((s: any) => oldMap.set(s.string_key, s));
+  newStrings?.forEach((s: any) => newMap.set(s.string_key, s));
+
+  const changes: any[] = [];
+
   // Find added strings
   for (const [key, newString] of newMap) {
     if (!oldMap.has(key)) {
@@ -456,7 +398,7 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
         new_scan_session_id: newSessionId,
         change_type: 'added',
         new_text: newString.original_text,
-        new_hash: newString.string_hash
+        new_hash: newString.string_hash,
       });
     } else {
       // Check for modifications
@@ -470,12 +412,12 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
           old_text: oldString.original_text,
           new_text: newString.original_text,
           old_hash: oldString.string_hash,
-          new_hash: newString.string_hash
+          new_hash: newString.string_hash,
         });
       }
     }
   }
-  
+
   // Find removed strings
   for (const [key, oldString] of oldMap) {
     if (!newMap.has(key)) {
@@ -485,48 +427,41 @@ async function compareAndLogChanges(supabase: any, oldSessionId: string, newSess
         new_scan_session_id: newSessionId,
         change_type: 'removed',
         old_text: oldString.original_text,
-        old_hash: oldString.string_hash
+        old_hash: oldString.string_hash,
       });
     }
   }
-  
+
   // Insert all changes
   if (changes.length > 0) {
-    await supabase
-      .from('string_change_log')
-      .insert(changes);
+    await supabase.from('string_change_log').insert(changes);
   }
-  
+
   // Update scan session with change counts
   await supabase
     .from('site_scan_sessions')
     .update({
-      new_strings_count: changes.filter(c => c.change_type === 'added').length,
-      modified_strings_count: changes.filter(c => c.change_type === 'modified').length
+      new_strings_count: changes.filter((c) => c.change_type === 'added').length,
+      modified_strings_count: changes.filter((c) => c.change_type === 'modified').length,
     })
     .eq('id', newSessionId);
 }
 
 async function createTranslationKeysFromStrings(supabase: any, stringIds: string[]) {
   // Get the approved strings
-  const { data: strings } = await supabase
-    .from('extracted_strings')
-    .select('*')
-    .in('id', stringIds);
+  const { data: strings } = await supabase.from('extracted_strings').select('*').in('id', stringIds);
 
   const newKeys: Array<{ key: string; value: string }> = [];
 
   for (const string of strings || []) {
     // Create translation key if it doesn't exist
-    const { error: keyError } = await supabase
-      .from('translation_keys')
-      .upsert({
-        key: string.string_key,
-        description: `Auto-extracted: ${string.original_text.substring(0, 100)}`,
-        category: 'auto_extracted',
-        page_context: string.context_path,
-        element_context: string.context_element
-      });
+    const { error: keyError } = await supabase.from('translation_keys').upsert({
+      key: string.string_key,
+      description: `Auto-extracted: ${string.original_text.substring(0, 100)}`,
+      category: 'auto_extracted',
+      page_context: string.context_path,
+      element_context: string.context_element,
+    });
 
     if (keyError) {
       console.error('Error creating translation key:', keyError);
@@ -534,17 +469,15 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
     }
 
     // Create initial English translation
-    await supabase
-      .from('translations')
-      .upsert({
-        key: string.string_key,
-        language_code: 'en',
-        value: string.original_text,
-        status: 'approved',
-        automation_source: 'site_scanner',
-        context_page: string.context_path,
-        context_element: string.context_element
-      });
+    await supabase.from('translations').upsert({
+      key: string.string_key,
+      language_code: 'en',
+      value: string.original_text,
+      status: 'approved',
+      automation_source: 'site_scanner',
+      context_page: string.context_path,
+      context_element: string.context_element,
+    }, { onConflict: 'key,language_code' });
 
     newKeys.push({ key: string.string_key, value: string.original_text });
   }
@@ -556,10 +489,20 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
 }
 
 const TARGET_LANGUAGES: Record<string, string> = {
-  es: 'Spanish', pt: 'Portuguese', fr: 'French', zh: 'Chinese (Simplified)',
-  de: 'German', hi: 'Hindi', id: 'Indonesian', it: 'Italian',
-  ja: 'Japanese', ru: 'Russian', ar: 'Arabic', af: 'Afrikaans',
-  ko: 'Korean', tr: 'Turkish'
+  es: 'Spanish',
+  pt: 'Portuguese',
+  fr: 'French',
+  zh: 'Chinese (Simplified)',
+  de: 'German',
+  hi: 'Hindi',
+  id: 'Indonesian',
+  it: 'Italian',
+  ja: 'Japanese',
+  ru: 'Russian',
+  ar: 'Arabic',
+  af: 'Afrikaans',
+  ko: 'Korean',
+  tr: 'Turkish',
 };
 
 async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; value: string }>) {
@@ -588,13 +531,14 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
-          })
+            generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
+          }),
         }
       );
 
       if (!response.ok) {
         console.error(`Gemini API error for ${langCode}: ${response.status}`);
+        await response.text();
         continue;
       }
 
@@ -604,7 +548,7 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
       // Strip markdown fences
       rawText = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       // Strip control characters
-      rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\t' ? ch : '');
+      rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => (ch === '\n' || ch === '\t' ? ch : ''));
 
       const translated: Record<string, string> = JSON.parse(rawText);
 
@@ -612,16 +556,17 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
       for (const [key, value] of Object.entries(translated)) {
         if (typeof value !== 'string' || !value.trim()) continue;
 
-        await supabase
-          .from('translations')
-          .upsert({
+        await supabase.from('translations').upsert(
+          {
             key,
             language_code: langCode,
             value: value.trim(),
             status: 'auto_translated',
             automation_source: 'site_scanner_auto',
-            context_page: keys.find(k => k.key === key) ? 'auto_extracted' : null
-          }, { onConflict: 'key,language_code' });
+            context_page: 'auto_extracted',
+          },
+          { onConflict: 'key,language_code' }
+        );
       }
 
       console.log(`✓ Translated ${Object.keys(translated).length} strings to ${langName}`);
