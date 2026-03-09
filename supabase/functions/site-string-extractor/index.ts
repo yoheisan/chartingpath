@@ -287,43 +287,48 @@ async function performSiteScan(supabase: any, scanSessionId: string, baseUrl: st
 }
 
 async function discoverUrls(baseUrl: string): Promise<string[]> {
-  // Start with basic pages - in a real implementation, you might:
-  // 1. Fetch and parse sitemap.xml
-  // 2. Crawl internal links
-  // 3. Use a more sophisticated discovery method
-  
-  const urls = [baseUrl];
-  
+  const urls = new Set<string>();
+
+  // Normalize base URL (strip trailing slash)
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+  urls.add(normalizedBase);
+
   try {
-    // Try to fetch sitemap
-    const sitemapResponse = await fetch(`${baseUrl}/sitemap.xml`);
-    if (sitemapResponse.ok) {
-      const sitemapText = await sitemapResponse.text();
-      // Simple regex to extract URLs from sitemap
-      const urlMatches = sitemapText.match(/<loc>(.*?)<\/loc>/g);
-      if (urlMatches) {
-        for (const match of urlMatches) {
-          const url = match.replace(/<\/?loc>/g, '');
-          if (url.startsWith(baseUrl)) {
-            urls.push(url);
+    // Try to fetch sitemap from common locations
+    const sitemapCandidates = [
+      `${normalizedBase}/sitemap.xml`,
+      `${normalizedBase}/sitemap_index.xml`,
+    ];
+
+    for (const smUrl of sitemapCandidates) {
+      try {
+        const sitemapResponse = await fetch(smUrl);
+        if (!sitemapResponse.ok) continue;
+        const sitemapText = await sitemapResponse.text();
+        const urlMatches = sitemapText.match(/<loc>(.*?)<\/loc>/g);
+        if (urlMatches) {
+          for (const match of urlMatches) {
+            const url = match.replace(/<\/?loc>/g, '');
+            if (url.startsWith(normalizedBase)) {
+              urls.add(url.replace(/\/$/, ''));
+            }
           }
         }
+      } catch {
+        // Ignore individual sitemap failures and fall back to heuristics
       }
     }
-  } catch (error) {
-    console.log('No sitemap found, using basic discovery');
+  } catch {
+    // Non-fatal; we'll fall back to heuristic paths below
   }
-  
-  // Add common pages if not found in sitemap
-  const commonPaths = ['/', '/about', '/contact', '/pricing', '/services'];
-  for (const path of commonPaths) {
-    const url = `${baseUrl}${path}`;
-    if (!urls.includes(url)) {
-      urls.push(url);
-    }
+
+  // Add known app routes (React SPA) that may not be in sitemap yet
+  const appPaths = ['/', '/about', '/pricing', '/learn', '/patterns/live', '/projects/pattern-lab/new', '/members/dashboard'];
+  for (const path of appPaths) {
+    urls.add(`${normalizedBase}${path}`.replace(/\/$/, ''));
   }
-  
-  return urls;
+
+  return Array.from(urls);
 }
 
 function extractStringsFromHtml(html: string, url: string): Array<{
