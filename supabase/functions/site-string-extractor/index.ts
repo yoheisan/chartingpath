@@ -621,56 +621,65 @@ async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; va
     sourceMap[k.key] = k.value;
   }
 
-  for (const [langCode, langName] of Object.entries(TARGET_LANGUAGES)) {
-    try {
-      const prompt = `Translate the following JSON values from English to ${langName}. Keep JSON keys unchanged. Return ONLY valid JSON, no markdown fences.\n\n${JSON.stringify(sourceMap, null, 2)}`;
+  // Parallelize all language translations to avoid timeout
+  const langEntries = Object.entries(TARGET_LANGUAGES);
+  const PARALLEL_BATCH = 5; // 5 languages at a time to avoid rate limits
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
-          }),
+  for (let b = 0; b < langEntries.length; b += PARALLEL_BATCH) {
+    const batch = langEntries.slice(b, b + PARALLEL_BATCH);
+    await Promise.all(
+      batch.map(async ([langCode, langName]) => {
+        try {
+          const prompt = `Translate the following JSON values from English to ${langName}. Keep JSON keys unchanged. Return ONLY valid JSON, no markdown fences.\n\n${JSON.stringify(sourceMap, null, 2)}`;
+
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            console.error(`Gemini API error for ${langCode}: ${response.status}`);
+            await response.text();
+            return;
+          }
+
+          const result = await response.json();
+          let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+          rawText = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+          rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => (ch === '\n' || ch === '\t' ? ch : ''));
+
+          const translated: Record<string, string> = JSON.parse(rawText);
+
+          // Batch upsert translations
+          const upsertRows = Object.entries(translated)
+            .filter(([, value]) => typeof value === 'string' && value.trim())
+            .map(([key, value]) => ({
+              key,
+              language_code: langCode,
+              value: (value as string).trim(),
+              status: 'auto_translated',
+              automation_source: 'site_scanner_auto',
+              context_page: 'auto_extracted',
+            }));
+
+          if (upsertRows.length > 0) {
+            await supabase.from('translations').upsert(upsertRows, { onConflict: 'key,language_code' });
+          }
+
+          console.log(`✓ Translated ${upsertRows.length} strings to ${langName}`);
+        } catch (error) {
+          console.error(`Error translating to ${langName}:`, error);
         }
-      );
-
-      if (!response.ok) {
-        console.error(`Gemini API error for ${langCode}: ${response.status}`);
-        await response.text();
-        continue;
-      }
-
-      const result = await response.json();
-      let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      rawText = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      rawText = rawText.replace(/[\x00-\x1F\x7F]/g, (ch: string) => (ch === '\n' || ch === '\t' ? ch : ''));
-
-      const translated: Record<string, string> = JSON.parse(rawText);
-
-      for (const [key, value] of Object.entries(translated)) {
-        if (typeof value !== 'string' || !value.trim()) continue;
-
-        await supabase.from('translations').upsert(
-          {
-            key,
-            language_code: langCode,
-            value: value.trim(),
-            status: 'auto_translated',
-            automation_source: 'site_scanner_auto',
-            context_page: 'auto_extracted',
-          },
-          { onConflict: 'key,language_code' }
-        );
-      }
-
-      console.log(`✓ Translated ${Object.keys(translated).length} strings to ${langName}`);
-    } catch (error) {
-      console.error(`Error translating to ${langName}:`, error);
-    }
+      })
+    );
   }
 
   console.log('Auto-translation complete');
