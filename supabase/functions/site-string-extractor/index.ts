@@ -602,6 +602,9 @@ const TARGET_LANGUAGES: Record<string, string> = {
   af: 'Afrikaans',
   ko: 'Korean',
   tr: 'Turkish',
+  nl: 'Dutch',
+  pl: 'Polish',
+  vi: 'Vietnamese',
 };
 
 async function autoTranslateStrings(supabase: any, keys: Array<{ key: string; value: string }>) {
