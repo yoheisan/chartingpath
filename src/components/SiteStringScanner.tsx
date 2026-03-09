@@ -453,6 +453,84 @@ export const SiteStringScanner = () => {
             </CardContent>
           </Card>
 
+          {/* Automation Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                Automation Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Diff Missing Translations</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Compare latest scan against existing translation_keys to find gaps.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('site-string-extractor', {
+                          body: { action: 'diff_missing_translations' },
+                        });
+                        if (error) throw error;
+                        toast({
+                          title: 'Diff Complete',
+                          description: `Found ${data.missing_count} extracted strings not yet in translation_keys (out of ${data.total_extracted} total).`,
+                        });
+                      } catch (err: any) {
+                        toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <Search className="h-4 w-4" />
+                    Find Missing Keys
+                  </Button>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Auto-Approve &amp; Translate</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Approve all pending strings from the latest scan and trigger Gemini translation into 14 languages.
+                  </p>
+                  <Button
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('site-string-extractor', {
+                          body: { action: 'auto_approve_and_translate' },
+                        });
+                        if (error) throw error;
+                        toast({
+                          title: 'Auto-Approve Complete',
+                          description: `Approved and translated ${data.approved} strings.`,
+                        });
+                      } catch (err: any) {
+                        toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    Auto-Approve All
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground border-t border-border pt-3">
+                Routes scanned: {APP_SCAN_ROUTES.length} (from centralised route registry). Add new pages to <code>src/utils/appRoutes.ts</code>.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Scan History */}
           <Card>
             <CardHeader>
