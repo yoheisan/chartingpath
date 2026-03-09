@@ -665,13 +665,13 @@ export const SiteStringScanner = () => {
                         {change.old_text && (
                           <div>
                             <div className="font-medium text-muted-foreground mb-1">Old Text:</div>
-                            <div className="bg-red-50 border border-red-200 p-2 rounded">{change.old_text}</div>
+                            <div className="bg-muted/40 border border-border p-2 rounded">{change.old_text}</div>
                           </div>
                         )}
                         {change.new_text && (
                           <div>
                             <div className="font-medium text-muted-foreground mb-1">New Text:</div>
-                            <div className="bg-green-50 border border-green-200 p-2 rounded">{change.new_text}</div>
+                            <div className="bg-muted/20 border border-border p-2 rounded">{change.new_text}</div>
                           </div>
                         )}
                       </div>
