@@ -386,26 +386,26 @@ export const SiteStringScanner = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-primary" />;
       case 'in_progress':
-        return <Clock className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Clock className="h-4 w-4 text-muted-foreground animate-spin" />;
       case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getChangeTypeColor = (changeType: string) => {
     switch (changeType) {
       case 'added':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-primary/10 text-foreground border border-primary/20';
       case 'modified':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-accent/20 text-foreground border border-accent/30';
       case 'removed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/10 text-foreground border border-destructive/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-foreground border border-border';
     }
   };
 
