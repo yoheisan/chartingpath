@@ -96,7 +96,7 @@ Return ONLY the JSON object, no markdown, no explanation.`
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+        generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
       })
     }
   )
@@ -124,7 +124,19 @@ Deno.serve(async (req) => {
   }
 
   const startTime = Date.now()
-  console.log('[auto-sync] ▶ Starting one-shot translation pipeline')
+
+  // Support resumable runs: caller can specify which languages to process
+  let requestedLanguages: string[] | null = null
+  try {
+    const body = await req.json()
+    if (body?.languages && Array.isArray(body.languages)) {
+      requestedLanguages = body.languages
+    }
+  } catch {
+    // No body or invalid JSON — process all languages
+  }
+
+  console.log('[auto-sync] ▶ Starting translation pipeline', requestedLanguages ? `for languages: ${requestedLanguages.join(',')}` : '(all languages)')
 
   try {
     const supabase = createClient(
@@ -208,39 +220,63 @@ Deno.serve(async (req) => {
     }
 
     // ─── STEP 2: Translate each language ─────────────────────────────
-    const languages = Object.keys(LANGUAGE_NAMES)
+    const allLanguages = Object.keys(LANGUAGE_NAMES)
+    // If specific languages requested, use those; otherwise process all
+    const languagesToProcess = requestedLanguages
+      ? allLanguages.filter(l => requestedLanguages!.includes(l))
+      : allLanguages
+
+    // Process ONE language at a time, limited keys per run
+    const MAX_KEYS_PER_RUN = 200
+    const currentLang = languagesToProcess[0]
+    const remainingLanguages = languagesToProcess.slice(1)
+
     const summary: Record<string, { translated: number; skipped: number; errors: number }> = {}
     let totalNewTranslations = 0
 
-    for (const langCode of languages) {
-      const langName = LANGUAGE_NAMES[langCode]
-      summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
+    if (!currentLang) {
+      return new Response(JSON.stringify({
+        success: true, has_more: false, remaining_languages: [],
+        message: 'No languages to process'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
-      try {
-        const existing = await paginatedSelect(supabase, 'translations', 'key, value, source_hash, is_manual_override', { language_code: langCode })
-        const existingMap = new Map<string, any>()
-        existing.forEach(t => existingMap.set(t.key, t))
+    const langCode = currentLang
+    const langName = LANGUAGE_NAMES[langCode]
+    summary[langCode] = { translated: 0, skipped: 0, errors: 0 }
 
-        const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
+    try {
+      const existing = await paginatedSelect(supabase, 'translations', 'key, value, source_hash, is_manual_override', { language_code: langCode })
+      const existingMap = new Map<string, any>()
+      existing.forEach(t => existingMap.set(t.key, t))
 
-        for (const [key, value] of enMap) {
-          const ex = existingMap.get(key)
-          const currentHash = md5Hash(value)
+      const keysToTranslate: Array<{ key: string; value: string; isStale: boolean }> = []
 
-          if (!ex) {
-            keysToTranslate.push({ key, value, isStale: false })
-          } else if (ex.is_manual_override) {
-            summary[langCode].skipped++
-          } else if (ex.source_hash && ex.source_hash !== currentHash) {
-            keysToTranslate.push({ key, value, isStale: true })
-          } else {
-            summary[langCode].skipped++
-          }
+      for (const [key, value] of enMap) {
+        const ex = existingMap.get(key)
+        const currentHash = md5Hash(value)
+
+        if (!ex) {
+          keysToTranslate.push({ key, value, isStale: false })
+        } else if (ex.is_manual_override) {
+          summary[langCode].skipped++
+        } else if (ex.source_hash && ex.source_hash !== currentHash) {
+          keysToTranslate.push({ key, value, isStale: true })
+        } else {
+          summary[langCode].skipped++
         }
+      }
 
-        if (keysToTranslate.length === 0) continue
+      const totalForLang = keysToTranslate.length
+      const thisRunKeys = keysToTranslate.slice(0, MAX_KEYS_PER_RUN)
+      const keysRemaining = totalForLang - thisRunKeys.length
+      // If there are still keys left for this language, re-include it
+      const langsDone = keysRemaining === 0
+      const effectiveRemaining = langsDone ? remainingLanguages : [currentLang, ...remainingLanguages]
 
-        console.log(`[auto-sync] ${langCode}: ${keysToTranslate.length} keys to translate`)
+      console.log(`[auto-sync] ${langCode}: ${totalForLang} total keys to translate, processing ${thisRunKeys.length} this run, ${keysRemaining} remaining for this lang`)
+
+      if (thisRunKeys.length > 0) {
 
         // Get tone context
         const { data: toneContext } = await supabase
@@ -252,10 +288,10 @@ Deno.serve(async (req) => {
 
         const toneExamples = toneContext?.map((t: any) => `"${t.key}": "${t.value}"`).join('\n') || 'None available'
 
-        // Batch translate (20 keys per batch)
-        const BATCH_SIZE = 20
-        for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
-          const batch = keysToTranslate.slice(i, i + BATCH_SIZE)
+        // Batch translate (40 keys per batch for speed)
+        const BATCH_SIZE = 40
+        for (let i = 0; i < thisRunKeys.length; i += BATCH_SIZE) {
+          const batch = thisRunKeys.slice(i, i + BATCH_SIZE)
 
           try {
             const translations = await translateBatch(
@@ -264,61 +300,52 @@ Deno.serve(async (req) => {
               toneExamples
             )
 
+            // Batch upsert instead of individual inserts
+            const upsertRows: any[] = []
             for (const item of batch) {
               const translatedValue = translations[item.key]
               if (!translatedValue) { summary[langCode].errors++; continue }
 
               const sourceHash = md5Hash(item.value)
+              upsertRows.push({
+                key: item.key,
+                language_code: langCode,
+                value: translatedValue,
+                source_hash: sourceHash,
+                status: 'auto_translated',
+                automation_source: 'auto-sync-cron',
+                original_automated_value: translatedValue,
+                is_manual_override: false
+              })
+            }
 
-              if (item.isStale) {
-                const { error } = await supabase
-                  .from('translations')
-                  .update({
-                    value: translatedValue,
-                    source_hash: sourceHash,
-                    status: 'auto_translated',
-                    automation_source: 'auto-sync-cron',
-                    original_automated_value: translatedValue,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('key', item.key)
-                  .eq('language_code', langCode)
-                if (error) { summary[langCode].errors++ } else { summary[langCode].translated++ }
+            if (upsertRows.length > 0) {
+              const { error } = await supabase
+                .from('translations')
+                .upsert(upsertRows, { onConflict: 'key,language_code' })
+              if (error) {
+                console.error(`Upsert error for ${langCode}:`, error)
+                summary[langCode].errors += upsertRows.length
               } else {
-                await supabase
-                  .from('translation_keys')
-                  .upsert({ key: item.key, description: item.value, category: item.key.split('.')[0] || 'general' }, { onConflict: 'key', ignoreDuplicates: true })
-
-                const { error } = await supabase
-                  .from('translations')
-                  .insert({
-                    key: item.key,
-                    language_code: langCode,
-                    value: translatedValue,
-                    source_hash: sourceHash,
-                    status: 'auto_translated',
-                    automation_source: 'auto-sync-cron',
-                    original_automated_value: translatedValue,
-                    is_manual_override: false
-                  })
-                if (error) { summary[langCode].errors++ } else { summary[langCode].translated++ }
+                summary[langCode].translated += upsertRows.length
               }
             }
 
-            if (i + BATCH_SIZE < keysToTranslate.length) {
-              await new Promise(r => setTimeout(r, 2000))
+            // Short delay between batches
+            if (i + BATCH_SIZE < thisRunKeys.length) {
+              await new Promise(r => setTimeout(r, 500))
             }
           } catch (batchError) {
             console.error(`Batch error for ${langCode}:`, batchError)
             summary[langCode].errors += batch.length
           }
         }
-
-        totalNewTranslations += summary[langCode].translated
-      } catch (langError) {
-        console.error(`Language ${langCode} error:`, langError)
-        summary[langCode].errors++
       }
+
+      totalNewTranslations += summary[langCode].translated
+    } catch (langError) {
+      console.error(`Language ${langCode} error:`, langError)
+      summary[langCode].errors++
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
@@ -333,6 +360,9 @@ Deno.serve(async (req) => {
       total_english_keys: enMap.size,
       total_new_translations: totalNewTranslations,
       duration_seconds: parseFloat(duration),
+      language_processed: currentLang,
+      remaining_languages: effectiveRemaining,
+      has_more: effectiveRemaining.length > 0,
       summary
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
