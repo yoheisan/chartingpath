@@ -355,62 +355,84 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ success: false, message: 'No completed scans found' });
         }
 
-        // Find all pending strings from this scan
-        const pendingIds: string[] = [];
+        // Find all pending OR approved strings that haven't been fully translated yet
+        // We mark strings as 'translated' once all languages are done
+        const targetIds: string[] = [];
+        const newlyApprovedIds: string[] = [];
         let from = 0;
         const PAGE = 1000;
         while (true) {
           const { data } = await supabase
             .from('extracted_strings')
-            .select('id, original_text')
+            .select('id, original_text, review_status')
             .eq('scan_session_id', latestScan.id)
-            .eq('review_status', 'pending')
+            .in('review_status', ['pending', 'approved'])
             .eq('is_translatable', true)
             .range(from, from + PAGE - 1);
           if (!data || data.length === 0) break;
-          // Additional quality filter: at least 3 chars and contains a word
           for (const row of data) {
             if (row.original_text?.trim().length >= 3 && /[a-zA-Z]{2,}/.test(row.original_text)) {
-              pendingIds.push(row.id);
+              targetIds.push(row.id);
+              if (row.review_status === 'pending') {
+                newlyApprovedIds.push(row.id);
+              }
             }
           }
           if (data.length < PAGE) break;
           from += PAGE;
         }
 
-        if (pendingIds.length === 0) {
-          return jsonResponse({ success: true, approved: 0, message: 'No pending strings to approve' });
+        if (targetIds.length === 0) {
+          return jsonResponse({ success: true, approved: 0, translated: 0, remaining: 0, message: 'All strings have been processed' });
         }
 
-        console.log(`[auto_approve] Approving ${pendingIds.length} strings from scan ${latestScan.id}`);
+        // Approve pending ones in batches
+        if (newlyApprovedIds.length > 0) {
+          const APPROVE_BATCH = 200;
+          for (let i = 0; i < newlyApprovedIds.length; i += APPROVE_BATCH) {
+            const batch = newlyApprovedIds.slice(i, i + APPROVE_BATCH);
+            await supabase
+              .from('extracted_strings')
+              .update({
+                review_status: 'approved',
+                reviewed_at: new Date().toISOString(),
+              })
+              .in('id', batch);
+          }
+        }
 
-        // Approve in batches
-        const APPROVE_BATCH = 200;
-        for (let i = 0; i < pendingIds.length; i += APPROVE_BATCH) {
-          const batch = pendingIds.slice(i, i + APPROVE_BATCH);
+        // Process only a limited number per invocation to avoid timeout
+        // With 17 languages and parallel batches of 5, ~50 strings takes ~30s
+        const MAX_PER_RUN = 50;
+        const thisRunIds = targetIds.slice(0, MAX_PER_RUN);
+        const remaining = targetIds.length - thisRunIds.length;
+
+        console.log(`[auto_approve] Processing ${thisRunIds.length}/${targetIds.length} strings (${newlyApprovedIds.length} newly approved), ${remaining} remaining`);
+
+        // Create translation keys + auto-translate
+        await createTranslationKeysFromStrings(supabase, thisRunIds);
+
+        // Mark processed strings as 'translated' so next run skips them
+        const MARK_BATCH = 200;
+        for (let i = 0; i < thisRunIds.length; i += MARK_BATCH) {
+          const batch = thisRunIds.slice(i, i + MARK_BATCH);
           await supabase
             .from('extracted_strings')
-            .update({
-              review_status: 'approved',
-              reviewed_at: new Date().toISOString(),
-            })
+            .update({ review_status: 'translated' })
             .in('id', batch);
         }
 
-        // Create translation keys + auto-translate
-        // Process in chunks to avoid timeouts
-        const TRANSLATE_BATCH = 50;
-        for (let i = 0; i < pendingIds.length; i += TRANSLATE_BATCH) {
-          const batch = pendingIds.slice(i, i + TRANSLATE_BATCH);
-          await createTranslationKeysFromStrings(supabase, batch);
-        }
-
-        console.log(`[auto_approve] Done. Approved and translated ${pendingIds.length} strings.`);
+        console.log(`[auto_approve] Done batch. Translated ${thisRunIds.length}, ${remaining} remaining.`);
 
         return jsonResponse({
           success: true,
-          approved: pendingIds.length,
+          approved: newlyApprovedIds.length,
+          translated: thisRunIds.length,
+          remaining,
           scan_session_id: latestScan.id,
+          message: remaining > 0
+            ? `Translated ${thisRunIds.length} strings. ${remaining} remaining — click again to continue.`
+            : `All ${thisRunIds.length} strings translated successfully.`,
         });
       }
 

@@ -503,13 +503,25 @@ export const SiteStringScanner = () => {
                     onClick={async () => {
                       setLoading(true);
                       try {
-                        const { data, error } = await supabase.functions.invoke('site-string-extractor', {
-                          body: { action: 'auto_approve_and_translate' },
-                        });
-                        if (error) throw error;
+                        let totalTranslated = 0;
+                        let remaining = 1; // start loop
+                        while (remaining > 0) {
+                          const { data, error } = await supabase.functions.invoke('site-string-extractor', {
+                            body: { action: 'auto_approve_and_translate' },
+                          });
+                          if (error) throw error;
+                          totalTranslated += data.translated || 0;
+                          remaining = data.remaining || 0;
+                          if (remaining > 0) {
+                            toast({
+                              title: 'Translating...',
+                              description: `Translated ${totalTranslated} strings so far. ${remaining} remaining...`,
+                            });
+                          }
+                        }
                         toast({
                           title: 'Auto-Approve Complete',
-                          description: `Approved and translated ${data.approved} strings.`,
+                          description: `Approved and translated ${totalTranslated} strings.`,
                         });
                       } catch (err: any) {
                         toast({ title: 'Error', description: err.message, variant: 'destructive' });
