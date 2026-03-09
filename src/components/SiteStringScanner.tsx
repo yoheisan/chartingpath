@@ -657,12 +657,14 @@ export const SiteStringScanner = () => {
     const iframe = iframeRef.current;
     if (!iframe) throw new Error('Scanner iframe not initialized');
 
+    // Use the centralised route registry (admin gets all pages)
+    const routes = getRoutesForRole(true);
     const globalSeen = new Set<string>();
     let pagesScanned = 0;
 
-    for (let i = 0; i < DEFAULT_SCAN_PATHS.length; i++) {
-      const path = DEFAULT_SCAN_PATHS[i];
-      const url = `${origin}${path}`;
+    for (let i = 0; i < routes.length; i++) {
+      const route = routes[i];
+      const url = `${origin}${route.path}`;
 
       await loadUrlInIframe(iframe, url);
 
@@ -672,7 +674,7 @@ export const SiteStringScanner = () => {
       const doc = iframe.contentDocument;
       if (!doc?.body) continue;
 
-      const extracted = extractStringsFromDocument(doc, path);
+      const extracted = extractStringsFromDocument(doc, route.path);
 
       // Deduplicate across the whole scan run
       const uniqueForPage: DomStringPayload[] = [];
@@ -694,7 +696,7 @@ export const SiteStringScanner = () => {
       }
 
       pagesScanned++;
-      setScanProgress(Math.round((pagesScanned / DEFAULT_SCAN_PATHS.length) * 100));
+      setScanProgress(Math.round((pagesScanned / routes.length) * 100));
     }
   }
 };
