@@ -795,6 +795,14 @@ export const TranslationManagement = () => {
             Coverage & Sync
           </Button>
           <Button
+            variant={activeTab === 'override' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('override')}
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Override
+          </Button>
+          <Button
             variant={activeTab === 'search' ? 'default' : 'outline'}
             onClick={() => setActiveTab('search')}
             className="flex items-center gap-2"
