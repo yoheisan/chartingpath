@@ -497,9 +497,8 @@ Deno.serve(async (req) => {
         // Full pipeline heal: find all gaps across all languages
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
 
-        // Accept optional fallback English content from client (static en.json)
-        const bodyData = await req.clone().json().catch(() => ({}))
-        const clientEnContent: Record<string, any> | undefined = bodyData.en_fallback_content
+        // Use en_fallback_content from client (static en.json) for keys missing from DB
+        const clientEnContent = en_fallback_content
 
         // Helper: flatten nested object to dot-separated keys
         const flattenObj = (obj: Record<string, any>, prefix = ''): Record<string, string> => {
