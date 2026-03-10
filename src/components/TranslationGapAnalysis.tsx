@@ -134,6 +134,20 @@ export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, hea
                 </div>
               </div>
 
+              {/* Live progress indicator */}
+              {healingSyncing && healProgress && (
+                <div className="mt-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span>
+                      Translating <strong>{healProgress.lang.toUpperCase()}</strong> — {healProgress.translated} keys done
+                      {healProgress.remaining > 0 && `, ~${healProgress.remaining} remaining`}
+                      {healProgress.errors > 0 && <span className="text-destructive ml-1">({healProgress.errors} errors)</span>}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground mt-3">
                 Coverage is computed from the <code>translations</code> table in Supabase — the canonical source of truth.
                 Static JSON files are derived fallback artifacts. Use "Sync Gaps" to translate missing keys via Gemini.
