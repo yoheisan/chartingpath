@@ -2628,6 +2628,10 @@
     "estAnnual": "est. annual",
     "liveSetups": "Live Setups",
     "validate": "Validate",
+    "rot": "ROT",
+    "returnOnTime": "Return on Time",
+    "rotTooltip": "R earned per bar of capital exposure. Higher = more capital-efficient edge. Measures how quickly the pattern converts risk into return.",
+    "rPerBar": "R/bar",
     "footerNote": "Use <strong>Live Setups</strong> to see current formations of this pattern · Use <strong>Validate</strong> to backtest on a specific instrument",
     "backToEdgeAtlas": "Back to Edge Atlas",
     "provenTickers": "Edge Atlas · Proven Tickers",
@@ -2764,7 +2768,15 @@
     "winRate": "Win Rate",
     "age": "Age",
     "long": "Long",
-    "short": "Short"
+    "short": "Short",
+    "actions": "Actions",
+    "screen": "Screen",
+    "validate": "Validate",
+    "agentScore": "Score",
+    "rot": "ROT",
+    "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
+    "openInTradingView": "Open in TradingView",
+    "signUpForAlerts": "Sign up to create alerts"
   },
   "alertsLibrary": {
     "totalAlerts": "Total Alerts",

@@ -431,10 +431,10 @@ export function EdgeAtlasSection() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="cursor-help">ROT <span className={`font-mono ${(r.avg_bars > 0 ? r.expectancy_r / r.avg_bars : 0) >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>{r.avg_bars > 0 ? (r.expectancy_r / r.avg_bars).toFixed(4) : '—'}R/bar</span></span>
+                               <span className="cursor-help">{t('edgeAtlas.rot', 'ROT')} <span className={`font-mono ${(r.avg_bars > 0 ? r.expectancy_r / r.avg_bars : 0) >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>{r.avg_bars > 0 ? (r.expectancy_r / r.avg_bars).toFixed(4) : '—'}{t('edgeAtlas.rPerBar', 'R/bar')}</span></span>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-sm whitespace-normal">
-                              <p className="text-xs"><strong>Return on Time</strong> — R earned per bar of capital exposure. Higher = more capital-efficient edge. Measures how quickly the pattern converts risk into return.</p>
+                               <p className="text-xs"><strong>{t('edgeAtlas.returnOnTime', 'Return on Time')}</strong> — {t('edgeAtlas.rotTooltip', 'R earned per bar of capital exposure. Higher = more capital-efficient edge. Measures how quickly the pattern converts risk into return.')}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
