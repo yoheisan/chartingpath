@@ -454,7 +454,7 @@ Deno.serve(async (req: Request) => {
         const thisRunIds = targetIds.slice(0, MAX_PER_RUN);
         const remaining = targetIds.length - thisRunIds.length;
 
-        console.log(`[auto_approve] Processing ${thisRunIds.length}/${targetIds.length} strings (${newlyApprovedIds.length} newly approved), ${remaining} remaining`);
+        console.log(`[auto_approve] Processing ${thisRunIds.length}/${targetIds.length} strings (${newlyApprovedIds.length} newly approved, ${retryIds.length} retried for incomplete coverage), ${remaining} remaining`);
 
         // Create translation keys + auto-translate
         await createTranslationKeysFromStrings(supabase, thisRunIds);
