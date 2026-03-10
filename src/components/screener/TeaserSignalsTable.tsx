@@ -201,7 +201,7 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  title="Open in TradingView"
+                  title={t('teaserSignals.openInTradingView', 'Open in TradingView')}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
