@@ -428,20 +428,20 @@ const Blog = () => {
         <div className="mt-16 text-center">
           <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
             <CardHeader>
-              <CardTitle className="text-2xl">Ready to Apply Your Knowledge?</CardTitle>
+              <CardTitle className="text-2xl">{t('blog.ctaTitle', 'Ready to Apply Your Knowledge?')}</CardTitle>
               <CardDescription className="text-base">
-                Test your skills with our interactive quizzes and pattern recognition tools
+                {t('blog.ctaDesc', 'Test your skills with our interactive quizzes and pattern recognition tools')}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex gap-4 justify-center flex-wrap">
               <Link to="/quiz/trading-knowledge">
                 <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                  Take Trading Quiz
+                  {t('blog.ctaTakeQuiz', 'Take Trading Quiz')}
                 </button>
               </Link>
               <Link to="/chart-patterns/generator">
                 <button className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                  Practice Pattern Recognition
+                  {t('blog.ctaPractice', 'Practice Pattern Recognition')}
                 </button>
               </Link>
             </CardContent>
