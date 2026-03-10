@@ -332,7 +332,7 @@ const Index = () => {
       <section ref={actionsRef} className="py-20 px-6 border-t border-border/20">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Tools</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('landing.tools', 'Tools')}</p>
             <h2 className="text-3xl font-bold">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
           </div>
           
