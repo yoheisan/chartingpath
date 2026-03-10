@@ -2743,9 +2743,16 @@
   },
   "patternStats": {
     "avgBars": "Avg Bars",
+    "avgDuration": "Avg Duration",
     "avgRR": "Avg R:R",
+    "bars": "bars",
+    "expectancyR": "Expectancy (R)",
     "expR": "Exp (R)",
+    "fromBreakout": "From breakout",
+    "notEnoughData": "Not enough data for {{pattern}} on {{instrument}} yet.",
     "performanceByTimeframe": "Performance by Timeframe",
+    "resolvedTrades": "Resolved trades",
+    "sampleSize": "Sample Size",
     "timeframe": "Timeframe",
     "trades": "Trades",
     "winRate": "Win Rate"
