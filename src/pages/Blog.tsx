@@ -335,6 +335,7 @@ const blogPosts = [
 const categories = ["All", "Chart Patterns", "Technical Analysis", "Price Action", "Risk Management", "Psychology", "Indicator Guides"];
 
 const Blog = () => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   // Filter posts based on selected category

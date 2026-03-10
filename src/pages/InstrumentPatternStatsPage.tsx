@@ -78,6 +78,7 @@ const TF_LABEL: Record<string, string> = { '1wk': '1W', '1d': '1D', '8h': '8H', 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function InstrumentPatternStatsPage() {
+  const { t } = useTranslation();
   const { patternId, instrument } = useParams<{ patternId: string; instrument: string }>();
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
