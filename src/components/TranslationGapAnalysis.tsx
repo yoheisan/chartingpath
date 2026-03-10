@@ -8,14 +8,22 @@ import { fetchDBCoverageStats, fetchMissingKeysForLanguage, type DBLanguageCover
 import { buildPartialEnglish } from '@/utils/translationGapAnalysis';
 import { languages } from '@/i18n/config';
 
+interface HealProgress {
+  lang: string;
+  translated: number;
+  remaining: number;
+  errors: number;
+}
+
 interface TranslationGapAnalysisProps {
   onSyncGaps: (langCode: string, partialEnContent: Record<string, any>, missingKeys: string[]) => void;
   onHealAllGaps?: () => void;
   syncing: boolean;
   healingSyncing?: boolean;
+  healProgress?: HealProgress | null;
 }
 
-export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, healingSyncing }: TranslationGapAnalysisProps) {
+export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, healingSyncing, healProgress }: TranslationGapAnalysisProps) {
   const [coverage, setCoverage] = useState<DBLanguageCoverage[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLang, setExpandedLang] = useState<string | null>(null);
@@ -125,6 +133,20 @@ export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, hea
                   </div>
                 </div>
               </div>
+
+              {/* Live progress indicator */}
+              {healingSyncing && healProgress && (
+                <div className="mt-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span>
+                      Translating <strong>{healProgress.lang.toUpperCase()}</strong> — {healProgress.translated} keys done
+                      {healProgress.remaining > 0 && `, ~${healProgress.remaining} remaining`}
+                      {healProgress.errors > 0 && <span className="text-destructive ml-1">({healProgress.errors} errors)</span>}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <p className="text-xs text-muted-foreground mt-3">
                 Coverage is computed from the <code>translations</code> table in Supabase — the canonical source of truth.
