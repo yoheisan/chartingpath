@@ -10,7 +10,9 @@ import { languages } from '@/i18n/config';
 
 interface TranslationGapAnalysisProps {
   onSyncGaps: (langCode: string, partialEnContent: Record<string, any>, missingKeys: string[]) => void;
+  onHealAllGaps?: () => void;
   syncing: boolean;
+  healingSyncing?: boolean;
 }
 
 export function TranslationGapAnalysis({ onSyncGaps, syncing }: TranslationGapAnalysisProps) {
