@@ -77,6 +77,7 @@ export const TranslationManagement = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps' | 'debug' | 'override'>('coverage');
   const [gapSyncing, setGapSyncing] = useState(false);
+  const [healAllSyncing, setHealAllSyncing] = useState(false);
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [coverageLoading, setCoverageLoading] = useState(false);
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
