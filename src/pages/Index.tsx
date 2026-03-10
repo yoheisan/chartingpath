@@ -171,20 +171,20 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
-              Find high-probability chart patterns
+              {t('hero.headlinePrimary', 'Find high-probability chart patterns')}
             </span>
             <br />
             <span className="text-primary">
-              before they break
+              {t('hero.headlineAccent', 'before they break')}
             </span>
           </h1>
           
           <p className="text-lg text-muted-foreground mb-3 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            Backtested across years of real market data. Entry, stop-loss, and target — in seconds.
+            {t('hero.subtitleMain', 'Backtested across years of real market data. Entry, stop-loss, and target — in seconds.')}
           </p>
           
           <p className="text-sm text-muted-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            Used by traders in Singapore, UK, US and 20+ countries. Free to start.
+            {t('hero.socialProof', 'Used by traders in Singapore, UK, US and 20+ countries. Free to start.')}
           </p>
 
           {/* Single prominent CTA */}
@@ -198,7 +198,7 @@ const Index = () => {
               className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
             >
               <TrendingUp className="h-6 w-6 mr-3" />
-              See Live Patterns Free
+              {t('hero.ctaPrimary', 'See Live Patterns Free')}
               <ArrowRight className="h-6 w-6 ml-3" />
             </Button>
           </div>
@@ -214,7 +214,7 @@ const Index = () => {
                 }}
                 className="px-8 py-6 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                Create Free Account
+                {t('hero.createFreeAccount', 'Create Free Account')}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
@@ -231,10 +231,10 @@ const Index = () => {
                 <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/40 transition-all group cursor-pointer">
                   <Search className="h-5 w-5 text-muted-foreground" />
                   <span className="text-muted-foreground text-base group-hover:text-foreground transition-colors">
-                    Search any ticker — AAPL, BTC, EUR/USD…
+                    {t('hero.searchPlaceholder', 'Search any ticker — AAPL, BTC, EUR/USD…')}
                   </span>
                   <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
-                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ instruments` : '800+ instruments'}
+                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ ${t('hero.instruments', 'instruments')}` : t('hero.instrumentsFallback', '800+ instruments')}
                   </kbd>
                 </button>
               }
@@ -297,10 +297,10 @@ const Index = () => {
           <div className="container mx-auto max-w-3xl">
             <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                Ready to find your next setup?
+                {t('hero.midPageHeadline', 'Ready to find your next setup?')}
               </h2>
               <p className="text-muted-foreground mb-8">
-                Free account. No credit card required.
+                {t('hero.midPageSubtext', 'Free account. No credit card required.')}
               </p>
               <Button
                 size="lg"
@@ -310,7 +310,7 @@ const Index = () => {
                 }}
                 className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
               >
-                Create Free Account
+                {t('hero.createFreeAccount', 'Create Free Account')}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
@@ -332,7 +332,7 @@ const Index = () => {
       <section ref={actionsRef} className="py-20 px-6 border-t border-border/20">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Tools</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('landing.tools', 'Tools')}</p>
             <h2 className="text-3xl font-bold">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
           </div>
           

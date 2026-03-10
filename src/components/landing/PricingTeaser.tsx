@@ -51,7 +51,7 @@ export const PricingTeaser = () => {
     <section className="py-20 px-6">
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Pricing</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('pricingTeaser.sectionLabel', 'Pricing')}</p>
           <h2 className="text-3xl font-bold mb-2">{t('pricingTeaser.title')}</h2>
           <p className="text-sm text-muted-foreground">
             {t('pricingTeaser.subtitle')}
@@ -66,13 +66,13 @@ export const PricingTeaser = () => {
             >
               {plan.popular && (
                 <span className="absolute -top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
-                  Most Popular
+                  {t('pricingTeaser.mostPopular', 'Most Popular')}
                 </span>
               )}
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-lg font-bold">{plan.name}</span>
                 {plan.price && (
-                  <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/mo</span></span>
+                  <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/{t('pricingTeaser.perMonth', 'mo')}</span></span>
                 )}
               </div>
               <div className="text-xs text-primary font-medium mb-4">{plan.tagline}</div>
