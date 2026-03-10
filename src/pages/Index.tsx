@@ -198,7 +198,7 @@ const Index = () => {
               className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
             >
               <TrendingUp className="h-6 w-6 mr-3" />
-              See Live Patterns Free
+              {t('hero.ctaPrimary', 'See Live Patterns Free')}
               <ArrowRight className="h-6 w-6 ml-3" />
             </Button>
           </div>
