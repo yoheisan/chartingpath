@@ -77,6 +77,7 @@ export const TranslationManagement = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'coverage' | 'pending' | 'search' | 'submit' | 'scanner' | 'gaps' | 'debug' | 'override'>('coverage');
   const [gapSyncing, setGapSyncing] = useState(false);
+  const [healAllSyncing, setHealAllSyncing] = useState(false);
   const [coverageData, setCoverageData] = useState<Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }>>({});
   const [coverageLoading, setCoverageLoading] = useState(false);
   const [syncingLanguages, setSyncingLanguages] = useState<string | null>(null);
@@ -542,6 +543,98 @@ export const TranslationManagement = () => {
       });
     } finally {
       setGapSyncing(false);
+    }
+  };
+
+  const handleHealAllGaps = async () => {
+    setHealAllSyncing(true);
+    try {
+      // 1. Get gap analysis from DB (English source + target languages)
+      const { data: healData, error: healError } = await supabase.functions.invoke('manage-translations', {
+        body: { action: 'heal_all_gaps' }
+      });
+      if (healError) throw healError;
+
+      if (!healData?.target_languages?.length) {
+        toast({ title: 'No Gaps Found', description: 'All languages are fully translated.' });
+        return;
+      }
+
+      toast({
+        title: 'Healing All Gaps',
+        description: `Found ${healData.total_gaps} gaps across ${healData.languages_with_gaps} languages. Translating...`
+      });
+
+      // 2. Ensure keys are registered
+      const { error: prepError } = await supabase.functions.invoke('sync-translations', {
+        body: {
+          en_content: healData.en_content,
+          target_languages: [],
+          prepare_keys_only: true
+        }
+      });
+      if (prepError) console.error('Key prep error:', prepError);
+
+      // 3. Translate in language batches (5 at a time to stay within timeout)
+      const allLangs: string[] = healData.target_languages;
+      const LANG_BATCH = 5;
+      let totalTranslated = 0;
+      let totalErrors = 0;
+
+      for (let i = 0; i < allLangs.length; i += LANG_BATCH) {
+        const langBatch = allLangs.slice(i, i + LANG_BATCH);
+        
+        // For each language batch, run chunks until remaining = 0
+        let remaining = Infinity;
+        let chunkNum = 0;
+        while (remaining > 0 && chunkNum < 50) {
+          chunkNum++;
+          const { data, error } = await supabase.functions.invoke('sync-translations', {
+            body: {
+              en_content: healData.en_content,
+              target_languages: langBatch,
+              skip_key_creation: true,
+              max_keys: 60
+            }
+          });
+          if (error) throw error;
+
+          // Sum up stats across languages in this batch
+          remaining = 0;
+          for (const lang of langBatch) {
+            const langStats = data?.summary?.[lang];
+            totalTranslated += langStats?.translated || 0;
+            totalErrors += langStats?.errors || 0;
+            remaining += langStats?.remaining ?? 0;
+          }
+        }
+      }
+
+      // 4. Refresh runtime bundles for all affected languages
+      for (const lang of allLangs) {
+        const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
+          body: { action: 'export_locale_json', language: lang }
+        });
+        if (!exportError && localeData) {
+          i18n.addResourceBundle(lang, 'translation', localeData, true, true);
+        }
+      }
+
+      toast({
+        title: 'All Gaps Healed',
+        description: `Translated ${totalTranslated} keys across ${allLangs.length} languages${totalErrors ? ` (${totalErrors} errors)` : ''}`
+      });
+
+      await loadCoverageStats();
+    } catch (error) {
+      console.error('Heal all gaps error:', error);
+      toast({
+        title: 'Heal All Gaps Failed',
+        description: 'Failed to translate all gaps. Check console for details.',
+        variant: 'destructive'
+      });
+    } finally {
+      setHealAllSyncing(false);
     }
   };
 
@@ -1254,7 +1347,7 @@ export const TranslationManagement = () => {
 
         {/* Gap Analysis Tab */}
         {activeTab === 'gaps' && (
-          <TranslationGapAnalysis onSyncGaps={handleSyncGaps} syncing={gapSyncing} />
+          <TranslationGapAnalysis onSyncGaps={handleSyncGaps} onHealAllGaps={handleHealAllGaps} syncing={gapSyncing} healingSyncing={healAllSyncing} />
         )}
 
         {/* Override Tab */}

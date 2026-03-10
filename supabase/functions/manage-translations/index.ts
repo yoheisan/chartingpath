@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 interface TranslationRequest {
-  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details' | 'export_locale_json' | 'get_coverage_stats'
+  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details' | 'export_locale_json' | 'get_coverage_stats' | 'heal_all_gaps'
   language?: string
   namespace?: string
   keys?: Array<{ key: string; description?: string; category?: string; page_context?: string; element_context?: string }>
@@ -487,6 +487,108 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ 
           total_keys: totalKeys,
           coverage 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'heal_all_gaps': {
+        // Full pipeline heal: find all gaps across all languages, build English source from DB, return payload for sync
+        const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
+
+        // 1. Get all canonical keys
+        const allKeys: Array<{ key: string; category: string }> = []
+        let from = 0
+        const PAGE = 1000
+        while (true) {
+          const { data, error } = await supabase
+            .from('translation_keys')
+            .select('key, category')
+            .range(from, from + PAGE - 1)
+          if (error) throw error
+          if (!data || data.length === 0) break
+          allKeys.push(...data)
+          if (data.length < PAGE) break
+          from += PAGE
+        }
+        const allKeySet = new Set(allKeys.map(k => k.key))
+
+        // 2. Get English source values from DB (the single source of truth)
+        const enValues: Record<string, string> = {}
+        from = 0
+        while (true) {
+          const { data, error } = await supabase
+            .from('translations')
+            .select('key, value')
+            .eq('language_code', 'en')
+            .in('status', ['approved', 'auto_translated'])
+            .range(from, from + PAGE - 1)
+          if (error) throw error
+          if (!data || data.length === 0) break
+          data.forEach((r: { key: string; value: string }) => { enValues[r.key] = r.value })
+          if (data.length < PAGE) break
+          from += PAGE
+        }
+
+        // 3. For each language, find which keys are missing translations
+        const gapsByLang: Record<string, string[]> = {}
+        let totalGaps = 0
+
+        for (const lang of targetLanguages) {
+          const translatedKeys = new Set<string>()
+          from = 0
+          while (true) {
+            const { data, error } = await supabase
+              .from('translations')
+              .select('key')
+              .eq('language_code', lang)
+              .in('status', ['approved', 'auto_translated'])
+              .range(from, from + PAGE - 1)
+            if (error) throw error
+            if (!data || data.length === 0) break
+            data.forEach((r: { key: string }) => translatedKeys.add(r.key))
+            if (data.length < PAGE) break
+            from += PAGE
+          }
+
+          const missing = allKeys
+            .filter(k => !translatedKeys.has(k.key) && enValues[k.key])
+            .map(k => k.key)
+
+          if (missing.length > 0) {
+            gapsByLang[lang] = missing
+            totalGaps += missing.length
+          }
+        }
+
+        // 4. Build nested English content from DB values (for sync-translations)
+        const enNested: Record<string, any> = {}
+        // Only include keys that have gaps somewhere
+        const gapKeySet = new Set<string>()
+        Object.values(gapsByLang).forEach(keys => keys.forEach(k => gapKeySet.add(k)))
+
+        gapKeySet.forEach(key => {
+          if (!enValues[key]) return
+          const parts = key.split('.')
+          let current = enNested
+          for (let i = 0; i < parts.length - 1; i++) {
+            if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+              current[parts[i]] = {}
+            }
+            current = current[parts[i]]
+          }
+          current[parts[parts.length - 1]] = enValues[key]
+        })
+
+        return new Response(JSON.stringify({
+          total_keys: allKeySet.size,
+          total_gaps: totalGaps,
+          languages_with_gaps: Object.keys(gapsByLang).length,
+          gaps_by_language: Object.fromEntries(
+            Object.entries(gapsByLang).map(([lang, keys]) => [lang, keys.length])
+          ),
+          en_content: enNested,
+          target_languages: Object.keys(gapsByLang)
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
