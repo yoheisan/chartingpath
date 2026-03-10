@@ -2741,6 +2741,15 @@
     "pressToTry": "Or press <kbd>⌘K</kbd> to try it now",
     "tryNow": "Try Copilot Now"
   },
+  "patternStats": {
+    "avgBars": "Avg Bars",
+    "avgRR": "Avg R:R",
+    "expR": "Exp (R)",
+    "performanceByTimeframe": "Performance by Timeframe",
+    "timeframe": "Timeframe",
+    "trades": "Trades",
+    "winRate": "Win Rate"
+  },
   "pricingTeaser": {
     "title": "Simple, Credit-Based Pricing",
     "subtitle": "Credits are used for scans and backtests. Start free, upgrade as you grow.",
