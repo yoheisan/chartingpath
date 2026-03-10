@@ -10,9 +10,9 @@ import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
 
 const demoResults = [
-  { symbol: "BTC/USD", quality: "A", directionKey: "copilotShowcase.bullish", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
-  { symbol: "ETH/USD", quality: "B+", directionKey: "copilotShowcase.bullish", entry: "3,580", sl: "3,440", tp: "3,860", rr: "2.0" },
-  { symbol: "SOL/USD", quality: "A-", directionKey: "copilotShowcase.bullish", entry: "148.50", sl: "142.00", tp: "162.00", rr: "2.1" },
+  { symbol: "BTC/USD", quality: "A", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
+  { symbol: "ETH/USD", quality: "B+", entry: "3,580", sl: "3,440", tp: "3,860", rr: "2.0" },
+  { symbol: "SOL/USD", quality: "A-", entry: "148.50", sl: "142.00", tp: "162.00", rr: "2.1" },
 ];
 
 export const CopilotShowcase = () => {
