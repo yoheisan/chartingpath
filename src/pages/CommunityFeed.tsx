@@ -8,6 +8,7 @@ import { LeaderboardSidebar } from '@/components/community/LeaderboardSidebar';
 import { ShieldCheck, Users } from 'lucide-react';
 
 const CommunityFeed = () => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<CommunityFilters>({});
 
   const { cards, loading, error, refetch } = useCommunityFeed(filters);
