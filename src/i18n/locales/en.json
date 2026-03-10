@@ -258,12 +258,22 @@
   },
   "blog": {
     "allLevels": "All Levels",
+    "ctaDesc": "Test your skills with our interactive quizzes and pattern recognition tools",
+    "ctaPractice": "Practice Pattern Recognition",
+    "ctaTakeQuiz": "Take Trading Quiz",
+    "ctaTitle": "Ready to Apply Your Knowledge?",
     "practicePatterns": "Practice Pattern Recognition",
     "readyToApply": "Ready to Apply Your Knowledge?",
     "readyToApplyDesc": "Test your skills with our interactive quizzes and pattern recognition tools",
     "subtitle": "Comprehensive guides and tutorials for mastering chart patterns, technical analysis, and trading strategies",
     "takeTradingQuiz": "Take Trading Quiz",
     "title": "ChartingPath Learning Center"
+  },
+  "community": {
+    "noEdges": "No edges shared yet",
+    "noEdgesDesc": "Be the first! Run a backtest in the Strategy Workspace and toggle \"Share to Community\" to post your verified edge here.",
+    "subtitle": "Every stat is verified by ChartingPath — no fake claims",
+    "title": "Community Edge Feed"
   },
   "common": {
     "add": "Add",
