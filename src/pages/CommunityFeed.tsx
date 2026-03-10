@@ -61,9 +61,9 @@ const CommunityFeed = () => {
                 <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
                   <ShieldCheck className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold">No edges shared yet</h2>
+                <h2 className="text-lg font-semibold">{t('community.noEdges', 'No edges shared yet')}</h2>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Be the first! Run a backtest in the Strategy Workspace and toggle "Share to Community" to post your verified edge here.
+                  {t('community.noEdgesDesc', 'Be the first! Run a backtest in the Strategy Workspace and toggle "Share to Community" to post your verified edge here.')}
                 </p>
               </div>
             ) : (
