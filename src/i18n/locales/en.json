@@ -2764,7 +2764,15 @@
     "winRate": "Win Rate",
     "age": "Age",
     "long": "Long",
-    "short": "Short"
+    "short": "Short",
+    "actions": "Actions",
+    "screen": "Screen",
+    "validate": "Validate",
+    "agentScore": "Score",
+    "rot": "ROT",
+    "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
+    "openInTradingView": "Open in TradingView",
+    "signUpForAlerts": "Sign up to create alerts"
   },
   "alertsLibrary": {
     "totalAlerts": "Total Alerts",
