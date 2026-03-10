@@ -1443,7 +1443,7 @@ export default function LivePatternsPage() {
                             <SortIcon columnKey="rot" />
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
+                        <TooltipContent side="top" className="max-w-sm whitespace-normal">
                           <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
                         </TooltipContent>
                       </Tooltip>
