@@ -95,12 +95,28 @@ export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, hea
                     <span className="font-bold text-lg text-destructive">{totalMissing}</span> total gaps across{' '}
                     <span className="font-bold">{langsWithGaps}</span> languages
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {totalMissing > 0 && (
-                      <Badge variant="secondary" className="bg-yellow-600 text-white">
-                        <AlertTriangle className="w-3 h-3 mr-1" />
-                        {totalMissing} missing
-                      </Badge>
+                      <>
+                        <Badge variant="secondary" className="bg-yellow-600 text-white">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          {totalMissing} missing
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={onHealAllGaps}
+                          disabled={healingSyncing || syncing || !onHealAllGaps}
+                          className="text-xs"
+                        >
+                          {healingSyncing ? (
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          ) : (
+                            <Zap className="w-3 h-3 mr-1" />
+                          )}
+                          Translate All Gaps
+                        </Button>
+                      </>
                     )}
                     <Button size="sm" variant="outline" onClick={loadCoverage} disabled={loading}>
                       <RefreshCw className="w-3 h-3 mr-1" />
