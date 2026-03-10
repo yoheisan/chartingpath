@@ -546,20 +546,21 @@ export const TranslationManagement = () => {
     }
   };
 
+  const [healProgress, setHealProgress] = useState<{ lang: string; translated: number; remaining: number; errors: number } | null>(null);
+
   const handleHealAllGaps = async () => {
     setHealAllSyncing(true);
+    setHealProgress(null);
     try {
-      // 1. Ensure all en.json keys exist in translation_keys + translations tables first
+      // 1. Seed en.json keys into translation_keys + translations tables
+      toast({ title: 'Step 1/3', description: 'Seeding English keys...' });
       const { error: seedError } = await supabase.functions.invoke('sync-translations', {
-        body: {
-          en_content: enTranslations,
-          target_languages: [],
-          prepare_keys_only: true
-        }
+        body: { en_content: enTranslations, target_languages: [], prepare_keys_only: true }
       });
       if (seedError) console.error('Seed error (non-fatal):', seedError);
 
-      // 2. Get gap analysis from DB (no need to send en.json — keys are now seeded)
+      // 2. Get gap analysis from DB
+      toast({ title: 'Step 2/3', description: 'Analyzing gaps...' });
       const { data: healData, error: healError } = await supabase.functions.invoke('manage-translations', {
         body: { action: 'heal_all_gaps' }
       });
@@ -570,69 +571,116 @@ export const TranslationManagement = () => {
         return;
       }
 
-      toast({
-        title: 'Healing All Gaps',
-        description: `Found ${healData.total_gaps} gaps across ${healData.languages_with_gaps} languages. Translating...`
-      });
-
-      // 2. Ensure keys are registered
-      const { error: prepError } = await supabase.functions.invoke('sync-translations', {
-        body: {
-          en_content: healData.en_content,
-          target_languages: [],
-          prepare_keys_only: true
-        }
-      });
-      if (prepError) console.error('Key prep error:', prepError);
-
-      // 3. Translate in language batches (5 at a time to stay within timeout)
       const allLangs: string[] = healData.target_languages;
-      const LANG_BATCH = 5;
-      let totalTranslated = 0;
-      let totalErrors = 0;
+      const totalGaps = healData.total_gaps || 0;
 
-      for (let i = 0; i < allLangs.length; i += LANG_BATCH) {
-        const langBatch = allLangs.slice(i, i + LANG_BATCH);
-        
-        // For each language batch, run chunks until remaining = 0
+      toast({
+        title: 'Step 3/3 — Translating',
+        description: `${totalGaps} gaps across ${allLangs.length} languages. This may take several minutes...`
+      });
+
+      // 3. Translate one language at a time for maximum resilience
+      let grandTotalTranslated = 0;
+      let grandTotalErrors = 0;
+      const MAX_RETRIES = 3;
+      const MAX_CHUNKS_PER_LANG = 200; // safety cap: 200 chunks × 60 keys = 12,000 keys per language
+
+      for (let langIdx = 0; langIdx < allLangs.length; langIdx++) {
+        const lang = allLangs[langIdx];
+        let langTranslated = 0;
+        let langErrors = 0;
         let remaining = Infinity;
         let chunkNum = 0;
-        while (remaining > 0 && chunkNum < 50) {
-          chunkNum++;
-          const { data, error } = await supabase.functions.invoke('sync-translations', {
-            body: {
-              en_content: healData.en_content,
-              target_languages: langBatch,
-              skip_key_creation: true,
-              max_keys: 60
-            }
-          });
-          if (error) throw error;
+        let consecutiveFailures = 0;
 
-          // Sum up stats across languages in this batch
-          remaining = 0;
-          for (const lang of langBatch) {
+        while (remaining > 0 && chunkNum < MAX_CHUNKS_PER_LANG) {
+          chunkNum++;
+
+          try {
+            const { data, error } = await supabase.functions.invoke('sync-translations', {
+              body: {
+                en_content: healData.en_content,
+                target_languages: [lang],
+                skip_key_creation: true,
+                max_keys: 60
+              }
+            });
+
+            if (error) {
+              consecutiveFailures++;
+              console.error(`[heal] ${lang} chunk ${chunkNum} error:`, error);
+              langErrors++;
+
+              if (consecutiveFailures >= MAX_RETRIES) {
+                console.warn(`[heal] ${lang}: ${MAX_RETRIES} consecutive failures, moving to next language`);
+                break;
+              }
+              // Wait before retry (exponential backoff: 2s, 4s, 8s)
+              await new Promise(r => setTimeout(r, 2000 * Math.pow(2, consecutiveFailures - 1)));
+              continue;
+            }
+
+            // Reset failure counter on success
+            consecutiveFailures = 0;
+
             const langStats = data?.summary?.[lang];
-            totalTranslated += langStats?.translated || 0;
-            totalErrors += langStats?.errors || 0;
-            remaining += langStats?.remaining ?? 0;
+            const chunkTranslated = langStats?.translated || 0;
+            const chunkErrors = langStats?.errors || 0;
+            remaining = langStats?.remaining ?? 0;
+
+            langTranslated += chunkTranslated;
+            langErrors += chunkErrors;
+
+            setHealProgress({
+              lang,
+              translated: grandTotalTranslated + langTranslated,
+              remaining,
+              errors: grandTotalErrors + langErrors
+            });
+
+            // If nothing was translated and nothing remaining, we're done with this lang
+            if (chunkTranslated === 0 && remaining === 0) break;
+            // If nothing translated but still remaining, might be stuck — count as soft failure
+            if (chunkTranslated === 0 && remaining > 0) {
+              consecutiveFailures++;
+              if (consecutiveFailures >= MAX_RETRIES) {
+                console.warn(`[heal] ${lang}: no progress after ${MAX_RETRIES} attempts, moving on`);
+                break;
+              }
+            }
+          } catch (err) {
+            consecutiveFailures++;
+            console.error(`[heal] ${lang} chunk ${chunkNum} exception:`, err);
+            langErrors++;
+            if (consecutiveFailures >= MAX_RETRIES) {
+              console.warn(`[heal] ${lang}: ${MAX_RETRIES} consecutive exceptions, moving to next language`);
+              break;
+            }
+            await new Promise(r => setTimeout(r, 2000 * Math.pow(2, consecutiveFailures - 1)));
           }
         }
+
+        grandTotalTranslated += langTranslated;
+        grandTotalErrors += langErrors;
       }
 
-      // 4. Refresh runtime bundles for all affected languages
+      // 4. Refresh runtime bundles
       for (const lang of allLangs) {
-        const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
-          body: { action: 'export_locale_json', language: lang }
-        });
-        if (!exportError && localeData) {
-          i18n.addResourceBundle(lang, 'translation', localeData, true, true);
+        try {
+          const { data: localeData, error: exportError } = await supabase.functions.invoke('manage-translations', {
+            body: { action: 'export_locale_json', language: lang }
+          });
+          if (!exportError && localeData) {
+            i18n.addResourceBundle(lang, 'translation', localeData, true, true);
+          }
+        } catch (e) {
+          console.error(`[heal] Failed to refresh ${lang} bundle:`, e);
         }
       }
 
       toast({
         title: 'All Gaps Healed',
-        description: `Translated ${totalTranslated} keys across ${allLangs.length} languages${totalErrors ? ` (${totalErrors} errors)` : ''}`
+        description: `Translated ${grandTotalTranslated} keys across ${allLangs.length} languages${grandTotalErrors ? ` (${grandTotalErrors} errors)` : ''}`
       });
 
       await loadCoverageStats();
@@ -645,6 +693,7 @@ export const TranslationManagement = () => {
       });
     } finally {
       setHealAllSyncing(false);
+      setHealProgress(null);
     }
   };
 
