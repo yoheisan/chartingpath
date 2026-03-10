@@ -214,7 +214,7 @@ const Index = () => {
                 }}
                 className="px-8 py-6 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                Create Free Account
+                {t('hero.createFreeAccount', 'Create Free Account')}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
