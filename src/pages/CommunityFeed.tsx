@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCommunityFeed, type CommunityFilters } from '@/hooks/useCommunityFeed';
 import { useCommunityEngagement } from '@/hooks/useCommunityEngagement';
 import { EdgeCard } from '@/components/community/EdgeCard';
