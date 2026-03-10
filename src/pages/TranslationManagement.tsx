@@ -1406,7 +1406,7 @@ export const TranslationManagement = () => {
 
         {/* Gap Analysis Tab */}
         {activeTab === 'gaps' && (
-          <TranslationGapAnalysis onSyncGaps={handleSyncGaps} onHealAllGaps={handleHealAllGaps} syncing={gapSyncing} healingSyncing={healAllSyncing} />
+          <TranslationGapAnalysis onSyncGaps={handleSyncGaps} onHealAllGaps={handleHealAllGaps} syncing={gapSyncing} healingSyncing={healAllSyncing} healProgress={healProgress} />
         )}
 
         {/* Override Tab */}
