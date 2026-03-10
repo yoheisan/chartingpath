@@ -355,31 +355,78 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ success: false, message: 'No completed scans found' });
         }
 
-        // Find all pending OR approved strings that haven't been fully translated yet
-        // We mark strings as 'translated' once all languages are done
+        // Find all pending, approved, OR previously-translated strings that
+        // still have incomplete language coverage. This allows re-runs to
+        // pick up strings whose translations partially failed.
+        const TOTAL_TARGET_LANGS = Object.keys(TARGET_LANGUAGES).length; // 17
         const targetIds: string[] = [];
+        const retryIds: string[] = [];
         const newlyApprovedIds: string[] = [];
         let from = 0;
         const PAGE = 1000;
         while (true) {
           const { data } = await supabase
             .from('extracted_strings')
-            .select('id, original_text, review_status')
+            .select('id, string_key, original_text, review_status')
             .eq('scan_session_id', latestScan.id)
-            .in('review_status', ['pending', 'approved'])
+            .in('review_status', ['pending', 'approved', 'translated'])
             .eq('is_translatable', true)
             .range(from, from + PAGE - 1);
           if (!data || data.length === 0) break;
           for (const row of data) {
             if (row.original_text?.trim().length >= 3 && /[a-zA-Z]{2,}/.test(row.original_text)) {
-              targetIds.push(row.id);
-              if (row.review_status === 'pending') {
-                newlyApprovedIds.push(row.id);
+              if (row.review_status === 'translated') {
+                // Will check coverage below
+                retryIds.push(row.id);
+              } else {
+                targetIds.push(row.id);
+                if (row.review_status === 'pending') {
+                  newlyApprovedIds.push(row.id);
+                }
               }
             }
           }
           if (data.length < PAGE) break;
           from += PAGE;
+        }
+
+        // For previously-translated strings, check if they have all 17 language translations
+        if (retryIds.length > 0) {
+          // Get string_keys for these IDs
+          const retryKeyMap = new Map<string, string>();
+          for (let i = 0; i < retryIds.length; i += PAGE) {
+            const batch = retryIds.slice(i, i + PAGE);
+            const { data: rows } = await supabase
+              .from('extracted_strings')
+              .select('id, string_key')
+              .in('id', batch);
+            rows?.forEach((r: any) => retryKeyMap.set(r.string_key, r.id));
+          }
+
+          // Check which keys have incomplete translations
+          const allKeys = Array.from(retryKeyMap.keys());
+          for (let i = 0; i < allKeys.length; i += PAGE) {
+            const keyBatch = allKeys.slice(i, i + PAGE);
+            const { data: counts } = await supabase
+              .from('translations')
+              .select('key')
+              .in('key', keyBatch)
+              .neq('language_code', 'en');
+
+            // Count per key
+            const countMap = new Map<string, number>();
+            counts?.forEach((r: any) => {
+              countMap.set(r.key, (countMap.get(r.key) || 0) + 1);
+            });
+
+            for (const key of keyBatch) {
+              const langCount = countMap.get(key) || 0;
+              if (langCount < TOTAL_TARGET_LANGS) {
+                const id = retryKeyMap.get(key);
+                if (id) targetIds.push(id);
+              }
+            }
+          }
         }
 
         if (targetIds.length === 0) {
