@@ -952,7 +952,8 @@
     "dashboardBullet2": "Pattern overlay & study",
     "dashboardBullet3": "Market overview panel",
     "openDashboard": "Open Dashboard",
-    "bestForDashboard": "Full workspace"
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "livePatterns": {
     "assetClass": "Asset Class",
