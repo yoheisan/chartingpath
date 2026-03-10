@@ -66,13 +66,13 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex items-center justify-end gap-1 cursor-help">
-                    ROT
-                    <Info className="h-3 w-3 opacity-50" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-sm whitespace-normal">
-                  <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
+                    <span className="flex items-center justify-end gap-1 cursor-help">
+                     {t('teaserSignals.rot', 'ROT')}
+                     <Info className="h-3 w-3 opacity-50" />
+                   </span>
+                 </TooltipTrigger>
+                 <TooltipContent side="top" className="max-w-sm whitespace-normal">
+                   <p className="text-xs">{t('teaserSignals.rotTooltip', 'Return on Time — R earned per bar of exposure. Higher = more capital-efficient.')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
