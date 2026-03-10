@@ -2739,7 +2739,10 @@
     "activeAlerts": "{{count}} active alerts",
     "basicPatterns": "Basic patterns",
     "timeframe4h": "4H timeframe",
-    "allTimeframes": "All timeframes"
+    "allTimeframes": "All timeframes",
+    "sectionLabel": "Pricing",
+    "mostPopular": "Most Popular",
+    "perMonth": "mo"
   },
   "livePatternPreview": {
     "title": "Active Patterns Right Now",
