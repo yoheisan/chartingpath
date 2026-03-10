@@ -549,9 +549,19 @@ export const TranslationManagement = () => {
   const handleHealAllGaps = async () => {
     setHealAllSyncing(true);
     try {
-      // 1. Get gap analysis from DB, passing static en.json as fallback for keys not yet in translations table
+      // 1. Ensure all en.json keys exist in translation_keys + translations tables first
+      const { error: seedError } = await supabase.functions.invoke('sync-translations', {
+        body: {
+          en_content: enTranslations,
+          target_languages: [],
+          prepare_keys_only: true
+        }
+      });
+      if (seedError) console.error('Seed error (non-fatal):', seedError);
+
+      // 2. Get gap analysis from DB (no need to send en.json — keys are now seeded)
       const { data: healData, error: healError } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'heal_all_gaps', en_fallback_content: enTranslations }
+        body: { action: 'heal_all_gaps' }
       });
       if (healError) throw healError;
 
