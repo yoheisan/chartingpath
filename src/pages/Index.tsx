@@ -231,7 +231,7 @@ const Index = () => {
                 <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/40 transition-all group cursor-pointer">
                   <Search className="h-5 w-5 text-muted-foreground" />
                   <span className="text-muted-foreground text-base group-hover:text-foreground transition-colors">
-                    Search any ticker — AAPL, BTC, EUR/USD…
+                    {t('hero.searchPlaceholder', 'Search any ticker — AAPL, BTC, EUR/USD…')}
                   </span>
                   <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
                     {instrumentCount ? `${instrumentCount.toLocaleString()}+ instruments` : '800+ instruments'}
