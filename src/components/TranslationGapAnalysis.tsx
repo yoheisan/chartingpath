@@ -15,7 +15,7 @@ interface TranslationGapAnalysisProps {
   healingSyncing?: boolean;
 }
 
-export function TranslationGapAnalysis({ onSyncGaps, syncing }: TranslationGapAnalysisProps) {
+export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, healingSyncing }: TranslationGapAnalysisProps) {
   const [coverage, setCoverage] = useState<DBLanguageCoverage[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLang, setExpandedLang] = useState<string | null>(null);
