@@ -497,7 +497,7 @@ export const SiteStringScanner = () => {
                 <div>
                   <h4 className="text-sm font-medium mb-2">Auto-Approve &amp; Translate</h4>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Approve all pending strings from the latest scan and trigger Gemini translation into 14 languages.
+                    Approve all pending strings from the latest scan and trigger Gemini translation into 17 languages.
                   </p>
                   <Button
                     onClick={async () => {
