@@ -547,7 +547,6 @@ export const TranslationManagement = () => {
     }
   };
 
-  const [healProgress, setHealProgress] = useState<{ lang: string; translated: number; remaining: number; errors: number } | null>(null);
 
   const handleHealAllGaps = async () => {
     setHealAllSyncing(true);
