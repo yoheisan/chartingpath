@@ -549,9 +549,9 @@ export const TranslationManagement = () => {
   const handleHealAllGaps = async () => {
     setHealAllSyncing(true);
     try {
-      // 1. Get gap analysis from DB (English source + target languages)
+      // 1. Get gap analysis from DB, passing static en.json as fallback for keys not yet in translations table
       const { data: healData, error: healError } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'heal_all_gaps' }
+        body: { action: 'heal_all_gaps', en_fallback_content: enTranslations }
       });
       if (healError) throw healError;
 
