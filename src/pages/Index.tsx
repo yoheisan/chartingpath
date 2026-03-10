@@ -234,7 +234,7 @@ const Index = () => {
                     {t('hero.searchPlaceholder', 'Search any ticker — AAPL, BTC, EUR/USD…')}
                   </span>
                   <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
-                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ instruments` : '800+ instruments'}
+                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ ${t('hero.instruments', 'instruments')}` : t('hero.instrumentsFallback', '800+ instruments')}
                   </kbd>
                 </button>
               }
