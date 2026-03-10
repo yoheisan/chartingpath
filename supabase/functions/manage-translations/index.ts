@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 interface TranslationRequest {
-  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details' | 'export_locale_json' | 'get_coverage_stats'
+  action: 'extract_keys' | 'get_translations' | 'submit_translation' | 'approve_translation' | 'sync_to_production' | 'get_pending_translations' | 'search_translations' | 'update_translation' | 'get_translation_details' | 'export_locale_json' | 'get_coverage_stats' | 'heal_all_gaps'
   language?: string
   namespace?: string
   keys?: Array<{ key: string; description?: string; category?: string; page_context?: string; element_context?: string }>
