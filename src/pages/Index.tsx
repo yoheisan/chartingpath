@@ -149,8 +149,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="ChartingPath – Chart Pattern Screener & Backtesting Platform"
-        description={`Find chart pattern setups before they break out. Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments, validate with 320K+ historical trades, and export Pine Script strategies.`}
+        title="ChartingPath – Validate Chart Patterns with 320K+ Backtested Outcomes"
+        description={`Know if a chart pattern works before you trade it. ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments backtested across 320,000+ real outcomes with win rates, expectancy, and quality grading.`}
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
