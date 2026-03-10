@@ -171,20 +171,20 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
-              Find high-probability chart patterns
+              {t('hero.headlinePrimary', 'Find high-probability chart patterns')}
             </span>
             <br />
             <span className="text-primary">
-              before they break
+              {t('hero.headlineAccent', 'before they break')}
             </span>
           </h1>
           
           <p className="text-lg text-muted-foreground mb-3 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            Backtested across years of real market data. Entry, stop-loss, and target — in seconds.
+            {t('hero.subtitleMain', 'Backtested across years of real market data. Entry, stop-loss, and target — in seconds.')}
           </p>
           
           <p className="text-sm text-muted-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            Used by traders in Singapore, UK, US and 20+ countries. Free to start.
+            {t('hero.socialProof', 'Used by traders in Singapore, UK, US and 20+ countries. Free to start.')}
           </p>
 
           {/* Single prominent CTA */}
