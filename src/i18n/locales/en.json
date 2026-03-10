@@ -2669,11 +2669,12 @@
     "filterHint": "Filter by asset class, timeframe, grade, and more"
   },
   "howItWorks": {
-    "sectionTitle": "Your Trading Journey",
-    "sectionSubtitle": "From signal discovery to automated execution",
-    "discover": "Discover",
-    "discoverSubtitle": "Find Signals",
-    "discoverDesc": "Scan markets for pattern-based setups with entry, SL, and TP levels.",
+    "sectionTitle": "Your Validation Workflow",
+    "sectionSubtitle": "From pattern to proof in four steps",
+    "companionTagline": "Works alongside TradingView — validate what you see on your charts",
+    "discover": "Spot",
+    "discoverSubtitle": "See a Pattern",
+    "discoverDesc": "Spot a pattern on your chart or scan our screener — then validate it with real data.",
     "research": "Research",
     "researchSubtitle": "Validate History",
     "researchDesc": "Backtest patterns to see historical win rates and performance metrics.",

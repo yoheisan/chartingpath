@@ -297,10 +297,10 @@ const Index = () => {
           <div className="container mx-auto max-w-3xl">
             <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                {t('hero.midPageHeadline', 'Ready to find your next setup?')}
+                {t('hero.midPageHeadline', 'See the data behind the pattern')}
               </h2>
               <p className="text-muted-foreground mb-8">
-                {t('hero.midPageSubtext', 'Free account. No credit card required.')}
+                {t('hero.midPageSubtext', 'Free account. No credit card. Real backtest data from day one.')}
               </p>
               <Button
                 size="lg"
