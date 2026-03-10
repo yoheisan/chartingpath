@@ -149,8 +149,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="ChartingPath – Chart Pattern Screener & Backtesting Platform"
-        description={`Find chart pattern setups before they break out. Scan ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments, validate with 320K+ historical trades, and export Pine Script strategies.`}
+        title="ChartingPath – Validate Chart Patterns with 320K+ Backtested Outcomes"
+        description={`Know if a chart pattern works before you trade it. ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments backtested across 320,000+ real outcomes with win rates, expectancy, and quality grading.`}
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
@@ -171,20 +171,20 @@ const Index = () => {
         <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
-              {t('hero.headlinePrimary', 'Find high-probability chart patterns')}
+              {t('hero.headlinePrimary', 'Know if a pattern works')}
             </span>
             <br />
             <span className="text-primary">
-              {t('hero.headlineAccent', 'before they break')}
+              {t('hero.headlineAccent', 'before you trade it')}
             </span>
           </h1>
           
           <p className="text-lg text-muted-foreground mb-3 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitleMain', 'Backtested across years of real market data. Entry, stop-loss, and target — in seconds.')}
+            {t('hero.subtitleMain', 'Every pattern backtested against 320,000+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.')}
           </p>
           
           <p className="text-sm text-muted-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            {t('hero.socialProof', 'Used by traders in Singapore, UK, US and 20+ countries. Free to start.')}
+            {t('hero.socialProof', '320,000+ pattern outcomes analyzed. Free to start — works alongside TradingView.')}
           </p>
 
           {/* Single prominent CTA */}
@@ -258,15 +258,15 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.35s' }}>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustSignals', 'Signals on closed candles')}</span>
+              <span>{t('hero.trustSignals', 'Every signal backtested')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustAssumptions', 'Assumptions documented')}</span>
+              <span>{t('hero.trustAssumptions', 'Win rates shown upfront')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustRepeatability', 'Built for repeatability')}</span>
+              <span>{t('hero.trustRepeatability', 'No black-box indicators')}</span>
             </div>
           </div>
 
@@ -297,10 +297,10 @@ const Index = () => {
           <div className="container mx-auto max-w-3xl">
             <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                {t('hero.midPageHeadline', 'Ready to find your next setup?')}
+                {t('hero.midPageHeadline', 'See the data behind the pattern')}
               </h2>
               <p className="text-muted-foreground mb-8">
-                {t('hero.midPageSubtext', 'Free account. No credit card required.')}
+                {t('hero.midPageSubtext', 'Free account. No credit card. Real backtest data from day one.')}
               </p>
               <Button
                 size="lg"

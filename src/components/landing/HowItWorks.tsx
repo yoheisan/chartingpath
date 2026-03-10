@@ -47,6 +47,7 @@ export const HowItWorks = () => {
         <div className="text-center mb-12">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('howItWorks.sectionTitle')}</p>
           <h2 className="text-3xl font-bold">{t('howItWorks.sectionSubtitle')}</h2>
+          <p className="text-sm text-muted-foreground/70 mt-2">{t('howItWorks.companionTagline', 'Works alongside TradingView — validate what you see on your charts')}</p>
         </div>
 
         <div className="grid md:grid-cols-4 gap-px bg-border/30 rounded-xl overflow-hidden border border-border/30">

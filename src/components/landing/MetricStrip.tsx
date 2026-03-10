@@ -70,8 +70,8 @@ export const MetricStrip = () => {
   const metrics: MetricProps[] = [
     { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
     { value: 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
-    { value: 320000, suffix: "+", label: t("metrics.trades", "Historical Trades"), icon: Database },
-    { value: 1, suffix: "h", label: t("metrics.refresh", "Refresh Cycle"), icon: Clock },
+    { value: 320000, suffix: "+", label: t("metrics.trades", "Backtested Outcomes"), icon: Database },
+    { value: 62, suffix: "%", label: t("metrics.avgWinRate", "Avg Win Rate (A-Grade)"), icon: Clock },
   ];
 
   return (
