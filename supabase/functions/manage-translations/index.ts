@@ -493,8 +493,26 @@ Deno.serve(async (req) => {
       }
 
       case 'heal_all_gaps': {
-        // Full pipeline heal: find all gaps across all languages, build English source from DB, return payload for sync
+        // Full pipeline heal: find all gaps across all languages
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
+
+        // Accept optional fallback English content from client (static en.json)
+        const bodyData = await req.clone().json().catch(() => ({}))
+        const clientEnContent: Record<string, any> | undefined = bodyData.en_fallback_content
+
+        // Helper: flatten nested object to dot-separated keys
+        const flattenObj = (obj: Record<string, any>, prefix = ''): Record<string, string> => {
+          const result: Record<string, string> = {}
+          for (const key of Object.keys(obj)) {
+            const fullKey = prefix ? `${prefix}.${key}` : key
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+              Object.assign(result, flattenObj(obj[key], fullKey))
+            } else {
+              result[fullKey] = String(obj[key])
+            }
+          }
+          return result
+        }
 
         // 1. Get all canonical keys
         const allKeys: Array<{ key: string; category: string }> = []
@@ -513,7 +531,7 @@ Deno.serve(async (req) => {
         }
         const allKeySet = new Set(allKeys.map(k => k.key))
 
-        // 2. Get English source values from DB (the single source of truth)
+        // 2. Get English source values from DB
         const enValues: Record<string, string> = {}
         from = 0
         while (true) {
@@ -530,7 +548,18 @@ Deno.serve(async (req) => {
           from += PAGE
         }
 
-        // 3. For each language, find which keys are missing translations
+        // 3. Merge with client-provided fallback (static en.json) for keys missing from DB
+        const flatClientEn = clientEnContent ? flattenObj(clientEnContent) : {}
+        let enSeeded = 0
+        for (const k of allKeys) {
+          if (!enValues[k.key] && flatClientEn[k.key]) {
+            enValues[k.key] = flatClientEn[k.key]
+            enSeeded++
+          }
+        }
+        console.log(`[heal_all_gaps] DB English: ${Object.keys(enValues).length - enSeeded}, Fallback seeded: ${enSeeded}`)
+
+        // 4. For each language, find which keys are missing translations
         const gapsByLang: Record<string, string[]> = {}
         let totalGaps = 0
 
@@ -561,9 +590,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        // 4. Build nested English content from DB values (for sync-translations)
+        // 5. Build nested English content for sync-translations
         const enNested: Record<string, any> = {}
-        // Only include keys that have gaps somewhere
         const gapKeySet = new Set<string>()
         Object.values(gapsByLang).forEach(keys => keys.forEach(k => gapKeySet.add(k)))
 
@@ -583,6 +611,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({
           total_keys: allKeySet.size,
           total_gaps: totalGaps,
+          en_seeded_from_fallback: enSeeded,
           languages_with_gaps: Object.keys(gapsByLang).length,
           gaps_by_language: Object.fromEntries(
             Object.entries(gapsByLang).map(([lang, keys]) => [lang, keys.length])
