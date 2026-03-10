@@ -756,7 +756,7 @@ export default function TickerStudy() {
                   className="gap-2 h-8"
                 >
                   {showPatternsOnChart ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  <span className="hidden sm:inline">Patterns</span>
+                  <span className="hidden sm:inline">{t('tickerStudy.patterns', 'Patterns')}</span>
                 </Button>
                 <TimeframeSelector
                   value={selectedTimeframe}
