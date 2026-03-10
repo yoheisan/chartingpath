@@ -2682,7 +2682,8 @@
     "automate": "Automate",
     "automateSubtitle": "Export Scripts",
     "automateDesc": "Generate Pine Script or trading bot code for automated execution.",
-    "footerNote": "Each stage builds on the last—start anywhere based on your current needs."
+    "footerNote": "Each stage builds on the last—start anywhere based on your current needs.",
+    "step": "Step"
   },
   "copilotShowcase": {
     "badge": "AI Copilot",
