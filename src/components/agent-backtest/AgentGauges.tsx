@@ -44,7 +44,7 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, tooltip, color }) => {
               <TooltipTrigger asChild>
                 <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed">
+              <TooltipContent side="bottom" className="max-w-sm whitespace-normal text-xs leading-relaxed">
                 {tooltip}
               </TooltipContent>
             </Tooltip>

@@ -1090,7 +1090,7 @@ export default function PatternScreenerTable() {
                               <Info className="h-3 w-3 opacity-50" />
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
+                          <TooltipContent side="top" className="max-w-sm whitespace-normal">
                             <p className="text-xs">Return on Time — R-multiple earned per bar of exposure (expectancy ÷ avg bars). Higher = more capital-efficient.</p>
                           </TooltipContent>
                         </Tooltip>

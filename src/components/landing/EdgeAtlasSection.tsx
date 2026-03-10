@@ -433,7 +433,7 @@ export function EdgeAtlasSection() {
                             <TooltipTrigger asChild>
                               <span className="cursor-help">ROT <span className={`font-mono ${(r.avg_bars > 0 ? r.expectancy_r / r.avg_bars : 0) >= 0.01 ? 'text-amber-400' : 'text-muted-foreground'}`}>{r.avg_bars > 0 ? (r.expectancy_r / r.avg_bars).toFixed(4) : '—'}R/bar</span></span>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
+                            <TooltipContent className="max-w-sm whitespace-normal">
                               <p className="text-xs"><strong>Return on Time</strong> — R earned per bar of capital exposure. Higher = more capital-efficient edge. Measures how quickly the pattern converts risk into return.</p>
                             </TooltipContent>
                           </Tooltip>

@@ -1542,7 +1542,7 @@ export default function LivePatternsPage() {
                                     </Badge>
                                   </span>
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                <TooltipContent side="top" className="max-w-sm whitespace-normal text-xs">
                                   {setup.trendAlignment === 'with_trend' 
                                     ? 'With Trend — pattern direction aligns with the higher-timeframe trend (EMA 50/200, MACD, RSI, ADX)'
                                     : 'Counter Trend — pattern direction opposes the prevailing trend. Higher risk.'}
