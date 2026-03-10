@@ -66,7 +66,7 @@ export const PricingTeaser = () => {
             >
               {plan.popular && (
                 <span className="absolute -top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
-                  Most Popular
+                  {t('pricingTeaser.mostPopular', 'Most Popular')}
                 </span>
               )}
               <div className="flex items-baseline gap-2 mb-1">
