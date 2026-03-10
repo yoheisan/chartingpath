@@ -8,14 +8,22 @@ import { fetchDBCoverageStats, fetchMissingKeysForLanguage, type DBLanguageCover
 import { buildPartialEnglish } from '@/utils/translationGapAnalysis';
 import { languages } from '@/i18n/config';
 
+interface HealProgress {
+  lang: string;
+  translated: number;
+  remaining: number;
+  errors: number;
+}
+
 interface TranslationGapAnalysisProps {
   onSyncGaps: (langCode: string, partialEnContent: Record<string, any>, missingKeys: string[]) => void;
   onHealAllGaps?: () => void;
   syncing: boolean;
   healingSyncing?: boolean;
+  healProgress?: HealProgress | null;
 }
 
-export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, healingSyncing }: TranslationGapAnalysisProps) {
+export function TranslationGapAnalysis({ onSyncGaps, onHealAllGaps, syncing, healingSyncing, healProgress }: TranslationGapAnalysisProps) {
   const [coverage, setCoverage] = useState<DBLanguageCoverage[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLang, setExpandedLang] = useState<string | null>(null);
