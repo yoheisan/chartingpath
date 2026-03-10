@@ -5,7 +5,7 @@
  * `translations` table. Only the user's active language is loaded at startup;
  * additional languages are loaded on-demand when the user switches.
  * 
- * This avoids fetching 30,000+ rows across 14 languages on every page load.
+ * This avoids fetching 30,000+ rows across 17 languages on every page load.
  */
 import { supabase } from '@/integrations/supabase/client';
 import i18n from './config';
