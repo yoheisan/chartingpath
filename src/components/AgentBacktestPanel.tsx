@@ -533,7 +533,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[240px] text-xs">
+                          <TooltipContent side="top" className="max-w-sm whitespace-normal text-xs">
                             {tooltip}
                           </TooltipContent>
                         </Tooltip>
