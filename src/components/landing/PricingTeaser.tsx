@@ -51,7 +51,7 @@ export const PricingTeaser = () => {
     <section className="py-20 px-6">
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">Pricing</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('pricingTeaser.sectionLabel', 'Pricing')}</p>
           <h2 className="text-3xl font-bold mb-2">{t('pricingTeaser.title')}</h2>
           <p className="text-sm text-muted-foreground">
             {t('pricingTeaser.subtitle')}
