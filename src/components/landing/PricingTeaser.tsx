@@ -72,7 +72,7 @@ export const PricingTeaser = () => {
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-lg font-bold">{plan.name}</span>
                 {plan.price && (
-                  <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/mo</span></span>
+                  <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/{t('pricingTeaser.perMonth', 'mo')}</span></span>
                 )}
               </div>
               <div className="text-xs text-primary font-medium mb-4">{plan.tagline}</div>

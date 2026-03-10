@@ -58,7 +58,7 @@ export const HowItWorks = () => {
               onClick={() => trackEvent('landing.cta_click', { button: `how_it_works_step_${item.stage}`, label: item.title })}
             >
               <div className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest mb-4">
-                Step {item.stage}
+                {t('howItWorks.step', 'Step')} {item.stage}
               </div>
               <div className="mb-3">
                 <item.icon className="h-5 w-5 text-primary" />
