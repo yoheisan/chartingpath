@@ -23,10 +23,10 @@ const CommunityFeed = () => {
               <Users className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Community Edge Feed</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('community.title', 'Community Edge Feed')}</h1>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                Every stat is verified by ChartingPath — no fake claims
+                {t('community.subtitle', 'Every stat is verified by ChartingPath — no fake claims')}
               </p>
             </div>
           </div>
