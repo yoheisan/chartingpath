@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCommunityFeed, type CommunityFilters } from '@/hooks/useCommunityFeed';
 import { useCommunityEngagement } from '@/hooks/useCommunityEngagement';
 import { EdgeCard } from '@/components/community/EdgeCard';
@@ -7,6 +8,7 @@ import { LeaderboardSidebar } from '@/components/community/LeaderboardSidebar';
 import { ShieldCheck, Users } from 'lucide-react';
 
 const CommunityFeed = () => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<CommunityFilters>({});
 
   const { cards, loading, error, refetch } = useCommunityFeed(filters);
@@ -21,10 +23,10 @@ const CommunityFeed = () => {
               <Users className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Community Edge Feed</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('community.title', 'Community Edge Feed')}</h1>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                Every stat is verified by ChartingPath — no fake claims
+                {t('community.subtitle', 'Every stat is verified by ChartingPath — no fake claims')}
               </p>
             </div>
           </div>
@@ -59,9 +61,9 @@ const CommunityFeed = () => {
                 <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
                   <ShieldCheck className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold">No edges shared yet</h2>
+                <h2 className="text-lg font-semibold">{t('community.noEdges', 'No edges shared yet')}</h2>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Be the first! Run a backtest in the Strategy Workspace and toggle "Share to Community" to post your verified edge here.
+                  {t('community.noEdgesDesc', 'Be the first! Run a backtest in the Strategy Workspace and toggle "Share to Community" to post your verified edge here.')}
                 </p>
               </div>
             ) : (

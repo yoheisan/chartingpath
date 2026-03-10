@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { PageMeta } from '@/components/PageMeta';
 import { JsonLd } from '@/components/JsonLd';
@@ -77,6 +78,7 @@ const TF_LABEL: Record<string, string> = { '1wk': '1W', '1d': '1D', '8h': '8H', 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function InstrumentPatternStatsPage() {
+  const { t } = useTranslation();
   const { patternId, instrument } = useParams<{ patternId: string; instrument: string }>();
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,29 +202,29 @@ export default function InstrumentPatternStatsPage() {
           </div>
         ) : agg ? (
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <KpiCard icon={<Target className="h-4 w-4" />} label="Win Rate" value={`${agg.win_rate_pct}%`} subtitle={`${agg.wins.toLocaleString()}W / ${agg.losses.toLocaleString()}L`} />
-            <KpiCard icon={<TrendingUp className="h-4 w-4" />} label="Expectancy (R)" value={`${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R`} subtitle={`Avg R:R ${agg.avg_rr}`} highlight={agg.expectancy_r > 0} />
-            <KpiCard icon={<BarChart3 className="h-4 w-4" />} label="Sample Size" value={agg.total_trades.toLocaleString()} subtitle="Resolved trades" />
-            <KpiCard icon={<Clock className="h-4 w-4" />} label="Avg Duration" value={`${agg.avg_bars} bars`} subtitle="From breakout" />
+            <KpiCard icon={<Target className="h-4 w-4" />} label={t('patternStats.winRate', 'Win Rate')} value={`${agg.win_rate_pct}%`} subtitle={`${agg.wins.toLocaleString()}W / ${agg.losses.toLocaleString()}L`} />
+            <KpiCard icon={<TrendingUp className="h-4 w-4" />} label={t('patternStats.expectancyR', 'Expectancy (R)')} value={`${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R`} subtitle={`${t('patternStats.avgRR', 'Avg R:R')} ${agg.avg_rr}`} highlight={agg.expectancy_r > 0} />
+            <KpiCard icon={<BarChart3 className="h-4 w-4" />} label={t('patternStats.sampleSize', 'Sample Size')} value={agg.total_trades.toLocaleString()} subtitle={t('patternStats.resolvedTrades', 'Resolved trades')} />
+            <KpiCard icon={<Clock className="h-4 w-4" />} label={t('patternStats.avgDuration', 'Avg Duration')} value={`${agg.avg_bars} ${t('patternStats.bars', 'bars')}`} subtitle={t('patternStats.fromBreakout', 'From breakout')} />
           </section>
         ) : (
           <div className="rounded-xl border border-border/40 bg-card/40 p-12 text-center text-muted-foreground mb-10">
-            Not enough data for {displayPatternName} on {displayInstrument} yet.
+            {t('patternStats.notEnoughData', 'Not enough data for {{pattern}} on {{instrument}} yet.', { pattern: displayPatternName, instrument: displayInstrument })}
           </div>
         )}
 
         {/* Timeframe Breakdown Table */}
         {!loading && data?.breakdowns && data.breakdowns.length > 0 && (
           <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Performance by Timeframe</h2>
+            <h2 className="text-2xl font-semibold mb-4">{t('patternStats.performanceByTimeframe', 'Performance by Timeframe')}</h2>
             <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
               <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_90px_80px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Timeframe</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win Rate</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Exp (R)</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg R:R</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Avg Bars</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('patternStats.timeframe', 'Timeframe')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.winRate', 'Win Rate')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.expR', 'Exp (R)')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgRR', 'Avg R:R')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.trades', 'Trades')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgBars', 'Avg Bars')}</span>
               </div>
 
               {data.breakdowns.map((b) => (

@@ -294,7 +294,7 @@ const MemberScripts = () => {
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 px-4 py-3">
           <ScanSearch className="h-5 w-5 text-primary shrink-0" />
           <div className="flex items-center gap-2 flex-wrap text-sm">
-            <span className="text-muted-foreground">Generating scripts for</span>
+            <span className="text-muted-foreground">{t('memberScripts.generatingFor', 'Generating scripts for')}</span>
             {instrumentParam && (
               <Badge variant="secondary" className="font-mono font-semibold text-sm">{instrumentParam.replace(/=X$|=F$/, '')}</Badge>
             )}

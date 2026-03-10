@@ -258,12 +258,22 @@
   },
   "blog": {
     "allLevels": "All Levels",
+    "ctaDesc": "Test your skills with our interactive quizzes and pattern recognition tools",
+    "ctaPractice": "Practice Pattern Recognition",
+    "ctaTakeQuiz": "Take Trading Quiz",
+    "ctaTitle": "Ready to Apply Your Knowledge?",
     "practicePatterns": "Practice Pattern Recognition",
     "readyToApply": "Ready to Apply Your Knowledge?",
     "readyToApplyDesc": "Test your skills with our interactive quizzes and pattern recognition tools",
     "subtitle": "Comprehensive guides and tutorials for mastering chart patterns, technical analysis, and trading strategies",
     "takeTradingQuiz": "Take Trading Quiz",
     "title": "ChartingPath Learning Center"
+  },
+  "community": {
+    "noEdges": "No edges shared yet",
+    "noEdgesDesc": "Be the first! Run a backtest in the Strategy Workspace and toggle \"Share to Community\" to post your verified edge here.",
+    "subtitle": "Every stat is verified by ChartingPath — no fake claims",
+    "title": "Community Edge Feed"
   },
   "common": {
     "add": "Add",
@@ -2730,6 +2740,22 @@
     "learnMore": "Learn More About the Copilot",
     "pressToTry": "Or press <kbd>⌘K</kbd> to try it now",
     "tryNow": "Try Copilot Now"
+  },
+  "patternStats": {
+    "avgBars": "Avg Bars",
+    "avgDuration": "Avg Duration",
+    "avgRR": "Avg R:R",
+    "bars": "bars",
+    "expectancyR": "Expectancy (R)",
+    "expR": "Exp (R)",
+    "fromBreakout": "From breakout",
+    "notEnoughData": "Not enough data for {{pattern}} on {{instrument}} yet.",
+    "performanceByTimeframe": "Performance by Timeframe",
+    "resolvedTrades": "Resolved trades",
+    "sampleSize": "Sample Size",
+    "timeframe": "Timeframe",
+    "trades": "Trades",
+    "winRate": "Win Rate"
   },
   "pricingTeaser": {
     "title": "Simple, Credit-Based Pricing",
