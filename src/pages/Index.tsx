@@ -258,15 +258,15 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.35s' }}>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustSignals', 'Signals on closed candles')}</span>
+              <span>{t('hero.trustSignals', 'Every signal backtested')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustAssumptions', 'Assumptions documented')}</span>
+              <span>{t('hero.trustAssumptions', 'Win rates shown upfront')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustRepeatability', 'Built for repeatability')}</span>
+              <span>{t('hero.trustRepeatability', 'No black-box indicators')}</span>
             </div>
           </div>
 
