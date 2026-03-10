@@ -1444,7 +1444,7 @@ export default function LivePatternsPage() {
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-sm whitespace-normal">
-                          <p className="text-xs">Return on Time — R earned per bar of exposure. Higher = more capital-efficient.</p>
+                          <p className="text-xs">{t('screener.rotTooltip', 'Return on Time — R earned per bar of exposure. Higher = more capital-efficient.')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
