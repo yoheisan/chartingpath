@@ -531,7 +531,7 @@ Deno.serve(async (req) => {
         }
         const allKeySet = new Set(allKeys.map(k => k.key))
 
-        // 2. Get English source values from DB
+        // 2. Get English source values from DB translations table
         const enValues: Record<string, string> = {}
         from = 0
         while (true) {
@@ -547,8 +547,19 @@ Deno.serve(async (req) => {
           if (data.length < PAGE) break
           from += PAGE
         }
+        const dbEnCount = Object.keys(enValues).length
 
-        // 3. Merge with client-provided fallback (static en.json) for keys missing from DB
+        // 3. Fallback: use translation_keys.description as English source
+        //    (sync-translations stores en text in description when creating keys)
+        let descFallback = 0
+        for (const k of allKeys) {
+          if (!enValues[k.key] && k.description) {
+            enValues[k.key] = k.description
+            descFallback++
+          }
+        }
+
+        // 4. Merge with client-provided fallback (static en.json) for any remaining gaps
         const flatClientEn = clientEnContent ? flattenObj(clientEnContent) : {}
         let enSeeded = 0
         for (const k of allKeys) {
@@ -557,7 +568,7 @@ Deno.serve(async (req) => {
             enSeeded++
           }
         }
-        console.log(`[heal_all_gaps] DB English: ${Object.keys(enValues).length - enSeeded}, Fallback seeded: ${enSeeded}`)
+        console.log(`[heal_all_gaps] DB English: ${dbEnCount}, Description fallback: ${descFallback}, Client fallback: ${enSeeded}, Total: ${Object.keys(enValues).length}`)
 
         // 4. For each language, find which keys are missing translations
         const gapsByLang: Record<string, string[]> = {}
