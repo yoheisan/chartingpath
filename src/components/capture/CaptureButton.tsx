@@ -65,36 +65,6 @@ export const CaptureButton = () => {
   // Don't show for unauthenticated users
   if (!isAuthenticated) return null;
 
-  const handleScreenshot = useCallback(async () => {
-    setPopoverOpen(false);
-    // Small delay to let popover close
-    await new Promise(r => setTimeout(r, 200));
-    const result = await captureScreenshot(null, 'screen');
-    if (result) {
-      setCaptureResult(result);
-      setShareDialogOpen(true);
-    }
-  }, [captureScreenshot]);
-
-  const handleStartRecording = useCallback(async () => {
-    setPopoverOpen(false);
-    const success = await startRecording(includeAudio);
-    if (!success) return;
-  }, [startRecording, includeAudio]);
-
-  const handleStopRecording = useCallback(() => {
-    stopRecording();
-    // Wait for MediaRecorder to finalize
-    setTimeout(() => {
-      // The lastCapture will be set by the hook
-    }, 500);
-  }, [stopRecording]);
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
 
   // Recording mode UI
   if (isRecording) {
