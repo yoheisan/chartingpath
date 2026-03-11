@@ -5182,5 +5182,22 @@
     "liveWR": "Live WR",
     "trades": "Trades",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Capture & Share",
+    "screenshot": "Screenshot",
+    "recordScreen": "Record Screen",
+    "microphone": "Microphone",
+    "maxDuration": "Max {{seconds}}s recording",
+    "stop": "Stop",
+    "captureChart": "Capture Chart",
+    "shareCapture": "Share Capture",
+    "download": "Download",
+    "copyClipboard": "Copy",
+    "copied": "Copied!",
+    "share": "Share",
+    "createLink": "Create Link",
+    "expiresIn24h": "Link expires in 24 hours",
+    "elitePermanentStorage": "Upgrade to Elite for permanent storage"
   }
 }
