@@ -63,7 +63,9 @@
     "toastResetError": "재설정 오류",
     "toastPasswordUpdated": "비밀번호 업데이트 완료",
     "toastPasswordUpdatedDesc": "비밀번호가 성공적으로 업데이트되었습니다.",
-    "toastUpdateError": "업데이트 오류"
+    "toastUpdateError": "업데이트 오류",
+    "signUpFree": "무료 가입",
+    "joinTraders": "1,300명 이상의 트레이더 합류"
   },
   "navigation": {
     "patternGenerator": "패턴 생성기",
