@@ -145,7 +145,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Win Rate</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">Win Rate <InfoTooltip term="winRate" size="h-3 w-3" /></span>
               <span className="text-sm font-semibold tabular-nums">{winRate}%</span>
             </div>
           </CardContent>

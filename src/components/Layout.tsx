@@ -70,6 +70,7 @@ const Layout = ({ children }: LayoutProps) => {
         />
       )}
       <GuestSignupNudge />
+      <OnboardingTour />
     </div>
   );
 };

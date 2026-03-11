@@ -53,11 +53,11 @@ const ComparisonBanner = ({ previous, current }: ComparisonBannerProps) => {
         <span className="text-sm font-medium text-primary">Optimization Comparison vs. Previous Run</span>
       </div>
       <div className="flex items-center justify-around flex-wrap gap-4">
-        <DeltaChip label="Win Rate" prev={previous.winRate} curr={current.winRate} format={fmtPct} />
-        <DeltaChip label="Expectancy" prev={previous.expectancy} curr={current.expectancy} format={fmtR} />
-        <DeltaChip label="Sharpe" prev={previous.sharpe} curr={current.sharpe} format={fmtNum} />
-        <DeltaChip label="Profit Factor" prev={previous.profitFactor} curr={current.profitFactor} format={fmtNum} />
-        <DeltaChip label="Trades" prev={previous.totalTrades} curr={current.totalTrades} format={v => String(v)} higherIsBetter={false} />
+        <DeltaChip label="Win Rate" prev={previous.winRate} curr={current.winRate} format={fmtPct} glossaryTerm="winRate" />
+        <DeltaChip label="Expectancy" prev={previous.expectancy} curr={current.expectancy} format={fmtR} glossaryTerm="expectancy" />
+        <DeltaChip label="Sharpe" prev={previous.sharpe} curr={current.sharpe} format={fmtNum} glossaryTerm="sharpe" />
+        <DeltaChip label="Profit Factor" prev={previous.profitFactor} curr={current.profitFactor} format={fmtNum} glossaryTerm="profitFactor" />
+        <DeltaChip label="Trades" prev={previous.totalTrades} curr={current.totalTrades} format={v => String(v)} higherIsBetter={false} glossaryTerm="sampleSize" />
       </div>
     </div>
   );
