@@ -50,8 +50,8 @@ const Layout = ({ children }: LayoutProps) => {
             onContextConsumed={copilot.consumePendingContext}
           />
         )}
+        <CaptureButton />
       </div>
-    );
   }
 
   return (
