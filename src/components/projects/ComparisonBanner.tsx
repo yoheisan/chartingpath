@@ -14,12 +14,13 @@ interface ComparisonBannerProps {
   current: Metrics;
 }
 
-const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true }: {
+const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true, glossaryTerm }: {
   label: string;
   prev: number;
   curr: number;
   format: (v: number) => string;
   higherIsBetter?: boolean;
+  glossaryTerm?: string;
 }) => {
   const diff = curr - prev;
   const pctChange = prev !== 0 ? (diff / Math.abs(prev)) * 100 : curr !== 0 ? 100 : 0;
