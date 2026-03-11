@@ -81,6 +81,8 @@ async function loadLanguageBundle(langCode: string, forceReload = false): Promis
   i18n.addResourceBundle(langCode, 'translation', bundle, true, true);
   loadedLanguages.add(langCode);
   console.log(`[i18n-loader] ${forceReload ? 'Reloaded' : 'Loaded'} ${langCode} from DB`);
+  // Force re-render of all components using useTranslation
+  i18n.emit('loaded');
   return true;
 }
 
