@@ -106,7 +106,7 @@ const AuthButton = () => {
             {t('auth.signUpFree', 'Sign Up Free')}
           </Link>
         </Button>
-        <span className="text-[10px] text-muted-foreground/60 hidden sm:inline">Join 1,300+ traders</span>
+        <span className="text-[10px] text-muted-foreground/60 hidden sm:inline">{t('auth.joinTraders', 'Join 1,300+ traders')}</span>
       </div>
     );
   }
