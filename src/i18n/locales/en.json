@@ -1076,10 +1076,6 @@
   "guestNudge": {
     "message": "You're on a guest preview — Create your free account to save results and get alerts."
   },
-  "auth": {
-    "signUpFree": "Sign Up Free",
-    "joinTraders": "Join 1,300+ traders"
-  },
   "notFound": {
     "message": "Oops! Page not found",
     "returnHome": "Back to Home",
