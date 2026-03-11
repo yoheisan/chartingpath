@@ -1549,7 +1549,7 @@ const PatternLabWizard = () => {
                     {!hasNoPatterns && hasLowPatterns && !zeroPatternCombos.length && (
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>Few pattern occurrences found — results may not be statistically significant.</span>
+                        <span>{t('patternLabWizard.fewOccurrences')}</span>
                       </div>
                     )}
                   </div>
