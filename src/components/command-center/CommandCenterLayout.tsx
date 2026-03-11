@@ -14,6 +14,7 @@ import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { PaperTradingPanel } from './PaperTradingPanel';
+import { ForwardPerformancePanel } from './ForwardPerformancePanel';
 
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
@@ -31,7 +32,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity } from 'lucide-react';
 
 
 // Lazy load mobile layout for code splitting
@@ -671,6 +672,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               >
                 <Wallet className="h-3.5 w-3.5" />
               </button>
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'forward' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+                onClick={() => { setRightPanelTab('forward'); toggleSidebar(false); }}
+                title="Forward Performance"
+              >
+                <Activity className="h-3.5 w-3.5" />
+              </button>
               <div className="flex-1" />
               <button
                 className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
@@ -709,6 +720,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="paper" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Paper
                       </TabsTrigger>
+                      <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                        Forward
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
                       <WatchlistPanel
@@ -726,6 +740,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     </TabsContent>
                     <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
                       <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                    </TabsContent>
+                    <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
+                      <ForwardPerformancePanel userId={userId} />
                     </TabsContent>
                   </Tabs>
                 </ResizablePanel>

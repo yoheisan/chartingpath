@@ -5125,5 +5125,53 @@
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
     "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to ChartingPath",
+    "welcomeDesc": "ChartingPath validates chart patterns against 320,000+ historical outcomes so you can trade with real statistical edges — not guesswork.",
+    "screenerTitle": "Live Pattern Screener",
+    "screenerDesc": "Real-time signals across 1,200+ instruments. Each pattern is graded by quality and backed by historical win rates. Filter by asset class, timeframe, and grade.",
+    "patternLabTitle": "Pattern Lab — Backtest Any Pattern",
+    "patternLabDesc": "Pick a pattern, choose a symbol, and see exactly how it performed over years of data. Sharpe ratio, profit factor, equity curve — all calculated instantly.",
+    "dashboardTitle": "Your Command Center",
+    "dashboardDesc": "Charts, watchlist, alerts, and paper trading — all in one screen. Click any signal from the screener to see it on your dashboard instantly.",
+    "edgeAtlasTitle": "Edge Atlas — Find the Best Edges",
+    "edgeAtlasDesc": "Discover which patterns perform best on which timeframes — ranked by annualized return. The data does the work so you trade smarter.",
+    "tryIt": "Try it now →",
+    "skip": "Skip tour",
+    "next": "Next",
+    "getStarted": "Let's go!"
+  },
+  "glossary": {
+    "winRate": "The percentage of trades that end in profit. A 60% win rate means 6 out of 10 trades are winners.",
+    "expectancy": "Average return per trade in R-multiples. Positive expectancy means the strategy is profitable over time.",
+    "sharpe": "Risk-adjusted return metric. Higher is better. Measures excess return per unit of volatility. Above 1.0 is good, above 2.0 is excellent.",
+    "profitFactor": "Gross profits divided by gross losses. Above 1.0 means overall profitable. Above 2.0 is considered strong.",
+    "maxDrawdown": "The largest peak-to-trough decline in portfolio value. Measures worst-case loss scenario.",
+    "riskReward": "Ratio between potential loss and potential gain. A 1:2 R:R means you risk $1 to potentially make $2.",
+    "sampleSize": "Number of historical trades used to calculate statistics. Larger samples (50+) give more reliable results.",
+    "grade": "Overall signal quality score combining pattern clarity, volume confirmation, and trend alignment.",
+    "timeframe": "The time period each candlestick represents (e.g., 1H = 1 hour, 1D = 1 day).",
+    "takeProfit": "The target price where a winning trade is closed to lock in gains.",
+    "stopLoss": "The price level where a losing trade is automatically closed to limit losses.",
+    "paperTrading": "Simulated trading with virtual money to practice strategies without financial risk.",
+    "signalAge": "How long ago the pattern was first detected. Fresher signals tend to be more actionable.",
+    "barsToOutcome": "Average number of candlesticks from entry to the trade reaching its target or stop loss.",
+    "cagr": "Compound Annual Growth Rate — the smoothed annual return over a given period.",
+    "sortino": "Like Sharpe but only penalizes downside volatility, giving a better picture of risk-adjusted returns.",
+    "annualizedReturn": "Estimated yearly return if the strategy were traded continuously.",
+    "tradesPerYear": "Estimated number of trading opportunities per year for this pattern/timeframe.",
+    "balance": "Current paper trading portfolio value including initial capital plus realized gains and losses.",
+    "totalPnl": "Total Profit & Loss — the sum of all closed trade results.",
+    "rMultiple": "Return expressed as a multiple of initial risk. A +2R trade means you made 2× what you risked."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Compares your actual paper trading results against backtest predictions for the same patterns.",
+    "signInRequired": "Sign in to track forward performance",
+    "noData": "Complete some paper trades to see forward performance vs. backtests",
+    "liveWR": "Live WR",
+    "trades": "Trades",
+    "backtestComparison": "vs. Backtest"
   }
 }

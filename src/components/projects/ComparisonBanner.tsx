@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 interface Metrics {
   winRate: number;
@@ -13,12 +14,13 @@ interface ComparisonBannerProps {
   current: Metrics;
 }
 
-const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true }: {
+const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true, glossaryTerm }: {
   label: string;
   prev: number;
   curr: number;
   format: (v: number) => string;
   higherIsBetter?: boolean;
+  glossaryTerm?: string;
 }) => {
   const diff = curr - prev;
   const pctChange = prev !== 0 ? (diff / Math.abs(prev)) * 100 : curr !== 0 ? 100 : 0;
@@ -27,7 +29,7 @@ const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true }: {
 
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[100px]">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground flex items-center gap-0.5">{label}{glossaryTerm && <InfoTooltip term={glossaryTerm} size="h-3 w-3" />}</span>
       <span className="text-sm font-semibold">{format(curr)}</span>
       <span className={`text-xs font-medium flex items-center gap-0.5 ${
         isNeutral ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'
@@ -51,11 +53,11 @@ const ComparisonBanner = ({ previous, current }: ComparisonBannerProps) => {
         <span className="text-sm font-medium text-primary">Optimization Comparison vs. Previous Run</span>
       </div>
       <div className="flex items-center justify-around flex-wrap gap-4">
-        <DeltaChip label="Win Rate" prev={previous.winRate} curr={current.winRate} format={fmtPct} />
-        <DeltaChip label="Expectancy" prev={previous.expectancy} curr={current.expectancy} format={fmtR} />
-        <DeltaChip label="Sharpe" prev={previous.sharpe} curr={current.sharpe} format={fmtNum} />
-        <DeltaChip label="Profit Factor" prev={previous.profitFactor} curr={current.profitFactor} format={fmtNum} />
-        <DeltaChip label="Trades" prev={previous.totalTrades} curr={current.totalTrades} format={v => String(v)} higherIsBetter={false} />
+        <DeltaChip label="Win Rate" prev={previous.winRate} curr={current.winRate} format={fmtPct} glossaryTerm="winRate" />
+        <DeltaChip label="Expectancy" prev={previous.expectancy} curr={current.expectancy} format={fmtR} glossaryTerm="expectancy" />
+        <DeltaChip label="Sharpe" prev={previous.sharpe} curr={current.sharpe} format={fmtNum} glossaryTerm="sharpe" />
+        <DeltaChip label="Profit Factor" prev={previous.profitFactor} curr={current.profitFactor} format={fmtNum} glossaryTerm="profitFactor" />
+        <DeltaChip label="Trades" prev={previous.totalTrades} curr={current.totalTrades} format={v => String(v)} higherIsBetter={false} glossaryTerm="sampleSize" />
       </div>
     </div>
   );

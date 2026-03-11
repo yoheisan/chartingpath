@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { GuestSignupNudge } from "./GuestSignupNudge";
+import { OnboardingTour } from "./onboarding/OnboardingTour";
 
 interface LayoutProps {
   children: ReactNode;
@@ -69,6 +70,7 @@ const Layout = ({ children }: LayoutProps) => {
         />
       )}
       <GuestSignupNudge />
+      <OnboardingTour />
     </div>
   );
 };

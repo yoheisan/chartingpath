@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 interface PaperPortfolio {
   id: string;
@@ -131,20 +132,20 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
         <Card className="border-border/60 bg-muted/20">
           <CardContent className="p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Balance</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">Balance <InfoTooltip term="balance" size="h-3 w-3" /></span>
               <span className="text-sm font-semibold tabular-nums">
                 ${(portfolio?.current_balance ?? 100000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Total P&L</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">Total P&L <InfoTooltip term="totalPnl" size="h-3 w-3" /></span>
               <span className={cn('text-sm font-semibold tabular-nums', pnlColor(portfolio?.total_pnl ?? 0))}>
                 {(portfolio?.total_pnl ?? 0) >= 0 ? '+' : ''}
                 ${(portfolio?.total_pnl ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Win Rate</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">Win Rate <InfoTooltip term="winRate" size="h-3 w-3" /></span>
               <span className="text-sm font-semibold tabular-nums">{winRate}%</span>
             </div>
           </CardContent>
