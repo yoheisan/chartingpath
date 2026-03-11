@@ -223,10 +223,6 @@
   "guestNudge": {
     "message": "Misafir önizlemesindesiniz — Sonuçları kaydetmek ve uyarı almak için ücretsiz hesap oluşturun."
   },
-  "auth": {
-    "signUpFree": "Ücretsiz Kaydol",
-    "joinTraders": "1.300+ yatırımcıya katılın"
-  },
   "aiBuilder": {
     "timeSession": "Zaman & Seans",
     "executionRisk": "Uygulama & Risk",
