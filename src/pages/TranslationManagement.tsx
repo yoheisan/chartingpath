@@ -562,7 +562,7 @@ export const TranslationManagement = () => {
       // 2. Get gap analysis from DB
       toast({ title: 'Step 2/3', description: 'Analyzing gaps...' });
       const { data: healData, error: healError } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'heal_all_gaps' }
+        body: { action: 'heal_all_gaps', en_fallback_content: enTranslations }
       });
       if (healError) throw healError;
 
