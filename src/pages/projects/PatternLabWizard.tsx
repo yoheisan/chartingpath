@@ -1515,7 +1515,7 @@ const PatternLabWizard = () => {
                           {p.count === 0 ? (
                             <span className="flex items-center gap-1 text-destructive font-medium">
                               <AlertCircle className="h-3 w-3" />
-                              None
+                              {t('patternLabWizard.none')}
                             </span>
                           ) : p.count < 5 ? (
                             <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
