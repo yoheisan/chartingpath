@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
 import { useMarketDataCache } from '@/hooks/useMarketDataCache';
 import { useTranslation } from 'react-i18next';
+import { CardCaptureButton } from '@/components/capture';
 
 interface BreadthData {
   advances: number;
@@ -266,22 +267,25 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" data-capture-target>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <h3 className="font-semibold text-sm flex items-center gap-1.5">
           <Globe className="h-4 w-4" />
           {t('commandCenter.marketOverview')}
         </h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={refreshMarket}
-          disabled={loading}
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-        </Button>
+        <div className="flex items-center gap-1">
+          <CardCaptureButton label="Market Overview" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={refreshMarket}
+            disabled={loading}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}

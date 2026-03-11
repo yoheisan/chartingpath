@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { CardCaptureButton } from '@/components/capture';
 
 interface WatchlistPanelProps {
   userId?: string;
@@ -192,7 +193,7 @@ export function WatchlistPanel({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" data-capture-target>
       {/* Header */}
       <div className="px-3 py-2 border-b border-border">
         <div className="flex items-center justify-between mb-2">
@@ -206,6 +207,7 @@ export function WatchlistPanel({
               </Badge>
             )}
           </h3>
+          <CardCaptureButton label="Watchlist" />
         </div>
         {isPaidUser ? (
           <UniversalSymbolSearch

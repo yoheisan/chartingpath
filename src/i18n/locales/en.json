@@ -5191,6 +5191,7 @@
     "maxDuration": "Max {{seconds}}s recording",
     "stop": "Stop",
     "captureChart": "Capture Chart",
+    "captureArea": "Capture {{area}}",
     "shareCapture": "Share Capture",
     "download": "Download",
     "copyClipboard": "Copy",
