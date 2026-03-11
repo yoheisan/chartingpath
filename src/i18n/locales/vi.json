@@ -10,5 +10,23 @@
     "member": "Thành viên",
     "admin": "Quản trị viên",
     "superAdmin": "Quản trị viên cấp cao"
+  },
+  "hero": {
+    "headlinePrimary": "Biết liệu mô hình có hoạt động không",
+    "headlineAccent": "trước khi bạn giao dịch",
+    "subtitleMain": "Mỗi mô hình được kiểm tra ngược với hơn 320.000 kết quả thị trường thực. Tỷ lệ thắng, kỳ vọng và xếp hạng chất lượng — không phải phỏng đoán.",
+    "socialProof": "Hơn 320.000 kết quả mô hình đã được phân tích. Miễn phí để bắt đầu — hoạt động cùng TradingView.",
+    "ctaPrimary": "Xem Mô Hình Trực Tiếp Miễn Phí",
+    "ctaSecondary": "Thử Backtest Miễn Phí",
+    "createFreeAccount": "Tạo Tài Khoản Miễn Phí",
+    "searchPlaceholder": "Tìm kiếm bất kỳ mã — AAPL, BTC, EUR/USD…",
+    "instruments": "công cụ",
+    "instrumentsFallback": "800+ công cụ",
+    "trustSignals": "Mọi tín hiệu đã được backtest",
+    "trustAssumptions": "Tỷ lệ thắng hiển thị trước",
+    "trustRepeatability": "Không có chỉ báo hộp đen",
+    "copilotHint": "Được hỗ trợ bởi AI Trading Copilot — nhấn ⌘K ở bất kỳ đâu",
+    "midPageHeadline": "Xem dữ liệu đằng sau mô hình",
+    "midPageSubtext": "Tài khoản miễn phí. Không cần thẻ tín dụng. Dữ liệu backtest thực từ ngày đầu tiên."
   }
 }

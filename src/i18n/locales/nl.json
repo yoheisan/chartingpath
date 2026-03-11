@@ -79,5 +79,23 @@
     "confidenceScore": "Vertrouwensscore",
     "sampleSize": "Steekproefgrootte",
     "notEnoughData": "Onvoldoende historische gegevens voor dit instrument"
+  },
+  "hero": {
+    "headlinePrimary": "Weet of een patroon werkt",
+    "headlineAccent": "voordat je ermee handelt",
+    "subtitleMain": "Elk patroon getest tegen 320.000+ echte marktresultaten. Winstpercentages, verwachtingswaarde en kwaliteitsscores — geen giswerk.",
+    "socialProof": "320.000+ patroonresultaten geanalyseerd. Gratis om te beginnen — werkt samen met TradingView.",
+    "ctaPrimary": "Bekijk Live Patronen Gratis",
+    "ctaSecondary": "Probeer een Gratis Backtest",
+    "createFreeAccount": "Gratis Account Aanmaken",
+    "searchPlaceholder": "Zoek een ticker — AAPL, BTC, EUR/USD…",
+    "instruments": "instrumenten",
+    "instrumentsFallback": "800+ instrumenten",
+    "trustSignals": "Elk signaal backtested",
+    "trustAssumptions": "Winstpercentages vooraf getoond",
+    "trustRepeatability": "Geen black-box indicatoren",
+    "copilotHint": "Aangedreven door AI Trading Copilot — druk overal op ⌘K",
+    "midPageHeadline": "Bekijk de data achter het patroon",
+    "midPageSubtext": "Gratis account. Geen creditcard. Echte backtest-data vanaf dag één."
   }
 }

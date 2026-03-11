@@ -79,5 +79,23 @@
     "confidenceScore": "Wynik pewności",
     "sampleSize": "Wielkość próby",
     "notEnoughData": "Niewystarczająca ilość danych historycznych dla tego instrumentu"
+  },
+  "hero": {
+    "headlinePrimary": "Sprawdź, czy formacja działa",
+    "headlineAccent": "zanim zaczniesz nią handlować",
+    "subtitleMain": "Każda formacja przetestowana na 320 000+ rzeczywistych wyników rynkowych. Współczynniki wygranych, oczekiwana wartość i oceny jakości — bez zgadywania.",
+    "socialProof": "Przeanalizowano 320 000+ wyników formacji. Zacznij za darmo — działa z TradingView.",
+    "ctaPrimary": "Zobacz Formacje na Żywo za Darmo",
+    "ctaSecondary": "Wypróbuj Darmowy Backtest",
+    "createFreeAccount": "Utwórz Darmowe Konto",
+    "searchPlaceholder": "Szukaj dowolnego tickera — AAPL, BTC, EUR/USD…",
+    "instruments": "instrumentów",
+    "instrumentsFallback": "800+ instrumentów",
+    "trustSignals": "Każdy sygnał przetestowany",
+    "trustAssumptions": "Współczynniki wygranych pokazane z góry",
+    "trustRepeatability": "Brak wskaźników typu czarna skrzynka",
+    "copilotHint": "Napędzany przez AI Trading Copilot — naciśnij ⌘K gdziekolwiek",
+    "midPageHeadline": "Zobacz dane stojące za formacją",
+    "midPageSubtext": "Darmowe konto. Bez karty kredytowej. Prawdziwe dane backtestowe od pierwszego dnia."
   }
 }
