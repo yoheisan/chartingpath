@@ -4236,5 +4236,22 @@
     "liveWR": "実績WR",
     "trades": "トレード数",
     "backtestComparison": "vs. バックテスト"
+  },
+  "capture": {
+    "captureAndShare": "キャプチャ＆共有",
+    "screenshot": "スクリーンショット",
+    "recordScreen": "画面録画",
+    "microphone": "マイク",
+    "maxDuration": "最大{{seconds}}秒録画",
+    "stop": "停止",
+    "captureChart": "チャートをキャプチャ",
+    "shareCapture": "キャプチャを共有",
+    "download": "ダウンロード",
+    "copyClipboard": "コピー",
+    "copied": "コピー済み！",
+    "share": "共有",
+    "createLink": "リンクを作成",
+    "expiresIn24h": "リンクは24時間で期限切れ",
+    "elitePermanentStorage": "Eliteにアップグレードで永久保存"
   }
 }

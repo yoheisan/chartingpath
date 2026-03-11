@@ -1421,5 +1421,22 @@
     "liveWR": "실전 승률",
     "trades": "거래",
     "backtestComparison": "vs. 백테스트"
+  },
+  "capture": {
+    "captureAndShare": "캡처 및 공유",
+    "screenshot": "스크린샷",
+    "recordScreen": "화면 녹화",
+    "microphone": "마이크",
+    "maxDuration": "최대 {{seconds}}초 녹화",
+    "stop": "중지",
+    "captureChart": "차트 캡처",
+    "shareCapture": "캡처 공유",
+    "download": "다운로드",
+    "copyClipboard": "복사",
+    "copied": "복사됨!",
+    "share": "공유",
+    "createLink": "링크 생성",
+    "expiresIn24h": "링크는 24시간 후 만료",
+    "elitePermanentStorage": "Elite 업그레이드로 영구 저장"
   }
 }

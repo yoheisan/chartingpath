@@ -1367,5 +1367,22 @@
     "liveWR": "Lewendige WR",
     "trades": "Transaksies",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Vang & Deel",
+    "screenshot": "Skermkiekie",
+    "recordScreen": "Neem skerm op",
+    "microphone": "Mikrofoon",
+    "maxDuration": "Maks {{seconds}}s opname",
+    "stop": "Stop",
+    "captureChart": "Vang grafiek",
+    "shareCapture": "Deel vangste",
+    "download": "Laai af",
+    "copyClipboard": "Kopieer",
+    "copied": "Gekopieer!",
+    "share": "Deel",
+    "createLink": "Skep skakel",
+    "expiresIn24h": "Skakel verval oor 24 uur",
+    "elitePermanentStorage": "Opgradeer na Elite vir permanente berging"
   }
 }

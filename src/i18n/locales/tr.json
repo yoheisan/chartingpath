@@ -1379,5 +1379,22 @@
     "liveWR": "Canlı KO",
     "trades": "İşlemler",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Yakala ve Paylaş",
+    "screenshot": "Ekran görüntüsü",
+    "recordScreen": "Ekran kaydı",
+    "microphone": "Mikrofon",
+    "maxDuration": "Maks {{seconds}}sn kayıt",
+    "stop": "Durdur",
+    "captureChart": "Grafiği yakala",
+    "shareCapture": "Yakalamayı paylaş",
+    "download": "İndir",
+    "copyClipboard": "Kopyala",
+    "copied": "Kopyalandı!",
+    "share": "Paylaş",
+    "createLink": "Bağlantı oluştur",
+    "expiresIn24h": "Bağlantı 24 saat içinde sona erer",
+    "elitePermanentStorage": "Kalıcı depolama için Elite'e yükseltin"
   }
 }

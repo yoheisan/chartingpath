@@ -1402,5 +1402,22 @@
     "liveWR": "Реальный WR",
     "trades": "Сделки",
     "backtestComparison": "vs. Бэктест"
+  },
+  "capture": {
+    "captureAndShare": "Захват и Поделиться",
+    "screenshot": "Снимок экрана",
+    "recordScreen": "Запись экрана",
+    "microphone": "Микрофон",
+    "maxDuration": "Макс. {{seconds}}с записи",
+    "stop": "Стоп",
+    "captureChart": "Захватить график",
+    "shareCapture": "Поделиться захватом",
+    "download": "Скачать",
+    "copyClipboard": "Копировать",
+    "copied": "Скопировано!",
+    "share": "Поделиться",
+    "createLink": "Создать ссылку",
+    "expiresIn24h": "Ссылка истекает через 24 часа",
+    "elitePermanentStorage": "Перейдите на Elite для постоянного хранения"
   }
 }

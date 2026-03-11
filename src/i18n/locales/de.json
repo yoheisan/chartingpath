@@ -1409,5 +1409,22 @@
     "liveWR": "Live-GR",
     "trades": "Trades",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Aufnehmen & Teilen",
+    "screenshot": "Screenshot",
+    "recordScreen": "Bildschirm aufnehmen",
+    "microphone": "Mikrofon",
+    "maxDuration": "Max. {{seconds}}s Aufnahme",
+    "stop": "Stopp",
+    "captureChart": "Chart aufnehmen",
+    "shareCapture": "Aufnahme teilen",
+    "download": "Herunterladen",
+    "copyClipboard": "Kopieren",
+    "copied": "Kopiert!",
+    "share": "Teilen",
+    "createLink": "Link erstellen",
+    "expiresIn24h": "Link läuft in 24 Stunden ab",
+    "elitePermanentStorage": "Upgrade auf Elite für dauerhaften Speicher"
   }
 }
