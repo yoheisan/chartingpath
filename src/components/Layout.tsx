@@ -72,6 +72,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
       <GuestSignupNudge />
       <OnboardingTour />
+      <CaptureButton />
     </div>
   );
 };
