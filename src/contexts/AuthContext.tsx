@@ -55,9 +55,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             } catch {}
 
-            // Send welcome email for new signups
+            // Onboarding + welcome email for new signups
             if (event === 'SIGNED_IN' && user.created_at) {
               const isNewUser = Date.now() - new Date(user.created_at).getTime() < 60000;
+              if (!isNewUser) {
+                // Returning user — mark onboarding as complete so tour never shows
+                try { localStorage.setItem('chartingpath_onboarding_completed', 'true'); } catch {}
+              }
               if (isNewUser) {
                 try {
                   const { data: prefs } = await supabase
