@@ -1534,7 +1534,7 @@ const PatternLabWizard = () => {
                       <Alert variant="destructive" className="mt-2 py-2">
                         <AlertCircle className="h-3.5 w-3.5" />
                         <AlertDescription className="text-xs">
-                          No historical pattern occurrences found for this configuration. The backtest would return 0 trades. Try a different instrument, pattern, or timeframe.
+                          {t('patternLabWizard.noOccurrencesFound')}
                         </AlertDescription>
                       </Alert>
                     )}
