@@ -37,6 +37,31 @@ export const CaptureButton = () => {
   const [captureResult, setCaptureResult] = useState<CaptureResult | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
+  const handleScreenshot = useCallback(async () => {
+    setPopoverOpen(false);
+    await new Promise(r => setTimeout(r, 200));
+    const result = await captureScreenshot(null, 'screen');
+    if (result) {
+      setCaptureResult(result);
+      setShareDialogOpen(true);
+    }
+  }, [captureScreenshot]);
+
+  const handleStartRecording = useCallback(async () => {
+    setPopoverOpen(false);
+    await startRecording(includeAudio);
+  }, [startRecording, includeAudio]);
+
+  const handleStopRecording = useCallback(() => {
+    stopRecording();
+  }, [stopRecording]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   // Don't show for unauthenticated users
   if (!isAuthenticated) return null;
 

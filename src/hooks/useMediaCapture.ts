@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 export type CaptureType = 'screenshot' | 'video';
 export type CaptureContextType = 'chart' | 'screen' | 'area';
 
-interface CaptureResult {
+export interface CaptureResult {
   blob: Blob;
   type: CaptureType;
   fileName: string;
