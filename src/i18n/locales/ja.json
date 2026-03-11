@@ -2648,7 +2648,21 @@
     "automateGet2": "出口モデル付きセットアップオプティマイザー",
     "automateGet3": "リピート可能な勝者/敗者分析",
     "automateGet4": "Pine Script v6 / MQL4/5エクスポート",
-    "patterns": "パターン"
+    "patterns": "パターン",
+    "quickStart": "クイックスタート — ワンクリックでバックテストを試す",
+    "quickStartApple": "AAPLのダブルボトム",
+    "quickStartBtc": "ビットコインのH&S",
+    "quickStartEurusd": "EUR/USDの下降ウェッジ",
+    "quickStartDaily3y": "日足 • 3年間遡及",
+    "patternOccurrences": "パターン発生回数",
+    "none": "なし",
+    "found": "{{count}}件発見",
+    "noOccurrencesFound": "この設定では過去のパターン発生が見つかりません。バックテストは0トレードを返します。別の銘柄、パターン、または時間足をお試しください。",
+    "zeroOccurrenceCombos": "{{count}}件の組み合わせに発生がなく、0トレードとなります。",
+    "fewOccurrences": "パターン発生回数が少なく、統計的に有意でない可能性があります。",
+    "checkingPatternOccurrences": "パターン発生を確認中…",
+    "checkingDataAvailability": "データの利用可能性を確認中…",
+    "lowDataWarning": "データが少ないため、少数のトレードで信頼性の低い結果になる可能性があります。"
   },
   "patternNames": {
     "Bull Flag": "ブルフラッグ",
