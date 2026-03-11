@@ -86,6 +86,11 @@ i18n
     interpolation: {
       escapeValue: false, // React already does escaping
     },
+    // Re-render components when resource bundles are added (DB overlay)
+    react: {
+      bindI18n: 'languageChanged loaded added',
+      bindI18nStore: 'added removed',
+    },
     saveMissing: true,
     missingKeyHandler: missingKeyCollector.handler,
   });
