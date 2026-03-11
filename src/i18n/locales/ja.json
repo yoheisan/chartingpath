@@ -63,7 +63,9 @@
     "toastResetError": "リセットエラー",
     "toastPasswordUpdated": "パスワードが更新されました",
     "toastPasswordUpdatedDesc": "パスワードが正常に更新されました",
-    "toastUpdateError": "更新エラー"
+    "toastUpdateError": "更新エラー",
+    "signUpFree": "無料登録",
+    "joinTraders": "1,300人以上のトレーダーが参加"
   },
   "tradingCopilot": {
     "moat": {
@@ -205,7 +207,17 @@
     "learningCenter": "ラーニングセンター",
     "stockMarket": "株式市場",
     "cryptocurrency": "暗号通貨",
-    "commodities": "商品"
+    "commodities": "商品",
+    "agentScoring": "エージェントスコアリング"
+  },
+  "metrics": {
+    "instruments": "銘柄",
+    "patterns": "パターン",
+    "trades": "バックテスト済み結果",
+    "avgWinRate": "平均勝率 (Aグレード)"
+  },
+  "guestNudge": {
+    "message": "ゲストプレビュー中です — 無料アカウントを作成して、結果の保存やアラートを受け取りましょう。"
   },
   "landing": {
     "researchDesc": "過去のパフォーマンスデータを使用して、任意のティッカー上の任意のパターンを検証します。",

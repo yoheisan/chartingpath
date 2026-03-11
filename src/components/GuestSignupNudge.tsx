@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { X, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -8,6 +9,7 @@ const DISMISSED_KEY = 'guest_nudge_dismissed';
 
 export function GuestSignupNudge() {
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISSED_KEY) === '1';
@@ -33,11 +35,11 @@ export function GuestSignupNudge() {
         </button>
         <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
         <span className="text-muted-foreground truncate">
-          You're on a guest preview — Create your free account to save results and get alerts.
+          {t('guestNudge.message', "You're on a guest preview — Create your free account to save results and get alerts.")}
         </span>
       </div>
       <Button asChild size="sm" className="shrink-0 ml-3 h-7 text-xs">
-        <Link to="/auth?mode=signup">Sign Up Free</Link>
+        <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
       </Button>
     </div>
   );

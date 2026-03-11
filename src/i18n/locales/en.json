@@ -63,7 +63,9 @@
     "toastPasswordUpdated": "Password Updated",
     "toastPasswordUpdatedDesc": "Your password has been successfully updated",
     "toastUpdateError": "Update Error",
-    "toastAuthError": "Authentication Error"
+    "toastAuthError": "Authentication Error",
+    "signUpFree": "Sign Up Free",
+    "joinTraders": "Join 1,300+ traders"
   },
   "about": {
     "commitmentDesc": "Whether you are taking your first steps in trading or you are a seasoned professional, ChartingPath is committed to providing you with the tools, knowledge, and support you need to succeed. We are not just a platform – we are your partner in the pursuit of trading excellence.",
@@ -1062,7 +1064,17 @@
     "settings": "Settings",
     "stockMarket": "Stock Market",
     "tools": "Tools",
-    "tradingStrategies": "Trading Strategies"
+    "tradingStrategies": "Trading Strategies",
+    "agentScoring": "Agent Scoring"
+  },
+  "metrics": {
+    "instruments": "Instruments",
+    "patterns": "Patterns",
+    "trades": "Backtested Outcomes",
+    "avgWinRate": "Avg Win Rate (A-Grade)"
+  },
+  "guestNudge": {
+    "message": "You're on a guest preview — Create your free account to save results and get alerts."
   },
   "notFound": {
     "message": "Oops! Page not found",

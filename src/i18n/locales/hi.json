@@ -30,7 +30,9 @@
     "toastAccountCreated": "खाता बनाया गया",
     "toastAuthError": "प्रमाणीकरण त्रुटि",
     "toastSignedIn": "सफलतापूर्वक साइन इन किया गया",
-    "toastWelcomeBack": "वापस स्वागत है"
+    "toastWelcomeBack": "वापस स्वागत है",
+    "signUpFree": "मुफ्त साइन अप",
+    "joinTraders": "1,300+ ट्रेडर्स शामिल हैं"
   },
   "tradingCopilot": {
     "challenges": {
@@ -357,7 +359,17 @@
     "screener": "Screener",
     "backToHome": "होम पर वापस जाएँ",
     "patternLab": "पैटर्न लैब",
-    "alerts": "अलर्ट"
+    "alerts": "अलर्ट",
+    "agentScoring": "एजेंट स्कोरिंग"
+  },
+  "metrics": {
+    "instruments": "इंस्ट्रूमेंट्स",
+    "patterns": "पैटर्न",
+    "trades": "बैकटेस्ट किए गए परिणाम",
+    "avgWinRate": "औसत जीत दर (A-ग्रेड)"
+  },
+  "guestNudge": {
+    "message": "आप गेस्ट प्रीव्यू पर हैं — परिणाम सहेजने और अलर्ट पाने के लिए मुफ्त अकाउंट बनाएं।"
   },
   "patternLibrary": {
     "faqLink": "पैटर्न सफलता दरों के बारे में प्रश्न? हमारे FAQ देखें",
