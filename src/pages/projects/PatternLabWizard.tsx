@@ -1503,7 +1503,7 @@ const PatternLabWizard = () => {
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                       <FlaskConical className="h-3 w-3" />
-                      Pattern Occurrences
+                      {t('patternLabWizard.patternOccurrences')}
                     </p>
                     <div className="space-y-1.5">
                       {patternCoverage.map(p => (
