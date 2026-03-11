@@ -14,6 +14,7 @@ import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { PaperTradingPanel } from './PaperTradingPanel';
+import { ForwardPerformancePanel } from './ForwardPerformancePanel';
 
 import { PatternOccurrence } from './PatternOccurrencesPanel';
 import { DashboardPatternStudy } from './DashboardPatternStudy';
