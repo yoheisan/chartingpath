@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 interface Metrics {
   winRate: number;
