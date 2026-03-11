@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { EconomicCalendarWidget } from './EconomicCalendarWidget';
 import { useMarketDataCache } from '@/hooks/useMarketDataCache';
 import { useTranslation } from 'react-i18next';
+import { CardCaptureButton } from '@/components/capture';
 
 interface BreadthData {
   advances: number;

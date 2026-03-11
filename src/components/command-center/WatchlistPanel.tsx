@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { CardCaptureButton } from '@/components/capture';
 
 interface WatchlistPanelProps {
   userId?: string;

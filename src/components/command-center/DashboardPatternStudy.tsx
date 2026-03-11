@@ -306,7 +306,7 @@ export function DashboardPatternStudy({
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4" data-capture-target>
       {/* Active Patterns Section */}
       {activePatterns.length > 0 && (
         <Card className="border-primary/50">
