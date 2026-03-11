@@ -54,6 +54,10 @@ const ChartAnalysisToolbar = memo(({
   onSelectVisible,
   onSendToCopilot,
   onClear,
+  chartContainerRef,
+  symbol,
+  timeframe,
+  pattern,
   className
 }: ChartAnalysisToolbarProps) => {
   const { t } = useTranslation();
