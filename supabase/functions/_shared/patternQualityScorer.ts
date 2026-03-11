@@ -677,7 +677,8 @@ export function calculatePatternQualityScore(
     takeProfit,
     atr,
     trendIndicators,
-    historicalPerformance
+    historicalPerformance,
+    repeatabilityProof
   } = input;
   
   const factors: QualityFactor[] = [];
