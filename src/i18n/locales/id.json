@@ -1374,5 +1374,22 @@
     "liveWR": "WR Live",
     "trades": "Trade",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Tangkap & Bagikan",
+    "screenshot": "Tangkapan Layar",
+    "recordScreen": "Rekam Layar",
+    "microphone": "Mikrofon",
+    "maxDuration": "Maks {{seconds}}d rekaman",
+    "stop": "Berhenti",
+    "captureChart": "Tangkap Grafik",
+    "shareCapture": "Bagikan Tangkapan",
+    "download": "Unduh",
+    "copyClipboard": "Salin",
+    "copied": "Disalin!",
+    "share": "Bagikan",
+    "createLink": "Buat Tautan",
+    "expiresIn24h": "Tautan kedaluwarsa dalam 24 jam",
+    "elitePermanentStorage": "Upgrade ke Elite untuk penyimpanan permanen"
   }
 }

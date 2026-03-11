@@ -156,5 +156,22 @@
     "checkingPatternOccurrences": "Checking pattern occurrences…",
     "checkingDataAvailability": "Checking data availability…",
     "lowDataWarning": "Low data may produce unreliable results with few trades."
+  },
+  "capture": {
+    "captureAndShare": "Przechwytuj i Udostępniaj",
+    "screenshot": "Zrzut ekranu",
+    "recordScreen": "Nagrywanie ekranu",
+    "microphone": "Mikrofon",
+    "maxDuration": "Maks. {{seconds}}s nagrywania",
+    "stop": "Stop",
+    "captureChart": "Przechwyć wykres",
+    "shareCapture": "Udostępnij przechwycenie",
+    "download": "Pobierz",
+    "copyClipboard": "Kopiuj",
+    "copied": "Skopiowano!",
+    "share": "Udostępnij",
+    "createLink": "Utwórz link",
+    "expiresIn24h": "Link wygasa za 24 godziny",
+    "elitePermanentStorage": "Uaktualnij do Elite dla trwałego przechowywania"
   }
 }

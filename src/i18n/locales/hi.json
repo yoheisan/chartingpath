@@ -1388,5 +1388,22 @@
     "liveWR": "लाइव WR",
     "trades": "ट्रेड",
     "backtestComparison": "vs. बैकटेस्ट"
+  },
+  "capture": {
+    "captureAndShare": "कैप्चर और शेयर",
+    "screenshot": "स्क्रीनशॉट",
+    "recordScreen": "स्क्रीन रिकॉर्ड",
+    "microphone": "माइक्रोफ़ोन",
+    "maxDuration": "अधिकतम {{seconds}}s रिकॉर्डिंग",
+    "stop": "रोकें",
+    "captureChart": "चार्ट कैप्चर",
+    "shareCapture": "कैप्चर शेयर करें",
+    "download": "डाउनलोड",
+    "copyClipboard": "कॉपी",
+    "copied": "कॉपी हो गया!",
+    "share": "शेयर",
+    "createLink": "लिंक बनाएं",
+    "expiresIn24h": "लिंक 24 घंटे में समाप्त",
+    "elitePermanentStorage": "स्थायी स्टोरेज के लिए Elite में अपग्रेड करें"
   }
 }

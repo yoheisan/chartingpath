@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SelectionMode } from '@/hooks/useChartAnalysis';
+import { ChartCaptureButton } from '@/components/capture';
 
 interface ChartAnalysisToolbarProps {
   selectionMode: SelectionMode;
@@ -30,6 +31,10 @@ interface ChartAnalysisToolbarProps {
   onAnalyze: () => void;
   onSendToCopilot: () => void;
   onClear: () => void;
+  chartContainerRef?: React.RefObject<HTMLElement>;
+  symbol?: string;
+  timeframe?: string;
+  pattern?: string;
   className?: string;
 }
 
@@ -49,6 +54,10 @@ const ChartAnalysisToolbar = memo(({
   onSelectVisible,
   onSendToCopilot,
   onClear,
+  chartContainerRef,
+  symbol,
+  timeframe,
+  pattern,
   className
 }: ChartAnalysisToolbarProps) => {
   const { t } = useTranslation();
@@ -141,6 +150,14 @@ const ChartAnalysisToolbar = memo(({
             </TooltipContent>
           </Tooltip>
         )}
+
+        {/* Chart Capture Button - Always visible */}
+        <ChartCaptureButton
+          chartContainerRef={chartContainerRef}
+          symbol={symbol}
+          timeframe={timeframe}
+          pattern={pattern}
+        />
       </div>
     </TooltipProvider>
   );

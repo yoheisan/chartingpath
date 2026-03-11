@@ -4790,6 +4790,51 @@ export type Database = {
           },
         ]
       }
+      user_captures: {
+        Row: {
+          capture_type: string
+          context_metadata: Json | null
+          context_type: string | null
+          created_at: string
+          duration_seconds: number | null
+          expires_at: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes: number | null
+          id: string
+          is_temporary: boolean
+          user_id: string
+        }
+        Insert: {
+          capture_type: string
+          context_metadata?: Json | null
+          context_type?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          expires_at?: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes?: number | null
+          id?: string
+          is_temporary?: boolean
+          user_id: string
+        }
+        Update: {
+          capture_type?: string
+          context_metadata?: Json | null
+          context_type?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          expires_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          id?: string
+          is_temporary?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_email_preferences: {
         Row: {
           alert_emails: boolean | null
@@ -5268,6 +5313,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
+      cleanup_expired_captures: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
       cleanup_old_health_checks: { Args: never; Returns: undefined }
       deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }

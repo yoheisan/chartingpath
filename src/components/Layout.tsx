@@ -8,6 +8,7 @@ import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
+import { CaptureButton } from "./capture";
 
 interface LayoutProps {
   children: ReactNode;
@@ -49,6 +50,7 @@ const Layout = ({ children }: LayoutProps) => {
             onContextConsumed={copilot.consumePendingContext}
           />
         )}
+        <CaptureButton />
       </div>
     );
   }
@@ -71,6 +73,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
       <GuestSignupNudge />
       <OnboardingTour />
+      <CaptureButton />
     </div>
   );
 };

@@ -156,5 +156,22 @@
     "checkingPatternOccurrences": "Checking pattern occurrences…",
     "checkingDataAvailability": "Checking data availability…",
     "lowDataWarning": "Low data may produce unreliable results with few trades."
+  },
+  "capture": {
+    "captureAndShare": "Vastleggen & Delen",
+    "screenshot": "Schermafbeelding",
+    "recordScreen": "Scherm opnemen",
+    "microphone": "Microfoon",
+    "maxDuration": "Max {{seconds}}s opname",
+    "stop": "Stop",
+    "captureChart": "Grafiek vastleggen",
+    "shareCapture": "Opname delen",
+    "download": "Downloaden",
+    "copyClipboard": "Kopiëren",
+    "copied": "Gekopieerd!",
+    "share": "Delen",
+    "createLink": "Link maken",
+    "expiresIn24h": "Link verloopt over 24 uur",
+    "elitePermanentStorage": "Upgrade naar Elite voor permanente opslag"
   }
 }

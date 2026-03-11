@@ -1403,5 +1403,22 @@
     "liveWR": "WR Real",
     "trades": "Trades",
     "backtestComparison": "vs. Backtest"
+  },
+  "capture": {
+    "captureAndShare": "Capturar e Compartilhar",
+    "screenshot": "Captura de tela",
+    "recordScreen": "Gravar tela",
+    "microphone": "Microfone",
+    "maxDuration": "Máx. {{seconds}}s de gravação",
+    "stop": "Parar",
+    "captureChart": "Capturar gráfico",
+    "shareCapture": "Compartilhar captura",
+    "download": "Baixar",
+    "copyClipboard": "Copiar",
+    "copied": "Copiado!",
+    "share": "Compartilhar",
+    "createLink": "Criar link",
+    "expiresIn24h": "Link expira em 24 horas",
+    "elitePermanentStorage": "Atualize para Elite para armazenamento permanente"
   }
 }

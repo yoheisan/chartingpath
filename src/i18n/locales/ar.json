@@ -1402,5 +1402,22 @@
     "liveWR": "WR فعلي",
     "trades": "صفقات",
     "backtestComparison": "vs. اختبار رجعي"
+  },
+  "capture": {
+    "captureAndShare": "التقاط ومشاركة",
+    "screenshot": "لقطة شاشة",
+    "recordScreen": "تسجيل الشاشة",
+    "microphone": "ميكروفون",
+    "maxDuration": "أقصى مدة {{seconds}} ثانية",
+    "stop": "إيقاف",
+    "captureChart": "التقاط الرسم البياني",
+    "shareCapture": "مشاركة الالتقاط",
+    "download": "تحميل",
+    "copyClipboard": "نسخ",
+    "copied": "تم النسخ!",
+    "share": "مشاركة",
+    "createLink": "إنشاء رابط",
+    "expiresIn24h": "ينتهي الرابط خلال 24 ساعة",
+    "elitePermanentStorage": "ترقية إلى Elite للتخزين الدائم"
   }
 }
