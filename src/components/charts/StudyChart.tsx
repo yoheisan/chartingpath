@@ -215,6 +215,7 @@ const StudyChart = memo(({
 }: StudyChartProps) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
   const rsiContainerRef = useRef<HTMLDivElement>(null);
   const macdContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -1725,7 +1726,7 @@ const StudyChart = memo(({
 
   return (
     <>
-    <div className={cn('flex flex-col overflow-hidden border border-border/50 rounded', autoHeight && 'h-full')}>
+    <div ref={chartWrapperRef} className={cn('flex flex-col overflow-hidden border border-border/50 rounded', autoHeight && 'h-full')}>
       <div className="relative flex-1 min-h-[150px]">
       <div
         ref={containerRef}
@@ -1754,12 +1755,14 @@ const StudyChart = memo(({
           onSendToCopilot={analysis.sendToCopilot}
           onClear={() => {
             analysis.clearSelection();
-            // Remove analysis lines when clearing
             analysisLinesRef.current.forEach(line => {
               try { candleSeriesRef.current?.removePriceLine(line); } catch {}
             });
             analysisLinesRef.current = [];
           }}
+          chartContainerRef={chartWrapperRef}
+          symbol={symbol}
+          timeframe={timeframe}
           className="absolute top-2 left-1/2 -translate-x-1/2 z-30"
         />
       )}
