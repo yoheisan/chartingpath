@@ -31,6 +31,10 @@ interface ChartAnalysisToolbarProps {
   onAnalyze: () => void;
   onSendToCopilot: () => void;
   onClear: () => void;
+  chartContainerRef?: React.RefObject<HTMLElement>;
+  symbol?: string;
+  timeframe?: string;
+  pattern?: string;
   className?: string;
 }
 
