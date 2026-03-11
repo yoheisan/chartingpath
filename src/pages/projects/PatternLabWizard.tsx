@@ -1564,7 +1564,7 @@ const PatternLabWizard = () => {
                 {isCheckingData && dataCoverage.length === 0 && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Checking data availability…
+                    {t('patternLabWizard.checkingDataAvailability')}
                   </div>
                 )}
                 
