@@ -1557,7 +1557,7 @@ const PatternLabWizard = () => {
                 {isCheckingPatterns && patternCoverage.length === 0 && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Checking pattern occurrences…
+                    {t('patternLabWizard.checkingPatternOccurrences')}
                   </div>
                 )}
 
