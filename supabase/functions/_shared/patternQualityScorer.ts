@@ -822,6 +822,55 @@ export function calculatePatternQualityScore(
   else if (finalScore >= 3.0) grade = 'D';
   else grade = 'F';
   
+  // ============= REPEATABILITY GATE =============
+  // Hard-cap grades for patterns without proven statistical edge.
+  // A-grade: requires n≥30, win rate ≥50%, positive expectancy (>0R)
+  // B-grade: requires n≥15, positive expectancy (>0R)
+  // Unproven patterns cap at C-grade regardless of form score.
+  
+  let repeatabilityWarning: string | null = null;
+  
+  if (repeatabilityProof) {
+    const { sampleSize, winRate, expectancyR } = repeatabilityProof;
+    
+    if (grade === 'A') {
+      const meetsAGate = sampleSize >= 30 && winRate >= 50 && expectancyR > 0;
+      if (!meetsAGate) {
+        grade = 'B'; // Downgrade to B
+        repeatabilityWarning = sampleSize < 30
+          ? `Insufficient proof for A-grade (n=${sampleSize}, need ≥30)`
+          : winRate < 50
+            ? `Win rate too low for A-grade (${winRate.toFixed(1)}%, need ≥50%)`
+            : `Negative expectancy blocks A-grade (${expectancyR.toFixed(2)}R)`;
+        
+        // Re-check if it meets B-grade gate
+        const meetsBGate = sampleSize >= 15 && expectancyR > 0;
+        if (!meetsBGate) {
+          grade = 'C';
+          repeatabilityWarning = `Unproven pattern capped at C-grade (n=${sampleSize}, exp=${expectancyR.toFixed(2)}R)`;
+        }
+      }
+    } else if (grade === 'B') {
+      const meetsBGate = sampleSize >= 15 && expectancyR > 0;
+      if (!meetsBGate) {
+        grade = 'C';
+        repeatabilityWarning = sampleSize < 15
+          ? `Insufficient proof for B-grade (n=${sampleSize}, need ≥15)`
+          : `Negative expectancy blocks B-grade (${expectancyR.toFixed(2)}R)`;
+      }
+    }
+  } else {
+    // No repeatability data provided — cap at C-grade
+    if (grade === 'A' || grade === 'B') {
+      grade = 'C';
+      repeatabilityWarning = 'No historical proof — capped at C-grade (Unproven)';
+    }
+  }
+  
+  if (repeatabilityWarning) {
+    warnings.push(repeatabilityWarning);
+  }
+  
   // Confidence
   const passedFactors = factors.filter(f => f.passed).length;
   const confidence = Math.round((passedFactors / factors.length) * 100);
