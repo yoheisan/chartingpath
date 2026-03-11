@@ -14,7 +14,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
 import { useMediaCapture, CaptureResult } from '@/hooks/useMediaCapture';
 import { CaptureShareDialog } from './CaptureShareDialog';
 import { useAuth } from '@/contexts/AuthContext';
