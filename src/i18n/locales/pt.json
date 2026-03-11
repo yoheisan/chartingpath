@@ -1344,5 +1344,53 @@
     "Script Generator": "Gerador de Scripts",
     "Trading Education Center": "Centro de Educação em Trading",
     "Market Breadth": "Amplitude de Mercado"
+  },
+  "onboarding": {
+    "welcomeTitle": "Bem-vindo ao ChartingPath",
+    "welcomeDesc": "O ChartingPath valida padrões gráficos contra mais de 320.000 resultados históricos para que você negocie com vantagens estatísticas reais.",
+    "screenerTitle": "Screener de Padrões ao Vivo",
+    "screenerDesc": "Sinais em tempo real em mais de 1.200 instrumentos. Cada padrão é avaliado por qualidade e respaldado por taxas de sucesso históricas.",
+    "patternLabTitle": "Pattern Lab — Faça Backtest de Qualquer Padrão",
+    "patternLabDesc": "Escolha um padrão, selecione um símbolo e veja exatamente como ele performou ao longo de anos de dados.",
+    "dashboardTitle": "Seu Centro de Comando",
+    "dashboardDesc": "Gráficos, lista de acompanhamento, alertas e paper trading — tudo em uma tela.",
+    "edgeAtlasTitle": "Edge Atlas — Encontre as Melhores Vantagens",
+    "edgeAtlasDesc": "Descubra quais padrões performam melhor em quais timeframes — classificados por retorno anualizado.",
+    "tryIt": "Experimente agora →",
+    "skip": "Pular tour",
+    "next": "Próximo",
+    "getStarted": "Vamos lá!"
+  },
+  "glossary": {
+    "winRate": "A porcentagem de trades que terminam em lucro. Uma taxa de 60% significa que 6 de 10 trades são vencedores.",
+    "expectancy": "Retorno médio por trade em múltiplos de R. Expectativa positiva significa que a estratégia é lucrativa ao longo do tempo.",
+    "sharpe": "Métrica de retorno ajustado ao risco. Maior é melhor. Acima de 1.0 é bom, acima de 2.0 é excelente.",
+    "profitFactor": "Lucros brutos divididos por perdas brutas. Acima de 1.0 é lucrativo. Acima de 2.0 é forte.",
+    "maxDrawdown": "A maior queda do pico ao vale no valor do portfólio. Mede o pior cenário de perda.",
+    "riskReward": "Relação entre perda potencial e ganho potencial. Um R:R de 1:2 significa arriscar R$1 para ganhar R$2.",
+    "sampleSize": "Número de trades históricos usados para calcular estatísticas. Amostras maiores (50+) dão resultados mais confiáveis.",
+    "grade": "Pontuação geral de qualidade do sinal combinando clareza do padrão, confirmação de volume e alinhamento de tendência.",
+    "timeframe": "O período que cada vela representa (ex., 1H = 1 hora, 1D = 1 dia).",
+    "takeProfit": "O preço alvo onde um trade vencedor é fechado para garantir os ganhos.",
+    "stopLoss": "O nível de preço onde um trade perdedor é automaticamente fechado para limitar perdas.",
+    "paperTrading": "Negociação simulada com dinheiro virtual para praticar estratégias sem risco financeiro.",
+    "signalAge": "Há quanto tempo o padrão foi detectado pela primeira vez. Sinais mais recentes tendem a ser mais acionáveis.",
+    "barsToOutcome": "Número médio de velas da entrada até o trade atingir seu alvo ou stop loss.",
+    "cagr": "Taxa de Crescimento Anual Composto — o retorno anual suavizado durante um período.",
+    "sortino": "Similar ao Sharpe mas penaliza apenas a volatilidade negativa.",
+    "annualizedReturn": "Retorno anual estimado se a estratégia fosse operada continuamente.",
+    "tradesPerYear": "Número estimado de oportunidades de trading por ano para este padrão/timeframe.",
+    "balance": "Valor atual do portfólio de paper trading incluindo capital inicial mais ganhos e perdas realizados.",
+    "totalPnl": "Lucro e Perda Total — a soma de todos os resultados de trades fechados.",
+    "rMultiple": "Retorno expresso como múltiplo do risco inicial. Um trade de +2R significa que você ganhou 2× o que arriscou."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Compara seus resultados reais de paper trading contra as previsões do backtest para os mesmos padrões.",
+    "signInRequired": "Faça login para acompanhar o desempenho forward",
+    "noData": "Complete algumas operações de paper trading para ver o desempenho forward vs. backtests",
+    "liveWR": "WR Real",
+    "trades": "Trades",
+    "backtestComparison": "vs. Backtest"
   }
 }

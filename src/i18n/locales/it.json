@@ -1317,5 +1317,53 @@
     "Script Generator": "Generatore di Script",
     "Trading Education Center": "Centro di Formazione al Trading",
     "Market Breadth": "Ampiezza del mercato"
+  },
+  "onboarding": {
+    "welcomeTitle": "Benvenuto su ChartingPath",
+    "welcomeDesc": "ChartingPath valida i pattern grafici contro oltre 320.000 risultati storici per farti operare con veri vantaggi statistici.",
+    "screenerTitle": "Screener Pattern in Tempo Reale",
+    "screenerDesc": "Segnali in tempo reale su oltre 1.200 strumenti. Ogni pattern è valutato per qualità e supportato da tassi di successo storici.",
+    "patternLabTitle": "Pattern Lab — Backtesta Qualsiasi Pattern",
+    "patternLabDesc": "Scegli un pattern, seleziona un simbolo e guarda esattamente come ha performato nel corso degli anni.",
+    "dashboardTitle": "Il Tuo Centro di Comando",
+    "dashboardDesc": "Grafici, watchlist, avvisi e paper trading — tutto in una schermata.",
+    "edgeAtlasTitle": "Edge Atlas — Trova i Migliori Vantaggi",
+    "edgeAtlasDesc": "Scopri quali pattern performano meglio in quali timeframe — classificati per rendimento annualizzato.",
+    "tryIt": "Provalo ora →",
+    "skip": "Salta il tour",
+    "next": "Avanti",
+    "getStarted": "Iniziamo!"
+  },
+  "glossary": {
+    "winRate": "La percentuale di trade che finiscono in profitto. Un win rate del 60% significa che 6 trade su 10 sono vincenti.",
+    "expectancy": "Rendimento medio per trade in multipli di R. Un'aspettativa positiva significa che la strategia è redditizia nel tempo.",
+    "sharpe": "Metrica di rendimento aggiustata per il rischio. Più alto è meglio. Sopra 1,0 è buono, sopra 2,0 è eccellente.",
+    "profitFactor": "Profitti lordi divisi per perdite lorde. Sopra 1,0 è redditizio. Sopra 2,0 è forte.",
+    "maxDrawdown": "Il più grande calo dal picco al minimo nel valore del portafoglio.",
+    "riskReward": "Rapporto tra perdita potenziale e guadagno potenziale. Un R:R di 1:2 significa rischiare 1€ per guadagnare 2€.",
+    "sampleSize": "Numero di trade storici utilizzati per calcolare le statistiche. Campioni più grandi (50+) danno risultati più affidabili.",
+    "grade": "Punteggio complessivo di qualità del segnale che combina chiarezza del pattern, conferma del volume e allineamento del trend.",
+    "timeframe": "Il periodo rappresentato da ogni candela (es., 1H = 1 ora, 1D = 1 giorno).",
+    "takeProfit": "Il prezzo obiettivo dove un trade vincente viene chiuso per assicurare i guadagni.",
+    "stopLoss": "Il livello di prezzo dove un trade perdente viene chiuso automaticamente per limitare le perdite.",
+    "paperTrading": "Trading simulato con denaro virtuale per praticare le strategie senza rischio finanziario.",
+    "signalAge": "Da quanto tempo il pattern è stato rilevato per la prima volta. I segnali più recenti tendono ad essere più azionabili.",
+    "barsToOutcome": "Numero medio di candele dall'ingresso al raggiungimento dell'obiettivo o dello stop loss.",
+    "cagr": "Tasso di Crescita Annuale Composto — il rendimento annuale smussato su un dato periodo.",
+    "sortino": "Simile allo Sharpe ma penalizza solo la volatilità al ribasso.",
+    "annualizedReturn": "Rendimento annuale stimato se la strategia fosse operata continuamente.",
+    "tradesPerYear": "Numero stimato di opportunità di trading all'anno per questo pattern/timeframe.",
+    "balance": "Valore attuale del portafoglio di paper trading incluso il capitale iniziale più guadagni e perdite realizzati.",
+    "totalPnl": "Profitto e Perdita Totale — la somma di tutti i risultati dei trade chiusi.",
+    "rMultiple": "Rendimento espresso come multiplo del rischio iniziale. Un trade di +2R significa che hai guadagnato 2× quello che hai rischiato."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Confronta i risultati reali del paper trading con le previsioni del backtest per gli stessi pattern.",
+    "signInRequired": "Accedi per monitorare la performance forward",
+    "noData": "Completa alcuni paper trade per vedere la performance forward vs. backtest",
+    "liveWR": "WR Reale",
+    "trades": "Trade",
+    "backtestComparison": "vs. Backtest"
   }
 }

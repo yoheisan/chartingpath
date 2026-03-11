@@ -1315,5 +1315,53 @@
     "Script Generator": "Generator Skrip",
     "Trading Education Center": "Pusat Edukasi Trading",
     "Market Breadth": "Keluasan Pasar"
+  },
+  "onboarding": {
+    "welcomeTitle": "Selamat Datang di ChartingPath",
+    "welcomeDesc": "ChartingPath memvalidasi pola grafik terhadap 320.000+ hasil historis agar Anda trading dengan keunggulan statistik nyata.",
+    "screenerTitle": "Screener Pola Langsung",
+    "screenerDesc": "Sinyal real-time di 1.200+ instrumen. Setiap pola dinilai berdasarkan kualitas dan didukung tingkat kemenangan historis.",
+    "patternLabTitle": "Pattern Lab — Backtest Pola Apa Saja",
+    "patternLabDesc": "Pilih pola, pilih simbol, dan lihat performa pastinya selama bertahun-tahun data.",
+    "dashboardTitle": "Pusat Komando Anda",
+    "dashboardDesc": "Grafik, watchlist, alert, dan paper trading — semua dalam satu layar.",
+    "edgeAtlasTitle": "Edge Atlas — Temukan Keunggulan Terbaik",
+    "edgeAtlasDesc": "Temukan pola mana yang berkinerja terbaik di timeframe mana — diranking berdasarkan return tahunan.",
+    "tryIt": "Coba sekarang →",
+    "skip": "Lewati tur",
+    "next": "Berikutnya",
+    "getStarted": "Ayo mulai!"
+  },
+  "glossary": {
+    "winRate": "Persentase trade yang berakhir dengan profit. Win rate 60% berarti 6 dari 10 trade menguntungkan.",
+    "expectancy": "Rata-rata return per trade dalam kelipatan R. Ekspektasi positif berarti strategi menguntungkan seiring waktu.",
+    "sharpe": "Metrik return yang disesuaikan risiko. Semakin tinggi semakin baik. Di atas 1,0 bagus, di atas 2,0 sangat baik.",
+    "profitFactor": "Laba kotor dibagi rugi kotor. Di atas 1,0 menguntungkan. Di atas 2,0 kuat.",
+    "maxDrawdown": "Penurunan terbesar dari puncak ke lembah dalam nilai portofolio.",
+    "riskReward": "Rasio antara potensi kerugian dan potensi keuntungan. R:R 1:2 berarti merisikokan Rp1 untuk mendapat Rp2.",
+    "sampleSize": "Jumlah trade historis yang digunakan untuk menghitung statistik. Sampel lebih besar (50+) memberikan hasil lebih andal.",
+    "grade": "Skor kualitas sinyal keseluruhan yang menggabungkan kejelasan pola, konfirmasi volume, dan keselarasan tren.",
+    "timeframe": "Periode waktu yang diwakili setiap candlestick (misal, 1H = 1 jam, 1D = 1 hari).",
+    "takeProfit": "Harga target di mana trade yang menang ditutup untuk mengamankan keuntungan.",
+    "stopLoss": "Level harga di mana trade yang rugi otomatis ditutup untuk membatasi kerugian.",
+    "paperTrading": "Trading simulasi dengan uang virtual untuk berlatih strategi tanpa risiko finansial.",
+    "signalAge": "Berapa lama lalu pola pertama kali terdeteksi. Sinyal yang lebih baru cenderung lebih dapat ditindaklanjuti.",
+    "barsToOutcome": "Rata-rata jumlah candlestick dari entry hingga trade mencapai target atau stop loss.",
+    "cagr": "Tingkat Pertumbuhan Tahunan Majemuk — return tahunan yang dihaluskan selama periode tertentu.",
+    "sortino": "Seperti Sharpe tapi hanya menghukum volatilitas ke bawah.",
+    "annualizedReturn": "Perkiraan return tahunan jika strategi diperdagangkan terus-menerus.",
+    "tradesPerYear": "Perkiraan jumlah peluang trading per tahun untuk pola/timeframe ini.",
+    "balance": "Nilai portofolio paper trading saat ini termasuk modal awal plus keuntungan dan kerugian terealisasi.",
+    "totalPnl": "Total Laba & Rugi — jumlah semua hasil trade yang ditutup.",
+    "rMultiple": "Return yang dinyatakan sebagai kelipatan risiko awal. Trade +2R berarti Anda mendapat 2× dari yang Anda risikokan."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Membandingkan hasil paper trading aktual Anda dengan prediksi backtest untuk pola yang sama.",
+    "signInRequired": "Masuk untuk melacak performa forward",
+    "noData": "Selesaikan beberapa paper trade untuk melihat performa forward vs. backtest",
+    "liveWR": "WR Live",
+    "trades": "Trade",
+    "backtestComparison": "vs. Backtest"
   }
 }
