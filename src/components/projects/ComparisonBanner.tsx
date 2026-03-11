@@ -28,7 +28,7 @@ const DeltaChip = ({ label, prev, curr, format, higherIsBetter = true }: {
 
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[100px]">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground flex items-center gap-0.5">{label}{glossaryTerm && <InfoTooltip term={glossaryTerm} size="h-3 w-3" />}</span>
       <span className="text-sm font-semibold">{format(curr)}</span>
       <span className={`text-xs font-medium flex items-center gap-0.5 ${
         isNeutral ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'
