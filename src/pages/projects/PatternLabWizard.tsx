@@ -1492,7 +1492,7 @@ const PatternLabWizard = () => {
                     {!hasNoData && hasLowData && (
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>Low data may produce unreliable results with few trades.</span>
+                        <span>{t('patternLabWizard.lowDataWarning')}</span>
                       </div>
                     )}
                   </div>
