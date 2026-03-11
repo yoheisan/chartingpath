@@ -460,6 +460,57 @@ const PatternLabWizard = () => {
   const hasNoData = dataCoverage.some(d => d.bars === 0);
   const hasLowData = dataCoverage.some(d => d.bars > 0 && d.bars < 50);
 
+  // Pattern occurrence pre-check — queries historical_pattern_occurrences to warn when no patterns exist
+  interface PatternCoverage { symbol: string; patternId: string; patternName: string; count: number }
+  const [patternCoverage, setPatternCoverage] = useState<PatternCoverage[]>([]);
+  const [isCheckingPatterns, setIsCheckingPatterns] = useState(false);
+
+  useEffect(() => {
+    if (selectedInstruments.length === 0 || selectedPatterns.length === 0) {
+      setPatternCoverage([]);
+      return;
+    }
+    let cancelled = false;
+    const check = async () => {
+      setIsCheckingPatterns(true);
+      try {
+        const results: PatternCoverage[] = [];
+        // Build all symbol variants for matching (e.g. AAPL, aapl)
+        for (const sym of selectedInstruments) {
+          for (const patId of selectedPatterns) {
+            const { count } = await supabase
+              .from('historical_pattern_occurrences')
+              .select('id', { count: 'exact', head: true })
+              .eq('symbol', sym)
+              .eq('pattern_id', patId)
+              .eq('timeframe', timeframe);
+            
+            if (!cancelled) {
+              const patInfo = PATTERNS.find(p => p.id === patId);
+              results.push({
+                symbol: sym,
+                patternId: patId,
+                patternName: patInfo?.name || patId,
+                count: count ?? 0,
+              });
+            }
+          }
+        }
+        if (!cancelled) setPatternCoverage(results);
+      } catch (e) {
+        console.error('Pattern coverage check failed:', e);
+      } finally {
+        if (!cancelled) setIsCheckingPatterns(false);
+      }
+    };
+    const debounce = setTimeout(check, 700);
+    return () => { clearTimeout(debounce); cancelled = true; };
+  }, [selectedInstruments, selectedPatterns, timeframe]);
+
+  const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.count === 0);
+  const hasLowPatterns = patternCoverage.some(p => p.count > 0 && p.count < 5);
+  const zeroPatternCombos = patternCoverage.filter(p => p.count === 0);
+
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
       prev.includes(symbol)
