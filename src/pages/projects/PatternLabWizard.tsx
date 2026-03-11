@@ -1519,12 +1519,12 @@ const PatternLabWizard = () => {
                             </span>
                           ) : p.count < 5 ? (
                             <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
-                              {p.count} found
+                              {t('patternLabWizard.found', { count: p.count })}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                               <CheckCircle2 className="h-3 w-3" />
-                              {p.count} found
+                              {t('patternLabWizard.found', { count: p.count })}
                             </span>
                           )}
                         </div>
