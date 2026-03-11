@@ -636,6 +636,16 @@ function analyzeVolatilityRegime(
 
 // ============= MAIN SCORING FUNCTION =============
 
+/**
+ * Repeatability proof requirements for grade eligibility.
+ * Patterns without sufficient historical evidence are capped.
+ */
+export interface RepeatabilityProof {
+  sampleSize: number;    // number of historical occurrences
+  winRate: number;       // win rate as percentage (0-100)
+  expectancyR: number;   // expectancy in R-multiples
+}
+
 export interface PatternQualityScorerInput {
   bars: OHLCBar[];
   patternType: string;
@@ -649,6 +659,8 @@ export interface PatternQualityScorerInput {
   // New v2.0 inputs
   trendIndicators?: TrendIndicatorsInput;
   historicalPerformance?: HistoricalPerformanceInput;
+  // Repeatability gate (from Edge Atlas)
+  repeatabilityProof?: RepeatabilityProof;
 }
 
 export function calculatePatternQualityScore(
