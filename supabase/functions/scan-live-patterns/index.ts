@@ -1345,6 +1345,30 @@ serve(async (req) => {
     console.info(`[scan-live-patterns] Repeatability gate applied to ${repeatabilityAppliedCount}/${setups.length} patterns`);
     console.info(`[scan-live-patterns] Slow path: attached per-asset stats to ${statsAttachedCount}/${setups.length} patterns`);
     
+    // Persist gate-adjusted quality scores back to DB
+    const gradeUpdates = setups
+      .filter((s: any) => repeatabilityStats.has(s.patternId))
+      .map((s: any) => {
+        const key = `${s.instrument}|${s.patternId}|${timeframe}`;
+        const ts = patternTimestamps.get(key);
+        return ts ? { instrument: s.instrument, patternId: s.patternId, grade: s.quality?.score } : null;
+      })
+      .filter(Boolean);
+    
+    if (gradeUpdates.length) {
+      Promise.allSettled(
+        gradeUpdates.map((u: any) =>
+          supabase.from('live_pattern_detections')
+            .update({ quality_score: u.grade })
+            .eq('instrument', u.instrument)
+            .eq('pattern_id', u.patternId)
+            .eq('timeframe', timeframe)
+            .eq('status', 'active')
+        )
+      ).then(() => console.info(`[scan-live-patterns] Persisted ${gradeUpdates.length} gate-adjusted grades`))
+       .catch(() => {});
+    }
+    
     const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
     
