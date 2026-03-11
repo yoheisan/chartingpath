@@ -116,10 +116,6 @@
   "guestNudge": {
     "message": "게스트 미리보기입니다 — 무료 계정을 만들어 결과를 저장하고 알림을 받으세요."
   },
-  "auth": {
-    "signUpFree": "무료 가입",
-    "joinTraders": "1,300명 이상의 트레이더 합류"
-  },
   "projects": {
     "pricing": {
       "examples": {
