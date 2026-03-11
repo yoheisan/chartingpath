@@ -922,6 +922,10 @@ function calculatePatternGrade(
   else score += 0.5;
   
   // Convert score (0-10) to grade — aligned with shared patternQualityScorer thresholds
+  // NOTE: The shared scorer also applies a Repeatability Gate that hard-caps grades
+  // for unproven patterns (A: n≥30+WR≥50%+exp>0, B: n≥15+exp>0, else cap at C).
+  // The backtester does NOT apply this gate because it IS the proof-generation engine.
+  // Grades here represent "form quality" — the live screener applies the full gate.
   let grade = 'F';
   if (score >= 7.5) grade = 'A';
   else if (score >= 6.0) grade = 'B';

@@ -636,6 +636,16 @@ function analyzeVolatilityRegime(
 
 // ============= MAIN SCORING FUNCTION =============
 
+/**
+ * Repeatability proof requirements for grade eligibility.
+ * Patterns without sufficient historical evidence are capped.
+ */
+export interface RepeatabilityProof {
+  sampleSize: number;    // number of historical occurrences
+  winRate: number;       // win rate as percentage (0-100)
+  expectancyR: number;   // expectancy in R-multiples
+}
+
 export interface PatternQualityScorerInput {
   bars: OHLCBar[];
   patternType: string;
@@ -649,6 +659,8 @@ export interface PatternQualityScorerInput {
   // New v2.0 inputs
   trendIndicators?: TrendIndicatorsInput;
   historicalPerformance?: HistoricalPerformanceInput;
+  // Repeatability gate (from Edge Atlas)
+  repeatabilityProof?: RepeatabilityProof;
 }
 
 export function calculatePatternQualityScore(
@@ -665,7 +677,8 @@ export function calculatePatternQualityScore(
     takeProfit,
     atr,
     trendIndicators,
-    historicalPerformance
+    historicalPerformance,
+    repeatabilityProof
   } = input;
   
   const factors: QualityFactor[] = [];
@@ -808,6 +821,55 @@ export function calculatePatternQualityScore(
   else if (finalScore >= 4.5) grade = 'C';
   else if (finalScore >= 3.0) grade = 'D';
   else grade = 'F';
+  
+  // ============= REPEATABILITY GATE =============
+  // Hard-cap grades for patterns without proven statistical edge.
+  // A-grade: requires n≥30, win rate ≥50%, positive expectancy (>0R)
+  // B-grade: requires n≥15, positive expectancy (>0R)
+  // Unproven patterns cap at C-grade regardless of form score.
+  
+  let repeatabilityWarning: string | null = null;
+  
+  if (repeatabilityProof) {
+    const { sampleSize, winRate, expectancyR } = repeatabilityProof;
+    
+    if (grade === 'A') {
+      const meetsAGate = sampleSize >= 30 && winRate >= 50 && expectancyR > 0;
+      if (!meetsAGate) {
+        grade = 'B'; // Downgrade to B
+        repeatabilityWarning = sampleSize < 30
+          ? `Insufficient proof for A-grade (n=${sampleSize}, need ≥30)`
+          : winRate < 50
+            ? `Win rate too low for A-grade (${winRate.toFixed(1)}%, need ≥50%)`
+            : `Negative expectancy blocks A-grade (${expectancyR.toFixed(2)}R)`;
+        
+        // Re-check if it meets B-grade gate
+        const meetsBGate = sampleSize >= 15 && expectancyR > 0;
+        if (!meetsBGate) {
+          grade = 'C';
+          repeatabilityWarning = `Unproven pattern capped at C-grade (n=${sampleSize}, exp=${expectancyR.toFixed(2)}R)`;
+        }
+      }
+    } else if (grade === 'B') {
+      const meetsBGate = sampleSize >= 15 && expectancyR > 0;
+      if (!meetsBGate) {
+        grade = 'C';
+        repeatabilityWarning = sampleSize < 15
+          ? `Insufficient proof for B-grade (n=${sampleSize}, need ≥15)`
+          : `Negative expectancy blocks B-grade (${expectancyR.toFixed(2)}R)`;
+      }
+    }
+  } else {
+    // No repeatability data provided — cap at C-grade
+    if (grade === 'A' || grade === 'B') {
+      grade = 'C';
+      repeatabilityWarning = 'No historical proof — capped at C-grade (Unproven)';
+    }
+  }
+  
+  if (repeatabilityWarning) {
+    warnings.push(repeatabilityWarning);
+  }
   
   // Confidence
   const passedFactors = factors.filter(f => f.passed).length;
