@@ -87,5 +87,22 @@
     "checkingPatternOccurrences": "Checking pattern occurrences…",
     "checkingDataAvailability": "Checking data availability…",
     "lowDataWarning": "Low data may produce unreliable results with few trades."
+  },
+  "capture": {
+    "captureAndShare": "Chụp & Chia sẻ",
+    "screenshot": "Ảnh chụp màn hình",
+    "recordScreen": "Ghi màn hình",
+    "microphone": "Micrô",
+    "maxDuration": "Tối đa {{seconds}}s ghi hình",
+    "stop": "Dừng",
+    "captureChart": "Chụp biểu đồ",
+    "shareCapture": "Chia sẻ ảnh chụp",
+    "download": "Tải về",
+    "copyClipboard": "Sao chép",
+    "copied": "Đã sao chép!",
+    "share": "Chia sẻ",
+    "createLink": "Tạo liên kết",
+    "expiresIn24h": "Liên kết hết hạn sau 24 giờ",
+    "elitePermanentStorage": "Nâng cấp Elite để lưu trữ vĩnh viễn"
   }
 }
