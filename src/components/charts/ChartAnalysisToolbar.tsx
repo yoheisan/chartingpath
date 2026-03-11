@@ -150,6 +150,14 @@ const ChartAnalysisToolbar = memo(({
             </TooltipContent>
           </Tooltip>
         )}
+
+        {/* Chart Capture Button - Always visible */}
+        <ChartCaptureButton
+          chartContainerRef={chartContainerRef}
+          symbol={symbol}
+          timeframe={timeframe}
+          pattern={pattern}
+        />
       </div>
     </TooltipProvider>
   );
