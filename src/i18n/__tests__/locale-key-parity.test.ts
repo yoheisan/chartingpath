@@ -17,7 +17,7 @@ import zh from '../locales/zh.json';
 import de from '../locales/de.json';
 import hi from '../locales/hi.json';
 import id from '../locales/id.json';
-import it from '../locales/it.json';
+import itLocale from '../locales/it.json';
 import ja from '../locales/ja.json';
 import ru from '../locales/ru.json';
 import ar from '../locales/ar.json';
