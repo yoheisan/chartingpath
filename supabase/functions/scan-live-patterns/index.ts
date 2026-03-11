@@ -1287,13 +1287,54 @@ serve(async (req) => {
     const patternStats = await fetchPatternSymbolStats(supabase, patternSymbolPairs, timeframe, rrTier);
     console.info(`[scan-live-patterns] Slow path: per-asset patternStats size=${patternStats.size}, detected=${detectedPatterns.length}, rrTier=${rrTier}`);
     
+    // Fetch Edge Atlas aggregate stats for repeatability gate
+    const uniquePatternIds = [...new Set(detectedPatterns.map(p => p.patternId))];
+    const repeatabilityStats = await fetchRepeatabilityStats(supabase, uniquePatternIds, timeframe, assetType);
+    
     let statsAttachedCount = 0;
+    let repeatabilityAppliedCount = 0;
     const setups = detectedPatterns.slice(0, limit).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
       const statsKey = getStatsKey(pattern.patternId, pattern.instrument, timeframe, rrTier);
       const stats = patternStats.get(statsKey);
       if (stats) statsAttachedCount++;
+      
+      // Apply repeatability gate: re-score with Edge Atlas proof
+      const edgeAtlas = repeatabilityStats.get(pattern.patternId);
+      if (edgeAtlas) {
+        repeatabilityAppliedCount++;
+        const rescoredInput: PatternQualityScorerInput = {
+          bars: pattern.bars?.map((b: any) => ({ date: b.t || b.date, open: b.o ?? b.open, high: b.h ?? b.high, low: b.l ?? b.low, close: b.c ?? b.close, volume: b.v ?? b.volume ?? 0 })) || [],
+          patternType: pattern.patternId,
+          patternStartIndex: Math.max(0, (pattern.bars?.length || 20) - 20),
+          patternEndIndex: (pattern.bars?.length || 1) - 1,
+          direction: pattern.direction,
+          entryPrice: pattern.tradePlan.entry,
+          stopLoss: pattern.tradePlan.stopLoss,
+          takeProfit: pattern.tradePlan.takeProfit,
+          atr: 0, // ATR not needed for re-grading, score structure is preserved
+          trendIndicators: pattern.trendIndicators || undefined,
+          repeatabilityProof: {
+            sampleSize: edgeAtlas.total_trades,
+            winRate: edgeAtlas.win_rate_pct,
+            expectancyR: edgeAtlas.expectancy_r,
+          },
+        };
+        const rescored = calculatePatternQualityScore(rescoredInput);
+        // Update the quality object with gate-adjusted grade
+        pattern.quality = {
+          ...pattern.quality,
+          score: rescored.grade,
+          numericScore: rescored.score,
+          confidence: rescored.confidence,
+          reasons: rescored.factors.filter((f: any) => f.passed).map((f: any) => f.description),
+          warnings: rescored.warnings,
+          tradeable: rescored.tradeable,
+          factors: rescored.factors,
+        };
+      }
+      
       return { 
         ...pattern, 
         signalTs: firstDetectedAt?.toISOString() || pattern.visualSpec.signalTs, 
@@ -1301,6 +1342,7 @@ serve(async (req) => {
         historicalPerformance: stats ? toHistoricalPerformance(stats) : undefined 
       };
     });
+    console.info(`[scan-live-patterns] Repeatability gate applied to ${repeatabilityAppliedCount}/${setups.length} patterns`);
     console.info(`[scan-live-patterns] Slow path: attached per-asset stats to ${statsAttachedCount}/${setups.length} patterns`);
     
     const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
