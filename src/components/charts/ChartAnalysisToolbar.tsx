@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SelectionMode } from '@/hooks/useChartAnalysis';
+import { ChartCaptureButton } from '@/components/capture';
 
 interface ChartAnalysisToolbarProps {
   selectionMode: SelectionMode;
