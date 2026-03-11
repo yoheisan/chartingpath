@@ -1542,7 +1542,7 @@ const PatternLabWizard = () => {
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>
-                          {zeroPatternCombos.length} combination{zeroPatternCombos.length > 1 ? 's' : ''} ha{zeroPatternCombos.length > 1 ? 've' : 's'} no occurrences and will produce 0 trades.
+                          {t('patternLabWizard.zeroOccurrenceCombos', { count: zeroPatternCombos.length })}
                         </span>
                       </div>
                     )}
