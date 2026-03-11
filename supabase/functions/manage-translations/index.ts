@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 interface TranslationRequest {
@@ -422,67 +422,49 @@ Deno.serve(async (req) => {
       }
 
       case 'get_coverage_stats': {
-        // Get total keys count using exact count (avoids 1000-row default limit)
+        // Get total keys count using exact count (head-only, no data transfer)
         const { count: totalEnKeys, error: keysError } = await supabase
           .from('translation_keys')
           .select('*', { count: 'exact', head: true })
 
+        if (keysError) throw keysError
         const totalKeys = totalEnKeys || 0
 
-        // For each language, count distinct translated keys (not raw rows/versions)
         const targetLanguages = ['es', 'pt', 'fr', 'zh', 'de', 'hi', 'id', 'it', 'ja', 'ru', 'ar', 'af', 'ko', 'tr', 'nl', 'pl', 'vi']
         const coverage: Record<string, { total: number; translated: number; approved: number; auto_translated: number; stale: number }> = {}
 
-        const collectDistinctKeys = async (
-          lang: string,
-          statuses?: string[],
-          staleOnly = false
-        ): Promise<Set<string>> => {
-          const keys = new Set<string>()
-          let from = 0
-          const PAGE_SIZE = 1000
+        // Use head-only count queries instead of fetching all rows — prevents broken pipe timeouts
+        const countQuery = async (lang: string, statuses: string[], staleOnly = false): Promise<number> => {
+          let query = supabase
+            .from('translations')
+            .select('*', { count: 'exact', head: true })
+            .eq('language_code', lang)
 
-          while (true) {
-            let query = supabase
-              .from('translations')
-              .select('key, source_hash')
-              .eq('language_code', lang)
-              .range(from, from + PAGE_SIZE - 1)
-
-            if (statuses && statuses.length > 0) {
-              query = query.in('status', statuses)
-            }
-
-            if (staleOnly) {
-              query = query.is('source_hash', null)
-            }
-
-            const { data, error } = await query
-            if (error) throw error
-            if (!data || data.length === 0) break
-
-            data.forEach((row: { key: string }) => keys.add(row.key))
-
-            if (data.length < PAGE_SIZE) break
-            from += PAGE_SIZE
+          if (statuses.length > 0) {
+            query = query.in('status', statuses)
+          }
+          if (staleOnly) {
+            query = query.is('source_hash', null)
           }
 
-          return keys
+          const { count, error } = await query
+          if (error) { console.error(`Count error ${lang}:`, error); return 0 }
+          return count || 0
         }
 
-        for (const lang of targetLanguages) {
-          const translatedKeys = await collectDistinctKeys(lang, ['approved', 'auto_translated'])
-          const approvedKeys = await collectDistinctKeys(lang, ['approved'])
-          const autoTranslatedKeys = await collectDistinctKeys(lang, ['auto_translated'])
-          const staleKeys = await collectDistinctKeys(lang, ['approved', 'auto_translated'], true)
-
-          coverage[lang] = {
-            total: totalKeys,
-            translated: translatedKeys.size,
-            approved: approvedKeys.size,
-            auto_translated: autoTranslatedKeys.size,
-            stale: staleKeys.size
-          }
+        // Process all languages in parallel batches of 5 to avoid connection limits
+        const BATCH = 5
+        for (let i = 0; i < targetLanguages.length; i += BATCH) {
+          const batch = targetLanguages.slice(i, i + BATCH)
+          await Promise.all(batch.map(async (lang) => {
+            const [translated, approved, autoTranslated, stale] = await Promise.all([
+              countQuery(lang, ['approved', 'auto_translated']),
+              countQuery(lang, ['approved']),
+              countQuery(lang, ['auto_translated']),
+              countQuery(lang, ['approved', 'auto_translated'], true),
+            ])
+            coverage[lang] = { total: totalKeys, translated, approved, auto_translated: autoTranslated, stale }
+          }))
         }
 
         return new Response(JSON.stringify({ 
