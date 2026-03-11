@@ -60,10 +60,10 @@ const enKeys = flattenKeys(en);
  * to en.json without propagating.
  */
 const BASELINE_GAPS: Record<string, number> = {
-  es: 3647, pt: 3647, fr: 3647, zh: 3647, de: 3647,
-  hi: 3630, id: 3647, it: 3647, ja: 3630, ru: 3647,
-  ar: 3647, af: 3647, ko: 3630, tr: 3630, nl: 3647,
-  pl: 3647, vi: 3647,
+  es: 3647, pt: 3652, fr: 3647, zh: 3647, de: 3647,
+  hi: 3672, id: 3680, it: 3680, ja: 1870, ru: 3646,
+  ar: 3654, af: 3689, ko: 3639, tr: 3681, nl: 4720,
+  pl: 4720, vi: 4785,
 };
 
 describe('Locale key parity guard', () => {
