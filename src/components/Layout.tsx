@@ -8,6 +8,7 @@ import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
+import { CaptureButton } from "./capture";
 
 interface LayoutProps {
   children: ReactNode;
