@@ -138,7 +138,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Total P&L</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">Total P&L <InfoTooltip term="totalPnl" size="h-3 w-3" /></span>
               <span className={cn('text-sm font-semibold tabular-nums', pnlColor(portfolio?.total_pnl ?? 0))}>
                 {(portfolio?.total_pnl ?? 0) >= 0 ? '+' : ''}
                 ${(portfolio?.total_pnl ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
