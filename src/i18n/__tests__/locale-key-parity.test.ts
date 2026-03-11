@@ -57,10 +57,7 @@ describe('Locale key parity with en.json', () => {
       if (missing.length > 0) {
         const sample = missing.slice(0, 10).join('\n  - ');
         const extra = missing.length > 10 ? `\n  ... and ${missing.length - 10} more` : '';
-        expect(missing).toEqual(
-          [],
-          `${langCode}.json is missing ${missing.length} keys:\n  - ${sample}${extra}`
-        );
+        expect(missing, `${langCode}.json is missing ${missing.length} keys:\n  - ${sample}${extra}`).toEqual([]);
       }
     });
   }
