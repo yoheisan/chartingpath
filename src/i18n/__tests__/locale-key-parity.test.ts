@@ -29,7 +29,7 @@ import pl from '../locales/pl.json';
 import vi from '../locales/vi.json';
 
 const locales: Record<string, Record<string, any>> = {
-  es, pt, fr, zh, de, hi, id, it, ja, ru, ar, af, ko, tr, nl, pl, vi,
+  es, pt, fr, zh, de, hi, id, it: itLocale, ja, ru, ar, af, ko, tr, nl, pl, vi,
 };
 
 /** Flatten nested object to dot-separated keys */
