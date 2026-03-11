@@ -184,6 +184,57 @@ async function loadFromDbCache(
   } catch { return results; }
 }
 
+// ============================================
+// Repeatability Gate: Edge Atlas aggregate stats
+// ============================================
+interface EdgeAtlasEntry {
+  pattern_id: string;
+  timeframe: string;
+  total_trades: number;
+  win_rate_pct: number;
+  expectancy_r: number;
+}
+
+async function fetchRepeatabilityStats(
+  supabase: any,
+  patternIds: string[],
+  timeframe: string,
+  assetType: string
+): Promise<Map<string, EdgeAtlasEntry>> {
+  const map = new Map<string, EdgeAtlasEntry>();
+  if (!patternIds.length) return map;
+  
+  try {
+    const { data, error } = await supabase.rpc('get_edge_atlas_rankings_filtered', {
+      p_asset_type: assetType,
+      p_timeframe: timeframe,
+      p_min_trades: 1, // fetch all, let the scorer apply thresholds
+      p_limit: 100,
+    });
+    
+    if (error) {
+      console.warn('[repeatability] Edge Atlas query error:', error.message);
+      return map;
+    }
+    
+    for (const row of (data || [])) {
+      map.set(row.pattern_id, {
+        pattern_id: row.pattern_id,
+        timeframe: row.timeframe,
+        total_trades: Number(row.total_trades),
+        win_rate_pct: Number(row.win_rate_pct),
+        expectancy_r: Number(row.expectancy_r),
+      });
+    }
+    
+    console.info(`[repeatability] Loaded ${map.size} Edge Atlas entries for ${assetType}@${timeframe}`);
+  } catch (err: any) {
+    console.warn('[repeatability] Exception:', err.message);
+  }
+  
+  return map;
+}
+
 // Fetch stats per (pattern_id, symbol, rrTier) combination - returns Map keyed by "patternId|symbol|rrTier"
 async function fetchPatternSymbolStats(
   supabase: any, 
