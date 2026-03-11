@@ -772,16 +772,41 @@ export function calculatePatternQualityScore(
   });
   
   // ============= CALCULATE FINAL SCORE =============
+  // Dynamic weight redistribution: when data is unavailable (score stuck at 5
+  // with a telltale "unavailable"/"No historical"/"Insufficient" description),
+  // redistribute that factor's weight proportionally to factors with real data.
   
-  const weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
+  const DATA_UNAVAILABLE_KEYWORDS = ['unavailable', 'No historical', 'Insufficient', 'No volume history', 'Invalid ATR'];
+  
+  const hasRealData = (f: QualityFactor): boolean =>
+    !DATA_UNAVAILABLE_KEYWORDS.some(kw => f.description.includes(kw));
+  
+  const realFactors = factors.filter(hasRealData);
+  const missingFactors = factors.filter(f => !hasRealData(f));
+  
+  let weightedScore: number;
+  
+  if (missingFactors.length > 0 && realFactors.length > 0) {
+    // Redistribute missing weight proportionally to real factors
+    const missingWeight = missingFactors.reduce((sum, f) => sum + f.weight, 0);
+    const realWeight = realFactors.reduce((sum, f) => sum + f.weight, 0);
+    const redistributionMultiplier = (realWeight + missingWeight) / realWeight;
+    
+    weightedScore = realFactors.reduce(
+      (sum, f) => sum + f.score * f.weight * redistributionMultiplier, 0
+    );
+  } else {
+    weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
+  }
+  
   const finalScore = Math.round(weightedScore * 10) / 10;
   
-  // Grade
+  // Grade — recalibrated thresholds so A-grade is rare but achievable (~5-10%)
   let grade: 'A' | 'B' | 'C' | 'D' | 'F';
-  if (finalScore >= 8) grade = 'A';
-  else if (finalScore >= 6.5) grade = 'B';
-  else if (finalScore >= 5) grade = 'C';
-  else if (finalScore >= 3.5) grade = 'D';
+  if (finalScore >= 7.5) grade = 'A';
+  else if (finalScore >= 6.0) grade = 'B';
+  else if (finalScore >= 4.5) grade = 'C';
+  else if (finalScore >= 3.0) grade = 'D';
   else grade = 'F';
   
   // Confidence

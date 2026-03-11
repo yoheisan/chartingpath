@@ -921,12 +921,12 @@ function calculatePatternGrade(
   else if (direction === 'short' && currentPrice > recentHigh - range * 0.3) score += 1.5;
   else score += 0.5;
   
-  // Convert score (0-10) to grade
+  // Convert score (0-10) to grade — aligned with shared patternQualityScorer thresholds
   let grade = 'F';
-  if (score >= 8) grade = 'A';
-  else if (score >= 6.5) grade = 'B';
-  else if (score >= 5) grade = 'C';
-  else if (score >= 3) grade = 'D';
+  if (score >= 7.5) grade = 'A';
+  else if (score >= 6.0) grade = 'B';
+  else if (score >= 4.5) grade = 'C';
+  else if (score >= 3.0) grade = 'D';
   
   return { grade, score };
 }
