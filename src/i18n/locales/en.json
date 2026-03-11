@@ -1062,7 +1062,21 @@
     "settings": "Settings",
     "stockMarket": "Stock Market",
     "tools": "Tools",
-    "tradingStrategies": "Trading Strategies"
+    "tradingStrategies": "Trading Strategies",
+    "agentScoring": "Agent Scoring"
+  },
+  "metrics": {
+    "instruments": "Instruments",
+    "patterns": "Patterns",
+    "trades": "Backtested Outcomes",
+    "avgWinRate": "Avg Win Rate (A-Grade)"
+  },
+  "guestNudge": {
+    "message": "You're on a guest preview — Create your free account to save results and get alerts."
+  },
+  "auth": {
+    "signUpFree": "Sign Up Free",
+    "joinTraders": "Join 1,300+ traders"
   },
   "notFound": {
     "message": "Oops! Page not found",
