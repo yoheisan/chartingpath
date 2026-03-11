@@ -1350,5 +1350,53 @@
     "Script Generator": "Generador de Scripts",
     "Trading Education Center": "Centro de Educación en Trading",
     "Market Breadth": "Amplitud de Mercado"
+  },
+  "onboarding": {
+    "welcomeTitle": "Bienvenido a ChartingPath",
+    "welcomeDesc": "ChartingPath valida patrones gráficos contra más de 320,000 resultados históricos para que operes con ventajas estadísticas reales, no con suposiciones.",
+    "screenerTitle": "Screener de Patrones en Vivo",
+    "screenerDesc": "Señales en tiempo real en más de 1,200 instrumentos. Cada patrón está calificado por calidad y respaldado por tasas de éxito históricas.",
+    "patternLabTitle": "Pattern Lab — Backtestea Cualquier Patrón",
+    "patternLabDesc": "Elige un patrón, selecciona un símbolo y observa exactamente cómo se desempeñó a lo largo de años de datos.",
+    "dashboardTitle": "Tu Centro de Comando",
+    "dashboardDesc": "Gráficos, lista de seguimiento, alertas y paper trading — todo en una pantalla.",
+    "edgeAtlasTitle": "Edge Atlas — Encuentra las Mejores Ventajas",
+    "edgeAtlasDesc": "Descubre qué patrones funcionan mejor en qué marcos temporales — clasificados por rendimiento anualizado.",
+    "tryIt": "Pruébalo ahora →",
+    "skip": "Saltar tour",
+    "next": "Siguiente",
+    "getStarted": "¡Empecemos!"
+  },
+  "glossary": {
+    "winRate": "El porcentaje de operaciones que terminan en ganancia. Una tasa del 60% significa que 6 de cada 10 operaciones son ganadoras.",
+    "expectancy": "Rendimiento promedio por operación en múltiplos de R. Una expectativa positiva significa que la estrategia es rentable a largo plazo.",
+    "sharpe": "Métrica de rendimiento ajustado al riesgo. Mayor es mejor. Por encima de 1.0 es bueno, por encima de 2.0 es excelente.",
+    "profitFactor": "Ganancias brutas divididas por pérdidas brutas. Por encima de 1.0 es rentable. Por encima de 2.0 es fuerte.",
+    "maxDrawdown": "La mayor caída de pico a valle en el valor del portafolio. Mide el peor escenario de pérdida.",
+    "riskReward": "Ratio entre pérdida potencial y ganancia potencial. Un R:R de 1:2 significa arriesgar $1 para ganar $2.",
+    "sampleSize": "Número de operaciones históricas usadas para calcular estadísticas. Muestras más grandes (50+) dan resultados más confiables.",
+    "grade": "Puntuación general de calidad de señal combinando claridad del patrón, confirmación de volumen y alineación de tendencia.",
+    "timeframe": "El período de tiempo que representa cada vela (ej., 1H = 1 hora, 1D = 1 día).",
+    "takeProfit": "El precio objetivo donde se cierra una operación ganadora para asegurar las ganancias.",
+    "stopLoss": "El nivel de precio donde se cierra automáticamente una operación perdedora para limitar pérdidas.",
+    "paperTrading": "Operaciones simuladas con dinero virtual para practicar estrategias sin riesgo financiero.",
+    "signalAge": "Hace cuánto tiempo se detectó el patrón por primera vez. Las señales más recientes tienden a ser más accionables.",
+    "barsToOutcome": "Número promedio de velas desde la entrada hasta que la operación alcanza su objetivo o stop loss.",
+    "cagr": "Tasa de Crecimiento Anual Compuesto — el rendimiento anual suavizado durante un período determinado.",
+    "sortino": "Similar al Sharpe pero solo penaliza la volatilidad a la baja.",
+    "annualizedReturn": "Rendimiento anual estimado si la estrategia se operara continuamente.",
+    "tradesPerYear": "Número estimado de oportunidades de trading por año para este patrón/marco temporal.",
+    "balance": "Valor actual del portafolio de paper trading incluyendo capital inicial más ganancias y pérdidas realizadas.",
+    "totalPnl": "Ganancia y Pérdida Total — la suma de todos los resultados de operaciones cerradas.",
+    "rMultiple": "Rendimiento expresado como múltiplo del riesgo inicial. Un trade de +2R significa que ganaste 2× lo que arriesgaste."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Compara tus resultados reales de paper trading contra las predicciones del backtest para los mismos patrones.",
+    "signInRequired": "Inicia sesión para rastrear el rendimiento forward",
+    "noData": "Completa algunas operaciones de paper trading para ver el rendimiento forward vs. backtests",
+    "liveWR": "WR Real",
+    "trades": "Operaciones",
+    "backtestComparison": "vs. Backtest"
   }
 }

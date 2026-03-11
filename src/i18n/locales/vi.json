@@ -28,5 +28,53 @@
     "copilotHint": "Được hỗ trợ bởi AI Trading Copilot — nhấn ⌘K ở bất kỳ đâu",
     "midPageHeadline": "Xem dữ liệu đằng sau mô hình",
     "midPageSubtext": "Tài khoản miễn phí. Không cần thẻ tín dụng. Dữ liệu backtest thực từ ngày đầu tiên."
+  },
+  "onboarding": {
+    "welcomeTitle": "Chào mừng đến ChartingPath",
+    "welcomeDesc": "ChartingPath xác thực mô hình biểu đồ dựa trên hơn 320.000 kết quả lịch sử để bạn giao dịch với lợi thế thống kê thực sự.",
+    "screenerTitle": "Bộ Lọc Mô Hình Trực Tiếp",
+    "screenerDesc": "Tín hiệu thời gian thực trên hơn 1.200 công cụ. Mỗi mô hình được đánh giá chất lượng và hỗ trợ bởi tỷ lệ thắng lịch sử.",
+    "patternLabTitle": "Phòng Thí Nghiệm Mô Hình — Backtest Bất Kỳ Mô Hình Nào",
+    "patternLabDesc": "Chọn một mô hình, chọn một mã và xem chính xác hiệu suất của nó qua nhiều năm dữ liệu.",
+    "dashboardTitle": "Trung Tâm Điều Khiển",
+    "dashboardDesc": "Biểu đồ, danh sách theo dõi, cảnh báo và giao dịch mô phỏng — tất cả trên một màn hình.",
+    "edgeAtlasTitle": "Edge Atlas — Tìm Lợi Thế Tốt Nhất",
+    "edgeAtlasDesc": "Khám phá mô hình nào hoạt động tốt nhất ở khung thời gian nào — xếp hạng theo lợi nhuận hàng năm.",
+    "tryIt": "Thử ngay →",
+    "skip": "Bỏ qua hướng dẫn",
+    "next": "Tiếp theo",
+    "getStarted": "Bắt đầu thôi!"
+  },
+  "glossary": {
+    "winRate": "Tỷ lệ phần trăm giao dịch kết thúc có lãi. Tỷ lệ thắng 60% có nghĩa là 6 trong 10 giao dịch có lãi.",
+    "expectancy": "Lợi nhuận trung bình mỗi giao dịch tính bằng bội số R. Kỳ vọng dương có nghĩa là chiến lược có lãi theo thời gian.",
+    "sharpe": "Chỉ số lợi nhuận điều chỉnh rủi ro. Càng cao càng tốt. Trên 1,0 là tốt, trên 2,0 là xuất sắc.",
+    "profitFactor": "Tổng lợi nhuận chia cho tổng thua lỗ. Trên 1,0 là có lãi. Trên 2,0 là mạnh.",
+    "maxDrawdown": "Mức giảm lớn nhất từ đỉnh đến đáy trong giá trị danh mục.",
+    "riskReward": "Tỷ lệ giữa thua lỗ tiềm năng và lợi nhuận tiềm năng. R:R 1:2 có nghĩa là chấp nhận rủi ro 1đ để kiếm 2đ.",
+    "sampleSize": "Số lượng giao dịch lịch sử được sử dụng để tính thống kê. Mẫu lớn hơn (50+) cho kết quả đáng tin cậy hơn.",
+    "grade": "Điểm chất lượng tín hiệu tổng thể kết hợp độ rõ mô hình, xác nhận khối lượng và căn chỉnh xu hướng.",
+    "timeframe": "Khoảng thời gian mỗi nến đại diện (ví dụ: 1H = 1 giờ, 1D = 1 ngày).",
+    "takeProfit": "Giá mục tiêu nơi giao dịch thắng được đóng để chốt lời.",
+    "stopLoss": "Mức giá nơi giao dịch thua được tự động đóng để hạn chế thua lỗ.",
+    "paperTrading": "Giao dịch mô phỏng với tiền ảo để thực hành chiến lược không có rủi ro tài chính.",
+    "signalAge": "Mô hình được phát hiện bao lâu trước. Tín hiệu mới hơn thường dễ thực hiện hơn.",
+    "barsToOutcome": "Số nến trung bình từ điểm vào đến khi giao dịch đạt mục tiêu hoặc stop loss.",
+    "cagr": "Tốc Độ Tăng Trưởng Kép Hàng Năm — lợi nhuận hàng năm được san phẳng trong một khoảng thời gian.",
+    "sortino": "Giống Sharpe nhưng chỉ phạt biến động giảm.",
+    "annualizedReturn": "Lợi nhuận hàng năm ước tính nếu chiến lược được giao dịch liên tục.",
+    "tradesPerYear": "Số lượng cơ hội giao dịch ước tính mỗi năm cho mô hình/khung thời gian này.",
+    "balance": "Giá trị danh mục giao dịch mô phỏng hiện tại bao gồm vốn ban đầu cộng lãi lỗ đã thực hiện.",
+    "totalPnl": "Tổng Lãi & Lỗ — tổng kết quả của tất cả giao dịch đã đóng.",
+    "rMultiple": "Lợi nhuận được biểu thị bằng bội số rủi ro ban đầu. Giao dịch +2R có nghĩa là bạn kiếm được gấp 2 lần rủi ro."
+  },
+  "forwardPerformance": {
+    "title": "Thực tế vs. Backtest",
+    "tooltip": "So sánh kết quả giao dịch mô phỏng thực tế với dự đoán backtest cho cùng các mô hình.",
+    "signInRequired": "Đăng nhập để theo dõi hiệu suất thực tế",
+    "noData": "Hoàn thành vài giao dịch mô phỏng để xem hiệu suất thực tế vs. backtest",
+    "liveWR": "WR Thực",
+    "trades": "Giao dịch",
+    "backtestComparison": "vs. Backtest"
   }
 }

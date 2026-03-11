@@ -1320,5 +1320,53 @@
     "Script Generator": "Betik Oluşturucu",
     "Trading Education Center": "İşlem Eğitim Merkezi",
     "Market Breadth": "Piyasa Genişliği"
+  },
+  "onboarding": {
+    "welcomeTitle": "ChartingPath'e Hoş Geldiniz",
+    "welcomeDesc": "ChartingPath, grafik formasyonlarını 320.000'den fazla geçmiş sonuçla doğrular — böylece gerçek istatistiksel avantajlarla işlem yaparsınız.",
+    "screenerTitle": "Canlı Formasyon Tarayıcı",
+    "screenerDesc": "1.200'den fazla enstrümanda gerçek zamanlı sinyaller. Her formasyon kalite derecesiyle değerlendirilir ve geçmiş kazanma oranlarıyla desteklenir.",
+    "patternLabTitle": "Formasyon Laboratuvarı — Herhangi Bir Formasyonu Test Edin",
+    "patternLabDesc": "Bir formasyon seçin, bir sembol belirleyin ve yıllarca veri üzerinde tam performansını görün.",
+    "dashboardTitle": "Komut Merkeziniz",
+    "dashboardDesc": "Grafikler, izleme listesi, uyarılar ve kağıt üzerinde işlem — hepsi tek ekranda.",
+    "edgeAtlasTitle": "Edge Atlas — En İyi Avantajları Bulun",
+    "edgeAtlasDesc": "Hangi formasyonların hangi zaman dilimlerinde en iyi performansı gösterdiğini keşfedin — yıllık getiriye göre sıralanmış.",
+    "tryIt": "Şimdi deneyin →",
+    "skip": "Turu atla",
+    "next": "İleri",
+    "getStarted": "Başlayalım!"
+  },
+  "glossary": {
+    "winRate": "Kârla sonuçlanan işlemlerin yüzdesi. %60 kazanma oranı, 10 işlemden 6'sının kazançlı olduğu anlamına gelir.",
+    "expectancy": "R katları cinsinden işlem başına ortalama getiri. Pozitif beklenti, stratejinin uzun vadede kârlı olduğu anlamına gelir.",
+    "sharpe": "Riske göre düzeltilmiş getiri ölçütü. Ne kadar yüksekse o kadar iyi. 1,0 üzeri iyi, 2,0 üzeri mükemmel.",
+    "profitFactor": "Brüt kârların brüt zararlara bölümü. 1,0 üzeri kârlı. 2,0 üzeri güçlü.",
+    "maxDrawdown": "Portföy değerindeki zirve-dip arası en büyük düşüş.",
+    "riskReward": "Potansiyel kayıp ile potansiyel kazanç arasındaki oran. 1:2 R:R, 1₺ risk alarak 2₺ kazanmak demektir.",
+    "sampleSize": "İstatistik hesaplamak için kullanılan geçmiş işlem sayısı. Daha büyük örneklemler (50+) daha güvenilir sonuçlar verir.",
+    "grade": "Formasyon netliği, hacim onayı ve trend hizalamasını birleştiren genel sinyal kalitesi puanı.",
+    "timeframe": "Her mumun temsil ettiği zaman dilimi (ör., 1H = 1 saat, 1D = 1 gün).",
+    "takeProfit": "Kazançlı bir işlemin kârı güvenceye almak için kapatıldığı hedef fiyat.",
+    "stopLoss": "Kayıplı bir işlemin zararı sınırlamak için otomatik olarak kapatıldığı fiyat seviyesi.",
+    "paperTrading": "Finansal risk olmadan strateji uygulamak için sanal parayla simüle edilmiş işlem.",
+    "signalAge": "Formasyonun ilk tespit edilmesinden bu yana geçen süre. Daha taze sinyaller genellikle daha uygulanabilir.",
+    "barsToOutcome": "Girişten işlemin hedefine veya stop loss'una ulaşmasına kadar ortalama mum sayısı.",
+    "cagr": "Bileşik Yıllık Büyüme Oranı — belirli bir dönemdeki düzleştirilmiş yıllık getiri.",
+    "sortino": "Sharpe gibi ama sadece aşağı yönlü oynaklığı cezalandırır.",
+    "annualizedReturn": "Strateji sürekli işlem görürse tahmini yıllık getiri.",
+    "tradesPerYear": "Bu formasyon/zaman dilimi için yıllık tahmini işlem fırsatı sayısı.",
+    "balance": "Başlangıç sermayesi artı gerçekleşen kâr ve zararlar dahil mevcut kağıt işlem portföy değeri.",
+    "totalPnl": "Toplam Kâr ve Zarar — tüm kapatılmış işlem sonuçlarının toplamı.",
+    "rMultiple": "Başlangıç riskinin katı olarak ifade edilen getiri. +2R işlem, riskinizin 2 katını kazandığınız anlamına gelir."
+  },
+  "forwardPerformance": {
+    "title": "İleriye Dönük vs. Backtest",
+    "tooltip": "Aynı formasyonlar için gerçek kağıt işlem sonuçlarınızı backtest tahminleriyle karşılaştırır.",
+    "signInRequired": "İleriye dönük performansı izlemek için giriş yapın",
+    "noData": "İleriye dönük performans vs. backtest'leri görmek için bazı kağıt işlemleri tamamlayın",
+    "liveWR": "Canlı KO",
+    "trades": "İşlemler",
+    "backtestComparison": "vs. Backtest"
   }
 }

@@ -97,5 +97,53 @@
     "copilotHint": "Aangedreven door AI Trading Copilot — druk overal op ⌘K",
     "midPageHeadline": "Bekijk de data achter het patroon",
     "midPageSubtext": "Gratis account. Geen creditcard. Echte backtest-data vanaf dag één."
+  },
+  "onboarding": {
+    "welcomeTitle": "Welkom bij ChartingPath",
+    "welcomeDesc": "ChartingPath valideert grafiekpatronen tegen 320.000+ historische resultaten zodat je handelt met echte statistische voordelen.",
+    "screenerTitle": "Live Patroon Screener",
+    "screenerDesc": "Realtime signalen over 1.200+ instrumenten. Elk patroon wordt beoordeeld op kwaliteit en ondersteund door historische winstpercentages.",
+    "patternLabTitle": "Pattern Lab — Backtest Elk Patroon",
+    "patternLabDesc": "Kies een patroon, selecteer een symbool en bekijk precies hoe het presteerde over jaren aan data.",
+    "dashboardTitle": "Je Commandocentrum",
+    "dashboardDesc": "Grafieken, watchlist, meldingen en papierhandel — alles op één scherm.",
+    "edgeAtlasTitle": "Edge Atlas — Vind de Beste Voordelen",
+    "edgeAtlasDesc": "Ontdek welke patronen het best presteren in welke tijdframes — gerangschikt op jaarlijks rendement.",
+    "tryIt": "Probeer het nu →",
+    "skip": "Tour overslaan",
+    "next": "Volgende",
+    "getStarted": "Laten we beginnen!"
+  },
+  "glossary": {
+    "winRate": "Het percentage trades dat eindigt in winst. Een winstpercentage van 60% betekent dat 6 op 10 trades winnaars zijn.",
+    "expectancy": "Gemiddeld rendement per trade in R-veelvouden. Positieve verwachting betekent dat de strategie winstgevend is op lange termijn.",
+    "sharpe": "Risicogecorrigeerde rendementsmaatstaf. Hoger is beter. Boven 1,0 is goed, boven 2,0 is uitstekend.",
+    "profitFactor": "Brutowinsten gedeeld door brutoverliezen. Boven 1,0 is winstgevend. Boven 2,0 is sterk.",
+    "maxDrawdown": "De grootste piek-tot-dal daling in portefeuillewaarde.",
+    "riskReward": "Verhouding tussen potentieel verlies en potentiële winst. Een 1:2 R:R betekent €1 riskeren om €2 te verdienen.",
+    "sampleSize": "Aantal historische trades gebruikt om statistieken te berekenen. Grotere steekproeven (50+) geven betrouwbaardere resultaten.",
+    "grade": "Algehele signaalkwaliteitsscore die patroonhelderheid, volumebevestiging en trenduitlijning combineert.",
+    "timeframe": "De tijdsperiode die elke kaars vertegenwoordigt (bijv. 1H = 1 uur, 1D = 1 dag).",
+    "takeProfit": "De doelprijs waar een winnende trade wordt gesloten om winst veilig te stellen.",
+    "stopLoss": "Het prijsniveau waar een verliezende trade automatisch wordt gesloten om verliezen te beperken.",
+    "paperTrading": "Gesimuleerde handel met virtueel geld om strategieën te oefenen zonder financieel risico.",
+    "signalAge": "Hoe lang geleden het patroon voor het eerst werd gedetecteerd. Recentere signalen zijn doorgaans beter bruikbaar.",
+    "barsToOutcome": "Gemiddeld aantal kaarsen van instap tot het bereiken van doel of stop-loss.",
+    "cagr": "Samengesteld Jaarlijks Groeipercentage — het afgevlakte jaarlijkse rendement over een bepaalde periode.",
+    "sortino": "Zoals Sharpe maar straft alleen neerwaartse volatiliteit.",
+    "annualizedReturn": "Geschat jaarlijks rendement als de strategie continu zou worden verhandeld.",
+    "tradesPerYear": "Geschat aantal handelsmogelijkheden per jaar voor dit patroon/tijdframe.",
+    "balance": "Huidige waarde van de papierhandel-portefeuille inclusief startkapitaal plus gerealiseerde winsten en verliezen.",
+    "totalPnl": "Totale Winst & Verlies — de som van alle gesloten traderesultaten.",
+    "rMultiple": "Rendement uitgedrukt als veelvoud van het initiële risico. Een +2R trade betekent dat je 2× hebt verdiend wat je riskeerde."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Vergelijkt je werkelijke papierhandel resultaten met de backtest-voorspellingen voor dezelfde patronen.",
+    "signInRequired": "Log in om forward-prestaties te volgen",
+    "noData": "Voltooi enkele papiertrades om forward-prestaties vs. backtests te zien",
+    "liveWR": "Live WR",
+    "trades": "Trades",
+    "backtestComparison": "vs. Backtest"
   }
 }

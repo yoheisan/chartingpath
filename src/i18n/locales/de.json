@@ -1350,5 +1350,53 @@
     "Script Generator": "Skript-Generator",
     "Trading Education Center": "Trading-Bildungszentrum",
     "Market Breadth": "Marktbreite"
+  },
+  "onboarding": {
+    "welcomeTitle": "Willkommen bei ChartingPath",
+    "welcomeDesc": "ChartingPath validiert Chartmuster gegen über 320.000 historische Ergebnisse, damit Sie mit echten statistischen Vorteilen handeln.",
+    "screenerTitle": "Live-Muster-Screener",
+    "screenerDesc": "Echtzeit-Signale über 1.200+ Instrumente. Jedes Muster wird nach Qualität bewertet und durch historische Gewinnraten gestützt.",
+    "patternLabTitle": "Pattern Lab — Backteste Jedes Muster",
+    "patternLabDesc": "Wählen Sie ein Muster, wählen Sie ein Symbol und sehen Sie genau, wie es über Jahre von Daten performt hat.",
+    "dashboardTitle": "Ihr Kommandozentrum",
+    "dashboardDesc": "Charts, Watchlist, Alarme und Paper Trading — alles auf einem Bildschirm.",
+    "edgeAtlasTitle": "Edge Atlas — Finden Sie die Besten Vorteile",
+    "edgeAtlasDesc": "Entdecken Sie, welche Muster in welchen Zeitrahmen am besten performen — gerankt nach annualisierter Rendite.",
+    "tryIt": "Jetzt ausprobieren →",
+    "skip": "Tour überspringen",
+    "next": "Weiter",
+    "getStarted": "Los geht's!"
+  },
+  "glossary": {
+    "winRate": "Der Prozentsatz der Trades, die im Gewinn enden. Eine 60%-Gewinnrate bedeutet, dass 6 von 10 Trades Gewinner sind.",
+    "expectancy": "Durchschnittliche Rendite pro Trade in R-Vielfachen. Positive Erwartung bedeutet, dass die Strategie langfristig profitabel ist.",
+    "sharpe": "Risikoadjustierte Renditekennzahl. Höher ist besser. Über 1,0 ist gut, über 2,0 ist ausgezeichnet.",
+    "profitFactor": "Bruttogewinne geteilt durch Bruttoverluste. Über 1,0 ist profitabel. Über 2,0 ist stark.",
+    "maxDrawdown": "Der größte Rückgang vom Hoch zum Tief im Portfoliowert. Misst das Worst-Case-Verlustszenario.",
+    "riskReward": "Verhältnis zwischen potenziellem Verlust und potenziellem Gewinn. Ein R:R von 1:2 bedeutet, 1€ zu riskieren, um 2€ zu gewinnen.",
+    "sampleSize": "Anzahl historischer Trades zur Berechnung von Statistiken. Größere Stichproben (50+) liefern zuverlässigere Ergebnisse.",
+    "grade": "Gesamtqualitätsbewertung des Signals, die Mustererkennung, Volumenbestätigung und Trendausrichtung kombiniert.",
+    "timeframe": "Der Zeitraum, den jede Kerze darstellt (z.B. 1H = 1 Stunde, 1D = 1 Tag).",
+    "takeProfit": "Der Zielpreis, bei dem ein gewinnender Trade geschlossen wird.",
+    "stopLoss": "Das Preisniveau, bei dem ein verlierender Trade automatisch geschlossen wird.",
+    "paperTrading": "Simulierter Handel mit virtuellem Geld zum Üben von Strategien ohne finanzielles Risiko.",
+    "signalAge": "Wie lange das Muster zuerst erkannt wurde. Frischere Signale sind tendenziell handelbarer.",
+    "barsToOutcome": "Durchschnittliche Anzahl von Kerzen vom Einstieg bis zum Erreichen des Ziels oder Stop-Loss.",
+    "cagr": "Jährliche Wachstumsrate — die geglättete jährliche Rendite über einen bestimmten Zeitraum.",
+    "sortino": "Wie Sharpe, bestraft aber nur die Abwärtsvolatilität.",
+    "annualizedReturn": "Geschätzte Jahresrendite bei kontinuierlichem Handel der Strategie.",
+    "tradesPerYear": "Geschätzte Anzahl von Handelsmöglichkeiten pro Jahr für dieses Muster/Zeitrahmen.",
+    "balance": "Aktueller Paper-Trading-Portfoliowert einschließlich Anfangskapital plus realisierte Gewinne und Verluste.",
+    "totalPnl": "Gesamtgewinn und -verlust — die Summe aller geschlossenen Trade-Ergebnisse.",
+    "rMultiple": "Rendite als Vielfaches des anfänglichen Risikos. Ein +2R-Trade bedeutet, dass Sie das 2-fache Ihres Risikos verdient haben."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Vergleicht Ihre tatsächlichen Paper-Trading-Ergebnisse mit den Backtest-Vorhersagen für dieselben Muster.",
+    "signInRequired": "Anmelden, um die Forward-Performance zu verfolgen",
+    "noData": "Schließen Sie einige Paper-Trades ab, um Forward-Performance vs. Backtests zu sehen",
+    "liveWR": "Live-GR",
+    "trades": "Trades",
+    "backtestComparison": "vs. Backtest"
   }
 }

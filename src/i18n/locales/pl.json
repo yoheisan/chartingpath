@@ -97,5 +97,53 @@
     "copilotHint": "Napędzany przez AI Trading Copilot — naciśnij ⌘K gdziekolwiek",
     "midPageHeadline": "Zobacz dane stojące za formacją",
     "midPageSubtext": "Darmowe konto. Bez karty kredytowej. Prawdziwe dane backtestowe od pierwszego dnia."
+  },
+  "onboarding": {
+    "welcomeTitle": "Witamy w ChartingPath",
+    "welcomeDesc": "ChartingPath waliduje formacje wykresowe na podstawie ponad 320 000 historycznych wyników, abyś handlował z prawdziwą przewagą statystyczną.",
+    "screenerTitle": "Skaner Formacji na Żywo",
+    "screenerDesc": "Sygnały w czasie rzeczywistym dla ponad 1200 instrumentów. Każda formacja jest oceniana pod kątem jakości i wspierana historycznymi współczynnikami wygranych.",
+    "patternLabTitle": "Laboratorium Formacji — Przetestuj Dowolną Formację",
+    "patternLabDesc": "Wybierz formację, wybierz symbol i zobacz dokładnie, jak radziła sobie na przestrzeni lat danych.",
+    "dashboardTitle": "Twoje Centrum Dowodzenia",
+    "dashboardDesc": "Wykresy, lista obserwowanych, alerty i handel papierowy — wszystko na jednym ekranie.",
+    "edgeAtlasTitle": "Edge Atlas — Znajdź Najlepsze Przewagi",
+    "edgeAtlasDesc": "Odkryj, które formacje najlepiej sprawdzają się w jakich ramach czasowych — uszeregowane według rocznego zwrotu.",
+    "tryIt": "Wypróbuj teraz →",
+    "skip": "Pomiń wycieczkę",
+    "next": "Dalej",
+    "getStarted": "Zaczynajmy!"
+  },
+  "glossary": {
+    "winRate": "Procent transakcji kończących się zyskiem. 60% współczynnik wygranych oznacza, że 6 na 10 transakcji jest zyskownych.",
+    "expectancy": "Średni zwrot na transakcję w wielokrotnościach R. Pozytywna oczekiwana wartość oznacza, że strategia jest zyskowna w czasie.",
+    "sharpe": "Miara zwrotu skorygowanego o ryzyko. Im wyższy, tym lepszy. Powyżej 1,0 jest dobry, powyżej 2,0 jest doskonały.",
+    "profitFactor": "Zyski brutto podzielone przez straty brutto. Powyżej 1,0 jest zyskowny. Powyżej 2,0 jest silny.",
+    "maxDrawdown": "Największy spadek wartości portfela od szczytu do dna.",
+    "riskReward": "Stosunek potencjalnej straty do potencjalnego zysku. R:R 1:2 oznacza ryzykowanie 1 zł, aby zarobić 2 zł.",
+    "sampleSize": "Liczba historycznych transakcji użytych do obliczenia statystyk. Większe próby (50+) dają bardziej wiarygodne wyniki.",
+    "grade": "Ogólna ocena jakości sygnału łącząca klarowność formacji, potwierdzenie wolumenu i wyrównanie trendu.",
+    "timeframe": "Okres czasu reprezentowany przez każdą świecę (np. 1H = 1 godzina, 1D = 1 dzień).",
+    "takeProfit": "Cena docelowa, przy której zyskowna transakcja jest zamykana w celu zabezpieczenia zysków.",
+    "stopLoss": "Poziom ceny, przy którym stratna transakcja jest automatycznie zamykana w celu ograniczenia strat.",
+    "paperTrading": "Symulowany handel wirtualnymi pieniędzmi do ćwiczenia strategii bez ryzyka finansowego.",
+    "signalAge": "Jak dawno formacja została po raz pierwszy wykryta. Nowsze sygnały bywają bardziej przydatne.",
+    "barsToOutcome": "Średnia liczba świec od wejścia do osiągnięcia celu lub stop lossa.",
+    "cagr": "Złożona Roczna Stopa Wzrostu — wygładzona roczna stopa zwrotu w danym okresie.",
+    "sortino": "Jak Sharpe, ale penalizuje tylko zmienność spadkową.",
+    "annualizedReturn": "Szacowany roczny zwrot, gdyby strategia była handlowana nieprzerwanie.",
+    "tradesPerYear": "Szacowana liczba okazji handlowych rocznie dla tej formacji/ram czasowych.",
+    "balance": "Bieżąca wartość portfela handlu papierowego, w tym kapitał początkowy plus zrealizowane zyski i straty.",
+    "totalPnl": "Całkowity Zysk i Strata — suma wyników wszystkich zamkniętych transakcji.",
+    "rMultiple": "Zwrot wyrażony jako wielokrotność początkowego ryzyka. Transakcja +2R oznacza, że zarobiłeś 2× tego, co zaryzykowałeś."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Porównuje Twoje rzeczywiste wyniki handlu papierowego z prognozami backtestu dla tych samych formacji.",
+    "signInRequired": "Zaloguj się, aby śledzić wyniki forward",
+    "noData": "Wykonaj kilka transakcji papierowych, aby zobaczyć wyniki forward vs. backtest",
+    "liveWR": "WR na żywo",
+    "trades": "Transakcje",
+    "backtestComparison": "vs. Backtest"
   }
 }

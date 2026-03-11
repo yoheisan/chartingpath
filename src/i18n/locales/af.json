@@ -1308,5 +1308,53 @@
     "Script Generator": "Skripgenerator",
     "Trading Education Center": "Handelsopleidingsentrum",
     "Market Breadth": "Markbreedte"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welkom by ChartingPath",
+    "welcomeDesc": "ChartingPath valideer grafiekpatrone teen 320,000+ historiese resultate sodat jy met werklike statistiese voordele kan handel dryf.",
+    "screenerTitle": "Lewendige Patroon-sifter",
+    "screenerDesc": "Intydse seine oor 1,200+ instrumente. Elke patroon word gegradeer vir kwaliteit en ondersteun deur historiese winskoerse.",
+    "patternLabTitle": "Patroon Lab — Toets Enige Patroon",
+    "patternLabDesc": "Kies 'n patroon, kies 'n simbool en sien presies hoe dit oor jare se data presteer het.",
+    "dashboardTitle": "Jou Beheersentrum",
+    "dashboardDesc": "Grafieke, dophouerlys, waarskuwings en papierhandel — alles op een skerm.",
+    "edgeAtlasTitle": "Edge Atlas — Vind die Beste Voordele",
+    "edgeAtlasDesc": "Ontdek watter patrone die beste presteer in watter tydraamwerke — gerangskik volgens jaarlikse opbrengs.",
+    "tryIt": "Probeer dit nou →",
+    "skip": "Slaan toer oor",
+    "next": "Volgende",
+    "getStarted": "Kom ons begin!"
+  },
+  "glossary": {
+    "winRate": "Die persentasie van transaksies wat in wins eindig. 'n 60% winskoers beteken 6 uit 10 transaksies is wenners.",
+    "expectancy": "Gemiddelde opbrengs per transaksie in R-veelvoude. Positiewe verwagting beteken die strategie is winsgewend oor tyd.",
+    "sharpe": "Risiko-aangepaste opbrengs maatstaf. Hoër is beter. Bo 1.0 is goed, bo 2.0 is uitstekend.",
+    "profitFactor": "Bruto winste gedeel deur bruto verliese. Bo 1.0 is winsgewend. Bo 2.0 is sterk.",
+    "maxDrawdown": "Die grootste piek-tot-dal daling in portefeulje waarde.",
+    "riskReward": "Verhouding tussen potensiële verlies en potensiële wins. 'n 1:2 R:R beteken jy waag R1 om R2 te verdien.",
+    "sampleSize": "Aantal historiese transaksies gebruik om statistieke te bereken. Groter steekproewe (50+) gee meer betroubare resultate.",
+    "grade": "Algehele seinkwaliteittelling wat patroonduidelikheid, volume-bevestiging en tendensbelyning kombineer.",
+    "timeframe": "Die tydperk wat elke kers verteenwoordig (bv., 1H = 1 uur, 1D = 1 dag).",
+    "takeProfit": "Die teikenprys waar 'n wentransaksie gesluit word om winste te verseker.",
+    "stopLoss": "Die prysvlak waar 'n verloorende transaksie outomaties gesluit word om verliese te beperk.",
+    "paperTrading": "Gesimuleerde handel met virtuele geld om strategieë sonder finansiële risiko te oefen.",
+    "signalAge": "Hoe lank gelede die patroon die eerste keer opgespoor is. Nuwer seine is geneig om meer aksioneerbaar te wees.",
+    "barsToOutcome": "Gemiddelde aantal kerse van inskrywing tot die transaksie sy teiken of stoploss bereik.",
+    "cagr": "Saamgestelde Jaarlikse Groeikoers — die gladde jaarlikse opbrengs oor 'n gegewe tydperk.",
+    "sortino": "Soos Sharpe maar straf slegs afwaartse wisselvalligheid.",
+    "annualizedReturn": "Geskatte jaarlikse opbrengs as die strategie deurlopend verhandel word.",
+    "tradesPerYear": "Geskatte aantal handelsgeleenthede per jaar vir hierdie patroon/tydraamwerk.",
+    "balance": "Huidige papierhandel-portefeulje waarde insluitend aanvangskapitaal plus gerealiseerde winste en verliese.",
+    "totalPnl": "Totale Wins & Verlies — die som van alle geslote transaksieresultate.",
+    "rMultiple": "Opbrengs uitgedruk as 'n veelvoud van aanvanklike risiko. 'n +2R transaksie beteken jy het 2× verdien wat jy gewaag het."
+  },
+  "forwardPerformance": {
+    "title": "Forward vs. Backtest",
+    "tooltip": "Vergelyk jou werklike papierhandel-resultate met die backtest-voorspellings vir dieselfde patrone.",
+    "signInRequired": "Meld aan om forward-prestasie te volg",
+    "noData": "Voltooi 'n paar papiertransaksies om forward-prestasie vs. backtests te sien",
+    "liveWR": "Lewendige WR",
+    "trades": "Transaksies",
+    "backtestComparison": "vs. Backtest"
   }
 }

@@ -1350,5 +1350,53 @@
     "Script Generator": "脚本生成器",
     "Trading Education Center": "交易教育中心",
     "Market Breadth": "市场广度"
+  },
+  "onboarding": {
+    "welcomeTitle": "欢迎来到 ChartingPath",
+    "welcomeDesc": "ChartingPath 将图表形态与超过 320,000 个历史结果进行验证，让您基于真实统计优势进行交易。",
+    "screenerTitle": "实时形态筛选器",
+    "screenerDesc": "覆盖 1,200+ 个品种的实时信号。每个形态都按质量评级并有历史胜率支撑。",
+    "patternLabTitle": "形态实验室 — 回测任何形态",
+    "patternLabDesc": "选择一个形态，选择一个品种，查看它在多年数据中的精确表现。",
+    "dashboardTitle": "您的指挥中心",
+    "dashboardDesc": "图表、自选列表、警报和模拟交易 — 全部在一个屏幕上。",
+    "edgeAtlasTitle": "Edge Atlas — 发现最佳优势",
+    "edgeAtlasDesc": "发现哪些形态在哪些时间框架上表现最佳 — 按年化收益排名。",
+    "tryIt": "立即体验 →",
+    "skip": "跳过导览",
+    "next": "下一步",
+    "getStarted": "开始吧！"
+  },
+  "glossary": {
+    "winRate": "以盈利结束的交易百分比。60% 的胜率意味着 10 笔交易中有 6 笔盈利。",
+    "expectancy": "每笔交易的平均回报（以 R 倍数计）。正期望值意味着策略长期盈利。",
+    "sharpe": "风险调整后收益指标。越高越好。1.0 以上为好，2.0 以上为优秀。",
+    "profitFactor": "总利润除以总亏损。1.0 以上为盈利。2.0 以上为强势。",
+    "maxDrawdown": "投资组合价值从峰值到谷值的最大跌幅。衡量最坏损失情景。",
+    "riskReward": "潜在损失与潜在收益的比率。1:2 的风险回报比意味着冒 1 元风险以获得 2 元收益。",
+    "sampleSize": "用于计算统计数据的历史交易数量。更大的样本（50+）给出更可靠的结果。",
+    "grade": "综合信号质量评分，结合形态清晰度、成交量确认和趋势对齐。",
+    "timeframe": "每根K线代表的时间段（例如，1H = 1小时，1D = 1天）。",
+    "takeProfit": "平仓获利的目标价格。",
+    "stopLoss": "自动平仓止损的价格水平。",
+    "paperTrading": "使用虚拟资金进行模拟交易，无财务风险地练习策略。",
+    "signalAge": "形态首次被检测到的时间。较新的信号往往更具可操作性。",
+    "barsToOutcome": "从入场到交易达到目标或止损的平均K线数。",
+    "cagr": "复合年增长率 — 给定期间的平滑年化回报。",
+    "sortino": "类似夏普比率，但只惩罚下行波动率。",
+    "annualizedReturn": "如果策略持续交易的估计年回报。",
+    "tradesPerYear": "该形态/时间框架每年的预计交易机会数。",
+    "balance": "当前模拟交易组合价值，包括初始资本加已实现盈亏。",
+    "totalPnl": "总盈亏 — 所有已平仓交易结果的总和。",
+    "rMultiple": "以初始风险倍数表示的回报。+2R 的交易意味着赚了所冒风险的 2 倍。"
+  },
+  "forwardPerformance": {
+    "title": "实盘 vs. 回测",
+    "tooltip": "将您的实际模拟交易结果与相同形态的回测预测进行比较。",
+    "signInRequired": "登录以跟踪实盘表现",
+    "noData": "完成一些模拟交易以查看实盘表现 vs. 回测",
+    "liveWR": "实盘胜率",
+    "trades": "交易",
+    "backtestComparison": "vs. 回测"
   }
 }
