@@ -1234,6 +1234,17 @@
     "automateDesc": "स्वचालित निष्पादन के लिए Pine Script या ट्रेडिंग बॉट कोड जेनरेट करें।",
     "footerNote": "प्रत्येक चरण पिछले चरण पर बनता है—अपनी वर्तमान आवश्यकताओं के आधार पर कहीं से भी शुरू करें।"
   },
+  "patternLabWizard": {
+    "patternOccurrences": "Pattern Occurrences",
+    "none": "None",
+    "found": "{{count}} found",
+    "noOccurrencesFound": "No historical pattern occurrences found for this configuration. The backtest would return 0 trades. Try a different instrument, pattern, or timeframe.",
+    "zeroOccurrenceCombos": "{{count}} combination(s) have no occurrences and will produce 0 trades.",
+    "fewOccurrences": "Few pattern occurrences found — results may not be statistically significant.",
+    "checkingPatternOccurrences": "Checking pattern occurrences…",
+    "checkingDataAvailability": "Checking data availability…",
+    "lowDataWarning": "Low data may produce unreliable results with few trades."
+  },
   "patternNames": {
     "Bull Flag": "बुल फ्लैग",
     "Bear Flag": "बेयर फ्लैग",
