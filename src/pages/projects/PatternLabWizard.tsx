@@ -1492,7 +1492,7 @@ const PatternLabWizard = () => {
                     {!hasNoData && hasLowData && (
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>Low data may produce unreliable results with few trades.</span>
+                        <span>{t('patternLabWizard.lowDataWarning')}</span>
                       </div>
                     )}
                   </div>
@@ -1503,7 +1503,7 @@ const PatternLabWizard = () => {
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                       <FlaskConical className="h-3 w-3" />
-                      Pattern Occurrences
+                      {t('patternLabWizard.patternOccurrences')}
                     </p>
                     <div className="space-y-1.5">
                       {patternCoverage.map(p => (
@@ -1515,16 +1515,16 @@ const PatternLabWizard = () => {
                           {p.count === 0 ? (
                             <span className="flex items-center gap-1 text-destructive font-medium">
                               <AlertCircle className="h-3 w-3" />
-                              None
+                              {t('patternLabWizard.none')}
                             </span>
                           ) : p.count < 5 ? (
                             <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
-                              {p.count} found
+                              {t('patternLabWizard.found', { count: p.count })}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                               <CheckCircle2 className="h-3 w-3" />
-                              {p.count} found
+                              {t('patternLabWizard.found', { count: p.count })}
                             </span>
                           )}
                         </div>
@@ -1534,7 +1534,7 @@ const PatternLabWizard = () => {
                       <Alert variant="destructive" className="mt-2 py-2">
                         <AlertCircle className="h-3.5 w-3.5" />
                         <AlertDescription className="text-xs">
-                          No historical pattern occurrences found for this configuration. The backtest would return 0 trades. Try a different instrument, pattern, or timeframe.
+                          {t('patternLabWizard.noOccurrencesFound')}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -1542,14 +1542,14 @@ const PatternLabWizard = () => {
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>
-                          {zeroPatternCombos.length} combination{zeroPatternCombos.length > 1 ? 's' : ''} ha{zeroPatternCombos.length > 1 ? 've' : 's'} no occurrences and will produce 0 trades.
+                          {t('patternLabWizard.zeroOccurrenceCombos', { count: zeroPatternCombos.length })}
                         </span>
                       </div>
                     )}
                     {!hasNoPatterns && hasLowPatterns && !zeroPatternCombos.length && (
                       <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>Few pattern occurrences found — results may not be statistically significant.</span>
+                        <span>{t('patternLabWizard.fewOccurrences')}</span>
                       </div>
                     )}
                   </div>
@@ -1557,14 +1557,14 @@ const PatternLabWizard = () => {
                 {isCheckingPatterns && patternCoverage.length === 0 && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Checking pattern occurrences…
+                    {t('patternLabWizard.checkingPatternOccurrences')}
                   </div>
                 )}
 
                 {isCheckingData && dataCoverage.length === 0 && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Checking data availability…
+                    {t('patternLabWizard.checkingDataAvailability')}
                   </div>
                 )}
                 
