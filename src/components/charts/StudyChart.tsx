@@ -1755,12 +1755,14 @@ const StudyChart = memo(({
           onSendToCopilot={analysis.sendToCopilot}
           onClear={() => {
             analysis.clearSelection();
-            // Remove analysis lines when clearing
             analysisLinesRef.current.forEach(line => {
               try { candleSeriesRef.current?.removePriceLine(line); } catch {}
             });
             analysisLinesRef.current = [];
           }}
+          chartContainerRef={chartWrapperRef}
+          symbol={symbol}
+          timeframe={timeframe}
           className="absolute top-2 left-1/2 -translate-x-1/2 z-30"
         />
       )}
