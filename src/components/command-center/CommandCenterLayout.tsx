@@ -741,6 +741,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
                       <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
                     </TabsContent>
+                    <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
+                      <ForwardPerformancePanel userId={userId} />
+                    </TabsContent>
                   </Tabs>
                 </ResizablePanel>
 
