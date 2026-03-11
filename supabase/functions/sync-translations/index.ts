@@ -196,9 +196,28 @@ Deno.serve(async (req) => {
           })
           const { error: insertKeysError } = await supabase
             .from('translation_keys')
-            .upsert(batch, { onConflict: 'key', ignoreDuplicates: true })
+            .upsert(batch, { onConflict: 'key', ignoreDuplicates: false })
           if (insertKeysError) {
             console.error(`Error inserting translation_keys batch:`, insertKeysError)
+          }
+        }
+      }
+
+      // Also update descriptions for existing keys that may have NULL descriptions
+      const existingKeysToUpdate = allKeys.filter(k => existingKeySet.has(k))
+      if (existingKeysToUpdate.length > 0) {
+        console.log(`Updating descriptions for ${existingKeysToUpdate.length} existing translation_keys`)
+        const BATCH_SIZE_KEYS = 100
+        for (let i = 0; i < existingKeysToUpdate.length; i += BATCH_SIZE_KEYS) {
+          const batch = existingKeysToUpdate.slice(i, i + BATCH_SIZE_KEYS).map(key => ({
+            key,
+            description: flatEnglish[key],
+          }))
+          const { error: updateError } = await supabase
+            .from('translation_keys')
+            .upsert(batch, { onConflict: 'key', ignoreDuplicates: false })
+          if (updateError) {
+            console.error(`Error updating translation_keys descriptions:`, updateError)
           }
         }
       }
