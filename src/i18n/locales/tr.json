@@ -322,6 +322,8 @@
     "upgradeNow": "Şimdi Yükseltin"
   },
   "hero": {
+    "headlinePrimary": "İşlem yapmadan önce",
+    "headlineAccent": "formasyonun işe yarayıp yaramadığını bilin",
     "headline1": "Sinyalleri keşfet.",
     "headline2": "Araştır. Uygula. Otomatikleştir.",
     "subtext": "Geçmişe dönük testler + alarmlar. Kripto swing yatırımcıları için tasarlandı.",
