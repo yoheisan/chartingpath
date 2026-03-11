@@ -52,6 +52,7 @@ const Layout = ({ children }: LayoutProps) => {
         )}
         <CaptureButton />
       </div>
+    );
   }
 
   return (
