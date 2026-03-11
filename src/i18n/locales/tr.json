@@ -21,7 +21,9 @@
     "toastAccountCreated": "Hesap Oluşturuldu",
     "toastAuthError": "Kimlik Doğrulama Hatası",
     "toastSignedIn": "Başarıyla giriş yaptınız",
-    "toastWelcomeBack": "Tekrar Hoş Geldiniz"
+    "toastWelcomeBack": "Tekrar Hoş Geldiniz",
+    "signUpFree": "Ücretsiz Kaydol",
+    "joinTraders": "1.300+ yatırımcıya katılın"
   },
   "projects": {
     "pricing": {
