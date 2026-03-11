@@ -102,7 +102,21 @@
     "commodities": "상품",
     "dashboard": "대시보드",
     "settings": "설정",
-    "account": "계정"
+    "account": "계정",
+    "agentScoring": "에이전트 스코어링"
+  },
+  "metrics": {
+    "instruments": "종목",
+    "patterns": "패턴",
+    "trades": "백테스트 결과",
+    "avgWinRate": "평균 승률 (A등급)"
+  },
+  "guestNudge": {
+    "message": "게스트 미리보기입니다 — 무료 계정을 만들어 결과를 저장하고 알림을 받으세요."
+  },
+  "auth": {
+    "signUpFree": "무료 가입",
+    "joinTraders": "1,300명 이상의 트레이더 합류"
   },
   "projects": {
     "pricing": {

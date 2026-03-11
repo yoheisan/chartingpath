@@ -209,7 +209,21 @@
     "commodities": "Emtialar",
     "dashboard": "Gösterge Paneli",
     "settings": "Ayarlar",
-    "account": "Hesap"
+    "account": "Hesap",
+    "agentScoring": "Ajan Puanlama"
+  },
+  "metrics": {
+    "instruments": "Enstrümanlar",
+    "patterns": "Formasyonlar",
+    "trades": "Backtest Edilen Sonuçlar",
+    "avgWinRate": "Ort. Kazanma Oranı (A-Sınıfı)"
+  },
+  "guestNudge": {
+    "message": "Misafir önizlemesindesiniz — Sonuçları kaydetmek ve uyarı almak için ücretsiz hesap oluşturun."
+  },
+  "auth": {
+    "signUpFree": "Ücretsiz Kaydol",
+    "joinTraders": "1.300+ yatırımcıya katılın"
   },
   "aiBuilder": {
     "timeSession": "Zaman & Seans",
