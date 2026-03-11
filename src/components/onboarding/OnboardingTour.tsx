@@ -57,7 +57,7 @@ const STEPS = [
 
 export function OnboardingTour() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const { isCompleted, complete } = useOnboardingState();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -86,8 +86,8 @@ export function OnboardingTour() {
     }
   }, [step, complete, navigate]);
 
-  // Don't show if already completed or not authenticated
-  if (isCompleted || !isAuthenticated) return null;
+  // Don't show if: still loading auth, already completed, or not authenticated
+  if (isAuthLoading || isCompleted || !isAuthenticated) return null;
 
   const current = STEPS[step];
 

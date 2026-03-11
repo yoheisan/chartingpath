@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const STORAGE_KEY = 'chartingpath_onboarding_completed';
 
@@ -10,6 +10,20 @@ export function useOnboardingState() {
       return false;
     }
   });
+
+  // Re-check localStorage after a short delay to catch the async
+  // returning-user flag set by AuthContext's setTimeout callback
+  useEffect(() => {
+    if (isCompleted) return;
+    const timer = setTimeout(() => {
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === 'true') {
+          setIsCompleted(true);
+        }
+      } catch { /* ignore */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [isCompleted]);
 
   const complete = useCallback(() => {
     try {
