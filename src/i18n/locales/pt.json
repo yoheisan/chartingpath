@@ -1174,7 +1174,8 @@
     "actionBridgingCant": "Nenhuma IA externa consegue se conectar às ferramentas do ChartingPath.",
     "seeItInAction": "Veja em ação",
     "tradingCopilot": "Copiloto de Negociação",
-    "demo": "Demonstração"
+    "demo": "Demonstração",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "error": "Erro",

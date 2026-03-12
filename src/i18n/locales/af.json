@@ -1197,7 +1197,8 @@
     "symbol": "Simbool",
     "grade": "Graad",
     "entry": "Inskrywing",
-    "sl": "SL"
+    "sl": "SL",
+    "tryNow": "Try Copilot Now"
   },
   "patternScreenerTeaser": {
     "justNow": "Netnou",

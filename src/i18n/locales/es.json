@@ -1165,7 +1165,8 @@
     "pineScript": "Pine Script con un clic",
     "seeItInAction": "Ver en acción",
     "entry": "Entrada",
-    "chatgptFootnote": "💬 ChatGPT diría: \"No tengo acceso a datos de mercado en tiempo real.\""
+    "chatgptFootnote": "💬 ChatGPT diría: \"No tengo acceso a datos de mercado en tiempo real.\"",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "price": "Precio:",

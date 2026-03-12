@@ -1198,7 +1198,8 @@
     "selfImprovingDesc": "Учится на реальных результатах торговли, чтобы автоматически корректировать правила анализа.",
     "selfImprovingCant": "ChatGPT — это статическая модель, она не может учиться на вашем рынке.",
     "seeItInAction": "Посмотреть в действии",
-    "demo": "Демо"
+    "demo": "Демо",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "entryPrice": "Цена входа",

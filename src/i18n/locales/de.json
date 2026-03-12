@@ -230,7 +230,8 @@
     "backtestedDesc": "Beantwortet \"was wirklich funktioniert?\" mit realen Gewinnraten aus unserem Edge Atlas.",
     "backtestedCant": "ChatGPT rät: \"Im Allgemeinen 60-70% laut Lehrbüchern.\"",
     "chartContext": "Chart-Kontextanalyse",
-    "chartContextDesc": "Liest Ihre Chart-Indikatoren, S/R-Level, RSI, MACD direkt – keine Screenshots."
+    "chartContextDesc": "Liest Ihre Chart-Indikatoren, S/R-Level, RSI, MACD direkt – keine Screenshots.",
+    "tryNow": "Try Copilot Now"
   },
   "livePatternPreview": {
     "title": "Aktive Muster im Moment",

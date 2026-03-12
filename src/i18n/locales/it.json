@@ -1158,7 +1158,8 @@
     "actionBridgingCant": "Nessuna AI esterna può collegarsi agli strumenti di ChartingPath.",
     "tradingCopilot": "Trading Copilot",
     "chartContextCant": "ChatGPT può solo usare l'OCR su screenshot sfocati, perdendo precisione.",
-    "demoResponse": "Trovate <strong>3 configurazioni di bull flag</strong> sulle criptovalute (intervallo di tempo 4H):"
+    "demoResponse": "Trovate <strong>3 configurazioni di bull flag</strong> sulle criptovalute (intervallo di tempo 4H):",
+    "tryNow": "Try Copilot Now"
   },
   "edgeAtlas": {
     "commodities": "Materie prime",

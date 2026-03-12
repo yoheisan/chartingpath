@@ -1133,7 +1133,8 @@
     "validateInPatternLab": "Pattern Lab'de Doğrula",
     "exportPineScript": "Pine Script'i Dışa Aktar",
     "chatgptFootnote": "💬 ChatGPT şöyle derdi: \"Gerçek zamanlı piyasa verilerine erişimim yok.\"",
-    "learnMore": "Copilot Hakkında Daha Fazla Bilgi Edinin"
+    "learnMore": "Copilot Hakkında Daha Fazla Bilgi Edinin",
+    "tryNow": "Try Copilot Now"
   },
   "pricingTeaser": {
     "seeFullPricing": "Tüm Fiyatlandırmayı Gör",

@@ -1180,7 +1180,8 @@
     "pineScript": "Pine Script en un clic",
     "selfImprovingDesc": "Apprend des résultats de trading réels pour auto-corriger ses règles d'analyse.",
     "entry": "Entrée",
-    "rr": "R:R"
+    "rr": "R:R",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "price": "Prix :",

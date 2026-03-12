@@ -712,7 +712,8 @@
     "validateInPatternLab": "Validasi di Pattern Lab",
     "chatgptFootnote": "💬 ChatGPT akan berkata: \"Saya tidak memiliki akses ke data pasar real-time.\"",
     "learnMore": "Pelajari Lebih Lanjut Tentang Copilot",
-    "pressToTry": "Atau tekan <kbd>⌘K</kbd> untuk mencobanya sekarang"
+    "pressToTry": "Atau tekan <kbd>⌘K</kbd> untuk mencobanya sekarang",
+    "tryNow": "Try Copilot Now"
   },
   "patternGenerator": {
     "subtitle": "Hasilkan dan visualisasikan berbagai pola grafik keuangan dengan alat interaktif kami",

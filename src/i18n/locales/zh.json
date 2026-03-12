@@ -1167,7 +1167,8 @@
     "backtested": "超过 32 万次回测交易",
     "demo": "演示",
     "validateInPatternLab": "在 Pattern Lab 中验证",
-    "liveMarketAccess": "实时市场访问"
+    "liveMarketAccess": "实时市场访问",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "recordAlertOutcome": "记录提醒结果",

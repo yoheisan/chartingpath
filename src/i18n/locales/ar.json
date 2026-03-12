@@ -1182,7 +1182,8 @@
     "tp": "TP",
     "backtested": "أكثر من 320 ألف صفقة تم اختبارها رجعيًا",
     "actionBridgingCant": "لا يمكن لأي ذكاء اصطناعي خارجي الارتباط بأدوات ChartingPath.",
-    "badge": "مساعد الذكاء الاصطناعي"
+    "badge": "مساعد الذكاء الاصطناعي",
+    "tryNow": "Try Copilot Now"
   },
   "teaserSignals": {
     "age": "العمر",
