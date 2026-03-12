@@ -10,6 +10,8 @@ import {
   TrendingUp,
   Target,
   Clock,
+  FlaskConical,
+  Zap,
   ChevronRight,
 } from 'lucide-react';
 import { PatternStatsCTA } from '@/components/PatternStatsCTA';
