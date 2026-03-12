@@ -2018,7 +2018,7 @@ const StudyChart = memo(({
       {/* Analysis Result Dialog - Desktop only */}
       {!isMobile && (
         <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
-          <DialogContent className="max-w-md max-h-[80vh]">
+          <DialogContent className="max-w-md max-h-[80vh]" data-capture-target>
             <DialogHeader>
               <DialogTitle className="text-base">{t('chartAnalysisDialog.title')}</DialogTitle>
             </DialogHeader>
