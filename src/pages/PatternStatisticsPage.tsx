@@ -6,15 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  ArrowLeft,
   BarChart3,
   TrendingUp,
   Target,
   Clock,
-  FlaskConical,
-  Zap,
   ChevronRight,
 } from 'lucide-react';
+import { PatternStatsCTA } from '@/components/PatternStatsCTA';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
