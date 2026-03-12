@@ -152,6 +152,7 @@ export function useChartAnalysis({
     
     if (barsToAnalyze.length < 10) {
       toast.error('Please select at least 10 bars for meaningful analysis');
+      setState(prev => ({ ...prev, isAnalyzing: false }));
       return null;
     }
 
