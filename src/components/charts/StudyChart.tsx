@@ -2027,18 +2027,21 @@ const StudyChart = memo(({
                 <ChartAnalysisSummary analysis={analysis.analysisResult} />
               )}
             </ScrollArea>
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              {onSendToCopilot && (
-                <Button variant="outline" size="sm" onClick={() => {
-                  setShowAnalysisDialog(false);
-                  analysis.sendToCopilot();
-                }}>
-                  {t('chartAnalysisDialog.askCopilot')}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <CardCaptureButton label={t('chartAnalysisDialog.title')} />
+              <div className="flex gap-2">
+                {onSendToCopilot && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setShowAnalysisDialog(false);
+                    analysis.sendToCopilot();
+                  }}>
+                    {t('chartAnalysisDialog.askCopilot')}
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
+                  {t('chartAnalysisDialog.close')}
                 </Button>
-              )}
-              <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
-                {t('chartAnalysisDialog.close')}
-              </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
