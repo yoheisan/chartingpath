@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
+import { useTradingCopilotContext } from "@/components/copilot";
 
 const demoResults = [
   { symbol: "BTC/USD", quality: "A", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
@@ -17,6 +18,7 @@ const demoResults = [
 
 export const CopilotShowcase = () => {
   const { t } = useTranslation();
+  const copilot = useTradingCopilotContext();
 
   const moatFeatures = [
     {
@@ -179,11 +181,9 @@ export const CopilotShowcase = () => {
           {/* CTA */}
           <div className="text-center mt-8 space-y-3">
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
-                <Link to="/patterns/live" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_try_now' })}>
+              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90" onClick={() => { trackEvent('landing.cta_click', { button: 'copilot_try_now' }); copilot.open(); }}>
                   {t('copilotShowcase.tryNow', 'Try Copilot Now')}
                   <ArrowRight className="h-4 w-4" />
-                </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="gap-2">
                 <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
