@@ -2018,15 +2018,17 @@ const StudyChart = memo(({
       {/* Analysis Result Dialog - Desktop only */}
       {!isMobile && (
         <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
-          <DialogContent className="max-w-md max-h-[80vh]" data-capture-target>
-            <DialogHeader>
-              <DialogTitle className="text-base">{t('chartAnalysisDialog.title')}</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[60vh] pr-3">
-              {analysis.analysisResult && (
-                <ChartAnalysisSummary analysis={analysis.analysisResult} />
-              )}
-            </ScrollArea>
+          <DialogContent className="max-w-md max-h-[80vh]">
+            <div data-capture-target className="space-y-4 bg-background p-4 -m-4 rounded-lg">
+              <DialogHeader>
+                <DialogTitle className="text-base">{t('chartAnalysisDialog.title')}</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="max-h-[60vh] pr-3">
+                {analysis.analysisResult && (
+                  <ChartAnalysisSummary analysis={analysis.analysisResult} />
+                )}
+              </ScrollArea>
+            </div>
             <div className="flex items-center justify-between pt-2 border-t">
               <CardCaptureButton label={t('chartAnalysisDialog.title')} />
               <div className="flex gap-2">
