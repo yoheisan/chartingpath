@@ -165,8 +165,10 @@ export function useChartAnalysis({
       ? barsToAnalyze.slice(-maxBars) 
       : barsToAnalyze;
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-chart-context', {
+      const invokePromise = supabase.functions.invoke('analyze-chart-context', {
         body: {
           symbol,
           timeframe,
@@ -181,32 +183,42 @@ export function useChartAnalysis({
         }
       });
 
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('ANALYSIS_TIMEOUT'));
+        }, 45000);
+      });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as Awaited<typeof invokePromise>;
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Analysis failed');
 
       const result = data.analysis as ChartAnalysisResult;
       
-      setState(prev => ({ ...prev, analysisResult: result, isAnalyzing: false }));
+      setState(prev => ({ ...prev, analysisResult: result }));
       toast.success('Analysis complete');
       onAnalysisComplete?.(result);
       
       return result;
     } catch (err: any) {
-      
       console.error('[useChartAnalysis] Error:', err);
       
       // Better error messages
-      if (err.name === 'AbortError' || err.message?.includes('timeout')) {
-        toast.error('Analysis timed out. Please check your connection and try again.');
+      if (err.name === 'AbortError' || err.message?.includes('timeout') || err.message === 'ANALYSIS_TIMEOUT') {
+        toast.error('Analysis timed out. Please try again.');
       } else if (err.message?.includes('Failed to fetch')) {
         toast.error('Network error. Please check your connection.');
       } else {
         toast.error('Analysis failed. Please try again.');
       }
       
-      setState(prev => ({ ...prev, isAnalyzing: false }));
       return null;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      setState(prev => ({ ...prev, isAnalyzing: false }));
     }
   }, [state.selectedBars, symbol, timeframe, onAnalysisComplete]);
 
