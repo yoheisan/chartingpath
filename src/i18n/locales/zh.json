@@ -141,7 +141,18 @@
     "learnBullet1": "形态库",
     "scanBullet1": "实时模式检测",
     "createAlertsDesc": "当观察列表上出现模式设置时收到通知。",
-    "learnBullet3": "交易规则"
+    "learnBullet3": "交易规则",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "description": "适用于股票、外汇、加密货币和商品的多资产图表模式检测。",
