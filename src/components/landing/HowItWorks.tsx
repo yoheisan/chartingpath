@@ -29,7 +29,7 @@ export const HowItWorks = () => {
       subtitle: t('howItWorks.executeSubtitle'),
       description: t('howItWorks.executeDesc'),
       icon: TrendingUp,
-      link: "/patterns/live",
+      link: "/members/alerts",
     },
     {
       stage: 4,
