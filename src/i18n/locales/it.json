@@ -109,7 +109,18 @@
     "createAlert": "Crea Avviso",
     "openPatternLab": "Apri Pattern Lab",
     "exploreLearn": "Esplora Learn",
-    "chooseActionSubtitle": "Seleziona un'attività in base al tuo obiettivo attuale"
+    "chooseActionSubtitle": "Seleziona un'attività in base al tuo obiettivo attuale",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "hero": {
     "headlinePrimary": "Sapere se un pattern funziona",
