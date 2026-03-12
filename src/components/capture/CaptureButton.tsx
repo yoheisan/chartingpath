@@ -54,7 +54,16 @@ export const CaptureButton = () => {
 
   const handleStopRecording = useCallback(() => {
     stopRecording();
+    // The share dialog will open via the useEffect watching lastCapture
   }, [stopRecording]);
+
+  // Open share dialog when a video recording completes
+  useEffect(() => {
+    if (lastCapture && lastCapture.type === 'video') {
+      setCaptureResult(lastCapture);
+      setShareDialogOpen(true);
+    }
+  }, [lastCapture]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
