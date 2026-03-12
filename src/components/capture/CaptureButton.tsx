@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Video, Square, Mic, MicOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
