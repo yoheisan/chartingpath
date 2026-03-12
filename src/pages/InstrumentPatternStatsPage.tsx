@@ -249,24 +249,12 @@ export default function InstrumentPatternStatsPage() {
           </section>
         )}
 
-        {/* CTA Buttons */}
-        <section className="flex flex-wrap gap-3 mb-12">
-          <Button asChild variant="default" className="gap-2">
-            <Link to={`/patterns/live?pattern=${patternId}`}>
-              <Zap className="h-4 w-4" /> View Live Signals
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to={`/projects/pattern-lab/new?pattern=${patternId}&instrument=${displayInstrument}`}>
-              <FlaskConical className="h-4 w-4" /> Backtest This
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to={`/patterns/${patternId}/statistics`}>
-              <BarChart3 className="h-4 w-4" /> All {displayPatternName} Stats
-            </Link>
-          </Button>
-        </section>
+        {/* CTA Banner */}
+        <PatternStatsCTA
+          patternId={patternId || ''}
+          patternName={displayPatternName}
+          instrument={displayInstrument}
+        />
 
         {/* Related Instruments */}
         {!loading && data?.related_instruments && data.related_instruments.length > 0 && (
