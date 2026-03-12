@@ -1,55 +1,97 @@
 
 
-## Stronger CTAs on Pattern Statistics Pages
+# Multi-Page Funnel Analysis and Improvement Plan
 
-### Problem
-The current CTA buttons on both `PatternStatisticsPage` and `InstrumentPatternStatsPage` are small, outline-styled buttons buried below the data table. Visitors land on these pages organically (SEO), see the stats, and leave without converting. There's no urgency, no value proposition, and no signup prompt for anonymous users.
+## Data Summary
 
-### Changes
+| Page | Views | Avg Time on Page | Key Issue |
+|------|-------|-----------------|-----------|
+| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
+| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
+| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
+| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
+| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
+| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
+| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
 
-**1. Add a bold inline CTA banner right after KPI cards (both pages)**
+---
 
-A full-width, visually distinct card placed immediately after the KPI section — the highest-attention area. For **anonymous users**, it drives signup. For **authenticated users**, it drives product usage (backtest/alerts).
+## Priority 1: Auth Page (75 views, 0 signups)
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  🔒 You're looking at data most traders never see.      │
-│  320,000+ backtested outcomes. Free account required.   │
-│                                                         │
-│  [Sign Up Free — No Credit Card]    [Google Sign In]    │
-└─────────────────────────────────────────────────────────┘
-```
+**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
 
-For authenticated users, the same slot shows:
-```text
-┌─────────────────────────────────────────────────────────┐
-│  ⚡ Backtest this exact setup on your own ticker.       │
-│  Run it in Pattern Lab — 50 free credits included.      │
-│                                                         │
-│  [Backtest {Pattern} Now]     [Set Alert for {Ticker}]  │
-└─────────────────────────────────────────────────────────┘
-```
-
-**2. Replace the existing weak CTA button row (lines 253-270 in InstrumentPatternStatsPage, similar in PatternStatisticsPage)**
-
-Remove the current `flex flex-wrap gap-3` row of outline buttons. The new banner above replaces it with stronger visual weight.
-
-**3. Add a sticky bottom bar for anonymous users on these pages**
-
-A slim bar at the bottom (similar to `GuestSignupNudge` but page-specific with pattern context):
-```text
-"This {Pattern} data is free. Backtesting it is too. → [Create Free Account]"
-```
+**Improvements**:
+1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
+2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
+3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
+4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
 
 ### Files to modify
-- `src/pages/InstrumentPatternStatsPage.tsx` — add auth-aware CTA banner after KPIs, remove old button row
-- `src/pages/PatternStatisticsPage.tsx` — same treatment
-- `src/i18n/locales/en.json` — add new CTA strings
-- All 17 non-English locale files — propagate keys as English placeholders
+- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
+- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
 
-### Technical details
-- Import `useAuth` from `@/contexts/AuthContext` in both pages
-- Import `GoogleSignInButton` for the anonymous variant
-- The banner component will be inline (not a separate file) since it's page-specific and uses page-local variables like `displayPatternName` and `displayInstrument`
-- Sticky bottom bar will reuse the existing `GuestSignupNudge` pattern but with contextual copy; or we simply ensure `GuestSignupNudge` is rendered on these pages (check if it's already in the layout)
+---
+
+## Priority 2: Screener (101 views, 18s avg dwell)
+
+**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+
+**Improvements**:
+1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
+2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
+3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+
+### Files to modify
+- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+
+---
+
+## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+
+**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+
+**Improvements**:
+1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
+2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
+3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+
+### Files to modify
+- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+
+---
+
+## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+
+**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+
+**Improvements**:
+1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
+2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+
+### Files to modify
+- Blog/Learn page components (investigate rendering issue first)
+
+---
+
+## Priority 5: Shared Links (8 views, 7 pattern views)
+
+**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+
+**Improvements**:
+1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
+2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+
+### Files to modify
+- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
+- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+
+---
+
+## Implementation Sequence
+
+1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
+2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
+3. **Screener** (first-visit guidance + top setup highlight)
+4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
+5. **Shared links** (add try-it-yourself CTA)
 

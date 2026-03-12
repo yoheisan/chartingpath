@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  ArrowLeft,
   BarChart3,
   TrendingUp,
   Target,
@@ -15,6 +14,7 @@ import {
   Zap,
   ChevronRight,
 } from 'lucide-react';
+import { PatternStatsCTA } from '@/components/PatternStatsCTA';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -334,6 +334,14 @@ export default function PatternStatisticsPage() {
           </section>
         )}
 
+        {/* CTA Banner */}
+        {!loading && (
+          <PatternStatsCTA
+            patternId={patternId || ''}
+            patternName={info.name}
+          />
+        )}
+
         {/* SEO content block */}
         {!loading && aggregates && (
           <section className="prose prose-invert max-w-none mb-12">
@@ -349,23 +357,6 @@ export default function PatternStatisticsPage() {
               the <strong>{TF_LABEL[aggregates.best_timeframe] || aggregates.best_timeframe}</strong> timeframe.
               Trades typically resolve within <strong>{aggregates.avg_bars} bars</strong>.
             </p>
-
-            <h3>Next Steps</h3>
-            <ul>
-              <li>
-                <Link to="/patterns/live" className="text-primary hover:underline">View live {info.name} signals</Link> detected across 600+ instruments
-              </li>
-              <li>
-                <Link to={`/projects/pattern-lab/new?pattern=${patternId}`} className="text-primary hover:underline">
-                  Backtest the {info.name}
-                </Link> on any ticker using Pattern Lab
-              </li>
-              <li>
-                <Link to="/#edge-atlas" className="text-primary hover:underline">
-                  Explore the Edge Atlas
-                </Link> for more high-expectancy patterns
-              </li>
-            </ul>
           </section>
         )}
 
