@@ -57,6 +57,7 @@ import {
   calculatePricePrecision,
 } from './chartConstants';
 import { ChartAnalysisToolbar } from './ChartAnalysisToolbar';
+import { CardCaptureButton } from '@/components/capture/CardCaptureButton';
 import { useChartAnalysis } from '@/hooks/useChartAnalysis';
 import { cn } from '@/lib/utils';
 import {
