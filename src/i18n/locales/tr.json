@@ -509,7 +509,18 @@
     "createAlert": "Alarm Oluştur",
     "browseScripts": "Scriptlere Göz At",
     "exploreLearn": "Öğrenmeyi Keşfet",
-    "disclaimer": "ChartingPath eğitim araçları ve geriye dönük test yazılımı sağlar. Geçmiş performans gelecekteki sonuçları garanti etmez. Alım satım önemli kayıp riski içerir. Uyarılar ve sinyaller yalnızca bilgilendirme amaçlıdır ve finansal tavsiye niteliği taşımaz."
+    "disclaimer": "ChartingPath eğitim araçları ve geriye dönük test yazılımı sağlar. Geçmiş performans gelecekteki sonuçları garanti etmez. Alım satım önemli kayıp riski içerir. Uyarılar ve sinyaller yalnızca bilgilendirme amaçlıdır ve finansal tavsiye niteliği taşımaz.",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "research": "Araştırma",
