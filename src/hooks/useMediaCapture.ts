@@ -221,18 +221,27 @@ export const useMediaCapture = (options: UseMediaCaptureOptions = {}) => {
     }
     try {
       const file = new File([capture.blob], capture.fileName, { type: capture.blob.type });
-      await navigator.share({
-        title: 'ChartingPath Capture',
-        files: [file],
-      });
+      const shareData = { title: 'ChartingPath Capture', files: [file] };
+      
+      // Check if the browser can actually share this file type
+      if (navigator.canShare && !navigator.canShare(shareData)) {
+        // Fallback: download the file instead
+        downloadCapture(capture);
+        toast.info('Sharing not supported for this file type — downloaded instead');
+        return false;
+      }
+      
+      await navigator.share(shareData);
       return true;
     } catch (error: any) {
       if (error.name !== 'AbortError') {
-        toast.error('Failed to share');
+        // Fallback: download
+        downloadCapture(capture);
+        toast.info('Share failed — downloaded instead');
       }
       return false;
     }
-  }, []);
+  }, [downloadCapture]);
 
   // Upload to Supabase (temp 24h or permanent for Elite)
   const uploadCapture = useCallback(async (
