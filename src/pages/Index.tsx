@@ -78,7 +78,7 @@ const Index = () => {
   const handleBacktestClick = () => {
     track('pricing_clicked', { source: 'landing_cta_backtest' });
     trackEvent('landing.cta_click', { button: 'hero_try_backtest' });
-    navigate('/pattern-lab');
+    navigate('/projects/pattern-lab/new');
   };
 
   const activityCards = [
@@ -107,7 +107,7 @@ const Index = () => {
       description: t('landing.researchDesc', 'Validate any pattern on any ticker with historical performance data.'),
       bullets: [t('landing.researchBullet1', 'Win rates & expectancy'), t('landing.researchBullet2', 'Visual Proof charts'), t('landing.researchBulletCopilot', '💡 Ask Copilot to validate')],
       ctaText: t('landing.openPatternLab', 'Open Pattern Lab'),
-      ctaLink: "/pattern-lab",
+      ctaLink: "/projects/pattern-lab/new",
       icon: Search,
       bestFor: t('landing.bestForResearch', 'Research & validation'),
       slug: "pattern_lab",
