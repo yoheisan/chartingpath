@@ -91,6 +91,8 @@ export const useMediaCapture = (options: UseMediaCaptureOptions = {}) => {
       const displayMediaOptions: DisplayMediaStreamOptions = {
         video: { frameRate: 30 },
         audio: includeAudio,
+        // @ts-ignore - preferCurrentTab is supported in modern browsers
+        preferCurrentTab: true,
       };
 
       const displayStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
