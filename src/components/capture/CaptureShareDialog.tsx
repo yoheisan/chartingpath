@@ -21,6 +21,7 @@ import {
 import { CaptureResult, CaptureContextType, useMediaCapture } from '@/hooks/useMediaCapture';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { track } from '@/services/analytics';
+import { toast } from 'sonner';
 
 interface CaptureShareDialogProps {
   open: boolean;
@@ -64,24 +65,64 @@ export const CaptureShareDialog = ({
     }
   }, [capture, copyToClipboard]);
 
-  const handleNativeShare = useCallback(async () => {
-    if (!capture) return;
-    await shareCapture(capture);
-  }, [capture, shareCapture]);
+  const ensureShareLink = useCallback(async (): Promise<string | null> => {
+    if (!capture) return null;
+    if (shareUrl) return shareUrl;
 
-  const handleCreateLink = useCallback(async () => {
-    if (!capture) return;
     setIsUploading(true);
     try {
       const result = await uploadCapture(capture, isElite, contextType, contextMetadata);
-      if (result) {
-        setShareUrl(result.publicUrl);
-        setExpiresAt(result.expiresAt || null);
-      }
+      if (!result) return null;
+      setShareUrl(result.publicUrl);
+      setExpiresAt(result.expiresAt || null);
+      return result.publicUrl;
     } finally {
       setIsUploading(false);
     }
-  }, [capture, isElite, contextType, contextMetadata, uploadCapture]);
+  }, [capture, shareUrl, uploadCapture, isElite, contextType, contextMetadata]);
+
+  const handleNativeShare = useCallback(async () => {
+    if (!capture) return;
+
+    const file = new File([capture.blob], capture.fileName, { type: capture.blob.type });
+    const supportsFileShare = typeof navigator.share === 'function' &&
+      (!navigator.canShare || navigator.canShare({ files: [file] }));
+
+    // Prefer native file sharing when supported
+    if (supportsFileShare) {
+      await shareCapture(capture);
+      return;
+    }
+
+    // Fallback: create share link and share/copy link
+    const link = await ensureShareLink();
+    if (!link) {
+      toast.error('Unable to create share link');
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'ChartingPath Capture', url: link, text: link });
+        return;
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('Share link copied to clipboard');
+    } catch {
+      toast.error('Could not copy share link');
+    }
+  }, [capture, shareCapture, ensureShareLink]);
+
+  const handleCreateLink = useCallback(async () => {
+    await ensureShareLink();
+  }, [ensureShareLink]);
 
   const handleCopyLink = useCallback(async () => {
     if (!shareUrl) return;
