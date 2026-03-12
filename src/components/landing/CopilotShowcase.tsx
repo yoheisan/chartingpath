@@ -18,6 +18,7 @@ const demoResults = [
 
 export const CopilotShowcase = () => {
   const { t } = useTranslation();
+  const copilot = useTradingCopilotContext();
 
   const moatFeatures = [
     {
