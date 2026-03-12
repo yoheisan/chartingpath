@@ -555,7 +555,18 @@
     "scanBullet1": "الكشف عن الأنماط المباشرة",
     "learnBullet3": "قواعد التداول",
     "researchBullet3": "أطر زمنية مخصصة",
-    "alertsBullet2": "إشعارات عبر البريد الإلكتروني"
+    "alertsBullet2": "إشعارات عبر البريد الإلكتروني",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "learningCenter": "مركز التعليم",
