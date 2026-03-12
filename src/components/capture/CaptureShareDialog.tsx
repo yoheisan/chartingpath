@@ -120,6 +120,32 @@ export const CaptureShareDialog = ({
     }
   }, [capture, shareCapture, ensureShareLink]);
 
+  const handleShareToX = useCallback(async () => {
+    const link = await ensureShareLink();
+    if (!link) {
+      toast.error('Unable to create share link');
+      return;
+    }
+
+    const shareText = capture?.type === 'video'
+      ? 'Check out this video capture from ChartingPath'
+      : 'Check out this capture from ChartingPath';
+
+    const xIntentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(link)}`;
+    const popup = window.open(xIntentUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
+
+    if (!popup) {
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${link}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success('X share text copied to clipboard');
+      } catch {
+        toast.error('Could not open X or copy share text');
+      }
+    }
+  }, [ensureShareLink, capture?.type]);
+
   const handleCreateLink = useCallback(async () => {
     await ensureShareLink();
   }, [ensureShareLink]);
@@ -184,6 +210,13 @@ export const CaptureShareDialog = ({
             <Button variant="outline" onClick={handleNativeShare} className="gap-2">
               <Share2 className="h-4 w-4" />
               {t('capture.share')}
+            </Button>
+          )}
+
+          {capture.type === 'video' && (
+            <Button variant="outline" onClick={handleShareToX} disabled={isUploading} className="gap-2">
+              <span aria-hidden="true">𝕏</span>
+              Share to X
             </Button>
           )}
 
