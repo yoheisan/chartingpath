@@ -25,6 +25,7 @@ export const CaptureButton = () => {
     isCapturing,
     isRecording,
     recordingTime,
+    lastCapture,
     captureScreenshot,
     startRecording,
     stopRecording,
