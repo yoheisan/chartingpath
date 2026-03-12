@@ -213,6 +213,13 @@ export const CaptureShareDialog = ({
             </Button>
           )}
 
+          {capture.type === 'video' && (
+            <Button variant="outline" onClick={handleShareToX} disabled={isUploading} className="gap-2">
+              <span aria-hidden="true">𝕏</span>
+              Share to X
+            </Button>
+          )}
+
           <Button
             variant="default"
             onClick={handleCreateLink}
