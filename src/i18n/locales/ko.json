@@ -1450,5 +1450,16 @@
     "createLink": "링크 생성",
     "expiresIn24h": "링크는 24시간 후 만료",
     "elitePermanentStorage": "Elite 업그레이드로 영구 저장"
+  },
+  "patternCTA": {
+    "exclusiveData": "Exclusive Data",
+    "anonHeadline": "You're looking at data most traders never see.",
+    "anonSubheadline": "320,000+ backtested outcomes. Free account to unlock backtesting, alerts, and more.",
+    "signUpFree": "Sign Up Free — No Credit Card",
+    "takeAction": "Take Action",
+    "authHeadline": "Backtest this exact setup on your own ticker.",
+    "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
+    "backtestNow": "Backtest {{pattern}} Now",
+    "viewLiveSignals": "View Live Signals"
   }
 }
