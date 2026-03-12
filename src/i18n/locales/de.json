@@ -230,7 +230,8 @@
     "backtestedDesc": "Beantwortet \"was wirklich funktioniert?\" mit realen Gewinnraten aus unserem Edge Atlas.",
     "backtestedCant": "ChatGPT rät: \"Im Allgemeinen 60-70% laut Lehrbüchern.\"",
     "chartContext": "Chart-Kontextanalyse",
-    "chartContextDesc": "Liest Ihre Chart-Indikatoren, S/R-Level, RSI, MACD direkt – keine Screenshots."
+    "chartContextDesc": "Liest Ihre Chart-Indikatoren, S/R-Level, RSI, MACD direkt – keine Screenshots.",
+    "tryNow": "Try Copilot Now"
   },
   "livePatternPreview": {
     "title": "Aktive Muster im Moment",
@@ -453,7 +454,18 @@
     "openPatternLab": "Pattern Lab öffnen",
     "scanBullet2": "Qualitätsbewertungen & Metriken",
     "alertsBullet2": "E-Mail Benachrichtigungen",
-    "openScreener": "Screener öffnen"
+    "openScreener": "Screener öffnen",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "privacy": "Datenschutz",

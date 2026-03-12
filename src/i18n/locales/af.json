@@ -652,7 +652,18 @@
     "createAlert": "Skep Waarskuwing",
     "bestForDiscovery": "Sein ontdekking",
     "openScreener": "Maak Skerm oop",
-    "chooseActionSubtitle": "Kies 'n aktiwiteit gebaseer op jou huidige doel"
+    "chooseActionSubtitle": "Kies 'n aktiwiteit gebaseer op jou huidige doel",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "markets": "Markte",
@@ -1186,7 +1197,8 @@
     "symbol": "Simbool",
     "grade": "Graad",
     "entry": "Inskrywing",
-    "sl": "SL"
+    "sl": "SL",
+    "tryNow": "Try Copilot Now"
   },
   "patternScreenerTeaser": {
     "justNow": "Netnou",

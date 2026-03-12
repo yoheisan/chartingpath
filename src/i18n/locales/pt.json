@@ -368,7 +368,18 @@
     "researchBullet1": "Taxas de vitória e expectativa",
     "bestForScripts": "Automatize o trading",
     "researchBullet2": "Gráficos de Prova Visual",
-    "learnPatterns": "Aprender Padrões"
+    "learnPatterns": "Aprender Padrões",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "stockMarket": "Mercado de Ações",
@@ -1163,7 +1174,8 @@
     "actionBridgingCant": "Nenhuma IA externa consegue se conectar às ferramentas do ChartingPath.",
     "seeItInAction": "Veja em ação",
     "tradingCopilot": "Copiloto de Negociação",
-    "demo": "Demonstração"
+    "demo": "Demonstração",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "error": "Erro",

@@ -806,7 +806,18 @@
     "openScreener": "Ouvrir le Screener",
     "scanMarketDesc": "Découvrez des configurations de motifs actifs sur plus de 1 100 instruments en temps réel.",
     "alertsBullet3": "Gérer les alertes actives",
-    "openPatternLab": "Ouvrir le Pattern Lab"
+    "openPatternLab": "Ouvrir le Pattern Lab",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "privacy": "Confidentialité",
@@ -1169,7 +1180,8 @@
     "pineScript": "Pine Script en un clic",
     "selfImprovingDesc": "Apprend des résultats de trading réels pour auto-corriger ses règles d'analyse.",
     "entry": "Entrée",
-    "rr": "R:R"
+    "rr": "R:R",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "price": "Prix :",

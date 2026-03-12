@@ -109,7 +109,18 @@
     "createAlert": "Crea Avviso",
     "openPatternLab": "Apri Pattern Lab",
     "exploreLearn": "Esplora Learn",
-    "chooseActionSubtitle": "Seleziona un'attività in base al tuo obiettivo attuale"
+    "chooseActionSubtitle": "Seleziona un'attività in base al tuo obiettivo attuale",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "hero": {
     "headlinePrimary": "Sapere se un pattern funziona",
@@ -1147,7 +1158,8 @@
     "actionBridgingCant": "Nessuna AI esterna può collegarsi agli strumenti di ChartingPath.",
     "tradingCopilot": "Trading Copilot",
     "chartContextCant": "ChatGPT può solo usare l'OCR su screenshot sfocati, perdendo precisione.",
-    "demoResponse": "Trovate <strong>3 configurazioni di bull flag</strong> sulle criptovalute (intervallo di tempo 4H):"
+    "demoResponse": "Trovate <strong>3 configurazioni di bull flag</strong> sulle criptovalute (intervallo di tempo 4H):",
+    "tryNow": "Try Copilot Now"
   },
   "edgeAtlas": {
     "commodities": "Materie prime",

@@ -330,7 +330,18 @@
     "exploreLearn": "학습 살펴보기",
     "openPatternLab": "패턴 랩 열기",
     "browseScripts": "스크립트 찾아보기",
-    "disclaimer": "ChartingPath는 교육 도구 및 백테스팅 소프트웨어를 제공합니다. 과거의 성과가 미래의 결과를 보장하지 않습니다. 거래는 상당한 손실 위험을 수반합니다. 알림 및 신호는 정보 제공 목적으로만 제공되며 금융 자문을 구성하지 않습니다."
+    "disclaimer": "ChartingPath는 교육 도구 및 백테스팅 소프트웨어를 제공합니다. 과거의 성과가 미래의 결과를 보장하지 않습니다. 거래는 상당한 손실 위험을 수반합니다. 알림 및 신호는 정보 제공 목적으로만 제공되며 금융 자문을 구성하지 않습니다.",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "research": "연구",
@@ -1189,7 +1200,8 @@
     "rr": "R:R",
     "validateInPatternLab": "Pattern Lab에서 검증",
     "exportPineScript": "Pine Script 내보내기",
-    "chatgptFootnote": "💬 ChatGPT는 이렇게 말할 것입니다: \"실시간 시장 데이터에 접근할 수 없습니다.\""
+    "chatgptFootnote": "💬 ChatGPT는 이렇게 말할 것입니다: \"실시간 시장 데이터에 접근할 수 없습니다.\"",
+    "tryNow": "Try Copilot Now"
   },
   "pricingTeaser": {
     "basicPatterns": "기본 패턴",

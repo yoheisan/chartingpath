@@ -173,5 +173,21 @@
     "createLink": "Link maken",
     "expiresIn24h": "Link verloopt over 24 uur",
     "elitePermanentStorage": "Upgrade naar Elite voor permanente opslag"
+  },
+  "landing": {
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
+  },
+  "copilotShowcase": {
+    "tryNow": "Try Copilot Now"
   }
 }

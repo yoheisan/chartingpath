@@ -370,7 +370,18 @@
     "bestForScripts": "Automatiza el trading",
     "researchBacktest": "Investigación y Backtesting",
     "scriptsBullet2": "Plantillas personalizables",
-    "chooseActionSubtitle": "Selecciona una actividad basada en tu objetivo actual"
+    "chooseActionSubtitle": "Selecciona una actividad basada en tu objetivo actual",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "footer": {
     "markets": "Mercados",
@@ -1154,7 +1165,8 @@
     "pineScript": "Pine Script con un clic",
     "seeItInAction": "Ver en acción",
     "entry": "Entrada",
-    "chatgptFootnote": "💬 ChatGPT diría: \"No tengo acceso a datos de mercado en tiempo real.\""
+    "chatgptFootnote": "💬 ChatGPT diría: \"No tengo acceso a datos de mercado en tiempo real.\"",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "price": "Precio:",

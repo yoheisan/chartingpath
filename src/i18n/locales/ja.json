@@ -257,7 +257,18 @@
     "createAlertsDesc": "ウォッチリストにパターン設定が表示されたときに通知を受け取ります。",
     "exportScripts": "スクリプトをエクスポート",
     "learnPatterns": "パターンを学ぶ",
-    "browseScripts": "スクリプトを閲覧"
+    "browseScripts": "スクリプトを閲覧",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "about": {
     "valuesTitle": "私たちのコアバリュー",
@@ -2481,7 +2492,8 @@
     "backtested": "320K以上のバックテスト済みトレード",
     "backtestedDesc": "Edge Atlasの実際の勝率で「実際に何が有効か？」に回答します。",
     "backtestedCant": "ChatGPTの推測: 「教科書によると一般的に60-70%です。」",
-    "chartContext": "チャートコンテキスト分析"
+    "chartContext": "チャートコンテキスト分析",
+    "tryNow": "Try Copilot Now"
   },
   "teaserSignals": {
     "grade": "グレード",

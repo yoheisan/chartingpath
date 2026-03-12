@@ -152,7 +152,18 @@
     "bestForScripts": "Автоматизируйте торговлю",
     "learnBullet3": "Торговые правила",
     "openPatternLab": "Открыть Pattern Lab",
-    "disclaimer": "ChartingPath предоставляет образовательные инструменты и программное обеспечение для бэктестинга. Прошлые результаты не гарантируют будущих результатов. Торговля сопряжена со значительным риском убытков. Оповещения и сигналы предназначены только для информационных целей и не являются финансовым советом."
+    "disclaimer": "ChartingPath предоставляет образовательные инструменты и программное обеспечение для бэктестинга. Прошлые результаты не гарантируют будущих результатов. Торговля сопряжена со значительным риском убытков. Оповещения и сигналы предназначены только для информационных целей и не являются финансовым советом.",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "tradingCopilot": {
     "moat": {
@@ -1187,7 +1198,8 @@
     "selfImprovingDesc": "Учится на реальных результатах торговли, чтобы автоматически корректировать правила анализа.",
     "selfImprovingCant": "ChatGPT — это статическая модель, она не может учиться на вашем рынке.",
     "seeItInAction": "Посмотреть в действии",
-    "demo": "Демо"
+    "demo": "Демо",
+    "tryNow": "Try Copilot Now"
   },
   "alertsLibrary": {
     "entryPrice": "Цена входа",

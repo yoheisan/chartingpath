@@ -188,7 +188,8 @@
     "learnMore": "को-पायलट के बारे में अधिक जानें",
     "pressToTry": "या अभी आज़माने के लिए <kbd>⌘K</kbd> दबाएं",
     "selfImprovingCant": "ChatGPT एक स्थिर मॉडल है - यह आपके बाजार से नहीं सीख सकता।",
-    "chartContextDesc": "आपके चार्ट इंडिकेटर, S/R स्तर, RSI, MACD को सीधे पढ़ता है - कोई स्क्रीनशॉट नहीं।"
+    "chartContextDesc": "आपके चार्ट इंडिकेटर, S/R स्तर, RSI, MACD को सीधे पढ़ता है - कोई स्क्रीनशॉट नहीं।",
+    "tryNow": "Try Copilot Now"
   },
   "commandCenter": {
     "addedToWatchlist": "{{symbol}} वॉचलिस्ट में जोड़ा गया",
@@ -622,7 +623,18 @@
     "researchBullet2": "विज़ुअल प्रूफ चार्ट",
     "alertsBullet3": "सक्रिय अलर्ट प्रबंधित करें",
     "openPatternLab": "पैटर्न लैब खोलें",
-    "chooseActionSubtitle": "अपने वर्तमान लक्ष्य के आधार पर एक गतिविधि चुनें"
+    "chooseActionSubtitle": "अपने वर्तमान लक्ष्य के आधार पर एक गतिविधि चुनें",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "about": {
     "transparency": "पारदर्शिता",

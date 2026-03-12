@@ -712,7 +712,8 @@
     "validateInPatternLab": "Validasi di Pattern Lab",
     "chatgptFootnote": "💬 ChatGPT akan berkata: \"Saya tidak memiliki akses ke data pasar real-time.\"",
     "learnMore": "Pelajari Lebih Lanjut Tentang Copilot",
-    "pressToTry": "Atau tekan <kbd>⌘K</kbd> untuk mencobanya sekarang"
+    "pressToTry": "Atau tekan <kbd>⌘K</kbd> untuk mencobanya sekarang",
+    "tryNow": "Try Copilot Now"
   },
   "patternGenerator": {
     "subtitle": "Hasilkan dan visualisasikan berbagai pola grafik keuangan dengan alat interaktif kami",
@@ -940,7 +941,18 @@
     "createAlerts": "Buat Pemberitahuan",
     "learnBullet2": "Kuis interaktif",
     "disclaimer": "ChartingPath menyediakan alat edukasi dan perangkat lunak backtesting. Kinerja masa lalu tidak menjamin hasil di masa depan. Trading melibatkan risiko kerugian yang substansial. Peringatan dan sinyal hanya untuk tujuan informasi dan bukan merupakan nasihat keuangan.",
-    "chooseActionSubtitle": "Pilih aktivitas berdasarkan tujuan Anda saat ini"
+    "chooseActionSubtitle": "Pilih aktivitas berdasarkan tujuan Anda saat ini",
+    "scriptsBulletCopilot": "💡 Generate via Copilot ⌘K",
+    "scanBulletCopilot": "💡 Ask Copilot to find setups",
+    "researchBulletCopilot": "💡 Ask Copilot to validate",
+    "dashboard": "Trading Dashboard",
+    "dashboardDesc": "Full command center with live charts, pattern overlays, watchlists, and market overview.",
+    "dashboardBullet1": "TradingView-style charts",
+    "dashboardBullet2": "Pattern overlay & study",
+    "dashboardBullet3": "Market overview panel",
+    "openDashboard": "Open Dashboard",
+    "bestForDashboard": "Full workspace",
+    "tools": "Tools"
   },
   "navigation": {
     "alerts": "Alert",
