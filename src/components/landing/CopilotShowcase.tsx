@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
+import { useTradingCopilotContext } from "@/components/copilot";
 
 const demoResults = [
   { symbol: "BTC/USD", quality: "A", entry: "67,420", sl: "65,800", tp: "71,200", rr: "2.3" },
