@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Video, Square, Mic, MicOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ export const CaptureButton = () => {
     isCapturing,
     isRecording,
     recordingTime,
+    lastCapture,
     captureScreenshot,
     startRecording,
     stopRecording,
@@ -53,7 +54,16 @@ export const CaptureButton = () => {
 
   const handleStopRecording = useCallback(() => {
     stopRecording();
+    // The share dialog will open via the useEffect watching lastCapture
   }, [stopRecording]);
+
+  // Open share dialog when a video recording completes
+  useEffect(() => {
+    if (lastCapture && lastCapture.type === 'video') {
+      setCaptureResult(lastCapture);
+      setShareDialogOpen(true);
+    }
+  }, [lastCapture]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
