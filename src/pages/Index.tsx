@@ -78,7 +78,7 @@ const Index = () => {
   const handleBacktestClick = () => {
     track('pricing_clicked', { source: 'landing_cta_backtest' });
     trackEvent('landing.cta_click', { button: 'hero_try_backtest' });
-    navigate('/pattern-lab');
+    navigate('/projects/pattern-lab/new');
   };
 
   const activityCards = [
