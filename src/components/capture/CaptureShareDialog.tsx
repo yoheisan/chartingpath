@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import {
   Download,
   Copy,
-  Share2,
   Check,
 } from 'lucide-react';
 import { CaptureResult, CaptureContextType, useMediaCapture } from '@/hooks/useMediaCapture';
