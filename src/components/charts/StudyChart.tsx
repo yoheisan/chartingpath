@@ -2019,7 +2019,7 @@ const StudyChart = memo(({
       {!isMobile && (
         <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
           <DialogContent className="max-w-md max-h-[80vh]">
-            <div data-capture-target className="space-y-4 bg-background p-4 -m-4 rounded-lg">
+            <div data-capture-target className="space-y-4 bg-background p-4 rounded-lg">
               <DialogHeader>
                 <DialogTitle className="text-base">{t('chartAnalysisDialog.title')}</DialogTitle>
               </DialogHeader>
@@ -2028,21 +2028,21 @@ const StudyChart = memo(({
                   <ChartAnalysisSummary analysis={analysis.analysisResult} />
                 )}
               </ScrollArea>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t">
-              <CardCaptureButton label={t('chartAnalysisDialog.title')} />
-              <div className="flex gap-2">
-                {onSendToCopilot && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setShowAnalysisDialog(false);
-                    analysis.sendToCopilot();
-                  }}>
-                    {t('chartAnalysisDialog.askCopilot')}
+              <div className="flex items-center justify-between pt-2 border-t">
+                <CardCaptureButton label={t('chartAnalysisDialog.title')} />
+                <div className="flex gap-2">
+                  {onSendToCopilot && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setShowAnalysisDialog(false);
+                      analysis.sendToCopilot();
+                    }}>
+                      {t('chartAnalysisDialog.askCopilot')}
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
+                    {t('chartAnalysisDialog.close')}
                   </Button>
-                )}
-                <Button size="sm" onClick={() => setShowAnalysisDialog(false)}>
-                  {t('chartAnalysisDialog.close')}
-                </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
