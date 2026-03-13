@@ -593,39 +593,61 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Bull Flag',
     detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
-      const poleGain = (closes[7] - closes[0]) / closes[0];
-      if (poleGain < 0.05) return { detected: false, pivots: [] };
+      // Proportional pole detection: scan for strongest consecutive up-move in first 30-60% of window
+      const maxPoleEnd = Math.floor(len * 0.6);
+      let bestPoleStart = 0, bestPoleEnd = 0, bestPoleGain = 0;
+      for (let start = 0; start < Math.floor(len * 0.3); start++) {
+        for (let end = start + 3; end <= maxPoleEnd; end++) {
+          const gain = (closes[end] - closes[start]) / closes[start];
+          if (gain > bestPoleGain) {
+            bestPoleGain = gain;
+            bestPoleStart = start;
+            bestPoleEnd = end;
+          }
+        }
+      }
       
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
-      if (flagHighs.length === 0) return { detected: false, pivots: [] };
+      // Minimum pole gain: 3% (Bulkowski minimum)
+      if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+      
+      // Flag zone: bars after pole peak, at least 3 bars, up to 50% of remaining window
+      const flagStart = bestPoleEnd + 1;
+      const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
+      if (flagStart >= flagEnd || flagEnd >= len) return { detected: false, pivots: [] };
+      
+      const flagHighs = highs.slice(flagStart, flagEnd + 1);
+      const flagLows = lows.slice(flagStart, flagEnd + 1);
+      if (flagHighs.length < 2) return { detected: false, pivots: [] };
+      
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
-      // Retracement must be < 50% of pole
-      const poleHeight = closes[7] - closes[0];
-      const retracement = (closes[7] - flagLow) / poleHeight;
-      if (flagRange > 0.04 || flagDrift > 0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      // Retracement must be < 50% of pole (Bulkowski standard)
+      const poleHeight = closes[bestPoleEnd] - closes[bestPoleStart];
+      const retracement = (closes[bestPoleEnd] - flagLow) / poleHeight;
       
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose > flagHigh * 1.005;
+      // Flag consolidation range ≤ 6%, retracement < 50%, slight downward/flat drift OK
+      if (flagRange > 0.06 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[len - 1];
+      const detected = lastClose > flagHigh * 1.002;
       
       return {
         detected,
-        patternStartIndex: 0,
-        patternEndIndex: window.length - 1,
+        patternStartIndex: bestPoleStart,
+        patternEndIndex: len - 1,
         pivots: detected ? [
-          { index: 0, price: closes[0], type: 'low', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'high', label: 'Pole End' },
-          { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+          { index: bestPoleStart, price: closes[bestPoleStart], type: 'low', label: 'Pole Start' },
+          { index: bestPoleEnd, price: closes[bestPoleEnd], type: 'high', label: 'Pole End' },
+          { index: flagStart + flagHighs.indexOf(flagHigh), price: flagHigh, type: 'high', label: 'Flag High' },
+          { index: len - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
       };
     }
