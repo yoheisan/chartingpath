@@ -118,13 +118,6 @@ export const CaptureShareDialog = ({
             </Button>
           )}
 
-          {canShare && (
-            <Button variant="outline" onClick={handleNativeShare} className="gap-2">
-              <Share2 className="h-4 w-4" />
-              {t('capture.share')}
-            </Button>
-          )}
-
           {capture.type === 'video' && (
             <Button variant="outline" onClick={handleDownloadForX} className="gap-2">
               <span aria-hidden="true">𝕏</span>
@@ -132,6 +125,10 @@ export const CaptureShareDialog = ({
             </Button>
           )}
         </div>
+
+        <p className="text-xs text-muted-foreground text-center">
+          {t('capture.copyPasteHint', 'Copy and paste to share with others')}
+        </p>
       </DialogContent>
     </Dialog>
   );
