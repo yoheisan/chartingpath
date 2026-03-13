@@ -32,10 +32,9 @@ export const CaptureShareDialog = ({
   contextMetadata = {},
 }: CaptureShareDialogProps) => {
   const { t } = useTranslation();
-  const { downloadCapture, copyToClipboard, shareCapture } = useMediaCapture();
+  const { downloadCapture, copyToClipboard } = useMediaCapture();
   
   const [copied, setCopied] = useState(false);
-  const canShare = typeof navigator.share === 'function';
 
   const handleDownload = useCallback(() => {
     if (!capture) return;
