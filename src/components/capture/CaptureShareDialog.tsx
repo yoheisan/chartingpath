@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import {
   Download,
   Copy,
-  Share2,
   Check,
 } from 'lucide-react';
 import { CaptureResult, CaptureContextType, useMediaCapture } from '@/hooks/useMediaCapture';
@@ -33,10 +32,9 @@ export const CaptureShareDialog = ({
   contextMetadata = {},
 }: CaptureShareDialogProps) => {
   const { t } = useTranslation();
-  const { downloadCapture, copyToClipboard, shareCapture } = useMediaCapture();
+  const { downloadCapture, copyToClipboard } = useMediaCapture();
   
   const [copied, setCopied] = useState(false);
-  const canShare = typeof navigator.share === 'function';
 
   const handleDownload = useCallback(() => {
     if (!capture) return;
@@ -52,11 +50,6 @@ export const CaptureShareDialog = ({
       setTimeout(() => setCopied(false), 2000);
     }
   }, [capture, copyToClipboard]);
-
-  const handleNativeShare = useCallback(async () => {
-    if (!capture) return;
-    await shareCapture(capture);
-  }, [capture, shareCapture]);
 
   const handleDownloadForX = useCallback(() => {
     if (!capture) return;
@@ -118,13 +111,6 @@ export const CaptureShareDialog = ({
             </Button>
           )}
 
-          {canShare && (
-            <Button variant="outline" onClick={handleNativeShare} className="gap-2">
-              <Share2 className="h-4 w-4" />
-              {t('capture.share')}
-            </Button>
-          )}
-
           {capture.type === 'video' && (
             <Button variant="outline" onClick={handleDownloadForX} className="gap-2">
               <span aria-hidden="true">𝕏</span>
@@ -132,6 +118,10 @@ export const CaptureShareDialog = ({
             </Button>
           )}
         </div>
+
+        <p className="text-xs text-muted-foreground text-center">
+          {t('capture.copyPasteHint', 'Copy and paste to share with others')}
+        </p>
       </DialogContent>
     </Dialog>
   );
