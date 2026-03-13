@@ -656,39 +656,61 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'short',
     displayName: 'Bear Flag',
     detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
-      const poleDrop = (closes[0] - closes[7]) / closes[0];
-      if (poleDrop < 0.05) return { detected: false, pivots: [] };
+      // Proportional pole detection: scan for strongest consecutive down-move in first 30-60% of window
+      const maxPoleEnd = Math.floor(len * 0.6);
+      let bestPoleStart = 0, bestPoleEnd = 0, bestPoleDrop = 0;
+      for (let start = 0; start < Math.floor(len * 0.3); start++) {
+        for (let end = start + 3; end <= maxPoleEnd; end++) {
+          const drop = (closes[start] - closes[end]) / closes[start];
+          if (drop > bestPoleDrop) {
+            bestPoleDrop = drop;
+            bestPoleStart = start;
+            bestPoleEnd = end;
+          }
+        }
+      }
       
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
-      if (flagLows.length === 0) return { detected: false, pivots: [] };
+      // Minimum pole drop: 3% (Bulkowski minimum)
+      if (bestPoleDrop < 0.03) return { detected: false, pivots: [] };
+      
+      // Flag zone: bars after pole bottom, at least 3 bars
+      const flagStart = bestPoleEnd + 1;
+      const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
+      if (flagStart >= flagEnd || flagEnd >= len) return { detected: false, pivots: [] };
+      
+      const flagHighs = highs.slice(flagStart, flagEnd + 1);
+      const flagLows = lows.slice(flagStart, flagEnd + 1);
+      if (flagLows.length < 2) return { detected: false, pivots: [] };
+      
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
       // Retracement must be < 50% of pole
-      const poleHeight = closes[0] - closes[7];
-      const retracement = (flagHigh - closes[7]) / poleHeight;
-      if (flagRange > 0.04 || flagDrift < -0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      const poleHeight = closes[bestPoleStart] - closes[bestPoleEnd];
+      const retracement = (flagHigh - closes[bestPoleEnd]) / poleHeight;
       
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose < flagLow * 0.995;
+      // Flag consolidation range ≤ 6%, retracement < 50%
+      if (flagRange > 0.06 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[len - 1];
+      const detected = lastClose < flagLow * 0.998;
       
       return {
         detected,
-        patternStartIndex: 0,
-        patternEndIndex: window.length - 1,
+        patternStartIndex: bestPoleStart,
+        patternEndIndex: len - 1,
         pivots: detected ? [
-          { index: 0, price: closes[0], type: 'high', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'low', label: 'Pole End' },
-          { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
-          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+          { index: bestPoleStart, price: closes[bestPoleStart], type: 'high', label: 'Pole Start' },
+          { index: bestPoleEnd, price: closes[bestPoleEnd], type: 'low', label: 'Pole End' },
+          { index: flagStart + flagLows.indexOf(flagLow), price: flagLow, type: 'low', label: 'Flag Low' },
+          { index: len - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
       };
     }
