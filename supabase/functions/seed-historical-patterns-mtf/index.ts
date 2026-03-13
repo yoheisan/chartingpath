@@ -719,11 +719,11 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Cup & Handle',
     detector: (window) => {
-      // Relaxed: 20 bars minimum (was 30)
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
       // PRIOR UPTREND CHECK: Cup & Handle requires a prior uptrend of ≥5% (Bulkowski)
       const earlyLow = Math.min(...lows.slice(0, 5));
@@ -731,54 +731,74 @@ const PATTERN_REGISTRY: Record<string, {
       const priorRise = (earlyHigh - earlyLow) / earlyLow;
       if (priorRise < 0.05) return { detected: false, pivots: [] };
       
-      // Dynamic window sizing for flexibility
-      const cupEnd = Math.floor(window.length * 0.7);
-      const handleStart = Math.floor(window.length * 0.75);
+      // Dynamic cup detection: find the deepest trough, then identify rims on either side
+      // Left rim: highest high in first 40% of window
+      const leftRimEnd = Math.max(3, Math.floor(len * 0.4));
+      const leftRimSlice = highs.slice(0, leftRimEnd);
+      const leftRim = Math.max(...leftRimSlice);
+      const leftRimIdx = leftRimSlice.indexOf(leftRim);
       
-      // Cup: Find U-shaped formation (rims at similar levels, bottom 7-40% below rims)
-      const leftRim = Math.max(...highs.slice(0, 4));
-      const rightRimArea = highs.slice(Math.floor(cupEnd * 0.8), cupEnd);
-      const rightRim = rightRimArea.length > 0 ? Math.max(...rightRimArea) : 0;
-      const cupMiddle = lows.slice(3, cupEnd - 2);
-      const cupBottom = cupMiddle.length > 0 ? Math.min(...cupMiddle) : 0;
+      // Cup bottom: lowest low between left rim and last 25% of window
+      const cupSearchEnd = Math.max(leftRimIdx + 3, Math.floor(len * 0.85));
+      const cupSearchStart = leftRimIdx + 1;
+      if (cupSearchStart >= cupSearchEnd) return { detected: false, pivots: [] };
       
-      if (cupBottom === 0) return { detected: false, pivots: [] };
+      const cupSlice = lows.slice(cupSearchStart, cupSearchEnd);
+      if (cupSlice.length < 2) return { detected: false, pivots: [] };
+      const cupBottom = Math.min(...cupSlice);
+      const cupBottomIdx = cupSearchStart + cupSlice.indexOf(cupBottom);
       
+      // Right rim: highest high between cup bottom and end of window (minus last 2 bars for breakout)
+      const rightRimStart = cupBottomIdx + 1;
+      const rightRimEnd = Math.max(rightRimStart + 1, len - 2);
+      if (rightRimStart >= rightRimEnd) return { detected: false, pivots: [] };
+      
+      const rightRimSlice = highs.slice(rightRimStart, rightRimEnd);
+      if (rightRimSlice.length === 0) return { detected: false, pivots: [] };
+      const rightRim = Math.max(...rightRimSlice);
+      const rightRimIdx = rightRimStart + rightRimSlice.indexOf(rightRim);
+      
+      // Validate cup shape
       const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
       const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
       
-      // Relaxed: rimDiff 8% (was 5%), cupDepth 7-40% (was 10-35%)
-      if (rimDiff > 0.08 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      // Rim diff ≤ 10%, cup depth 7-40%
+      if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
       
-      // Handle: Small pullback after right rim (relaxed: 3-60% of cup depth)
-      const handleLows = lows.slice(handleStart, window.length - 1);
-      if (handleLows.length === 0) return { detected: false, pivots: [] };
-      const handleLow = Math.min(...handleLows);
-      const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+      // Handle: small pullback after right rim (optional — if no room, check direct breakout)
+      let handleLow = rightRim;
+      let handleLowIdx = rightRimIdx;
+      if (rightRimIdx + 1 < len - 1) {
+        const handleLows = lows.slice(rightRimIdx + 1, len - 1);
+        if (handleLows.length > 0) {
+          handleLow = Math.min(...handleLows);
+          handleLowIdx = rightRimIdx + 1 + handleLows.indexOf(handleLow);
+          const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+          // Handle depth 3-60% of cup depth; if outside range, skip handle requirement
+          if (handleDepth < 0.03 || handleDepth > 0.60) {
+            handleLow = rightRim;
+            handleLowIdx = rightRimIdx;
+          }
+        }
+      }
       
-      // Relaxed handle depth range
-      if (handleDepth < 0.03 || handleDepth > 0.60) return { detected: false, pivots: [] };
-      
-      // Breakout: Last close breaks above right rim (relaxed: 0.1% vs 0.2%)
-      const lastClose = closes[closes.length - 1];
+      // Breakout: last close above right rim
+      const lastClose = closes[len - 1];
       const detected = lastClose > rightRim * 1.001;
       
-      const leftRimIdx = highs.slice(0, 4).indexOf(leftRim);
-      const cupBottomIdx = 3 + cupMiddle.indexOf(cupBottom);
-      const rightRimStartIdx = Math.floor(cupEnd * 0.8);
-      const rightRimIdx = rightRimStartIdx + rightRimArea.indexOf(rightRim);
+      const pivots: PatternPivot[] = detected ? [
+        { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
+        { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
+        { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
+        ...(handleLowIdx !== rightRimIdx ? [{ index: handleLowIdx, price: handleLow, type: 'low' as const, label: 'Handle' }] : []),
+        { index: len - 1, price: lastClose, type: 'high', label: 'Breakout' }
+      ] : [];
       
       return {
         detected,
         patternStartIndex: leftRimIdx,
-        patternEndIndex: window.length - 1,
-        pivots: detected ? [
-          { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
-          { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
-          { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
-          { index: handleStart + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
-        ] : []
+        patternEndIndex: len - 1,
+        pivots
       };
     }
   },
