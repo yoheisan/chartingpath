@@ -391,12 +391,11 @@ const PATTERN_REGISTRY: Record<string, {
       const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
       if (supportTests < 3) return { detected: false, pivots: [] };
       
-      // Falling highs (minimum 2 lower highs)
+      // Falling highs (minimum 2 lower highs) — no penalty for noise bars (matches ascending triangle logic)
       const recentHighs = highs.slice(-10);
       let fallingHighCount = 0;
       for (let i = 1; i < recentHighs.length; i++) {
         if (recentHighs[i] < recentHighs[i - 1] * 0.999) fallingHighCount++;
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighCount--;
       }
       if (fallingHighCount < 2) return { detected: false, pivots: [] };
       
