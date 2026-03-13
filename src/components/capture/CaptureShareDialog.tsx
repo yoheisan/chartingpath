@@ -51,11 +51,6 @@ export const CaptureShareDialog = ({
     }
   }, [capture, copyToClipboard]);
 
-  const handleNativeShare = useCallback(async () => {
-    if (!capture) return;
-    await shareCapture(capture);
-  }, [capture, shareCapture]);
-
   const handleDownloadForX = useCallback(() => {
     if (!capture) return;
     // Download the video file
