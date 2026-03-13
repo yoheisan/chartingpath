@@ -932,6 +932,7 @@
     "createAlerts": "Create Alerts",
     "createAlertsDesc": "Get notified when pattern setups appear on your watchlist.",
     "disclaimer": "ChartingPath provides educational tools and backtesting software. Past performance does not guarantee future results. Trading involves substantial risk of loss. Alerts and signals are for informational purposes only and do not constitute financial advice.",
+    "platformBadge": "Chart Pattern Backtesting Platform",
     "exploreLearn": "Explore Learn",
     "exportScripts": "Export Scripts",
     "exportScriptsDesc": "Download ready-to-use Pine Script and MQL code for your strategies.",
