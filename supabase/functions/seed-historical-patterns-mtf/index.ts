@@ -391,12 +391,11 @@ const PATTERN_REGISTRY: Record<string, {
       const supportTests = lows.filter(l => l < supportZone * 1.02 && l >= supportZone * 0.98).length;
       if (supportTests < 3) return { detected: false, pivots: [] };
       
-      // Falling highs (minimum 2 lower highs)
+      // Falling highs (minimum 2 lower highs) — no penalty for noise bars (matches ascending triangle logic)
       const recentHighs = highs.slice(-10);
       let fallingHighCount = 0;
       for (let i = 1; i < recentHighs.length; i++) {
         if (recentHighs[i] < recentHighs[i - 1] * 0.999) fallingHighCount++;
-        if (recentHighs[i] > recentHighs[i - 1] * 1.005) fallingHighCount--;
       }
       if (fallingHighCount < 2) return { detected: false, pivots: [] };
       
@@ -594,39 +593,61 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Bull Flag',
     detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
-      const poleGain = (closes[7] - closes[0]) / closes[0];
-      if (poleGain < 0.05) return { detected: false, pivots: [] };
+      // Proportional pole detection: scan for strongest consecutive up-move in first 30-60% of window
+      const maxPoleEnd = Math.floor(len * 0.6);
+      let bestPoleStart = 0, bestPoleEnd = 0, bestPoleGain = 0;
+      for (let start = 0; start < Math.floor(len * 0.3); start++) {
+        for (let end = start + 3; end <= maxPoleEnd; end++) {
+          const gain = (closes[end] - closes[start]) / closes[start];
+          if (gain > bestPoleGain) {
+            bestPoleGain = gain;
+            bestPoleStart = start;
+            bestPoleEnd = end;
+          }
+        }
+      }
       
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
-      if (flagHighs.length === 0) return { detected: false, pivots: [] };
+      // Minimum pole gain: 3% (Bulkowski minimum)
+      if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+      
+      // Flag zone: bars after pole peak, at least 3 bars, up to 50% of remaining window
+      const flagStart = bestPoleEnd + 1;
+      const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
+      if (flagStart >= flagEnd || flagEnd >= len) return { detected: false, pivots: [] };
+      
+      const flagHighs = highs.slice(flagStart, flagEnd + 1);
+      const flagLows = lows.slice(flagStart, flagEnd + 1);
+      if (flagHighs.length < 2) return { detected: false, pivots: [] };
+      
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
-      // Retracement must be < 50% of pole
-      const poleHeight = closes[7] - closes[0];
-      const retracement = (closes[7] - flagLow) / poleHeight;
-      if (flagRange > 0.04 || flagDrift > 0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      // Retracement must be < 50% of pole (Bulkowski standard)
+      const poleHeight = closes[bestPoleEnd] - closes[bestPoleStart];
+      const retracement = (closes[bestPoleEnd] - flagLow) / poleHeight;
       
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose > flagHigh * 1.005;
+      // Flag consolidation range ≤ 6%, retracement < 50%, slight downward/flat drift OK
+      if (flagRange > 0.06 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[len - 1];
+      const detected = lastClose > flagHigh * 1.002;
       
       return {
         detected,
-        patternStartIndex: 0,
-        patternEndIndex: window.length - 1,
+        patternStartIndex: bestPoleStart,
+        patternEndIndex: len - 1,
         pivots: detected ? [
-          { index: 0, price: closes[0], type: 'low', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'high', label: 'Pole End' },
-          { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+          { index: bestPoleStart, price: closes[bestPoleStart], type: 'low', label: 'Pole Start' },
+          { index: bestPoleEnd, price: closes[bestPoleEnd], type: 'high', label: 'Pole End' },
+          { index: flagStart + flagHighs.indexOf(flagHigh), price: flagHigh, type: 'high', label: 'Flag High' },
+          { index: len - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
       };
     }
@@ -635,39 +656,61 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'short',
     displayName: 'Bear Flag',
     detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
-      const poleDrop = (closes[0] - closes[7]) / closes[0];
-      if (poleDrop < 0.05) return { detected: false, pivots: [] };
+      // Proportional pole detection: scan for strongest consecutive down-move in first 30-60% of window
+      const maxPoleEnd = Math.floor(len * 0.6);
+      let bestPoleStart = 0, bestPoleEnd = 0, bestPoleDrop = 0;
+      for (let start = 0; start < Math.floor(len * 0.3); start++) {
+        for (let end = start + 3; end <= maxPoleEnd; end++) {
+          const drop = (closes[start] - closes[end]) / closes[start];
+          if (drop > bestPoleDrop) {
+            bestPoleDrop = drop;
+            bestPoleStart = start;
+            bestPoleEnd = end;
+          }
+        }
+      }
       
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
-      if (flagLows.length === 0) return { detected: false, pivots: [] };
+      // Minimum pole drop: 3% (Bulkowski minimum)
+      if (bestPoleDrop < 0.03) return { detected: false, pivots: [] };
+      
+      // Flag zone: bars after pole bottom, at least 3 bars
+      const flagStart = bestPoleEnd + 1;
+      const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
+      if (flagStart >= flagEnd || flagEnd >= len) return { detected: false, pivots: [] };
+      
+      const flagHighs = highs.slice(flagStart, flagEnd + 1);
+      const flagLows = lows.slice(flagStart, flagEnd + 1);
+      if (flagLows.length < 2) return { detected: false, pivots: [] };
+      
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
       
       // Retracement must be < 50% of pole
-      const poleHeight = closes[0] - closes[7];
-      const retracement = (flagHigh - closes[7]) / poleHeight;
-      if (flagRange > 0.04 || flagDrift < -0.02 || retracement > 0.50) return { detected: false, pivots: [] };
+      const poleHeight = closes[bestPoleStart] - closes[bestPoleEnd];
+      const retracement = (flagHigh - closes[bestPoleEnd]) / poleHeight;
       
-      const lastClose = closes[closes.length - 1];
-      const detected = lastClose < flagLow * 0.995;
+      // Flag consolidation range ≤ 6%, retracement < 50%
+      if (flagRange > 0.06 || retracement > 0.50) return { detected: false, pivots: [] };
+      
+      const lastClose = closes[len - 1];
+      const detected = lastClose < flagLow * 0.998;
       
       return {
         detected,
-        patternStartIndex: 0,
-        patternEndIndex: window.length - 1,
+        patternStartIndex: bestPoleStart,
+        patternEndIndex: len - 1,
         pivots: detected ? [
-          { index: 0, price: closes[0], type: 'high', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'low', label: 'Pole End' },
-          { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
-          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+          { index: bestPoleStart, price: closes[bestPoleStart], type: 'high', label: 'Pole Start' },
+          { index: bestPoleEnd, price: closes[bestPoleEnd], type: 'low', label: 'Pole End' },
+          { index: flagStart + flagLows.indexOf(flagLow), price: flagLow, type: 'low', label: 'Flag Low' },
+          { index: len - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
       };
     }
@@ -676,11 +719,11 @@ const PATTERN_REGISTRY: Record<string, {
     direction: 'long',
     displayName: 'Cup & Handle',
     detector: (window) => {
-      // Relaxed: 20 bars minimum (was 30)
-      if (window.length < 20) return { detected: false, pivots: [] };
+      if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
+      const len = window.length;
       
       // PRIOR UPTREND CHECK: Cup & Handle requires a prior uptrend of ≥5% (Bulkowski)
       const earlyLow = Math.min(...lows.slice(0, 5));
@@ -688,54 +731,74 @@ const PATTERN_REGISTRY: Record<string, {
       const priorRise = (earlyHigh - earlyLow) / earlyLow;
       if (priorRise < 0.05) return { detected: false, pivots: [] };
       
-      // Dynamic window sizing for flexibility
-      const cupEnd = Math.floor(window.length * 0.7);
-      const handleStart = Math.floor(window.length * 0.75);
+      // Dynamic cup detection: find the deepest trough, then identify rims on either side
+      // Left rim: highest high in first 40% of window
+      const leftRimEnd = Math.max(3, Math.floor(len * 0.4));
+      const leftRimSlice = highs.slice(0, leftRimEnd);
+      const leftRim = Math.max(...leftRimSlice);
+      const leftRimIdx = leftRimSlice.indexOf(leftRim);
       
-      // Cup: Find U-shaped formation (rims at similar levels, bottom 7-40% below rims)
-      const leftRim = Math.max(...highs.slice(0, 4));
-      const rightRimArea = highs.slice(Math.floor(cupEnd * 0.8), cupEnd);
-      const rightRim = rightRimArea.length > 0 ? Math.max(...rightRimArea) : 0;
-      const cupMiddle = lows.slice(3, cupEnd - 2);
-      const cupBottom = cupMiddle.length > 0 ? Math.min(...cupMiddle) : 0;
+      // Cup bottom: lowest low between left rim and last 25% of window
+      const cupSearchEnd = Math.max(leftRimIdx + 3, Math.floor(len * 0.85));
+      const cupSearchStart = leftRimIdx + 1;
+      if (cupSearchStart >= cupSearchEnd) return { detected: false, pivots: [] };
       
-      if (cupBottom === 0) return { detected: false, pivots: [] };
+      const cupSlice = lows.slice(cupSearchStart, cupSearchEnd);
+      if (cupSlice.length < 2) return { detected: false, pivots: [] };
+      const cupBottom = Math.min(...cupSlice);
+      const cupBottomIdx = cupSearchStart + cupSlice.indexOf(cupBottom);
       
+      // Right rim: highest high between cup bottom and end of window (minus last 2 bars for breakout)
+      const rightRimStart = cupBottomIdx + 1;
+      const rightRimEnd = Math.max(rightRimStart + 1, len - 2);
+      if (rightRimStart >= rightRimEnd) return { detected: false, pivots: [] };
+      
+      const rightRimSlice = highs.slice(rightRimStart, rightRimEnd);
+      if (rightRimSlice.length === 0) return { detected: false, pivots: [] };
+      const rightRim = Math.max(...rightRimSlice);
+      const rightRimIdx = rightRimStart + rightRimSlice.indexOf(rightRim);
+      
+      // Validate cup shape
       const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
       const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
       
-      // Relaxed: rimDiff 8% (was 5%), cupDepth 7-40% (was 10-35%)
-      if (rimDiff > 0.08 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      // Rim diff ≤ 10%, cup depth 7-40%
+      if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
       
-      // Handle: Small pullback after right rim (relaxed: 3-60% of cup depth)
-      const handleLows = lows.slice(handleStart, window.length - 1);
-      if (handleLows.length === 0) return { detected: false, pivots: [] };
-      const handleLow = Math.min(...handleLows);
-      const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+      // Handle: small pullback after right rim (optional — if no room, check direct breakout)
+      let handleLow = rightRim;
+      let handleLowIdx = rightRimIdx;
+      if (rightRimIdx + 1 < len - 1) {
+        const handleLows = lows.slice(rightRimIdx + 1, len - 1);
+        if (handleLows.length > 0) {
+          handleLow = Math.min(...handleLows);
+          handleLowIdx = rightRimIdx + 1 + handleLows.indexOf(handleLow);
+          const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
+          // Handle depth 3-60% of cup depth; if outside range, skip handle requirement
+          if (handleDepth < 0.03 || handleDepth > 0.60) {
+            handleLow = rightRim;
+            handleLowIdx = rightRimIdx;
+          }
+        }
+      }
       
-      // Relaxed handle depth range
-      if (handleDepth < 0.03 || handleDepth > 0.60) return { detected: false, pivots: [] };
-      
-      // Breakout: Last close breaks above right rim (relaxed: 0.1% vs 0.2%)
-      const lastClose = closes[closes.length - 1];
+      // Breakout: last close above right rim
+      const lastClose = closes[len - 1];
       const detected = lastClose > rightRim * 1.001;
       
-      const leftRimIdx = highs.slice(0, 4).indexOf(leftRim);
-      const cupBottomIdx = 3 + cupMiddle.indexOf(cupBottom);
-      const rightRimStartIdx = Math.floor(cupEnd * 0.8);
-      const rightRimIdx = rightRimStartIdx + rightRimArea.indexOf(rightRim);
+      const pivots: PatternPivot[] = detected ? [
+        { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
+        { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
+        { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
+        ...(handleLowIdx !== rightRimIdx ? [{ index: handleLowIdx, price: handleLow, type: 'low' as const, label: 'Handle' }] : []),
+        { index: len - 1, price: lastClose, type: 'high', label: 'Breakout' }
+      ] : [];
       
       return {
         detected,
         patternStartIndex: leftRimIdx,
-        patternEndIndex: window.length - 1,
-        pivots: detected ? [
-          { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
-          { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
-          { index: rightRimIdx, price: rightRim, type: 'high', label: 'Right Rim' },
-          { index: handleStart + handleLows.indexOf(handleLow), price: handleLow, type: 'low', label: 'Handle' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
-        ] : []
+        patternEndIndex: len - 1,
+        pivots
       };
     }
   },

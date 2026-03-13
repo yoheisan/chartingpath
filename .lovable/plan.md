@@ -1,88 +1,97 @@
 
 
-# Fix Pattern Detection Imbalance in Historical Seeder
+# Multi-Page Funnel Analysis and Improvement Plan
 
-## Problem
-The `historical_pattern_occurrences` table shows extreme detection skew:
+## Data Summary
 
-| Pattern | Resolved Trades | Issue |
-|---------|----------------|-------|
-| Donchian Short | 123,442 | Massively over-represented |
-| Donchian Long | 1,219 | 100x fewer than Short — asymmetric |
-| Ascending Triangle | 610 | Low |
-| Descending Triangle | 95 | Very low |
-| Cup & Handle | 47 | Nearly zero |
-| Bull Flag | 17 | Nearly zero |
-| Bear Flag | 2 | Nearly zero |
+| Page | Views | Avg Time on Page | Key Issue |
+|------|-------|-----------------|-----------|
+| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
+| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
+| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
+| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
+| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
+| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
+| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
 
-Meanwhile Triple Top (60k), Symmetrical Triangle (55k), Rising/Falling Wedge (41-45k) detect prolifically.
+---
 
-## Root Cause Analysis
+## Priority 1: Auth Page (75 views, 0 signups)
 
-All issues are in `supabase/functions/seed-historical-patterns-mtf/index.ts` detector functions:
+**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
 
-### 1. Bull Flag / Bear Flag (lines 593-673) — Hardcoded bar indices
-The detector demands the pole occupy **exactly bars 0-7** and the flag **exactly bars 8-17** within a 25-bar window. A 5% pole gain must occur in precisely 8 bars. The flag consolidation range is capped at 4%. This is far too rigid — real flags form at varying proportions.
+**Improvements**:
+1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
+2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
+3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
+4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
 
-### 2. Cup & Handle (lines 675-740) — Rigid proportional slicing
-Cup ends at 70% of window, handle starts at 75%. With a default 25-bar lookback (40 for daily), the cup must form in ~17-28 bars. The 5% prior uptrend requirement is fine per Bulkowski, but the fixed slice points miss cups that form at different proportions.
+### Files to modify
+- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
+- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
 
-### 3. Descending Triangle (lines 373-419) — Overly strict falling-high counter
-The falling-high counter penalizes any bar where `recentHighs[i] > recentHighs[i-1] * 1.005` by decrementing. In choppy markets this kills detection. Ascending Triangle (610 detections) has the same structure but rising lows are more common in uptrends, explaining the 6x gap.
+---
 
-### 4. Donchian Long vs Short asymmetry (lines 509-591)
-Both use identical ADX > 20 filter and identical threshold logic (1.001 / 0.999). The asymmetry is likely market-structural (bearish breakdowns are more common), but the Long threshold of `> recentHigh * 1.001` combined with the ADX check may be slightly stricter in trending-up contexts. This needs verification but is likely acceptable as-is.
+## Priority 2: Screener (101 views, 18s avg dwell)
 
-## Implementation Plan
+**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
 
-### File: `supabase/functions/seed-historical-patterns-mtf/index.ts`
+**Improvements**:
+1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
+2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
+3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
 
-**A. Rewrite Bull Flag detector (lines 593-632)**
-- Use proportional pole/flag sizing instead of fixed bar indices:
-  - Pole: first 30-50% of window (scan for strongest consecutive up-move)
-  - Flag: next 20-40% of window after pole peak
-- Reduce min pole gain from 5% → 3% (Bulkowski minimum)
-- Widen flag consolidation range from 4% → 6%
-- Reduce breakout threshold from 0.5% → 0.2%
-- Keep retracement < 50% filter (Bulkowski standard)
+### Files to modify
+- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
 
-**B. Rewrite Bear Flag detector (lines 634-673)**
-- Mirror the Bull Flag changes for short direction
+---
 
-**C. Relax Cup & Handle detector (lines 675-740)**
-- Use dynamic cup-end scanning instead of fixed 70% slice: find the deepest trough, then identify rims on either side
-- Keep Bulkowski thresholds (5% prior trend, 7-40% cup depth, 3-60% handle)
-- This structural change alone should significantly increase detections
+## Priority 3: Pattern Lab (71 views, 0 backtests completed)
 
-**D. Relax Descending Triangle detector (lines 373-419)**
-- Remove the penalty decrement for rising highs (line 400: `fallingHighCount--`)
-- Just require net 2+ falling highs without penalizing noise bars
-- Match the Ascending Triangle logic symmetry
+**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
 
-**E. No changes to Donchian detectors**
-- The Long/Short gap is market-structural (more downside breaks than upside). Both use identical logic. No code change needed.
+**Improvements**:
+1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
+2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
+3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
 
-### Post-deployment: Re-seed affected patterns
+### Files to modify
+- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
 
-After deploying the updated detectors, run a targeted re-seed for the 5 underperforming patterns only:
-```
-POST seed-historical-patterns-mtf
-{
-  "patterns": ["bull-flag", "bear-flag", "cup-and-handle", "descending-triangle", "ascending-triangle"],
-  "forceFullBackfill": true,
-  "timeframe": "1d"
-}
-```
-Repeat for each timeframe (1h, 4h, 8h, 1wk).
+---
 
-## Files Modified
-| File | Change |
-|------|--------|
-| `supabase/functions/seed-historical-patterns-mtf/index.ts` | Rewrite Bull Flag, Bear Flag, Cup & Handle, Descending Triangle detectors |
+## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
 
-## Scope
-- Backend edge function only — no frontend changes
-- No schema changes
-- Existing high-volume patterns (Donchian Short, Triple Top, etc.) are untouched
-- Quality scoring and grading pipeline remain unchanged
+**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+
+**Improvements**:
+1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
+2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+
+### Files to modify
+- Blog/Learn page components (investigate rendering issue first)
+
+---
+
+## Priority 5: Shared Links (8 views, 7 pattern views)
+
+**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+
+**Improvements**:
+1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
+2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+
+### Files to modify
+- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
+- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+
+---
+
+## Implementation Sequence
+
+1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
+2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
+3. **Screener** (first-visit guidance + top setup highlight)
+4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
+5. **Shared links** (add try-it-yourself CTA)
 
