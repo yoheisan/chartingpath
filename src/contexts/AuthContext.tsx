@@ -83,8 +83,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       },
                       body: JSON.stringify({
                         to: user.email,
-                        subject: 'Welcome to ChartingPath 👋',
+                        subject: undefined,
                         template: 'welcome',
+                        language: i18n.language || 'en',
                         data: {
                           name: user.user_metadata?.full_name?.split(' ')[0] ||
                                 user.user_metadata?.display_name?.split(' ')[0] ||

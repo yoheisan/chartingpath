@@ -5211,5 +5211,34 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "emails": {
+    "welcome": {
+      "subject": "Welcome to ChartingPath 👋",
+      "greeting": "Welcome, {{name}} 👋",
+      "body": "You now have access to AI-powered chart pattern detection, backtesting, and agent scoring — everything you need to find high-probability trade setups.",
+      "cta": "See Live Patterns →",
+      "stepsTitle": "Get started in 3 steps:",
+      "step1Title": "Browse live pattern detections",
+      "step1Desc": "The Screener shows real-time chart patterns across forex, crypto, stocks and indices.",
+      "step2Title": "Run a backtest in Pattern Lab",
+      "step2Desc": "Pick any pattern and instrument to see its historical win rate, expectancy, and R:R over years of data.",
+      "step3Title": "Set up pattern alerts",
+      "step3Desc": "Get emailed when a specific pattern is detected on your favourite instruments. Never miss a setup again.",
+      "footer": "You're receiving this because you signed up at chartingpath.com",
+      "dashboard": "Dashboard",
+      "screener": "Screener"
+    },
+    "gettingStarted": {
+      "subject": "Your first backtest takes 60 seconds ⚡",
+      "greeting": "Your first backtest takes 60 seconds ⚡",
+      "body": "Hi {{name}}, Pattern Lab lets you validate any chart pattern against years of historical data before risking a single dollar.",
+      "step1": "Go to Pattern Lab",
+      "step2": "Choose an instrument (e.g. EURUSD, AAPL, BTC-USD)",
+      "step3": "Choose a pattern (e.g. Bull Flag, Double Bottom)",
+      "step4": "Hit Run — results in under 30 seconds",
+      "cta": "Run My First Backtest →",
+      "dashboard": "Dashboard"
+    }
   }
 }
