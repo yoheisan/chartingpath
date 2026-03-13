@@ -1074,7 +1074,8 @@
     "avgWinRate": "Avg Win Rate (A-Grade)"
   },
   "guestNudge": {
-    "message": "You're on a guest preview — Create your free account to save results and get alerts."
+    "message": "You're on a guest preview — Create your free account to save results and get alerts.",
+    "actionMessage": "Start here → See live pattern setups"
   },
   "notFound": {
     "message": "Oops! Page not found",

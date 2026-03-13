@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  CheckCircle, ArrowRight, TrendingUp, Bell, Shield, Activity,
-  Search, FlaskConical, Code, BookOpen, BarChart3, Bot
+  CheckCircle, ArrowRight, TrendingUp, Shield,
+  Bot
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,9 +10,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
 import { trackEvent } from '@/lib/analytics';
-import ActionCard from '@/components/landing/ActionCard';
 import HowItWorks from '@/components/landing/HowItWorks';
-import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
@@ -35,7 +33,6 @@ const Index = () => {
   const howItWorksRef = useSectionTracking('how_it_works');
   const screenerRef = useSectionTracking('screener_teaser');
   const edgeAtlasRef = useSectionTracking('edge_atlas');
-  const actionsRef = useSectionTracking('action_cards');
   const copilotRef = useSectionTracking('copilot');
   const pricingRef = useSectionTracking('pricing');
 
@@ -75,77 +72,6 @@ const Index = () => {
     navigate('/patterns/live');
   };
 
-  const handleBacktestClick = () => {
-    track('pricing_clicked', { source: 'landing_cta_backtest' });
-    trackEvent('landing.cta_click', { button: 'hero_try_backtest' });
-    navigate('/projects/pattern-lab/new');
-  };
-
-  const activityCards = [
-    {
-      title: t('landing.dashboard', 'Trading Dashboard'),
-      description: t('landing.dashboardDesc', 'Full command center with live charts, pattern overlays, watchlists, and market overview.'),
-      bullets: [t('landing.dashboardBullet1', 'TradingView-style charts'), t('landing.dashboardBullet2', 'Pattern overlay & study'), t('landing.dashboardBullet3', 'Market overview panel')],
-      ctaText: t('landing.openDashboard', 'Open Dashboard'),
-      ctaLink: "/members/dashboard",
-      icon: BarChart3,
-      bestFor: t('landing.bestForDashboard', 'Full workspace'),
-      slug: "dashboard",
-    },
-    {
-      title: t('landing.scanMarket', 'Scan the Market'),
-      description: t('landing.scanMarketDesc', `Discover active pattern setups across ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments in real-time.`),
-      bullets: [t('landing.scanBullet1', 'Live pattern detection'), t('landing.scanBullet2', 'Quality scores & metrics'), t('landing.scanBulletCopilot', '💡 Ask Copilot to find setups')],
-      ctaText: t('landing.openScreener', 'Open Screener'),
-      ctaLink: "/patterns/live",
-      icon: Activity,
-      bestFor: t('landing.bestForDiscovery', 'Signal discovery'),
-      slug: "screener",
-    },
-    {
-      title: t('landing.researchBacktest', 'Research & Backtest'),
-      description: t('landing.researchDesc', 'Validate any pattern on any ticker with historical performance data.'),
-      bullets: [t('landing.researchBullet1', 'Win rates & expectancy'), t('landing.researchBullet2', 'Visual Proof charts'), t('landing.researchBulletCopilot', '💡 Ask Copilot to validate')],
-      ctaText: t('landing.openPatternLab', 'Open Pattern Lab'),
-      ctaLink: "/projects/pattern-lab/new",
-      icon: Search,
-      bestFor: t('landing.bestForResearch', 'Research & validation'),
-      slug: "pattern_lab",
-    },
-    {
-      title: t('landing.createAlerts', 'Create Alerts'),
-      description: t('landing.createAlertsDesc', 'Get notified when pattern setups appear on your watchlist.'),
-      bullets: [t('landing.alertsBullet1', 'Multi-pattern support'), t('landing.alertsBullet2', 'Email notifications'), t('landing.alertsBullet3', 'Manage active alerts')],
-      ctaText: t('landing.createAlert', 'Create Alert'),
-      ctaLink: "/members/alerts",
-      icon: Bell,
-      bestFor: t('landing.bestForAlerts', 'Stay informed'),
-      slug: "alerts",
-      requiresAuth: true,
-    },
-    {
-      title: t('landing.exportScripts', 'Export Scripts'),
-      description: t('landing.exportScriptsDesc', 'Download ready-to-use Pine Script and MQL code for your strategies.'),
-      bullets: [t('landing.scriptsBullet1', 'Pine Script & MQL'), t('landing.scriptsBullet2', 'Customizable templates'), t('landing.scriptsBulletCopilot', '💡 Generate via Copilot ⌘K')],
-      ctaText: t('landing.browseScripts', 'Browse Scripts'),
-      ctaLink: "/members/scripts",
-      icon: Code,
-      bestFor: t('landing.bestForScripts', 'Automate trading'),
-      slug: "scripts",
-      requiresAuth: true,
-    },
-    {
-      title: t('landing.learnPatterns', 'Learn Patterns'),
-      description: t('landing.learnPatternsDesc', 'Master chart patterns with interactive examples and quizzes.'),
-      bullets: [t('landing.learnBullet1', 'Pattern library'), t('landing.learnBullet2', 'Interactive quizzes'), t('landing.learnBullet3', 'Trading rules')],
-      ctaText: t('landing.exploreLearn', 'Explore Learn'),
-      ctaLink: "/chart-patterns/library",
-      icon: BookOpen,
-      bestFor: t('landing.bestForLearn', 'Education'),
-      slug: "learn",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
@@ -156,8 +82,8 @@ const Index = () => {
       <WebApplicationJsonLd />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[55vh] flex items-center justify-center overflow-hidden">
-        {/* Background — subtle grid only */}
+      <section ref={heroRef} className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
+        {/* Background — subtle grid */}
         <div className="absolute inset-0 bg-background">
           <div className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -169,6 +95,11 @@ const Index = () => {
         
         {/* Content */}
         <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
+          {/* Platform badge */}
+          <Badge variant="secondary" className="mb-5 text-xs tracking-wide animate-fade-in">
+            {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
+          </Badge>
+
           <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
             <span className="text-foreground">
               {t('hero.headlinePrimary', 'Know if a pattern works')}
@@ -187,7 +118,7 @@ const Index = () => {
             {t('hero.socialProof', '320,000+ pattern outcomes analyzed. Free to start — works alongside TradingView.')}
           </p>
 
-          {/* Single prominent CTA */}
+          {/* Primary CTA */}
           <div className="mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Button 
               size="lg" 
@@ -203,7 +134,7 @@ const Index = () => {
             </Button>
           </div>
 
-          {/* Sign Up CTA — prominent for guests */}
+          {/* Sign Up CTA — for guests */}
           {!isAuthenticated && (
             <div className="mb-10 animate-fade-in" style={{ animationDelay: '0.25s' }}>
               <Button
@@ -220,42 +151,8 @@ const Index = () => {
             </div>
           )}
           
-          {/* Ticker Search */}
-          <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-            <UniversalSymbolSearch
-              onSelect={(symbol) => {
-                trackEvent('landing.search_select', { symbol });
-                navigate('/members/dashboard', { state: { initialSymbol: symbol } });
-              }}
-              trigger={
-                <button className="w-full max-w-xl mx-auto flex items-center gap-3 px-5 py-4 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/40 transition-all group cursor-pointer">
-                  <Search className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-muted-foreground text-base group-hover:text-foreground transition-colors">
-                    {t('hero.searchPlaceholder', 'Search any ticker — AAPL, BTC, EUR/USD…')}
-                  </span>
-                  <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-[11px] text-muted-foreground border border-border">
-                    {instrumentCount ? `${instrumentCount.toLocaleString()}+ ${t('hero.instruments', 'instruments')}` : t('hero.instrumentsFallback', '800+ instruments')}
-                  </kbd>
-                </button>
-              }
-            />
-          </div>
-
-          {/* Secondary CTA */}
-          <div className="flex justify-center mb-10 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={handleBacktestClick}
-              className="px-8 py-6 text-lg"
-            >
-              <FlaskConical className="h-5 w-5 mr-2" />
-              {t('hero.ctaSecondary', 'Try a Free Backtest')}
-            </Button>
-          </div>
-          
           {/* Trust Block */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider" style={{ animationDelay: '0.35s' }}>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider mb-4" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center gap-1.5">
               <CheckCircle className="h-3 w-3 text-primary/60" />
               <span>{t('hero.trustSignals', 'Every signal backtested')}</span>
@@ -271,7 +168,7 @@ const Index = () => {
           </div>
 
           {/* Copilot hint */}
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.35s' }}>
             <Bot className="h-3 w-3" />
             <span>{t('hero.copilotHint', 'Powered by AI Trading Copilot — press ⌘K anywhere')}</span>
           </div>
@@ -281,7 +178,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
       <div ref={howItWorksRef} className="border-t border-border/20">
         <HowItWorks />
       </div>
@@ -327,26 +224,6 @@ const Index = () => {
       <div ref={edgeAtlasRef}>
         <EdgeAtlasSection />
       </div>
-
-      {/* Choose Your Action */}
-      <section ref={actionsRef} className="py-20 px-6 border-t border-border/20">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('landing.tools', 'Tools')}</p>
-            <h2 className="text-3xl font-bold">{t('landing.chooseAction', 'Choose Your Next Action')}</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activityCards.map((card) => (
-              <ActionCard
-                key={card.slug}
-                {...card}
-                isAuthenticated={isAuthenticated}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Pricing Teaser */}
       <div ref={pricingRef}>

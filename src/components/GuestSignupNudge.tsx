@@ -34,9 +34,9 @@ export function GuestSignupNudge() {
           <X className="h-4 w-4" />
         </button>
         <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
-        <span className="text-muted-foreground truncate">
-          {t('guestNudge.message', "You're on a guest preview — Create your free account to save results and get alerts.")}
-        </span>
+        <Link to="/patterns/live" className="text-primary hover:underline truncate font-medium text-xs">
+          {t('guestNudge.actionMessage', 'Start here → See live pattern setups')}
+        </Link>
       </div>
       <Button asChild size="sm" className="shrink-0 ml-3 h-7 text-xs">
         <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
