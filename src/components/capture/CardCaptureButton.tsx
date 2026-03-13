@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Video, Square, Loader2 } from 'lucide-react';
 import {
@@ -11,17 +11,11 @@ import { CaptureShareDialog } from './CaptureShareDialog';
 import type { CaptureResult } from '@/hooks/useMediaCapture';
 
 interface CardCaptureButtonProps {
-  /** Ref to the element to capture. If omitted, captures closest parent with [data-capture-target] */
   targetRef?: React.RefObject<HTMLElement>;
-  /** Descriptive label for the capture (e.g. "Watchlist", "Market Overview") */
   label?: string;
   className?: string;
 }
 
-/**
- * Small camera icon button for capturing any dashboard card/panel.
- * Click for screenshot, long-press or secondary button for video recording.
- */
 export const CardCaptureButton = ({
   targetRef,
   label,
@@ -32,6 +26,7 @@ export const CardCaptureButton = ({
     isCapturing,
     isRecording,
     recordingTime,
+    lastCapture,
     captureScreenshot,
     startElementRecording,
     stopRecording,
@@ -39,6 +34,7 @@ export const CardCaptureButton = ({
   const [captureResult, setCaptureResult] = useState<CaptureResult | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const wasRecordingRef = useRef(false);
 
   const resolveTarget = useCallback((): HTMLElement | null => {
     let target: HTMLElement | null = targetRef?.current || null;
@@ -60,34 +56,25 @@ export const CardCaptureButton = ({
   const handleToggleRecording = useCallback(async () => {
     if (isRecording) {
       stopRecording();
-      // The onstop handler in useMediaCapture sets lastCapture,
-      // but we need to listen for it — use a small delay
-      setTimeout(() => {
-        // We'll rely on the share dialog opening via the effect below
-      }, 500);
       return;
     }
     const target = resolveTarget();
-    if (!target) {
-      return;
-    }
+    if (!target) return;
     await startElementRecording(target);
   }, [isRecording, resolveTarget, startElementRecording, stopRecording]);
 
-  // Watch for recording completion to open dialog
-  const { lastCapture } = useMediaCapture();
-  // We need to detect when recording stops and a new video capture appears
-  const prevRecordingRef = useRef(false);
-  if (prevRecordingRef.current && !isRecording && lastCapture?.type === 'video' && !shareDialogOpen) {
-    setCaptureResult(lastCapture);
-    setShareDialogOpen(true);
-  }
-  prevRecordingRef.current = isRecording;
+  // When recording stops, open dialog with the video result
+  useEffect(() => {
+    if (wasRecordingRef.current && !isRecording && lastCapture?.type === 'video') {
+      setCaptureResult(lastCapture);
+      setShareDialogOpen(true);
+    }
+    wasRecordingRef.current = isRecording;
+  }, [isRecording, lastCapture]);
 
   return (
     <>
       <div className="flex items-center gap-0.5">
-        {/* Screenshot button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -108,7 +95,6 @@ export const CardCaptureButton = ({
           </TooltipContent>
         </Tooltip>
 
-        {/* Video recording toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
