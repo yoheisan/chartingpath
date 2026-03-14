@@ -1594,7 +1594,7 @@ function runHistoricalBacktest(
   bars: OHLCBar[],
   symbol: string,
   patternId: string,
-  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[]) => PatternDetectionResult },
+  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult },
   timeframe: string,
   assetType?: string,
   lookback?: number,
