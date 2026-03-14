@@ -249,3 +249,4 @@ Before any pattern reaches a public channel (social, email, screener), it must p
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-03-04 | Initial specification codified from implementation learnings and UI/UX spec alignment |
+| 1.1.0 | 2026-03-14 | Added §3.4 Hybrid Depth Methodology for Cup & Handle (range-relative for FX, fixed for others). Updated prior rise to range-relative across all asset classes. Validated via dry-run testing. |
