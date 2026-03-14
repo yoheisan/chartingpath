@@ -419,9 +419,17 @@ serve(async (req) => {
     const {
       tickers = DRY_RUN_TICKERS,
       patterns = Object.keys(TARGET_DETECTORS),
-      lookback = 40,  // Default lookback window for 1D
-      timeframe = '1d'
+      lookback = 40,
+      timeframe = '1d',
+      cahMode: reqCahMode = 'range-relative',
+      cahMinRangeRatio: reqCahRatio = 0.30,
+      cahFixedMinDepth: reqCahFixed = 0.10,
     } = body;
+    
+    // Apply C&H config from request
+    CAH_MODE = reqCahMode;
+    CAH_MIN_RANGE_RATIO = reqCahRatio;
+    CAH_FIXED_MIN_DEPTH = reqCahFixed;
 
     console.log(`=== DETECTOR DRY-RUN VALIDATION ===`);
     console.log(`Tickers: ${tickers.map((t: any) => t.symbol).join(', ')}`);
