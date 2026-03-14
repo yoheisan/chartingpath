@@ -90,10 +90,27 @@ A reversal pattern detected in a **sideways** market or **against** the required
 
 | Pattern Type | Required Context | Minimum Impulse |
 |---|---|---|
-| Bull Flag, Cup & Handle | Prior **uptrend** (pole/impulse) | ≥5% prior move |
+| Bull Flag, Cup & Handle | Prior **uptrend** (pole/impulse) | ≥5% prior move (stocks/crypto) |
 | Bear Flag | Prior **downtrend** (pole/impulse) | ≥5% prior move |
 
-### 3.4 Structural Validation Guards
+### 3.4 Cup & Handle — Hybrid Depth Methodology
+
+Cup & Handle detection uses a **hybrid depth threshold** to accommodate the structural differences between asset classes:
+
+| Asset Class | Depth Method | Minimum Cup Depth | Rationale |
+|---|---|---|---|
+| **FX** | Range-relative | ≥30% of lookback window's high-low range | FX daily ranges are 0.5–1.5%; a fixed 10% threshold would never trigger. Using range-relative normalizes the formation to the pair's own volatility structure. |
+| **Stocks, Crypto, ETFs, Commodities, Indices** | Fixed percentage | ≥10% absolute price depth | Larger absolute price swings make fixed thresholds reliable and battle-tested per Bulkowski. |
+
+**Prior Rise Check:** Also range-relative across all asset classes — the early 5-bar rise must be ≥15% of the window's total range (replacing the previous fixed 5% threshold). This ensures the "prior uptrend" requirement scales with volatility.
+
+**Maximum Depth Cap:** 40% (all asset classes) — cups deeper than 40% indicate a structural breakdown rather than a consolidation pattern.
+
+**Rim Symmetry:** Left and right rims must be within 10% of each other (unchanged).
+
+> **Design Decision (2026-03-14):** The hybrid approach was validated via dry-run testing across 8 FX pairs and 5 stock/crypto tickers. Universal range-relative (30%) over-detected on stocks (118.8/ticker); the hybrid reduced stocks to 34/ticker while enabling FX detection from 0 → 67.9/ticker. See `supabase/functions/validate-detector-dryrun/` for validation tooling.
+
+### 3.5 Structural Validation Guards
 
 | Guard | Rule | Effect |
 |---|---|---|
@@ -232,3 +249,4 @@ Before any pattern reaches a public channel (social, email, screener), it must p
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-03-04 | Initial specification codified from implementation learnings and UI/UX spec alignment |
+| 1.1.0 | 2026-03-14 | Added §3.4 Hybrid Depth Methodology for Cup & Handle (range-relative for FX, fixed for others). Updated prior rise to range-relative across all asset classes. Validated via dry-run testing. |

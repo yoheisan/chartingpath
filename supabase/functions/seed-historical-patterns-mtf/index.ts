@@ -38,7 +38,7 @@ interface PatternDetectionResult {
 const PATTERN_REGISTRY: Record<string, { 
   direction: 'long' | 'short'; 
   displayName: string; 
-  detector: (w: OHLCBar[]) => PatternDetectionResult 
+  detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult 
 }> = {
   'double-top': {
     direction: 'short',
@@ -718,18 +718,25 @@ const PATTERN_REGISTRY: Record<string, {
   'cup-and-handle': {
     direction: 'long',
     displayName: 'Cup & Handle',
-    detector: (window) => {
+    detector: (window, assetType) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       const len = window.length;
       
-      // PRIOR UPTREND CHECK: Cup & Handle requires a prior uptrend of ≥5% (Bulkowski)
+      // HYBRID CUP DEPTH: range-relative for FX, fixed percentage for others
+      // Calculate window range for range-relative checks
+      const windowHighAll = Math.max(...highs);
+      const windowLowAll = Math.min(...lows);
+      const windowRangeAll = windowHighAll - windowLowAll;
+      
+      // PRIOR UPTREND CHECK: range-relative (15% of window range)
       const earlyLow = Math.min(...lows.slice(0, 5));
       const earlyHigh = Math.max(...highs.slice(0, 5));
-      const priorRise = (earlyHigh - earlyLow) / earlyLow;
-      if (priorRise < 0.05) return { detected: false, pivots: [] };
+      const priorRise = earlyHigh - earlyLow;
+      const priorRiseRatio = windowRangeAll > 0 ? priorRise / windowRangeAll : 0;
+      if (priorRiseRatio < 0.15) return { detected: false, pivots: [] };
       
       // Dynamic cup detection: find the deepest trough, then identify rims on either side
       // Left rim: highest high in first 40% of window
@@ -760,10 +767,20 @@ const PATTERN_REGISTRY: Record<string, {
       
       // Validate cup shape
       const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
-      const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
+      const cupDepthPct = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
+      const cupAbsDepth = Math.min(leftRim, rightRim) - cupBottom;
+      const cupRangeRatio = windowRangeAll > 0 ? cupAbsDepth / windowRangeAll : 0;
       
-      // Rim diff ≤ 10%, cup depth 7-40%
-      if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      // Rim diff ≤ 10%
+      if (rimDiff > 0.10) return { detected: false, pivots: [] };
+      
+      // Hybrid depth check: FX uses range-relative (30%), others use fixed (10%)
+      const isFX = assetType === 'fx';
+      if (isFX) {
+        if (cupRangeRatio < 0.30 || cupDepthPct > 0.40) return { detected: false, pivots: [] };
+      } else {
+        if (cupDepthPct < 0.10 || cupDepthPct > 0.40) return { detected: false, pivots: [] };
+      }
       
       // Handle: small pullback after right rim (optional — if no room, check direct breakout)
       let handleLow = rightRim;
@@ -1577,7 +1594,7 @@ function runHistoricalBacktest(
   bars: OHLCBar[],
   symbol: string,
   patternId: string,
-  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[]) => PatternDetectionResult },
+  pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult },
   timeframe: string,
   assetType?: string,
   lookback?: number,
@@ -1599,7 +1616,7 @@ function runHistoricalBacktest(
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
-    const detectionResult = pattern.detector(window);
+    const detectionResult = pattern.detector(window, resolvedAssetType);
     
     if (!detectionResult.detected) continue;
     

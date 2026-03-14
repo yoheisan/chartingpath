@@ -8,6 +8,19 @@
  * 4. Monte Carlo Simulation (distribution of outcomes)
  * 5. Benchmark-Relative Alpha
  * 
+ * Pattern Identification Methodology:
+ * - All 15 core patterns follow Bulkowski structural validation standards
+ * - Prior trend requirements enforced: ≥2-3% for reversals, ≥5% for continuations
+ * - Cup & Handle uses HYBRID DEPTH METHODOLOGY (validated 2026-03-14):
+ *   • FX: Range-relative depth (cup ≥ 30% of lookback window's high-low range)
+ *   • Stocks/Crypto/ETFs/Commodities: Fixed percentage depth (cup ≥ 10%)
+ *   • Prior rise: Range-relative across all classes (≥15% of window range)
+ *   • Rationale: FX daily ranges (0.5-1.5%) make fixed % thresholds unusable;
+ *     range-relative normalizes to each asset's volatility structure
+ * - Triangles require 3-touch minimum on support/resistance
+ * - Flags include ADX > 20 and retracement filters
+ * - See docs/PATTERN_DISCIPLINE.md §3.4 for full hybrid depth specification
+ * 
  * All computations are deterministic and use bar-close semantics.
  */
 
