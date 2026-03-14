@@ -491,6 +491,11 @@ serve(async (req) => {
         }
 
         console.log(`  ${patternDef.displayName}: ${detectionCount} detections`);
+        if (patternId === 'cup-and-handle') {
+          console.log(`  C&H Debug: total=${cahDebug.total} failPriorRise=${cahDebug.failPriorRise} failStructure=${cahDebug.failStructure} failRim=${cahDebug.failRim} failDepth=${cahDebug.failDepth} passed=${cahDebug.passed}`);
+          // Reset for next ticker
+          cahDebug.total = 0; cahDebug.failPriorRise = 0; cahDebug.failStructure = 0; cahDebug.failRim = 0; cahDebug.failDepth = 0; cahDebug.passed = 0;
+        }
       }
 
       results[ticker.symbol] = {
