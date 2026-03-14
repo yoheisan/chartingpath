@@ -485,7 +485,7 @@ serve(async (req) => {
         // Slide the window across all bars
         for (let i = lookback; i < bars.length; i++) {
           const window = bars.slice(i - lookback, i + 1);
-          const result = patternDef.detector(window);
+          const result = patternDef.detector(window, ticker.type);
 
           if (result.detected) {
             detectionCount++;
