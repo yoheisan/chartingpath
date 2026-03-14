@@ -173,10 +173,17 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const lows = window.map(d => d.low);
   const len = window.length;
   
+  // Range-relative prior rise: must show upward momentum in early bars
+  // Use 15% of window range as minimum prior rise (instead of fixed 5%)
+  const windowHighAll = Math.max(...highs);
+  const windowLowAll = Math.min(...lows);
+  const windowRangeAll = windowHighAll - windowLowAll;
+  
   const earlyLow = Math.min(...lows.slice(0, 5));
   const earlyHigh = Math.max(...highs.slice(0, 5));
-  const priorRise = (earlyHigh - earlyLow) / earlyLow;
-  if (priorRise < 0.05) return { detected: false, pivots: [] };
+  const priorRise = earlyHigh - earlyLow;
+  const priorRiseRatio = windowRangeAll > 0 ? priorRise / windowRangeAll : 0;
+  if (priorRiseRatio < 0.15) return { detected: false, pivots: [] };
   
   const leftRimEnd = Math.max(3, Math.floor(len * 0.4));
   const leftRimSlice = highs.slice(0, leftRimEnd);
