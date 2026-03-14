@@ -166,6 +166,9 @@ function detectBearFlag(window: OHLCBar[]): PatternDetectionResult {
   };
 }
 
+// Debug counters for C&H filter analysis
+const cahDebug = { total: 0, failPriorRise: 0, failStructure: 0, failRim: 0, failDepth: 0, failBreakout: 0, passed: 0 };
+
 function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   if (window.length < 15) return { detected: false, pivots: [] };
   const closes = window.map(d => d.close);
@@ -173,10 +176,18 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const lows = window.map(d => d.low);
   const len = window.length;
   
+  cahDebug.total++;
+  
+  // Range-relative prior rise
+  const windowHighAll = Math.max(...highs);
+  const windowLowAll = Math.min(...lows);
+  const windowRangeAll = windowHighAll - windowLowAll;
+  
   const earlyLow = Math.min(...lows.slice(0, 5));
   const earlyHigh = Math.max(...highs.slice(0, 5));
-  const priorRise = (earlyHigh - earlyLow) / earlyLow;
-  if (priorRise < 0.05) return { detected: false, pivots: [] };
+  const priorRise = earlyHigh - earlyLow;
+  const priorRiseRatio = windowRangeAll > 0 ? priorRise / windowRangeAll : 0;
+  if (priorRiseRatio < 0.15) { cahDebug.failPriorRise++; return { detected: false, pivots: [] }; }
   
   const leftRimEnd = Math.max(3, Math.floor(len * 0.4));
   const leftRimSlice = highs.slice(0, leftRimEnd);
@@ -185,26 +196,30 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   
   const cupSearchEnd = Math.max(leftRimIdx + 3, Math.floor(len * 0.85));
   const cupSearchStart = leftRimIdx + 1;
-  if (cupSearchStart >= cupSearchEnd) return { detected: false, pivots: [] };
+  if (cupSearchStart >= cupSearchEnd) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   
   const cupSlice = lows.slice(cupSearchStart, cupSearchEnd);
-  if (cupSlice.length < 2) return { detected: false, pivots: [] };
+  if (cupSlice.length < 2) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   const cupBottom = Math.min(...cupSlice);
   const cupBottomIdx = cupSearchStart + cupSlice.indexOf(cupBottom);
   
   const rightRimStart = cupBottomIdx + 1;
   const rightRimEnd = Math.max(rightRimStart + 1, len - 2);
-  if (rightRimStart >= rightRimEnd) return { detected: false, pivots: [] };
+  if (rightRimStart >= rightRimEnd) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   
   const rightRimSlice = highs.slice(rightRimStart, rightRimEnd);
-  if (rightRimSlice.length === 0) return { detected: false, pivots: [] };
+  if (rightRimSlice.length === 0) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   const rightRim = Math.max(...rightRimSlice);
   const rightRimIdx = rightRimStart + rightRimSlice.indexOf(rightRim);
   
   const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
-  const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
+  const cupDepthPct = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
   
-  if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
+  const cupAbsDepth = Math.min(leftRim, rightRim) - cupBottom;
+  const cupRangeRatio = windowRangeAll > 0 ? cupAbsDepth / windowRangeAll : 0;
+  
+  if (rimDiff > 0.10) { cahDebug.failRim++; return { detected: false, pivots: [] }; }
+  if (cupRangeRatio < 0.30 || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;
@@ -476,6 +491,11 @@ serve(async (req) => {
         }
 
         console.log(`  ${patternDef.displayName}: ${detectionCount} detections`);
+        if (patternId === 'cup-and-handle') {
+          console.log(`  C&H Debug: total=${cahDebug.total} failPriorRise=${cahDebug.failPriorRise} failStructure=${cahDebug.failStructure} failRim=${cahDebug.failRim} failDepth=${cahDebug.failDepth} passed=${cahDebug.passed}`);
+          // Reset for next ticker
+          cahDebug.total = 0; cahDebug.failPriorRise = 0; cahDebug.failStructure = 0; cahDebug.failRim = 0; cahDebug.failDepth = 0; cahDebug.passed = 0;
+        }
       }
 
       results[ticker.symbol] = {
@@ -515,6 +535,7 @@ serve(async (req) => {
       lookback,
       tickerCount: tickers.length,
       summary: summaryTable,
+      cahFilterDebug: { ...cahDebug },
       detailedResults: results,
       nextStep: 'Review detection counts and sample pivots. If reasonable, proceed to pilot stage with commodity asset class.'
     }, null, 2), {
