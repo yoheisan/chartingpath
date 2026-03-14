@@ -718,7 +718,7 @@ const PATTERN_REGISTRY: Record<string, {
   'cup-and-handle': {
     direction: 'long',
     displayName: 'Cup & Handle',
-    detector: (window) => {
+    detector: (window, assetType) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
