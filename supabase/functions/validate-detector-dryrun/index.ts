@@ -535,6 +535,7 @@ serve(async (req) => {
       lookback,
       tickerCount: tickers.length,
       summary: summaryTable,
+      cahFilterDebug: { ...cahDebug },
       detailedResults: results,
       nextStep: 'Review detection counts and sample pivots. If reasonable, proceed to pilot stage with commodity asset class.'
     }, null, 2), {
