@@ -763,7 +763,7 @@ const PATTERN_REGISTRY: Record<string, {
       const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
       
       // Rim diff ≤ 10%, cup depth 7-40%
-      if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
       
       // Handle: small pullback after right rim (optional — if no room, check direct breakout)
       let handleLow = rightRim;
