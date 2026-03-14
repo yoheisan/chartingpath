@@ -76,7 +76,7 @@ function detectBullFlag(window: OHLCBar[]): PatternDetectionResult {
     }
   }
   
-  if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+  if (bestPoleGain < 0.04) return { detected: false, pivots: [] };
   
   const flagStart = bestPoleEnd + 1;
   const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
@@ -131,7 +131,7 @@ function detectBearFlag(window: OHLCBar[]): PatternDetectionResult {
     }
   }
   
-  if (bestPoleDrop < 0.03) return { detected: false, pivots: [] };
+  if (bestPoleDrop < 0.04) return { detected: false, pivots: [] };
   
   const flagStart = bestPoleEnd + 1;
   const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
@@ -204,7 +204,7 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
   const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
   
-  if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+  if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;

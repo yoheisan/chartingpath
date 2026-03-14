@@ -614,7 +614,7 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       // Minimum pole gain: 3% (Bulkowski minimum)
-      if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+      if (bestPoleGain < 0.04) return { detected: false, pivots: [] };
       
       // Flag zone: bars after pole peak, at least 3 bars, up to 50% of remaining window
       const flagStart = bestPoleEnd + 1;
@@ -677,7 +677,7 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       // Minimum pole drop: 3% (Bulkowski minimum)
-      if (bestPoleDrop < 0.03) return { detected: false, pivots: [] };
+      if (bestPoleDrop < 0.04) return { detected: false, pivots: [] };
       
       // Flag zone: bars after pole bottom, at least 3 bars
       const flagStart = bestPoleEnd + 1;
@@ -763,7 +763,7 @@ const PATTERN_REGISTRY: Record<string, {
       const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
       
       // Rim diff ≤ 10%, cup depth 7-40%
-      if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+      if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
       
       // Handle: small pullback after right rim (optional — if no room, check direct breakout)
       let handleLow = rightRim;
