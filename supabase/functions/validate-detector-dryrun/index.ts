@@ -166,6 +166,9 @@ function detectBearFlag(window: OHLCBar[]): PatternDetectionResult {
   };
 }
 
+// Debug counters for C&H filter analysis
+const cahDebug = { total: 0, failPriorRise: 0, failStructure: 0, failRim: 0, failDepth: 0, failBreakout: 0, passed: 0 };
+
 function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   if (window.length < 15) return { detected: false, pivots: [] };
   const closes = window.map(d => d.close);
@@ -173,8 +176,9 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const lows = window.map(d => d.low);
   const len = window.length;
   
-  // Range-relative prior rise: must show upward momentum in early bars
-  // Use 15% of window range as minimum prior rise (instead of fixed 5%)
+  cahDebug.total++;
+  
+  // Range-relative prior rise
   const windowHighAll = Math.max(...highs);
   const windowLowAll = Math.min(...lows);
   const windowRangeAll = windowHighAll - windowLowAll;
@@ -183,7 +187,7 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const earlyHigh = Math.max(...highs.slice(0, 5));
   const priorRise = earlyHigh - earlyLow;
   const priorRiseRatio = windowRangeAll > 0 ? priorRise / windowRangeAll : 0;
-  if (priorRiseRatio < 0.15) return { detected: false, pivots: [] };
+  if (priorRiseRatio < 0.15) { cahDebug.failPriorRise++; return { detected: false, pivots: [] }; }
   
   const leftRimEnd = Math.max(3, Math.floor(len * 0.4));
   const leftRimSlice = highs.slice(0, leftRimEnd);
@@ -192,31 +196,30 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   
   const cupSearchEnd = Math.max(leftRimIdx + 3, Math.floor(len * 0.85));
   const cupSearchStart = leftRimIdx + 1;
-  if (cupSearchStart >= cupSearchEnd) return { detected: false, pivots: [] };
+  if (cupSearchStart >= cupSearchEnd) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   
   const cupSlice = lows.slice(cupSearchStart, cupSearchEnd);
-  if (cupSlice.length < 2) return { detected: false, pivots: [] };
+  if (cupSlice.length < 2) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   const cupBottom = Math.min(...cupSlice);
   const cupBottomIdx = cupSearchStart + cupSlice.indexOf(cupBottom);
   
   const rightRimStart = cupBottomIdx + 1;
   const rightRimEnd = Math.max(rightRimStart + 1, len - 2);
-  if (rightRimStart >= rightRimEnd) return { detected: false, pivots: [] };
+  if (rightRimStart >= rightRimEnd) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   
   const rightRimSlice = highs.slice(rightRimStart, rightRimEnd);
-  if (rightRimSlice.length === 0) return { detected: false, pivots: [] };
+  if (rightRimSlice.length === 0) { cahDebug.failStructure++; return { detected: false, pivots: [] }; }
   const rightRim = Math.max(...rightRimSlice);
   const rightRimIdx = rightRimStart + rightRimSlice.indexOf(rightRim);
   
   const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
   const cupDepthPct = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
   
-  // Range-relative depth: cup must be ≥ 30% of the window's high-low range
   const cupAbsDepth = Math.min(leftRim, rightRim) - cupBottom;
   const cupRangeRatio = windowRangeAll > 0 ? cupAbsDepth / windowRangeAll : 0;
   
-  // Use range-relative (30% of window range) instead of fixed 10%
-  if (rimDiff > 0.10 || cupRangeRatio < 0.30 || cupDepthPct > 0.40) return { detected: false, pivots: [] };
+  if (rimDiff > 0.10) { cahDebug.failRim++; return { detected: false, pivots: [] }; }
+  if (cupRangeRatio < 0.30 || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;
