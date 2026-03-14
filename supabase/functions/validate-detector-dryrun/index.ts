@@ -356,7 +356,7 @@ function detectAscendingTriangle(window: OHLCBar[]): PatternDetectionResult {
 const TARGET_DETECTORS: Record<string, {
   direction: 'long' | 'short';
   displayName: string;
-  detector: (w: OHLCBar[]) => PatternDetectionResult;
+  detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult;
 }> = {
   'bull-flag': { direction: 'long', displayName: 'Bull Flag', detector: detectBullFlag },
   'bear-flag': { direction: 'short', displayName: 'Bear Flag', detector: detectBearFlag },
