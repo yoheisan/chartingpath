@@ -169,7 +169,12 @@ function detectBearFlag(window: OHLCBar[]): PatternDetectionResult {
 // Debug counters for C&H filter analysis
 const cahDebug = { total: 0, failPriorRise: 0, failStructure: 0, failRim: 0, failDepth: 0, failBreakout: 0, passed: 0 };
 
-function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
+// Configurable C&H params — set from request body
+let CAH_MIN_RANGE_RATIO = 0.30;
+let CAH_MODE: 'range-relative' | 'hybrid' = 'range-relative';
+let CAH_FIXED_MIN_DEPTH = 0.10; // Used in hybrid mode for non-FX
+
+function detectCupAndHandle(window: OHLCBar[], assetType?: string): PatternDetectionResult {
   if (window.length < 15) return { detected: false, pivots: [] };
   const closes = window.map(d => d.close);
   const highs = window.map(d => d.high);
@@ -219,7 +224,21 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const cupRangeRatio = windowRangeAll > 0 ? cupAbsDepth / windowRangeAll : 0;
   
   if (rimDiff > 0.10) { cahDebug.failRim++; return { detected: false, pivots: [] }; }
-  if (cupRangeRatio < 0.30 || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+  
+  // Depth check: hybrid vs universal range-relative
+  if (CAH_MODE === 'hybrid') {
+    const isFX = assetType === 'fx';
+    if (isFX) {
+      // FX: use range-relative
+      if (cupRangeRatio < CAH_MIN_RANGE_RATIO || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+    } else {
+      // Non-FX: use fixed percentage depth
+      if (cupDepthPct < CAH_FIXED_MIN_DEPTH || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+    }
+  } else {
+    // Universal range-relative
+    if (cupRangeRatio < CAH_MIN_RANGE_RATIO || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+  }
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;
