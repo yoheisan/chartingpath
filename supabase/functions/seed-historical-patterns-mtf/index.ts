@@ -1616,7 +1616,7 @@ function runHistoricalBacktest(
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
-    const detectionResult = pattern.detector(window);
+    const detectionResult = pattern.detector(window, resolvedAssetType);
     
     if (!detectionResult.detected) continue;
     
