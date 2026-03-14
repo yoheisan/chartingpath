@@ -169,7 +169,12 @@ function detectBearFlag(window: OHLCBar[]): PatternDetectionResult {
 // Debug counters for C&H filter analysis
 const cahDebug = { total: 0, failPriorRise: 0, failStructure: 0, failRim: 0, failDepth: 0, failBreakout: 0, passed: 0 };
 
-function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
+// Configurable C&H params — set from request body
+let CAH_MIN_RANGE_RATIO = 0.30;
+let CAH_MODE: 'range-relative' | 'hybrid' = 'range-relative';
+let CAH_FIXED_MIN_DEPTH = 0.10; // Used in hybrid mode for non-FX
+
+function detectCupAndHandle(window: OHLCBar[], assetType?: string): PatternDetectionResult {
   if (window.length < 15) return { detected: false, pivots: [] };
   const closes = window.map(d => d.close);
   const highs = window.map(d => d.high);
@@ -219,7 +224,21 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const cupRangeRatio = windowRangeAll > 0 ? cupAbsDepth / windowRangeAll : 0;
   
   if (rimDiff > 0.10) { cahDebug.failRim++; return { detected: false, pivots: [] }; }
-  if (cupRangeRatio < 0.30 || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+  
+  // Depth check: hybrid vs universal range-relative
+  if (CAH_MODE === 'hybrid') {
+    const isFX = assetType === 'fx';
+    if (isFX) {
+      // FX: use range-relative
+      if (cupRangeRatio < CAH_MIN_RANGE_RATIO || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+    } else {
+      // Non-FX: use fixed percentage depth
+      if (cupDepthPct < CAH_FIXED_MIN_DEPTH || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+    }
+  } else {
+    // Universal range-relative
+    if (cupRangeRatio < CAH_MIN_RANGE_RATIO || cupDepthPct > 0.40) { cahDebug.failDepth++; return { detected: false, pivots: [] }; }
+  }
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;
@@ -337,7 +356,7 @@ function detectAscendingTriangle(window: OHLCBar[]): PatternDetectionResult {
 const TARGET_DETECTORS: Record<string, {
   direction: 'long' | 'short';
   displayName: string;
-  detector: (w: OHLCBar[]) => PatternDetectionResult;
+  detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult;
 }> = {
   'bull-flag': { direction: 'long', displayName: 'Bull Flag', detector: detectBullFlag },
   'bear-flag': { direction: 'short', displayName: 'Bear Flag', detector: detectBearFlag },
@@ -400,9 +419,17 @@ serve(async (req) => {
     const {
       tickers = DRY_RUN_TICKERS,
       patterns = Object.keys(TARGET_DETECTORS),
-      lookback = 40,  // Default lookback window for 1D
-      timeframe = '1d'
+      lookback = 40,
+      timeframe = '1d',
+      cahMode: reqCahMode = 'range-relative',
+      cahMinRangeRatio: reqCahRatio = 0.30,
+      cahFixedMinDepth: reqCahFixed = 0.10,
     } = body;
+    
+    // Apply C&H config from request
+    CAH_MODE = reqCahMode;
+    CAH_MIN_RANGE_RATIO = reqCahRatio;
+    CAH_FIXED_MIN_DEPTH = reqCahFixed;
 
     console.log(`=== DETECTOR DRY-RUN VALIDATION ===`);
     console.log(`Tickers: ${tickers.map((t: any) => t.symbol).join(', ')}`);
@@ -458,7 +485,7 @@ serve(async (req) => {
         // Slide the window across all bars
         for (let i = lookback; i < bars.length; i++) {
           const window = bars.slice(i - lookback, i + 1);
-          const result = patternDef.detector(window);
+          const result = patternDef.detector(window, ticker.type);
 
           if (result.detected) {
             detectionCount++;
