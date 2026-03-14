@@ -677,7 +677,7 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       // Minimum pole drop: 3% (Bulkowski minimum)
-      if (bestPoleDrop < 0.03) return { detected: false, pivots: [] };
+      if (bestPoleDrop < 0.04) return { detected: false, pivots: [] };
       
       // Flag zone: bars after pole bottom, at least 3 bars
       const flagStart = bestPoleEnd + 1;
