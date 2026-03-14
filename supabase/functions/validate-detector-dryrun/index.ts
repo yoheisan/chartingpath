@@ -76,7 +76,7 @@ function detectBullFlag(window: OHLCBar[]): PatternDetectionResult {
     }
   }
   
-  if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+  if (bestPoleGain < 0.04) return { detected: false, pivots: [] };
   
   const flagStart = bestPoleEnd + 1;
   const flagEnd = Math.min(len - 2, bestPoleEnd + Math.max(3, Math.floor((len - bestPoleEnd) * 0.6)));
