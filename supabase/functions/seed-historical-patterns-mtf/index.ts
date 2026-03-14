@@ -38,7 +38,7 @@ interface PatternDetectionResult {
 const PATTERN_REGISTRY: Record<string, { 
   direction: 'long' | 'short'; 
   displayName: string; 
-  detector: (w: OHLCBar[]) => PatternDetectionResult 
+  detector: (w: OHLCBar[], assetType?: string) => PatternDetectionResult 
 }> = {
   'double-top': {
     direction: 'short',
