@@ -614,7 +614,7 @@ const PATTERN_REGISTRY: Record<string, {
       }
       
       // Minimum pole gain: 3% (Bulkowski minimum)
-      if (bestPoleGain < 0.03) return { detected: false, pivots: [] };
+      if (bestPoleGain < 0.04) return { detected: false, pivots: [] };
       
       // Flag zone: bars after pole peak, at least 3 bars, up to 50% of remaining window
       const flagStart = bestPoleEnd + 1;
