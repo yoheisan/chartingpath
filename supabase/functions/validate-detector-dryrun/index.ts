@@ -204,7 +204,7 @@ function detectCupAndHandle(window: OHLCBar[]): PatternDetectionResult {
   const rimDiff = Math.abs(leftRim - rightRim) / leftRim;
   const cupDepth = (Math.min(leftRim, rightRim) - cupBottom) / Math.min(leftRim, rightRim);
   
-  if (rimDiff > 0.10 || cupDepth < 0.07 || cupDepth > 0.40) return { detected: false, pivots: [] };
+  if (rimDiff > 0.10 || cupDepth < 0.10 || cupDepth > 0.40) return { detected: false, pivots: [] };
   
   let handleLow = rightRim;
   let handleLowIdx = rightRimIdx;
