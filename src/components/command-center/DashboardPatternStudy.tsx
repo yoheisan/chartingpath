@@ -100,10 +100,15 @@ export function DashboardPatternStudy({
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [activePatterns, setActivePatterns] = useState<ActivePattern[]>([]);
   const [activePatternsOpen, setActivePatternsOpen] = useState(true);
+  // Track last fetched key to avoid redundant refetches on panel toggle
+  const [lastFetchedKey, setLastFetchedKey] = useState<string | null>(null);
 
   const timeframeLabel = timeframe.toUpperCase();
 
+  const currentFetchKey = `${symbol}|${timeframe}|${user?.id ?? 'anon'}`;
+
   // Fetch data — skip when panel is inactive (hidden) or auth-gated
+  // Don't refetch if we already have data for the same symbol/timeframe
   useEffect(() => {
     if (!active) {
       return; // Panel hidden — don't fetch
@@ -112,6 +117,12 @@ export function DashboardPatternStudy({
       setLoading(false);
       setHistoricalPatterns([]);
       setActivePatterns([]);
+      setLastFetchedKey(null);
+      return;
+    }
+
+    // Skip refetch if we already loaded this exact combination
+    if (lastFetchedKey === currentFetchKey) {
       return;
     }
 
@@ -177,6 +188,10 @@ export function DashboardPatternStudy({
             visual_spec: p.visual_spec as VisualSpec,
           })));
         }
+
+        if (!cancelled) {
+          setLastFetchedKey(currentFetchKey);
+        }
       } catch (err) {
         console.error('[DashboardPatternStudy] Error:', err);
       } finally {
@@ -189,7 +204,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe, user, active]);
+  }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey]);
 
   // Performance stats
   const stats = useMemo(() => {
