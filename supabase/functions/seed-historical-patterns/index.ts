@@ -510,7 +510,7 @@ const PATTERN_REGISTRY: Record<string, {
         patternStartIndex: recentHighIdx,
         patternEndIndex: window.length - 1,
         pivots: detected ? [
-          { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
+          { index: window.length - 1, price: recentHigh, type: 'high', label: 'Breakout Level' },
           { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
         ] : []
       };
