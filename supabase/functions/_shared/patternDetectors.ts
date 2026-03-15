@@ -79,7 +79,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       return {
         detected: true,
         pivots: [
-          { index: recentHighIdx, price: recentHigh, type: 'high', label: 'Breakout Level' },
+          { index: window.length - 1, price: recentHigh, type: 'high', label: 'Breakout Level' },
           { index: window.length - 1, price: currentClose, type: 'high', label: 'Entry' }
         ]
       };
@@ -121,7 +121,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       return {
         detected: true,
         pivots: [
-          { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
+          { index: window.length - 1, price: recentLow, type: 'low', label: 'Breakdown Level' },
           { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
         ]
       };
