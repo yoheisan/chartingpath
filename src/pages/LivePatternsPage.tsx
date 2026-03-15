@@ -1607,6 +1607,24 @@ export default function LivePatternsPage() {
                               {signalAge}
                             </span>
                           </TableCell>
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePaperTrade(setup);
+                                  }}
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left">Paper Trade</TooltipContent>
+                            </Tooltip>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
