@@ -629,8 +629,26 @@ export default function FullChartViewer({
 
             if (isBreakout) {
               const pointUp = !isBreakdown;
+              // Anchor breakout/breakdown marker to the confirmation candle
+              let anchorTime = t;
+              if (setup.signalTs) {
+                const detTs = Math.floor(new Date(setup.signalTs).getTime() / 1000);
+                const detDate = setup.signalTs.split('T')[0];
+                const exactIdx = chartData.findIndex(b => (b.time as number) === detTs);
+                if (exactIdx >= 0) {
+                  anchorTime = chartData[exactIdx].time as number;
+                } else {
+                  const dateIdx = bars.findIndex(b => b.t.split('T')[0] === detDate);
+                  if (dateIdx >= 0) {
+                    anchorTime = Math.floor(new Date(bars[dateIdx].t).getTime() / 1000);
+                  }
+                }
+              } else if (bars.length > 0) {
+                const lastBarTs = Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000);
+                if (timeSet.has(lastBarTs)) anchorTime = lastBarTs;
+              }
               canvasTriangleMarkers.push({
-                time: t,
+                time: anchorTime,
                 price: pivot.price,
                 direction: pointUp ? 'up' : 'down',
                 color: '#f97316',
