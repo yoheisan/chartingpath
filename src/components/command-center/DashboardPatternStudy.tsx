@@ -208,9 +208,26 @@ export function DashboardPatternStudy({
     return () => { cancelled = true; };
   }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey]);
 
-  // Performance stats
+  // Unique pattern names for filter
+  const uniquePatternNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const p of historicalPatterns) {
+      if (!names.has(p.pattern_id)) {
+        names.set(p.pattern_id, PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name);
+      }
+    }
+    return Array.from(names.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [historicalPatterns]);
+
+  // Filtered historical patterns
+  const filteredHistorical = useMemo(() => {
+    if (!selectedPatternFilter) return historicalPatterns;
+    return historicalPatterns.filter(p => p.pattern_id === selectedPatternFilter);
+  }, [historicalPatterns, selectedPatternFilter]);
+
+  // Performance stats — computed from filtered data
   const stats = useMemo(() => {
-    const withOutcome = historicalPatterns.filter(p => p.outcome && p.outcome !== 'pending');
+    const withOutcome = filteredHistorical.filter(p => p.outcome && p.outcome !== 'pending');
     const wins = withOutcome.filter(p => p.outcome === 'hit_tp');
     const losses = withOutcome.filter(p => p.outcome === 'hit_sl');
     const winRate = withOutcome.length > 0 ? (wins.length / withOutcome.length) * 100 : 0;
@@ -221,9 +238,13 @@ export function DashboardPatternStudy({
     const avgPnl = withOutcome.length > 0 ? totalPnl / withOutcome.length : 0;
     const profitFactor = totalLossPnl > 0 ? totalWinPnl / totalLossPnl : totalWinPnl > 0 ? Infinity : 0;
 
+    const filteredActive = selectedPatternFilter 
+      ? activePatterns.filter(p => p.pattern_id === selectedPatternFilter)
+      : activePatterns;
+
     return {
-      totalPatterns: historicalPatterns.length,
-      activePatterns: activePatterns.length,
+      totalPatterns: filteredHistorical.length,
+      activePatterns: filteredActive.length,
       sampleSize: withOutcome.length,
       winRate,
       avgPnl,
@@ -232,7 +253,7 @@ export function DashboardPatternStudy({
       wins: wins.length,
       losses: losses.length,
     };
-  }, [historicalPatterns, activePatterns]);
+  }, [filteredHistorical, activePatterns, selectedPatternFilter]);
 
   const handlePatternClick = useCallback((pattern: HistoricalPattern | ActivePattern, isActive: boolean) => {
     if (!onPatternSelect) return;
