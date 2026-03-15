@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
+import { ExternalLink, RefreshCw, Star, StarOff, Loader2, Search, Lock, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
