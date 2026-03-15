@@ -1467,7 +1467,7 @@ export default function LivePatternsPage() {
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={8} className="py-2">
+                      <TableCell colSpan={9} className="py-2">
                         <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
