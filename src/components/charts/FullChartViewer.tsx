@@ -122,6 +122,24 @@ function loadIndicatorSettings(): IndicatorSettings {
   return DEFAULT_INDICATORS;
 }
 
+/** Find the nearest candle time in chart data to a target timestamp */
+function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number): number {
+  if (data.length === 0) return targetTs;
+  let bestTime = data[0].time as number;
+  let bestDiff = Math.abs(bestTime - targetTs);
+  for (let i = 1; i < data.length; i++) {
+    const t = data[i].time as number;
+    const diff = Math.abs(t - targetTs);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestTime = t;
+    } else if (diff > bestDiff) {
+      break;
+    }
+  }
+  return bestTime;
+}
+
 function saveIndicatorSettings(settings: IndicatorSettings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
