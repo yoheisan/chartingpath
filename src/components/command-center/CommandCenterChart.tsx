@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, RefreshCw, Star, StarOff, Loader2, Search, Lock } from 'lucide-react';
+import { ExternalLink, RefreshCw, Star, StarOff, Loader2, Search, Lock, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +93,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [autoPatterns, setAutoPatterns] = useState<any[]>([]);
+  const [selectedPatternIndex, setSelectedPatternIndex] = useState<number>(0);
+  const [patternOverlayVisible, setPatternOverlayVisible] = useState(true);
 
   // Check if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
@@ -479,6 +481,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // This prevents rendering old-symbol pattern overlays on new-symbol candles
   useEffect(() => {
     setAutoPatterns([]);
+    setSelectedPatternIndex(0);
+    setPatternOverlayVisible(true);
   }, [symbol, timeframe]);
 
   // Unified fetch: chart data + auto-patterns in parallel, then start polling
@@ -590,55 +594,47 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return Number.isFinite(min) && Number.isFinite(max) && max > min ? { min, max, span: max - min } : null;
   }, [bars]);
 
-  const overlayPattern = useMemo(() => {
-    if (sortedPatterns.length === 0) return null;
+  // Build list of all eligible overlay patterns (active + recent unresolved)
+  const eligibleOverlayPatterns = useMemo(() => {
+    if (sortedPatterns.length === 0) return [];
 
-    const hasPivots = (p: any) => Array.isArray((p.visual_spec as any)?.pivots) && ((p.visual_spec as any).pivots.length >= 2);
-    const activePattern = sortedPatterns.find((p) => p.isActive && p.status !== 'expired');
-    const derivedOutcomePattern = sortedPatterns.find((p) => !!p._derivedOutcome);
     const isResolved = (o?: string | null) => ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(o || '').toLowerCase());
-    const latestUnresolved = sortedPatterns.find((p) => !isResolved(p.outcome));
-    const preferred = activePattern || derivedOutcomePattern || latestUnresolved || sortedPatterns[0];
-    if (!preferred) return null;
 
-    // Price-range overlap check: reject patterns whose entry/SL/TP levels
-    // fall entirely outside the chart's visible candle range.
-    // This catches stale patterns from weeks/months ago where price has moved
-    // significantly but the percentage drift is still within naive thresholds.
-    if (chartPriceRange) {
-      const entry = Number(preferred.entry_price);
-      const sl = Number(preferred.stop_loss_price);
-      const tp = Number(preferred.take_profit_price);
-      
-      if (Number.isFinite(entry) && entry > 0) {
-        // Allow a margin of 1x the chart's price span above/below the range
+    return sortedPatterns.filter((p) => {
+      if (isResolved(p.outcome) && !p._derivedOutcome) return false;
+
+      const entry = Number(p.entry_price);
+      const sl = Number(p.stop_loss_price);
+      const tp = Number(p.take_profit_price);
+
+      if (!Number.isFinite(entry) || entry <= 0) return false;
+
+      if (chartPriceRange) {
         const margin = chartPriceRange.span;
         const extendedMin = chartPriceRange.min - margin;
         const extendedMax = chartPriceRange.max + margin;
-        
-        // If entry price is outside the extended range, the pattern is clearly stale
-        if (entry < extendedMin || entry > extendedMax) {
-          console.warn('[CommandCenterChart] overlayPattern rejected: entry outside chart range', {
-            symbol, entry, chartRange: `${chartPriceRange.min.toFixed(4)}-${chartPriceRange.max.toFixed(4)}`,
-          });
-          return null;
-        }
-        
-        // If ALL trade levels (entry, SL, TP) are outside the candle range, suppress
-        const levels = [entry, sl, tp].filter(v => Number.isFinite(v) && v > 0);
-        const allOutside = levels.every(l => l < chartPriceRange.min || l > chartPriceRange.max);
-        if (allOutside && levels.length > 0) {
-          console.warn('[CommandCenterChart] overlayPattern rejected: all levels outside visible range', {
-            symbol, levels, chartRange: `${chartPriceRange.min.toFixed(4)}-${chartPriceRange.max.toFixed(4)}`,
-          });
-          return null;
-        }
-      }
-    }
 
-    // Prefer a pivot-bearing pattern so ZigZag/zone can render.
-    return hasPivots(preferred) ? preferred : preferred;
-  }, [sortedPatterns, bars, symbol, chartPriceRange]);
+        if (entry < extendedMin || entry > extendedMax) return false;
+
+        const levels = [entry, sl, tp].filter(v => Number.isFinite(v) && v > 0);
+        if (levels.length > 0 && levels.every(l => l < chartPriceRange.min || l > chartPriceRange.max)) return false;
+      }
+
+      return true;
+    });
+  }, [sortedPatterns, chartPriceRange, symbol]);
+
+  // Clamp selected index when eligible list changes
+  useEffect(() => {
+    if (selectedPatternIndex >= eligibleOverlayPatterns.length) {
+      setSelectedPatternIndex(Math.max(0, eligibleOverlayPatterns.length - 1));
+    }
+  }, [eligibleOverlayPatterns.length, selectedPatternIndex]);
+
+  const overlayPattern = useMemo(() => {
+    if (!patternOverlayVisible || eligibleOverlayPatterns.length === 0) return null;
+    return eligibleOverlayPatterns[selectedPatternIndex] || eligibleOverlayPatterns[0] || null;
+  }, [eligibleOverlayPatterns, selectedPatternIndex, patternOverlayVisible]);
 
   // Derive trade plan from the overlay pattern so TP/SL/Entry lines always match the displayed formation
   const tradePlan = useMemo(() => {
@@ -898,6 +894,57 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                 : 80
               }
             />
+            {/* Pattern Cycling Overlay */}
+            {eligibleOverlayPatterns.length > 0 && (
+              <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 bg-background/90 backdrop-blur-sm border border-border/60 rounded-md px-2 py-1 shadow-sm">
+                <button
+                  onClick={() => setPatternOverlayVisible(!patternOverlayVisible)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  title={patternOverlayVisible ? 'Hide pattern overlay' : 'Show pattern overlay'}
+                >
+                  {patternOverlayVisible ? (
+                    <Eye className="h-3 w-3 text-primary" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" />
+                  )}
+                </button>
+                {patternOverlayVisible && eligibleOverlayPatterns.length > 1 && (
+                  <>
+                    <span className="w-px h-3 bg-border/60" />
+                    <button
+                      onClick={() => setSelectedPatternIndex((prev) => (prev - 1 + eligibleOverlayPatterns.length) % eligibleOverlayPatterns.length)}
+                      className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <span className="text-[11px] font-medium text-foreground tabular-nums min-w-[3ch] text-center">
+                      {selectedPatternIndex + 1}/{eligibleOverlayPatterns.length}
+                    </span>
+                    <button
+                      onClick={() => setSelectedPatternIndex((prev) => (prev + 1) % eligibleOverlayPatterns.length)}
+                      className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+                {patternOverlayVisible && overlayPattern && (
+                  <>
+                    <span className="w-px h-3 bg-border/60" />
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                      {PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-medium px-1 rounded",
+                      overlayPattern.direction === 'long' || overlayPattern.direction === 'bullish' 
+                        ? 'text-emerald-400' : 'text-red-400'
+                    )}>
+                      {overlayPattern.direction === 'long' || overlayPattern.direction === 'bullish' ? '↗ Long' : '↘ Short'}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
