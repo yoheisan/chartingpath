@@ -38,12 +38,12 @@ export function deriveFormationOverlay(
   // Sort pivots by index
   const sorted = [...pivots].sort((a, b) => a.index - b.index);
 
-  // Build ZigZag polyline
+  // Build ZigZag polyline — snap pivot prices to actual candle extremes
   const zigzag: FormationLineData[] = [];
   for (const p of sorted) {
-    const time = pivotToTime(p, bars);
-    if (time !== null) {
-      zigzag.push({ time, value: p.price });
+    const resolved = pivotToTimeAndPrice(p, bars);
+    if (resolved !== null) {
+      zigzag.push({ time: resolved.time, value: resolved.price });
     }
   }
 
@@ -56,12 +56,12 @@ export function deriveFormationOverlay(
 
   // For patterns with clear upper/lower structure, extend trendlines
   for (const p of highs) {
-    const time = pivotToTime(p, bars);
-    if (time !== null) upperTrend.push({ time, value: p.price });
+    const resolved = pivotToTimeAndPrice(p, bars);
+    if (resolved !== null) upperTrend.push({ time: resolved.time, value: resolved.price });
   }
   for (const p of lows) {
-    const time = pivotToTime(p, bars);
-    if (time !== null) lowerTrend.push({ time, value: p.price });
+    const resolved = pivotToTimeAndPrice(p, bars);
+    if (resolved !== null) lowerTrend.push({ time: resolved.time, value: resolved.price });
   }
 
   // For donchian patterns, compute the 20-period channel as upper/lower zone
