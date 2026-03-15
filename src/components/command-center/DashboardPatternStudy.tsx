@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import { Filter } from 'lucide-react';
 import { AUTH_REQUIRED_TIMEFRAMES } from './CommandCenterChart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
