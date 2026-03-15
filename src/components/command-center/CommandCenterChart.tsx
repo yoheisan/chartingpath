@@ -481,6 +481,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // This prevents rendering old-symbol pattern overlays on new-symbol candles
   useEffect(() => {
     setAutoPatterns([]);
+    setSelectedPatternIndex(0);
+    setPatternOverlayVisible(true);
   }, [symbol, timeframe]);
 
   // Unified fetch: chart data + auto-patterns in parallel, then start polling
