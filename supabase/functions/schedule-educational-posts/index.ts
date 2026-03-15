@@ -12,6 +12,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Support force mode to clear stale clones and re-schedule
+  let forceMode = false;
+  try {
+    if (req.method === 'POST') {
+      const body = await req.json().catch(() => ({}));
+      forceMode = body?.force === true;
+    }
+  } catch {}
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -72,10 +81,19 @@ serve(async (req) => {
       .lte('scheduled_time', tomorrowEnd);
     
     if (existingPosts && existingPosts.length > 0) {
-      return new Response(
-        JSON.stringify({ message: 'Posts already scheduled for tomorrow', count: existingPosts.length }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (forceMode) {
+        // Delete stale clones so we can re-schedule with correct position
+        console.log(`[schedule-edu] Force mode: deleting ${existingPosts.length} existing posts for ${tomorrowDate}`);
+        await supabase
+          .from('scheduled_posts')
+          .delete()
+          .in('id', existingPosts.map(p => p.id));
+      } else {
+        return new Response(
+          JSON.stringify({ message: 'Posts already scheduled for tomorrow', count: existingPosts.length }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     const scheduledPosts: any[] = [];
