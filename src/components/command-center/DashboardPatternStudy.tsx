@@ -555,7 +555,7 @@ export function DashboardPatternStudy({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {historicalPatterns.map((pattern) => (
+                {filteredHistorical.map((pattern) => (
                   <TableRow
                     key={pattern.id}
                     className={cn(
