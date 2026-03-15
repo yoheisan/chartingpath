@@ -870,6 +870,53 @@ export default function LivePatternsPage() {
     };
   };
 
+  const handlePaperTrade = async (setup: LiveSetup) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { toast.error('Please log in to paper trade'); return; }
+
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('auto-paper-trade', {
+        body: {
+          user_id: session.user.id,
+          symbol: setup.instrument,
+          direction: setup.direction,
+          entry_price: setup.tradePlan.entry,
+          stop_loss_price: setup.tradePlan.stopLoss,
+          take_profit_price: setup.tradePlan.takeProfit,
+          risk_percent: 1,
+          pattern: setup.patternId,
+          timeframe: timeframe,
+          detection_id: setup.dbId || null,
+        },
+      });
+
+      if (invokeError) throw invokeError;
+
+      if (data?.success) {
+        // Record signal action
+        await supabase.from('user_signal_actions').insert({
+          user_id: session.user.id,
+          detection_id: setup.dbId || null,
+          instrument: setup.instrument,
+          pattern_id: setup.patternId,
+          timeframe: timeframe,
+          action: 'paper_trade',
+          paper_trade_id: data.trade_id || null,
+        });
+        toast.success(`Paper trade opened: ${setup.direction.toUpperCase()} ${setup.instrument}`);
+      } else if (data?.skipped) {
+        toast.info(data.reason === 'duplicate_open_trade' 
+          ? `Already have an open trade on ${setup.instrument}` 
+          : 'Trade skipped: position too large');
+      } else {
+        toast.error(data?.error || 'Failed to open paper trade');
+      }
+    } catch (err: any) {
+      console.error('[LivePatternsPage] Paper trade error:', err);
+      toast.error('Failed to open paper trade');
+    }
+  };
+
   const handleOpenChart = async (setup: LiveSetup) => {
     const requestId = ++chartDetailsRequestIdRef.current;
 
