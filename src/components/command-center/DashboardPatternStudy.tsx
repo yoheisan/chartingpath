@@ -120,6 +120,7 @@ export function DashboardPatternStudy({
       setHistoricalPatterns([]);
       setActivePatterns([]);
       setLastFetchedKey(null);
+      setSelectedPatternFilter(null);
       return;
     }
 
