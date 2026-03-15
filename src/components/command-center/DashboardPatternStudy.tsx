@@ -486,6 +486,41 @@ export function DashboardPatternStudy({
         </CardContent>
       </Card>
 
+      {/* Pattern Filter Chips */}
+      {uniquePatternNames.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <button
+            onClick={() => setSelectedPatternFilter(null)}
+            className={cn(
+              "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+              !selectedPatternFilter
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+            )}
+          >
+            All ({historicalPatterns.length})
+          </button>
+          {uniquePatternNames.map(([patternId, displayName]) => {
+            const count = historicalPatterns.filter(p => p.pattern_id === patternId).length;
+            return (
+              <button
+                key={patternId}
+                onClick={() => setSelectedPatternFilter(selectedPatternFilter === patternId ? null : patternId)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+                  selectedPatternFilter === patternId
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+                )}
+              >
+                {displayName} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Historical Pattern Occurrences Table */}
       <Card>
         <CardHeader className="pb-2">
@@ -498,12 +533,12 @@ export function DashboardPatternStudy({
               </Badge>
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {t('commandCenter.patternsFound', { count: historicalPatterns.length })}
+              {t('commandCenter.patternsFound', { count: filteredHistorical.length })}
             </p>
           </div>
         </CardHeader>
         <CardContent>
-          {historicalPatterns.length > 0 ? (
+          {filteredHistorical.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
