@@ -410,6 +410,7 @@ async function fetchPatternSymbolStats(
     }
     
     console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at timeframe=${timeframe}, rrTier=${rrTier}`);
+    } // end if (allData.length)
     
     // Cross-timeframe fallback: for pairs with no stats at the requested timeframe,
     // try the closest available timeframe so users still see win rates.
