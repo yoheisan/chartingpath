@@ -678,9 +678,9 @@ export default function FullChartViewer({
         if (!tradeResolved && safeChartData.length > 0 && tradePlan?.entry) {
           const isLong = setup.direction === 'long';
 
-          // Find the bar matching the pattern's detectedAt timestamp
-          const detectedDate = setup.detectedAt?.split('T')[0];
-          const detectedTs = setup.detectedAt ? Math.floor(new Date(setup.detectedAt).getTime() / 1000) : null;
+          // Find the bar matching the pattern's signalTs timestamp
+          const detectedDate = setup.signalTs?.split('T')[0];
+          const detectedTs = setup.signalTs ? Math.floor(new Date(setup.signalTs).getTime() / 1000) : null;
 
           // Try exact timestamp match first, then date match, then fall back to last bar
           let matchBarIdx = detectedTs
@@ -688,11 +688,6 @@ export default function FullChartViewer({
             : -1;
           if (matchBarIdx < 0 && detectedDate) {
             matchBarIdx = bars.findIndex(b => b.t.split('T')[0] === detectedDate);
-          }
-          // If no match found, try signalTs
-          if (matchBarIdx < 0 && setup.signalTs) {
-            const signalTs = Math.floor(new Date(setup.signalTs).getTime() / 1000);
-            matchBarIdx = safeChartData.findIndex(b => (b.time as number) === signalTs);
           }
           if (matchBarIdx < 0) matchBarIdx = safeChartData.length - 1;
 
