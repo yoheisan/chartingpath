@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
-  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical
+  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -870,6 +870,53 @@ export default function LivePatternsPage() {
     };
   };
 
+  const handlePaperTrade = async (setup: LiveSetup) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { toast.error('Please log in to paper trade'); return; }
+
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('auto-paper-trade', {
+        body: {
+          user_id: session.user.id,
+          symbol: setup.instrument,
+          direction: setup.direction,
+          entry_price: setup.tradePlan.entry,
+          stop_loss_price: setup.tradePlan.stopLoss,
+          take_profit_price: setup.tradePlan.takeProfit,
+          risk_percent: 1,
+          pattern: setup.patternId,
+          timeframe: timeframe,
+          detection_id: setup.dbId || null,
+        },
+      });
+
+      if (invokeError) throw invokeError;
+
+      if (data?.success) {
+        // Record signal action
+        await supabase.from('user_signal_actions').insert({
+          user_id: session.user.id,
+          detection_id: setup.dbId || null,
+          instrument: setup.instrument,
+          pattern_id: setup.patternId,
+          timeframe: timeframe,
+          action: 'paper_trade',
+          paper_trade_id: data.trade_id || null,
+        });
+        toast.success(`Paper trade opened: ${setup.direction.toUpperCase()} ${setup.instrument}`);
+      } else if (data?.skipped) {
+        toast.info(data.reason === 'duplicate_open_trade' 
+          ? `Already have an open trade on ${setup.instrument}` 
+          : 'Trade skipped: position too large');
+      } else {
+        toast.error(data?.error || 'Failed to open paper trade');
+      }
+    } catch (err: any) {
+      console.error('[LivePatternsPage] Paper trade error:', err);
+      toast.error('Failed to open paper trade');
+    }
+  };
+
   const handleOpenChart = async (setup: LiveSetup) => {
     const requestId = ++chartDetailsRequestIdRef.current;
 
@@ -1458,6 +1505,8 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="signal" />
                     </div>
                   </TableHead>
+                  <TableHead className="text-center whitespace-nowrap w-10">
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1465,7 +1514,7 @@ export default function LivePatternsPage() {
                   <Fragment key={patternName}>
                     {/* Pattern Group Header */}
                     <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={8} className="py-2">
+                      <TableCell colSpan={9} className="py-2">
                         <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {setups.length}
@@ -1604,6 +1653,24 @@ export default function LivePatternsPage() {
                             }`}>
                               {signalAge}
                             </span>
+                          </TableCell>
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePaperTrade(setup);
+                                  }}
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left">Paper Trade</TooltipContent>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       );
