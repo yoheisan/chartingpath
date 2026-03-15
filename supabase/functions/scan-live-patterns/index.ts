@@ -328,8 +328,8 @@ async function fetchPatternSymbolStats(
     }
     
     if (!allData.length) {
-      console.warn(`[fetchPatternSymbolStats] No historical data found for rrTier=${rrTier}`);
-      return statsMap;
+      console.warn(`[fetchPatternSymbolStats] No exact-timeframe data found for rrTier=${rrTier}, will try cross-timeframe fallback`);
+      // Don't return early - fall through to cross-timeframe fallback below
     }
     
     console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences for rrTier=${rrTier}`);
