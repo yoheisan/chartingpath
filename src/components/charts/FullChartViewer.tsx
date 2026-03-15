@@ -122,6 +122,24 @@ function loadIndicatorSettings(): IndicatorSettings {
   return DEFAULT_INDICATORS;
 }
 
+/** Find the nearest candle time in chart data to a target timestamp */
+function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number): number {
+  if (data.length === 0) return targetTs;
+  let bestTime = data[0].time as number;
+  let bestDiff = Math.abs(bestTime - targetTs);
+  for (let i = 1; i < data.length; i++) {
+    const t = data[i].time as number;
+    const diff = Math.abs(t - targetTs);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestTime = t;
+    } else if (diff > bestDiff) {
+      break;
+    }
+  }
+  return bestTime;
+}
+
 function saveIndicatorSettings(settings: IndicatorSettings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -629,24 +647,14 @@ export default function FullChartViewer({
 
             if (isBreakout) {
               const pointUp = !isBreakdown;
-              // Anchor breakout/breakdown marker to the confirmation candle
+              // Anchor breakout/breakdown marker to the nearest actual chart candle
               let anchorTime = t;
-              if (setup.signalTs) {
-                const detTs = Math.floor(new Date(setup.signalTs).getTime() / 1000);
-                const detDate = setup.signalTs.split('T')[0];
-                const exactIdx = chartData.findIndex(b => (b.time as number) === detTs);
-                if (exactIdx >= 0) {
-                  anchorTime = chartData[exactIdx].time as number;
-                } else {
-                  const dateIdx = bars.findIndex(b => b.t.split('T')[0] === detDate);
-                  if (dateIdx >= 0) {
-                    anchorTime = Math.floor(new Date(bars[dateIdx].t).getTime() / 1000);
-                  }
-                }
-              } else if (bars.length > 0) {
-                const lastBarTs = Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000);
-                if (timeSet.has(lastBarTs)) anchorTime = lastBarTs;
-              }
+              const targetTs = setup.signalTs
+                ? Math.floor(new Date(setup.signalTs).getTime() / 1000)
+                : (bars.length > 0)
+                  ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
+                  : t;
+              anchorTime = findNearestCandleTime(chartData, targetTs);
               canvasTriangleMarkers.push({
                 time: anchorTime,
                 price: pivot.price,

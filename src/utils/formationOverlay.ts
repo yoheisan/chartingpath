@@ -100,12 +100,25 @@ function pivotToTime(pivot: ZigZagPivot, bars: CompressedBar[]): Time | null {
     }
   }
   
-  // Fallback to timestamp
+  // Fallback to timestamp — find nearest bar instead of using raw timestamp
   if (pivot.timestamp) {
-    const ts = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-    if (Number.isFinite(ts)) {
-      return ts as unknown as Time;
+    const targetTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
+    if (!Number.isFinite(targetTs)) return null;
+
+    // Find nearest bar by timestamp
+    let bestIdx = 0;
+    let bestDiff = Math.abs(Math.floor(new Date(bars[0].t).getTime() / 1000) - targetTs);
+    for (let i = 1; i < bars.length; i++) {
+      const barTs = Math.floor(new Date(bars[i].t).getTime() / 1000);
+      const diff = Math.abs(barTs - targetTs);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      } else if (diff > bestDiff) {
+        break; // bars are sorted chronologically
+      }
     }
+    return Math.floor(new Date(bars[bestIdx].t).getTime() / 1000) as unknown as Time;
   }
 
   return null;
