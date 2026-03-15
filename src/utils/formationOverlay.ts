@@ -89,23 +89,52 @@ export function deriveFormationOverlay(
 }
 
 /**
- * Convert a pivot point to a chart Time value.
+ * Resolve a pivot to a chart Time and snap its price to the actual candle extreme.
+ * High pivots snap to bar.h, low pivots snap to bar.l.
+ */
+function pivotToTimeAndPrice(
+  pivot: ZigZagPivot,
+  bars: CompressedBar[]
+): { time: Time; price: number } | null {
+  const barIdx = findPivotBarIndex(pivot, bars);
+  if (barIdx < 0) return null;
+
+  const bar = bars[barIdx];
+  const time = Math.floor(new Date(bar.t).getTime() / 1000) as unknown as Time;
+
+  // Snap price to candle extreme based on pivot type
+  let price = pivot.price;
+  if (pivot.type === 'high' && bar.h != null) {
+    price = bar.h;
+  } else if (pivot.type === 'low' && bar.l != null) {
+    price = bar.l;
+  }
+
+  return { time, price };
+}
+
+/**
+ * Convert a pivot point to a chart Time value (legacy, used externally).
  */
 function pivotToTime(pivot: ZigZagPivot, bars: CompressedBar[]): Time | null {
+  const result = pivotToTimeAndPrice(pivot, bars);
+  return result ? result.time : null;
+}
+
+/**
+ * Find the bar index for a given pivot point.
+ */
+function findPivotBarIndex(pivot: ZigZagPivot, bars: CompressedBar[]): number {
   // First try using the index to find the bar
   if (Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < bars.length) {
-    const bar = bars[pivot.index];
-    if (bar) {
-      return Math.floor(new Date(bar.t).getTime() / 1000) as unknown as Time;
-    }
+    return pivot.index;
   }
   
-  // Fallback to timestamp — find nearest bar instead of using raw timestamp
+  // Fallback to timestamp — find nearest bar
   if (pivot.timestamp) {
     const targetTs = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-    if (!Number.isFinite(targetTs)) return null;
+    if (!Number.isFinite(targetTs)) return -1;
 
-    // Find nearest bar by timestamp
     let bestIdx = 0;
     let bestDiff = Math.abs(Math.floor(new Date(bars[0].t).getTime() / 1000) - targetTs);
     for (let i = 1; i < bars.length; i++) {
@@ -115,13 +144,13 @@ function pivotToTime(pivot: ZigZagPivot, bars: CompressedBar[]): Time | null {
         bestDiff = diff;
         bestIdx = i;
       } else if (diff > bestDiff) {
-        break; // bars are sorted chronologically
+        break;
       }
     }
-    return Math.floor(new Date(bars[bestIdx].t).getTime() / 1000) as unknown as Time;
+    return bestIdx;
   }
 
-  return null;
+  return -1;
 }
 
 /**
