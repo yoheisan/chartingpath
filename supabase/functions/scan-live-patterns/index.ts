@@ -332,6 +332,7 @@ async function fetchPatternSymbolStats(
       // Don't return early - fall through to cross-timeframe fallback below
     }
     
+    if (allData.length) {
     console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences for rrTier=${rrTier}`);
     
     const nowDate = new Date();
