@@ -132,7 +132,7 @@ function detectDonchianShort(w: OHLCBar[]): PatternDetectionResult {
   const recentLow = Math.min(...lookbackLows);
   const currentClose = closes[closes.length - 1];
   const detected = currentClose < recentLow * 0.999;
-  return { detected, patternStartIndex: lookbackLows.indexOf(recentLow), patternEndIndex: w.length - 1, pivots: detected ? [{ index: lookbackLows.indexOf(recentLow), price: recentLow, type: 'low', label: 'Breakdown Level' }] : [] };
+  return { detected, patternStartIndex: lookbackLows.indexOf(recentLow), patternEndIndex: w.length - 1, pivots: detected ? [{ index: w.length - 1, price: recentLow, type: 'low', label: 'Breakdown Level' }] : [] };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -114,7 +114,7 @@ const WEDGE_PATTERN_REGISTRY: Record<string, { direction: 'long' | 'short'; disp
       const thresh = 1 - 0.001 * scale;
       const detected = currentClose < recentLow * thresh || prevClose < recentLow * thresh;
       const pivots: PatternPivot[] = detected ? [
-        { index: recentLowIdx, price: recentLow, type: 'low', label: 'Breakdown Level' },
+        { index: window.length - 1, price: recentLow, type: 'low', label: 'Breakdown Level' },
         { index: window.length - 1, price: currentClose, type: 'low', label: 'Entry' }
       ] : [];
       return { detected, pivots };
