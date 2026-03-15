@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import { Filter } from 'lucide-react';
 import { AUTH_REQUIRED_TIMEFRAMES } from './CommandCenterChart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -100,6 +101,7 @@ export function DashboardPatternStudy({
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [activePatterns, setActivePatterns] = useState<ActivePattern[]>([]);
   const [activePatternsOpen, setActivePatternsOpen] = useState(true);
+  const [selectedPatternFilter, setSelectedPatternFilter] = useState<string | null>(null);
   // Track last fetched key to avoid redundant refetches on panel toggle
   const [lastFetchedKey, setLastFetchedKey] = useState<string | null>(null);
 
@@ -118,6 +120,7 @@ export function DashboardPatternStudy({
       setHistoricalPatterns([]);
       setActivePatterns([]);
       setLastFetchedKey(null);
+      setSelectedPatternFilter(null);
       return;
     }
 
@@ -206,9 +209,26 @@ export function DashboardPatternStudy({
     return () => { cancelled = true; };
   }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey]);
 
-  // Performance stats
+  // Unique pattern names for filter
+  const uniquePatternNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const p of historicalPatterns) {
+      if (!names.has(p.pattern_id)) {
+        names.set(p.pattern_id, PATTERN_DISPLAY_NAMES[p.pattern_id] || p.pattern_name);
+      }
+    }
+    return Array.from(names.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [historicalPatterns]);
+
+  // Filtered historical patterns
+  const filteredHistorical = useMemo(() => {
+    if (!selectedPatternFilter) return historicalPatterns;
+    return historicalPatterns.filter(p => p.pattern_id === selectedPatternFilter);
+  }, [historicalPatterns, selectedPatternFilter]);
+
+  // Performance stats — computed from filtered data
   const stats = useMemo(() => {
-    const withOutcome = historicalPatterns.filter(p => p.outcome && p.outcome !== 'pending');
+    const withOutcome = filteredHistorical.filter(p => p.outcome && p.outcome !== 'pending');
     const wins = withOutcome.filter(p => p.outcome === 'hit_tp');
     const losses = withOutcome.filter(p => p.outcome === 'hit_sl');
     const winRate = withOutcome.length > 0 ? (wins.length / withOutcome.length) * 100 : 0;
@@ -219,9 +239,13 @@ export function DashboardPatternStudy({
     const avgPnl = withOutcome.length > 0 ? totalPnl / withOutcome.length : 0;
     const profitFactor = totalLossPnl > 0 ? totalWinPnl / totalLossPnl : totalWinPnl > 0 ? Infinity : 0;
 
+    const filteredActive = selectedPatternFilter 
+      ? activePatterns.filter(p => p.pattern_id === selectedPatternFilter)
+      : activePatterns;
+
     return {
-      totalPatterns: historicalPatterns.length,
-      activePatterns: activePatterns.length,
+      totalPatterns: filteredHistorical.length,
+      activePatterns: filteredActive.length,
       sampleSize: withOutcome.length,
       winRate,
       avgPnl,
@@ -230,7 +254,7 @@ export function DashboardPatternStudy({
       wins: wins.length,
       losses: losses.length,
     };
-  }, [historicalPatterns, activePatterns]);
+  }, [filteredHistorical, activePatterns, selectedPatternFilter]);
 
   const handlePatternClick = useCallback((pattern: HistoricalPattern | ActivePattern, isActive: boolean) => {
     if (!onPatternSelect) return;
@@ -463,6 +487,41 @@ export function DashboardPatternStudy({
         </CardContent>
       </Card>
 
+      {/* Pattern Filter Chips */}
+      {uniquePatternNames.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <button
+            onClick={() => setSelectedPatternFilter(null)}
+            className={cn(
+              "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+              !selectedPatternFilter
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+            )}
+          >
+            All ({historicalPatterns.length})
+          </button>
+          {uniquePatternNames.map(([patternId, displayName]) => {
+            const count = historicalPatterns.filter(p => p.pattern_id === patternId).length;
+            return (
+              <button
+                key={patternId}
+                onClick={() => setSelectedPatternFilter(selectedPatternFilter === patternId ? null : patternId)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+                  selectedPatternFilter === patternId
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+                )}
+              >
+                {displayName} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Historical Pattern Occurrences Table */}
       <Card>
         <CardHeader className="pb-2">
@@ -475,12 +534,12 @@ export function DashboardPatternStudy({
               </Badge>
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {t('commandCenter.patternsFound', { count: historicalPatterns.length })}
+              {t('commandCenter.patternsFound', { count: filteredHistorical.length })}
             </p>
           </div>
         </CardHeader>
         <CardContent>
-          {historicalPatterns.length > 0 ? (
+          {filteredHistorical.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -497,7 +556,7 @@ export function DashboardPatternStudy({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {historicalPatterns.map((pattern) => (
+                {filteredHistorical.map((pattern) => (
                   <TableRow
                     key={pattern.id}
                     className={cn(
