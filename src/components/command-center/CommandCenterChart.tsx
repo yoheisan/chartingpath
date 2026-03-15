@@ -93,6 +93,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [autoPatterns, setAutoPatterns] = useState<any[]>([]);
+  const [selectedPatternIndex, setSelectedPatternIndex] = useState<number>(0);
+  const [patternOverlayVisible, setPatternOverlayVisible] = useState(true);
 
   // Check if user is on a paid plan
   const isPaidUser = profile?.subscription_plan && 
