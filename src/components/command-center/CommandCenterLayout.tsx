@@ -573,7 +573,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
           <div className="h-full flex flex-col">
 
             {/* Main Chart — dominates viewport */}
-            <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[55%] min-h-[280px] shrink-0")}>
+            <div className={cn("relative overflow-hidden", studyPanelCollapsed ? "flex-1 min-h-0" : "h-[50%] min-h-[240px] shrink-0")}>
               {selectedOccurrence ? (
                 <PatternOverlayChart
                   setup={occurrenceSetup}
@@ -592,28 +592,33 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               )}
             </div>
             
-            {/* Minimal study panel toggle — TradingView-style thin divider */}
+            {/* Bottom panel toggle — TradingView SuperChart style panel header */}
             <button
               onClick={() => setStudyPanelCollapsed(prev => !prev)}
-              className="flex items-center justify-center gap-1.5 w-full h-6 border-t border-border/60 hover:bg-muted/30 transition-colors text-[13px] font-medium text-muted-foreground/70 hover:text-muted-foreground shrink-0"
+              className={cn(
+                "flex items-center justify-center gap-1.5 w-full border-t border-border/60 hover:bg-muted/40 transition-colors shrink-0",
+                studyPanelCollapsed
+                  ? "h-8 text-xs font-medium text-muted-foreground/80 hover:text-foreground"
+                  : "h-9 text-xs font-semibold text-foreground/90 hover:text-foreground bg-muted/20"
+              )}
             >
               {studyPanelCollapsed ? (
                 <>
-                  <ChevronUp className="h-3 w-3" />
+                  <ChevronUp className="h-3.5 w-3.5" />
                   <span>{t('commandCenter.showPatternsMetrics')}</span>
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                   <span>{t('commandCenter.hidePatternsMetrics')}</span>
                 </>
               )}
             </button>
 
-            {/* Study panel — kept mounted to avoid refetch */}
+            {/* Study panel — TradingView-style bottom panel with generous height */}
             <div className={cn(
-              "flex-1 min-h-0 overflow-auto border-t border-border/60",
-              studyPanelCollapsed && "hidden"
+              "min-h-0 overflow-auto border-t border-border/60",
+              studyPanelCollapsed ? "hidden" : "flex-1"
             )}>
               <DashboardPatternStudy
                 symbol={selectedSymbol}
