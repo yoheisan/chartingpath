@@ -101,6 +101,7 @@ export function DashboardPatternStudy({
   const [historicalPatterns, setHistoricalPatterns] = useState<HistoricalPattern[]>([]);
   const [activePatterns, setActivePatterns] = useState<ActivePattern[]>([]);
   const [activePatternsOpen, setActivePatternsOpen] = useState(true);
+  const [selectedPatternFilter, setSelectedPatternFilter] = useState<string | null>(null);
   // Track last fetched key to avoid redundant refetches on panel toggle
   const [lastFetchedKey, setLastFetchedKey] = useState<string | null>(null);
 
