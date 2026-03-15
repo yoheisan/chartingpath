@@ -2803,12 +2803,18 @@ export type Database = {
       }
       paper_trades: {
         Row: {
+          close_reason: string | null
           closed_at: string | null
           created_at: string
+          detection_id: string | null
           entry_price: number
           exit_price: number | null
           id: string
           notes: string | null
+          notified_at: string | null
+          outcome_r: number | null
+          override_notes: string | null
+          override_reason: string | null
           pnl: number | null
           portfolio_id: string
           quantity: number
@@ -2820,12 +2826,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          close_reason?: string | null
           closed_at?: string | null
           created_at?: string
+          detection_id?: string | null
           entry_price: number
           exit_price?: number | null
           id?: string
           notes?: string | null
+          notified_at?: string | null
+          outcome_r?: number | null
+          override_notes?: string | null
+          override_reason?: string | null
           pnl?: number | null
           portfolio_id: string
           quantity: number
@@ -2837,12 +2849,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          close_reason?: string | null
           closed_at?: string | null
           created_at?: string
+          detection_id?: string | null
           entry_price?: number
           exit_price?: number | null
           id?: string
           notes?: string | null
+          notified_at?: string | null
+          outcome_r?: number | null
+          override_notes?: string | null
+          override_reason?: string | null
           pnl?: number | null
           portfolio_id?: string
           quantity?: number
@@ -2853,7 +2871,15 @@ export type Database = {
           trade_type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "paper_trades_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "live_pattern_detections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pattern_hit_rates: {
         Row: {
@@ -4951,6 +4977,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_signal_actions: {
+        Row: {
+          action: string
+          actioned_at: string | null
+          detection_id: string | null
+          id: string
+          instrument: string
+          paper_trade_id: string | null
+          pattern_id: string
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actioned_at?: string | null
+          detection_id?: string | null
+          id?: string
+          instrument: string
+          paper_trade_id?: string | null
+          pattern_id: string
+          timeframe: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actioned_at?: string | null
+          detection_id?: string | null
+          id?: string
+          instrument?: string
+          paper_trade_id?: string | null
+          pattern_id?: string
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_signal_actions_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "live_pattern_detections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_signal_actions_paper_trade_id_fkey"
+            columns: ["paper_trade_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_strategies: {
         Row: {
