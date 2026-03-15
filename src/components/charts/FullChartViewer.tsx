@@ -605,8 +605,7 @@ export default function FullChartViewer({
         }
 
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
-        // Lightweight-charts markers must reference an existing bar time, so we snap to the pivot index when needed.
-        const timeSet = new Set<number>(chartData.map((d) => d.time as number));
+        // Use findNearestCandleTime to snap pivots to the closest existing bar instead of dropping them.
         const allMarkers: Array<{
           time: Time;
           position: 'aboveBar' | 'belowBar' | 'inBar';
@@ -634,27 +633,30 @@ export default function FullChartViewer({
             const isBreakout = (pivot.label || '').toLowerCase().includes('breakout') || (pivot.label || '').toLowerCase().includes('breakdown');
             const isBreakdown = (pivot.label || '').toLowerCase().includes('breakdown');
 
+            // Resolve pivot time: prefer index-based, then snap to nearest candle
             let t = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
             if (
-              !timeSet.has(t) &&
               Number.isInteger(pivot.index) &&
               pivot.index >= 0 &&
               pivot.index < bars.length
             ) {
-              t = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+              const altT = Math.floor(new Date(bars[pivot.index].t).getTime() / 1000);
+              if (altT) t = altT;
             }
-            if (!timeSet.has(t)) return;
+            // Snap to nearest chart candle instead of dropping non-matching pivots
+            t = findNearestCandleTime(safeChartData, t);
 
             if (isBreakout) {
               const pointUp = !isBreakdown;
-              // Anchor breakout/breakdown marker to the nearest actual chart candle
-              let anchorTime = t;
-              const targetTs = setup.signalTs
-                ? Math.floor(new Date(setup.signalTs).getTime() / 1000)
-                : (bars.length > 0)
-                  ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
-                  : t;
-              anchorTime = findNearestCandleTime(chartData, targetTs);
+              // Anchor breakout/breakdown marker to the detection candle (consistent with StudyChart)
+              const targetTs = setup.detectedAt
+                ? Math.floor(new Date(setup.detectedAt).getTime() / 1000)
+                : setup.signalTs
+                  ? Math.floor(new Date(setup.signalTs).getTime() / 1000)
+                  : (bars.length > 0)
+                    ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
+                    : t;
+              const anchorTime = findNearestCandleTime(safeChartData, targetTs);
               canvasTriangleMarkers.push({
                 time: anchorTime,
                 price: pivot.price,
@@ -674,14 +676,33 @@ export default function FullChartViewer({
           });
         }
 
-        // Entry Point → canvas triangle on last bar (skip for resolved trades)
-        if (!tradeResolved && chartData.length > 0 && tradePlan?.entry) {
-          const lastBar = chartData[chartData.length - 1];
-          const lastBarData = bars[bars.length - 1];
+        // Entry Point → canvas triangle at the pattern's detection/signal bar (consistent with StudyChart)
+        if (!tradeResolved && safeChartData.length > 0 && tradePlan?.entry) {
           const isLong = setup.direction === 'long';
+
+          // Find the bar matching the pattern's detectedAt timestamp
+          const detectedDate = setup.detectedAt?.split('T')[0];
+          const detectedTs = setup.detectedAt ? Math.floor(new Date(setup.detectedAt).getTime() / 1000) : null;
+
+          // Try exact timestamp match first, then date match, then fall back to last bar
+          let matchBarIdx = detectedTs
+            ? safeChartData.findIndex(b => (b.time as number) === detectedTs)
+            : -1;
+          if (matchBarIdx < 0 && detectedDate) {
+            matchBarIdx = bars.findIndex(b => b.t.split('T')[0] === detectedDate);
+          }
+          // If no match found, try signalTs
+          if (matchBarIdx < 0 && setup.signalTs) {
+            const signalTs = Math.floor(new Date(setup.signalTs).getTime() / 1000);
+            matchBarIdx = safeChartData.findIndex(b => (b.time as number) === signalTs);
+          }
+          if (matchBarIdx < 0) matchBarIdx = safeChartData.length - 1;
+
+          const matchBar = safeChartData[matchBarIdx];
+          const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
           canvasTriangleMarkers.push({
-            time: lastBar.time as number,
-            price: isLong ? (lastBarData?.l ?? tradePlan.entry) : (lastBarData?.h ?? tradePlan.entry),
+            time: matchBar.time as number,
+            price: isLong ? (matchBarData?.l ?? tradePlan.entry) : (matchBarData?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
             color: '#3b82f6',
             label: '',
