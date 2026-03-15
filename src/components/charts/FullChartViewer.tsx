@@ -649,13 +649,11 @@ export default function FullChartViewer({
             if (isBreakout) {
               const pointUp = !isBreakdown;
               // Anchor breakout/breakdown marker to the detection candle (consistent with StudyChart)
-              const targetTs = setup.detectedAt
-                ? Math.floor(new Date(setup.detectedAt).getTime() / 1000)
-                : setup.signalTs
-                  ? Math.floor(new Date(setup.signalTs).getTime() / 1000)
-                  : (bars.length > 0)
-                    ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
-                    : t;
+              const targetTs = setup.signalTs
+                ? Math.floor(new Date(setup.signalTs).getTime() / 1000)
+                : (bars.length > 0)
+                  ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
+                  : t;
               const anchorTime = findNearestCandleTime(safeChartData, targetTs);
               canvasTriangleMarkers.push({
                 time: anchorTime,
