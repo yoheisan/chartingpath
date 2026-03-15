@@ -122,7 +122,7 @@ function detectDonchianLong(w: OHLCBar[]): PatternDetectionResult {
   const recentHigh = Math.max(...lookbackHighs);
   const currentClose = closes[closes.length - 1];
   const detected = currentClose > recentHigh * 1.001;
-  return { detected, patternStartIndex: lookbackHighs.indexOf(recentHigh), patternEndIndex: w.length - 1, pivots: detected ? [{ index: lookbackHighs.indexOf(recentHigh), price: recentHigh, type: 'high', label: 'Breakout Level' }] : [] };
+  return { detected, patternStartIndex: lookbackHighs.indexOf(recentHigh), patternEndIndex: w.length - 1, pivots: detected ? [{ index: w.length - 1, price: recentHigh, type: 'high', label: 'Breakout Level' }] : [] };
 }
 
 function detectDonchianShort(w: OHLCBar[]): PatternDetectionResult {
