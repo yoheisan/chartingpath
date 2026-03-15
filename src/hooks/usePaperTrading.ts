@@ -56,10 +56,14 @@ export function usePaperTrading(userId?: string) {
         supabase.from('paper_portfolios').select('*').eq('user_id', userId).maybeSingle(),
         supabase.from('paper_trades').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(500),
       ]);
-      if (portfolioRes.data) setPortfolio(portfolioRes.data);
+      console.log('[PaperTrading] portfolioRes:', portfolioRes.error?.message ?? 'ok', portfolioRes.data ? 'has data' : 'no data');
+      console.log('[PaperTrading] tradesRes:', tradesRes.error?.message ?? 'ok', tradesRes.data?.length ?? 0, 'trades');
+      if (portfolioRes.error) console.error('[PaperTrading] portfolio error:', portfolioRes.error);
+      if (tradesRes.error) console.error('[PaperTrading] trades error:', tradesRes.error);
+      if (portfolioRes.data) setPortfolio(portfolioRes.data as any);
       if (tradesRes.data) {
-        setOpenTrades(tradesRes.data.filter((t: any) => t.status === 'open'));
-        setClosedTrades(tradesRes.data.filter((t: any) => t.status === 'closed'));
+        setOpenTrades((tradesRes.data as any[]).filter((t: any) => t.status === 'open'));
+        setClosedTrades((tradesRes.data as any[]).filter((t: any) => t.status === 'closed'));
       }
     } catch (err) {
       console.error('[PaperTrading] fetch error', err);
