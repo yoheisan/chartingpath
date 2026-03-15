@@ -305,3 +305,6 @@ verify_jwt = false
 
 [functions.validate-detector-dryrun]
 verify_jwt = false
+
+[functions.monitor-paper-trades]
+verify_jwt = false
