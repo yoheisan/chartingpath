@@ -328,10 +328,11 @@ async function fetchPatternSymbolStats(
     }
     
     if (!allData.length) {
-      console.warn(`[fetchPatternSymbolStats] No historical data found for rrTier=${rrTier}`);
-      return statsMap;
+      console.warn(`[fetchPatternSymbolStats] No exact-timeframe data found for rrTier=${rrTier}, will try cross-timeframe fallback`);
+      // Don't return early - fall through to cross-timeframe fallback below
     }
     
+    if (allData.length) {
     console.info(`[fetchPatternSymbolStats] Found ${allData.length} historical occurrences for rrTier=${rrTier}`);
     
     const nowDate = new Date();
@@ -409,6 +410,7 @@ async function fetchPatternSymbolStats(
     }
     
     console.info(`[fetchPatternSymbolStats] Computed stats for ${statsMap.size} pattern-symbol pairs at timeframe=${timeframe}, rrTier=${rrTier}`);
+    } // end if (allData.length)
     
     // Cross-timeframe fallback: for pairs with no stats at the requested timeframe,
     // try the closest available timeframe so users still see win rates.
