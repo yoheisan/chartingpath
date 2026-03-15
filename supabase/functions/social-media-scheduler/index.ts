@@ -252,7 +252,10 @@ async function processPost(supabaseClient: any, post: any, now: Date) {
   console.log(`Post ${post.id} successfully posted:`, postResult);
 
   // Schedule next occurrence for recurring posts
-  if (post.recurrence_pattern) {
+  // SKIP educational posts — their scheduling + position advancement is handled
+  // exclusively by schedule-educational-posts. Auto-cloning here would duplicate
+  // posts with stale report_config and block position advancement.
+  if (post.recurrence_pattern && post.post_type !== 'educational') {
     const nextTime = calculateNextScheduledTime(post.scheduled_time, post.recurrence_pattern);
     await supabaseClient
       .from('scheduled_posts')
