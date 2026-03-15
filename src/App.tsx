@@ -105,6 +105,7 @@ const ProjectRun = lazy(() => import("./pages/projects/ProjectRun"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LivePatternsPage = lazy(() => import("./pages/LivePatternsPage"));
 const PatternVisualizationPreview = lazy(() => import("./pages/PatternVisualizationPreview"));
+const PaperTradingPage = lazy(() => import("./pages/PaperTradingPage"));
 
 const AdminKPIDashboard = lazy(() => import("./pages/admin/AdminKPIDashboard"));
 const AIJourneyAnalytics = lazy(() => import("./pages/admin/AIJourneyAnalytics"));
@@ -128,6 +129,7 @@ const App = () => (
           <Route path="/tools/risk-calculator" element={withSuspense(<RiskCalculator />)} />
           <Route path="/tools/market-breadth" element={withSuspense(<MarketBreadthReport />)} />
           <Route path="/tools/script-generator" element={<Navigate to="/members/scripts" replace />} />
+          <Route path="/tools/paper-trading" element={withSuspense(<PaperTradingPage />)} />
           <Route path="/tools/economic-calendar" element={withSuspense(<EconomicCalendar />)} />
           <Route path="/email-preview" element={withSuspense(<EmailPreview />)} />
           <Route path="/chart-patterns/generator" element={withSuspense(<PatternGenerator />)} />
