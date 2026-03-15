@@ -894,6 +894,57 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                 : 80
               }
             />
+            {/* Pattern Cycling Overlay */}
+            {eligibleOverlayPatterns.length > 0 && (
+              <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 bg-background/90 backdrop-blur-sm border border-border/60 rounded-md px-2 py-1 shadow-sm">
+                <button
+                  onClick={() => setPatternOverlayVisible(!patternOverlayVisible)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  title={patternOverlayVisible ? 'Hide pattern overlay' : 'Show pattern overlay'}
+                >
+                  {patternOverlayVisible ? (
+                    <Eye className="h-3 w-3 text-primary" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" />
+                  )}
+                </button>
+                {patternOverlayVisible && eligibleOverlayPatterns.length > 1 && (
+                  <>
+                    <span className="w-px h-3 bg-border/60" />
+                    <button
+                      onClick={() => setSelectedPatternIndex((prev) => (prev - 1 + eligibleOverlayPatterns.length) % eligibleOverlayPatterns.length)}
+                      className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <span className="text-[11px] font-medium text-foreground tabular-nums min-w-[3ch] text-center">
+                      {selectedPatternIndex + 1}/{eligibleOverlayPatterns.length}
+                    </span>
+                    <button
+                      onClick={() => setSelectedPatternIndex((prev) => (prev + 1) % eligibleOverlayPatterns.length)}
+                      className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+                {patternOverlayVisible && overlayPattern && (
+                  <>
+                    <span className="w-px h-3 bg-border/60" />
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                      {PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-medium px-1 rounded",
+                      overlayPattern.direction === 'long' || overlayPattern.direction === 'bullish' 
+                        ? 'text-emerald-400' : 'text-red-400'
+                    )}>
+                      {overlayPattern.direction === 'long' || overlayPattern.direction === 'bullish' ? '↗ Long' : '↘ Short'}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
