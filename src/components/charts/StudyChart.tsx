@@ -924,8 +924,30 @@ const StudyChart = memo(({
 
           if (isBreakout) {
             const pointUp = !isBreakdown;
+            // Anchor breakout/breakdown marker to the confirmation candle
+            // (last bar of the pattern's detection window), not the historical pivot
+            let anchorTime = t;
+            if (currentPattern.detectedAt) {
+              const detTs = Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000);
+              const detDate = currentPattern.detectedAt.split('T')[0];
+              // Try exact timestamp, then date match on chart data
+              const exactIdx = safeChartData.findIndex(b => (b.time as number) === detTs);
+              if (exactIdx >= 0) {
+                anchorTime = safeChartData[exactIdx].time as number;
+              } else {
+                const dateIdx = bars.findIndex(b => b.t.split('T')[0] === detDate);
+                if (dateIdx >= 0) {
+                  anchorTime = Math.floor(new Date(bars[dateIdx].t).getTime() / 1000);
+                }
+              }
+            } else if (currentPattern.bars && currentPattern.bars.length > 0) {
+              const lastPBar = currentPattern.bars[currentPattern.bars.length - 1];
+              const lts = Math.floor(new Date(lastPBar.t).getTime() / 1000);
+              const idx = safeChartData.findIndex(b => (b.time as number) === lts);
+              if (idx >= 0) anchorTime = lts;
+            }
             canvasTriangleMarkers.push({
-              time: t,
+              time: anchorTime,
               price: pivot.price,
               direction: pointUp ? 'up' : 'down',
               color: '#f97316',
