@@ -8,6 +8,7 @@ import {
   Send,
   Loader2,
   TrendingUp,
+  BarChart3,
   ChevronDown,
   ThumbsUp,
   ThumbsDown,
