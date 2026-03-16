@@ -73,7 +73,7 @@ import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
-import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints } from '@/utils/formationOverlay';
 import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
@@ -751,11 +751,12 @@ export default function FullChartViewer({
         };
 
         // ─── Formation Overlay: ZigZag + Trendlines + Shaded Zone ───
-        const formation = deriveFormationOverlay(
+        let formation = deriveFormationOverlay(
           visualSpec?.pivots,
           bars,
           visualSpec?.patternId
         );
+        if (formation) formation = snapFormationToChartTimes(formation, safeChartData);
 
         if (formation && formation.zigzag.length >= 2) {
           // ZigZag polyline (cyan)

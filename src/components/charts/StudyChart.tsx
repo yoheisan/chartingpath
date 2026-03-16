@@ -12,7 +12,7 @@ import {
   SeriesMarkerShape,
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
-import { FormationOverlayData, buildZonePoints } from '@/utils/formationOverlay';
+import { FormationOverlayData, buildZonePoints, snapFormationToChartTimes } from '@/utils/formationOverlay';
 import {
   calculateEMA,
   calculateSMA,
@@ -673,7 +673,8 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
 
     // === FORMATION OVERLAYS (auto-detected patterns) ===
     if (formationOverlays && formationOverlays.length > 0) {
-      for (const formation of formationOverlays) {
+      for (const rawFormation of formationOverlays) {
+        const formation = snapFormationToChartTimes(rawFormation, safeChartData);
         if (formation.zigzag.length >= 2) {
           const zigzagSeries = chart.addSeries(LineSeries, {
             color: 'rgba(0, 200, 255, 0.85)',
@@ -1039,7 +1040,8 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
         for (const pattern of historicalPatterns) {
           if (!pattern.pivots || pattern.pivots.length < 2) continue;
           const patternBars = pattern.bars && pattern.bars.length > 0 ? pattern.bars : bars;
-          const formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          let formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          if (formation) formation = snapFormationToChartTimes(formation, safeChartData);
           if (formation && formation.zigzag.length >= 2) {
             const zigzagSeries = chart.addSeries(LineSeries, {
               color: PATTERN_OVERLAY_COLORS.zigzag,
@@ -1116,8 +1118,9 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
           ctx.clearRect(0, 0, rect.width, rect.height);
 
           // Re-draw formation zone if present (since we cleared the canvas)
-          if (formationOverlays && formationOverlays.length > 0) {
-            for (const formation of formationOverlays) {
+           if (formationOverlays && formationOverlays.length > 0) {
+            for (const rawFormation of formationOverlays) {
+              const formation = snapFormationToChartTimes(rawFormation, safeChartData);
               if (formation.hasZone) {
                 const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
                 if (zonePoints.length >= 2) {

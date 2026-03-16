@@ -18,7 +18,7 @@ import { getChartDataLimits, Timeframe } from '@/config/dataCoverageContract';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTradingCopilotContext } from '@/components/copilot';
-import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, snapFormationToChartTimes, FormationOverlayData } from '@/utils/formationOverlay';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { deriveLiveOutcome as deriveLiveOutcomeUtil } from '@/utils/deriveLiveOutcome';
