@@ -69,6 +69,7 @@ const Pricing = () => {
         "6 classic chart patterns",
         "3 active alerts",
         "50 credits/month",
+        "3 scripts/month",
         "Demo backtesting",
       ],
       popular: false,
