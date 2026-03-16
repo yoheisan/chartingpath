@@ -678,24 +678,19 @@ export default function FullChartViewer({
         if (!tradeResolved && safeChartData.length > 0 && tradePlan?.entry) {
           const isLong = setup.direction === 'long';
 
-          // Find the bar matching the pattern's signalTs timestamp
-          const detectedDate = setup.signalTs?.split('T')[0];
+          // Determine target timestamp for the entry marker
           const detectedTs = setup.signalTs ? Math.floor(new Date(setup.signalTs).getTime() / 1000) : null;
+          const lastBarTs = bars.length > 0 ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000) : null;
+          const targetTs = detectedTs || lastBarTs || (safeChartData[safeChartData.length - 1].time as number);
 
-          // Try exact timestamp match first, then date match, then fall back to last bar
-          let matchBarIdx = detectedTs
-            ? safeChartData.findIndex(b => (b.time as number) === detectedTs)
-            : -1;
-          if (matchBarIdx < 0 && detectedDate) {
-            matchBarIdx = bars.findIndex(b => b.t.split('T')[0] === detectedDate);
-          }
-          if (matchBarIdx < 0) matchBarIdx = safeChartData.length - 1;
+          // Snap to nearest actual chart candle (prevents floating markers)
+          const anchorTime = findNearestCandleTime(safeChartData, targetTs);
+          const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
+          const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : bars[bars.length - 1];
 
-          const matchBar = safeChartData[matchBarIdx];
-          const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
           canvasTriangleMarkers.push({
-            time: matchBar.time as number,
-            price: isLong ? (matchBarData?.l ?? tradePlan.entry) : (matchBarData?.h ?? tradePlan.entry),
+            time: anchorTime,
+            price: isLong ? (anchorBar?.l ?? tradePlan.entry) : (anchorBar?.h ?? tradePlan.entry),
             direction: isLong ? 'up' : 'down',
             color: '#3b82f6',
             label: '',
