@@ -192,6 +192,52 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   // Whether current timeframe is gated and user is not authenticated
   const isTimeframeGated = AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId;
 
+  /**
+   * Lightweight poll: fetch latest bars from DB and merge into accumulated cache.
+   * Only fetches the most recent slice (last 20 bars) to update the forming candle
+   * and append any new completed candles.
+   */
+  const pollChartData = useCallback(async () => {
+    if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) return;
+
+    const cacheKey = `${symbol}:${timeframe}`;
+    try {
+      const { data, error: dbError } = await supabase
+        .from('historical_prices')
+        .select('date, open, high, low, close, volume')
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .order('date', { ascending: false })
+        .limit(20); // Only fetch tail for merge
+
+      if (dbError || !data || data.length === 0) return;
+
+      const freshBars: CompressedBar[] = data
+        .reverse() // API returns desc, we need asc
+        .map((row) => ({
+          t: row.date,
+          o: row.open,
+          h: row.high,
+          l: row.low,
+          c: row.close,
+          v: row.volume || 0,
+        }));
+
+      // Merge into accumulated store (updates forming candle + appends new)
+      symbolDataCache.set(cacheKey, freshBars);
+
+      // Re-read the full accumulated dataset
+      const accumulated = symbolDataCache.get(cacheKey);
+      if (accumulated && accumulated.length > 0) {
+        setBars(accumulated);
+        updatePriceData(accumulated);
+      }
+    } catch (err) {
+      // Silent fail for poll — don't disrupt UI
+      console.warn('[CommandCenterChart] poll merge error:', err);
+    }
+  }, [symbol, timeframe, userId]);
+
   const fetchChartData = useCallback(async () => {
     // Don't fetch data for auth-gated timeframes
     if (AUTH_REQUIRED_TIMEFRAMES.has(timeframe) && !userId) {
@@ -211,7 +257,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       updatePriceData(cached);
       setLoading(false);
       setError(null);
-      // No immediate background revalidation — the 60s polling handles staleness
+      // Trigger a background poll to merge any new bars
+      pollChartData();
       return;
     }
 
@@ -295,7 +342,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           const patternBars = await tryExtractPatternBars(symbol, timeframe);
           if (patternBars.length > 0) {
             console.log(`[CommandCenterChart] Using ${patternBars.length} bars from pattern detection as fallback`);
-            symbolDataCache.set(cacheKey, patternBars);
+            symbolDataCache.replace(cacheKey, patternBars);
             setBars(patternBars);
             updatePriceData(patternBars);
             setLoading(false);
@@ -304,8 +351,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           throw new Error('No data available for this symbol/timeframe');
         }
 
-        // Cache the result
-        symbolDataCache.set(cacheKey, fetchedBars);
+        // Initial load — replace (not merge) to start fresh
+        symbolDataCache.replace(cacheKey, fetchedBars);
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
       } else {
@@ -318,8 +365,8 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           v: row.volume || 0,
         }));
 
-        // Cache the result
-        symbolDataCache.set(cacheKey, mapped);
+        // Initial load — replace to start with full dataset
+        symbolDataCache.replace(cacheKey, mapped);
         setBars(mapped);
         updatePriceData(mapped);
       }
@@ -329,7 +376,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     } finally {
       setLoading(false);
     }
-  }, [symbol, timeframe, userId]);
+  }, [symbol, timeframe, userId, pollChartData]);
 
   const updatePriceData = (chartBars: CompressedBar[]) => {
     if (chartBars.length < 2) return;
@@ -492,7 +539,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     // Fire both in parallel
     Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
       // Start 60s polling AFTER initial fetch settles
+      // Poll BOTH chart data (merge) and patterns
       intervalId = window.setInterval(() => {
+        pollChartData();
         fetchAutoPatterns();
       }, 60_000);
     });
@@ -500,7 +549,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId);
     };
-  }, [fetchChartData, fetchAutoPatterns]);
+  }, [fetchChartData, fetchAutoPatterns, pollChartData]);
+
+
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
