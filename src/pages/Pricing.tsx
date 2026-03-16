@@ -291,6 +291,9 @@ const Pricing = () => {
                   <CardDescription className="text-sm mt-2">
                     {planDesc}
                   </CardDescription>
+                  {plan.freeTagline && (
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{plan.freeTagline}</p>
+                  )}
                 </CardHeader>
 
                 <CardContent className="flex flex-col flex-1 space-y-4">
