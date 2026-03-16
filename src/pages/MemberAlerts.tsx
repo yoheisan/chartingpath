@@ -513,6 +513,11 @@ const MemberAlerts = () => {
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <PageMeta
+        title="Pattern Alert System — Get Notified When Patterns Form | ChartingPath"
+        description="Set email alerts for any chart pattern on any instrument. ChartingPath scans 800+ markets every hour and notifies you the moment your pattern appears."
+        canonicalPath="/members/alerts"
+      />
       
       {/* Back Navigation */}
       <div className="mb-6">

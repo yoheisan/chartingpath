@@ -35,6 +35,11 @@ const AgentScoring = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <PageMeta
+        title="AI Pattern Scoring — TAKE, WATCH or SKIP Every Signal | ChartingPath"
+        description="Four AI agents score every live pattern signal for win rate, risk, timing and portfolio fit. Get a composite 0-100 score and actionable verdict on every setup."
+        canonicalPath="/tools/agent-scoring"
+      />
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
         <div className="w-[420px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">

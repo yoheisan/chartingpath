@@ -46,6 +46,11 @@ const MemberDashboard = () => {
   // Render for both authenticated and anonymous users
   return (
     <>
+      <PageMeta
+        title="Trading Dashboard — Charts, Patterns & Market Overview | ChartingPath"
+        description="Your full trading command centre. Live charts with pattern overlays, watchlist, and market overview across forex, crypto, stocks and commodities."
+        canonicalPath="/members/dashboard"
+      />
       {routeState?.backUrl && (
         <div className="bg-muted/30 border-b border-border/40 px-4 py-2">
           <button
