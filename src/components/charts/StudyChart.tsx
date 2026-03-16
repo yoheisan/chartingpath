@@ -1039,7 +1039,8 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
         for (const pattern of historicalPatterns) {
           if (!pattern.pivots || pattern.pivots.length < 2) continue;
           const patternBars = pattern.bars && pattern.bars.length > 0 ? pattern.bars : bars;
-          const formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          let formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
+          if (formation) formation = snapFormationToChartTimes(formation, safeChartData);
           if (formation && formation.zigzag.length >= 2) {
             const zigzagSeries = chart.addSeries(LineSeries, {
               color: PATTERN_OVERLAY_COLORS.zigzag,

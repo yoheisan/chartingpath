@@ -751,11 +751,12 @@ export default function FullChartViewer({
         };
 
         // ─── Formation Overlay: ZigZag + Trendlines + Shaded Zone ───
-        const formation = deriveFormationOverlay(
+        let formation = deriveFormationOverlay(
           visualSpec?.pivots,
           bars,
           visualSpec?.patternId
         );
+        if (formation) formation = snapFormationToChartTimes(formation, safeChartData);
 
         if (formation && formation.zigzag.length >= 2) {
           // ZigZag polyline (cyan)
