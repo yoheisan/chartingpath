@@ -14,8 +14,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { 
   Download, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
   FileCode, FlaskConical, Zap, Trash2, Clock, Save, LayoutGrid, List,
-  ChevronDown, ChevronUp, ScanSearch, Shield
+  ChevronDown, ChevronUp, ScanSearch, Shield, Search
 } from "lucide-react";
+import { EdgeInsightsPanel, useEdgeData } from "@/components/scripts/EdgeInsightsPanel";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthGate } from "@/hooks/useAuthGate";
