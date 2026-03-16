@@ -127,6 +127,7 @@ const Pricing = () => {
         "8 chart patterns",
         "5 active alerts",
         "100 credits/month",
+        "10 scripts/month",
         "Basic backtesting (2 years)",
         "Email support",
       ],
