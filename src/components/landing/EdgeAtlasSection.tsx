@@ -3,10 +3,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, FlaskConical, Info, Zap } from 'lucide-react';
+import { Trophy, FlaskConical, Info, Zap, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Tooltip,
   TooltipContent,
