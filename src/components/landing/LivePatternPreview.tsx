@@ -24,15 +24,29 @@ export default function LivePatternPreview() {
     setError(null);
     
     try {
-      const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { assetType: 'fx', limit: 4 },
-      });
+      // Try multiple asset types to find available patterns
+      const assetTypes = ['stocks', 'crypto', 'fx', 'indices', 'etfs', 'commodities'];
+      let allPatterns: LiveSetup[] = [];
+      let scanTime: string | null = null;
+
+      for (const assetType of assetTypes) {
+        if (allPatterns.length >= 4) break;
+        
+        const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
+          body: { assetType, limit: 4, topNWithBars: 4 },
+        });
+        
+        if (!fnError && data?.patterns?.length) {
+          allPatterns = [...allPatterns, ...data.patterns];
+          if (!scanTime) scanTime = data.scannedAt;
+        }
+      }
       
-      if (fnError) throw fnError;
-      
-      if (data?.patterns) {
-        setPatterns(data.patterns.slice(0, 4));
-        setLastScanned(data.scannedAt);
+      if (allPatterns.length > 0) {
+        setPatterns(allPatterns.slice(0, 4));
+        setLastScanned(scanTime);
+      } else {
+        setError(t('livePatternPreview.noPatterns'));
       }
     } catch (err: any) {
       console.error('[LivePatternPreview] Error:', err);
