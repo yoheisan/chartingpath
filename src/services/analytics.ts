@@ -51,7 +51,8 @@ export type AnalyticsEvent =
   | 'upgrade_banner_shown'
   | 'upgrade_banner_clicked'
   | 'upgrade_banner_dismissed'
-  | 'shared_to_auth_click';
+  | 'shared_to_auth_click'
+  | 'landing_view';
 
 // Event properties types
 export interface PresetLoadedProps {
