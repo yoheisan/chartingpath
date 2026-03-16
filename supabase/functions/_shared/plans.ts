@@ -302,6 +302,7 @@ export interface TierDisplayInfo {
   monthlyPrice: number;
   annualPrice: number;
   monthlyCredits: number;
+  monthlyScripts: number; // -1 = unlimited
   maxActiveAlerts: number;
   bestFor: string;
   color: string;
@@ -313,6 +314,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 0,
     annualPrice: 0,
     monthlyCredits: 50,
+    monthlyScripts: 3,
     maxActiveAlerts: 3,
     bestFor: 'Explore the platform',
     color: 'text-muted-foreground'
@@ -322,6 +324,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 12,
     annualPrice: 120,
     monthlyCredits: 100,
+    monthlyScripts: 10,
     maxActiveAlerts: 5,
     bestFor: 'Hobbyist traders starting out',
     color: 'text-emerald-500'
@@ -331,6 +334,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 29,
     annualPrice: 290,
     monthlyCredits: 300,
+    monthlyScripts: 30,
     maxActiveAlerts: 25,
     bestFor: 'Active traders testing ideas',
     color: 'text-blue-500'
@@ -340,6 +344,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 79,
     annualPrice: 790,
     monthlyCredits: 900,
+    monthlyScripts: 100,
     maxActiveAlerts: 100,
     bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
@@ -349,6 +354,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
+    monthlyScripts: -1,
     maxActiveAlerts: 500,
     bestFor: 'Trading teams & portfolio managers',
     color: 'text-amber-500'
