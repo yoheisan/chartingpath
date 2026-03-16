@@ -308,7 +308,7 @@ const Pricing = () => {
 
                   <Button 
                     className={`w-full ${plan.popular ? 'shadow-md' : ''}`}
-                    variant={plan.popular ? "default" : "outline"}
+                    variant={plan.popular || plan.key === 'free' ? "default" : "outline"}
                     size="lg"
                     onClick={() => handlePlanSelect(plan.key)}
                   >
