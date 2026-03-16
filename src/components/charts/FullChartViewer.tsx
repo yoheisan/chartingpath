@@ -73,7 +73,7 @@ import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
-import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints, findNearestCandleTime } from '@/utils/formationOverlay';
 import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
@@ -122,23 +122,7 @@ function loadIndicatorSettings(): IndicatorSettings {
   return DEFAULT_INDICATORS;
 }
 
-/** Find the nearest candle time in chart data to a target timestamp */
-function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number): number {
-  if (data.length === 0) return targetTs;
-  let bestTime = data[0].time as number;
-  let bestDiff = Math.abs(bestTime - targetTs);
-  for (let i = 1; i < data.length; i++) {
-    const t = data[i].time as number;
-    const diff = Math.abs(t - targetTs);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      bestTime = t;
-    } else if (diff > bestDiff) {
-      break;
-    }
-  }
-  return bestTime;
-}
+// findNearestCandleTime is now imported from @/utils/formationOverlay
 
 function saveIndicatorSettings(settings: IndicatorSettings) {
   try {
