@@ -162,6 +162,27 @@ function findPivotBarIndex(pivot: ZigZagPivot, bars: CompressedBar[]): number {
  * This prevents zigzag lines and markers from floating in empty space
  * when pattern bar timestamps don't exactly match chart bar timestamps.
  */
+/**
+ * Find the nearest candle time in sorted chart data to a target unix timestamp.
+ * Centralised here so every chart renderer uses the same snapping logic.
+ */
+export function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number): number {
+  if (data.length === 0) return targetTs;
+  let bestTime = data[0].time as number;
+  let bestDiff = Math.abs(bestTime - targetTs);
+  for (let i = 1; i < data.length; i++) {
+    const t = data[i].time as number;
+    const diff = Math.abs(t - targetTs);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestTime = t;
+    } else if (diff > bestDiff) {
+      break; // sorted data, past the minimum
+    }
+  }
+  return bestTime;
+}
+
 export function snapFormationToChartTimes(
   formation: FormationOverlayData,
   chartData: Array<{ time: unknown }>
