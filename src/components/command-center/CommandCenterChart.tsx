@@ -551,10 +551,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     };
   }, [fetchChartData, fetchAutoPatterns, pollChartData]);
 
-    return () => {
-      if (intervalId !== undefined) window.clearInterval(intervalId);
-    };
-  }, [fetchChartData, fetchAutoPatterns]);
+
 
   const getDetectedAt = (pattern: any) =>
     pattern.last_confirmed_at || pattern.first_detected_at || pattern.detected_at || '';
