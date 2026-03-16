@@ -429,6 +429,38 @@ const MemberScripts = () => {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Configuration Panel */}
             <div className="lg:col-span-1 space-y-4">
+              {/* Ticker Input for Edge Insights */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    Instrument Edge
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Enter a ticker to see which patterns work best
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. AAPL, EURUSD, BTC"
+                      value={edgeTicker}
+                      onChange={(e) => setEdgeTicker(e.target.value.toUpperCase())}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Edge Insights Panel */}
+              {edgeTicker && (
+                <EdgeInsightsPanel
+                  symbol={edgeTicker}
+                  onSelectWinners={handleSelectWinners}
+                  onDeselectLosers={handleDeselectLosers}
+                />
+              )}
+
               {/* Pattern Selection */}
               <Collapsible open={patternsOpen} onOpenChange={setPatternsOpen}>
                 <Card className={patternsOpen ? '' : 'border-primary/40'}>
