@@ -314,6 +314,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 0,
     annualPrice: 0,
     monthlyCredits: 50,
+    monthlyScripts: 3,
     maxActiveAlerts: 3,
     bestFor: 'Explore the platform',
     color: 'text-muted-foreground'
