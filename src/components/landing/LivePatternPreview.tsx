@@ -25,7 +25,7 @@ export default function LivePatternPreview() {
     
     try {
       const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-        body: { assetType: 'fx', limit: 4 },
+        body: { limit: 4 },
       });
       
       if (fnError) throw fnError;
