@@ -130,6 +130,19 @@ const MemberScripts = () => {
   const [patternsOpen, setPatternsOpen] = useState(!isFromPatternLab); // Collapse if pre-filled
   const [riskOpen, setRiskOpen] = useState(false);
   
+  // Ticker for edge insights
+  const [edgeTicker, setEdgeTicker] = useState(instrumentParam || symbolParam || '');
+  const edgeData = useEdgeData(edgeTicker || null);
+  
+  const handleSelectWinners = (patternIds: string[]) => {
+    setSelectedPatterns(patternIds);
+    toast({ title: 'Winners Selected', description: `${patternIds.length} patterns with positive edge selected` });
+  };
+  const handleDeselectLosers = (loserIds: string[]) => {
+    setSelectedPatterns(prev => prev.filter(p => !loserIds.includes(p)));
+    toast({ title: 'Losers Removed', description: `${loserIds.length} patterns with negative edge deselected` });
+  };
+  
   // Load saved scripts
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
