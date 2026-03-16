@@ -100,6 +100,7 @@ export const PLANS_CONFIG: PlansConfig = {
     },
     LITE: {
       monthlyCredits: 100,
+      monthlyScripts: 10,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 5,
       maxWatchlistSlots: 20, // 20 custom tickers to monitor
