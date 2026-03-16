@@ -21,13 +21,17 @@ const STATIC_ROUTES = [
 
 // Pattern statistics pages — high-value SEO landing pages
 const PATTERN_IDS = [
-  'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
+  'ascending-triangle', 'descending-triangle',
   'double-bottom', 'double-top', 'triple-bottom', 'triple-top',
   'head-and-shoulders', 'inverse-head-and-shoulders',
   'bull-flag', 'bear-flag', 'rising-wedge', 'falling-wedge',
-  'cup-and-handle', 'inverse-cup-and-handle',
+  'cup-and-handle',
   'donchian-breakout-long', 'donchian-breakout-short',
 ];
+
+// Programmatic SEO — 15 patterns × 5 asset classes × 5 timeframes = 375 pages
+const STAT_ASSET_CLASSES = ['forex', 'crypto', 'stocks', 'commodities', 'indices'];
+const STAT_TIMEFRAMES = ['1h', '4h', '8h', '1d', '1wk'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -107,7 +111,28 @@ Deno.serve(async (req) => {
 `;
     }
 
-    // Instrument+pattern statistics pages (long-tail SEO)
+    // Programmatic pattern stats pages (375+ long-tail SEO pages)
+    xml += `  <url>
+    <loc>${BASE_URL}/patterns/stats</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+`;
+    for (const pid of PATTERN_IDS) {
+      for (const ac of STAT_ASSET_CLASSES) {
+        for (const tf of STAT_TIMEFRAMES) {
+          xml += `  <url>
+    <loc>${BASE_URL}/patterns/stats/${pid}/${ac}/${tf}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+        }
+      }
+    }
+
     for (const pair of instrumentPairs) {
       const [patternId, symbol] = pair.split('|');
       xml += `  <url>
