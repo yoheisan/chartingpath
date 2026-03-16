@@ -539,10 +539,17 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     // Fire both in parallel
     Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
       // Start 60s polling AFTER initial fetch settles
+      // Poll BOTH chart data (merge) and patterns
       intervalId = window.setInterval(() => {
+        pollChartData();
         fetchAutoPatterns();
       }, 60_000);
     });
+
+    return () => {
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+    };
+  }, [fetchChartData, fetchAutoPatterns, pollChartData]);
 
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId);
