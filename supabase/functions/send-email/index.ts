@@ -96,9 +96,84 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { to, subject, html, template, data, language } = await req.json();
-    const lang = language || "en";
+    const { to, subject, html, template, data, language, batch } = await req.json();
 
+    // ── Batch mode: find eligible users & send to each ──────────────
+    if (batch === true && template === "getting_started") {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      // Find users who received welcome but not getting_started, signed up 24-48h ago
+      const { data: users, error: qErr } = await supabase
+        .rpc("get_getting_started_batch");
+
+      if (qErr) {
+        console.error("[send-email] Batch query error:", qErr.message);
+        throw new Error(`Batch query failed: ${qErr.message}`);
+      }
+
+      if (!users || users.length === 0) {
+        console.log("[send-email] No users eligible for getting_started batch");
+        return new Response(JSON.stringify({ success: true, sent: 0 }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`[send-email] Found ${users.length} users for getting_started batch`);
+      let sentCount = 0;
+
+      for (const user of users) {
+        try {
+          // Get user language preference
+          const { data: langData } = await supabase
+            .from("user_language_preferences")
+            .select("language_code")
+            .eq("user_id", user.user_id)
+            .maybeSingle();
+
+          const userLang = langData?.language_code || "en";
+          const s = await getEmailStrings("gettingStarted", userLang);
+          const vars = { name: user.full_name || "Trader" };
+          const emailSubject = interpolate(s.subject, vars);
+          const emailHtml = buildGettingStartedEmail(s, vars);
+
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ from: FROM_EMAIL, to: user.email, subject: emailSubject, html: emailHtml }),
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            console.error(`[send-email] Failed sending getting_started to ${user.email}: ${errText}`);
+            continue;
+          }
+
+          const result = await res.json();
+          console.log(`[send-email] Sent getting_started (${userLang}) to ${user.email}, id: ${result.id}`);
+
+          // Mark as sent
+          await supabase
+            .from("user_email_preferences")
+            .update({ getting_started_sent: true })
+            .eq("user_id", user.user_id);
+
+          sentCount++;
+        } catch (userErr: any) {
+          console.error(`[send-email] Error for user ${user.email}:`, userErr.message);
+        }
+      }
+
+      console.log(`[send-email] Batch complete: sent ${sentCount}/${users.length}`);
+      return new Response(JSON.stringify({ success: true, sent: sentCount, total: users.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Single-send mode (existing logic) ───────────────────────────
+    const lang = language || "en";
     let emailHtml = html;
     let emailSubject = subject;
 
