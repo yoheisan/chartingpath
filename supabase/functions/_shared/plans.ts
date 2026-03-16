@@ -63,6 +63,7 @@ export interface ProjectCaps {
 
 export interface TierConfig {
   monthlyCredits: number;
+  monthlyScripts: number; // -1 = unlimited
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
   maxWatchlistSlots: number;
