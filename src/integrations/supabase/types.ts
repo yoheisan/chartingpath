@@ -5522,6 +5522,14 @@ export type Database = {
           win_rate_pct: number
         }[]
       }
+      get_getting_started_batch: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       get_quiz_questions: {
         Args: {
           p_category?: Database["public"]["Enums"]["quiz_category"]
