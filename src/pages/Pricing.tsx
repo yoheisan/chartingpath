@@ -75,7 +75,8 @@ const Pricing = () => {
       ],
       popular: false,
       icon: Zap,
-      cta: 'Get Started Free',
+      cta: 'Start Free Now →',
+      freeTagline: 'Start free today — no credit card, no time limit. Upgrade when you\'re ready.',
     },
     {
       key: 'plus',
@@ -290,6 +291,9 @@ const Pricing = () => {
                   <CardDescription className="text-sm mt-2">
                     {planDesc}
                   </CardDescription>
+                  {plan.freeTagline && (
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{plan.freeTagline}</p>
+                  )}
                 </CardHeader>
 
                 <CardContent className="flex flex-col flex-1 space-y-4">
@@ -304,7 +308,7 @@ const Pricing = () => {
 
                   <Button 
                     className={`w-full ${plan.popular ? 'shadow-md' : ''}`}
-                    variant={plan.popular ? "default" : "outline"}
+                    variant={plan.popular || plan.key === 'free' ? "default" : "outline"}
                     size="lg"
                     onClick={() => handlePlanSelect(plan.key)}
                   >
