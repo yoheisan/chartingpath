@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { PageMeta } from '@/components/PageMeta';
 import { usePatternStats } from '@/hooks/usePatternStats';
 import {
   PATTERN_NAMES,
