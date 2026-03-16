@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   STAT_PATTERNS,
   STAT_ASSET_CLASSES,
@@ -17,6 +18,7 @@ import {
 } from '@/config/patternStatsConstants';
 
 export default function PatternStatsIndexPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeAsset, setActiveAsset] = useState<string>('all');
 
@@ -29,7 +31,7 @@ export default function PatternStatsIndexPage() {
   }, [search]);
 
   const assetTabs = [
-    { key: 'all', label: 'All Patterns' },
+    { key: 'all', label: t('patternStats.allPatterns') },
     ...STAT_ASSET_CLASSES.map((ac) => ({ key: ac, label: ASSET_CLASS_LABELS[ac] })),
   ];
 
@@ -45,10 +47,10 @@ export default function PatternStatsIndexPage() {
         {/* Hero */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Chart Pattern Statistics
+            {t('patternStats.indexTitle')}
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Backtested win rates, expectancy data, and risk/reward ratios for every pattern across every asset class and timeframe. Powered by 320,000+ historical trades from ChartingPath's Edge Atlas.
+            {t('patternStats.indexSubtitle')}
           </p>
           <div className="h-0.5 w-20 bg-orange-500 mt-4" />
         </header>
@@ -58,7 +60,7 @@ export default function PatternStatsIndexPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search patterns..."
+              placeholder={t('patternStats.searchPatterns')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-[#1a1d27] border-[#2a2d3a]"
@@ -123,7 +125,7 @@ export default function PatternStatsIndexPage() {
                   to={`/patterns/stats/${patternSlug}/${(assetClasses as readonly string[])[0]}/${STAT_TIMEFRAMES[1]}`}
                   className="inline-flex items-center text-orange-400 text-sm mt-4 hover:underline"
                 >
-                  View Statistics <ArrowRight className="ml-1 h-3 w-3" />
+                  {t('patternStats.viewStatistics')} <ArrowRight className="ml-1 h-3 w-3" />
                 </Link>
               </div>
             );
@@ -132,15 +134,15 @@ export default function PatternStatsIndexPage() {
 
         {filtered.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
-            No patterns match your search.
+            {t('patternStats.noMatchSearch')}
           </div>
         )}
 
         {/* SEO Footer Text */}
         <section className="mt-16 max-w-3xl">
-          <h2 className="text-lg font-bold text-foreground mb-3">About These Statistics</h2>
+          <h2 className="text-lg font-bold text-foreground mb-3">{t('patternStats.aboutTitle')}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Every statistic on this page is derived from real historical pattern detections across 800+ instruments. ChartingPath's scanner detects 15 chart patterns on forex, crypto, stocks, commodities, and index instruments every hour. Each detection is validated against actual price movement to determine if the pattern's take profit or stop loss was hit first. This creates a growing database of pattern outcomes — currently over 320,000 trades — that powers the win rates, expectancy scores, and risk/reward ratios shown here.
+            {t('patternStats.aboutText')}
           </p>
         </section>
       </div>

@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { PageMeta } from '@/components/PageMeta';
 import { usePatternStats } from '@/hooks/usePatternStats';
+import { useTranslation } from 'react-i18next';
 import {
   PATTERN_NAMES,
   PATTERN_DESCRIPTIONS,
@@ -128,6 +129,7 @@ function PatternDiagram({ slug }: { slug: string }) {
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ProgrammaticPatternStatsPage() {
+  const { t } = useTranslation();
   const { patternSlug = '', assetClass = '', timeframe = '' } = useParams<{
     patternSlug: string;
     assetClass: string;
@@ -149,7 +151,6 @@ export default function ProgrammaticPatternStatsPage() {
   const pageDesc = data
     ? `Backtest results for ${pName} on ${acLabel} at ${tfLabel} timeframe. ${data.totalTrades} historical trades, ${(data.winRate * 100).toFixed(1)}% win rate, ${data.avgExpectancy}R average expectancy. Real data from ChartingPath's Edge Atlas.`
     : `Historical backtest statistics for ${pName} on ${acLabel} at ${tfLabel} timeframe. Powered by ChartingPath's Edge Atlas database.`;
-  const canonical = `https://chartingpath.com/patterns/stats/${patternSlug}/${assetClass}/${timeframe}`;
 
   // Inject JSON-LD
   useJsonLd(data ? {
@@ -162,6 +163,9 @@ export default function ProgrammaticPatternStatsPage() {
     variableMeasured: ['Win Rate', 'Expectancy', 'Risk Reward Ratio', 'Sample Size'],
   } : null);
 
+  const wrFormatted = data ? (data.winRate * 100).toFixed(1) : '0';
+  const diffFormatted = data ? Math.abs((data.winRate - 0.5) * 100).toFixed(1) : '0';
+
   return (
     <article className="min-h-screen bg-[#0f1117]">
       <PageMeta
@@ -173,7 +177,7 @@ export default function ProgrammaticPatternStatsPage() {
       <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 space-y-12">
         {/* Breadcrumb */}
         <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb">
-          <Link to="/patterns/stats" className="hover:text-orange-400">Pattern Stats</Link>
+          <Link to="/patterns/stats" className="hover:text-orange-400">{t('patternStats.breadcrumbPatternStats')}</Link>
           <span className="mx-2">/</span>
           <span>{pName}</span>
           <span className="mx-2">/</span>
@@ -193,9 +197,9 @@ export default function ProgrammaticPatternStatsPage() {
         ) : error || !data ? (
           <div className="text-center py-20 space-y-4">
             <h1 className="text-2xl font-bold text-foreground">{pName} — {acLabel} {tfLabel}</h1>
-            <p className="text-muted-foreground">Not enough data for this combination yet. We need at least a few resolved trades to generate statistics.</p>
+            <p className="text-muted-foreground">{t('patternStats.notEnoughDataCombo')}</p>
             <Button asChild variant="outline">
-              <Link to="/patterns/stats">Browse All Pattern Statistics</Link>
+              <Link to="/patterns/stats">{t('patternStats.browseAll')}</Link>
             </Button>
           </div>
         ) : (
@@ -208,22 +212,26 @@ export default function ProgrammaticPatternStatsPage() {
                 </h1>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <MetricTile icon={<TrendingUp className="h-5 w-5" />} label="Win Rate" value={`${(data.winRate * 100).toFixed(1)}%`} colorClass={wrColor(data.winRate)} />
-                  <MetricTile icon={<Target className="h-5 w-5" />} label="Avg Expectancy" value={`${data.avgExpectancy}R`} colorClass={expColor(data.avgExpectancy)} />
-                  <MetricTile icon={<BarChart3 className="h-5 w-5" />} label="Avg R:R" value={`${data.avgRR}:1`} colorClass="text-foreground" />
-                  <MetricTile icon={<Hash className="h-5 w-5" />} label="Total Trades" value={data.totalTrades.toLocaleString()} colorClass="text-foreground"
-                    badge={data.totalTrades >= 100 ? 'Significant' : data.totalTrades < 30 ? 'Emerging' : undefined}
+                  <MetricTile icon={<TrendingUp className="h-5 w-5" />} label={t('patternStats.winRate')} value={`${wrFormatted}%`} colorClass={wrColor(data.winRate)} />
+                  <MetricTile icon={<Target className="h-5 w-5" />} label={t('patternStats.avgExpectancy')} value={`${data.avgExpectancy}R`} colorClass={expColor(data.avgExpectancy)} />
+                  <MetricTile icon={<BarChart3 className="h-5 w-5" />} label={t('patternStats.avgRR')} value={`${data.avgRR}:1`} colorClass="text-foreground" />
+                  <MetricTile icon={<Hash className="h-5 w-5" />} label={t('patternStats.totalTrades')} value={data.totalTrades.toLocaleString()} colorClass="text-foreground"
+                    badge={data.totalTrades >= 100 ? t('patternStats.badgeSignificant') : data.totalTrades < 30 ? t('patternStats.badgeEmerging') : undefined}
                     badgeVariant={data.totalTrades >= 100 ? 'default' : 'secondary'}
                   />
                 </div>
 
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  The {pName} pattern on {acLabel} at the {tfLabel} timeframe has demonstrated a{' '}
-                  <strong className={wrColor(data.winRate)}>{(data.winRate * 100).toFixed(1)}%</strong> win rate across{' '}
-                  <strong>{data.totalTrades.toLocaleString()}</strong> backtested trades, with an average expectancy of{' '}
-                  <strong className={expColor(data.avgExpectancy)}>{data.avgExpectancy}R</strong> per trade —{' '}
-                  {data.winRate >= 0.5 ? 'outperforming' : 'underperforming'} the baseline 50% threshold by{' '}
-                  {Math.abs((data.winRate - 0.5) * 100).toFixed(1)} percentage points.
+                  {t('patternStats.heroSummary', {
+                    pattern: pName,
+                    asset: acLabel,
+                    timeframe: tfLabel,
+                    winRate: wrFormatted,
+                    trades: data.totalTrades.toLocaleString(),
+                    expectancy: data.avgExpectancy,
+                    performance: data.winRate >= 0.5 ? t('patternStats.outperforming') : t('patternStats.underperforming'),
+                    diff: diffFormatted,
+                  })}
                 </p>
               </section>
             </FadeSection>
@@ -231,7 +239,7 @@ export default function ProgrammaticPatternStatsPage() {
             {/* ── Section 2: What Is This Pattern? ─────────────────────────── */}
             <FadeSection>
               <section>
-                <h2 className="text-xl font-bold text-foreground mb-4">What Is the {pName}?</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.whatIsPattern', { pattern: pName })}</h2>
                 <div className="grid md:grid-cols-2 gap-8 items-start">
                   <p className="text-muted-foreground leading-relaxed">
                     {PATTERN_DESCRIPTIONS[patternSlug] || `The ${pName} is a chart pattern detected by ChartingPath's scanner.`}
@@ -247,16 +255,16 @@ export default function ProgrammaticPatternStatsPage() {
             {data.instrumentBreakdown.length > 0 && (
               <FadeSection>
                 <section>
-                  <h2 className="text-xl font-bold text-foreground mb-4">Performance by Market</h2>
+                  <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.performanceByMarket')}</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-[#2a2d3a] text-muted-foreground">
-                          <th className="text-left py-3 pr-4">Instrument</th>
-                          <th className="text-right py-3 px-4">Trades</th>
-                          <th className="text-right py-3 px-4">Win Rate</th>
-                          <th className="text-right py-3 px-4">Avg R</th>
-                          <th className="text-right py-3 pl-4">Grade</th>
+                          <th className="text-left py-3 pr-4">{t('patternStats.instrument')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.trades')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.winRate')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.avgRR')}</th>
+                          <th className="text-right py-3 pl-4">{t('patternStats.grade')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -281,7 +289,7 @@ export default function ProgrammaticPatternStatsPage() {
                   <div className="mt-4">
                     <Button asChild variant="outline" size="sm">
                       <Link to={`/patterns/live?pattern=${patternSlug}&timeframe=${timeframe}`}>
-                        View Live Setups <ArrowRight className="ml-1 h-4 w-4" />
+                        {t('patternStats.viewLiveSetups')} <ArrowRight className="ml-1 h-4 w-4" />
                       </Link>
                     </Button>
                   </div>
@@ -293,8 +301,8 @@ export default function ProgrammaticPatternStatsPage() {
             {data.monthlyBreakdown.some(m => m.trades > 0) && (
               <FadeSection>
                 <section>
-                  <h2 className="text-xl font-bold text-foreground mb-1">Is This Pattern's Edge Holding Up?</h2>
-                  <p className="text-sm text-muted-foreground mb-4">Monthly win rate over the last 12 months</p>
+                  <h2 className="text-xl font-bold text-foreground mb-1">{t('patternStats.edgeHoldingTitle')}</h2>
+                  <p className="text-sm text-muted-foreground mb-4">{t('patternStats.edgeHoldingSubtitle')}</p>
                   <div className="bg-[#1a1d27] rounded-lg p-4 h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={data.monthlyBreakdown.map(m => ({ ...m, winPct: +(m.winRate * 100).toFixed(1) }))}>
@@ -307,7 +315,7 @@ export default function ProgrammaticPatternStatsPage() {
                         <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
                         <Tooltip contentStyle={{ backgroundColor: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} labelStyle={{ color: '#9ca3af' }}
-                          formatter={(v: number) => [`${v}%`, 'Win Rate']}
+                          formatter={(v: number) => [`${v}%`, t('patternStats.winRate')]}
                         />
                         <Area type="monotone" dataKey="winPct" stroke="#f97316" fill="url(#wrGrad)" strokeWidth={2} />
                       </AreaChart>
@@ -320,9 +328,9 @@ export default function ProgrammaticPatternStatsPage() {
             {/* ── Section 5: Grade Distribution ────────────────────────────── */}
             <FadeSection>
               <section>
-                <h2 className="text-xl font-bold text-foreground mb-4">Grade Distribution</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.gradeDistribution')}</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Higher-graded instances historically perform better. Filter the Screener to Grade A/B for the strongest setups.
+                  {t('patternStats.gradeDistributionHint')}
                 </p>
                 <div className="bg-[#1a1d27] rounded-lg p-4 h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -353,11 +361,11 @@ export default function ProgrammaticPatternStatsPage() {
             {guide && (
               <FadeSection>
                 <section>
-                  <h2 className="text-xl font-bold text-foreground mb-4">How To Trade the {pName}</h2>
+                  <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.howToTrade', { pattern: pName })}</h2>
                   <div className="grid md:grid-cols-3 gap-4">
-                    <TradeCard icon={<Crosshair className="h-5 w-5 text-orange-400" />} title="Entry" body={`${guide.entry} On ${tfLabel} charts, this typically means waiting for the breakout candle to close.`} />
-                    <TradeCard icon={<Shield className="h-5 w-5 text-red-400" />} title="Stop Loss" body={`${guide.stopLoss} For ${pName}, the historical average R:R is ${data.avgRR}:1.`} />
-                    <TradeCard icon={<Target className="h-5 w-5 text-green-400" />} title="Take Profit" body={`${guide.takeProfit} The historical average R:R for this pattern on ${acLabel} ${tfLabel} is ${data.avgRR}:1.`} />
+                    <TradeCard icon={<Crosshair className="h-5 w-5 text-orange-400" />} title={t('patternStats.entry')} body={`${guide.entry} ${t('patternStats.onTimeframeCharts', { timeframe: tfLabel })}`} />
+                    <TradeCard icon={<Shield className="h-5 w-5 text-red-400" />} title={t('patternStats.stopLoss')} body={`${guide.stopLoss} ${t('patternStats.historicalAvgRR', { pattern: pName, rr: data.avgRR })}`} />
+                    <TradeCard icon={<Target className="h-5 w-5 text-green-400" />} title={t('patternStats.takeProfit')} body={`${guide.takeProfit} ${t('patternStats.historicalAvgRRTakeProfit', { asset: acLabel, timeframe: tfLabel, rr: data.avgRR })}`} />
                   </div>
                 </section>
               </FadeSection>
@@ -367,16 +375,16 @@ export default function ProgrammaticPatternStatsPage() {
             {data.timeframeComparison.length > 1 && (
               <FadeSection>
                 <section>
-                  <h2 className="text-xl font-bold text-foreground mb-4">Comparison With Other Timeframes</h2>
+                  <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.comparisonTimeframes')}</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-[#2a2d3a] text-muted-foreground">
-                          <th className="text-left py-3 pr-4">Timeframe</th>
-                          <th className="text-right py-3 px-4">Trades</th>
-                          <th className="text-right py-3 px-4">Win Rate</th>
-                          <th className="text-right py-3 px-4">Expectancy</th>
-                          <th className="text-right py-3 pl-4">View</th>
+                          <th className="text-left py-3 pr-4">{t('patternStats.timeframe')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.trades')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.winRate')}</th>
+                          <th className="text-right py-3 px-4">{t('patternStats.expectancy')}</th>
+                          <th className="text-right py-3 pl-4">{t('patternStats.view')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -391,7 +399,7 @@ export default function ProgrammaticPatternStatsPage() {
                               <tr key={row.timeframe} className={`border-b border-[#1a1d27] ${isCurrent ? 'bg-orange-500/10' : 'hover:bg-[#1a1d27]/50'}`}>
                                 <td className={`py-3 pr-4 font-medium ${isCurrent ? 'text-orange-400' : 'text-foreground'}`}>
                                   {TIMEFRAME_LABELS[row.timeframe] || row.timeframe}
-                                  {isCurrent && <span className="ml-2 text-xs text-orange-400">(current)</span>}
+                                  {isCurrent && <span className="ml-2 text-xs text-orange-400">({t('patternStats.current')})</span>}
                                 </td>
                                 <td className="text-right py-3 px-4 text-muted-foreground">{row.trades}</td>
                                 <td className={`text-right py-3 px-4 font-medium ${wrColor(row.winRate)}`}>{(row.winRate * 100).toFixed(0)}%</td>
@@ -416,7 +424,7 @@ export default function ProgrammaticPatternStatsPage() {
             {/* ── Section 8: Live Signals ──────────────────────────────────── */}
             <FadeSection>
               <section>
-                <h2 className="text-xl font-bold text-foreground mb-4">Live Signals Right Now</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.liveSignalsTitle')}</h2>
                 {liveSignals && liveSignals.length > 0 ? (
                   <div className="grid md:grid-cols-3 gap-4">
                     {liveSignals.map((sig: any) => (
@@ -426,11 +434,11 @@ export default function ProgrammaticPatternStatsPage() {
                           <span className="font-medium text-foreground text-sm">{sig.instrument}</span>
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
-                          <p>Entry: {sig.entry_price?.toFixed(4)}</p>
+                          <p>{t('patternStats.entry')}: {sig.entry_price?.toFixed(4)}</p>
                           <p>SL: {sig.stop_loss_price?.toFixed(4)} | TP: {sig.take_profit_price?.toFixed(4)}</p>
                         </div>
                         <Link to={`/patterns/live`} className="text-orange-400 text-xs hover:underline mt-2 inline-block">
-                          View Signal →
+                          {t('patternStats.viewSignal')}
                         </Link>
                       </div>
                     ))}
@@ -438,10 +446,10 @@ export default function ProgrammaticPatternStatsPage() {
                 ) : (
                   <div className="bg-[#1a1d27] rounded-lg p-6 text-center border border-[#2a2d3a]">
                     <p className="text-muted-foreground mb-3">
-                      No live {pName} setups on {acLabel} right now. Set an alert to be notified when one appears.
+                      {t('patternStats.noLiveSignals', { pattern: pName, asset: acLabel })}
                     </p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/members/alerts"><Bell className="mr-1 h-4 w-4" /> Set Alert</Link>
+                      <Link to="/members/alerts"><Bell className="mr-1 h-4 w-4" /> {t('patternStats.setAlert')}</Link>
                     </Button>
                   </div>
                 )}
@@ -451,49 +459,66 @@ export default function ProgrammaticPatternStatsPage() {
             {/* ── Section 9: FAQ ───────────────────────────────────────────── */}
             <FadeSection>
               <section>
-                <h2 className="text-xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t('patternStats.faqTitle')}</h2>
                 <Accordion type="single" collapsible className="space-y-2">
                   <AccordionItem value="works" className="border-[#2a2d3a] bg-[#1a1d27] rounded-lg px-4">
                     <AccordionTrigger className="text-foreground text-sm hover:no-underline">
-                      Does the {pName} pattern work on {acLabel}?
+                      {t('patternStats.faqWorksQuestion', { pattern: pName, asset: acLabel })}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      Based on {data.totalTrades.toLocaleString()} backtested trades on {acLabel} at the {tfLabel} timeframe, the {pName} pattern has a {(data.winRate * 100).toFixed(1)}% win rate with an average expectancy of {data.avgExpectancy}R. It {data.winRate >= 0.5 ? 'outperforms' : 'underperforms'} the 50% baseline, suggesting it {data.winRate >= 0.5 ? 'does have' : 'may not have'} a statistically meaningful edge in this market.
+                      {t('patternStats.faqWorksAnswer', {
+                        trades: data.totalTrades.toLocaleString(),
+                        asset: acLabel,
+                        timeframe: tfLabel,
+                        pattern: pName,
+                        winRate: wrFormatted,
+                        expectancy: data.avgExpectancy,
+                        performance: data.winRate >= 0.5 ? t('patternStats.outperforming') : t('patternStats.underperforming'),
+                        edge: data.winRate >= 0.5 ? t('patternStats.doesHaveEdge') : t('patternStats.mayNotHaveEdge'),
+                      })}
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="best-tf" className="border-[#2a2d3a] bg-[#1a1d27] rounded-lg px-4">
                     <AccordionTrigger className="text-foreground text-sm hover:no-underline">
-                      What is the best timeframe for {pName} on {acLabel}?
+                      {t('patternStats.faqBestTfQuestion', { pattern: pName, asset: acLabel })}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
                       {data.timeframeComparison.length > 0
-                        ? `Based on our data, the ${TIMEFRAME_LABELS[data.timeframeComparison.sort((a, b) => b.expectancy - a.expectancy)[0]?.timeframe] || 'Daily'} timeframe shows the highest expectancy for ${pName} on ${acLabel}. See the timeframe comparison table above for full details.`
-                        : `We're still gathering data across timeframes for this combination.`}
+                        ? t('patternStats.faqBestTfAnswer', {
+                            timeframe: TIMEFRAME_LABELS[data.timeframeComparison.sort((a, b) => b.expectancy - a.expectancy)[0]?.timeframe] || 'Daily',
+                            pattern: pName,
+                            asset: acLabel,
+                          })
+                        : t('patternStats.faqBestTfNoData')}
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="sample" className="border-[#2a2d3a] bg-[#1a1d27] rounded-lg px-4">
                     <AccordionTrigger className="text-foreground text-sm hover:no-underline">
-                      How many trades is this based on?
+                      {t('patternStats.faqSampleQuestion')}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      {data.totalTrades.toLocaleString()} historical trades{data.earliestDate ? ` between ${data.earliestDate.split('T')[0]} and ${data.lastUpdated.split('T')[0]}` : ''}, sourced from ChartingPath's Edge Atlas database of 320,000+ pattern outcomes.
+                      {t('patternStats.faqSampleAnswer', {
+                        trades: data.totalTrades.toLocaleString(),
+                        from: data.earliestDate?.split('T')[0] || '—',
+                        to: data.lastUpdated.split('T')[0],
+                      })}
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="calc" className="border-[#2a2d3a] bg-[#1a1d27] rounded-lg px-4">
                     <AccordionTrigger className="text-foreground text-sm hover:no-underline">
-                      How is the win rate calculated?
+                      {t('patternStats.faqCalcQuestion')}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      A trade is counted as a win when price reaches the take profit level before the stop loss level. Timeouts — trades where neither level is hit — are excluded from win rate calculations but included in expectancy calculations.
+                      {t('patternStats.faqCalcAnswer')}
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="alert" className="border-[#2a2d3a] bg-[#1a1d27] rounded-lg px-4">
                     <AccordionTrigger className="text-foreground text-sm hover:no-underline">
-                      Can I get alerted when a {pName} appears on {acLabel}?
+                      {t('patternStats.faqAlertQuestion', { pattern: pName, asset: acLabel })}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      Yes. ChartingPath scans {acLabel} markets every hour for new {pName} formations.{' '}
-                      <Link to="/members/alerts" className="text-orange-400 hover:underline">Set up an alert →</Link>
+                      {t('patternStats.faqAlertAnswer', { asset: acLabel, pattern: pName })}{' '}
+                      <Link to="/members/alerts" className="text-orange-400 hover:underline">{t('patternStats.faqAlertLink')}</Link>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -504,17 +529,17 @@ export default function ProgrammaticPatternStatsPage() {
             <FadeSection>
               <section className="bg-[#1a1d27] rounded-xl border border-orange-500/30 p-8 text-center">
                 <h2 className="text-xl font-bold text-foreground mb-3">
-                  Ready to trade {pName} with statistical confidence?
+                  {t('patternStats.ctaTitle', { pattern: pName })}
                 </h2>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
                     <Link to={`/patterns/live?pattern=${patternSlug}`}>
-                      See Live {pName} Setups <ArrowRight className="ml-1 h-4 w-4" />
+                      {t('patternStats.ctaLiveSetups', { pattern: pName })} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
                     <Link to="/projects/pattern-lab/new">
-                      <FlaskConical className="mr-1 h-4 w-4" /> Run a Custom Backtest
+                      <FlaskConical className="mr-1 h-4 w-4" /> {t('patternStats.ctaBacktest')}
                     </Link>
                   </Button>
                 </div>
