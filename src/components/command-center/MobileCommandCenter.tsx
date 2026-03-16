@@ -354,8 +354,10 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
    }, []);
  
    const handleCloseOccurrence = useCallback(() => {
+     ++occurrenceRequestIdRef.current;
      setSelectedOccurrence(null);
      setOccurrenceSetup(null);
+     setLoadingOccurrence(false);
    }, []);
  
    const handleOpenFullChartFromOccurrence = useCallback(() => {
