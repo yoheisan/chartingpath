@@ -67,7 +67,13 @@ function incrementGuestMsgCount(): number {
   return next;
 }
 
-const QUICK_PROMPTS = [
+const GUEST_QUICK_PROMPTS = [
+  { label: "What bull flag setups are active right now?", icon: TrendingUp },
+  { label: "Which patterns have the highest win rate on forex?", icon: BarChart3 },
+  { label: "Show me the best crypto setups today", icon: Sparkles },
+];
+
+const AUTH_QUICK_PROMPTS = [
   { label: "Increase take rate by 5%", icon: TrendingUp },
   { label: "Make scoring more conservative", icon: Sparkles },
   { label: "Show current scoring weights", icon: Sparkles },
