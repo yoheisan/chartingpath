@@ -100,6 +100,7 @@ export function EdgeAtlasSection() {
   const [liveCountMap, setLiveCountMap] = useState<Record<string, number>>({});
   const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Fetch total active setup counts per asset class (once on mount)
   useEffect(() => {
