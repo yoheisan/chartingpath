@@ -471,6 +471,20 @@ export function EdgeAtlasSection() {
                       <FlaskConical className="h-3 w-3" />
                       {t('edgeAtlas.validate')}
                     </Button>
+                    {!user && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-8 gap-1 text-muted-foreground hover:text-primary"
+                        onClick={() => {
+                          trackEvent('landing.cta_click', { button: 'edge_atlas_get_alerted', pattern: r.pattern_name });
+                          navigate(`/auth?mode=signup&intent=alert&pattern=${encodeURIComponent(r.pattern_id)}`);
+                        }}
+                      >
+                        <Bell className="h-3 w-3" />
+                        {t('edgeAtlas.getAlerted', 'Get alerted')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
