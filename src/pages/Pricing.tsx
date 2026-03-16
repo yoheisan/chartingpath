@@ -143,6 +143,7 @@ const Pricing = () => {
         "15+ patterns",
         "500 active alerts",
         "3000 credits/month",
+        "Unlimited scripts",
         "Full 10-year backtesting",
         "Priority queues & VIP support",
         "Early access to new features",

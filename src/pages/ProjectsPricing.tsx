@@ -244,6 +244,12 @@ const ProjectsPricing = () => {
                     <span className="font-semibold text-foreground">{tier.config.maxActiveAlerts}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Scripts</span>
+                    <span className="font-semibold text-foreground">
+                      {tier.config.monthlyScripts === -1 ? p('labels.unlimited') : `${tier.config.monthlyScripts}/mo`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{p('labels.instruments')}</span>
                     <span className="font-semibold text-foreground">
                       {tier.config.projects.setup_finder.maxInstruments}/run
