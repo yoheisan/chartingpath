@@ -26,6 +26,7 @@ import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/Grad
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
+import { PageMeta } from '@/components/PageMeta';
 import { 
   DATA_COVERAGE, 
   getValidLookbackOptions, 
