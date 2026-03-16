@@ -485,7 +485,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               </div>
               <div className="space-y-1.5">
                 <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.trySaying', 'Try saying:')}</p>
-                {QUICK_PROMPTS.map((p) => (
+                {(isAuthenticated ? AUTH_QUICK_PROMPTS : GUEST_QUICK_PROMPTS).map((p) => (
                   <button
                     key={p.label}
                     className="w-full text-left text-sm px-3 py-2 rounded-md border border-border/50 hover:bg-muted/50 hover:border-border transition-colors"
