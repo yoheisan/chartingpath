@@ -966,30 +966,23 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
       if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
 
-        // Find the bar matching the pattern's detectedAt timestamp
-        const detectedDate = currentPattern.detectedAt?.split('T')[0];
+        // Determine target timestamp for the entry marker
         const detectedTs = currentPattern.detectedAt ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000) : null;
-        
-        // Try exact timestamp match first, then date match, then fall back to last bar
-        let matchBarIdx = detectedTs 
-          ? safeChartData.findIndex(b => (b.time as number) === detectedTs)
-          : -1;
-        if (matchBarIdx < 0 && detectedDate) {
-          matchBarIdx = bars.findIndex(b => b.t.split('T')[0] === detectedDate);
-        }
-        // If no match found, use the last bar in the pattern's own bars array
-        if (matchBarIdx < 0 && currentPattern.bars && currentPattern.bars.length > 0) {
-          const lastPatternBar = currentPattern.bars[currentPattern.bars.length - 1];
-          const lastPatternTs = Math.floor(new Date(lastPatternBar.t).getTime() / 1000);
-          matchBarIdx = safeChartData.findIndex(b => (b.time as number) === lastPatternTs);
-        }
-        if (matchBarIdx < 0) matchBarIdx = safeChartData.length - 1;
+        const lastPatternBarTs = (currentPattern.bars && currentPattern.bars.length > 0)
+          ? Math.floor(new Date(currentPattern.bars[currentPattern.bars.length - 1].t).getTime() / 1000)
+          : null;
+        const targetTs = detectedTs || lastPatternBarTs || (safeChartData[safeChartData.length - 1].time as number);
 
-        const matchBar = safeChartData[matchBarIdx];
-        const matchBarData = bars[matchBarIdx] || bars[bars.length - 1];
+        // Snap to nearest actual chart candle (prevents floating markers)
+        const anchorTime = findNearestCandleTime(safeChartData, targetTs);
+        
+        // Find the bar data at the snapped time for price snapping
+        const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
+        const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : bars[bars.length - 1];
+
         canvasTriangleMarkers.push({
-          time: matchBar.time as number,
-          price: isLong ? (matchBarData?.l ?? currentPattern.entryPrice) : (matchBarData?.h ?? currentPattern.entryPrice),
+          time: anchorTime,
+          price: isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice),
           direction: isLong ? 'up' : 'down',
           color: '#3b82f6',
           label: '',
