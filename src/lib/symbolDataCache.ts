@@ -2,17 +2,27 @@ import type { CompressedBar } from '@/types/VisualSpec';
 
 /**
  * In-memory LRU cache for symbol OHLCV data.
- * Keeps the last N symbols in memory for instant chart switching.
- * Falls through to DB/API on cache miss.
+ * 
+ * ACCUMULATING MODE (v2):
+ * Instead of replacing bars on each write, new bars are merged into the
+ * existing dataset:
+ *   - New timestamps are appended
+ *   - Existing timestamps are updated (latest OHLCV wins — handles forming candles)
+ *   - Result is always sorted chronologically
+ * 
+ * This allows the chart to grow over time within a session while keeping
+ * the memory footprint bounded by maxBarsPerKey.
  */
 class SymbolDataLRUCache {
   private cache = new Map<string, { bars: CompressedBar[]; ts: number }>();
   private maxEntries: number;
   private maxAgeMs: number;
+  private maxBarsPerKey: number;
 
-  constructor(maxEntries = 30, maxAgeMs = 5 * 60 * 1000) {
+  constructor(maxEntries = 30, maxAgeMs = 5 * 60 * 1000, maxBarsPerKey = 2000) {
     this.maxEntries = maxEntries;
     this.maxAgeMs = maxAgeMs;
+    this.maxBarsPerKey = maxBarsPerKey;
   }
 
   /**
@@ -37,16 +47,67 @@ class SymbolDataLRUCache {
   }
 
   /**
-   * Store bars in cache. Evicts oldest entry if at capacity.
+   * Merge new bars into the cache for a given key.
+   * - Existing candles are updated with the latest OHLCV values
+   * - New candles are appended
+   * - Result is sorted by timestamp and trimmed to maxBarsPerKey
    */
-  set(key: string, bars: CompressedBar[]): void {
-    // Evict oldest if at capacity
+  set(key: string, incomingBars: CompressedBar[]): void {
+    // Evict oldest if at capacity and this is a new key
     if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
       const oldest = this.cache.keys().next().value;
       if (oldest) this.cache.delete(oldest);
     }
 
-    this.cache.set(key, { bars, ts: Date.now() });
+    const existing = this.cache.get(key);
+
+    if (!existing || existing.bars.length === 0) {
+      // No prior data — store directly (trim to cap)
+      const trimmed = incomingBars.length > this.maxBarsPerKey
+        ? incomingBars.slice(incomingBars.length - this.maxBarsPerKey)
+        : incomingBars;
+      this.cache.set(key, { bars: trimmed, ts: Date.now() });
+      return;
+    }
+
+    // Merge: build a map keyed by timestamp, incoming wins on conflict
+    const barMap = new Map<string, CompressedBar>();
+    for (const bar of existing.bars) {
+      barMap.set(bar.t, bar);
+    }
+    for (const bar of incomingBars) {
+      barMap.set(bar.t, bar); // update existing or add new
+    }
+
+    // Sort chronologically
+    let merged = Array.from(barMap.values()).sort((a, b) => {
+      if (a.t < b.t) return -1;
+      if (a.t > b.t) return 1;
+      return 0;
+    });
+
+    // Trim to cap — keep the most recent bars
+    if (merged.length > this.maxBarsPerKey) {
+      merged = merged.slice(merged.length - this.maxBarsPerKey);
+    }
+
+    this.cache.set(key, { bars: merged, ts: Date.now() });
+  }
+
+  /**
+   * Replace bars entirely (for initial load or symbol change).
+   * Use this when you want to reset accumulated data.
+   */
+  replace(key: string, bars: CompressedBar[]): void {
+    if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
+      const oldest = this.cache.keys().next().value;
+      if (oldest) this.cache.delete(oldest);
+    }
+
+    const trimmed = bars.length > this.maxBarsPerKey
+      ? bars.slice(bars.length - this.maxBarsPerKey)
+      : bars;
+    this.cache.set(key, { bars: trimmed, ts: Date.now() });
   }
 
   /**
@@ -71,6 +132,14 @@ class SymbolDataLRUCache {
   }
 
   /**
+   * Get the number of bars stored for a key (without triggering expiry check)
+   */
+  barCount(key: string): number {
+    const entry = this.cache.get(key);
+    return entry?.bars.length ?? 0;
+  }
+
+  /**
    * Get cache stats for debugging
    */
   get stats() {
@@ -78,12 +147,16 @@ class SymbolDataLRUCache {
       size: this.cache.size,
       maxEntries: this.maxEntries,
       keys: Array.from(this.cache.keys()),
+      barCounts: Object.fromEntries(
+        Array.from(this.cache.entries()).map(([k, v]) => [k, v.bars.length])
+      ),
     };
   }
 }
 
 /**
  * Global singleton — shared across all dashboard components.
- * 30 entries × ~500 bars × ~50 bytes ≈ 750KB max memory footprint.
+ * 30 entries × up to 2000 bars × ~50 bytes ≈ 3MB max memory footprint.
+ * maxAge bumped to 30 minutes since bars now accumulate within a session.
  */
-export const symbolDataCache = new SymbolDataLRUCache(30, 5 * 60 * 1000);
+export const symbolDataCache = new SymbolDataLRUCache(30, 30 * 60 * 1000, 2000);
