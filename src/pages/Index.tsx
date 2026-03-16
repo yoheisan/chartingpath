@@ -20,6 +20,7 @@ import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
+import LivePatternPreview from '@/components/landing/LivePatternPreview';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -183,6 +184,9 @@ const Index = () => {
           <MetricStrip />
         </div>
       </section>
+
+      {/* Live Pattern Preview — visual proof above the fold */}
+      <LivePatternPreview />
 
       {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
       <div ref={howItWorksRef} className="border-t border-border/20">
