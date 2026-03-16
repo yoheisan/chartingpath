@@ -160,6 +160,7 @@ export const PLANS_CONFIG: PlansConfig = {
     },
     TEAM: {
       monthlyCredits: 3000,
+      monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
       maxWatchlistSlots: 9999, // Unlimited custom tickers
