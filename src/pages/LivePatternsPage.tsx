@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
+import { PageMeta } from '@/components/PageMeta';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {

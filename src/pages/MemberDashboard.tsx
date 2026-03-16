@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CommandCenterLayout } from "@/components/command-center";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
+import { PageMeta } from '@/components/PageMeta';
 import type { SetupWithVisuals } from "@/types/VisualSpec";
 
 /** Route state passed when navigating from Historical Occurrences for playback */

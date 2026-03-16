@@ -18,6 +18,7 @@ import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";

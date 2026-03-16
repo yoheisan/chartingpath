@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { PageMeta } from '@/components/PageMeta';
 
 const AgentScoring = () => {
   const { t } = useTranslation();

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackPricingClicked, trackCheckoutStarted, track } from "@/services/analytics";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from '@/components/PageMeta';
 
 const Pricing = () => {
   const { t } = useTranslation();

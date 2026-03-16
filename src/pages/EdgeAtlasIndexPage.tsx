@@ -4,6 +4,7 @@ import { ALL_PATTERN_IDS, PATTERN_DISPLAY_NAMES } from "@/hooks/useScreenerCaps"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from '@/components/PageMeta';
 
 const BULLISH_PATTERNS = new Set([
   "donchian-breakout-long",
