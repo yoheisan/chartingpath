@@ -80,6 +80,7 @@ export const PLANS_CONFIG: PlansConfig = {
   tiers: {
     FREE: {
       monthlyCredits: 50,
+      monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
       maxWatchlistSlots: 0, // No custom watchlist monitoring
