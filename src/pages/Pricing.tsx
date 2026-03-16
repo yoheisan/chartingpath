@@ -75,7 +75,8 @@ const Pricing = () => {
       ],
       popular: false,
       icon: Zap,
-      cta: 'Get Started Free',
+      cta: 'Start Free Now →',
+      freeTagline: 'Start free today — no credit card, no time limit. Upgrade when you\'re ready.',
     },
     {
       key: 'plus',
