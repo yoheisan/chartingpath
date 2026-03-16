@@ -104,6 +104,7 @@ const Pricing = () => {
         "Full pattern library (12+)",
         "100 active alerts",
         "900 credits/month",
+        "100 scripts/month",
         "Script export (TV, MT4/MT5)",
         "Full backtesting (5+ years)",
         "Advanced trade analytics",
