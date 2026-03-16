@@ -82,6 +82,7 @@ const MemberScripts = () => {
   const timeframeParam = searchParams.get('timeframe');
   const instrumentsParam = searchParams.get('instruments');
   const instrumentParam = searchParams.get('instrument'); // single instrument context
+  const symbolParam = searchParams.get('symbol'); // ticker for edge insights
   const winnersParam = searchParams.get('winners');
   const losersParam = searchParams.get('losers');
   
