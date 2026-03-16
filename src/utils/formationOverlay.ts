@@ -157,6 +157,45 @@ function findPivotBarIndex(pivot: ZigZagPivot, bars: CompressedBar[]): number {
  * Build interpolated zone polygon points from upper and lower trendlines.
  * Returns pairs of {upper, lower} at each time point for canvas drawing.
  */
+/**
+ * Snap all formation overlay times to the nearest chart candle time.
+ * This prevents zigzag lines and markers from floating in empty space
+ * when pattern bar timestamps don't exactly match chart bar timestamps.
+ */
+export function snapFormationToChartTimes(
+  formation: FormationOverlayData,
+  chartData: Array<{ time: unknown }>
+): FormationOverlayData {
+  if (chartData.length === 0) return formation;
+
+  const snapTime = (t: Time): Time => {
+    const target = t as number;
+    let bestTime = chartData[0].time as number;
+    let bestDiff = Math.abs(bestTime - target);
+    for (let i = 1; i < chartData.length; i++) {
+      const ct = chartData[i].time as number;
+      const diff = Math.abs(ct - target);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestTime = ct;
+      } else if (diff > bestDiff) {
+        break;
+      }
+    }
+    return bestTime as unknown as Time;
+  };
+
+  const snapLine = (line: FormationLineData[]): FormationLineData[] =>
+    line.map(p => ({ time: snapTime(p.time), value: p.value }));
+
+  return {
+    zigzag: snapLine(formation.zigzag),
+    upperTrend: snapLine(formation.upperTrend),
+    lowerTrend: snapLine(formation.lowerTrend),
+    hasZone: formation.hasZone,
+  };
+}
+
 export function buildZonePoints(
   upperTrend: FormationLineData[],
   lowerTrend: FormationLineData[]
