@@ -188,14 +188,14 @@ const Index = () => {
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
 
-      {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
-      <div ref={howItWorksRef} className="border-t border-border/20">
-        <HowItWorks />
-      </div>
-
       {/* AI Copilot */}
       <div ref={copilotRef} className="border-t border-border/20">
         <CopilotShowcase />
+      </div>
+
+      {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
+      <div ref={howItWorksRef} className="border-t border-border/20">
+        <HowItWorks />
       </div>
 
       {/* Mid-page Signup CTA */}
