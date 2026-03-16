@@ -135,33 +135,24 @@ export default function ProgrammaticPatternStatsPage() {
     : `Historical backtest statistics for ${pName} on ${acLabel} at ${tfLabel} timeframe. Powered by ChartingPath's Edge Atlas database.`;
   const canonical = `https://chartingpath.com/patterns/stats/${patternSlug}/${assetClass}/${timeframe}`;
 
+  // Inject JSON-LD
+  useJsonLd(data ? {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: `${pName} ${acLabel} ${tfLabel} Backtest Statistics`,
+    description: `Historical backtest results for ${pName} pattern on ${acLabel} at ${tfLabel} timeframe`,
+    creator: { '@type': 'Organization', name: 'ChartingPath' },
+    dateModified: data.lastUpdated?.split('T')[0],
+    variableMeasured: ['Win Rate', 'Expectancy', 'Risk Reward Ratio', 'Sample Size'],
+  } : null);
+
   return (
     <article className="min-h-screen bg-[#0f1117]">
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDesc} />
-        <link rel="canonical" href={canonical} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDesc} />
-        <meta property="og:url" content={canonical} />
-        <meta property="og:type" content="article" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDesc} />
-        {data && (
-          <script type="application/ld+json">
-            {JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Dataset',
-              name: `${pName} ${acLabel} ${tfLabel} Backtest Statistics`,
-              description: `Historical backtest results for ${pName} pattern on ${acLabel} at ${tfLabel} timeframe`,
-              creator: { '@type': 'Organization', name: 'ChartingPath' },
-              dateModified: data.lastUpdated?.split('T')[0],
-              variableMeasured: ['Win Rate', 'Expectancy', 'Risk Reward Ratio', 'Sample Size'],
-            })}
-          </script>
-        )}
-      </Helmet>
+      <PageMeta
+        title={pageTitle}
+        description={pageDesc}
+        canonicalPath={`/patterns/stats/${patternSlug}/${assetClass}/${timeframe}`}
+      />
 
       <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 space-y-12">
         {/* Breadcrumb */}

@@ -35,11 +35,11 @@ export default function PatternStatsIndexPage() {
 
   return (
     <article className="min-h-screen bg-[#0f1117]">
-      <Helmet>
-        <title>Chart Pattern Statistics — Backtested Win Rates & Performance Data | ChartingPath</title>
-        <meta name="description" content="Comprehensive chart pattern backtest statistics across forex, crypto, stocks and commodities. Real win rates, expectancy data, and R:R ratios from 320,000+ historical trades." />
-        <link rel="canonical" href="https://chartingpath.com/patterns/stats" />
-      </Helmet>
+      <PageMeta
+        title="Chart Pattern Statistics — Backtested Win Rates & Performance Data | ChartingPath"
+        description="Comprehensive chart pattern backtest statistics across forex, crypto, stocks and commodities. Real win rates, expectancy data, and R:R ratios from 320,000+ historical trades."
+        canonicalPath="/patterns/stats"
+      />
 
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
         {/* Hero */}
