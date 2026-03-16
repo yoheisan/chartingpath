@@ -36,6 +36,12 @@ const Index = () => {
   const copilotRef = useSectionTracking('copilot');
   const pricingRef = useSectionTracking('pricing');
 
+  // Track landing page view for KPI funnel
+  useEffect(() => {
+    track('landing_cta_setup_finder', { context: 'landing_view' });
+    trackEvent('landing_view', { path: '/' });
+  }, []);
+
   useEffect(() => {
     prefetchArticles();
   }, [prefetchArticles]);
