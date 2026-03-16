@@ -354,6 +354,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
+    monthlyScripts: -1,
     maxActiveAlerts: 500,
     bestFor: 'Trading teams & portfolio managers',
     color: 'text-amber-500'
