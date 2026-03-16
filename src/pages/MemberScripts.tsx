@@ -14,8 +14,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { 
   Download, Code, ArrowLeft, Lock, ArrowRight, Copy, Check,
   FileCode, FlaskConical, Zap, Trash2, Clock, Save, LayoutGrid, List,
-  ChevronDown, ChevronUp, ScanSearch, Shield
+  ChevronDown, ChevronUp, ScanSearch, Shield, Search
 } from "lucide-react";
+import { EdgeInsightsPanel, useEdgeData } from "@/components/scripts/EdgeInsightsPanel";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -81,6 +82,7 @@ const MemberScripts = () => {
   const timeframeParam = searchParams.get('timeframe');
   const instrumentsParam = searchParams.get('instruments');
   const instrumentParam = searchParams.get('instrument'); // single instrument context
+  const symbolParam = searchParams.get('symbol'); // ticker for edge insights
   const winnersParam = searchParams.get('winners');
   const losersParam = searchParams.get('losers');
   
@@ -127,6 +129,19 @@ const MemberScripts = () => {
   const [scriptsView, setScriptsView] = useState<'grid' | 'list'>('grid');
   const [patternsOpen, setPatternsOpen] = useState(!isFromPatternLab); // Collapse if pre-filled
   const [riskOpen, setRiskOpen] = useState(false);
+  
+  // Ticker for edge insights
+  const [edgeTicker, setEdgeTicker] = useState(instrumentParam || symbolParam || '');
+  const edgeData = useEdgeData(edgeTicker || null);
+  
+  const handleSelectWinners = (patternIds: string[]) => {
+    setSelectedPatterns(patternIds);
+    toast({ title: 'Winners Selected', description: `${patternIds.length} patterns with positive edge selected` });
+  };
+  const handleDeselectLosers = (loserIds: string[]) => {
+    setSelectedPatterns(prev => prev.filter(p => !loserIds.includes(p)));
+    toast({ title: 'Losers Removed', description: `${loserIds.length} patterns with negative edge deselected` });
+  };
   
   // Load saved scripts
   useEffect(() => {
@@ -414,6 +429,38 @@ const MemberScripts = () => {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Configuration Panel */}
             <div className="lg:col-span-1 space-y-4">
+              {/* Ticker Input for Edge Insights */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    Instrument Edge
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Enter a ticker to see which patterns work best
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. AAPL, EURUSD, BTC"
+                      value={edgeTicker}
+                      onChange={(e) => setEdgeTicker(e.target.value.toUpperCase())}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Edge Insights Panel */}
+              {edgeTicker && (
+                <EdgeInsightsPanel
+                  symbol={edgeTicker}
+                  onSelectWinners={handleSelectWinners}
+                  onDeselectLosers={handleDeselectLosers}
+                />
+              )}
+
               {/* Pattern Selection */}
               <Collapsible open={patternsOpen} onOpenChange={setPatternsOpen}>
                 <Card className={patternsOpen ? '' : 'border-primary/40'}>
@@ -466,6 +513,16 @@ const MemberScripts = () => {
                                     className="h-3.5 w-3.5"
                                   />
                                   <span className="text-sm flex-1">{t(`patternNames.${p.name}`, p.name)}</span>
+                                  {/* Edge badge */}
+                                  {edgeTicker && (() => {
+                                    const edge = edgeData.get(p.id);
+                                    if (!edge || !edge.sufficient) return <Badge variant="outline" className="text-[10px] px-1.5 text-muted-foreground border-muted">No data</Badge>;
+                                    return (
+                                      <Badge variant="outline" className={`text-[10px] px-1.5 ${edge.hasEdge ? 'text-emerald-600 border-emerald-500/30' : 'text-destructive border-destructive/30'}`}>
+                                        {edge.win_rate_pct}% WR
+                                      </Badge>
+                                    );
+                                  })()}
                                   <Badge variant="outline" className={`text-[10px] px-1.5 ${
                                     p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'
                                   }`}>
