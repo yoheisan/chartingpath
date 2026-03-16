@@ -3,6 +3,7 @@ import { trackEvent } from '@/lib/analytics';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -437,17 +438,33 @@ const MemberScripts = () => {
                     Instrument Edge
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Enter a ticker to see which patterns work best
+                    Search for an instrument to see which patterns work best
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g. AAPL, EURUSD, BTC"
-                      value={edgeTicker}
-                      onChange={(e) => setEdgeTicker(e.target.value.toUpperCase())}
-                      className="font-mono text-sm"
+                  <div className="flex gap-2 items-center">
+                    <UniversalSymbolSearch
+                      onSelect={(symbol) => setEdgeTicker(symbol.toUpperCase())}
+                      trigger={
+                        <Button variant="outline" className="w-full justify-start font-mono text-sm h-9">
+                          {edgeTicker ? (
+                            <span className="text-foreground">{edgeTicker}</span>
+                          ) : (
+                            <span className="text-muted-foreground">e.g. AAPL, EURUSD, BTC</span>
+                          )}
+                        </Button>
+                      }
                     />
+                    {edgeTicker && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => setEdgeTicker('')}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
