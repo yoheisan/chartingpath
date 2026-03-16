@@ -226,6 +226,8 @@ const App = () => (
           <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
           <Route path="/patterns/:patternId/statistics" element={withSuspense(<PatternStatisticsPage />)} />
           <Route path="/patterns/:patternId/:instrument/statistics" element={withSuspense(<InstrumentPatternStatsPage />)} />
+          <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />
+          <Route path="/patterns/stats/:patternSlug/:assetClass/:timeframe" element={withSuspense(<ProgrammaticPatternStatsPage />)} />
           <Route path="/instruments/:symbol" element={withSuspense(<InstrumentPage />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
