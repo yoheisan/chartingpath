@@ -45,6 +45,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
+// ─── JSON-LD injection hook ─────────────────────────────────────────────────
+function useJsonLd(jsonLd: Record<string, any> | null) {
+  useEffect(() => {
+    if (!jsonLd) return;
+    const id = 'pattern-stats-jsonld';
+    let el = document.getElementById(id) as HTMLScriptElement | null;
+    if (!el) {
+      el = document.createElement('script');
+      el.id = id;
+      el.type = 'application/ld+json';
+      document.head.appendChild(el);
+    }
+    el.textContent = JSON.stringify(jsonLd);
+    return () => { el?.remove(); };
+  }, [jsonLd]);
+}
 // ─── Fade-in on scroll ──────────────────────────────────────────────────────
 function FadeSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
