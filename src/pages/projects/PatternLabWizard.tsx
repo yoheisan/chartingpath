@@ -26,6 +26,7 @@ import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/Grad
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
+import { PageMeta } from '@/components/PageMeta';
 import { 
   DATA_COVERAGE, 
   getValidLookbackOptions, 
@@ -615,6 +616,11 @@ const PatternLabWizard = () => {
   
   return (
     <div className="min-h-screen bg-background flex">
+      <PageMeta
+        title="Backtest Any Chart Pattern in 60 Seconds — No Code | ChartingPath"
+        description="Run a backtest on any chart pattern across any instrument and timeframe. See win rate, expectancy, and R:R from years of historical data. Free to try."
+        canonicalPath="/projects/pattern-lab/new"
+      />
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
         <div className="w-[420px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">

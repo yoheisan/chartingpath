@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackPricingClicked, trackCheckoutStarted, track } from "@/services/analytics";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from '@/components/PageMeta';
 
 const Pricing = () => {
   const { t } = useTranslation();
@@ -157,6 +158,11 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="Pricing — Free Forever Tier Available | ChartingPath"
+        description="Start free with 50 credits per month, 3 active alerts and live screener access. Upgrade to Lite or Pro for more backtests, alerts and advanced features."
+        canonicalPath="/projects/pricing"
+      />
       <div className="container mx-auto px-6 py-8 max-w-5xl">
         {/* Back Navigation */}
         <div className="mb-6">

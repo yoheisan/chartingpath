@@ -3,10 +3,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, FlaskConical, Info, Zap } from 'lucide-react';
+import { Trophy, FlaskConical, Info, Zap, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Tooltip,
   TooltipContent,
@@ -99,6 +100,7 @@ export function EdgeAtlasSection() {
   const [liveCountMap, setLiveCountMap] = useState<Record<string, number>>({});
   const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Fetch total active setup counts per asset class (once on mount)
   useEffect(() => {
@@ -469,6 +471,20 @@ export function EdgeAtlasSection() {
                       <FlaskConical className="h-3 w-3" />
                       {t('edgeAtlas.validate')}
                     </Button>
+                    {!user && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-8 gap-1 text-muted-foreground hover:text-primary"
+                        onClick={() => {
+                          trackEvent('landing.cta_click', { button: 'edge_atlas_get_alerted', pattern: r.pattern_name });
+                          navigate(`/auth?mode=signup&intent=alert&pattern=${encodeURIComponent(r.pattern_id)}`);
+                        }}
+                      >
+                        <Bell className="h-3 w-3" />
+                        {t('edgeAtlas.getAlerted', 'Get alerted')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );

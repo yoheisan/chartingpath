@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Layers, Database, Clock } from "lucide-react";
+import { BarChart3, Layers, Database, Clock, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MetricProps {
@@ -68,10 +68,11 @@ export const MetricStrip = () => {
   }, []);
 
   const metrics: MetricProps[] = [
-    { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
-    { value: 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
-    { value: 320000, suffix: "+", label: t("metrics.trades", "Backtested Outcomes"), icon: Database },
-    { value: 62, suffix: "%", label: t("metrics.avgWinRate", "Avg Win Rate (A-Grade)"), icon: Clock },
+    { value: tickerCount, suffix: "+", label: t("metrics.instruments", "Instruments Scanned Every Hour"), icon: BarChart3 },
+    { value: 17, suffix: "", label: t("metrics.patterns", "Pattern Types Detected"), icon: Layers },
+    { value: 320000, suffix: "+", label: t("metrics.trades", "Trades Backtested For You"), icon: Database },
+    { value: 1, suffix: "h", label: t("metrics.refresh", "Live Data Refresh"), icon: Clock },
+    { value: 62, suffix: "%", label: t("metrics.avgWinRate", "Avg Win Rate — Grade A Signals"), icon: Target },
   ];
 
   return (

@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
+import { PageMeta } from '@/components/PageMeta';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
@@ -1027,6 +1028,11 @@ export default function LivePatternsPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <PageMeta
+        title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
+        description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
+        canonicalPath="/patterns/live"
+      />
       {/* Copilot Sidebar */}
       {showCopilot && !isMobile && (
         <div className="w-[420px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">

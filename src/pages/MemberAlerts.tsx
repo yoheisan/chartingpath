@@ -18,6 +18,7 @@ import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { AuthGateDialog } from "@/components/AuthGateDialog";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
@@ -513,6 +514,11 @@ const MemberAlerts = () => {
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <PageMeta
+        title="Pattern Alert System — Get Notified When Patterns Form | ChartingPath"
+        description="Set email alerts for any chart pattern on any instrument. ChartingPath scans 800+ markets every hour and notifies you the moment your pattern appears."
+        canonicalPath="/members/alerts"
+      />
       
       {/* Back Navigation */}
       <div className="mb-6">
