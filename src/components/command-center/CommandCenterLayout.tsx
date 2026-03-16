@@ -454,8 +454,12 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
   }, []);
 
   const handleCloseOccurrence = useCallback(() => {
+    // Bump request id to cancel any in-flight fetch so its finally-block
+    // doesn't overwrite the reset we're doing here.
+    ++occurrenceRequestIdRef.current;
     setSelectedOccurrence(null);
     setOccurrenceSetup(null);
+    setLoadingOccurrence(false);
   }, []);
 
   const handleOpenFullChartFromOccurrence = useCallback(() => {
