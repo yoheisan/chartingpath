@@ -12,7 +12,7 @@ import {
   SeriesMarkerShape,
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
-import { FormationOverlayData, buildZonePoints, snapFormationToChartTimes } from '@/utils/formationOverlay';
+import { FormationOverlayData, buildZonePoints, snapFormationToChartTimes, findNearestCandleTime } from '@/utils/formationOverlay';
 import {
   calculateEMA,
   calculateSMA,
