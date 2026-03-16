@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Layers, Database, Clock } from "lucide-react";
+import { BarChart3, Layers, Database, Clock, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MetricProps {
