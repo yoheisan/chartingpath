@@ -88,25 +88,24 @@ const AuthButton = () => {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/auth">
-            <LogIn className="h-4 w-4 mr-1" />
-            {t('accountMenu.login')}
-          </Link>
-        </Button>
+        <Link
+          to="/auth"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t('accountMenu.login', 'Sign In')}
+        </Link>
         <Button
           asChild
           size="sm"
           className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
         >
           <Link
-            to="/auth?mode=signup"
-            onClick={() => (window as any).gtag?.('event', 'cta_click', { location: 'navbar_signup' })}
+            to="/patterns/live"
+            onClick={() => (window as any).gtag?.('event', 'cta_click', { location: 'navbar_live_signals' })}
           >
-            {t('auth.signUpFree', 'Sign Up Free')}
+            {t('navigation.seeLiveSignals', 'See Live Signals Free →')}
           </Link>
         </Button>
-        <span className="text-[10px] text-muted-foreground/60 hidden sm:inline">{t('auth.joinTraders', 'Join 1,300+ traders')}</span>
       </div>
     );
   }
