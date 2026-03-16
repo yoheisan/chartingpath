@@ -91,6 +91,8 @@ const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage")
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
 const InstrumentPage = lazy(() => import("./pages/InstrumentPage"));
+const ProgrammaticPatternStatsPage = lazy(() => import("./pages/ProgrammaticPatternStatsPage"));
+const PatternStatsIndexPage = lazy(() => import("./pages/PatternStatsIndexPage"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
 // Lazy-load blog pages
