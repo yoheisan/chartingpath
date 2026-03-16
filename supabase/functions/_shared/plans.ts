@@ -140,6 +140,7 @@ export const PLANS_CONFIG: PlansConfig = {
     },
     PRO: {
       monthlyCredits: 900,
+      monthlyScripts: 100,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
       maxWatchlistSlots: 300,
