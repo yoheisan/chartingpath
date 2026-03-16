@@ -24,27 +24,36 @@ export default function LivePatternPreview() {
     setError(null);
     
     try {
-      // Try multiple asset types to find available patterns
-      const assetTypes = ['stocks', 'crypto', 'fx', 'indices', 'etfs', 'commodities'];
-      let allPatterns: LiveSetup[] = [];
-      let scanTime: string | null = null;
+      // Query DB directly for active patterns — much faster than edge function for a simple preview
+      const { data: dbPatterns, error: dbError } = await supabase
+        .from('live_pattern_detections')
+        .select('id, instrument, pattern_id, pattern_name, direction, asset_type, timeframe, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, visual_spec, bars, last_confirmed_at')
+        .eq('status', 'active')
+        .order('last_confirmed_at', { ascending: false })
+        .limit(4);
 
-      for (const assetType of assetTypes) {
-        if (allPatterns.length >= 4) break;
-        
-        const { data, error: fnError } = await supabase.functions.invoke<ScanResult>('scan-live-patterns', {
-          body: { assetType, limit: 4, topNWithBars: 4 },
-        });
-        
-        if (!fnError && data?.patterns?.length) {
-          allPatterns = [...allPatterns, ...data.patterns];
-          if (!scanTime) scanTime = data.scannedAt;
-        }
-      }
-      
-      if (allPatterns.length > 0) {
-        setPatterns(allPatterns.slice(0, 4));
-        setLastScanned(scanTime);
+      if (dbError) throw dbError;
+
+      if (dbPatterns && dbPatterns.length > 0) {
+        const mapped: LiveSetup[] = dbPatterns.map((p: any) => ({
+          dbId: p.id,
+          instrument: p.instrument,
+          patternId: p.pattern_id,
+          patternName: p.pattern_name,
+          direction: p.direction as 'long' | 'short',
+          signalTs: p.last_confirmed_at,
+          quality: { score: 'B', reasons: [] },
+          tradePlan: {
+            entry: p.entry_price,
+            stopLoss: p.stop_loss_price,
+            takeProfit: p.take_profit_price,
+            rr: p.risk_reward_ratio,
+          },
+          bars: p.bars,
+          visualSpec: p.visual_spec,
+        }));
+        setPatterns(mapped);
+        setLastScanned(dbPatterns[0].last_confirmed_at);
       } else {
         setError(t('livePatternPreview.noPatterns'));
       }
