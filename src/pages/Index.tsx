@@ -185,6 +185,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Live Pattern Preview — visual proof above the fold */}
+      <LivePatternPreview />
+
       {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
       <div ref={howItWorksRef} className="border-t border-border/20">
         <HowItWorks />
