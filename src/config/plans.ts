@@ -302,6 +302,7 @@ export interface TierDisplayInfo {
   monthlyPrice: number;
   annualPrice: number;
   monthlyCredits: number;
+  monthlyScripts: number; // -1 = unlimited
   maxActiveAlerts: number;
   bestFor: string;
   color: string;
