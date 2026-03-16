@@ -20,6 +20,7 @@ import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
+import LivePatternPreview from '@/components/landing/LivePatternPreview';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
