@@ -715,25 +715,14 @@ export default function LivePatternsPage() {
     return Array.from(groups.entries());
   }, [sortedPatterns]);
 
-  // Guest preview: limit visible rows to ~30%
+  // Guest preview: show first 5 rows clearly, blur rest
   const { isAuthenticated: isAuthed } = useAuth();
   const totalRowCount = sortedPatterns.length;
-  const GUEST_VISIBLE = 3;
+  const GUEST_VISIBLE = 5;
   const guestLimited = !isAuthed && totalRowCount > GUEST_VISIBLE;
 
-  const visibleGroupedPatterns = useMemo(() => {
-    if (!guestLimited) return groupedPatterns;
-    // Show only the first GUEST_VISIBLE rows across all groups
-    let remaining = GUEST_VISIBLE;
-    const limited: [string, LiveSetup[]][] = [];
-    for (const [name, setups] of groupedPatterns) {
-      if (remaining <= 0) break;
-      const slice = setups.slice(0, remaining);
-      limited.push([name, slice]);
-      remaining -= slice.length;
-    }
-    return limited;
-  }, [groupedPatterns, guestLimited]);
+  // For guests, show ALL groups (no truncation) — blur is applied per-row in the table
+  const visibleGroupedPatterns = groupedPatterns;
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
     if (sortKey !== columnKey) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
@@ -1510,173 +1499,179 @@ export default function LivePatternsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visibleGroupedPatterns.map(([patternName, setups]) => (
-                  <Fragment key={patternName}>
-                    {/* Pattern Group Header */}
-                    <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={9} className="py-2">
-                        <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {setups.length}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                    {/* Pattern Rows */}
-                    {setups.map((setup, idx) => {
-                      const isLong = setup.direction === 'long';
-                      const signalAge = formatSignalAgeSimple(setup.signalTs);
-                      const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
-                      const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
-                      // Check if this pattern has bars embedded (instant load) or is prefetched
-                      const hasBarsReady = (setup.bars?.length ?? 0) > 0 || (setup.dbId && getCached(setup.dbId));
-                      
-                      return (
-                        <TableRow 
-                          key={`${setup.instrument}-${setup.patternId}-${idx}`}
-                          className={`cursor-pointer hover:bg-muted/50 transition-colors ${
-                            isHighlighted ? 'bg-primary/5' : ''
-                          }`}
-                          onClick={() => handleOpenChart(setup)}
-                          onMouseEnter={() => {
-                            // Prefetch pattern details on hover for instant chart loading
-                            if (!hasBarsReady && setup.dbId) {
-                              onRowHover(setup.dbId);
-                            }
-                          }}
-                          onMouseLeave={cancelPrefetch}
-                        >
-                          <TableCell>
-                            <InstrumentLogo instrument={setup.instrument} />
-                          </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
-                            {translatePatternName(setup.patternName)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <GradeBadge quality={setup.quality} />
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline"
-                              className={`font-medium ${
-                                isLong 
-                                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30' 
-                                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
-                              }`}
-                            >
-                              {isLong ? (
-                                <TrendingUp className="h-3 w-3 mr-1" />
-                              ) : (
-                                <TrendingDown className="h-3 w-3 mr-1" />
+                {(() => {
+                  let rowIndex = 0;
+                  return visibleGroupedPatterns.map(([patternName, setups]) => (
+                    <Fragment key={patternName}>
+                      {/* Pattern Group Header */}
+                      <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
+                        <TableCell colSpan={9} className="py-2">
+                          <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            {setups.length}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                      {/* Pattern Rows */}
+                      {setups.map((setup, idx) => {
+                        const currentRow = rowIndex++;
+                        const isBlurred = guestLimited && currentRow >= GUEST_VISIBLE;
+                        const isLong = setup.direction === 'long';
+                        const signalAge = formatSignalAgeSimple(setup.signalTs);
+                        const isFresh = signalAge.endsWith('m') || signalAge.endsWith('h') || signalAge === '1d';
+                        const isHighlighted = highlightSymbol && setup.instrument.includes(highlightSymbol);
+                        // Check if this pattern has bars embedded (instant load) or is prefetched
+                        const hasBarsReady = (setup.bars?.length ?? 0) > 0 || (setup.dbId && getCached(setup.dbId));
+                        
+                        return (
+                          <TableRow 
+                            key={`${setup.instrument}-${setup.patternId}-${idx}`}
+                            className={`${isBlurred ? 'pointer-events-none select-none' : 'cursor-pointer'} hover:bg-muted/50 transition-colors ${
+                              isHighlighted ? 'bg-primary/5' : ''
+                            }`}
+                            style={isBlurred ? { filter: 'blur(4px)' } : undefined}
+                            onClick={isBlurred ? undefined : () => handleOpenChart(setup)}
+                            onMouseEnter={isBlurred ? undefined : () => {
+                              // Prefetch pattern details on hover for instant chart loading
+                              if (!hasBarsReady && setup.dbId) {
+                                onRowHover(setup.dbId);
+                              }
+                            }}
+                            onMouseLeave={isBlurred ? undefined : cancelPrefetch}
+                          >
+                            <TableCell>
+                              <InstrumentLogo instrument={setup.instrument} />
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {translatePatternName(setup.patternName)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <GradeBadge quality={setup.quality} />
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant="outline"
+                                className={`font-medium ${
+                                  isLong 
+                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30' 
+                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
+                                }`}
+                              >
+                                {isLong ? (
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 mr-1" />
+                                )}
+                                {isLong ? t('screener.long') : t('screener.short')}
+                              </Badge>
+                              {/* Trend Alignment Badge */}
+                              {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="inline-flex align-middle">
+                                      <Badge 
+                                        variant="outline"
+                                        className={`ml-1.5 text-[10px] px-1.5 py-0 cursor-help ${
+                                          setup.trendAlignment === 'with_trend' 
+                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
+                                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                        }`}
+                                      >
+                                        {setup.trendAlignment === 'with_trend' ? (
+                                          <ArrowUpRight className="h-2.5 w-2.5" />
+                                        ) : (
+                                          <ArrowDownRight className="h-2.5 w-2.5" />
+                                        )}
+                                      </Badge>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-sm whitespace-normal text-xs">
+                                    {setup.trendAlignment === 'with_trend' 
+                                      ? 'With Trend — pattern direction aligns with the higher-timeframe trend (EMA 50/200, MACD, RSI, ADX)'
+                                      : 'Counter Trend — pattern direction opposes the prevailing trend. Higher risk.'}
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
-                              {isLong ? t('screener.long') : t('screener.short')}
-                            </Badge>
-                            {/* Trend Alignment Badge */}
-                            {setup.trendAlignment && setup.trendAlignment !== 'neutral' && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="inline-flex align-middle">
-                                    <Badge 
-                                      variant="outline"
-                                      className={`ml-1.5 text-[10px] px-1.5 py-0 cursor-help ${
-                                        setup.trendAlignment === 'with_trend' 
-                                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                                      }`}
-                                    >
-                                      {setup.trendAlignment === 'with_trend' ? (
-                                        <ArrowUpRight className="h-2.5 w-2.5" />
-                                      ) : (
-                                        <ArrowDownRight className="h-2.5 w-2.5" />
-                                      )}
-                                    </Badge>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-sm whitespace-normal text-xs">
-                                  {setup.trendAlignment === 'with_trend' 
-                                    ? 'With Trend — pattern direction aligns with the higher-timeframe trend (EMA 50/200, MACD, RSI, ADX)'
-                                    : 'Counter Trend — pattern direction opposes the prevailing trend. Higher risk.'}
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.winRate != null ? (
-                              <span className={`font-mono text-sm font-medium ${
-                                setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
-                              }`}>
-                                {setup.historicalPerformance.winRate.toFixed(0)}%
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* Projected Expectancy based on default R:R */}
-                          <TableCell className="text-right">
-                            {setup.historicalPerformance?.winRate != null ? (() => {
-                              const expectancy = calculateProjectedExpectancy(
-                                setup.historicalPerformance.winRate, 
-                                DEFAULT_RR
-                              );
-                              return (
-                                <span className={`font-mono text-xs font-medium ${
-                                  expectancy >= 0 ? 'text-green-500' : 'text-red-500'
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {setup.historicalPerformance?.winRate != null ? (
+                                <span className={`font-mono text-sm font-medium ${
+                                  setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
                                 }`}>
-                                  {expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R
+                                  {setup.historicalPerformance.winRate.toFixed(0)}%
                                 </span>
-                              );
-                            })() : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                          {/* ROT - Return on Time */}
-                          <TableCell className="text-right">
-                            {(() => {
-                              const perf = setup.historicalPerformance;
-                              if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                                const rot = perf.avgRMultiple / perf.avgDurationBars;
-                                const isHighEfficiency = rot >= 0.01;
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            {/* Projected Expectancy based on default R:R */}
+                            <TableCell className="text-right">
+                              {setup.historicalPerformance?.winRate != null ? (() => {
+                                const expectancy = calculateProjectedExpectancy(
+                                  setup.historicalPerformance.winRate, 
+                                  DEFAULT_RR
+                                );
                                 return (
-                                  <span className={cn(
-                                    'font-mono text-xs font-medium',
-                                    isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
-                                  )}>
-                                    {rot.toFixed(4)}
+                                  <span className={`font-mono text-xs font-medium ${
+                                    expectancy >= 0 ? 'text-green-500' : 'text-red-500'
+                                  }`}>
+                                    {expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R
                                   </span>
                                 );
-                              }
-                              return <span className="text-muted-foreground text-xs">—</span>;
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className={`text-xs ${
-                              isFresh ? 'text-green-500' : 'text-muted-foreground'
-                            }`}>
-                              {signalAge}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePaperTrade(setup);
-                                  }}
-                                >
-                                  <FileText className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">Paper Trade</TooltipContent>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </Fragment>
-                ))}
+                              })() : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            {/* ROT - Return on Time */}
+                            <TableCell className="text-right">
+                              {(() => {
+                                const perf = setup.historicalPerformance;
+                                if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                                  const rot = perf.avgRMultiple / perf.avgDurationBars;
+                                  const isHighEfficiency = rot >= 0.01;
+                                  return (
+                                    <span className={cn(
+                                      'font-mono text-xs font-medium',
+                                      isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
+                                    )}>
+                                      {rot.toFixed(4)}
+                                    </span>
+                                  );
+                                }
+                                return <span className="text-muted-foreground text-xs">—</span>;
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className={`text-xs ${
+                                isFresh ? 'text-green-500' : 'text-muted-foreground'
+                              }`}>
+                                {signalAge}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePaperTrade(setup);
+                                    }}
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">Paper Trade</TooltipContent>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </Fragment>
+                  ));
+                })()}
               </TableBody>
             </Table>
           </div>
