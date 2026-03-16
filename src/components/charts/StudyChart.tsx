@@ -72,7 +72,7 @@ import {
   PATTERN_OVERLAY_COLORS,
 } from './PatternOverlayRenderer';
 import { PatternOverlayTogglePanel } from './PatternOverlayTogglePanel';
-import { deriveFormationOverlay } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, snapFormationToChartTimes } from '@/utils/formationOverlay';
 
 export interface IndicatorSettings {
   ema20: boolean;

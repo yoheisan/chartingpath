@@ -73,7 +73,7 @@ import { GradeBadge } from '@/components/ui/GradeBadge';
 import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
-import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints } from '@/utils/formationOverlay';
 import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
