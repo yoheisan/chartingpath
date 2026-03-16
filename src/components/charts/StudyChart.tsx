@@ -1118,8 +1118,9 @@ function findNearestCandleTime(data: Array<{ time: unknown }>, targetTs: number)
           ctx.clearRect(0, 0, rect.width, rect.height);
 
           // Re-draw formation zone if present (since we cleared the canvas)
-          if (formationOverlays && formationOverlays.length > 0) {
-            for (const formation of formationOverlays) {
+           if (formationOverlays && formationOverlays.length > 0) {
+            for (const rawFormation of formationOverlays) {
+              const formation = snapFormationToChartTimes(rawFormation, safeChartData);
               if (formation.hasZone) {
                 const zonePoints = buildZonePoints(formation.upperTrend, formation.lowerTrend);
                 if (zonePoints.length >= 2) {
