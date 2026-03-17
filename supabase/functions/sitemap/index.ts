@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       for (const article of articles) {
         const lastmod = (article.updated_at || article.published_at || today).split('T')[0];
         xml += `  <url>
-    <loc>${BASE_URL}/learn/${article.slug}</loc>
+    <loc>${BASE_URL}/blog/${article.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
