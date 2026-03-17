@@ -156,7 +156,7 @@ export const TranslationManagement = () => {
     setCoverageLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'get_coverage_stats' }
+        body: { action: 'get_coverage_stats', en_fallback_content: (await import('@/i18n/locales/en.json')).default }
       });
       if (error) throw error;
       const dbCoverage = data.coverage || {};

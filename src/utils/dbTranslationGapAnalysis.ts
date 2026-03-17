@@ -31,7 +31,7 @@ export interface DBGapDetail {
 /** Fetch coverage stats from the DB (via manage-translations edge function) */
 export async function fetchDBCoverageStats(): Promise<DBLanguageCoverage[]> {
   const { data, error } = await supabase.functions.invoke('manage-translations', {
-    body: { action: 'get_coverage_stats' }
+    body: { action: 'get_coverage_stats', en_fallback_content: enTranslations }
   });
 
   if (error || !data) {
