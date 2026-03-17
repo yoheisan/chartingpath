@@ -9,6 +9,7 @@
  * the `translations` table holds per-language values.
  */
 import { supabase } from '@/integrations/supabase/client';
+import enTranslations from '@/i18n/locales/en.json';
 
 export interface DBLanguageCoverage {
   langCode: string;
