@@ -631,7 +631,7 @@ async function createTranslationKeysFromStrings(supabase: any, stringIds: string
       category: 'auto_extracted',
       page_context: string.context_path,
       element_context: string.context_element,
-    });
+    }, { onConflict: 'key' });
 
     if (keyError) {
       console.error('Error creating translation key:', keyError);
