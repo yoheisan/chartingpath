@@ -8,15 +8,54 @@ const corsHeaders = {
 const BASE_URL = 'https://chartingpath.com';
 
 const STATIC_ROUTES = [
+  // Core pages
   { path: '/', priority: '1.0', changefreq: 'daily' },
-  { path: '/learn', priority: '0.9', changefreq: 'daily' },
-  { path: '/patterns/live', priority: '0.9', changefreq: 'hourly' },
-  { path: '/chart-patterns/library', priority: '0.8', changefreq: 'weekly' },
-  { path: '/chart-patterns/quiz', priority: '0.7', changefreq: 'weekly' },
-  { path: '/pattern-lab', priority: '0.8', changefreq: 'weekly' },
-  { path: '/tools/edge-atlas', priority: '0.8', changefreq: 'daily' },
-  { path: '/pricing', priority: '0.6', changefreq: 'monthly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
+  { path: '/learn', priority: '0.9', changefreq: 'daily' },
+  { path: '/community', priority: '0.7', changefreq: 'daily' },
+
+  // Live data pages
+  { path: '/patterns/live', priority: '0.9', changefreq: 'hourly' },
+  { path: '/tools/agent-scoring', priority: '0.8', changefreq: 'hourly' },
+
+  // Pattern education
+  { path: '/chart-patterns/library', priority: '0.8', changefreq: 'weekly' },
+  { path: '/chart-patterns/generator', priority: '0.7', changefreq: 'monthly' },
+  { path: '/chart-patterns/strategies', priority: '0.7', changefreq: 'weekly' },
+  { path: '/chart-patterns/quiz', priority: '0.7', changefreq: 'weekly' },
+
+  // Quizzes
+  { path: '/quiz/pattern-identification', priority: '0.6', changefreq: 'monthly' },
+  { path: '/quiz/trading-knowledge', priority: '0.6', changefreq: 'monthly' },
+  { path: '/quiz/stock-market', priority: '0.6', changefreq: 'monthly' },
+  { path: '/quiz/forex', priority: '0.6', changefreq: 'monthly' },
+  { path: '/quiz/crypto', priority: '0.6', changefreq: 'monthly' },
+  { path: '/quiz/commodities', priority: '0.6', changefreq: 'monthly' },
+
+  // Tools
+  { path: '/tools/pip-calculator', priority: '0.7', changefreq: 'monthly' },
+  { path: '/tools/risk-calculator', priority: '0.7', changefreq: 'monthly' },
+  { path: '/tools/market-breadth', priority: '0.7', changefreq: 'daily' },
+  { path: '/tools/economic-calendar', priority: '0.7', changefreq: 'daily' },
+  { path: '/tools/paper-trading', priority: '0.6', changefreq: 'monthly' },
+
+  // Projects / Pattern Lab
+  { path: '/projects/pattern-lab/new', priority: '0.8', changefreq: 'weekly' },
+  { path: '/projects/pattern-lab/audit', priority: '0.7', changefreq: 'weekly' },
+  { path: '/projects/pricing', priority: '0.6', changefreq: 'monthly' },
+
+  // Edge Atlas & Stats
+  { path: '/edge-atlas', priority: '0.8', changefreq: 'daily' },
+  { path: '/patterns/stats', priority: '0.9', changefreq: 'daily' },
+
+  // Feature pages
+  { path: '/features/trading-copilot', priority: '0.6', changefreq: 'monthly' },
+
+  // Legal / support
+  { path: '/faq', priority: '0.5', changefreq: 'monthly' },
+  { path: '/support', priority: '0.5', changefreq: 'monthly' },
+  { path: '/terms', priority: '0.3', changefreq: 'yearly' },
+  { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
 ];
 
 // Pattern statistics pages — high-value SEO landing pages
@@ -112,13 +151,6 @@ Deno.serve(async (req) => {
     }
 
     // Programmatic pattern stats pages (375+ long-tail SEO pages)
-    xml += `  <url>
-    <loc>${BASE_URL}/patterns/stats</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-`;
     for (const pid of PATTERN_IDS) {
       for (const ac of STAT_ASSET_CLASSES) {
         for (const tf of STAT_TIMEFRAMES) {
@@ -162,7 +194,7 @@ Deno.serve(async (req) => {
       for (const article of articles) {
         const lastmod = (article.updated_at || article.published_at || today).split('T')[0];
         xml += `  <url>
-    <loc>${BASE_URL}/learn/${article.slug}</loc>
+    <loc>${BASE_URL}/blog/${article.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
