@@ -9,6 +9,7 @@
  * the `translations` table holds per-language values.
  */
 import { supabase } from '@/integrations/supabase/client';
+import enTranslations from '@/i18n/locales/en.json';
 
 export interface DBLanguageCoverage {
   langCode: string;
@@ -30,7 +31,7 @@ export interface DBGapDetail {
 /** Fetch coverage stats from the DB (via manage-translations edge function) */
 export async function fetchDBCoverageStats(): Promise<DBLanguageCoverage[]> {
   const { data, error } = await supabase.functions.invoke('manage-translations', {
-    body: { action: 'get_coverage_stats' }
+    body: { action: 'get_coverage_stats', en_fallback_content: enTranslations }
   });
 
   if (error || !data) {
