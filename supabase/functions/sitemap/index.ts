@@ -151,13 +151,6 @@ Deno.serve(async (req) => {
     }
 
     // Programmatic pattern stats pages (375+ long-tail SEO pages)
-    xml += `  <url>
-    <loc>${BASE_URL}/patterns/stats</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-`;
     for (const pid of PATTERN_IDS) {
       for (const ac of STAT_ASSET_CLASSES) {
         for (const tf of STAT_TIMEFRAMES) {
