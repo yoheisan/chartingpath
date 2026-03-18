@@ -3109,7 +3109,35 @@
     "vsMarketAvg": "vs 市場平均",
     "confidenceScore": "信頼スコア",
     "sampleSize": "サンプルサイズ",
-    "notEnoughData": "この銘柄の過去データが不十分です"
+    "notEnoughData": "この銘柄の過去データが不十分です",
+    "agentScoring": "トレードを採点",
+    "agentScoringPrompt": "現在アクティブなトップパターンにAgent Scoringを実行し、TAKE、WATCH、SKIPを表示してください",
+    "guestLimit": "無料メッセージ{{count}}回をお試し — 無制限アクセスにはサインイン",
+    "usedAllMessages": "無料メッセージ{{count}}回をすべて使用しました",
+    "signInUnlimited": "トレーディングコパイロットへの無制限アクセスにはサインイン",
+    "or": "または",
+    "signIn": "サインイン",
+    "register": "登録",
+    "feedbackThanks": "フィードバックありがとうございます！",
+    "feedbackNoted": "フィードバックを受け付けました。改善します！",
+    "ctx": {
+      "scoringPrompt1": "スコアリングをより保守的にしてください",
+      "scoringPrompt2": "勝率を最適化",
+      "scoringPrompt3": "現在の設定を表示",
+      "screenerPrompt1": "今何がうまくいっている？",
+      "screenerPrompt2": "Aグレードの暗号通貨セットアップを見せて",
+      "screenerPrompt3": "今日の最良のFXパターン",
+      "researchPrompt1": "このシンボルで最も収益性の高いパターンを見つけて",
+      "researchPrompt2": "EURUSDで勝率>60%は何？",
+      "researchPrompt3": "バックテストのクォータを確認"
+    }
+  },
+  "activation": {
+    "title": "はじめに",
+    "viewSignal": "ライブパターンシグナルを表示",
+    "runBacktest": "最初のバックテストを実行",
+    "setAlert": "パターンアラートを設定",
+    "freeMessagesRemaining": "残り{{count}}/{{total}}回の無料メッセージ"
   },
   "terms": {
     "pageTitle": "📑 利用規約",

@@ -1449,5 +1449,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "入门指南",
+    "viewSignal": "查看实时模式信号",
+    "runBacktest": "运行你的第一个回测",
+    "setAlert": "设置模式提醒",
+    "freeMessagesRemaining": "剩余{{count}}/{{total}}条免费消息"
   }
 }

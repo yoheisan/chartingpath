@@ -5533,5 +5533,12 @@
     "author3": "Position Trader",
     "role3": "Multi-Asset"
   },
-  "pricingTeaser.startFree": "Start Free →"
+  "pricingTeaser.startFree": "Start Free →",
+  "activation": {
+    "title": "Getting Started",
+    "viewSignal": "View a live pattern signal",
+    "runBacktest": "Run your first backtest",
+    "setAlert": "Set a pattern alert",
+    "freeMessagesRemaining": "{{count}} of {{total}} free messages remaining"
+  }
 }

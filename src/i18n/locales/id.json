@@ -1414,5 +1414,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "Memulai",
+    "viewSignal": "Lihat sinyal pola langsung",
+    "runBacktest": "Jalankan backtest pertama Anda",
+    "setAlert": "Atur peringatan pola",
+    "freeMessagesRemaining": "{{count}} dari {{total}} pesan gratis tersisa"
   }
 }

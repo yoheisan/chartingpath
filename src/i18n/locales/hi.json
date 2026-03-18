@@ -1428,5 +1428,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "शुरू करें",
+    "viewSignal": "एक लाइव पैटर्न सिग्नल देखें",
+    "runBacktest": "अपना पहला बैकटेस्ट चलाएं",
+    "setAlert": "एक पैटर्न अलर्ट सेट करें",
+    "freeMessagesRemaining": "{{total}} में से {{count}} मुफ़्त संदेश शेष"
   }
 }

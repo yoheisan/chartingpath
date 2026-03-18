@@ -1407,5 +1407,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "Aan die gang",
+    "viewSignal": "Bekyk 'n lewendige patroonsein",
+    "runBacktest": "Doen jou eerste terugtoets",
+    "setAlert": "Stel 'n patroonwaarskuwing in",
+    "freeMessagesRemaining": "{{count}} van {{total}} gratis boodskappe oor"
   }
 }

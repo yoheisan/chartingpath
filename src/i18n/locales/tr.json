@@ -1419,5 +1419,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "Başlarken",
+    "viewSignal": "Canlı bir desen sinyali görüntüle",
+    "runBacktest": "İlk backtestinizi çalıştırın",
+    "setAlert": "Bir desen uyarısı oluşturun",
+    "freeMessagesRemaining": "{{total}} ücretsiz mesajdan {{count}} kaldı"
   }
 }
