@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
       pattern,
       timeframe,
       detection_id,
+      asset_type,
     } = await req.json();
 
     // Validate required fields
