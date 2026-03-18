@@ -621,7 +621,7 @@ export function TradingCopilot({
             {!isAuthenticated && guestMsgCount > 0 && (
               <div className="flex justify-center mb-2">
                 <Badge variant="secondary" className="text-[10px] font-normal">
-                  {GUEST_MSG_LIMIT - guestMsgCount} of {GUEST_MSG_LIMIT} free messages remaining
+                  {t('activation.freeMessagesRemaining', '{{count}} of {{total}} free messages remaining', { count: GUEST_MSG_LIMIT - guestMsgCount, total: GUEST_MSG_LIMIT })}
                 </Badge>
               </div>
             )}
