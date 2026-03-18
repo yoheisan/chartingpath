@@ -5027,6 +5027,18 @@
     "marketBreadthPrompt": "What is the current market breadth? Show me the advance/decline ratio and sentiment",
     "agentScoring": "Score trades",
     "agentScoringPrompt": "Run Agent Scoring on the top active patterns right now and show me which ones are TAKE, WATCH, or SKIP",
+    "ctx": {
+      "adjustWeights": "Adjust weights",
+      "adjustWeightsPrompt": "Help me adjust my Agent Scoring weights to be more conservative on risk",
+      "comparePresets": "Compare presets",
+      "comparePresetsPrompt": "Compare my current scoring preset against the default balanced preset",
+      "bestSetups": "Best setups now",
+      "bestSetupsPrompt": "What are the highest-scored trade setups active right now?",
+      "portfolioReview": "Portfolio review",
+      "portfolioReviewPrompt": "Review my current alerts and active patterns — any changes I should make?",
+      "sectorAnalysis": "Sector analysis",
+      "sectorAnalysisPrompt": "Which sectors show the strongest breadth right now and what patterns are forming?"
+    },
     "placeholder": "Ask about patterns, alerts, or scripts...",
     "disclaimer": "For educational purposes only. Not financial advice.",
     "moreBelow": "More below",
