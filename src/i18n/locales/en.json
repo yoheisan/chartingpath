@@ -5510,5 +5510,28 @@
       "name": "Donchian Breakout (Short)",
       "description": "A momentum-based short signal triggered when price breaks below the lower Donchian channel, suggesting a potential new downtrend."
     }
-  }
+  },
+  "guestScreenerOverlay": {
+    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
+    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
+    "createFreeAccount": "Create Free Account →",
+    "signIn": "Sign In",
+    "noCreditCard": "No credit card required. Free forever tier available.",
+    "orContinueWith": "or continue with"
+  },
+  "socialProof": {
+    "sectionLabel": "Trusted by Traders",
+    "title": "What traders are saying",
+    "subtitle": "Real feedback from traders using ChartingPath to validate their setups.",
+    "quote1": "Finally, a tool that tells me if a pattern actually works before I risk money on it. The win rate data changed how I trade.",
+    "author1": "Swing Trader",
+    "role1": "US Equities",
+    "quote2": "I was skeptical about pattern trading until I saw the backtest data. 320K outcomes don't lie — now I only trade patterns with real edge.",
+    "author2": "Day Trader",
+    "role2": "Forex & Crypto",
+    "quote3": "The screener saves me hours every day. Grade A setups delivered straight to me, each one backed by historical performance.",
+    "author3": "Position Trader",
+    "role3": "Multi-Asset"
+  },
+  "pricingTeaser.startFree": "Start Free →"
 }

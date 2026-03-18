@@ -21,6 +21,9 @@ import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
+import { SocialProof } from '@/components/landing/SocialProof';
+import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
+import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -188,6 +191,11 @@ const Index = () => {
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
 
+      {/* Social Proof */}
+      <div className="border-t border-border/20">
+        <SocialProof />
+      </div>
+
       {/* AI Copilot */}
       <div ref={copilotRef} className="border-t border-border/20">
         <CopilotShowcase />
@@ -235,10 +243,16 @@ const Index = () => {
         <EdgeAtlasSection />
       </div>
 
+      {/* Email Lead Capture */}
+      <EmailLeadCapture />
+
       {/* Pricing Teaser */}
       <div ref={pricingRef}>
         <PricingTeaser />
       </div>
+
+      {/* Scroll-triggered signup modal for engaged guests */}
+      <ScrollSignupModal />
 
       {/* Disclaimer */}
       <section className="py-8 px-6 border-t">

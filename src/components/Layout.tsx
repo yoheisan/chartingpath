@@ -8,6 +8,7 @@ import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
+import { ActivationChecklist } from "./onboarding/ActivationChecklist";
 import { CaptureButton } from "./capture";
 
 interface LayoutProps {
@@ -73,6 +74,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
       <GuestSignupNudge />
       <OnboardingTour />
+      <ActivationChecklist />
       <CaptureButton />
     </div>
   );

@@ -1822,6 +1822,27 @@ export type Database = {
         }
         Relationships: []
       }
+      email_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       extracted_strings: {
         Row: {
           context_element: string | null
@@ -4824,6 +4845,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_activation: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dismissed: boolean
+          id: string
+          ran_backtest: boolean
+          set_alert: boolean
+          updated_at: string
+          user_id: string
+          viewed_signal: boolean
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          ran_backtest?: boolean
+          set_alert?: boolean
+          updated_at?: string
+          user_id: string
+          viewed_signal?: boolean
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          ran_backtest?: boolean
+          set_alert?: boolean
+          updated_at?: string
+          user_id?: string
+          viewed_signal?: boolean
+        }
+        Relationships: []
       }
       user_captures: {
         Row: {

@@ -59,7 +59,7 @@ export const PricingTeaser = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-px bg-border/30 rounded-xl overflow-visible border border-border/30 mb-10 pt-3">
-          {plans.map((plan) => (
+          {plans.map((plan, planIdx) => (
             <div
               key={plan.name}
               className={`p-6 bg-card/30 relative ${plan.highlighted ? 'bg-primary/[0.03]' : ''} ${plan.popular ? 'ring-1 ring-primary/50' : ''}`}
@@ -84,6 +84,17 @@ export const PricingTeaser = () => {
                   </li>
                 ))}
               </ul>
+              {/* Free plan CTA */}
+              {planIdx === 0 && (
+                <Button asChild size="sm" className="mt-4 w-full" onClick={() => {
+                  track('pricing_start_free', { source: 'landing_pricing_teaser' });
+                  trackEvent('landing.cta_click', { button: 'pricing_start_free' });
+                }}>
+                  <Link to="/auth?mode=signup">
+                    {t('pricingTeaser.startFree', 'Start Free →')}
+                  </Link>
+                </Button>
+              )}
             </div>
           ))}
         </div>
