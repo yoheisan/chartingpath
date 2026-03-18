@@ -1,5 +1,6 @@
 import { useEffect, useRef, ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Shield, Eye, Cpu, Users, Target, TrendingUp, ArrowRight } from "lucide-react";
 
@@ -24,22 +25,29 @@ function FadeIn({ children, className = "" }: { children: ReactNode; className?:
 }
 
 /* ── Flow diagram (Section 6) ────────────────────────────── */
-const FLOW_STEPS = ["Signal Detected", "Trader Acts", "Outcome Recorded", "Model Improves", "Better Signals"];
-
 function FlowDiagram() {
+  const { t } = useTranslation();
+  const steps = [
+    t('aboutPage.flowSignalDetected', 'Signal Detected'),
+    t('aboutPage.flowTraderActs', 'Trader Acts'),
+    t('aboutPage.flowOutcomeRecorded', 'Outcome Recorded'),
+    t('aboutPage.flowModelImproves', 'Model Improves'),
+    t('aboutPage.flowBetterSignals', 'Better Signals'),
+  ];
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 md:gap-0 mt-12">
-      {FLOW_STEPS.map((step, i) => (
-        <div key={step} className="flex items-center gap-2 md:gap-0">
-          <div className="px-4 py-2.5 rounded-lg border border-[#f97316]/30 bg-[#f97316]/5 text-sm font-medium text-foreground whitespace-nowrap">
+      {steps.map((step, i) => (
+        <div key={i} className="flex items-center gap-2 md:gap-0">
+          <div className="px-4 py-2.5 rounded-lg border border-primary/30 bg-primary/5 text-sm font-medium text-foreground whitespace-nowrap">
             {step}
           </div>
-          {i < FLOW_STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <div className="hidden md:flex items-center mx-1">
-              <div className="w-8 h-px bg-[#f97316]/40 relative overflow-hidden">
-                <div className="absolute inset-y-0 left-0 w-3 h-px bg-[#f97316] animate-[flowPulse_2s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.4}s` }} />
+              <div className="w-8 h-px bg-primary/40 relative overflow-hidden">
+                <div className="absolute inset-y-0 left-0 w-3 h-px bg-primary animate-[flowPulse_2s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.4}s` }} />
               </div>
-              <ArrowRight className="h-3.5 w-3.5 text-[#f97316]/70" />
+              <ArrowRight className="h-3.5 w-3.5 text-primary/70" />
             </div>
           )}
         </div>
@@ -52,8 +60,8 @@ function FlowDiagram() {
 function SectionNum({ n, label }: { n: string; label: string }) {
   return (
     <div className="select-none">
-      <span className="text-[120px] leading-none font-bold text-[#f97316]/10 block">{n}</span>
-      <span className="text-sm font-semibold uppercase tracking-widest text-[#f97316]">{label}</span>
+      <span className="text-[120px] leading-none font-bold text-primary/10 block">{n}</span>
+      <span className="text-sm font-semibold uppercase tracking-widest text-primary">{label}</span>
     </div>
   );
 }
@@ -62,7 +70,7 @@ function SectionNum({ n, label }: { n: string; label: string }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center">
-      <div className="text-3xl md:text-4xl font-bold text-[#f97316]">{value}</div>
+      <div className="text-3xl md:text-4xl font-bold text-primary">{value}</div>
       <div className="text-sm text-muted-foreground mt-1">{label}</div>
     </div>
   );
@@ -71,8 +79,8 @@ function Stat({ value, label }: { value: string; label: string }) {
 /* ── Belief card ──────────────────────────────────────────── */
 function BeliefCard({ icon: Icon, title, desc }: { icon: typeof BarChart3; title: string; desc: string }) {
   return (
-    <div className="p-6 rounded-xl border border-[hsl(220,14%,18%)] bg-[hsl(220,16%,12%)] hover:border-[#f97316]/30 transition-colors">
-      <Icon className="h-8 w-8 text-[#f97316] mb-4" />
+    <div className="p-6 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
+      <Icon className="h-8 w-8 text-primary mb-4" />
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
     </div>
@@ -82,7 +90,7 @@ function BeliefCard({ icon: Icon, title, desc }: { icon: typeof BarChart3; title
 /* ── Trader profile card ──────────────────────────────────── */
 function ProfileCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="p-6 rounded-xl border border-[hsl(220,14%,18%)] bg-[hsl(220,16%,12%)]">
+    <div className="p-6 rounded-xl border border-border bg-card">
       <h3 className="text-lg font-semibold text-foreground mb-3">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
     </div>
@@ -93,6 +101,8 @@ function ProfileCard({ title, desc }: { title: string; desc: string }) {
    ABOUT PAGE
    ════════════════════════════════════════════════════════════ */
 const About = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
 
@@ -100,14 +110,14 @@ const About = () => {
       <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20">
         <FadeIn>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight max-w-4xl">
-            Markets don't lie.{" "}
-            <span className="text-[#f97316]">Patterns don't lie.</span>{" "}
-            Most trading tools do.
+            {t('aboutPage.heroLine1', "Markets don't lie.")}{" "}
+            <span className="text-primary">{t('aboutPage.heroLine2', "Patterns don't lie.")}</span>{" "}
+            {t('aboutPage.heroLine3', "Most trading tools do.")}
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed">
-            ChartingPath was built on one uncomfortable truth: most traders lose not because they lack discipline — but because nobody ever showed them which patterns actually work.
+            {t('aboutPage.heroSubtitle', "ChartingPath was built on one uncomfortable truth: most traders lose not because they lack discipline — but because nobody ever showed them which patterns actually work.")}
           </p>
-          <div className="mt-8 w-[120px] h-[2px] bg-[#f97316]" />
+          <div className="mt-8 w-[120px] h-[2px] bg-primary" />
         </FadeIn>
       </section>
 
@@ -115,13 +125,14 @@ const About = () => {
       <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="grid md:grid-cols-[240px_1fr] gap-8 md:gap-12">
-            <SectionNum n="01" label="The Problem" />
+            <SectionNum n="01" label={t('aboutPage.sectionProblem', 'The Problem')} />
             <div className="space-y-5 text-muted-foreground leading-relaxed">
               <p>
-                Every trading platform shows you chart patterns. TradingView shows you a Bull Flag. Your broker shows you a Head and Shoulders. But none of them answer the only question that matters: <span className="text-foreground font-medium">does this pattern actually work?</span>
+                {t('aboutPage.problemP1Before', "Every trading platform shows you chart patterns. TradingView shows you a Bull Flag. Your broker shows you a Head and Shoulders. But none of them answer the only question that matters:")}
+                {" "}<span className="text-foreground font-medium">{t('aboutPage.problemP1Highlight', "does this pattern actually work?")}</span>
               </p>
               <p>
-                We searched for a tool that could tell us — with real data — whether a Descending Triangle on EURUSD at the 4H timeframe had a positive expectancy over the last 5 years. It didn't exist. So we built it.
+                {t('aboutPage.problemP2', "We searched for a tool that could tell us — with real data — whether a Descending Triangle on EURUSD at the 4H timeframe had a positive expectancy over the last 5 years. It didn't exist. So we built it.")}
               </p>
             </div>
           </div>
@@ -132,23 +143,23 @@ const About = () => {
       <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="mb-10">
-            <SectionNum n="02" label="What We Believe" />
+            <SectionNum n="02" label={t('aboutPage.sectionBelieve', 'What We Believe')} />
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             <BeliefCard
               icon={BarChart3}
-              title="Data over dogma"
-              desc="Every pattern claim on ChartingPath is backed by real historical outcomes — not textbook theory, not YouTube heuristics. 320,000+ trades don't lie."
+              title={t('aboutPage.beliefDataTitle', "Data over dogma")}
+              desc={t('aboutPage.beliefDataDesc', "Every pattern claim on ChartingPath is backed by real historical outcomes — not textbook theory, not YouTube heuristics. 320,000+ trades don't lie.")}
             />
             <BeliefCard
               icon={Shield}
-              title="Edge is earned, not sold"
-              desc="We don't sell signals. We don't promise returns. We give you the statistical foundation to develop your own edge — and the tools to validate it before risking a dollar."
+              title={t('aboutPage.beliefEdgeTitle', "Edge is earned, not sold")}
+              desc={t('aboutPage.beliefEdgeDesc', "We don't sell signals. We don't promise returns. We give you the statistical foundation to develop your own edge — and the tools to validate it before risking a dollar.")}
             />
             <BeliefCard
               icon={Eye}
-              title="Transparency builds trust"
-              desc="Our Edge Atlas is public. Anyone can see which patterns work and which don't. We have nothing to hide because the data speaks for itself."
+              title={t('aboutPage.beliefTransparencyTitle', "Transparency builds trust")}
+              desc={t('aboutPage.beliefTransparencyDesc', "Our Edge Atlas is public. Anyone can see which patterns work and which don't. We have nothing to hide because the data speaks for itself.")}
             />
           </div>
         </FadeIn>
@@ -158,17 +169,18 @@ const About = () => {
       <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="grid md:grid-cols-[240px_1fr] gap-8 md:gap-12">
-            <SectionNum n="03" label="What It Is" />
+            <SectionNum n="03" label={t('aboutPage.sectionWhatItIs', 'What It Is')} />
             <div>
-              <p className="text-2xl md:text-3xl font-semibold italic text-[#f97316] leading-snug mb-6">
-                A pattern intelligence platform — not a signal service.
+              <p className="text-2xl md:text-3xl font-semibold italic text-primary leading-snug mb-6">
+                {t('aboutPage.whatItIsTagline', "A pattern intelligence platform — not a signal service.")}
               </p>
               <div className="space-y-4 text-muted-foreground leading-relaxed text-sm">
                 <p>
-                  There's an important difference. A signal service tells you what to trade. A pattern intelligence platform shows you what works, why it works, and how often — then lets you decide.
+                  {t('aboutPage.whatItIsP1', "There's an important difference. A signal service tells you what to trade. A pattern intelligence platform shows you what works, why it works, and how often — then lets you decide.")}
                 </p>
                 <p>
-                  ChartingPath scans 800+ instruments across forex, crypto, stocks, and commodities every hour. It detects 17 chart patterns. It backtests each one against years of real price data. And it gives every signal a statistical verdict: <span className="text-foreground font-medium">TAKE</span>, <span className="text-foreground font-medium">WATCH</span>, or <span className="text-foreground font-medium">SKIP</span> — based on evidence, not opinion.
+                  {t('aboutPage.whatItIsP2Before', "ChartingPath scans 800+ instruments across forex, crypto, stocks, and commodities every hour. It detects 17 chart patterns. It backtests each one against years of real price data. And it gives every signal a statistical verdict:")}
+                  {" "}<span className="text-foreground font-medium">TAKE</span>, <span className="text-foreground font-medium">WATCH</span>, {t('aboutPage.or', 'or')} <span className="text-foreground font-medium">SKIP</span> — {t('aboutPage.whatItIsP2After', "based on evidence, not opinion.")}
                 </p>
               </div>
             </div>
@@ -181,33 +193,33 @@ const About = () => {
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
-              <SectionNum n="04" label="The Technology" />
+              <SectionNum n="04" label={t('aboutPage.sectionTechnology', 'The Technology')} />
             </div>
-            <div className="rounded-2xl border border-[hsl(220,14%,18%)] bg-[hsl(220,16%,12%)] p-8 md:p-12" style={{ backgroundImage: "radial-gradient(circle, hsl(220,14%,18%) 1px, transparent 1px)", backgroundSize: "24px 24px" }}>
+            <div className="rounded-2xl border border-border bg-card p-8 md:p-12" style={{ backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)", backgroundSize: "24px 24px" }}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-                <Stat value="800+" label="Instruments tracked" />
-                <Stat value="17" label="Pattern types detected" />
-                <Stat value="320K+" label="Historical outcomes" />
-                <Stat value="4" label="AI agents scoring" />
+                <Stat value="800+" label={t('aboutPage.statInstruments', 'Instruments tracked')} />
+                <Stat value="17" label={t('aboutPage.statPatterns', 'Pattern types detected')} />
+                <Stat value="320K+" label={t('aboutPage.statOutcomes', 'Historical outcomes')} />
+                <Stat value="4" label={t('aboutPage.statAgents', 'AI agents scoring')} />
               </div>
 
               <div className="grid md:grid-cols-2 gap-10 text-sm">
                 <div>
                   <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2">
-                    <Cpu className="h-4 w-4 text-[#f97316]" />
-                    How the scoring works
+                    <Cpu className="h-4 w-4 text-primary" />
+                    {t('aboutPage.howScoringTitle', 'How the scoring works')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Every live pattern detection passes through four AI agents simultaneously. The <span className="text-foreground">Analyst</span> agent evaluates historical win rate and expectancy. The <span className="text-foreground">Risk</span> agent calculates reward-to-risk and Kelly criterion. The <span className="text-foreground">Timing</span> agent checks trend alignment and economic event proximity. The <span className="text-foreground">Portfolio</span> agent scores basket fit. The result is a composite score from 0–100 and a TAKE / WATCH / SKIP verdict — automatically, every hour.
+                    {t('aboutPage.howScoringDesc', "Every live pattern detection passes through four AI agents simultaneously. The Analyst agent evaluates historical win rate and expectancy. The Risk agent calculates reward-to-risk and Kelly criterion. The Timing agent checks trend alignment and economic event proximity. The Portfolio agent scores basket fit. The result is a composite score from 0–100 and a TAKE / WATCH / SKIP verdict — automatically, every hour.")}
                   </p>
                 </div>
                 <div>
                   <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-[#f97316]" />
-                    Why it matters
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    {t('aboutPage.whyMattersTitle', 'Why it matters')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Pattern trading is fundamentally about supply and demand dynamics forming in recognisable geometric shapes. When a Bull Flag forms, it means demand is consolidating after absorbing supply — and historically, that consolidation resolves upward X% of the time. ChartingPath quantifies that X. For every pattern. On every instrument. Across every timeframe.
+                    {t('aboutPage.whyMattersDesc', "Pattern trading is fundamentally about supply and demand dynamics forming in recognisable geometric shapes. When a Bull Flag forms, it means demand is consolidating after absorbing supply — and historically, that consolidation resolves upward X% of the time. ChartingPath quantifies that X. For every pattern. On every instrument. Across every timeframe.")}
                   </p>
                 </div>
               </div>
@@ -217,21 +229,21 @@ const About = () => {
       </section>
 
       {/* ─── S6: The Moat ─────────────────────────────────────── */}
-      <section className="py-20 border-t border-[hsl(220,14%,18%)]">
+      <section className="py-20 border-t border-border">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
-              <SectionNum n="05" label="The Moat" />
+              <SectionNum n="05" label={t('aboutPage.sectionMoat', 'The Moat')} />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-              The longer you use ChartingPath, the{" "}
-              <span className="text-[#f97316]">smarter it gets.</span>
+              {t('aboutPage.moatHeadline1', 'The longer you use ChartingPath, the')}{" "}
+              <span className="text-primary">{t('aboutPage.moatHeadline2', 'smarter it gets.')}</span>
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-4">
-              Every time a trader paper trades a signal on ChartingPath, the outcome feeds back into the scoring model. Not theoretical outcomes — real ones, validated against actual price movement. This creates a proprietary dataset that no competitor can replicate without starting over.
+              {t('aboutPage.moatP1', "Every time a trader paper trades a signal on ChartingPath, the outcome feeds back into the scoring model. Not theoretical outcomes — real ones, validated against actual price movement. This creates a proprietary dataset that no competitor can replicate without starting over.")}
             </p>
             <p className="text-muted-foreground leading-relaxed max-w-3xl">
-              TradingView can copy our UI. Bloomberg can copy our patterns. Nobody can copy five years of user-validated pattern outcomes tied to real market conditions.
+              {t('aboutPage.moatP2', "TradingView can copy our UI. Bloomberg can copy our patterns. Nobody can copy five years of user-validated pattern outcomes tied to real market conditions.")}
             </p>
             <FlowDiagram />
           </FadeIn>
@@ -239,24 +251,24 @@ const About = () => {
       </section>
 
       {/* ─── S7: Who We Serve ─────────────────────────────────── */}
-      <section className="py-20 border-t border-[hsl(220,14%,18%)]">
+      <section className="py-20 border-t border-border">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
-              <SectionNum n="06" label="Who We Serve" />
+              <SectionNum n="06" label={t('aboutPage.sectionWhoWeServe', 'Who We Serve')} />
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               <ProfileCard
-                title="The Systematic Trader"
-                desc="You already have a process. You want data to validate it — not replace it. ChartingPath gives you the statistical foundation to know which patterns have genuine edge in your markets before you risk capital."
+                title={t('aboutPage.profileSystematicTitle', 'The Systematic Trader')}
+                desc={t('aboutPage.profileSystematicDesc', "You already have a process. You want data to validate it — not replace it. ChartingPath gives you the statistical foundation to know which patterns have genuine edge in your markets before you risk capital.")}
               />
               <ProfileCard
-                title="The Pattern Trader"
-                desc="You've been trading Bull Flags and Double Bottoms for years — mostly on gut feel. ChartingPath tells you which ones actually worked, on which instruments, at which timeframes. Finally: proof."
+                title={t('aboutPage.profilePatternTitle', 'The Pattern Trader')}
+                desc={t('aboutPage.profilePatternDesc', "You've been trading Bull Flags and Double Bottoms for years — mostly on gut feel. ChartingPath tells you which ones actually worked, on which instruments, at which timeframes. Finally: proof.")}
               />
               <ProfileCard
-                title="The Prop Trader"
-                desc="You're paying for challenge accounts hoping your strategy survives the drawdown rules. ChartingPath lets you validate your pattern strategy against 320,000+ historical outcomes before you spend another dollar on a challenge fee."
+                title={t('aboutPage.profilePropTitle', 'The Prop Trader')}
+                desc={t('aboutPage.profilePropDesc', "You're paying for challenge accounts hoping your strategy survives the drawdown rules. ChartingPath lets you validate your pattern strategy against 320,000+ historical outcomes before you spend another dollar on a challenge fee.")}
               />
             </div>
           </FadeIn>
@@ -264,25 +276,25 @@ const About = () => {
       </section>
 
       {/* ─── S8: The Vision ───────────────────────────────────── */}
-      <section className="py-24 border-t border-[hsl(220,14%,18%)]">
+      <section className="py-24 border-t border-border">
         <div className="max-w-2xl mx-auto px-4 md:px-6 lg:px-8 text-center">
           <FadeIn>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              From signal discovery to{" "}
-              <span className="text-[#f97316]">pattern intelligence.</span>
+              {t('aboutPage.visionHeadline1', 'From signal discovery to')}{" "}
+              <span className="text-primary">{t('aboutPage.visionHeadline2', 'pattern intelligence.')}</span>
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-10">
-              The future we're building is one where any trader — regardless of experience — can answer the question "does my strategy actually work?" in under 60 seconds. Where pattern outcomes are transparent, verifiable, and continuously improving. Where the gap between retail traders and institutional desks narrows — not because retail traders got more capital, but because they finally got the same quality of information.
+              {t('aboutPage.visionDesc', 'The future we\'re building is one where any trader — regardless of experience — can answer the question "does my strategy actually work?" in under 60 seconds. Where pattern outcomes are transparent, verifiable, and continuously improving. Where the gap between retail traders and institutional desks narrows — not because retail traders got more capital, but because they finally got the same quality of information.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild size="lg" className="bg-[#f97316] hover:bg-[#f97316]/90 text-white font-semibold gap-2">
+              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2">
                 <Link to="/auth/register">
-                  Start For Free
+                  {t('aboutPage.ctaStartFree', 'Start For Free')}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/patterns/live">Explore the Edge Atlas</Link>
+                <Link to="/patterns/live">{t('aboutPage.ctaExploreEdge', 'Explore the Edge Atlas')}</Link>
               </Button>
             </div>
           </FadeIn>
@@ -290,17 +302,17 @@ const About = () => {
       </section>
 
       {/* ─── S9: Footer CTA Band ─────────────────────────────── */}
-      <section className="bg-gradient-to-r from-[#f97316] to-[#ea580c] py-16">
+      <section className="bg-gradient-to-r from-primary to-primary/80 py-16">
         <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 text-center">
           <FadeIn>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
-              Ready to trade with evidence, not instinct?
+            <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-6">
+              {t('aboutPage.footerCtaHeadline', 'Ready to trade with evidence, not instinct?')}
             </h2>
-            <Button asChild size="lg" className="bg-white text-[#f97316] hover:bg-white/90 font-semibold">
-              <Link to="/auth/register">Create Free Account</Link>
+            <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold">
+              <Link to="/auth/register">{t('aboutPage.footerCtaButton', 'Create Free Account')}</Link>
             </Button>
-            <p className="text-white/70 text-sm mt-4">
-              No credit card required. Free forever tier available.
+            <p className="text-primary-foreground/70 text-sm mt-4">
+              {t('aboutPage.footerCtaSubtext', 'No credit card required. Free forever tier available.')}
             </p>
           </FadeIn>
         </div>
