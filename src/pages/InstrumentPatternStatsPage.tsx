@@ -166,9 +166,9 @@ export default function InstrumentPatternStatsPage() {
       <div className="container mx-auto max-w-5xl px-6 py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+          <Link to="/" className="hover:text-foreground transition-colors">{t('patternStats.home', 'Home')}</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">Edge Atlas</Link>
+          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">{t('edgeAtlas.badge', 'Edge Atlas')}</Link>
           <ChevronRight className="h-3 w-3" />
           <Link to={`/patterns/${patternId}/statistics`} className="hover:text-foreground transition-colors">
             {displayPatternName}
