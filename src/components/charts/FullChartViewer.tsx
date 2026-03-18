@@ -648,8 +648,7 @@ export default function FullChartViewer({
                   : t;
               const anchorTime = findNearestCandleTime(safeChartData, targetTs);
               // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
-              const brkBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-              const brkBar = brkBarIdx >= 0 ? bars[brkBarIdx] : null;
+              const brkBar = normalizedBarByTime.get(anchorTime);
               const snappedPrice = brkBar
                 ? (pointUp ? brkBar.h : brkBar.l)
                 : pivot.price;
