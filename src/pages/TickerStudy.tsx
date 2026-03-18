@@ -230,6 +230,17 @@ export default function TickerStudy() {
   const decodedSymbol = symbol ? decodeURIComponent(symbol) : '';
   const displaySymbol = decodedSymbol.replace('=X', '').replace('=F', '').replace('-USD', '').toUpperCase();
 
+  // Emit view context for Copilot awareness
+  useEffect(() => {
+    if (!decodedSymbol) return;
+    const { setViewContext } = require('@/lib/copilotEvents');
+    setViewContext({
+      page: 'ticker-study',
+      instrument: decodedSymbol,
+      timeframe: selectedTimeframe,
+    });
+  }, [decodedSymbol, selectedTimeframe]);
+
   // Handler for sending chart context to copilot with visual analysis
   const handleSendToCopilot = useCallback((context: string, analysis: import('@/hooks/useChartAnalysis').ChartAnalysisResult) => {
     copilot.openWithAnalysis(context, analysis);

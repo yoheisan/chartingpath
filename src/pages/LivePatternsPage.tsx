@@ -274,6 +274,21 @@ export default function LivePatternsPage() {
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
+
+  // Emit view context when a setup is selected so the Copilot knows what the user is looking at
+  useEffect(() => {
+    if (!selectedSetup) return;
+    const { setViewContext } = require('@/lib/copilotEvents');
+    setViewContext({
+      page: 'screener',
+      instrument: selectedSetup.instrument,
+      patternName: selectedSetup.patternName,
+      patternId: selectedSetup.patternId,
+      timeframe: selectedSetup.visualSpec?.timeframe,
+      direction: selectedSetup.direction,
+      grade: selectedSetup.grade,
+    });
+  }, [selectedSetup]);
   const [creatingAlertInline, setCreatingAlertInline] = useState(false);
   // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
   const chartDetailsRequestIdRef = useRef(0);
