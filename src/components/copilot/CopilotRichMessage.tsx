@@ -534,7 +534,7 @@ interface AgentScoreExplanation {
   timeframe: string;
   composite: number;
   verdict: string;
-  analyst: { score: number; winRate?: number; avgR?: number; trades?: number };
+  analyst: { score: number; winRate?: number; avgR?: number; trades?: number; source?: string };
   risk: { score: number; rr?: number; kelly?: number };
   timing: { score: number; trend?: string; hasEvents?: boolean };
   portfolio: { score: number; note?: string };
