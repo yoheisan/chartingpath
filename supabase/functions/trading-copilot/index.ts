@@ -2693,8 +2693,23 @@ serve(async (req) => {
       ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
       : "";
     
+    // Build view context layer — tells the AI what the user is currently looking at
+    let viewContextLayer = '';
+    if (viewContext && typeof viewContext === 'object' && viewContext.page) {
+      const parts: string[] = [`The user is currently on the **${viewContext.page}** page.`];
+      if (viewContext.instrument) parts.push(`They are focused on **${viewContext.instrument}**.`);
+      if (viewContext.patternName) parts.push(`Pattern: **${viewContext.patternName}**.`);
+      if (viewContext.timeframe) parts.push(`Timeframe: **${viewContext.timeframe}**.`);
+      if (viewContext.direction) parts.push(`Direction: **${viewContext.direction}**.`);
+      if (viewContext.grade) parts.push(`Quality grade: **${viewContext.grade}**.`);
+      if (viewContext.verdict) parts.push(`Agent verdict: **${viewContext.verdict}** (score: ${viewContext.compositeScore ?? 'N/A'}).`);
+      if (viewContext.detectionId) parts.push(`Detection ID: ${viewContext.detectionId}.`);
+      viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
+      console.log(`[trading-copilot] View context: page=${viewContext.page}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
+    }
+
     // Assemble enhanced system prompt with all context layers
-    const contextLayers = [temporalContext, platformContext, userBehavior].filter(Boolean).join('\n\n');
+    const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer].filter(Boolean).join('\n\n');
     const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
       + (contextLayers ? '\n\n' + contextLayers : '')
       + langInstruction 
