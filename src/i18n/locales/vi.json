@@ -131,5 +131,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "Bắt đầu",
+    "viewSignal": "Xem tín hiệu mẫu trực tiếp",
+    "runBacktest": "Chạy backtest đầu tiên",
+    "setAlert": "Đặt cảnh báo mẫu",
+    "freeMessagesRemaining": "Còn {{count}}/{{total}} tin nhắn miễn phí"
   }
 }
