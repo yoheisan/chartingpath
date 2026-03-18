@@ -261,6 +261,10 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const timingScore = timingRaw * weights.timing;
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+      // Determine analyst data source from precomputed details or detection
+      const analystDetails = precomputed?.analyst_details as any;
+      const analystSource = analystDetails?.source || 'per_symbol';
+
       return {
         id: d.id,
         symbol: d.instrument,
@@ -273,6 +277,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         assetType: d.asset_type,
         analystRaw, riskRaw, timingRaw,
         analystScore, riskScore, timingScore, composite, verdict,
+        analystSource,
       };
     });
 
@@ -446,7 +451,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
                   <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
                   <td className="px-4 py-3 text-center">
-                    <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" />
+                    <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" estimated={trade.analystSource === 'pattern_aggregate' || trade.analystSource === 'bayesian_prior'} estimatedLabel={trade.analystSource === 'bayesian_prior' ? 'Prior' : 'Est.'} />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
@@ -616,7 +621,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
   );
 };
 
-const ScoreCell: React.FC<{ score: number; max: number; color: string }> = ({ score, max, color }) => {
+const ScoreCell: React.FC<{ score: number; max: number; color: string; estimated?: boolean; estimatedLabel?: string }> = ({ score, max, color, estimated, estimatedLabel }) => {
   const pct = max > 0 ? (score / max) * 100 : 0;
   const barColors: Record<string, string> = {
     blue: 'bg-blue-500',
@@ -626,13 +631,27 @@ const ScoreCell: React.FC<{ score: number; max: number; color: string }> = ({ sc
   };
   return (
     <div className="flex items-center gap-2 justify-center">
-      <div className="w-14 h-2 rounded-full bg-muted/40 overflow-hidden">
+      <div className={`w-14 h-2 rounded-full bg-muted/40 overflow-hidden ${estimated ? 'opacity-60' : ''}`}>
         <div
-          className={`h-full rounded-full ${barColors[color]} transition-all duration-500`}
+          className={`h-full rounded-full ${barColors[color]} transition-all duration-500 ${estimated ? 'opacity-70' : ''}`}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
       <span className="font-mono text-muted-foreground w-6 text-right text-sm">{score.toFixed(0)}</span>
+      {estimated && (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[9px] text-muted-foreground/70 bg-muted/50 rounded px-1 py-0.5 cursor-help">{estimatedLabel || 'Est.'}</span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {estimatedLabel === 'Prior' 
+                ? 'Based on Bayesian prior (no historical data for this pattern). Score is neutral (~40%).'
+                : 'Based on pattern-level aggregate across all instruments, not per-symbol data.'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };

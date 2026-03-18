@@ -13,14 +13,19 @@ const PROOF_GATE_MIN_SAMPLE = 15;
 const PROOF_GATE_MIN_WIN_RATE = 0.45;
 const BATCH_SIZE = 100;
 
+// Bayesian prior: neutral assumption when no data exists
+const BAYESIAN_PRIOR_WIN_RATE = 0.50;
+const BAYESIAN_PRIOR_EXPECTANCY = 0;
+const BAYESIAN_VIRTUAL_SAMPLE = 10;
+
 // ── Analyst Agent (matches AnalystAgent.ts engine logic) ──────────────────
-function scoreAnalyst(hp: any): { raw: number; details: Record<string, any> } {
+function scoreAnalyst(hp: any, source: string = "per_symbol"): { raw: number; details: Record<string, any> } {
   const winRate = hp?.winRate ?? hp?.win_rate ?? 0;
   const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
   const expectancyR = hp?.avgRMultiple ?? hp?.expectancyR ?? 0;
 
   if (sampleSize < 5) {
-    return { raw: 0, details: { reason: "insufficient_data", sampleSize } };
+    return { raw: 0, details: { reason: "insufficient_data", sampleSize, source } };
   }
 
   const winRateScore = Math.min(10, winRate * 10);
@@ -35,7 +40,7 @@ function scoreAnalyst(hp: any): { raw: number; details: Record<string, any> } {
   return {
     raw,
     details: {
-      winRate, expectancyR, sampleSize,
+      winRate, expectancyR, sampleSize, source,
       winRateScore: Math.round(winRateScore * 100) / 100,
       expectancyScore: Math.round(expectancyScore * 100) / 100,
       confidenceScore: Math.round(confidenceScore * 100) / 100,
@@ -87,7 +92,6 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
     return { raw: trendScore, details: { trendScore, eventCount: 0 } };
   }
 
-  // Match events by currency to instrument
   const instrument = (d.instrument || "").toUpperCase();
   const relevantEvents = economicEvents.filter((e: any) => {
     const currency = (e.currency || e.country_code || "").toUpperCase();
@@ -125,6 +129,51 @@ function scorePortfolio(d: any): number {
   return gradeMap[d.quality_score || "C"] ?? 0.55;
 }
 
+// ── Pattern-Level Aggregate Fetcher ──────────────────────────────────────
+async function fetchPatternAggregates(
+  supabase: any,
+  patternIds: string[]
+): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
+  const map = new Map();
+  if (!patternIds.length) return map;
+
+  try {
+    const { data, error } = await supabase
+      .from("historical_pattern_occurrences")
+      .select("pattern_id, outcome, outcome_pnl_percent")
+      .in("pattern_id", patternIds)
+      .in("outcome", ["hit_tp", "hit_sl"])
+      .limit(5000);
+
+    if (error || !data?.length) return map;
+
+    const grouped = new Map<string, { wins: number; total: number; pnlSum: number }>();
+    for (const row of data) {
+      if (!grouped.has(row.pattern_id)) grouped.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0 });
+      const e = grouped.get(row.pattern_id)!;
+      e.total++;
+      if (row.outcome === "hit_tp") e.wins++;
+      e.pnlSum += row.outcome_pnl_percent ?? 0;
+    }
+
+    for (const [patternId, e] of grouped) {
+      if (e.total >= 5) {
+        map.set(patternId, {
+          winRate: Math.round((e.wins / e.total) * 1000) / 10,
+          avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
+          sampleSize: e.total,
+        });
+      }
+    }
+
+    console.log(`[score-agent-detections] Pattern aggregates fetched for ${map.size}/${patternIds.length} patterns`);
+  } catch (err: any) {
+    console.warn("[score-agent-detections] Pattern aggregate fetch error:", err.message);
+  }
+
+  return map;
+}
+
 // ── Main Handler ──────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -155,20 +204,54 @@ serve(async (req) => {
       .gte("scheduled_time", now.toISOString())
       .lte("scheduled_time", in48h.toISOString());
 
-    // 3. Score in batches and upsert
+    // 3. Identify detections needing pattern-aggregate fallback
+    const dataPoorDetections = detections.filter((d: any) => {
+      const hp = d.historical_performance;
+      const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
+      return sampleSize < 5;
+    });
+
+    let patternAggregates = new Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>();
+    if (dataPoorDetections.length > 0) {
+      const patternIds = [...new Set(dataPoorDetections.map((d: any) => d.pattern_id))];
+      console.log(`[score-agent-detections] ${dataPoorDetections.length} detections need fallback, fetching aggregates for ${patternIds.length} patterns`);
+      patternAggregates = await fetchPatternAggregates(supabase, patternIds);
+    }
+
+    // 4. Score in batches and upsert
     let scored = 0;
     let skipped = 0;
+    let fallbackUsed = { pattern_aggregate: 0, bayesian_prior: 0 };
 
     for (let i = 0; i < detections.length; i += BATCH_SIZE) {
       const batch = detections.slice(i, i + BATCH_SIZE);
 
       const rows = batch.map((d: any) => {
-        const hp = d.historical_performance;
+        let hp = d.historical_performance;
+        const originalSampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
+        let analystSource = "per_symbol";
+
+        // Fallback chain for data-poor detections
+        if (originalSampleSize < 5) {
+          const agg = patternAggregates.get(d.pattern_id);
+          if (agg && agg.sampleSize >= 5) {
+            // Use pattern-level aggregate
+            hp = { winRate: agg.winRate, avgRMultiple: agg.avgRMultiple, sampleSize: agg.sampleSize };
+            analystSource = "pattern_aggregate";
+            fallbackUsed.pattern_aggregate++;
+          } else {
+            // Use Bayesian prior — neutral score instead of 0
+            hp = { winRate: BAYESIAN_PRIOR_WIN_RATE, avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY, sampleSize: BAYESIAN_VIRTUAL_SAMPLE };
+            analystSource = "bayesian_prior";
+            fallbackUsed.bayesian_prior++;
+          }
+        }
+
         const winRate = hp?.winRate ?? hp?.win_rate ?? 0;
         const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
         const expectancyR = hp?.avgRMultiple ?? hp?.expectancyR ?? 0;
 
-        const analyst = scoreAnalyst(hp);
+        const analyst = scoreAnalyst(hp, analystSource);
         const risk = scoreRisk(d);
         const timing = scoreTiming(d, economicEvents || []);
         const portfolioRaw = scorePortfolio(d);
@@ -209,16 +292,15 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} duration=${duration}ms`);
+    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} duration=${duration}ms fallbacks=${JSON.stringify(fallbackUsed)}`);
 
     return new Response(
-      JSON.stringify({ scored, skipped, duration_ms: duration, total: detections.length }),
+      JSON.stringify({ scored, skipped, duration_ms: duration, total: detections.length, fallbacks: fallbackUsed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
     console.error("[score-agent-detections] error:", err);
 
-    // Handle upstream HTML errors (502/503 from infra)
     const msg = typeof err?.message === "string" && err.message.includes("<")
       ? "Upstream service temporarily unavailable"
       : (err.message || "Unknown error");
