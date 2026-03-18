@@ -308,7 +308,7 @@ serve(async (req) => {
       downstreamResp = await fetch(handlerUrl, {
         method: "POST",
         headers: forwardHeaders,
-        body: JSON.stringify({ messages, language, context, prewarmed }),
+        body: JSON.stringify({ messages, language, context, prewarmed, viewContext }),
         signal: AbortSignal.timeout(DOWNSTREAM_TIMEOUT_MS),
       });
     } catch (fetchError) {
