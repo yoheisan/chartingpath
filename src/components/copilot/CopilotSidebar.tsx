@@ -30,6 +30,7 @@ import {
   dispatchRunBacktest,
   dispatchNavigate,
   isPanelMounted,
+  getViewContext,
 } from '@/lib/copilotEvents';
 import { fuzzyMatchRoute } from '@/lib/navigationRoutes';
 
@@ -234,6 +235,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             panelMounted: isPanelMounted('agentScoring'),
             currentPath: window.location.pathname,
           },
+          viewContext: getViewContext(),
           ...(prewarmedCtx.ready && {
             prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
           }),

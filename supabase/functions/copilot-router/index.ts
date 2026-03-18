@@ -230,7 +230,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language, context, prewarmed } = await req.json();
+    const { messages, language, context, prewarmed, viewContext } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
@@ -308,7 +308,7 @@ serve(async (req) => {
       downstreamResp = await fetch(handlerUrl, {
         method: "POST",
         headers: forwardHeaders,
-        body: JSON.stringify({ messages, language, context, prewarmed }),
+        body: JSON.stringify({ messages, language, context, prewarmed, viewContext }),
         signal: AbortSignal.timeout(DOWNSTREAM_TIMEOUT_MS),
       });
     } catch (fetchError) {

@@ -10,6 +10,7 @@ import {
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
@@ -274,6 +275,20 @@ export default function LivePatternsPage() {
   const [selectedSetup, setSelectedSetup] = useState<SetupWithVisuals | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [loadingChartDetails, setLoadingChartDetails] = useState(false);
+
+  // Emit view context when a setup is selected so the Copilot knows what the user is looking at
+  useEffect(() => {
+    if (!selectedSetup) return;
+    setViewContext({
+      page: 'screener',
+      instrument: selectedSetup.instrument,
+      patternName: selectedSetup.patternName,
+      patternId: selectedSetup.patternId,
+      timeframe: selectedSetup.visualSpec?.timeframe,
+      direction: selectedSetup.direction,
+      grade: selectedSetup.quality?.grade,
+    });
+  }, [selectedSetup]);
   const [creatingAlertInline, setCreatingAlertInline] = useState(false);
   // Prevent stale/overlapping detail fetches from leaving the modal stuck in a loading state.
   const chartDetailsRequestIdRef = useRef(0);

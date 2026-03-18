@@ -52,6 +52,49 @@ export function isPanelMounted(name: string): boolean {
   return !!(window as any).__copilotPanels?.[name];
 }
 
+/** Tracks what the user is currently viewing so the Copilot can be context-aware */
+export interface ViewContext {
+  /** Which page/module the user is on */
+  page: 'screener' | 'agent-scoring' | 'ticker-study' | 'pattern-lab' | 'dashboard' | 'other';
+  /** The instrument the user is focused on (e.g. AAPL, BTC-USD) */
+  instrument?: string;
+  /** The pattern being viewed */
+  patternName?: string;
+  patternId?: string;
+  /** Timeframe in view */
+  timeframe?: string;
+  /** Trade direction */
+  direction?: string;
+  /** Quality grade if available */
+  grade?: string;
+  /** Agent scoring verdict if on that page */
+  verdict?: string;
+  /** Composite score */
+  compositeScore?: number;
+  /** Detection DB id */
+  detectionId?: string;
+  /** Timestamp of when context was set */
+  updatedAt: number;
+}
+
+const VIEW_CONTEXT_KEY = '__copilotViewContext';
+
+export function setViewContext(ctx: Omit<ViewContext, 'updatedAt'>) {
+  (window as any)[VIEW_CONTEXT_KEY] = { ...ctx, updatedAt: Date.now() };
+}
+
+export function getViewContext(): ViewContext | null {
+  const ctx = (window as any)[VIEW_CONTEXT_KEY] as ViewContext | undefined;
+  if (!ctx) return null;
+  // Expire after 10 minutes of staleness
+  if (Date.now() - ctx.updatedAt > 10 * 60 * 1000) return null;
+  return ctx;
+}
+
+export function clearViewContext() {
+  (window as any)[VIEW_CONTEXT_KEY] = null;
+}
+
 export function buildDiffSummary(diff: ScoringUpdatePayload['diff']): string {
   const parts: string[] = [];
   if (diff?.weights) {
