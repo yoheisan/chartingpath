@@ -36,7 +36,7 @@ export function ActivationChecklist() {
   if (!shouldShow) return null;
 
   return (
-    <div className="fixed bottom-14 right-4 z-40 w-72 rounded-xl border border-border bg-card shadow-2xl p-4 animate-fade-in">
+    <div className="fixed bottom-28 right-4 z-40 w-72 rounded-xl border border-border bg-card shadow-2xl p-4 animate-fade-in sm:bottom-14">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-semibold text-foreground">
           {t('activation.title', 'Getting Started')}
