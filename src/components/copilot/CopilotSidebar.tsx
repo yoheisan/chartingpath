@@ -30,6 +30,7 @@ import {
   dispatchRunBacktest,
   dispatchNavigate,
   isPanelMounted,
+  getViewContext,
 } from '@/lib/copilotEvents';
 import { fuzzyMatchRoute } from '@/lib/navigationRoutes';
 
