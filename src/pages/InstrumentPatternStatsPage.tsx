@@ -102,10 +102,10 @@ export default function InstrumentPatternStatsPage() {
 
   const agg = data?.aggregates;
 
-  const pageTitle = `${displayPatternName} on ${displayInstrument} — Win Rate & Stats`;
+  const pageTitle = t('patternStats.pageTitle', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} on ${displayInstrument} — Win Rate & Stats` });
   const pageDesc = agg
-    ? `${displayPatternName} pattern on ${displayInstrument}: ${agg.win_rate_pct}% win rate across ${agg.total_trades} trades. Expectancy ${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R.`
-    : `${displayPatternName} pattern statistics for ${displayInstrument}. Historical win rate, expectancy and performance data.`;
+    ? t('patternStats.pageDescWithData', { pattern: displayPatternName, instrument: displayInstrument, winRate: agg.win_rate_pct, trades: agg.total_trades, expectancy: `${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R`, defaultValue: `${displayPatternName} pattern on ${displayInstrument}: ${agg.win_rate_pct}% win rate across ${agg.total_trades} trades. Expectancy ${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R.` })
+    : t('patternStats.pageDescNoData', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} pattern statistics for ${displayInstrument}. Historical win rate, expectancy and performance data.` });
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,9 +166,9 @@ export default function InstrumentPatternStatsPage() {
       <div className="container mx-auto max-w-5xl px-6 py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+          <Link to="/" className="hover:text-foreground transition-colors">{t('patternStats.home', 'Home')}</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">Edge Atlas</Link>
+          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">{t('edgeAtlas.badge', 'Edge Atlas')}</Link>
           <ChevronRight className="h-3 w-3" />
           <Link to={`/patterns/${patternId}/statistics`} className="hover:text-foreground transition-colors">
             {displayPatternName}
@@ -187,10 +187,10 @@ export default function InstrumentPatternStatsPage() {
             <Badge variant="secondary" className="text-xs font-mono">{displayInstrument}</Badge>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-            {displayPatternName} on {displayInstrument}
+            {t('patternStats.instrumentHeading', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} on ${displayInstrument}` })}
           </h1>
           <p className="text-muted-foreground text-lg max-w-3xl leading-relaxed">
-            Historical performance statistics for the {displayPatternName} pattern on {displayInstrument}, based on backtested data.
+            {t('patternStats.instrumentSubheading', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `Historical performance statistics for the ${displayPatternName} pattern on ${displayInstrument}, based on backtested data.` })}
           </p>
         </header>
 
@@ -260,7 +260,7 @@ export default function InstrumentPatternStatsPage() {
         {!loading && data?.related_instruments && data.related_instruments.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-semibold mb-4">
-              {displayPatternName} on Other Instruments
+              {t('patternStats.onOtherInstruments', { pattern: displayPatternName, defaultValue: `${displayPatternName} on Other Instruments` })}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {data.related_instruments.map((sym) => (
@@ -273,7 +273,7 @@ export default function InstrumentPatternStatsPage() {
                     <span className="font-mono font-medium text-sm">{sym}</span>
                     <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{displayPatternName} stats →</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('patternStats.statsLink', { pattern: displayPatternName, defaultValue: `${displayPatternName} stats →` })}</p>
                 </Link>
               ))}
             </div>
