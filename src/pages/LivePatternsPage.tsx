@@ -10,6 +10,7 @@ import {
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
