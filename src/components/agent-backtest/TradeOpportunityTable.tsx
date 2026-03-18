@@ -446,7 +446,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   <td className="px-4 py-3 text-center text-muted-foreground">{trade.timeframe}</td>
                   <td className="px-4 py-3 text-center font-mono">{trade.rr.toFixed(1)}</td>
                   <td className="px-4 py-3 text-center">
-                    <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" />
+                    <ScoreCell score={trade.analystScore} max={weights.analyst} color="blue" estimated={trade.analystSource === 'pattern_aggregate' || trade.analystSource === 'bayesian_prior'} estimatedLabel={trade.analystSource === 'bayesian_prior' ? 'Prior' : 'Est.'} />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ScoreCell score={trade.riskScore} max={weights.risk} color="amber" />
