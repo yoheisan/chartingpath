@@ -5346,5 +5346,75 @@
       "cta": "Run My First Backtest →",
       "dashboard": "Dashboard"
     }
+  },
+  "patterns": {
+    "ascending-triangle": {
+      "name": "Ascending Triangle",
+      "description": "A bullish continuation pattern formed by a flat resistance line and a rising support trendline, indicating increasing buying pressure."
+    },
+    "descending-triangle": {
+      "name": "Descending Triangle",
+      "description": "A bearish continuation pattern with a flat support and declining resistance, suggesting sellers are gaining control."
+    },
+    "symmetrical-triangle": {
+      "name": "Symmetrical Triangle",
+      "description": "A neutral consolidation pattern with converging trendlines that can break in either direction, reflecting market indecision."
+    },
+    "double-bottom": {
+      "name": "Double Bottom",
+      "description": "A bullish reversal pattern that forms after a downtrend when price tests a support level twice and bounces, resembling the letter \"W\"."
+    },
+    "double-top": {
+      "name": "Double Top",
+      "description": "A bearish reversal pattern where price tests a resistance level twice and fails to break through, forming an \"M\" shape."
+    },
+    "triple-bottom": {
+      "name": "Triple Bottom",
+      "description": "A bullish reversal pattern with three roughly equal lows, indicating strong support and potential trend reversal."
+    },
+    "triple-top": {
+      "name": "Triple Top",
+      "description": "A bearish reversal pattern where price tests resistance three times, signaling exhaustion and a likely downside break."
+    },
+    "head-and-shoulders": {
+      "name": "Head and Shoulders",
+      "description": "A classic bearish reversal pattern with three peaks — the middle peak (head) is the highest, flanked by two lower peaks (shoulders)."
+    },
+    "inverse-head-and-shoulders": {
+      "name": "Inverse Head and Shoulders",
+      "description": "A bullish reversal pattern mirroring the head and shoulders, with three troughs where the middle is the deepest."
+    },
+    "bull-flag": {
+      "name": "Bull Flag",
+      "description": "A short-term bullish continuation pattern where a sharp upward move is followed by a brief rectangular consolidation before continuing higher."
+    },
+    "bear-flag": {
+      "name": "Bear Flag",
+      "description": "A bearish continuation pattern where a sharp decline is followed by a brief upward-sloping consolidation before resuming lower."
+    },
+    "rising-wedge": {
+      "name": "Rising Wedge",
+      "description": "A bearish pattern where price converges within upward-sloping trendlines, typically breaking down as buying momentum fades."
+    },
+    "falling-wedge": {
+      "name": "Falling Wedge",
+      "description": "A bullish pattern with downward-converging trendlines, usually resolving to the upside as selling pressure diminishes."
+    },
+    "cup-and-handle": {
+      "name": "Cup & Handle",
+      "description": "A bullish continuation pattern resembling a teacup, with a rounded bottom (cup) followed by a slight pullback (handle) before breakout."
+    },
+    "inverse-cup-and-handle": {
+      "name": "Inverse Cup & Handle",
+      "description": "A bearish variant of the cup and handle, with a rounded top followed by a small rally before breaking down."
+    },
+    "donchian-breakout-long": {
+      "name": "Donchian Breakout (Long)",
+      "description": "A momentum-based long signal triggered when price breaks above the upper Donchian channel, indicating a potential new uptrend."
+    },
+    "donchian-breakout-short": {
+      "name": "Donchian Breakout (Short)",
+      "description": "A momentum-based short signal triggered when price breaks below the lower Donchian channel, suggesting a potential new downtrend."
+    }
   }
 }
