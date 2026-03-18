@@ -471,6 +471,14 @@ const StudyChart = memo(({
     const safeChartData = sanitizeSeriesData(chartData);
     candleSeries.setData(safeChartData);
 
+    const normalizedBarByTime = new Map<number, (typeof normalizedBars)[number]>();
+    for (const bar of normalizedBars) {
+      const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+      if (Number.isFinite(ts)) {
+        normalizedBarByTime.set(ts, bar);
+      }
+    }
+
     // Add volume histogram if volume data is available
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
@@ -936,8 +944,7 @@ const StudyChart = memo(({
             // Find nearest candle in chart data
             anchorTime = findNearestCandleTime(safeChartData, targetTs);
             // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
-            const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-            const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : null;
+            const anchorBar = normalizedBarByTime.get(anchorTime);
             const snappedPrice = anchorBar
               ? (pointUp ? anchorBar.h : anchorBar.l)
               : pivot.price;
@@ -967,8 +974,7 @@ const StudyChart = memo(({
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
         
         // Find the bar data at the snapped time for price snapping
-        const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-        const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : bars[bars.length - 1];
+        const anchorBar = normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
 
         canvasTriangleMarkers.push({
           time: anchorTime,

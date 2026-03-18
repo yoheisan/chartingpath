@@ -409,6 +409,14 @@ export default function FullChartViewer({
         const safeChartData = [...seen.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
         candleSeries.setData(safeChartData);
 
+        const normalizedBarByTime = new Map<number, (typeof normalizedBars)[number]>();
+        for (const bar of normalizedBars) {
+          const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+          if (Number.isFinite(ts)) {
+            normalizedBarByTime.set(ts, bar);
+          }
+        }
+
         // Add volume histogram if volume data is available
         const hasVolume = bars.some(bar => bar.v && bar.v > 0);
         if (hasVolume) {
@@ -640,8 +648,7 @@ export default function FullChartViewer({
                   : t;
               const anchorTime = findNearestCandleTime(safeChartData, targetTs);
               // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
-              const brkBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-              const brkBar = brkBarIdx >= 0 ? bars[brkBarIdx] : null;
+              const brkBar = normalizedBarByTime.get(anchorTime);
               const snappedPrice = brkBar
                 ? (pointUp ? brkBar.h : brkBar.l)
                 : pivot.price;
@@ -675,8 +682,7 @@ export default function FullChartViewer({
 
           // Snap to nearest actual chart candle (prevents floating markers)
           const anchorTime = findNearestCandleTime(safeChartData, targetTs);
-          const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-          const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : bars[bars.length - 1];
+          const anchorBar = normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
 
           canvasTriangleMarkers.push({
             time: anchorTime,
