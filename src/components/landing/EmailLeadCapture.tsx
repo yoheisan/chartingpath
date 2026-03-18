@@ -22,7 +22,7 @@ export function EmailLeadCapture() {
 
     setLoading(true);
     try {
-      await supabase.from('email_leads').insert({ email, source: 'landing_page' });
+      await supabase.from('email_leads' as any).insert({ email, source: 'landing_page' } as any);
       trackEvent('email_lead.captured', { source: 'landing_page' });
       setSubmitted(true);
     } catch {

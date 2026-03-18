@@ -52,7 +52,9 @@ export type AnalyticsEvent =
   | 'upgrade_banner_clicked'
   | 'upgrade_banner_dismissed'
   | 'shared_to_auth_click'
-  | 'landing_view';
+  | 'landing_view'
+  | 'pricing_start_free'
+  | 'email_lead_captured';
 
 // Event properties types
 export interface PresetLoadedProps {
