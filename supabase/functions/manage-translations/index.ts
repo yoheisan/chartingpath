@@ -87,9 +87,10 @@ Deno.serve(async (req) => {
       status_filter,
       language_filter,
       en_fallback_content,
+      en_flat_keys,
       limit = 50,
       offset = 0
-    }: TranslationRequest & { en_fallback_content?: Record<string, any> } = await req.json()
+    }: TranslationRequest & { en_fallback_content?: Record<string, any>; en_flat_keys?: string[] } = await req.json()
     console.log('Translation management action:', action)
 
     switch (action) {
@@ -429,55 +430,57 @@ Deno.serve(async (req) => {
 
         if (keysError) throw keysError
 
-        // If client sent en_fallback_content, count those keys as the real source of truth
+        // If client sent en_flat_keys (preferred) or en_fallback_content, use as source of truth
         let staticKeyCount = 0
-        const flattenObj2 = (obj: Record<string, any>, prefix = ''): string[] => {
-          const keys: string[] = []
-          for (const key of Object.keys(obj)) {
-            const fullKey = prefix ? `${prefix}.${key}` : key
-            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-              keys.push(...flattenObj2(obj[key], fullKey))
-            } else {
-              keys.push(fullKey)
-            }
-          }
-          return keys
-        }
-
         let enKeysList: string[] = []
-        if (en_fallback_content && typeof en_fallback_content === 'object') {
+
+        if (en_flat_keys && Array.isArray(en_flat_keys) && en_flat_keys.length > 0) {
+          enKeysList = en_flat_keys
+          staticKeyCount = enKeysList.length
+        } else if (en_fallback_content && typeof en_fallback_content === 'object') {
+          const flattenObj2 = (obj: Record<string, any>, prefix = ''): string[] => {
+            const keys: string[] = []
+            for (const key of Object.keys(obj)) {
+              const fullKey = prefix ? `${prefix}.${key}` : key
+              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                keys.push(...flattenObj2(obj[key], fullKey))
+              } else {
+                keys.push(fullKey)
+              }
+            }
+            return keys
+          }
           enKeysList = flattenObj2(en_fallback_content)
           staticKeyCount = enKeysList.length
+        }
 
-          // Auto-sync missing keys into translation_keys (fire-and-forget, batched)
-          if (staticKeyCount > (dbKeyCount || 0)) {
-            // Fetch existing keys from DB
-            const existingKeys = new Set<string>()
-            let from = 0
-            const PAGE = 1000
-            while (true) {
-              const { data: rows, error: fetchErr } = await supabase
-                .from('translation_keys')
-                .select('key')
-                .range(from, from + PAGE - 1)
-              if (fetchErr || !rows || rows.length === 0) break
-              rows.forEach((r: { key: string }) => existingKeys.add(r.key))
-              if (rows.length < PAGE) break
-              from += PAGE
-            }
+        // Auto-sync missing keys into translation_keys (fire-and-forget, batched)
+        if (staticKeyCount > (dbKeyCount || 0)) {
+          const existingKeys = new Set<string>()
+          let from = 0
+          const PAGE = 1000
+          while (true) {
+            const { data: rows, error: fetchErr } = await supabase
+              .from('translation_keys')
+              .select('key')
+              .range(from, from + PAGE - 1)
+            if (fetchErr || !rows || rows.length === 0) break
+            rows.forEach((r: { key: string }) => existingKeys.add(r.key))
+            if (rows.length < PAGE) break
+            from += PAGE
+          }
 
-            const missing = enKeysList.filter(k => !existingKeys.has(k))
-            if (missing.length > 0) {
-              console.log(`[coverage] Syncing ${missing.length} missing keys to translation_keys`)
-              const UPSERT_BATCH = 200
-              for (let b = 0; b < missing.length; b += UPSERT_BATCH) {
-                const batch = missing.slice(b, b + UPSERT_BATCH).map(key => ({
-                  key,
-                  category: key.split('.')[0],
-                  description: `Auto-synced from en.json`,
-                }))
-                await supabase.from('translation_keys').upsert(batch, { onConflict: 'key' })
-              }
+          const missing = enKeysList.filter(k => !existingKeys.has(k))
+          if (missing.length > 0) {
+            console.log(`[coverage] Syncing ${missing.length} missing keys to translation_keys`)
+            const UPSERT_BATCH = 200
+            for (let b = 0; b < missing.length; b += UPSERT_BATCH) {
+              const batch = missing.slice(b, b + UPSERT_BATCH).map(key => ({
+                key,
+                category: key.split('.')[0],
+                description: `Auto-synced from en.json`,
+              }))
+              await supabase.from('translation_keys').upsert(batch, { onConflict: 'key' })
             }
           }
         }

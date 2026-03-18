@@ -20,6 +20,20 @@ import { TranslationGapAnalysis } from '@/components/TranslationGapAnalysis';
 import { TranslationDebugPanel } from '@/components/TranslationDebugPanel';
 import { TranslationOverrideSearch } from '@/components/TranslationOverrideSearch';
 
+/** Flatten nested object to dot-key names only (no values) */
+function flattenKeysOnly(obj: Record<string, any>, prefix = ''): string[] {
+  const keys: string[] = [];
+  for (const key of Object.keys(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      keys.push(...flattenKeysOnly(obj[key], fullKey));
+    } else {
+      keys.push(fullKey);
+    }
+  }
+  return keys;
+}
+
 interface PendingTranslation {
   id: string;
   key: string;
@@ -155,8 +169,10 @@ export const TranslationManagement = () => {
   const loadCoverageStats = async (showToast = false) => {
     setCoverageLoading(true);
     try {
+      const enMod = (await import('@/i18n/locales/en.json')).default;
+      const flatKeys = flattenKeysOnly(enMod);
       const { data, error } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'get_coverage_stats', en_fallback_content: (await import('@/i18n/locales/en.json')).default }
+        body: { action: 'get_coverage_stats', en_flat_keys: flatKeys }
       });
       if (error) throw error;
       const dbCoverage = data.coverage || {};
