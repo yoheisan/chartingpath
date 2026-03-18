@@ -261,6 +261,10 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       const timingScore = timingRaw * weights.timing;
       const verdict = composite >= takeCutoff ? 'TAKE' : composite >= watchCutoff ? 'WATCH' : 'SKIP';
       const direction: 'Long' | 'Short' = d.direction?.toLowerCase().includes('short') ? 'Short' : 'Long';
+      // Determine analyst data source from precomputed details or detection
+      const analystDetails = precomputed?.analyst_details as any;
+      const analystSource = analystDetails?.source || 'per_symbol';
+
       return {
         id: d.id,
         symbol: d.instrument,
@@ -273,6 +277,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
         assetType: d.asset_type,
         analystRaw, riskRaw, timingRaw,
         analystScore, riskScore, timingScore, composite, verdict,
+        analystSource,
       };
     });
 
