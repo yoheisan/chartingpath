@@ -191,6 +191,11 @@ const Index = () => {
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
 
+      {/* Social Proof */}
+      <div className="border-t border-border/20">
+        <SocialProof />
+      </div>
+
       {/* AI Copilot */}
       <div ref={copilotRef} className="border-t border-border/20">
         <CopilotShowcase />
