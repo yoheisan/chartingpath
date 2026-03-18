@@ -639,9 +639,15 @@ export default function FullChartViewer({
                   ? Math.floor(new Date(bars[bars.length - 1].t).getTime() / 1000)
                   : t;
               const anchorTime = findNearestCandleTime(safeChartData, targetTs);
+              // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
+              const brkBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
+              const brkBar = brkBarIdx >= 0 ? bars[brkBarIdx] : null;
+              const snappedPrice = brkBar
+                ? (pointUp ? brkBar.h : brkBar.l)
+                : pivot.price;
               canvasTriangleMarkers.push({
                 time: anchorTime,
-                price: pivot.price,
+                price: snappedPrice,
                 direction: pointUp ? 'up' : 'down',
                 color: '#f97316',
                 label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
