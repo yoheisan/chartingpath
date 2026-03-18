@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
       pattern,
       timeframe,
       detection_id,
+      asset_type,
     } = await req.json();
 
     // Validate required fields
@@ -115,6 +116,9 @@ Deno.serve(async (req) => {
         take_profit: take_profit_price,
         quantity: Number(quantity.toFixed(6)),
         status: 'open',
+        pattern_id: pattern || null,
+        timeframe: timeframe || null,
+        asset_type: asset_type || null,
         notes: `[auto-trade] ${pattern || 'pattern'} on ${timeframe || 'unknown'} | detection: ${detection_id || 'n/a'}`,
       })
       .select('id')

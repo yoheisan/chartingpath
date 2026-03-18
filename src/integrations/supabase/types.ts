@@ -2803,6 +2803,7 @@ export type Database = {
       }
       paper_trades: {
         Row: {
+          asset_type: string | null
           close_reason: string | null
           closed_at: string | null
           created_at: string
@@ -2815,6 +2816,7 @@ export type Database = {
           outcome_r: number | null
           override_notes: string | null
           override_reason: string | null
+          pattern_id: string | null
           pnl: number | null
           portfolio_id: string
           quantity: number
@@ -2822,10 +2824,12 @@ export type Database = {
           stop_loss: number | null
           symbol: string
           take_profit: number | null
+          timeframe: string | null
           trade_type: string
           user_id: string
         }
         Insert: {
+          asset_type?: string | null
           close_reason?: string | null
           closed_at?: string | null
           created_at?: string
@@ -2838,6 +2842,7 @@ export type Database = {
           outcome_r?: number | null
           override_notes?: string | null
           override_reason?: string | null
+          pattern_id?: string | null
           pnl?: number | null
           portfolio_id: string
           quantity: number
@@ -2845,10 +2850,12 @@ export type Database = {
           stop_loss?: number | null
           symbol: string
           take_profit?: number | null
+          timeframe?: string | null
           trade_type: string
           user_id: string
         }
         Update: {
+          asset_type?: string | null
           close_reason?: string | null
           closed_at?: string | null
           created_at?: string
@@ -2861,6 +2868,7 @@ export type Database = {
           outcome_r?: number | null
           override_notes?: string | null
           override_reason?: string | null
+          pattern_id?: string | null
           pnl?: number | null
           portfolio_id?: string
           quantity?: number
@@ -2868,6 +2876,7 @@ export type Database = {
           stop_loss?: number | null
           symbol?: string
           take_profit?: number | null
+          timeframe?: string | null
           trade_type?: string
           user_id?: string
         }
@@ -4865,8 +4874,12 @@ export type Database = {
         Row: {
           alert_emails: boolean | null
           created_at: string | null
+          first_paper_trade_seen: boolean | null
           getting_started_sent: boolean | null
           id: string
+          milestone_20_seen: boolean | null
+          milestone_5_seen: boolean | null
+          milestone_50_seen: boolean | null
           unsubscribed: boolean | null
           updated_at: string | null
           user_id: string
@@ -4876,8 +4889,12 @@ export type Database = {
         Insert: {
           alert_emails?: boolean | null
           created_at?: string | null
+          first_paper_trade_seen?: boolean | null
           getting_started_sent?: boolean | null
           id?: string
+          milestone_20_seen?: boolean | null
+          milestone_5_seen?: boolean | null
+          milestone_50_seen?: boolean | null
           unsubscribed?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -4887,8 +4904,12 @@ export type Database = {
         Update: {
           alert_emails?: boolean | null
           created_at?: string | null
+          first_paper_trade_seen?: boolean | null
           getting_started_sent?: boolean | null
           id?: string
+          milestone_20_seen?: boolean | null
+          milestone_5_seen?: boolean | null
+          milestone_50_seen?: boolean | null
           unsubscribed?: boolean | null
           updated_at?: string | null
           user_id?: string

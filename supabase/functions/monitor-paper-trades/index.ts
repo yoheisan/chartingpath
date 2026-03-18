@@ -5,6 +5,120 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Override reasons that indicate the pattern signal itself was bad → soft negative
+const NEGATIVE_SIGNAL_OVERRIDES = [
+  'Pattern invalidated',
+  'Market conditions changed',
+  'Changed my mind',
+];
+
+// Override reasons that are trader-side decisions → neutral (no signal quality impact)
+const NEUTRAL_OVERRIDES = [
+  'Taking partial profit',
+  'Risk management',
+  'News event risk',
+];
+
+/**
+ * Feed trade outcome back into agent_scores to make scoring self-improving.
+ * 
+ * - TP hit: full positive signal (weight 1.0)
+ * - SL hit: full negative signal (weight 1.0)
+ * - Timeout: weighted by R outcome (positive = partial win, negative = partial loss)
+ * - Override (negative signal): soft negative (weight 0.3)
+ * - Override (neutral): no signal quality update
+ */
+async function feedbackToAgentScores(
+  supabase: ReturnType<typeof createClient>,
+  trade: Record<string, any>,
+  outcomeR: number,
+  closeReason: string,
+) {
+  // Extract pattern_id and timeframe from trade columns or notes
+  const patternId = trade.pattern_id || trade.notes?.match(/\[pattern:(.*?)\]/)?.[1];
+  const timeframe = trade.timeframe || trade.notes?.match(/on (\w+)/)?.[1];
+  
+  if (!patternId || !timeframe) {
+    console.log('[feedback] Skipping: no pattern_id or timeframe on trade', trade.id);
+    return;
+  }
+
+  // Determine signal weight based on close reason
+  let signalWeight = 1.0;
+  const overrideReason = trade.override_reason;
+
+  if (overrideReason) {
+    if (NEUTRAL_OVERRIDES.includes(overrideReason)) {
+      console.log(`[feedback] Neutral override "${overrideReason}" — no signal quality update`);
+      return; // Skip entirely for neutral overrides
+    }
+    if (NEGATIVE_SIGNAL_OVERRIDES.includes(overrideReason)) {
+      signalWeight = 0.3; // Soft negative
+      console.log(`[feedback] Soft negative override "${overrideReason}" — weight 0.3`);
+    }
+  }
+
+  // Find the matching agent_scores row for this instrument+pattern+timeframe
+  const { data: agentScore } = await supabase
+    .from('agent_scores')
+    .select('id, analyst_raw, win_rate, sample_size, analyst_details')
+    .eq('instrument', trade.symbol)
+    .eq('pattern_id', patternId)
+    .eq('timeframe', timeframe)
+    .order('scored_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!agentScore) {
+    console.log(`[feedback] No agent_scores row for ${trade.symbol}/${patternId}/${timeframe}`);
+    return;
+  }
+
+  // Calculate updated stats
+  const currentWinRate = agentScore.win_rate ?? 0.5;
+  const currentSampleSize = agentScore.sample_size ?? 0;
+  const isWin = outcomeR > 0;
+
+  // Weighted incremental update: new_wr = (old_wr * n + weighted_outcome) / (n + weight)
+  const effectiveOutcome = isWin ? signalWeight : 0;
+  const newSampleSize = currentSampleSize + signalWeight;
+  const newWinRate = newSampleSize > 0
+    ? (currentWinRate * currentSampleSize + effectiveOutcome) / newSampleSize
+    : currentWinRate;
+
+  // Update analyst_raw score based on new win rate (out of 25)
+  // Formula: base from win rate (0-15) + confidence bonus from sample size (0-10)
+  const wrScore = Math.min(15, newWinRate * 15);
+  const confidenceBonus = Math.min(10, Math.log2(Math.max(1, newSampleSize)) * 1.5);
+  const newAnalystRaw = Math.round((wrScore + confidenceBonus) * 100) / 100;
+
+  // Update analyst_details with outcome tracking
+  const details = (agentScore.analyst_details as Record<string, any>) || {};
+  const outcomes = details.outcome_feedback || { wins: 0, losses: 0, overrides: 0 };
+  if (isWin) outcomes.wins = (outcomes.wins || 0) + 1;
+  else outcomes.losses = (outcomes.losses || 0) + 1;
+  if (overrideReason) outcomes.overrides = (outcomes.overrides || 0) + 1;
+  details.outcome_feedback = outcomes;
+  details.last_outcome_at = new Date().toISOString();
+  details.last_outcome_r = outcomeR;
+
+  const { error } = await supabase
+    .from('agent_scores')
+    .update({
+      analyst_raw: newAnalystRaw,
+      win_rate: Math.round(newWinRate * 10000) / 10000,
+      sample_size: Math.round(newSampleSize),
+      analyst_details: details,
+    })
+    .eq('id', agentScore.id);
+
+  if (error) {
+    console.error('[feedback] agent_scores update error:', error);
+  } else {
+    console.log(`[feedback] Updated ${trade.symbol}/${patternId}/${timeframe}: wr=${(newWinRate * 100).toFixed(1)}% n=${Math.round(newSampleSize)} analyst=${newAnalystRaw}`);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -34,6 +148,7 @@ Deno.serve(async (req) => {
     let hitTp = 0;
     let hitSl = 0;
     let timedOut = 0;
+    let feedbackCount = 0;
 
     for (const trade of openTrades) {
       // Get latest price for this instrument from live_pattern_detections
@@ -126,6 +241,14 @@ Deno.serve(async (req) => {
           })
           .eq('id', trade.id);
 
+        // Feed outcome back to agent scoring
+        try {
+          await feedbackToAgentScores(supabase, trade, outcomeR ?? 0, closeReason ?? '');
+          feedbackCount++;
+        } catch (fbErr) {
+          console.warn('[monitor-paper-trades] Feedback error:', fbErr);
+        }
+
         // Send outcome email notification
         const { data: prefs } = await supabase
           .from('user_email_preferences')
@@ -150,7 +273,7 @@ Deno.serve(async (req) => {
                   template: 'trade_outcome',
                   data: {
                     instrument: trade.symbol,
-                    pattern: trade.notes?.match(/\[pattern:(.*?)\]/)?.[1] ?? 'Pattern',
+                    pattern: trade.pattern_id || trade.notes?.match(/\[pattern:(.*?)\]/)?.[1] ?? 'Pattern',
                     direction: trade.trade_type,
                     entryPrice: trade.entry_price,
                     exitPrice,
@@ -176,10 +299,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[monitor-paper-trades] Done: ${processed} closed (TP:${hitTp} SL:${hitSl} Timeout:${timedOut})`);
+    console.log(`[monitor-paper-trades] Done: ${processed} closed (TP:${hitTp} SL:${hitSl} Timeout:${timedOut}) Feedback:${feedbackCount}`);
 
     return new Response(
-      JSON.stringify({ success: true, processed, hitTp, hitSl, timedOut }),
+      JSON.stringify({ success: true, processed, hitTp, hitSl, timedOut, feedbackCount }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
