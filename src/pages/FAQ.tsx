@@ -411,6 +411,84 @@ const FAQ = () => {
               )
             },
             {
+              question: s('q_repeatabilityGate'),
+              answer: (
+                <div className="space-y-4">
+                  <p dangerouslySetInnerHTML={{ __html: s('a_repeatabilityIntro') }} />
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge className="bg-emerald-600 text-white min-w-8 justify-center mt-0.5">A</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_repeatA')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_repeatADesc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge className="bg-sky-600 text-white min-w-8 justify-center mt-0.5">B</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_repeatB')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_repeatBDesc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="secondary" className="min-w-8 justify-center mt-0.5">C</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_repeatC')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_repeatCDesc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="outline" className="min-w-8 justify-center mt-0.5">D</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_repeatD')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_repeatDDesc')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_repeatabilityNote') }} />
+                </div>
+              )
+            },
+            {
+              question: s('q_dataPoorFallback'),
+              answer: (
+                <div className="space-y-4">
+                  <p dangerouslySetInnerHTML={{ __html: s('a_dataPoorIntro') }} />
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="outline" className="min-w-6 justify-center mt-0.5">1</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_fallback1Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_fallback1Desc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="outline" className="min-w-6 justify-center mt-0.5">2</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_fallback2Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_fallback2Desc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="outline" className="min-w-6 justify-center mt-0.5">3</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_fallback3Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_fallback3Desc')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <Badge variant="outline" className="min-w-6 justify-center mt-0.5">4</Badge>
+                      <div>
+                        <strong className="text-sm">{s('a_fallback4Title')}</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_fallback4Desc')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_dataPoorNote') }} />
+                </div>
+              )
+            },
+            {
               question: s('q_validationPipeline'),
               answer: (
                 <div className="space-y-4">
