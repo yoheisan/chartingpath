@@ -563,19 +563,6 @@ export const TranslationManagement = () => {
     }
   };
 
-/** Flatten nested object to dot-key names only (no values) */
-function flattenKeysOnly(obj: Record<string, any>, prefix = ''): string[] {
-  const keys: string[] = [];
-  for (const key of Object.keys(obj)) {
-    const fullKey = prefix ? `${prefix}.${key}` : key;
-    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-      keys.push(...flattenKeysOnly(obj[key], fullKey));
-    } else {
-      keys.push(fullKey);
-    }
-  }
-  return keys;
-}
 
   const handleHealAllGaps = async () => {
     setHealAllSyncing(true);
