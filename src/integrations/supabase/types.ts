@@ -4846,6 +4846,42 @@ export type Database = {
           },
         ]
       }
+      user_activation: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dismissed: boolean
+          id: string
+          ran_backtest: boolean
+          set_alert: boolean
+          updated_at: string
+          user_id: string
+          viewed_signal: boolean
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          ran_backtest?: boolean
+          set_alert?: boolean
+          updated_at?: string
+          user_id: string
+          viewed_signal?: boolean
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          ran_backtest?: boolean
+          set_alert?: boolean
+          updated_at?: string
+          user_id?: string
+          viewed_signal?: boolean
+        }
+        Relationships: []
+      }
       user_captures: {
         Row: {
           capture_type: string
