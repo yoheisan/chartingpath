@@ -520,7 +520,29 @@ function isTranslatableText(text: string): boolean {
   }
 
   if (!/[a-zA-Z]/.test(text)) return false;
+
+  // Reject legal/TOS text fragments (long paragraphs not suitable for key-based i18n)
+  if (text.length > 500) return false;
+
+  // Reject text that looks like raw HTML or DOM element dumps
+  if (/<[a-z][a-z0-9]*[\s>]/i.test(text)) return false;
+
   return true;
+}
+
+/** Check if a generated string_key looks like a junk DOM artifact */
+function isJunkKey(key: string): boolean {
+  // Keys starting with HTML element names (span_, p_, div_, a_, li_, etc.)
+  if (/^(span|div|p|a|li|ul|ol|td|th|tr|section|article|header|footer|nav|main|aside|h[1-6])_/.test(key)) {
+    // Only reject if the rest is very long (real keys like "p_something_short" are fine)
+    const suffix = key.replace(/^[a-z0-9]+_/, '');
+    if (suffix.length > 80) return true;
+  }
+
+  // Keys that contain "terms_and_conditions", "privacy_policy", or other legal boilerplate
+  if (/terms_and_conditions|privacy_policy|cookie_policy|legal_notice|all_rights_reserved/.test(key)) return true;
+
+  return false;
 }
 
 function generateStringKey(text: string, context: string): string {
