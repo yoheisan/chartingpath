@@ -243,10 +243,16 @@ const Index = () => {
         <EdgeAtlasSection />
       </div>
 
+      {/* Email Lead Capture */}
+      <EmailLeadCapture />
+
       {/* Pricing Teaser */}
       <div ref={pricingRef}>
         <PricingTeaser />
       </div>
+
+      {/* Scroll-triggered signup modal for engaged guests */}
+      <ScrollSignupModal />
 
       {/* Disclaimer */}
       <section className="py-8 px-6 border-t">
