@@ -569,6 +569,8 @@ function ScoreExplanationCard({ explanation }: { explanation: AgentScoreExplanat
         explanation.analyst.winRate !== undefined && `Win rate ${(explanation.analyst.winRate * 100).toFixed(0)}%`,
         explanation.analyst.avgR !== undefined && `Avg R ${explanation.analyst.avgR.toFixed(2)}`,
         explanation.analyst.trades !== undefined && `${explanation.analyst.trades} trades`,
+        explanation.analyst.source === 'pattern_aggregate' && '📊 Pattern avg',
+        explanation.analyst.source === 'bayesian_prior' && '🔮 Estimated',
       ].filter(Boolean).join(' · '),
     },
     {
