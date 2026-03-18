@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AgentBacktestPanel } from '@/components/AgentBacktestPanel';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Sparkles, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PageMeta } from '@/components/PageMeta';
+import { setViewContext } from '@/lib/copilotEvents';
 
 const AgentScoring = () => {
   const { t } = useTranslation();
