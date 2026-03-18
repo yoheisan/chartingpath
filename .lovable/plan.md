@@ -1,97 +1,93 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Signup & PMF Gap Analysis
 
-## Data Summary
+## Current State Summary
 
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+After reviewing the landing page, auth flow, onboarding, guest gating, and conversion components, here is what exists and what is missing.
 
----
-
-## Priority 1: Auth Page (75 views, 0 signups)
-
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
-
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
-
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+### What Already Works
+- Landing page with live pattern previews, metric strip, CTA hierarchy
+- Guest screener overlay gating (shows N of M signals, prompts signup)
+- Google Sign-In + email auth with abandonment tracking
+- 5-step onboarding tour post-signup
+- Welcome email + getting-started drip (24h delay)
+- Bottom-bar signup nudge for guests
+- Mid-page signup CTA block
+- Auth funnel analytics in admin daily report (views, starts, submissions, abandons)
+- Scroll depth tracking on landing page
 
 ---
 
-## Priority 2: Screener (101 views, 18s avg dwell)
+## Critical Gaps — Ranked by Impact
 
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
+### 1. No Social Proof / Testimonials
+There are zero testimonials, user counts, or community proof anywhere on the landing page or auth page. For a niche tool, this is the single biggest trust gap. Visitors see metrics about the product but nothing from real users.
 
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
+**Recommendation**: Add a compact "What traders say" section on the landing page (between LivePatternPreview and HowItWorks) and a sidebar proof strip on the Auth page. Even 3 short quotes with avatar/alias would materially improve conversion.
 
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+### 2. Auth Page Has No Value Reinforcement
+The signup page (`Auth.tsx`) is a bare form. There is no reminder of what the user gets by signing up — no feature bullets, no "what you'll unlock" panel. Users who arrive via direct link or SEO lose all landing page context.
 
----
+**Recommendation**: Add a left-panel or header strip on the auth page showing 3-4 value props (e.g., "Unlock all live signals", "50 free credits", "Pattern alerts") — similar to what Notion, Linear, etc. do.
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+### 3. No Exit-Intent or Time-Delayed Signup Prompt
+The bottom nudge bar is easily dismissed and never returns (persisted in localStorage). There is no exit-intent modal or scroll-triggered prompt for users who engage deeply but don't convert.
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+**Recommendation**: Add a scroll-depth triggered modal (fires once when user has scrolled past 60% of landing page and spent >30s) offering signup. Use sessionStorage so it only fires once per visit.
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+### 4. No Email Capture for Non-Signup Users
+There is no lightweight email capture (e.g., "Get weekly pattern reports" or "Get notified of Grade A setups"). Users who aren't ready to create an account have zero way to stay connected.
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+**Recommendation**: Add an email-only capture form on the landing page (before pricing section) that feeds into a Supabase `email_leads` table. This creates a remarketing channel without requiring full signup.
 
----
+### 5. GuestScreenerOverlay Is Not Translated
+The overlay text ("You're seeing X of Y live signals", "Create a free account to unlock...") is hardcoded in English. For a platform supporting 17 languages, this breaks the conversion funnel for non-English users.
 
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
+**Recommendation**: Move all strings in `GuestScreenerOverlay.tsx` to i18n translation keys.
 
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
+### 6. No Post-Signup Activation Loop
+The onboarding tour shows features but doesn't guide the user to complete a specific high-value action (e.g., "Run your first backtest" or "Set your first alert"). There is no activation checklist or progress tracker.
 
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
+**Recommendation**: Replace the modal tour with a persistent "Getting Started" checklist widget (3 items: view a live signal, run a backtest, set an alert) that appears on the dashboard until completed. Track completion in a `user_activation` table.
 
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
+### 7. Pricing Friction on Landing Page
+The pricing teaser shows 3 plans but the free plan has no CTA button. Users see "Free" but have no immediate action to take. The "See Full Pricing" link adds an extra click.
+
+**Recommendation**: Add a "Start Free" button directly on the free plan card in the PricingTeaser, linking to `/auth?mode=signup`.
 
 ---
 
-## Priority 5: Shared Links (8 views, 7 pattern views)
+## Quick Wins (< 1 hour each)
 
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+| Item | File(s) | Impact |
+|------|---------|--------|
+| Translate GuestScreenerOverlay | `GuestScreenerOverlay.tsx`, `en.json` | Unblocks non-English signups |
+| Add "Start Free" CTA to pricing free tier | `PricingTeaser.tsx` | Reduces friction |
+| Add value props to Auth page | `Auth.tsx` | Increases form completion |
+| Add Google Sign-In to GuestScreenerOverlay | `GuestScreenerOverlay.tsx` | 1-click signup at point of intent |
 
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
+## Medium Efforts (2-4 hours each)
 
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+| Item | Files | Impact |
+|------|-------|--------|
+| Social proof section on landing | New component + `Index.tsx` | Trust building |
+| Email lead capture form | New component + DB migration | Remarketing channel |
+| Scroll-triggered signup modal | New component + `Index.tsx` | Captures engaged non-converters |
+| Activation checklist widget | New component + DB table | Improves retention post-signup |
 
 ---
 
-## Implementation Sequence
+## Recommended Implementation Order
 
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+1. Translate GuestScreenerOverlay (immediate — currently losing non-English conversions)
+2. Add value reinforcement to Auth page
+3. Add "Start Free" button to pricing teaser
+4. Add Google Sign-In to GuestScreenerOverlay
+5. Build social proof / testimonials section
+6. Build email lead capture
+7. Build scroll-triggered signup modal
+8. Build activation checklist
+
+Would you like me to implement any or all of these?
 
