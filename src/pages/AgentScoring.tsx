@@ -19,6 +19,11 @@ const AgentScoring = () => {
   const [showCopilot, setShowCopilot] = useState(false);
   const isMobile = useIsMobile();
 
+  // Set page-level view context for Copilot
+  useEffect(() => {
+    setViewContext({ page: 'agent-scoring' });
+  }, []);
+
   const handleSendToBacktest = (setup: TradeSetup) => {
     const params = new URLSearchParams({
       instrument: setup.symbol,
