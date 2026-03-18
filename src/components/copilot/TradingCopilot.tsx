@@ -183,6 +183,7 @@ export function TradingCopilot({
   onContextConsumed
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
