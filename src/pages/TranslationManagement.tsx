@@ -155,8 +155,10 @@ export const TranslationManagement = () => {
   const loadCoverageStats = async (showToast = false) => {
     setCoverageLoading(true);
     try {
+      const enMod = (await import('@/i18n/locales/en.json')).default;
+      const flatKeys = flattenKeysOnly(enMod);
       const { data, error } = await supabase.functions.invoke('manage-translations', {
-        body: { action: 'get_coverage_stats', en_fallback_content: (await import('@/i18n/locales/en.json')).default }
+        body: { action: 'get_coverage_stats', en_flat_keys: flatKeys }
       });
       if (error) throw error;
       const dbCoverage = data.coverage || {};
