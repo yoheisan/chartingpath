@@ -85,7 +85,21 @@ function incrementGuestMsgCount(): number {
   return next;
 }
 
-const QUICK_ACTION_KEYS = [
+// ── Route-aware, auth-aware quick actions ──────────────────────
+
+interface QuickAction {
+  labelKey: string;
+  promptKey: string;
+  icon: typeof TrendingUp;
+}
+
+const GUEST_ACTIONS: QuickAction[] = [
+  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+  { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+];
+
+const AUTH_DEFAULT_ACTIONS: QuickAction[] = [
   { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
   { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
   { labelKey: "copilot.generateScript", promptKey: "copilot.generateScriptPrompt", icon: Code },
@@ -93,6 +107,63 @@ const QUICK_ACTION_KEYS = [
   { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
   { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
 ];
+
+/** Route-specific overrides for authenticated users */
+const ROUTE_ACTIONS: Record<string, QuickAction[]> = {
+  '/tools/agent-scoring': [
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
+    { labelKey: "copilot.ctx.adjustWeights", promptKey: "copilot.ctx.adjustWeightsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.ctx.comparePresets", promptKey: "copilot.ctx.comparePresetsPrompt", icon: BarChart3 },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
+  ],
+  '/patterns/live': [
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+  ],
+  '/members/dashboard': [
+    { labelKey: "copilot.ctx.portfolioReview", promptKey: "copilot.ctx.portfolioReviewPrompt", icon: BarChart3 },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
+  ],
+  '/tools/market-breadth': [
+    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+    { labelKey: "copilot.ctx.sectorAnalysis", promptKey: "copilot.ctx.sectorAnalysisPrompt", icon: TrendingUp },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: Sparkles },
+  ],
+  '/chart-patterns/library': [
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
+  ],
+};
+
+/** Route-specific overrides for guests (lighter set — no locked features) */
+const GUEST_ROUTE_ACTIONS: Record<string, QuickAction[]> = {
+  '/patterns/live': [
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+  ],
+  '/tools/agent-scoring': [
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+  ],
+  '/chart-patterns/library': [
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+  ],
+};
+
+function getQuickActions(pathname: string, authenticated: boolean): QuickAction[] {
+  if (authenticated) {
+    return ROUTE_ACTIONS[pathname] || AUTH_DEFAULT_ACTIONS;
+  }
+  return GUEST_ROUTE_ACTIONS[pathname] || GUEST_ACTIONS;
+}
 
 const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
 
