@@ -1461,5 +1461,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "시작하기",
+    "viewSignal": "실시간 패턴 신호 보기",
+    "runBacktest": "첫 번째 백테스트 실행",
+    "setAlert": "패턴 알림 설정",
+    "freeMessagesRemaining": "무료 메시지 {{total}}개 중 {{count}}개 남음"
   }
 }
