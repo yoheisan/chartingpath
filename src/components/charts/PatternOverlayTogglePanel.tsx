@@ -6,6 +6,7 @@
  */
 
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { 
@@ -30,6 +31,8 @@ export const PatternOverlayTogglePanel = memo(({
   patternCount,
   className,
 }: PatternOverlayTogglePanelProps) => {
+  const { t } = useTranslation();
+
   if (patternCount === 0) return null;
 
   return (
@@ -47,7 +50,7 @@ export const PatternOverlayTogglePanel = memo(({
           )}
           <Layers className="h-3.5 w-3.5 mr-1" />
           <span className="text-xs">
-            Patterns
+            {t('chartOverlays.patterns', 'Patterns')}
             <span className="ml-1 text-muted-foreground">({patternCount})</span>
           </span>
         </Button>
@@ -58,7 +61,7 @@ export const PatternOverlayTogglePanel = memo(({
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold">Pattern Overlays</Label>
+            <Label className="text-xs font-semibold">{t('chartOverlays.patternOverlays', 'Pattern Overlays')}</Label>
             <Switch
               checked={toggles.showPatterns}
               onCheckedChange={() => onToggle('showPatterns')}
@@ -69,37 +72,37 @@ export const PatternOverlayTogglePanel = memo(({
           {toggles.showPatterns && (
             <div className="space-y-2.5 pl-1 border-l-2 border-border/50 ml-1">
               <ToggleRow 
-                label="Entry Line" 
+                label={t('chartOverlays.entryLine', 'Entry Line')}
                 color="#3b82f6"
                 checked={toggles.showEntry}
                 onChange={() => onToggle('showEntry')}
               />
               <ToggleRow 
-                label="Stop Loss" 
+                label={t('chartOverlays.stopLoss', 'Stop Loss')}
                 color="#ef4444"
                 checked={toggles.showStopLoss}
                 onChange={() => onToggle('showStopLoss')}
               />
               <ToggleRow 
-                label="Take Profit" 
+                label={t('chartOverlays.takeProfit', 'Take Profit')}
                 color="#22c55e"
                 checked={toggles.showTakeProfit}
                 onChange={() => onToggle('showTakeProfit')}
               />
               <ToggleRow 
-                label="Trade Zones" 
+                label={t('chartOverlays.tradeZones', 'Trade Zones')}
                 color="rgba(59, 130, 246, 0.5)"
                 checked={toggles.showTradeZones}
                 onChange={() => onToggle('showTradeZones')}
               />
               <ToggleRow 
-                label="ZigZag Lines"
+                label={t('chartOverlays.zigzagLines', 'ZigZag Lines')}
                 color="rgba(0, 200, 255, 0.85)"
                 checked={toggles.showZigzag}
                 onChange={() => onToggle('showZigzag')}
               />
               <ToggleRow 
-                label="Pattern Labels"
+                label={t('chartOverlays.patternLabels', 'Pattern Labels')}
                 color="#f97316"
                 checked={toggles.showLabels}
                 onChange={() => onToggle('showLabels')}

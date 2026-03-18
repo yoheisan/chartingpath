@@ -328,6 +328,16 @@
     "takeTradingQuiz": "Take Trading Quiz",
     "title": "ChartingPath Learning Center"
   },
+  "chartOverlays": {
+    "patterns": "Patterns",
+    "patternOverlays": "Pattern Overlays",
+    "entryLine": "Entry Line",
+    "stopLoss": "Stop Loss",
+    "takeProfit": "Take Profit",
+    "tradeZones": "Trade Zones",
+    "zigzagLines": "ZigZag Lines",
+    "patternLabels": "Pattern Labels"
+  },
   "community": {
     "noEdges": "No edges shared yet",
     "noEdgesDesc": "Be the first! Run a backtest in the Strategy Workspace and toggle \"Share to Community\" to post your verified edge here.",
