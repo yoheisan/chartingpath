@@ -230,7 +230,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language, context, prewarmed } = await req.json();
+    const { messages, language, context, prewarmed, viewContext } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
