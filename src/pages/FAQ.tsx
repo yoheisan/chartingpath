@@ -581,6 +581,70 @@ const FAQ = () => {
               )
             },
             {
+              question: s('q_agentProofGate'),
+              answer: (
+                <div className="space-y-4">
+                  <p dangerouslySetInnerHTML={{ __html: s('a_agentProofGateIntro') }} />
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">{t('faq.screener.a_proofGateReqTitle', 'Requirements to Pass')}</h4>
+                    <div className="text-sm space-y-1">
+                      <div>• {s('a_proofGateReq1')}</div>
+                      <div>• {s('a_proofGateReq2')}</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
+                      <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-sm">PROVEN</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_proofGateProven')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-sm">ESTIMATED</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_proofGateEstimated')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 border rounded-lg">
+                      <HelpCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-sm">UNPROVEN</strong>
+                        <p className="text-xs text-muted-foreground">{s('a_proofGateUnproven')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_proofGateNote') }} />
+                </div>
+              )
+            },
+            {
+              question: s('q_gradingVsEdge'),
+              answer: (
+                <div className="space-y-4">
+                  <p dangerouslySetInnerHTML={{ __html: s('a_gradingVsEdgeIntro') }} />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Scan className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold text-sm">{s('a_gradingDimension1')}</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{s('a_gradingDimension1Desc')}</p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold text-sm">{s('a_gradingDimension2')}</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{s('a_gradingDimension2Desc')}</p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm" dangerouslySetInnerHTML={{ __html: s('a_gradingVsEdgeNote') }} />
+                </div>
+              )
+            },
+            {
               question: s('q_knownLimitations'),
               answer: (
                 <div className="space-y-4">
