@@ -11,6 +11,22 @@
 import { supabase } from '@/integrations/supabase/client';
 import enTranslations from '@/i18n/locales/en.json';
 
+/** Flatten a nested object into dot-separated key names */
+function flattenKeys(obj: Record<string, any>, prefix = ''): string[] {
+  const keys: string[] = [];
+  for (const key of Object.keys(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      keys.push(...flattenKeys(obj[key], fullKey));
+    } else {
+      keys.push(fullKey);
+    }
+  }
+  return keys;
+}
+
+const enFlatKeys = flattenKeys(enTranslations);
+
 export interface DBLanguageCoverage {
   langCode: string;
   totalKeys: number;
