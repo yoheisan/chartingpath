@@ -102,10 +102,10 @@ export default function InstrumentPatternStatsPage() {
 
   const agg = data?.aggregates;
 
-  const pageTitle = `${displayPatternName} on ${displayInstrument} — Win Rate & Stats`;
+  const pageTitle = t('patternStats.pageTitle', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} on ${displayInstrument} — Win Rate & Stats` });
   const pageDesc = agg
-    ? `${displayPatternName} pattern on ${displayInstrument}: ${agg.win_rate_pct}% win rate across ${agg.total_trades} trades. Expectancy ${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R.`
-    : `${displayPatternName} pattern statistics for ${displayInstrument}. Historical win rate, expectancy and performance data.`;
+    ? t('patternStats.pageDescWithData', { pattern: displayPatternName, instrument: displayInstrument, winRate: agg.win_rate_pct, trades: agg.total_trades, expectancy: `${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R`, defaultValue: `${displayPatternName} pattern on ${displayInstrument}: ${agg.win_rate_pct}% win rate across ${agg.total_trades} trades. Expectancy ${agg.expectancy_r > 0 ? '+' : ''}${agg.expectancy_r.toFixed(3)}R.` })
+    : t('patternStats.pageDescNoData', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} pattern statistics for ${displayInstrument}. Historical win rate, expectancy and performance data.` });
 
   return (
     <div className="min-h-screen bg-background">
