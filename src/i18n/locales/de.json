@@ -1449,5 +1449,12 @@
     "authSubheadline": "Run it in Pattern Lab — see if {{pattern}} works on the instruments you actually trade.",
     "backtestNow": "Backtest {{pattern}} Now",
     "viewLiveSignals": "View Live Signals"
+  },
+  "activation": {
+    "title": "Erste Schritte",
+    "viewSignal": "Ein Live-Muster-Signal ansehen",
+    "runBacktest": "Führen Sie Ihren ersten Backtest durch",
+    "setAlert": "Einen Muster-Alarm einrichten",
+    "freeMessagesRemaining": "{{count}} von {{total}} kostenlosen Nachrichten übrig"
   }
 }
