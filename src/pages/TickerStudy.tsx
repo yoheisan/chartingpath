@@ -233,7 +233,6 @@ export default function TickerStudy() {
   // Emit view context for Copilot awareness
   useEffect(() => {
     if (!decodedSymbol) return;
-    const { setViewContext } = require('@/lib/copilotEvents');
     setViewContext({
       page: 'ticker-study',
       instrument: decodedSymbol,

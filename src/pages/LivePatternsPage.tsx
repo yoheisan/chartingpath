@@ -278,7 +278,6 @@ export default function LivePatternsPage() {
   // Emit view context when a setup is selected so the Copilot knows what the user is looking at
   useEffect(() => {
     if (!selectedSetup) return;
-    const { setViewContext } = require('@/lib/copilotEvents');
     setViewContext({
       page: 'screener',
       instrument: selectedSetup.instrument,
@@ -286,7 +285,7 @@ export default function LivePatternsPage() {
       patternId: selectedSetup.patternId,
       timeframe: selectedSetup.visualSpec?.timeframe,
       direction: selectedSetup.direction,
-      grade: selectedSetup.grade,
+      grade: selectedSetup.quality?.letter,
     });
   }, [selectedSetup]);
   const [creatingAlertInline, setCreatingAlertInline] = useState(false);
