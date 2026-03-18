@@ -507,9 +507,21 @@ Deno.serve(async (req) => {
           }
         }
 
-        const missingFromExtracted = [...extractedDiscovered].filter(k => !existingKeys.has(k))
+        // Filter out junk DOM artifact keys before promotion
+        const isJunkExtractedKey = (key: string): boolean => {
+          // Keys starting with HTML element names with very long suffixes
+          if (/^(span|div|p|a|li|ul|ol|td|th|tr|section|article|header|footer|nav|main|aside|h[1-6])_/.test(key)) {
+            const suffix = key.replace(/^[a-z0-9]+_/, '')
+            if (suffix.length > 80) return true
+          }
+          // Legal boilerplate
+          if (/terms_and_conditions|privacy_policy|cookie_policy|legal_notice|all_rights_reserved/.test(key)) return true
+          return false
+        }
+
+        const missingFromExtracted = [...extractedDiscovered].filter(k => !existingKeys.has(k) && !isJunkExtractedKey(k))
         if (missingFromExtracted.length > 0) {
-          console.log(`[coverage] Syncing ${missingFromExtracted.length} extracted keys to translation_keys`)
+          console.log(`[coverage] Syncing ${missingFromExtracted.length} extracted keys to translation_keys (after junk filter)`)
           const UPSERT_BATCH = 200
           for (let b = 0; b < missingFromExtracted.length; b += UPSERT_BATCH) {
             const batch = missingFromExtracted.slice(b, b + UPSERT_BATCH).map(key => ({
