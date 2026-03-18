@@ -100,6 +100,10 @@ Deno.serve(async (req: Request) => {
           const path = (s?.path || '').toString();
 
           const stringKey = generateStringKey(text, element);
+
+          // Skip junk DOM artifact keys
+          if (isJunkKey(stringKey)) continue;
+
           const stringHash = await generateHash(text);
 
           const unique = `${stringKey}_${stringHash}_${path}`;
