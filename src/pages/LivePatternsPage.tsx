@@ -286,7 +286,7 @@ export default function LivePatternsPage() {
       patternId: selectedSetup.patternId,
       timeframe: selectedSetup.visualSpec?.timeframe,
       direction: selectedSetup.direction,
-      grade: selectedSetup.quality?.letter,
+      grade: selectedSetup.quality?.grade,
     });
   }, [selectedSetup]);
   const [creatingAlertInline, setCreatingAlertInline] = useState(false);
