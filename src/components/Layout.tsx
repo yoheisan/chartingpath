@@ -74,6 +74,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
       <GuestSignupNudge />
       <OnboardingTour />
+      <ActivationChecklist />
       <CaptureButton />
     </div>
   );
