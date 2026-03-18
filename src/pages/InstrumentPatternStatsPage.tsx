@@ -187,10 +187,10 @@ export default function InstrumentPatternStatsPage() {
             <Badge variant="secondary" className="text-xs font-mono">{displayInstrument}</Badge>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-            {displayPatternName} on {displayInstrument}
+            {t('patternStats.instrumentHeading', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `${displayPatternName} on ${displayInstrument}` })}
           </h1>
           <p className="text-muted-foreground text-lg max-w-3xl leading-relaxed">
-            Historical performance statistics for the {displayPatternName} pattern on {displayInstrument}, based on backtested data.
+            {t('patternStats.instrumentSubheading', { pattern: displayPatternName, instrument: displayInstrument, defaultValue: `Historical performance statistics for the ${displayPatternName} pattern on ${displayInstrument}, based on backtested data.` })}
           </p>
         </header>
 
