@@ -88,8 +88,22 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 /** Grade ordering for sorting (A=1 best, F=5 worst) */
 export const GRADE_ORDER: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, F: 5 };
 
-/** Extract a sortable grade string from a LiveSetup */
+/** Extract a sortable grade letter from a LiveSetup */
 export const getPatternGrade = (setup: LiveSetup): string => {
   const q = setup.quality as any;
-  return q?.grade || q?.score || 'C';
+  if (!q) return 'C';
+  // Direct grade field (letter A-F)
+  if (q.grade && /^[A-F]$/.test(q.grade)) return q.grade;
+  // Grade letter stored in score field (backend mapping issue)
+  if (typeof q.score === 'string' && /^[A-F]$/.test(q.score)) return q.score;
+  // Numeric score → derive grade
+  if (typeof q.score === 'number' || (typeof q.score === 'string' && !isNaN(Number(q.score)))) {
+    const n = Number(q.score);
+    if (n >= 7.5) return 'A';
+    if (n >= 6.0) return 'B';
+    if (n >= 4.5) return 'C';
+    if (n >= 3.0) return 'D';
+    return 'F';
+  }
+  return 'C';
 };
