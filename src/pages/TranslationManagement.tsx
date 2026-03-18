@@ -647,6 +647,24 @@ export const TranslationManagement = () => {
             langTranslated += chunkTranslated;
             langErrors += chunkErrors;
 
+            // Live UI status update (so cards don't look stuck at 4975 during long runs)
+            if (chunkTranslated > 0) {
+              setCoverageData(prev => {
+                const current = prev[lang];
+                if (!current) return prev;
+                const translated = Math.min(current.total, current.translated + chunkTranslated);
+                const autoTranslated = Math.min(current.total, current.auto_translated + chunkTranslated);
+                return {
+                  ...prev,
+                  [lang]: {
+                    ...current,
+                    translated,
+                    auto_translated: autoTranslated,
+                  },
+                };
+              });
+            }
+
             setHealProgress({
               lang,
               translated: grandTotalTranslated + langTranslated,
