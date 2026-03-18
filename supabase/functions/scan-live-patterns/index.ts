@@ -990,14 +990,10 @@ async function readCachedPatternsFromDb(
         // - Keep a non-suspect cached value (prevents Win% from showing as "—")
         // - Otherwise clear suspect fallbacks and omit
         if (!s) {
-          if (p.dbId && isStatsSuspect(p.historicalPerformance)) {
-            // Clear the stale pattern-level fallback from DB
-            updatesToPerform.push({ id: p.dbId, hp: null });
-            clearedCount++;
-          }
-          // Return pattern without historicalPerformance (will show "—" in UI)
-          const { historicalPerformance, ...rest } = p;
-          return rest;
+        // Keep existing historicalPerformance if present (even if suspect),
+          // so the background scorer (score-agent-detections) can apply its own fallback chain.
+          // Only truly null values will be left for the scorer's Bayesian prior.
+          return p;
         }
 
         enrichedCount++;
