@@ -2654,7 +2654,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language } = await req.json();
+    const { messages, language, context, viewContext } = await req.json();
     
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
