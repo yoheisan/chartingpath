@@ -974,8 +974,7 @@ const StudyChart = memo(({
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
         
         // Find the bar data at the snapped time for price snapping
-        const anchorBarIdx = safeChartData.findIndex(b => (b.time as number) === anchorTime);
-        const anchorBar = anchorBarIdx >= 0 ? bars[anchorBarIdx] : bars[bars.length - 1];
+        const anchorBar = normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
 
         canvasTriangleMarkers.push({
           time: anchorTime,
