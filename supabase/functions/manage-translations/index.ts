@@ -87,9 +87,10 @@ Deno.serve(async (req) => {
       status_filter,
       language_filter,
       en_fallback_content,
+      en_flat_keys,
       limit = 50,
       offset = 0
-    }: TranslationRequest & { en_fallback_content?: Record<string, any> } = await req.json()
+    }: TranslationRequest & { en_fallback_content?: Record<string, any>; en_flat_keys?: string[] } = await req.json()
     console.log('Translation management action:', action)
 
     switch (action) {
