@@ -149,10 +149,74 @@ Deno.serve(async (req) => {
       throw new Error('en_content (English JSON content) is required')
     }
 
-    // Flatten the English content
+    // Flatten incoming English content (en.json subset/full)
     const flatEnglish = flattenObject(en_content)
+
+    // Build source text map from extracted_strings so scanner-only keys can also be translated
+    const extractedSourceMap = new Map<string, string>()
+    let exFrom = 0
+    const EX_PAGE = 1000
+    while (true) {
+      const { data: exPage, error: exError } = await supabase
+        .from('extracted_strings')
+        .select('string_key, original_text')
+        .not('string_key', 'is', null)
+        .range(exFrom, exFrom + EX_PAGE - 1)
+
+      if (exError) {
+        console.error('Error fetching extracted_strings source text:', exError)
+        break
+      }
+      if (!exPage || exPage.length === 0) break
+
+      for (const row of exPage as Array<{ string_key: string | null; original_text: string | null }>) {
+        if (row.string_key && row.original_text && !extractedSourceMap.has(row.string_key)) {
+          extractedSourceMap.set(row.string_key, row.original_text)
+        }
+      }
+
+      if (exPage.length < EX_PAGE) break
+      exFrom += EX_PAGE
+    }
+
+    // Expand flatEnglish with canonical keys from translation_keys (if missing from en.json payload)
+    let canonicalAdded = 0
+    let tkFrom = 0
+    const TK_PAGE = 1000
+    while (true) {
+      const { data: keyPage, error: keyPageError } = await supabase
+        .from('translation_keys')
+        .select('key, description')
+        .range(tkFrom, tkFrom + TK_PAGE - 1)
+
+      if (keyPageError) {
+        console.error('Error fetching translation_keys for canonical merge:', keyPageError)
+        break
+      }
+      if (!keyPage || keyPage.length === 0) break
+
+      for (const row of keyPage as Array<{ key: string; description: string | null }>) {
+        if (!flatEnglish[row.key]) {
+          const extractedText = extractedSourceMap.get(row.key)
+          const description = row.description || ''
+          const usableDescription =
+            description &&
+            !description.startsWith('Auto-synced from en.json') &&
+            !description.startsWith('Auto-imported from extracted_strings')
+              ? description
+              : null
+
+          flatEnglish[row.key] = extractedText || usableDescription || row.key
+          canonicalAdded++
+        }
+      }
+
+      if (keyPage.length < TK_PAGE) break
+      tkFrom += TK_PAGE
+    }
+
     const totalKeys = Object.keys(flatEnglish).length
-    console.log(`Processing ${totalKeys} English keys`)
+    console.log(`Processing ${totalKeys} English keys (${canonicalAdded} canonical-only keys added)`)
 
     // Paginate to avoid 1000-row default limit
     const existingKeySet = new Set<string>()
