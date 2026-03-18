@@ -235,6 +235,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             panelMounted: isPanelMounted('agentScoring'),
             currentPath: window.location.pathname,
           },
+          viewContext: getViewContext(),
           ...(prewarmedCtx.ready && {
             prewarmed: { watchlist: prewarmedCtx.watchlistSymbols, activePatterns: prewarmedCtx.activePatternCount },
           }),
