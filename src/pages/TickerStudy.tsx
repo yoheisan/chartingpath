@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { setViewContext } from '@/lib/copilotEvents';
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import UniversalSymbolSearch from '@/components/charts/UniversalSymbolSearch';
 import ThumbnailChart from '@/components/charts/ThumbnailChart';
