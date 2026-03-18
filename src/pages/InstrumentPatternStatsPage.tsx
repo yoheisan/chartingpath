@@ -273,7 +273,7 @@ export default function InstrumentPatternStatsPage() {
                     <span className="font-mono font-medium text-sm">{sym}</span>
                     <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{displayPatternName} stats →</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('patternStats.statsLink', { pattern: displayPatternName, defaultValue: `${displayPatternName} stats →` })}</p>
                 </Link>
               ))}
             </div>
