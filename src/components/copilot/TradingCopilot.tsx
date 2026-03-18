@@ -570,7 +570,7 @@ export function TradingCopilot({
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
                   <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                    {QUICK_ACTION_KEYS.map((action) => (
+                    {getQuickActions(location.pathname, isAuthenticated).map((action) => (
                       <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
                         <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
                         <span className="text-xs">{t(action.labelKey)}</span>
