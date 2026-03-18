@@ -1,97 +1,119 @@
 
 
-# Multi-Page Funnel Analysis and Improvement Plan
+# Outcome Feedback Loop + Your Edge Dashboard — Full Implementation Plan
 
-## Data Summary
-
-| Page | Views | Avg Time on Page | Key Issue |
-|------|-------|-----------------|-----------|
-| Landing `/` | 516 | 116s | New CTAs just deployed, early data looks promising |
-| Auth `/auth` | 75 (29 sessions) | No leave data | 5 sessions start form, 4 abandon -- 0 signups |
-| Screener `/patterns/live` | 101 | 18s | Short dwell time -- users may be overwhelmed |
-| Pattern Lab `/projects/pattern-lab/new` | 71 | 32s | Decent engagement but 0 completed backtests |
-| Shared links `/s/*` | 8 views across 4 links | -- | Small but active channel, 7 pattern views tracked |
-| Pricing `/projects/pricing` | 43 | 26s | Healthy engagement |
-| Blog/Learn (head-and-shoulders) | 1,332 combined | ~0s (bounces) | Massive SEO traffic, near-zero engagement |
+This is a multi-step build across ~8-10 implementation rounds. Here's the sequenced plan.
 
 ---
 
-## Priority 1: Auth Page (75 views, 0 signups)
+## Phase 1: Backend Feedback Loop (2 rounds)
 
-**Problem**: 5 out of 29 sessions start the form (`form_start`), but nobody completes it. 4 sessions explicitly abandon. All 24 `auth_page.viewed` events show `context: direct` -- meaning nobody arrives from a contextual CTA (shared link, paywall, etc.).
+### Round 1A — Database Schema + `feedbackToAgentScores` in monitor-paper-trades
 
-**Improvements**:
-1. **Reduce form friction** -- Default to the "Create Account" view (not "Sign In") for new visitors. Currently defaults to Sign In, which assumes returning users.
-2. **Lead with Google OAuth** -- Move the Google button above the email form. Social login has dramatically lower friction than email+password+confirm.
-3. **Add contextual messaging from landing CTAs** -- Pass `context` param from hero buttons (e.g., `?context=screener` or `?context=backtest`) so the auth page can show "Sign up to access live setups" instead of generic copy.
-4. **Track auth page leave duration** -- Currently no `page.leave` data for `/auth`, making it impossible to measure time-on-page. Ensure the analytics hook fires on unmount.
+**Migration**: Add columns to support feedback tracking:
+- `paper_trades`: add `pattern_id TEXT`, `timeframe TEXT`, `asset_type TEXT` columns (needed to link outcomes back to agent_scores)
+- `user_email_preferences`: add `first_paper_trade_seen BOOLEAN DEFAULT false`, `milestone_5_seen`, `milestone_20_seen`, `milestone_50_seen` columns
 
-### Files to modify
-- `src/pages/Auth.tsx` -- Reorder form layout (Google first), default to signup mode for new visitors, use `context` param for dynamic messaging
-- `src/pages/Index.tsx` -- Pass `context` param in CTA navigation
+**Edge Function Update** (`monitor-paper-trades/index.ts`):
+- Add `feedbackToAgentScores()` function that:
+  1. Extracts `pattern_id` and `timeframe` from the trade's notes field (already stores `[pattern:xxx]`) or new columns
+  2. Queries `instrument_pattern_stats_mv` for current stats
+  3. Recalculates win rate and expectancy incorporating the new outcome
+  4. Updates `agent_scores` row for that detection with new `analyst_raw`, `win_rate`, `sample_size`
+- Call it after every trade close (TP, SL, timeout)
 
----
+### Round 1B — Override Feedback Weighting
 
-## Priority 2: Screener (101 views, 18s avg dwell)
-
-**Problem**: 18 seconds average time is very short for a data-rich screener. Users likely see a wall of filters/data and leave before finding value.
-
-**Improvements**:
-1. **Add a first-visit guided state** -- Show a brief "what you're looking at" tooltip or banner for users who haven't visited before (localStorage flag). Highlight the top 3 setups and explain grade/quality.
-2. **Surface "best setup of the day"** -- Pin the highest-graded fresh signal at the top with a highlight card before the table, giving immediate value.
-3. **Track screener interactions** -- Add events for filter changes, row clicks, and chart opens to understand where users engage vs. drop off.
-
-### Files to modify
-- `src/pages/LivePatternsPage.tsx` -- Add "Top Setup" highlight card, first-visit guidance, interaction tracking
+- In `monitor-paper-trades`, add override classification logic:
+  - "Pattern invalidated" / "Market conditions changed" / "Changed my mind" → soft negative (0.3 weight)
+  - "Taking partial profit" / "Risk management" / "News event risk" → neutral (no signal quality impact)
+- Wire into `feedbackToAgentScores` with weighted outcome
 
 ---
 
-## Priority 3: Pattern Lab (71 views, 0 backtests completed)
+## Phase 2: "What We Learned" Outcome Card (2 rounds)
 
-**Problem**: Users spend 32 seconds (decent) but never complete a backtest. The activation moment is unreachable.
+### Round 2A — Outcome Card Component
 
-**Improvements**:
-1. **Pre-fill with a compelling example** -- When arriving from the landing page CTA without params, auto-populate with a high-performing pattern (e.g., "Double Bottom on AAPL, 1D") so users can click "Run" immediately instead of configuring from scratch.
-2. **Add a "Quick Start" one-click backtest** -- A prominent button that runs a curated backtest instantly, showing results in seconds. This removes the configuration barrier entirely.
-3. **Track funnel steps** -- Add events for each step: page load, configuration started, run clicked, results displayed, to identify where exactly users drop off.
+**New component**: `src/components/paper-trading/OutcomeLearnedCard.tsx`
+- Shows pattern name, instrument, timeframe, result (R-multiple), close reason
+- Displays updated platform win rate for that pattern+instrument+timeframe
+- Shows user's personal win rate for that pattern
+- Green/red/amber styling based on outcome type
+- Two action buttons: "View Your Edge →" and "See All [Pattern] →"
 
-### Files to modify
-- Pattern Lab page (find exact path -- likely in `/projects/pattern-lab/` route component)
+### Round 2B — Wire Into PaperTradingPanel + Toast
 
----
-
-## Priority 4: Blog/Learn Pages (1,332 views, ~0s dwell)
-
-**Problem**: `/blog/head-and-shoulders` and `/learn/head-and-shoulders` get massive traffic (likely SEO) but 0-second dwell times suggest immediate bounces or redirect issues. This is your biggest untapped acquisition channel.
-
-**Improvements**:
-1. **Investigate the 0-second dwell** -- These pages may have rendering issues, redirects, or the page.leave event fires immediately. This needs debugging first.
-2. **Add in-content CTAs** -- If the content renders properly, add contextual CTAs within the article: "See live Head & Shoulders signals now" linking to the screener pre-filtered, and "Backtest this pattern" linking to Pattern Lab pre-filled.
-
-### Files to modify
-- Blog/Learn page components (investigate rendering issue first)
+- Listen via Supabase realtime for trade closures
+- Show toast notification on close with outcome summary
+- Persist outcome cards in History tab as special "outcome recorded" events
+- Override confirmation toast: "Override recorded — noted as soft negative signal"
 
 ---
 
-## Priority 5: Shared Links (8 views, 7 pattern views)
+## Phase 3: Live Learning Indicator (1 round)
 
-**Problem**: Small volume but these are high-intent users arriving from social proof. The current shared backtest page has a sticky "Create Free Account" CTA but no clear path to try the product first.
+### Round 3 — AgentBacktestPanel Indicator
 
-**Improvements**:
-1. **Add "Try this backtest yourself" CTA** -- Link directly to Pattern Lab pre-filled with the shared pattern's params (already partially implemented in SharedPattern but not SharedBacktest).
-2. **Track conversion from shared links** -- The `shared_to_auth_click` event exists but shows 0 fires. Ensure the tracking works.
-
-### Files to modify
-- `src/pages/SharedBacktest.tsx` -- Add "Try this yourself" CTA alongside auth CTA
-- `src/pages/SharedPattern.tsx` -- Verify tracking fires
+**New component**: `src/components/agent-backtest/LiveLearningIndicator.tsx`
+- Shows "Model last updated: X minutes ago"
+- Total outcomes count (from `paper_trades` where `status = 'closed'`)
+- Outcomes added today
+- User's contributing trades count
+- Real-time updates via `postgres_changes` subscription on `paper_trades`
 
 ---
 
-## Implementation Sequence
+## Phase 4: Your Edge Dashboard (3 rounds)
 
-1. **Auth page** (highest impact -- fixing the 0-signup bottleneck)
-2. **Pattern Lab** (pre-fill + quick start to enable the "aha moment")
-3. **Screener** (first-visit guidance + top setup highlight)
-4. **Blog/Learn** (investigate 0s dwell, then add CTAs)
-5. **Shared links** (add try-it-yourself CTA)
+### Round 4A — Page + Hero + Empty State
+
+**New page**: `src/pages/YourEdgePage.tsx` at `/tools/your-edge`
+- Personal Performance Hero with 4 stat cards (win rate, avg R, total P&L, trade count)
+- Auto-generated insight sentence (best pattern, best timeframe, best asset class)
+- Empty state for <5 trades with CTA to Screener
+- Add to router and navigation
+
+### Round 4B — Pattern Performance Table + Timeframe/Asset Cards
+
+- Table comparing user's personal win rate vs platform average per pattern
+- Edge column with color coding and icons (trophy, check, warning, avoid)
+- Two side-by-side cards: Timeframe Performance and Asset Class Performance
+- Progress bars with orange fill, personal insights
+
+### Round 4C — Trade History Timeline + Journal Notes
+
+- Chronological trade cards with entry/exit, R-multiple, P&L
+- Mini progress bar showing result vs platform average R
+- "Add note" field that updates `paper_trades.notes`
+- Pagination (10 per page)
+
+---
+
+## Phase 5: Sidebar Widget + Milestones + Onboarding (1 round)
+
+### Round 5 — Polish & Engagement
+
+- **PaperTradingPanel sidebar widget**: Compact "Your Edge Summary" in Performance tab
+- **Milestone notifications**: Toast at 5, 20, 50 closed trades with deep links
+- **First paper trade onboarding modal**: One-time "You're now contributing to ChartingPath" message
+- Store milestone flags in `user_email_preferences`
+
+---
+
+## Implementation Order Summary
+
+| Round | What | Files |
+|-------|------|-------|
+| 1A | DB migration + feedbackToAgentScores | migration SQL, monitor-paper-trades/index.ts |
+| 1B | Override weighting | monitor-paper-trades/index.ts |
+| 2A | OutcomeLearnedCard component | New component |
+| 2B | Wire card + toasts | PaperTradingPanel, usePaperTrading |
+| 3 | Live Learning indicator | New component, AgentBacktestPanel |
+| 4A | Your Edge page + hero + empty state | New page, router, nav |
+| 4B | Pattern table + timeframe/asset cards | YourEdgePage components |
+| 4C | Trade timeline + journal | YourEdgePage components |
+| 5 | Sidebar widget + milestones + onboarding | Multiple components |
+
+I'll start with Round 1A (migration + feedback loop backend) upon approval.
 
