@@ -260,7 +260,7 @@ export default function InstrumentPatternStatsPage() {
         {!loading && data?.related_instruments && data.related_instruments.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-semibold mb-4">
-              {displayPatternName} on Other Instruments
+              {t('patternStats.onOtherInstruments', { pattern: displayPatternName, defaultValue: `${displayPatternName} on Other Instruments` })}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {data.related_instruments.map((sym) => (
