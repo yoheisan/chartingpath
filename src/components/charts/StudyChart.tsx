@@ -471,6 +471,14 @@ const StudyChart = memo(({
     const safeChartData = sanitizeSeriesData(chartData);
     candleSeries.setData(safeChartData);
 
+    const normalizedBarByTime = new Map<number, (typeof normalizedBars)[number]>();
+    for (const bar of normalizedBars) {
+      const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+      if (Number.isFinite(ts)) {
+        normalizedBarByTime.set(ts, bar);
+      }
+    }
+
     // Add volume histogram if volume data is available
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
