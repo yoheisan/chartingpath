@@ -1,35 +1,46 @@
 
 
-# Landing Page Redesign — TradingView-Inspired Simplification
+# Plan: "Deploy as Alert" from Pattern Lab Results
 
-## What Changes
+## What We're Building
 
-### 1. Hero Section — Radical Simplification
-Strip the hero down from 7 layers to 4, inspired by TradingView's "Look first / Then leap" approach:
+A seamless one-click bridge from Pattern Lab backtest results to a pre-filled alert with `auto_paper_trade` enabled. When a user validates a pattern and clicks "Deploy as Alert," the system pre-fills the alert form with the validated symbol, pattern, timeframe, and enables auto paper trading by default.
 
-- **Keep**: Badge, headline (2 lines), one subtitle line, ONE primary CTA
-- **Remove**: Second subtitle line, "Create Free Account" button (move it down), trust row (3 checkmarks), copilot hint (⌘K), MetricStrip from hero
-- **Single CTA**: "See Live Patterns Free" stays as the only hero button — big, bold, gradient
-- **Add breathing room**: More vertical padding, let the headline speak
+## Current State
 
-### 2. Move MetricStrip Below Hero
-Reposition MetricStrip as its own lightweight section between hero and LivePatternPreview — acts as a visual separator and proof strip without cluttering the hero.
+- **Pattern Lab results** show a "Create Alert" button (`BacktestResultSummary.tsx`) and "Set Alert" button (`ProjectRun.tsx`), but both navigate to `/members/alerts` without passing context.
+- **`playbookContext`** (sessionStorage-based) already exists for pre-filling alerts, but is only used by `StrategyWorkspaceInterface`, not Pattern Lab.
+- **MemberAlerts page** already reads `playbookContext` and pre-fills symbol, pattern, and timeframe.
+- The playbook context does NOT currently carry `autoPaperTrade` or `riskPercent`.
 
-### 3. Consolidate "Create Free Account" CTA
-Move the signup CTA to the mid-page CTA block only (which already exists). Remove it from the hero to eliminate competing actions.
+## Changes
 
-### 4. Move Trust Signals
-Relocate the trust checkmarks (Every signal backtested, Win rates shown upfront, No black-box indicators) into the MetricStrip section or remove entirely — they add noise in the hero.
+### 1. Extend PlaybookContext interface
+**File:** `src/hooks/usePlaybookContext.tsx`
+- Add optional fields: `autoPaperTrade?: boolean`, `riskPercent?: number`, `winRate?: number`, `totalTrades?: number` (to show validation badge on alerts page).
 
-### 5. Add Subtle Visual Element to Hero
-Add a faint decorative chart/pattern SVG or gradient glow behind the headline to give "visual punch" similar to TradingView's hero imagery, without requiring an actual image asset.
+### 2. Wire "Create Alert" in BacktestResultSummary to save playbook context
+**File:** `src/components/BacktestResultSummary.tsx`
+- The `handleCreateAlert` function currently just calls `onCreateAlert()` (which navigates). Update the component to accept and pass backtest metadata (symbol, pattern, timeframe) so the parent can save it to playbook context before navigating.
+- Add a new optional prop `onDeployAsAlert` that saves playbook context with `autoPaperTrade: true` and navigates to `/members/alerts`.
 
-## Files Modified
+### 3. Wire "Set Alert" in ProjectRun to save playbook context
+**File:** `src/pages/projects/ProjectRun.tsx`
+- Import `savePlaybookContextStatic` and save the run's instrument, pattern, and timeframe before navigating to `/members/alerts`.
 
-| File | Change |
-|------|--------|
-| `src/pages/Index.tsx` | Simplify hero: remove second CTA, trust row, copilot hint, extra subtitle. Move MetricStrip out of hero into its own section. Add subtle background glow. |
+### 4. Read extended playbook context in MemberAlerts
+**File:** `src/pages/MemberAlerts.tsx`
+- In the existing `useEffect` that reads `playbookContext`, also read `autoPaperTrade` and `riskPercent` to pre-fill the automation toggles.
+- Show a "Pre-filled from Pattern Lab" badge (already partially exists as "Pre-filled from Playbook").
 
-## Result
-The hero becomes a focused 4-element stack: badge → headline → one subtitle → one CTA. Everything else moves lower where it reinforces rather than competes.
+### 5. Rename CTA button text
+- In `BacktestResultSummary.tsx`: Change "Create Alert" to "Deploy as Alert" with a Zap icon to signal automation.
+- In `ProjectRun.tsx`: Keep "Set Alert" but add tooltip "Auto paper trade when pattern appears."
+
+## Technical Details
+
+- Uses the existing `sessionStorage`-based playbook context mechanism (no new state management).
+- Follows the existing URL-based context transfer standard documented in architecture memories.
+- No database or Edge Function changes required.
+- No new dependencies.
 
