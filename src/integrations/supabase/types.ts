@@ -356,6 +356,8 @@ export type Database = {
           entry_price: number | null
           id: string
           is_auto_captured: boolean | null
+          mae_r: number | null
+          mfe_r: number | null
           outcome_at: string | null
           outcome_pnl_percent: number | null
           outcome_price: number | null
@@ -377,6 +379,8 @@ export type Database = {
           entry_price?: number | null
           id?: string
           is_auto_captured?: boolean | null
+          mae_r?: number | null
+          mfe_r?: number | null
           outcome_at?: string | null
           outcome_pnl_percent?: number | null
           outcome_price?: number | null
@@ -398,6 +402,8 @@ export type Database = {
           entry_price?: number | null
           id?: string
           is_auto_captured?: boolean | null
+          mae_r?: number | null
+          mfe_r?: number | null
           outcome_at?: string | null
           outcome_pnl_percent?: number | null
           outcome_price?: number | null
