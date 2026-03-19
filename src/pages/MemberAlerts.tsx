@@ -133,18 +133,26 @@ const MemberAlerts = () => {
         const patternMap: Record<string, string> = {
           'Donchian Breakout (Long)': 'donchian_breakout_long',
           'Donchian Breakout (Short)': 'donchian_breakout_short',
-          'Double Top (Short)': 'double_top',
-          'Double Bottom (Long)': 'double_bottom',
-          'Ascending Triangle (Long)': 'ascending_triangle',
-          'Descending Triangle (Short)': 'descending_triangle',
-          'Breakout': 'donchian_breakout_long',
-          'DoubleTopBottom': 'double_top',
-          'Triangle': 'ascending_triangle',
+          'Double Top': 'double-top',
+          'Double Bottom': 'double-bottom',
+          'Ascending Triangle': 'ascending-triangle',
+          'Descending Triangle': 'descending-triangle',
+          'Head & Shoulders': 'head-and-shoulders',
+          'Inverse H&S': 'inverse-head-and-shoulders',
+          'Rising Wedge': 'rising-wedge',
+          'Falling Wedge': 'falling-wedge',
+          'Bull Flag': 'bull-flag',
+          'Bear Flag': 'bear-flag',
+          'Cup & Handle': 'cup-and-handle',
+          'Triangle': 'ascending-triangle',
         };
         const mappedPattern = patternMap[playbookContext.pattern] || playbookContext.pattern.toLowerCase();
         setSelectedPatterns([mappedPattern]);
       }
       if (playbookContext.timeframe) setTimeframe(playbookContext.timeframe);
+      // Deploy-as-Alert extensions: auto-enable paper trading
+      if (playbookContext.autoPaperTrade) setAutoPaperTrade(true);
+      if (playbookContext.riskPercent) setRiskPercent(playbookContext.riskPercent);
     }
   }, [playbookContext]);
 
@@ -569,7 +577,7 @@ const MemberAlerts = () => {
                {t('alerts.createNewDesc')}
                {playbookContext && (
                 <Badge variant="secondary" className="ml-2">
-                  {t('alerts.prefilledFromPlaybook')}
+                  {playbookContext.source === 'pattern-lab' ? 'Pre-filled from Pattern Lab' : t('alerts.prefilledFromPlaybook')}
                 </Badge>
               )}
             </CardDescription>

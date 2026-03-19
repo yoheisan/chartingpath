@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
-  Bell, 
+  Zap, 
   ExternalLink, 
   Share2, 
   Check, 
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { track } from '@/services/analytics';
+import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 
 // Wedge Summary type for UX display
 export interface WedgeSummary {
@@ -198,7 +199,19 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   }, [isLowSample, runId, symbol, timeframe, pattern, wedgeEnabled, enabledPatternsCount, results.totalTrades]);
 
   const handleCreateAlert = () => {
-    track('create_alert_clicked', { 
+    // Save playbook context so alerts page pre-fills with validated params
+    savePlaybookContextStatic({
+      symbol,
+      pattern,
+      timeframe,
+      instrumentCategory: '',
+      autoPaperTrade: true,
+      riskPercent: 1.0,
+      winRate: results.winRate,
+      totalTrades: results.totalTrades,
+      source: 'pattern-lab',
+    });
+    track('deploy_as_alert_clicked', { 
       source: 'result_summary', 
       symbol,
       timeframe,
@@ -454,8 +467,8 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             className="flex-1 gap-2"
             size="lg"
           >
-            <Bell className="h-4 w-4" />
-            Create Alert
+            <Zap className="h-4 w-4" />
+            Deploy as Alert
           </Button>
           
           <AgentScoreButton symbol={symbol} pattern={pattern} />
