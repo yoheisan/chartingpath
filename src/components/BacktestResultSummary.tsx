@@ -467,8 +467,8 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             className="flex-1 gap-2"
             size="lg"
           >
-            <Bell className="h-4 w-4" />
-            Create Alert
+            <Zap className="h-4 w-4" />
+            Deploy as Alert
           </Button>
           
           <AgentScoreButton symbol={symbol} pattern={pattern} />

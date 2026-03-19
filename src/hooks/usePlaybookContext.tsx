@@ -6,6 +6,12 @@ export interface PlaybookContext {
   pattern: string;
   timeframe: string;
   instrumentCategory: string;
+  // Deploy-as-Alert extensions
+  autoPaperTrade?: boolean;
+  riskPercent?: number;
+  winRate?: number;
+  totalTrades?: number;
+  source?: 'pattern-lab' | 'strategy-workspace' | 'agent-scoring';
 }
 
 const STORAGE_KEY = 'chartingpath_playbook_context';

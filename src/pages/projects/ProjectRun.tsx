@@ -548,12 +548,22 @@ const ProjectRun = () => {
                         size="sm"
                         onClick={() => {
                           trackEvent('pattern_lab.validate_verdict', { grade, instrument: firstSetup?.instrument });
-                          // Navigate to alerts — user is ready to execute
+                          // Save playbook context for pre-filling alerts
+                          if (firstSetup) {
+                            savePlaybookContextStatic({
+                              symbol: firstSetup.instrument,
+                              pattern: firstSetup.patternId,
+                              timeframe: artifact.timeframe || '',
+                              instrumentCategory: '',
+                              autoPaperTrade: true,
+                              source: 'pattern-lab',
+                            });
+                          }
                           navigate('/alerts');
                         }}
                       >
-                        <Bell className="h-4 w-4 mr-2" />
-                        Set Alert
+                        <Zap className="h-4 w-4 mr-2" />
+                        Deploy as Alert
                       </Button>
                       <Button
                         variant="outline"
