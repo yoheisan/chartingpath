@@ -89,8 +89,8 @@ const Index = () => {
       <WebApplicationJsonLd />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
-        {/* Background — subtle grid */}
+      <section ref={heroRef} className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+        {/* Background — subtle grid + glow */}
         <div className="absolute inset-0 bg-background">
           <div className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -98,16 +98,18 @@ const Index = () => {
               backgroundSize: '80px 80px',
             }}
           />
+          {/* Decorative glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07] blur-[100px] bg-primary pointer-events-none" />
         </div>
         
         {/* Content */}
-        <div className="relative z-10 container mx-auto max-w-7xl text-center px-6">
+        <div className="relative z-10 container mx-auto max-w-4xl text-center px-6 py-20">
           {/* Platform badge */}
-          <Badge variant="secondary" className="mb-5 text-xs tracking-wide animate-fade-in">
+          <Badge variant="secondary" className="mb-6 text-xs tracking-wide animate-fade-in">
             {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
           </Badge>
 
-          <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold mb-5 leading-[1.15] animate-fade-in tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] animate-fade-in tracking-tight">
             <span className="text-foreground">
               {t('hero.headlinePrimary', 'Know if a pattern works')}
             </span>
@@ -117,73 +119,34 @@ const Index = () => {
             </span>
           </h1>
           
-          <p className="text-lg text-muted-foreground mb-3 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
+          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
             {t('hero.subtitleMain', 'Every pattern backtested against 320,000+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.')}
           </p>
-          
-          <p className="text-sm text-muted-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            {t('hero.socialProof', '320,000+ pattern outcomes analyzed. Free to start — works alongside TradingView.')}
-          </p>
 
-          {/* Primary CTA */}
-          <div className="mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          {/* Single Primary CTA */}
+          <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Button 
               size="lg" 
               onClick={() => {
                 (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
                 handleScreenerClick();
               }}
-              className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
+              className="px-12 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
             >
               <TrendingUp className="h-6 w-6 mr-3" />
               {t('hero.ctaPrimary', 'See Live Patterns Free')}
               <ArrowRight className="h-6 w-6 ml-3" />
             </Button>
           </div>
-
-          {/* Sign Up CTA — for guests */}
-          {!isAuthenticated && (
-            <div className="mb-10 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-              <Button
-                size="lg"
-                onClick={() => {
-                  (window as any).gtag?.('event', 'cta_click', { location: 'hero_signup' });
-                  navigate('/auth?mode=signup');
-                }}
-                className="px-8 py-6 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {t('hero.createFreeAccount', 'Create Free Account')}
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            </div>
-          )}
-          
-          {/* Trust Block */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-xs text-muted-foreground/70 animate-fade-in uppercase tracking-wider mb-4" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustSignals', 'Every signal backtested')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustAssumptions', 'Win rates shown upfront')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle className="h-3 w-3 text-primary/60" />
-              <span>{t('hero.trustRepeatability', 'No black-box indicators')}</span>
-            </div>
-          </div>
-
-          {/* Copilot hint */}
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: '0.35s' }}>
-            <Bot className="h-3 w-3" />
-            <span>{t('hero.copilotHint', 'Powered by AI Trading Copilot — press ⌘K anywhere')}</span>
-          </div>
-
-          {/* Metric Strip */}
-          <MetricStrip />
         </div>
       </section>
+
+      {/* Metric Strip — proof bar below hero */}
+      <div className="border-t border-border/20 bg-card/30">
+        <div className="container mx-auto max-w-7xl">
+          <MetricStrip />
+        </div>
+      </div>
 
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
