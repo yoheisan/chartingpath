@@ -121,8 +121,8 @@ export const SubscriptionManager = () => {
 
   const handlePlanChange = async (newPlan: string) => {
     // Plan changes are coming soon - show toast instead of Stripe checkout
-    toast('💙 Payments coming very soon!', {
-      description: 'We\'re finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation.',
+    toast(t('pricing.paymentsComingSoonTitle'), {
+      description: t('pricing.paymentsComingSoonDesc'),
       duration: 8000,
     });
   };
