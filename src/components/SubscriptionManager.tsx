@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreditCard, Clock, AlertTriangle, CheckCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SubscriptionData {
   id: string;
@@ -46,6 +47,7 @@ export const SubscriptionManager = () => {
   const [changingPlan, setChangingPlan] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [isAdmin, setIsAdmin] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadSubscriptionData();
@@ -119,8 +121,8 @@ export const SubscriptionManager = () => {
 
   const handlePlanChange = async (newPlan: string) => {
     // Plan changes are coming soon - show toast instead of Stripe checkout
-    toast('💙 Payments coming very soon!', {
-      description: 'We\'re finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation.',
+    toast(t('pricing.paymentsComingSoonTitle'), {
+      description: t('pricing.paymentsComingSoonDesc'),
       duration: 8000,
     });
   };
@@ -159,8 +161,8 @@ export const SubscriptionManager = () => {
 
   const handleCreateSubscription = async (plan: string) => {
     // Paid plans are coming soon - show toast instead of Stripe checkout
-    toast('💙 Payments coming very soon!', {
-      description: 'We\'re finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation.',
+    toast(t('pricing.paymentsComingSoonTitle'), {
+      description: t('pricing.paymentsComingSoonDesc'),
       duration: 8000,
     });
   };
