@@ -199,7 +199,19 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   }, [isLowSample, runId, symbol, timeframe, pattern, wedgeEnabled, enabledPatternsCount, results.totalTrades]);
 
   const handleCreateAlert = () => {
-    track('create_alert_clicked', { 
+    // Save playbook context so alerts page pre-fills with validated params
+    savePlaybookContextStatic({
+      symbol,
+      pattern,
+      timeframe,
+      instrumentCategory: '',
+      autoPaperTrade: true,
+      riskPercent: 1.0,
+      winRate: results.winRate,
+      totalTrades: results.totalTrades,
+      source: 'pattern-lab',
+    });
+    track('deploy_as_alert_clicked', { 
       source: 'result_summary', 
       symbol,
       timeframe,
