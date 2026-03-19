@@ -3,6 +3,7 @@
  * 
  * Scheduled function that checks pending alerts to see if SL/TP was hit.
  * Auto-captures outcomes using price feed data.
+ * Tracks MFE (Max Favorable Excursion) and MAE (Max Adverse Excursion) in R-multiples.
  * 
  * Run via cron: every 15 minutes
  */
@@ -30,6 +31,8 @@ interface PendingAlert {
   stop_loss_price: number | null;
   take_profit_price: number | null;
   check_count: number;
+  mfe_r: number | null;
+  mae_r: number | null;
 }
 
 interface Alert {
@@ -67,7 +70,9 @@ Deno.serve(async (req) => {
         entry_price,
         stop_loss_price,
         take_profit_price,
-        check_count
+        check_count,
+        mfe_r,
+        mae_r
       `)
       .eq('outcome_status', 'pending')
       .lt('check_count', MAX_CHECK_COUNT)
@@ -148,6 +153,24 @@ Deno.serve(async (req) => {
       const triggeredAt = new Date(alert.triggered_at);
       const hoursSinceTrigger = (Date.now() - triggeredAt.getTime()) / (1000 * 60 * 60);
 
+      // Calculate current R-multiple for MFE/MAE tracking
+      let currentMfeR = alert.mfe_r || 0;
+      let currentMaeR = alert.mae_r || 0;
+
+      if (currentPrice && entryPrice && slPrice) {
+        const isLong = tpPrice ? tpPrice > entryPrice : slPrice < entryPrice;
+        const stopDistance = Math.abs(entryPrice - slPrice);
+        
+        if (stopDistance > 0) {
+          const currentR = isLong
+            ? (currentPrice - entryPrice) / stopDistance
+            : (entryPrice - currentPrice) / stopDistance;
+          
+          currentMfeR = Math.max(currentMfeR, currentR);
+          currentMaeR = Math.min(currentMaeR, currentR);
+        }
+      }
+
       if (hoursSinceTrigger > TIMEOUT_HOURS) {
         // Timeout - calculate exit at current price or last known price
         const exitPrice = currentPrice || entryPrice;
@@ -168,21 +191,26 @@ Deno.serve(async (req) => {
             capture_method: 'price_feed',
             checked_at: new Date().toISOString(),
             check_count: (alert.check_count || 0) + 1,
+            mfe_r: Number(currentMfeR.toFixed(3)),
+            mae_r: Number(currentMaeR.toFixed(3)),
           })
           .eq('id', alert.id);
 
         timeoutCount++;
         updatedCount++;
+        console.log(`[check-alert-outcomes] ${symbol} timeout | MFE: ${currentMfeR.toFixed(2)}R | MAE: ${currentMaeR.toFixed(2)}R`);
         continue;
       }
 
       if (!currentPrice || !entryPrice || !slPrice || !tpPrice) {
-        // Update check count but skip outcome check
+        // Update check count and excursions but skip outcome check
         await supabase
           .from('alerts_log')
           .update({
             checked_at: new Date().toISOString(),
             check_count: (alert.check_count || 0) + 1,
+            mfe_r: Number(currentMfeR.toFixed(3)),
+            mae_r: Number(currentMaeR.toFixed(3)),
           })
           .eq('id', alert.id);
         continue;
@@ -235,18 +263,22 @@ Deno.serve(async (req) => {
             capture_method: 'price_feed',
             checked_at: new Date().toISOString(),
             check_count: (alert.check_count || 0) + 1,
+            mfe_r: Number(currentMfeR.toFixed(3)),
+            mae_r: Number(currentMaeR.toFixed(3)),
           })
           .eq('id', alert.id);
 
         updatedCount++;
-        console.log(`[check-alert-outcomes] ${symbol} ${outcomeStatus} at ${outcomePrice} (${rMultiple.toFixed(2)}R)`);
+        console.log(`[check-alert-outcomes] ${symbol} ${outcomeStatus} at ${outcomePrice} (${rMultiple.toFixed(2)}R) | MFE: ${currentMfeR.toFixed(2)}R | MAE: ${currentMaeR.toFixed(2)}R`);
       } else {
-        // Just update the check count
+        // Just update the check count and excursions
         await supabase
           .from('alerts_log')
           .update({
             checked_at: new Date().toISOString(),
             check_count: (alert.check_count || 0) + 1,
+            mfe_r: Number(currentMfeR.toFixed(3)),
+            mae_r: Number(currentMaeR.toFixed(3)),
           })
           .eq('id', alert.id);
       }
