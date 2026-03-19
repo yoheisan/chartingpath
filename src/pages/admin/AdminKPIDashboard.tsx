@@ -721,6 +721,9 @@ const AdminKPIDashboard = () => {
           </Card>
         </div>
 
+        {/* User Geography */}
+        <UserGeographyCard />
+
         {/* Data Quality Panel */}
         <Card>
           <CardHeader>
