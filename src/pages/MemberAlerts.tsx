@@ -577,7 +577,7 @@ const MemberAlerts = () => {
                {t('alerts.createNewDesc')}
                {playbookContext && (
                 <Badge variant="secondary" className="ml-2">
-                  {t('alerts.prefilledFromPlaybook')}
+                  {playbookContext.source === 'pattern-lab' ? 'Pre-filled from Pattern Lab' : t('alerts.prefilledFromPlaybook')}
                 </Badge>
               )}
             </CardDescription>
