@@ -91,6 +91,7 @@ interface QuickAction {
   labelKey: string;
   promptKey: string;
   icon: typeof TrendingUp;
+  label?: string; // fallback when i18n key missing in active locale
 }
 
 const GUEST_ACTIONS: QuickAction[] = [
