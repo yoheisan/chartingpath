@@ -187,7 +187,37 @@ export function PatternScreenerTeaser() {
 
         const allPatternsRaw = (data || []).map(rowToLiveSetup);
         // Filter out patterns where trade has already ended (SL/TP breached)
-        const allPatterns = filterActiveTradesOnly(allPatternsRaw);
+        let allPatterns = filterActiveTradesOnly(allPatternsRaw);
+
+        // Fallback: enrich patterns missing historicalPerformance from the materialized view
+        const needsEnrichment = allPatterns.filter(p => !p.historicalPerformance || p.historicalPerformance.winRate === 0);
+        if (needsEnrichment.length > 0) {
+          const symbols = [...new Set(needsEnrichment.map(p => p.instrument))];
+          const { data: mvData } = await supabase
+            .from('instrument_pattern_stats_mv' as any)
+            .select('symbol, pattern_id, win_rate, expectancy_r, total_trades, avg_rr')
+            .in('symbol', symbols);
+
+          if (mvData?.length) {
+            const statsMap = new Map<string, any>();
+            for (const row of mvData as any[]) {
+              statsMap.set(`${row.symbol}|${row.pattern_id}`, row);
+            }
+            allPatterns = allPatterns.map(p => {
+              if (p.historicalPerformance && p.historicalPerformance.winRate > 0) return p;
+              const stat = statsMap.get(`${p.instrument}|${p.patternId}`);
+              if (!stat || stat.total_trades < 5) return p;
+              return {
+                ...p,
+                historicalPerformance: {
+                  winRate: stat.win_rate,
+                  avgRMultiple: stat.expectancy_r ?? stat.avg_rr ?? 0,
+                  sampleSize: stat.total_trades,
+                },
+              };
+            });
+          }
+        }
 
         const dedupeKey = (p: LiveSetup) => {
           const baseSymbol = p.instrument.replace(/L$/, '');
