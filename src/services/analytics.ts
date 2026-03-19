@@ -54,7 +54,8 @@ export type AnalyticsEvent =
   | 'shared_to_auth_click'
   | 'landing_view'
   | 'pricing_start_free'
-  | 'email_lead_captured';
+  | 'email_lead_captured'
+  | 'deploy_as_alert_clicked';
 
 // Event properties types
 export interface PresetLoadedProps {
