@@ -12,6 +12,7 @@ import PatternLabViewer from '@/components/projects/PatternLabViewer';
 import RunHistory from '@/components/projects/RunHistory';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 import { GradeBadge, extractGrade } from '@/components/ui/GradeBadge';
+import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { trackEvent } from '@/lib/analytics';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
