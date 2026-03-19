@@ -47,6 +47,7 @@ export const SubscriptionManager = () => {
   const [changingPlan, setChangingPlan] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [isAdmin, setIsAdmin] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadSubscriptionData();
