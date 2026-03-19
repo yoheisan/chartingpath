@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
-  Bell, 
+  Zap, 
   ExternalLink, 
   Share2, 
   Check, 
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { track } from '@/services/analytics';
+import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 
 // Wedge Summary type for UX display
 export interface WedgeSummary {
