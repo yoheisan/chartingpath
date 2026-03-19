@@ -574,7 +574,7 @@ export function TradingCopilot({
                     {getQuickActions(location.pathname, isAuthenticated).map((action) => (
                       <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
                         <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                        <span className="text-xs">{t(action.labelKey)}</span>
+                        <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
                       </Button>
                     ))}
                     </div>
