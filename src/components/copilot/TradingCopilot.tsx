@@ -144,18 +144,18 @@ const ROUTE_ACTIONS: Record<string, QuickAction[]> = {
 /** Route-specific overrides for guests (lighter set — no locked features) */
 const GUEST_ROUTE_ACTIONS: Record<string, QuickAction[]> = {
   '/patterns/live': [
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
   ],
   '/tools/agent-scoring': [
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
+    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3, label: "Market breadth" },
   ],
   '/chart-patterns/library': [
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
   ],
 };
 
