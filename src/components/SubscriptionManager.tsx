@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreditCard, Clock, AlertTriangle, CheckCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SubscriptionData {
   id: string;
