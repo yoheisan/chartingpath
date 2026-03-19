@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchKPIData, TimeWindow, KPIData } from "@/services/adminKpiService";
 import { DataScalingCard } from "@/components/admin/DataScalingCard";
+import { UserGeographyCard } from "@/components/admin/UserGeographyCard";
 
 const AdminKPIDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -719,6 +720,9 @@ const AdminKPIDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* User Geography */}
+        <UserGeographyCard />
 
         {/* Data Quality Panel */}
         <Card>
