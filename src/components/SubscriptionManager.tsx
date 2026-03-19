@@ -159,8 +159,9 @@ export const SubscriptionManager = () => {
 
   const handleCreateSubscription = async (plan: string) => {
     // Paid plans are coming soon - show toast instead of Stripe checkout
-    toast('🚀 Stay tight, this plan is coming soon!', {
-      description: 'We\'re working hard to bring you this plan. Check back shortly!',
+    toast('💙 Payments coming very soon!', {
+      description: 'We\'re finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation.',
+      duration: 8000,
     });
   };
 
