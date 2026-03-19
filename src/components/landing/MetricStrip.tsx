@@ -76,7 +76,7 @@ export const MetricStrip = () => {
   ];
 
   return (
-    <div className="flex flex-wrap justify-center divide-x divide-border/30 mt-10 animate-fade-in" style={{ animationDelay: "0.4s" }}>
+    <div className="flex flex-wrap justify-center divide-x divide-border/30 py-2 animate-fade-in">
       {metrics.map((m) => (
         <AnimatedMetric key={m.label} {...m} />
       ))}
