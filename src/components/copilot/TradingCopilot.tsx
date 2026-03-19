@@ -91,6 +91,7 @@ interface QuickAction {
   labelKey: string;
   promptKey: string;
   icon: typeof TrendingUp;
+  label?: string; // fallback when i18n key missing in active locale
 }
 
 const GUEST_ACTIONS: QuickAction[] = [
@@ -111,50 +112,50 @@ const AUTH_DEFAULT_ACTIONS: QuickAction[] = [
 /** Route-specific overrides for authenticated users */
 const ROUTE_ACTIONS: Record<string, QuickAction[]> = {
   '/tools/agent-scoring': [
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
-    { labelKey: "copilot.ctx.adjustWeights", promptKey: "copilot.ctx.adjustWeightsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.ctx.comparePresets", promptKey: "copilot.ctx.comparePresetsPrompt", icon: BarChart3 },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
+    { labelKey: "copilot.ctx.adjustWeights", promptKey: "copilot.ctx.adjustWeightsPrompt", icon: TrendingUp, label: "Adjust weights" },
+    { labelKey: "copilot.ctx.comparePresets", promptKey: "copilot.ctx.comparePresetsPrompt", icon: BarChart3, label: "Compare presets" },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
   ],
   '/patterns/live': [
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
   ],
   '/members/dashboard': [
-    { labelKey: "copilot.ctx.portfolioReview", promptKey: "copilot.ctx.portfolioReviewPrompt", icon: BarChart3 },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
+    { labelKey: "copilot.ctx.portfolioReview", promptKey: "copilot.ctx.portfolioReviewPrompt", icon: BarChart3, label: "Portfolio review" },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
+    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
   ],
   '/tools/market-breadth': [
-    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
-    { labelKey: "copilot.ctx.sectorAnalysis", promptKey: "copilot.ctx.sectorAnalysisPrompt", icon: TrendingUp },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: Sparkles },
+    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3, label: "Market breadth" },
+    { labelKey: "copilot.ctx.sectorAnalysis", promptKey: "copilot.ctx.sectorAnalysisPrompt", icon: TrendingUp, label: "Sector analysis" },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: Sparkles, label: "Find patterns" },
   ],
   '/chart-patterns/library': [
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
   ],
 };
 
 /** Route-specific overrides for guests (lighter set — no locked features) */
 const GUEST_ROUTE_ACTIONS: Record<string, QuickAction[]> = {
   '/patterns/live': [
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
+    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
   ],
   '/tools/agent-scoring': [
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
+    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
+    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3, label: "Market breadth" },
   ],
   '/chart-patterns/library': [
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
+    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
+    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
   ],
 };
 
@@ -573,7 +574,7 @@ export function TradingCopilot({
                     {getQuickActions(location.pathname, isAuthenticated).map((action) => (
                       <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
                         <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                        <span className="text-xs">{t(action.labelKey)}</span>
+                        <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
                       </Button>
                     ))}
                     </div>
