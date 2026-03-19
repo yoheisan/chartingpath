@@ -1,9 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  CheckCircle, ArrowRight, TrendingUp, Shield,
-  Bot
-} from "lucide-react";
+import { ArrowRight, TrendingUp, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
