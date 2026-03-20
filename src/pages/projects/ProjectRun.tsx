@@ -563,7 +563,7 @@ const ProjectRun = () => {
                         }}
                       >
                         <Zap className="h-4 w-4 mr-2" />
-                        Deploy as Alert
+                        {t('alerts.deployAsAlert', 'Deploy as Alert')}
                       </Button>
                       <Button
                         variant="outline"
