@@ -20,7 +20,7 @@ const BULLISH_PATTERNS = new Set([
 const EdgeAtlasIndexPage = () => {
   const { t } = useTranslation();
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10">
       <PageMeta
         title="Best Chart Patterns by Win Rate — Backtested Rankings | ChartingPath"
         description="Ranked chart patterns by annualised return and win rate. Real backtest data from 320,000+ historical trades across forex, crypto, stocks and commodities."

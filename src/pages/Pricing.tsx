@@ -165,7 +165,7 @@ const Pricing = () => {
         description="Start free with 50 credits per month, 3 active alerts and live screener access. Upgrade to Lite or Pro for more backtests, alerts and advanced features."
         canonicalPath="/projects/pricing"
       />
-      <div className="container mx-auto px-6 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

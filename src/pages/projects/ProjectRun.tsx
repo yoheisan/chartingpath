@@ -328,7 +328,7 @@ const ProjectRun = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
           <Skeleton className="h-8 w-48 mb-4" />
           <Skeleton className="h-6 w-96 mb-8" />
           <Skeleton className="h-64 w-full" />
@@ -340,7 +340,7 @@ const ProjectRun = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate(fromAgentScoring ? '/tools/agent-scoring' : '/projects/pattern-lab/new')}
@@ -372,7 +372,7 @@ const ProjectRun = () => {
 
       {/* Main content */}
       <div className="flex-1 min-w-0 overflow-auto">
-        <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Button 
