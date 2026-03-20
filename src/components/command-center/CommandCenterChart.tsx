@@ -382,7 +382,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
       } else {
-        const mapped = data.map((row) => ({
+        const mapped = processedData.map((row) => ({
           t: row.date,
           o: row.open,
           h: row.high,
