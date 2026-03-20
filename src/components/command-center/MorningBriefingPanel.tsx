@@ -300,7 +300,7 @@ function TradeRow({ trade, onSelect }: { trade: PaperTradeUpdate; onSelect?: (s:
       className="w-full flex items-center gap-2 rounded border border-border/40 px-2 py-1.5 hover:bg-muted/40 transition-colors text-left"
       onClick={() => onSelect?.(trade.symbol)}
     >
-      <InstrumentLogo symbol={trade.symbol} size={18} />
+      <InstrumentLogo instrument={trade.symbol} size="sm" showName={false} />
       <div className="flex-1 min-w-0">
         <span className="text-xs font-medium truncate block">{trade.symbol}</span>
         <span className="text-[10px] text-muted-foreground capitalize">
