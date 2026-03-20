@@ -759,7 +759,7 @@ export default function PatternScreenerTable() {
   if (loading) {
     return (
       <section className="py-12 px-6 bg-muted/20">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -802,7 +802,7 @@ export default function PatternScreenerTable() {
 
   return (
     <section className="py-12 px-6 bg-muted/20">
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>

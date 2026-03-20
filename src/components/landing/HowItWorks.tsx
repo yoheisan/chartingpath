@@ -51,7 +51,7 @@ export const HowItWorks = () => {
 
   return (
     <section className="py-24 px-4 md:px-6 lg:px-8">
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto">
         <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
           {/* Left — section header */}
           <div className="lg:sticky lg:top-24">
