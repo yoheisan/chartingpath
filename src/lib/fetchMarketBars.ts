@@ -100,6 +100,25 @@ function isProviderHealthy(provider: string): boolean {
  */
 export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]> {
   const { symbol, startDate, endDate, interval, includeOhlc = true } = opts;
+  
+  // For 4h/8h, fetch 1h bars then aggregate
+  const needsAggregation = interval === '4h' || interval === '8h';
+  const fetchInterval = getProviderInterval(interval);
+  const aggHours = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
+
+  const rawBars = await fetchMarketBarsRaw({ symbol, startDate, endDate, interval: fetchInterval, includeOhlc });
+  
+  if (needsAggregation && rawBars.length > 0) {
+    const aggregated = aggregateHourlyBars(rawBars, aggHours);
+    console.log(`[fetchMarketBars] Aggregated ${rawBars.length} 1h bars → ${aggregated.length} ${interval} bars for ${symbol}`);
+    return aggregated;
+  }
+  
+  return rawBars;
+}
+
+function fetchMarketBarsRaw(opts: FetchBarsOptions): Promise<OHLCBar[]> {
+  const { symbol, startDate, endDate, interval, includeOhlc = true } = opts;
 
   // --- Crypto path: Binance → Yahoo (skip EODHD) ---
   if (isCryptoSymbol(symbol)) {
