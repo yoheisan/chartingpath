@@ -52,7 +52,20 @@ function isLikelyTicker(word: string): boolean {
   return true;
 }
 
-// Map pattern names to screener IDs
+// Detect asset type from a plain ticker symbol for screener deep-linking
+function detectAssetTypeFromTicker(symbol: string): string | null {
+  if (symbol.endsWith('=F')) return 'commodities';
+  if (symbol.endsWith('=X')) return 'fx';
+  if (symbol.includes('-USD') || symbol.endsWith('USDT')) return 'crypto';
+  // Known major FX bases
+  const fxBases = ['EUR', 'GBP', 'AUD', 'NZD', 'CAD', 'CHF', 'JPY'];
+  if (fxBases.includes(symbol)) return 'fx';
+  // Default to stocks for plain uppercase tickers (AAPL, NVDA, TSLA etc.)
+  if (/^[A-Z]{1,5}$/.test(symbol)) return 'stocks';
+  return null;
+}
+
+
 const PATTERN_SCREENER_MAP: Record<string, string> = {
   'head and shoulders': 'head-and-shoulders',
   'inverse head and shoulders': 'inverse-head-and-shoulders',
