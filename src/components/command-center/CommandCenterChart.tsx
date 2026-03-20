@@ -202,18 +202,43 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const cacheKey = `${symbol}:${timeframe}`;
     try {
+      // For 4h/8h, query 1h bars and aggregate (same as initial load)
+      const isHourlyAggregated = ['4h', '8h'].includes(timeframe);
+      const dbTimeframe = isHourlyAggregated ? '1h' : timeframe;
+      const pollLimit = isHourlyAggregated ? 20 * (timeframe === '8h' ? 8 : 4) : 20;
+
       const { data, error: dbError } = await supabase
         .from('historical_prices')
         .select('date, open, high, low, close, volume')
         .eq('symbol', symbol)
-        .eq('timeframe', timeframe)
+        .eq('timeframe', dbTimeframe)
         .order('date', { ascending: false })
-        .limit(20); // Only fetch tail for merge
+        .limit(pollLimit);
 
       if (dbError || !data || data.length === 0) return;
 
-      const freshBars: CompressedBar[] = data
-        .reverse() // API returns desc, we need asc
+      let processedData = data.reverse();
+
+      // Aggregate 1h → 4h/8h if needed
+      if (isHourlyAggregated) {
+        const hours = timeframe === '8h' ? 8 : 4;
+        const aggregated: typeof processedData = [];
+        for (let i = 0; i < processedData.length; i += hours) {
+          const chunk = processedData.slice(i, i + hours);
+          if (chunk.length === 0) break;
+          aggregated.push({
+            date: chunk[0].date,
+            open: chunk[0].open,
+            high: Math.max(...chunk.map(b => b.high)),
+            low: Math.min(...chunk.map(b => b.low)),
+            close: chunk[chunk.length - 1].close,
+            volume: chunk.reduce((sum, b) => sum + (b.volume || 0), 0),
+          });
+        }
+        processedData = aggregated;
+      }
+
+      const freshBars: CompressedBar[] = processedData
         .map((row) => ({
           t: row.date,
           o: row.open,

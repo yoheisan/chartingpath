@@ -252,10 +252,12 @@ export default function TickerStudy() {
   }, [selectedTimeframe]);
 
   // Convert selected timeframe to Yahoo interval format
+  // 4h/8h are not natively supported by Yahoo — fetch as 1h and aggregate
   const getYahooInterval = useCallback((tf: string) => {
     const mapping: Record<string, string> = {
       '1h': '1h',
-      '4h': '4h',
+      '4h': '1h',  // Fetch 1h, aggregate client-side
+      '8h': '1h',  // Fetch 1h, aggregate client-side
       '1d': '1d',
       '1wk': '1wk',
     };
@@ -317,7 +319,7 @@ export default function TickerStudy() {
               const mappedOnDemand: HistoricalPattern[] = onDemandData.patterns.map((p: any) => ({
                 id: p.id,
                 symbol: decodedSymbol,
-                asset_type: 'forex',
+                asset_type: p.asset_type || (decodedSymbol.includes('-USD') ? 'crypto' : decodedSymbol.includes('=X') ? 'fx' : decodedSymbol.startsWith('^') ? 'index' : 'stock'),
                 pattern_id: p.pattern_id,
                 pattern_name: p.pattern_name,
                 direction: p.direction as 'bullish' | 'bearish',
@@ -432,14 +434,19 @@ export default function TickerStudy() {
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData: any[] | null = null;
 
+        // For 4h/8h, query 1h bars from DB and aggregate
+        const isHourlyAggregated = ['4h', '8h'].includes(selectedTimeframe);
+        const dbTimeframe = isHourlyAggregated ? '1h' : selectedTimeframe;
+        const dbBarLimit = isHourlyAggregated ? barLimit * (selectedTimeframe === '8h' ? 8 : 4) : barLimit;
+
         for (const sym of priceSymbols) {
           const { data, error } = await supabase
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
             .eq('symbol', sym)
-            .eq('timeframe', selectedTimeframe)
+            .eq('timeframe', dbTimeframe)
             .order('date', { ascending: false })
-            .limit(barLimit);
+            .limit(dbBarLimit);
 
           if (!error && data && data.length > 0) {
             pricesData = data;
@@ -447,10 +454,31 @@ export default function TickerStudy() {
           }
         }
 
-        const hasEnoughData = pricesData && pricesData.length >= minBarsRequired;
+        const hasEnoughData = pricesData && pricesData.length >= (isHourlyAggregated ? minBarsRequired * (selectedTimeframe === '8h' ? 8 : 4) : minBarsRequired);
 
         if (hasEnoughData) {
-          const bars: CompressedBar[] = pricesData!
+          let rows = pricesData!.reverse();
+
+          // Aggregate 1h → 4h/8h if needed
+          if (isHourlyAggregated) {
+            const hours = selectedTimeframe === '8h' ? 8 : 4;
+            const aggregated: typeof rows = [];
+            for (let i = 0; i < rows.length; i += hours) {
+              const chunk = rows.slice(i, i + hours);
+              if (chunk.length === 0) break;
+              aggregated.push({
+                date: chunk[0].date,
+                open: chunk[0].open,
+                high: Math.max(...chunk.map((b: any) => b.high)),
+                low: Math.min(...chunk.map((b: any) => b.low)),
+                close: chunk[chunk.length - 1].close,
+                volume: chunk.reduce((sum: number, b: any) => sum + (b.volume || 0), 0),
+              });
+            }
+            rows = aggregated;
+          }
+
+          const bars: CompressedBar[] = rows
             .map((p: any) => ({
               t: new Date(p.date).toISOString(),
               o: Number(p.open),
@@ -458,9 +486,8 @@ export default function TickerStudy() {
               l: Number(p.low),
               c: Number(p.close),
               v: Number(p.volume || 0),
-            }))
-            .reverse();
-          setPriceData(bars);
+            }));
+          setPriceData(bars.slice(-barLimit));
         } else {
           const endDate = new Date();
           const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
@@ -497,7 +524,26 @@ export default function TickerStudy() {
 
             const bars = (yfData as any)?.bars as CompressedBar[] | undefined;
             if (Array.isArray(bars) && bars.length > 0) {
-              setPriceData(bars.slice(-barLimit));
+              // Aggregate 1h → 4h/8h if needed
+              if (isHourlyAggregated) {
+                const hours = selectedTimeframe === '8h' ? 8 : 4;
+                const aggregated: CompressedBar[] = [];
+                for (let i = 0; i < bars.length; i += hours) {
+                  const chunk = bars.slice(i, i + hours);
+                  if (chunk.length === 0) break;
+                  aggregated.push({
+                    t: chunk[0].t,
+                    o: chunk[0].o,
+                    h: Math.max(...chunk.map(b => b.h)),
+                    l: Math.min(...chunk.map(b => b.l)),
+                    c: chunk[chunk.length - 1].c,
+                    v: chunk.reduce((sum, b) => sum + b.v, 0),
+                  });
+                }
+                setPriceData(aggregated.slice(-barLimit));
+              } else {
+                setPriceData(bars.slice(-barLimit));
+              }
               break;
             }
 
