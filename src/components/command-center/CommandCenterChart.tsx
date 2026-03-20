@@ -274,19 +274,45 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       console.log(`[CommandCenterChart] Fetching ${symbol} ${timeframe}: barLimit=${barLimit}, minBarsRequired=${minBarsRequired}, daysBack=${daysBack}`);
 
       // Fetch from historical_prices table
+      // For 4h/8h, query 1h bars from DB and aggregate client-side
+      const isHourlyAggregated = ['4h', '8h'].includes(timeframe);
+      const dbTimeframe = isHourlyAggregated ? '1h' : timeframe;
+      const dbLimit = isHourlyAggregated ? barLimit * (timeframe === '8h' ? 8 : 4) : barLimit;
+
       const { data, error: dbError } = await supabase
         .from('historical_prices')
         .select('date, open, high, low, close, volume')
         .eq('symbol', symbol)
-        .eq('timeframe', timeframe)
+        .eq('timeframe', dbTimeframe)
         .order('date', { ascending: true })
-        .limit(barLimit);
+        .limit(dbLimit);
 
       if (dbError) throw dbError;
 
+      // Aggregate 1h → 4h/8h if needed
+      let processedData = data;
+      if (isHourlyAggregated && data && data.length > 0) {
+        const hours = timeframe === '8h' ? 8 : 4;
+        const aggregated: typeof data = [];
+        for (let i = 0; i < data.length; i += hours) {
+          const chunk = data.slice(i, i + hours);
+          if (chunk.length === 0) break;
+          aggregated.push({
+            date: chunk[0].date,
+            open: chunk[0].open,
+            high: Math.max(...chunk.map(b => b.high)),
+            low: Math.min(...chunk.map(b => b.low)),
+            close: chunk[chunk.length - 1].close,
+            volume: chunk.reduce((sum, b) => sum + (b.volume || 0), 0),
+          });
+        }
+        processedData = aggregated;
+        console.log(`[CommandCenterChart] Aggregated ${data.length} 1h bars → ${aggregated.length} ${timeframe} bars from DB`);
+      }
+
       // Only use DB data if we have enough bars
-      const hasEnoughData = data && data.length >= minBarsRequired;
-      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars, hasEnoughData=${hasEnoughData}`);
+      const hasEnoughData = processedData && processedData.length >= minBarsRequired;
+      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars (${dbTimeframe}), processed=${processedData?.length || 0} (${timeframe}), hasEnoughData=${hasEnoughData}`);
 
       if (!hasEnoughData) {
         // EODHD-first, Yahoo-fallback
@@ -356,7 +382,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         setBars(fetchedBars);
         updatePriceData(fetchedBars);
       } else {
-        const mapped = data.map((row) => ({
+        const mapped = processedData.map((row) => ({
           t: row.date,
           o: row.open,
           h: row.high,
