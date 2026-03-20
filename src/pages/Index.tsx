@@ -194,26 +194,30 @@ const Index = () => {
 
       {/* Mid-page Signup CTA */}
       {!isAuthenticated && (
-        <section className="py-16 px-6 border-t border-border/20">
-          <div className="container mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                {t('hero.midPageHeadline', 'See the data behind the pattern')}
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                {t('hero.midPageSubtext', 'Free account. No credit card. Real backtest data from day one.')}
-              </p>
-              <Button
-                size="lg"
-                onClick={() => {
-                  (window as any).gtag?.('event', 'cta_click', { location: 'mid_page' });
-                  navigate('/auth?mode=signup');
-                }}
-                className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
-              >
-                {t('hero.createFreeAccount', 'Create Free Account')}
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
+        <section className="py-20 px-4 md:px-6 lg:px-8 border-t border-border/20">
+          <div className="container mx-auto max-w-7xl">
+            <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-16">
+              <div className="flex-1">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3">
+                  {t('hero.midPageHeadline', 'See the data behind the pattern')}
+                </h2>
+                <p className="text-base md:text-lg text-muted-foreground">
+                  {t('hero.midPageSubtext', 'Free account. No credit card. Real backtest data from day one.')}
+                </p>
+              </div>
+              <div className="shrink-0">
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    (window as any).gtag?.('event', 'cta_click', { location: 'mid_page' });
+                    navigate('/auth?mode=signup');
+                  }}
+                  className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 whitespace-nowrap"
+                >
+                  {t('hero.createFreeAccount', 'Create Free Account')}
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </div>
             </div>
           </div>
         </section>

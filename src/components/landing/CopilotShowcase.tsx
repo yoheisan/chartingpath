@@ -100,7 +100,7 @@ export const CopilotShowcase = () => {
         </div>
 
         {/* Demo Conversation */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-[1fr_1fr] gap-8 items-start">
           <h3 className="text-lg font-semibold mb-4 text-center">{t('copilotShowcase.seeItInAction')}</h3>
           <div className="rounded-xl border bg-card overflow-hidden">
             {/* Chat header */}
