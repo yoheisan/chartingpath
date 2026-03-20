@@ -434,14 +434,19 @@ export default function TickerStudy() {
         const priceSymbols = [decodedSymbol, normalized];
         let pricesData: any[] | null = null;
 
+        // For 4h/8h, query 1h bars from DB and aggregate
+        const isHourlyAggregated = ['4h', '8h'].includes(selectedTimeframe);
+        const dbTimeframe = isHourlyAggregated ? '1h' : selectedTimeframe;
+        const dbBarLimit = isHourlyAggregated ? barLimit * (selectedTimeframe === '8h' ? 8 : 4) : barLimit;
+
         for (const sym of priceSymbols) {
           const { data, error } = await supabase
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
             .eq('symbol', sym)
-            .eq('timeframe', selectedTimeframe)
+            .eq('timeframe', dbTimeframe)
             .order('date', { ascending: false })
-            .limit(barLimit);
+            .limit(dbBarLimit);
 
           if (!error && data && data.length > 0) {
             pricesData = data;
@@ -449,10 +454,31 @@ export default function TickerStudy() {
           }
         }
 
-        const hasEnoughData = pricesData && pricesData.length >= minBarsRequired;
+        const hasEnoughData = pricesData && pricesData.length >= (isHourlyAggregated ? minBarsRequired * (selectedTimeframe === '8h' ? 8 : 4) : minBarsRequired);
 
         if (hasEnoughData) {
-          const bars: CompressedBar[] = pricesData!
+          let rows = pricesData!.reverse();
+
+          // Aggregate 1h → 4h/8h if needed
+          if (isHourlyAggregated) {
+            const hours = selectedTimeframe === '8h' ? 8 : 4;
+            const aggregated: typeof rows = [];
+            for (let i = 0; i < rows.length; i += hours) {
+              const chunk = rows.slice(i, i + hours);
+              if (chunk.length === 0) break;
+              aggregated.push({
+                date: chunk[0].date,
+                open: chunk[0].open,
+                high: Math.max(...chunk.map((b: any) => b.high)),
+                low: Math.min(...chunk.map((b: any) => b.low)),
+                close: chunk[chunk.length - 1].close,
+                volume: chunk.reduce((sum: number, b: any) => sum + (b.volume || 0), 0),
+              });
+            }
+            rows = aggregated;
+          }
+
+          const bars: CompressedBar[] = rows
             .map((p: any) => ({
               t: new Date(p.date).toISOString(),
               o: Number(p.open),
@@ -460,9 +486,8 @@ export default function TickerStudy() {
               l: Number(p.low),
               c: Number(p.close),
               v: Number(p.volume || 0),
-            }))
-            .reverse();
-          setPriceData(bars);
+            }));
+          setPriceData(bars.slice(-barLimit));
         } else {
           const endDate = new Date();
           const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
