@@ -524,7 +524,26 @@ export default function TickerStudy() {
 
             const bars = (yfData as any)?.bars as CompressedBar[] | undefined;
             if (Array.isArray(bars) && bars.length > 0) {
-              setPriceData(bars.slice(-barLimit));
+              // Aggregate 1h → 4h/8h if needed
+              if (isHourlyAggregated) {
+                const hours = selectedTimeframe === '8h' ? 8 : 4;
+                const aggregated: CompressedBar[] = [];
+                for (let i = 0; i < bars.length; i += hours) {
+                  const chunk = bars.slice(i, i + hours);
+                  if (chunk.length === 0) break;
+                  aggregated.push({
+                    t: chunk[0].t,
+                    o: chunk[0].o,
+                    h: Math.max(...chunk.map(b => b.h)),
+                    l: Math.min(...chunk.map(b => b.l)),
+                    c: chunk[chunk.length - 1].c,
+                    v: chunk.reduce((sum, b) => sum + b.v, 0),
+                  });
+                }
+                setPriceData(aggregated.slice(-barLimit));
+              } else {
+                setPriceData(bars.slice(-barLimit));
+              }
               break;
             }
 
