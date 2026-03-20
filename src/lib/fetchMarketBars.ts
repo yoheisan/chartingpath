@@ -117,7 +117,7 @@ export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]
   return rawBars;
 }
 
-function fetchMarketBarsRaw(opts: FetchBarsOptions): Promise<OHLCBar[]> {
+async function fetchMarketBarsRaw(opts: FetchBarsOptions): Promise<OHLCBar[]> {
   const { symbol, startDate, endDate, interval, includeOhlc = true } = opts;
 
   // --- Crypto path: Binance → Yahoo (skip EODHD) ---
