@@ -90,7 +90,7 @@ const Index = () => {
       <WebApplicationJsonLd />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[60vh] flex items-center overflow-hidden">
         {/* Background — subtle grid + glow */}
         <div className="absolute inset-0 bg-background">
           <div className="absolute inset-0 opacity-[0.03]"
@@ -99,45 +99,67 @@ const Index = () => {
               backgroundSize: '80px 80px',
             }}
           />
-          {/* Decorative glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07] blur-[100px] bg-primary pointer-events-none" />
         </div>
         
-        {/* Content */}
-        <div className="relative z-10 container mx-auto max-w-4xl text-center px-6 py-20">
-          {/* Platform badge */}
-          <Badge variant="secondary" className="mb-6 text-xs tracking-wide animate-fade-in">
-            {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
-          </Badge>
+        {/* Content — two-column */}
+        <div className="relative z-10 container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-20 lg:py-28">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left — copy */}
+            <div>
+              <Badge variant="secondary" className="mb-6 text-xs tracking-wide animate-fade-in">
+                {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
+              </Badge>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] animate-fade-in tracking-tight">
-            <span className="text-foreground">
-              {t('hero.headlinePrimary', 'Know if a pattern works')}
-            </span>
-            <br />
-            <span className="text-primary">
-              {t('hero.headlineAccent', 'before you trade it')}
-            </span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            {t('hero.subtitleMain', 'Every pattern backtested against 320,000+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.')}
-          </p>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.08] animate-fade-in tracking-tight">
+                <span className="text-foreground">
+                  {t('hero.headlinePrimary', 'Know if a pattern works')}
+                </span>
+                <br />
+                <span className="text-primary">
+                  {t('hero.headlineAccent', 'before you trade it')}
+                </span>
+              </h1>
+              
+              <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-10 max-w-xl animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
+                {t('hero.subtitleMain', 'Every pattern backtested against 320,000+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.')}
+              </p>
 
-          {/* Single Primary CTA */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <Button 
-              size="lg" 
-              onClick={() => {
-                (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
-                handleScreenerClick();
-              }}
-              className="px-12 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
-            >
-              <TrendingUp className="h-6 w-6 mr-3" />
-              {t('hero.ctaPrimary', 'See Live Patterns Free')}
-              <ArrowRight className="h-6 w-6 ml-3" />
-            </Button>
+              <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <Button 
+                  size="lg" 
+                  onClick={() => {
+                    (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
+                    handleScreenerClick();
+                  }}
+                  className="px-12 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
+                >
+                  <TrendingUp className="h-6 w-6 mr-3" />
+                  {t('hero.ctaPrimary', 'See Live Patterns Free')}
+                  <ArrowRight className="h-6 w-6 ml-3" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right — key stats */}
+            <div className="hidden lg:grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="rounded-xl border border-border/40 bg-card/50 p-6">
+                <p className="text-3xl font-bold text-foreground tabular-nums">320K+</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('hero.statTrades', 'Backtested trades')}</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-card/50 p-6">
+                <p className="text-3xl font-bold text-primary tabular-nums">{instrumentCount ? instrumentCount.toLocaleString() : '800'}+</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('hero.statInstruments', 'Instruments tracked')}</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-card/50 p-6">
+                <p className="text-3xl font-bold text-foreground tabular-nums">62%</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('hero.statWinRate', 'Avg win rate (Grade A)')}</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-card/50 p-6">
+                <p className="text-3xl font-bold text-foreground tabular-nums">24/7</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('hero.statScanning', 'Live pattern scanning')}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
