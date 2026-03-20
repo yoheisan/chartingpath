@@ -18,6 +18,7 @@ import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
+import MarketPulseChart from '@/components/landing/MarketPulseChart';
 import { SocialProof } from '@/components/landing/SocialProof';
 import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
 import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
