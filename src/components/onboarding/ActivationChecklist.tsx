@@ -17,7 +17,7 @@ const steps = [
     icon: FlaskConical,
     labelKey: 'activation.runBacktest',
     labelFallback: 'Run your first backtest',
-    route: '/projects/pattern-lab/new',
+    route: '/projects/pattern-lab/new?instrument=AAPL&pattern=double-bottom&timeframe=1d&mode=validate',
   },
   {
     key: 'set_alert' as const,

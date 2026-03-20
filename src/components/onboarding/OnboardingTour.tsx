@@ -35,7 +35,7 @@ const STEPS = [
     descKey: 'onboarding.patternLabDesc',
     titleFallback: 'Pattern Lab — Backtest Any Pattern',
     descFallback: 'Pick a pattern, choose a symbol, and see exactly how it performed over years of data. Sharpe ratio, profit factor, equity curve — all calculated instantly.',
-    route: '/projects/pattern-lab/new',
+    route: '/projects/pattern-lab/new?instrument=AAPL&pattern=double-bottom&timeframe=1d&mode=validate',
   },
   {
     icon: <LayoutDashboard className="h-8 w-8 text-primary" />,
