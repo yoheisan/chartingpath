@@ -743,6 +743,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Forward
                       </TabsTrigger>
+                      <TabsTrigger value="briefing" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                        {t('morningBriefing.tabLabel', 'Briefing')}
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
                       <WatchlistPanel
