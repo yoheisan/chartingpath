@@ -375,7 +375,7 @@ const Navigation = () => {
   // Original full navigation (when wedge mode is disabled)
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-      <div className={`mx-auto px-6 py-4 ${isDashboard ? 'w-full' : 'container max-w-6xl'}`}>
+      <div className={`mx-auto px-4 md:px-6 lg:px-8 py-4 ${isDashboard ? 'w-full' : 'container max-w-7xl'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-accent">
