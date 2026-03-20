@@ -66,17 +66,20 @@ export const CopilotShowcase = () => {
   ];
 
   return (
-    <section className="py-20 px-6">
+    <section className="py-24 px-4 md:px-6 lg:px-8">
       <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
-            {t('copilotShowcase.badge')}
-          </p>
-          <h2 className="text-3xl font-bold mb-3">
-            {t('copilotShowcase.title')}
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.subtitle') }} />
+        {/* Header — left-aligned two-column */}
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start mb-16">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
+              {t('copilotShowcase.badge')}
+            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold mb-3">
+              {t('copilotShowcase.title')}
+            </h2>
+            <p className="text-base text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.subtitle') }} />
+          </div>
+          <div />
         </div>
 
         {/* 6-Card Moat Grid */}
@@ -90,7 +93,7 @@ export const CopilotShowcase = () => {
                   </div>
                   <h3 className="font-semibold">{feature.title}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                 <p className="text-xs text-muted-foreground/70 italic border-t border-border/50 pt-3">
                   {feature.cantDo}
                 </p>
@@ -99,19 +102,40 @@ export const CopilotShowcase = () => {
           ))}
         </div>
 
-        {/* Demo Conversation */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-lg font-semibold mb-4 text-center">{t('copilotShowcase.seeItInAction')}</h3>
+        {/* Demo Conversation — two-column: CTA left, chat right */}
+        <div className="grid lg:grid-cols-[1fr_1.5fr] gap-8 lg:gap-12 items-start">
+          {/* Left — heading + CTA */}
+          <div className="lg:sticky lg:top-24">
+            <h3 className="text-2xl lg:text-3xl font-bold mb-4">{t('copilotShowcase.seeItInAction')}</h3>
+            <p className="text-base text-muted-foreground leading-relaxed mb-8">
+              {t('copilotShowcase.demoDesc', 'Ask about any pattern, instrument, or strategy. The copilot pulls live data and backtest results in real time.')}
+            </p>
+            <div className="space-y-3">
+              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 w-full sm:w-auto" onClick={() => { trackEvent('landing.cta_click', { button: 'copilot_try_now' }); copilot.open(); }}>
+                {t('copilotShowcase.tryNow', 'Try Copilot Now')}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
+                <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
+                  {t('copilotShowcase.learnMore')}
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </Button>
+              <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.pressToTry') }} />
+            </div>
+          </div>
+
+          {/* Right — chat demo */}
           <div className="rounded-xl border bg-card overflow-hidden">
             {/* Chat header */}
-            <div className="px-4 py-3 border-b bg-muted/30 flex items-center gap-2">
+            <div className="px-5 py-3 border-b bg-muted/30 flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{t('copilotShowcase.tradingCopilot')}</span>
               <Badge variant="outline" className="text-xs ml-auto">{t('copilotShowcase.demo')}</Badge>
             </div>
 
             {/* User message */}
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-4">
               <div className="flex gap-3">
                 <div className="p-1.5 rounded-full bg-muted h-fit">
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -130,28 +154,28 @@ export const CopilotShowcase = () => {
                   <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.demoResponse') }} />
                   {/* Results table */}
                   <div className="overflow-x-auto rounded-lg border">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-muted/50">
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.symbol')}</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.grade')}</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.entry')}</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.sl')}</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.tp')}</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">{t('copilotShowcase.rr')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.symbol')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.grade')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.entry')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.sl')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.tp')}</th>
+                          <th className="text-left px-3 py-2.5 font-medium text-muted-foreground">{t('copilotShowcase.rr')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {demoResults.map((r) => (
                           <tr key={r.symbol} className="border-b last:border-0">
-                            <td className="px-3 py-2 font-medium">{r.symbol}</td>
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-2.5 font-medium">{r.symbol}</td>
+                            <td className="px-3 py-2.5">
                               <Badge variant="outline" className="text-xs font-mono">{r.quality}</Badge>
                             </td>
-                            <td className="px-3 py-2 font-mono">{r.entry}</td>
-                            <td className="px-3 py-2 font-mono text-destructive">{r.sl}</td>
-                            <td className="px-3 py-2 font-mono text-emerald-500">{r.tp}</td>
-                            <td className="px-3 py-2 font-mono">{r.rr}</td>
+                            <td className="px-3 py-2.5 font-mono tabular-nums">{r.entry}</td>
+                            <td className="px-3 py-2.5 font-mono tabular-nums text-destructive">{r.sl}</td>
+                            <td className="px-3 py-2.5 font-mono tabular-nums text-emerald-500">{r.tp}</td>
+                            <td className="px-3 py-2.5 font-mono tabular-nums">{r.rr}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -159,10 +183,10 @@ export const CopilotShowcase = () => {
                   </div>
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1">
                       <TrendingUp className="h-3 w-3" /> {t('copilotShowcase.validateInPatternLab')}
                     </Button>
-                    <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1">
                       <Code2 className="h-3 w-3" /> {t('copilotShowcase.exportPineScript')}
                     </Button>
                   </div>
@@ -171,28 +195,11 @@ export const CopilotShowcase = () => {
             </div>
 
             {/* Footnote */}
-            <div className="px-4 py-3 border-t bg-muted/20">
+            <div className="px-5 py-3 border-t bg-muted/20">
               <p className="text-xs text-muted-foreground text-center italic">
                 {t('copilotShowcase.chatgptFootnote')}
               </p>
             </div>
-          </div>
-
-          {/* CTA */}
-          <div className="text-center mt-8 space-y-3">
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90" onClick={() => { trackEvent('landing.cta_click', { button: 'copilot_try_now' }); copilot.open(); }}>
-                  {t('copilotShowcase.tryNow', 'Try Copilot Now')}
-                  <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2">
-                <Link to="/features/trading-copilot" onClick={() => trackEvent('landing.cta_click', { button: 'copilot_learn_more' })}>
-                  {t('copilotShowcase.learnMore')}
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('copilotShowcase.pressToTry') }} />
           </div>
         </div>
       </div>
