@@ -10,7 +10,7 @@ const Footer = () => {
   if (isWedgeMode) {
     return (
       <footer className="border-t bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
             {/* Logo and Brand */}
             <div>
@@ -108,7 +108,7 @@ const Footer = () => {
   // Full footer for non-wedge mode
   return (
     <footer className="border-t bg-background/80 backdrop-blur-sm">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Logo and Brand */}
           <div className="lg:col-span-1">

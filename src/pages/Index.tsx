@@ -103,7 +103,7 @@ const Index = () => {
         </div>
         
         {/* Content — two-column */}
-        <div className="relative z-10 container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 py-20 lg:py-28">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left — copy */}
             <div>
@@ -166,7 +166,7 @@ const Index = () => {
 
       {/* Metric Strip — proof bar below hero */}
       <div className="border-t border-border/20 bg-card/30">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto">
           <MetricStrip />
         </div>
       </div>
@@ -195,7 +195,7 @@ const Index = () => {
       {/* Mid-page Signup CTA */}
       {!isAuthenticated && (
         <section className="py-20 px-4 md:px-6 lg:px-8 border-t border-border/20">
-          <div className="container mx-auto max-w-7xl">
+          <div className="container mx-auto">
             <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-16">
               <div className="flex-1">
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3">
@@ -246,7 +246,7 @@ const Index = () => {
 
       {/* Disclaimer */}
       <section className="py-8 px-6 border-t">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto">
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <p>
