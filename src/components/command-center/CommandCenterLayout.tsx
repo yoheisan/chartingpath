@@ -692,6 +692,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               >
                 <Activity className="h-3.5 w-3.5" />
               </button>
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'briefing' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+                onClick={() => { setRightPanelTab('briefing'); toggleSidebar(false); }}
+                title={t('morningBriefing.title', 'Morning Briefing')}
+              >
+                <Sunrise className="h-3.5 w-3.5" />
+              </button>
               <div className="flex-1" />
               <button
                 className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
