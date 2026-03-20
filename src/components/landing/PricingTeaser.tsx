@@ -48,12 +48,12 @@ export const PricingTeaser = () => {
   };
 
   return (
-    <section className="py-20 px-6">
+    <section className="py-24 px-4 md:px-6 lg:px-8">
       <div className="container mx-auto max-w-7xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-14">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('pricingTeaser.sectionLabel', 'Pricing')}</p>
-          <h2 className="text-3xl font-bold mb-2">{t('pricingTeaser.title')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-3">{t('pricingTeaser.title')}</h2>
+          <p className="text-base text-muted-foreground">
             {t('pricingTeaser.subtitle')}
           </p>
         </div>
