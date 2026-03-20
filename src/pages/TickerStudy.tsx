@@ -319,7 +319,7 @@ export default function TickerStudy() {
               const mappedOnDemand: HistoricalPattern[] = onDemandData.patterns.map((p: any) => ({
                 id: p.id,
                 symbol: decodedSymbol,
-                asset_type: 'forex',
+                asset_type: p.asset_type || (decodedSymbol.includes('-USD') ? 'crypto' : decodedSymbol.includes('=X') ? 'fx' : decodedSymbol.startsWith('^') ? 'index' : 'stock'),
                 pattern_id: p.pattern_id,
                 pattern_name: p.pattern_name,
                 direction: p.direction as 'bullish' | 'bearish',

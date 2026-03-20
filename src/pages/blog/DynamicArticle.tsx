@@ -788,7 +788,7 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
             .from('historical_prices')
             .select('date, open, high, low, close, volume')
             .eq('symbol', symbol)
-            .eq('timeframe', '1D')
+            .eq('timeframe', '1d')
             .order('date', { ascending: true })
             .limit(1260); // ~5 years of trading days
           
