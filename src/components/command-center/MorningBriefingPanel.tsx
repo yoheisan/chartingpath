@@ -242,7 +242,7 @@ function SignalRow({ signal, onSelect }: { signal: WatchlistSignal; onSelect?: (
       className="w-full flex items-center gap-2 rounded border border-border/40 px-2 py-1.5 hover:bg-muted/40 transition-colors text-left"
       onClick={() => onSelect?.(signal.instrument)}
     >
-      <InstrumentLogo symbol={signal.instrument} size={18} />
+      <InstrumentLogo instrument={signal.instrument} size="sm" showName={false} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span className="text-xs font-medium truncate">{signal.instrument}</span>
