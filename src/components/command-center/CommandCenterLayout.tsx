@@ -767,6 +767,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
                       <ForwardPerformancePanel userId={userId} />
                     </TabsContent>
+                    <TabsContent value="briefing" className="flex-1 m-0 overflow-hidden">
+                      <MorningBriefingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                    </TabsContent>
                   </Tabs>
                 </ResizablePanel>
 
