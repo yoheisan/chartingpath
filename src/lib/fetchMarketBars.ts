@@ -24,7 +24,34 @@ function isCryptoSymbol(symbol: string): boolean {
 
 /** Check if interval is intraday (EODHD doesn't reliably support these) */
 function isIntradayInterval(interval: string): boolean {
-  return ['1m', '5m', '15m', '30m', '1h'].includes(interval);
+  return ['1m', '5m', '15m', '30m', '1h', '4h', '8h'].includes(interval);
+}
+
+/** Get the actual fetch interval for providers (4h/8h must be fetched as 1h then aggregated) */
+export function getProviderInterval(interval: string): string {
+  if (interval === '4h' || interval === '8h') return '1h';
+  return interval;
+}
+
+/** Aggregate 1h bars into N-hour bars (4h or 8h) */
+export function aggregateHourlyBars(bars: OHLCBar[], hours: number): OHLCBar[] {
+  if (bars.length === 0 || hours <= 1) return bars;
+  
+  const result: OHLCBar[] = [];
+  for (let i = 0; i < bars.length; i += hours) {
+    const chunk = bars.slice(i, i + hours);
+    if (chunk.length === 0) break;
+    
+    result.push({
+      t: chunk[0].t,
+      o: chunk[0].o,
+      h: Math.max(...chunk.map(b => b.h)),
+      l: Math.min(...chunk.map(b => b.l)),
+      c: chunk[chunk.length - 1].c,
+      v: chunk.reduce((sum, b) => sum + b.v, 0),
+    });
+  }
+  return result;
 }
 
 // ── Provider Health Tracker ──────────────────────────────────────────
