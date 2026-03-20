@@ -759,16 +759,24 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       />
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
-                      <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      {rightPanelTab === 'alerts' && (
+                        <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      )}
                     </TabsContent>
                     <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
-                      <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      {rightPanelTab === 'paper' && (
+                        <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      )}
                     </TabsContent>
                     <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
-                      <ForwardPerformancePanel userId={userId} />
+                      {rightPanelTab === 'forward' && (
+                        <ForwardPerformancePanel userId={userId} />
+                      )}
                     </TabsContent>
                     <TabsContent value="briefing" className="flex-1 m-0 overflow-hidden">
-                      <MorningBriefingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      {rightPanelTab === 'briefing' && (
+                        <MorningBriefingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                      )}
                     </TabsContent>
                   </Tabs>
                 </ResizablePanel>
