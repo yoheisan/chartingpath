@@ -252,10 +252,12 @@ export default function TickerStudy() {
   }, [selectedTimeframe]);
 
   // Convert selected timeframe to Yahoo interval format
+  // 4h/8h are not natively supported by Yahoo — fetch as 1h and aggregate
   const getYahooInterval = useCallback((tf: string) => {
     const mapping: Record<string, string> = {
       '1h': '1h',
-      '4h': '4h',
+      '4h': '1h',  // Fetch 1h, aggregate client-side
+      '8h': '1h',  // Fetch 1h, aggregate client-side
       '1d': '1d',
       '1wk': '1wk',
     };
