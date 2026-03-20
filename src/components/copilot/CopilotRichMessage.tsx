@@ -239,6 +239,11 @@ function extractActionButtons(content: string): ActionButton[] {
 
   const screenerParams = new URLSearchParams();
   if (firstPattern) screenerParams.set('pattern', firstPattern);
+  // Detect asset type from ticker so the screener opens on the right tab
+  if (firstTicker) {
+    const detectedAsset = detectAssetTypeFromTicker(firstTicker);
+    if (detectedAsset) screenerParams.set('assetType', detectedAsset);
+  }
 
   const scriptParams = new URLSearchParams();
   if (firstTicker) scriptParams.set('instrument', firstTicker);
