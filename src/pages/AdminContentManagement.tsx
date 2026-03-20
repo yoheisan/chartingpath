@@ -18,7 +18,7 @@ const AdminContentManagement = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="h-4 w-4" /> Admin Dashboard

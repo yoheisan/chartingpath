@@ -526,7 +526,7 @@ plot(ema_slow_line, "Slow EMA", color.red)`;
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
              <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

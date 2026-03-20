@@ -171,7 +171,7 @@ export default function CronJobMonitor() {
   });
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="mb-6">
         <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Admin Dashboard

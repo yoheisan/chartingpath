@@ -421,7 +421,7 @@ const MemberAlerts = () => {
   // Loading skeleton
   if (authLoading || (user && dataLoading && alerts.length === 0 && !profile)) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <Skeleton className="h-8 w-32" />
           <div className="text-center mb-8">
@@ -460,7 +460,7 @@ const MemberAlerts = () => {
   // If no user after auth check, show auth gate
   if (!user) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-r from-primary to-accent shadow-glow">
@@ -492,7 +492,7 @@ const MemberAlerts = () => {
   // Error state
   if (fetchError) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="max-w-md w-full">
             <CardContent className="pt-6">
@@ -521,7 +521,7 @@ const MemberAlerts = () => {
   const canCreateMore = planLimits.max === 999999 || activeAlerts.length < planLimits.max;
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
       <PageMeta
         title="Pattern Alert System — Get Notified When Patterns Form | ChartingPath"
         description="Set email alerts for any chart pattern on any instrument. ChartingPath scans 800+ markets every hour and notifies you the moment your pattern appears."
