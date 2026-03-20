@@ -152,6 +152,9 @@ const Index = () => {
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
 
+      {/* Market Pulse — Long vs Short detection chart */}
+      <MarketPulseChart />
+
       {/* Social Proof */}
       <div className="border-t border-border/20">
         <SocialProof />
