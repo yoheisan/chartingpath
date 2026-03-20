@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,7 @@ interface SetupArtifact {
 const TERMINAL_STATUSES = new Set(['succeeded', 'failed']);
 
 const ProjectRun = () => {
+  const { t } = useTranslation();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -563,7 +565,7 @@ const ProjectRun = () => {
                         }}
                       >
                         <Zap className="h-4 w-4 mr-2" />
-                        Deploy as Alert
+                        {t('alerts.deployAsAlert', 'Deploy as Alert')}
                       </Button>
                       <Button
                         variant="outline"

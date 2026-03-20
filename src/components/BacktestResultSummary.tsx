@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   shareToCommunity,
   onShareToCommunityChange,
 }) => {
+  const { t } = useTranslation();
   const isLowSample = results.totalTrades < MIN_TRADES_THRESHOLD;
   const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
   const interpretation = useMemo(() => generateInterpretation(results), [results]);
@@ -468,7 +470,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
             size="lg"
           >
             <Zap className="h-4 w-4" />
-            Deploy as Alert
+            {t('alerts.deployAsAlert', 'Deploy as Alert')}
           </Button>
           
           <AgentScoreButton symbol={symbol} pattern={pattern} />
