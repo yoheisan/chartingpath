@@ -124,7 +124,7 @@ const EliteDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 shadow-2xl">

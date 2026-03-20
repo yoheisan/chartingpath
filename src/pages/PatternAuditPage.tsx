@@ -153,7 +153,7 @@ const PatternAuditPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
           <Link to="/projects/pattern-lab" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4">

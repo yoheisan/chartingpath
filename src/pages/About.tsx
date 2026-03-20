@@ -107,7 +107,7 @@ const About = () => {
     <div className="min-h-screen bg-background text-foreground">
 
       {/* ─── S1: Hero / Manifesto ─────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20">
         <FadeIn>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight max-w-4xl">
             {t('aboutPage.heroLine1', "Markets don't lie.")}{" "}
@@ -122,7 +122,7 @@ const About = () => {
       </section>
 
       {/* ─── S2: The Origin Story ─────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="grid md:grid-cols-[240px_1fr] gap-8 md:gap-12">
             <SectionNum n="01" label={t('aboutPage.sectionProblem', 'The Problem')} />
@@ -140,7 +140,7 @@ const About = () => {
       </section>
 
       {/* ─── S3: What We Believe ──────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="mb-10">
             <SectionNum n="02" label={t('aboutPage.sectionBelieve', 'What We Believe')} />
@@ -166,7 +166,7 @@ const About = () => {
       </section>
 
       {/* ─── S4: What ChartingPath Actually Is ────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-20">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-20">
         <FadeIn>
           <div className="grid md:grid-cols-[240px_1fr] gap-8 md:gap-12">
             <SectionNum n="03" label={t('aboutPage.sectionWhatItIs', 'What It Is')} />
@@ -190,7 +190,7 @@ const About = () => {
 
       {/* ─── S5: The Technology ───────────────────────────────── */}
       <section className="py-20">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
               <SectionNum n="04" label={t('aboutPage.sectionTechnology', 'The Technology')} />
@@ -230,7 +230,7 @@ const About = () => {
 
       {/* ─── S6: The Moat ─────────────────────────────────────── */}
       <section className="py-20 border-t border-border">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
               <SectionNum n="05" label={t('aboutPage.sectionMoat', 'The Moat')} />
@@ -252,7 +252,7 @@ const About = () => {
 
       {/* ─── S7: Who We Serve ─────────────────────────────────── */}
       <section className="py-20 border-t border-border">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-10">
               <SectionNum n="06" label={t('aboutPage.sectionWhoWeServe', 'Who We Serve')} />

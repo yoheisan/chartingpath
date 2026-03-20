@@ -366,7 +366,7 @@ const MarketBreadthReport = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-6 py-12 max-w-6xl">
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-12">
         {/* Hero Section */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">

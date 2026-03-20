@@ -193,7 +193,7 @@ export default function InstrumentPage() {
         }} />
       )}
 
-      <div className="container mx-auto max-w-5xl px-6 py-10">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>

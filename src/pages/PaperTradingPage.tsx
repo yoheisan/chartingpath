@@ -41,7 +41,7 @@ export default function PaperTradingPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20" />)}
@@ -54,7 +54,7 @@ export default function PaperTradingPage() {
   const totalPnl = portfolio?.total_pnl ?? 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
