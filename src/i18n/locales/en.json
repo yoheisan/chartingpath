@@ -1027,6 +1027,12 @@
     "copilotHint": "Powered by AI Trading Copilot — press ⌘K anywhere"
   },
   "landing": {
+    "marketPulse": {
+      "title": "Market Pulse",
+      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
+      "long": "Long (Bullish)",
+      "short": "Short (Bearish)"
+    },
     "alertsBullet1": "Multi-pattern support",
     "alertsBullet2": "Email notifications",
     "alertsBullet3": "Manage active alerts",

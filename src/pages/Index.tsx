@@ -18,6 +18,7 @@ import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
+import MarketPulseChart from '@/components/landing/MarketPulseChart';
 import { SocialProof } from '@/components/landing/SocialProof';
 import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
 import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
@@ -150,6 +151,9 @@ const Index = () => {
 
       {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
+
+      {/* Market Pulse — Long vs Short detection chart */}
+      <MarketPulseChart />
 
       {/* Social Proof */}
       <div className="border-t border-border/20">
