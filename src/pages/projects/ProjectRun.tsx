@@ -86,6 +86,7 @@ interface SetupArtifact {
 const TERMINAL_STATUSES = new Set(['succeeded', 'failed']);
 
 const ProjectRun = () => {
+  const { t } = useTranslation();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const location = useLocation();

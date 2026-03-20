@@ -154,6 +154,7 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
   shareToCommunity,
   onShareToCommunityChange,
 }) => {
+  const { t } = useTranslation();
   const isLowSample = results.totalTrades < MIN_TRADES_THRESHOLD;
   const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
   const interpretation = useMemo(() => generateInterpretation(results), [results]);
