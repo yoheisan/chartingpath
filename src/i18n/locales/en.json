@@ -5556,5 +5556,25 @@
     "runBacktest": "Run your first backtest",
     "setAlert": "Set a pattern alert",
     "freeMessagesRemaining": "{{count}} of {{total}} free messages remaining"
+  },
+  "morningBriefing": {
+    "title": "Morning Briefing",
+    "tabLabel": "Briefing",
+    "signInRequired": "Sign in to see your Morning Briefing",
+    "error": "Failed to load briefing",
+    "retry": "Retry",
+    "portfolio": "Portfolio",
+    "balance": "Balance",
+    "totalPnl": "Total P&L",
+    "openPositions": "{{count}} open position(s)",
+    "marketRegime": "Market Regime",
+    "watchlistSignals": "Watchlist Signals",
+    "noWatchlistSignals": "No active signals on your watchlist",
+    "more": "more",
+    "topVerdicts": "Top AI Verdicts",
+    "noVerdicts": "No high-confidence verdicts right now",
+    "openTrades": "Open Trades",
+    "recentlyClosed": "Closed (24h)",
+    "lastUpdated": "Updated"
   }
 }

@@ -308,3 +308,6 @@ verify_jwt = false
 
 [functions.monitor-paper-trades]
 verify_jwt = false
+
+[functions.send-morning-briefing]
+verify_jwt = false

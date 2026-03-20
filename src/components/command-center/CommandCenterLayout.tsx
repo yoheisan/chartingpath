@@ -14,6 +14,7 @@ import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
 import { PaperTradingPanel } from './PaperTradingPanel';
+import { MorningBriefingPanel } from './MorningBriefingPanel';
 import { ForwardPerformancePanel } from './ForwardPerformancePanel';
 
 import { PatternOccurrence } from './PatternOccurrencesPanel';
@@ -32,7 +33,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
 
 
 // Lazy load mobile layout for code splitting
@@ -691,6 +692,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               >
                 <Activity className="h-3.5 w-3.5" />
               </button>
+              <button
+                className={cn(
+                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  rightPanelTab === 'briefing' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+                onClick={() => { setRightPanelTab('briefing'); toggleSidebar(false); }}
+                title={t('morningBriefing.title', 'Morning Briefing')}
+              >
+                <Sunrise className="h-3.5 w-3.5" />
+              </button>
               <div className="flex-1" />
               <button
                 className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
@@ -732,6 +743,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Forward
                       </TabsTrigger>
+                      <TabsTrigger value="briefing" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                        {t('morningBriefing.tabLabel', 'Briefing')}
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="watchlist" className="flex-1 m-0 overflow-hidden">
                       <WatchlistPanel
@@ -752,6 +766,9 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     </TabsContent>
                     <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
                       <ForwardPerformancePanel userId={userId} />
+                    </TabsContent>
+                    <TabsContent value="briefing" className="flex-1 m-0 overflow-hidden">
+                      <MorningBriefingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
                     </TabsContent>
                   </Tabs>
                 </ResizablePanel>
