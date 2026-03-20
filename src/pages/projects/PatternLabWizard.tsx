@@ -713,6 +713,18 @@ const PatternLabWizard = () => {
         {/* Mode Picker — shown when no mode selected yet */}
         {!mode && (
           <div className="mb-8">
+            {/* First Analysis Nudge — for authenticated users with no pre-filled context */}
+            {!urlInstrument && !urlPattern && isAuthenticated && (
+              <Alert className="mb-6 border-primary/30 bg-primary/5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-sm">
+                    <strong>{t('patternLabWizard.firstAnalysisTitle', 'First time here?')}</strong>{' '}
+                    {t('patternLabWizard.firstAnalysisDesc', 'Pick a Quick Start below to run your first backtest in one click — no setup needed.')}
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
             {/* Quick Start Examples — when no URL params, show one-click backtests */}
             {!urlInstrument && !urlPattern && (
               <div className="mb-8">
