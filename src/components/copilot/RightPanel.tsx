@@ -25,9 +25,10 @@ interface RightPanelProps {
   openDebriefOnMount?: boolean;
   onDebriefOpened?: () => void;
   onTradeSelect?: (trade: SelectedClosedTrade) => void;
+  debriefQuestion?: string | null;
 }
 
-const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: RightPanelProps = {}) => {
+const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debriefQuestion }: RightPanelProps = {}) => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'paper' | 'live'>('paper');
@@ -289,7 +290,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: Righ
       </div>
 
       {/* Modals */}
-      <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} />
+      <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} initialQuestion={debriefQuestion} />
       <DeployModal
         open={deployOpen}
         onClose={() => setDeployOpen(false)}

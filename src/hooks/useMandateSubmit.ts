@@ -30,7 +30,16 @@ async function callMandate(action: string, body: Record<string, any>) {
   return data;
 }
 
-export function useMandateSubmit(onSaved?: () => void) {
+interface MandateSubmitOptions {
+  onSaved?: () => void;
+  onQuestion?: (question: string) => void;
+}
+
+export function useMandateSubmit(onSavedOrOpts?: (() => void) | MandateSubmitOptions) {
+  const opts: MandateSubmitOptions = typeof onSavedOrOpts === 'function'
+    ? { onSaved: onSavedOrOpts }
+    : onSavedOrOpts || {};
+
   const [state, setState] = useState<MandateState>({ step: "idle" });
 
   const submit = useCallback(async (text: string) => {
@@ -39,9 +48,10 @@ export function useMandateSubmit(onSaved?: () => void) {
     setState({ step: "parsing" });
 
     try {
-      // Step 1: Classify
+      // Call 1 — Intent classification (Gemini Flash Lite — cheap)
       const { classification } = await callMandate("classify", { text });
 
+      // Call 5 — Override handling (Gemini Flash Lite)
       if (classification === "override") {
         const { summary } = await callMandate("override", { text });
         toast.success(`Got it — ${summary}`);
@@ -49,26 +59,26 @@ export function useMandateSubmit(onSaved?: () => void) {
         return;
       }
 
+      // Call 6 — Question routing → open debrief modal
       if (classification === "question") {
-        // Pass to existing copilot chat — for now just toast
-        toast.info("Routing to Copilot chat...");
         setState({ step: "idle" });
+        opts.onQuestion?.(text);
         return;
       }
 
-      // new_mandate flow
+      // Call 2 — Mandate parsing (stronger model)
       const { parsed } = await callMandate("parse", { text });
       if (!parsed) throw new Error("Parse returned empty");
 
-      // Step 2: Get confirmation
+      // Call 3 — Confirmation (Gemini Flash Lite — cheap)
       const { confirmation } = await callMandate("confirm", { mandate: parsed });
 
       setState({ step: "confirming", parsed, confirmation });
     } catch (err: any) {
-      const msg = err.message || "Couldn't parse that — try being more specific.\nExample: Max 3% per trade, breakouts only, 9:30-11:30am";
+      const msg = err.message || "Couldn't parse that — try: Max 3% per trade, breakouts only, 9:30-11:30am, 2R stop";
       setState({ step: "error", message: msg });
     }
-  }, []);
+  }, [opts.onQuestion]);
 
   const confirmSave = useCallback(async () => {
     if (state.step !== "confirming") return;
@@ -78,11 +88,11 @@ export function useMandateSubmit(onSaved?: () => void) {
       await callMandate("save", { mandate: state.parsed });
       toast.success("Master Plan saved");
       setState({ step: "idle" });
-      onSaved?.();
+      opts.onSaved?.();
     } catch (err: any) {
       setState({ step: "error", message: err.message || "Failed to save" });
     }
-  }, [state, onSaved]);
+  }, [state, opts.onSaved]);
 
   const reset = useCallback(() => {
     setState({ step: "idle" });

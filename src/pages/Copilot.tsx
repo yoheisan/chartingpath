@@ -18,7 +18,18 @@ const Copilot = () => {
   const [conflictReason, setConflictReason] = useState<string | null>(null);
   const [sessionEndBanner, setSessionEndBanner] = useState<{ time: string } | null>(null);
   const [debriefFromBanner, setDebriefFromBanner] = useState(false);
+  const [debriefQuestion, setDebriefQuestion] = useState<string | null>(null);
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
+
+  // Listen for question routing from NL Command Bar
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setDebriefQuestion(e.detail);
+      setDebriefFromBanner(true);
+    };
+    window.addEventListener('copilot-question', handler as EventListener);
+    return () => window.removeEventListener('copilot-question', handler as EventListener);
+  }, []);
 
   const activeTrade = openTrades.length > 0 ? openTrades[0] : null;
 
@@ -130,8 +141,9 @@ const Copilot = () => {
         <aside className="w-[256px] shrink-0 overflow-hidden">
           <RightPanel
             openDebriefOnMount={debriefFromBanner}
-            onDebriefOpened={() => setDebriefFromBanner(false)}
+            onDebriefOpened={() => { setDebriefFromBanner(false); }}
             onTradeSelect={handleTradeSelect}
+            debriefQuestion={debriefQuestion}
           />
         </aside>
       </div>
