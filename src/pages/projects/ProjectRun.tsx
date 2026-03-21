@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Zap, Code2, Bell, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Zap, Code2, Bell, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
 import RunHistory from '@/components/projects/RunHistory';
@@ -16,6 +16,7 @@ import { GradeBadge, extractGrade } from '@/components/ui/GradeBadge';
 import { savePlaybookContextStatic } from '@/hooks/usePlaybookContext';
 import { trackEvent } from '@/lib/analytics';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
 
 interface ExecutionMetadata {
   progress?: number;
