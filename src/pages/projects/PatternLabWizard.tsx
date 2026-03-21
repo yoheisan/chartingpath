@@ -221,7 +221,6 @@ const PatternLabWizard = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
-  const [showCopilot, setShowCopilot] = useState(false);
   const isMobile = useIsMobile();
   
   // Check if we have prefilled state from a previous run
