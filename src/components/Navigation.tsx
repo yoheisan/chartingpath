@@ -317,18 +317,6 @@ const Navigation = () => {
                   </DropdownMenuGroup>
                   
                   <DropdownMenuSeparator />
-                  
-                  {/* AI Copilot Feature */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.features', 'Features')}</DropdownMenuLabel>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/features/trading-copilot" className="flex items-center gap-2">
-                        <Bot className="h-4 w-4 text-primary" />
-                        {t('navigation.aiCopilot', 'AI Copilot')}
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  
 
                   {/* Company Section */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.company', 'Company')}</DropdownMenuLabel>
