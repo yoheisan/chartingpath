@@ -269,10 +269,25 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
   
   const contextProcessedRef = useRef(false);
   const { hasPlan } = useMasterPlan();
+  const isMobile = useIsMobile();
+
+  const {
+    conversations,
+    activeConversationId,
+    setActiveConversationId,
+    isLoadingHistory,
+    createConversation,
+    loadMessages,
+    saveMessage,
+    deleteConversation,
+    startNewChat,
+    isAuthenticated,
+  } = useCopilotConversations();
+
+  const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
 
   // Fetch today's paper trade count for the greeting
   useEffect(() => {
@@ -292,20 +307,6 @@ export function TradingCopilot({
     };
     fetchTodayTrades();
   }, [isAuthenticated, hasPlan]);
-  const isMobile = useIsMobile();
-
-  const {
-    conversations,
-    activeConversationId,
-    setActiveConversationId,
-    isLoadingHistory,
-    createConversation,
-    loadMessages,
-    saveMessage,
-    deleteConversation,
-    startNewChat,
-    isAuthenticated,
-  } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
 
