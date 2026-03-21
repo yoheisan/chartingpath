@@ -724,52 +724,98 @@ export function TradingCopilot({
             ) : messages.length === 0 ? (
               (() => {
                 const pageCtx = getPageContext(location.pathname);
-                const contextChips = isAuthenticated ? pageCtx.chips : [];
+                const tier2Chips = isAuthenticated ? pageCtx.chips : [];
                 return (
               <div className="space-y-4">
                 <div className="text-center py-6">
                   <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {isAuthenticated ? pageCtx.greeting : t('copilot.welcomeDesc')}
-                  </p>
-                  {!isAuthenticated && (
-                    <p className="text-xs text-muted-foreground/70 mt-2">
-                      {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {/* Page-contextual chips for authenticated users */}
-                  {contextChips.length > 0 && (
+                  {!isAuthenticated ? (
                     <>
-                      <p className="text-xs text-muted-foreground font-medium px-1">Suggested for this page</p>
-                      <div className="flex flex-wrap gap-2">
-                        {contextChips.map((chip) => (
-                          <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                            <span className="text-xs">{chip.label}</span>
-                          </Button>
-                        ))}
-                      </div>
+                      <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('copilot.welcomeDesc')}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-2">
+                        {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
+                      </p>
+                    </>
+                  ) : hasPlan ? (
+                    <>
+                      <h4 className="font-semibold mb-1">Your desk is running</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Copilot is scanning. {todayTradeCount !== null ? `${todayTradeCount} paper trade${todayTradeCount !== 1 ? 's' : ''} taken today.` : ''}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="font-semibold mb-1">Let's set up your trading mandate</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Tell me how you want to trade — patterns, risk rules, timing. I'll handle the rest.
+                      </p>
                     </>
                   )}
-                  <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
-                  <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                    {getQuickActions(location.pathname, isAuthenticated).map((action) => (
-                      <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
-                        <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                        <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Tier 1 — Mandate & Session */}
+                  {isAuthenticated && hasPlan && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's trades")} disabled={isLoading}>
+                        <span className="text-xs">Review today's trades</span>
                       </Button>
-                    ))}
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my mandate")} disabled={isLoading}>
+                        <span className="text-xs">Update my mandate</span>
+                      </Button>
                     </div>
+                  )}
+
+                  {/* Tier 1 — Getting started (no mandate) */}
+                  {isAuthenticated && !hasPlan && (
+                    <Button
+                      className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                      onClick={() => handleQuickAction("Set my trading mandate")}
+                      disabled={isLoading}
+                    >
+                      Set my trading mandate →
+                    </Button>
+                  )}
+
+                  {/* Tier 2 — Page-aware chips */}
+                  {tier2Chips.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tier2Chips.map((chip) => (
+                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                          <span className="text-xs">{chip.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Guest quick actions */}
+                  {!isAuthenticated && (
+                    <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+                      {GUEST_ACTIONS.map((action) => (
+                        <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
+                          <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
+                          <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tier 3 — Utility row (small text links) */}
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>Generate script</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>Create alert</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>Learn patterns</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>Market breadth</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
                     <ContactSupportDialog
                       trigger={
-                        <Button variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left w-full">
-                          <SUPPORT_ACTION.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                          <span className="text-xs">{t(SUPPORT_ACTION.labelKey, 'Contact Support')}</span>
-                        </Button>
+                        <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact Support</button>
                       }
                       defaultCategory="other"
                       defaultSubject=""
@@ -778,6 +824,7 @@ export function TradingCopilot({
                     />
                   </div>
                 </div>
+              </div>
                 );
               })()
             ) : (
