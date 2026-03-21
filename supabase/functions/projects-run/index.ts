@@ -2023,64 +2023,131 @@ serve(async (req) => {
         let artifactJson: any = null;
         let artifactType = 'backtest_report';
         
-        // ============= PATTERN LAB EXECUTION =============
+        // ============= PATTERN LAB EXECUTION (Signal Replay Model) =============
+        // Instead of re-detecting patterns from raw bars, query pre-validated signals
+        // from historical_pattern_occurrences. This ensures 100% alignment between
+        // the pre-check count shown in the UI and the actual backtest results.
         if (projectType === 'pattern_lab') {
-          const normalizedInstrumentPatternMap: Record<string, string[]> = {};
-          if (instrumentPatternMap && typeof instrumentPatternMap === 'object') {
-            for (const instrument of instruments) {
-              const raw = (instrumentPatternMap as Record<string, unknown>)[instrument];
-              if (!Array.isArray(raw)) continue;
-              const cleaned = raw
-                .filter((p): p is string => typeof p === 'string')
-                .filter((p) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
-              if (cleaned.length > 0) {
-                normalizedInstrumentPatternMap[instrument] = [...new Set(cleaned)];
-              }
-            }
-          }
+          const scannedPatternIds = [...new Set(patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p])))];
 
-          const effectivePatternMap: Record<string, string[]> = {};
-          for (const instrument of instruments) {
-            const scoped = normalizedInstrumentPatternMap[instrument];
-            const fallback = patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p]));
-            effectivePatternMap[instrument] = (scoped && scoped.length > 0) ? scoped : fallback;
-          }
-
-          const scannedPatternIds = [...new Set(Object.values(effectivePatternMap).flat())];
-          const totalPatternScans = Object.values(effectivePatternMap).reduce((sum, list) => sum + list.length, 0);
-
-          console.log(`[PatternLab] Starting backtest for ${instruments.length} instruments, ${scannedPatternIds.length} unique patterns, ${totalPatternScans} instrument-pattern scans, ${lookbackYears} years`);
+          console.log(`[PatternLab] Signal Replay: ${instruments.length} instruments, ${scannedPatternIds.length} patterns, grades=${gradeFilter.join(',')}, ${effectiveLookbackYears}y lookback`);
           
           const allTrades: BacktestTrade[] = [];
           const patternResults: any[] = [];
           const equity: { date: string; value: number; drawdown: number }[] = [];
-          // Track detection funnel per pattern
           const detectionFunnel: Record<string, { detected: number; gradeFiltered: number; overlapSkipped: number; traded: number }> = {};
-          
-          // Fetch data and run backtests
-          let completedPatternScans = 0;
-          for (let instIdx = 0; instIdx < instruments.length; instIdx++) {
-            ensureBudget(`instrument preflight (${instIdx + 1}/${instruments.length})`);
-            const instrument = instruments[instIdx];
-            const instrumentPatterns = effectivePatternMap[instrument] || [];
-            console.log(`[PatternLab] Processing ${instrument}... (${instIdx + 1}/${instruments.length})`);
-            
-            // Update progress in execution_metadata
+
+          // ─── Step 1: Query all matching signals from DB ───
+          await supabase
+            .from('project_runs')
+            .update({ 
+              execution_metadata: { 
+                progress: 5,
+                currentStep: 'Querying validated signals from database',
+                heartbeatAt: new Date().toISOString(),
+              } 
+            })
+            .eq('id', run.id);
+
+          // Fetch signals in batches per instrument to stay within PostgREST limits
+          interface DBSignal {
+            id: string;
+            symbol: string;
+            pattern_id: string;
+            pattern_name: string;
+            direction: string;
+            detected_at: string;
+            entry_price: number;
+            stop_loss_price: number;
+            take_profit_price: number;
+            risk_reward_ratio: number;
+            quality_score: string | null;
+            outcome: string | null;
+            outcome_date: string | null;
+            outcome_price: number | null;
+            bars_to_outcome: number | null;
+            timeframe: string;
+          }
+
+          const allSignals: DBSignal[] = [];
+          const PAGE_SIZE = 1000;
+
+          for (const instrument of instruments) {
+            ensureBudget(`signal query ${instrument}`);
+            let from = 0;
+            while (true) {
+              let query = supabase
+                .from('historical_pattern_occurrences')
+                .select('id, symbol, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_date, outcome_price, bars_to_outcome, timeframe')
+                .eq('symbol', instrument)
+                .eq('timeframe', timeframe)
+                .in('pattern_id', scannedPatternIds)
+                .gte('detected_at', startDate.toISOString())
+                .lte('detected_at', endDate.toISOString())
+                .order('detected_at', { ascending: true })
+                .range(from, from + PAGE_SIZE - 1);
+
+              // Apply grade filter
+              if (gradeFilter.length < 5) {
+                query = query.in('quality_score', gradeFilter);
+              }
+
+              const { data, error } = await query;
+              if (error) {
+                console.warn(`[PatternLab] Signal query error for ${instrument}:`, error.message);
+                break;
+              }
+              if (!data || data.length === 0) break;
+              allSignals.push(...(data as DBSignal[]));
+              if (data.length < PAGE_SIZE) break;
+              from += PAGE_SIZE;
+            }
+          }
+
+          console.log(`[PatternLab] Signal Replay: ${allSignals.length} signals fetched from DB (matching grade filter)`);
+
+          // Initialize funnel tracking
+          for (const patId of scannedPatternIds) {
+            detectionFunnel[patId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+          }
+
+          // Count total signals per pattern (before overlap filtering)
+          for (const signal of allSignals) {
+            if (detectionFunnel[signal.pattern_id]) {
+              detectionFunnel[signal.pattern_id].detected++;
+            }
+          }
+
+          // ─── Step 2: Fetch price data and simulate trades ───
+          // Group signals by instrument for efficient data fetching
+          const signalsByInstrument: Record<string, DBSignal[]> = {};
+          for (const signal of allSignals) {
+            if (!signalsByInstrument[signal.symbol]) signalsByInstrument[signal.symbol] = [];
+            signalsByInstrument[signal.symbol].push(signal);
+          }
+
+          const instrumentList = Object.keys(signalsByInstrument);
+          let processedInstruments = 0;
+
+          for (const instrument of instrumentList) {
+            ensureBudget(`trade simulation ${instrument}`);
+            processedInstruments++;
+
             await supabase
               .from('project_runs')
               .update({ 
                 execution_metadata: { 
-                  progress: totalPatternScans > 0 ? Math.round((completedPatternScans / totalPatternScans) * 100) : 0,
-                  currentStep: `Scanning ${instrument}`,
-                  instrumentsProcessed: instIdx,
-                  instrumentsTotal: instruments.length,
-                  patternsTotal: totalPatternScans,
-                  scansCompleted: completedPatternScans,
+                  progress: Math.round(10 + (processedInstruments / Math.max(instrumentList.length, 1)) * 85),
+                  currentStep: `Simulating trades for ${instrument}`,
+                  instrumentsProcessed: processedInstruments,
+                  instrumentsTotal: instrumentList.length,
+                  signalsTotal: allSignals.length,
                   heartbeatAt: new Date().toISOString(),
                 } 
               })
               .eq('id', run.id);
-            
+
+            // Fetch price data for trade simulation
             const bars = await fetchBacktestData(
               supabase,
               instrument,
@@ -2088,42 +2155,119 @@ serve(async (req) => {
               endDate.toISOString().split('T')[0],
               timeframe
             );
-            
-            // Cap bars to prevent CPU timeout on large intraday datasets
+
             const MAX_BARS_PER_INSTRUMENT = 5000;
             if (bars.length > MAX_BARS_PER_INSTRUMENT) {
               console.log(`[PatternLab] Capping ${instrument} bars from ${bars.length} to ${MAX_BARS_PER_INSTRUMENT}`);
               bars.splice(0, bars.length - MAX_BARS_PER_INSTRUMENT);
             }
 
-            if (bars.length < 50) {
-              completedPatternScans += instrumentPatterns.length;
-              console.log(`[PatternLab] Insufficient data for ${instrument}: ${bars.length} bars`);
+            if (bars.length < 10) {
+              console.log(`[PatternLab] Insufficient price data for ${instrument}: ${bars.length} bars, skipping trade simulation`);
               continue;
             }
 
-            for (const patternId of instrumentPatterns) {
-              ensureBudget(`pattern scan ${instrument}:${patternId}`);
-              const pattern = WEDGE_PATTERN_REGISTRY[patternId];
-              if (!pattern) {
-                console.log(`[PatternLab] Unknown pattern: ${patternId} - skipping`);
-                completedPatternScans += 1;
+            // Build date→index lookup for fast signal-to-bar matching
+            const dateIndex: Record<string, number> = {};
+            for (let i = 0; i < bars.length; i++) {
+              // Store by date string (YYYY-MM-DD or ISO)
+              const dateKey = typeof bars[i].date === 'string' ? bars[i].date.split('T')[0] : new Date(bars[i].timestamp).toISOString().split('T')[0];
+              dateIndex[dateKey] = i;
+            }
+
+            const instrumentSignals = signalsByInstrument[instrument];
+            let lastTradeEndIndex = -1;
+
+            for (const signal of instrumentSignals) {
+              const patternId = signal.pattern_id;
+              const grade = signal.quality_score || 'C';
+              const funnel = detectionFunnel[patternId];
+
+              // Find the bar index closest to signal's detected_at date
+              const signalDate = signal.detected_at.split('T')[0];
+              let entryIndex = dateIndex[signalDate];
+
+              // If exact date not found, find closest bar after signal date
+              if (entryIndex === undefined) {
+                const signalTs = new Date(signal.detected_at).getTime();
+                let bestIdx = -1;
+                let bestDiff = Infinity;
+                for (let i = 0; i < bars.length; i++) {
+                  const barTs = bars[i].timestamp;
+                  const diff = barTs - signalTs;
+                  if (diff >= 0 && diff < bestDiff) {
+                    bestDiff = diff;
+                    bestIdx = i;
+                  }
+                }
+                entryIndex = bestIdx;
+              }
+
+              if (entryIndex < 0 || entryIndex >= bars.length - 5) {
+                // Signal date not found in price data — skip
                 continue;
               }
-              
-              const result = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-              allTrades.push(...result.trades);
-              
-              // Accumulate funnel stats per pattern
-              if (!detectionFunnel[patternId]) {
-                detectionFunnel[patternId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+
+              // Skip overlapping trades (same as original engine)
+              if (entryIndex <= lastTradeEndIndex) {
+                if (funnel) funnel.overlapSkipped++;
+                continue;
               }
-              detectionFunnel[patternId].detected += result.detectedCount;
-              detectionFunnel[patternId].gradeFiltered += result.gradeFilteredCount;
-              detectionFunnel[patternId].overlapSkipped += result.overlapSkippedCount;
-              detectionFunnel[patternId].traded += result.trades.length;
-              
-              completedPatternScans += 1;
+
+              // Use entry price from the DB signal (validated during seeding)
+              const entryPrice = signal.entry_price;
+              const stopLossPrice = signal.stop_loss_price;
+              const direction = signal.direction as 'long' | 'short';
+              const isLong = direction === 'long';
+              const stopDistance = Math.abs(entryPrice - stopLossPrice);
+
+              if (stopDistance <= 0 || entryPrice <= 0) {
+                continue; // Invalid signal data
+              }
+
+              const maxBarsInTrade = 50;
+
+              // Simulate trade outcomes for all R:R tiers
+              const rrOutcomes = {
+                rr2: simulateRROutcome(bars, entryIndex, entryPrice, stopDistance, 2, isLong, maxBarsInTrade),
+                rr3: simulateRROutcome(bars, entryIndex, entryPrice, stopDistance, 3, isLong, maxBarsInTrade),
+                rr4: simulateRROutcome(bars, entryIndex, entryPrice, stopDistance, 4, isLong, maxBarsInTrade),
+                rr5: simulateRROutcome(bars, entryIndex, entryPrice, stopDistance, 5, isLong, maxBarsInTrade),
+              };
+
+              // Compute exit strategy outcomes
+              const exitOutcomes = computeExitOutcomes(bars, entryIndex, entryPrice, stopDistance, isLong, maxBarsInTrade);
+
+              // Use RR2 as the primary result
+              const primary = rrOutcomes.rr2;
+              const exitDate = primary.exitDate;
+              const exitPrice = primary.exitPrice;
+              const exitReason: 'tp' | 'sl' | 'time_stop' =
+                primary.outcome === 'hit_tp' ? 'tp' : primary.outcome === 'hit_sl' ? 'sl' : 'time_stop';
+              const rMultiple = primary.rMultiple;
+              const pnl = isLong ? exitPrice - entryPrice : entryPrice - exitPrice;
+
+              const regime = bars.length > 50 ? classifyRegime(bars.slice(0, entryIndex + 1)) : { trend: 'SIDEWAYS' as const, volatility: 'MED' as const };
+
+              allTrades.push({
+                entryDate: signal.detected_at,
+                exitDate,
+                instrument,
+                patternId,
+                direction,
+                entryPrice,
+                exitPrice,
+                rMultiple,
+                isWin: pnl > 0,
+                regime: `${regime.trend}_${regime.volatility}`,
+                exitReason,
+                grade,
+                rrOutcomes,
+                exitOutcomes,
+              } as any);
+
+              if (funnel) funnel.traded++;
+              lastTradeEndIndex = entryIndex + 5;
             }
           }
           
@@ -2135,16 +2279,16 @@ serve(async (req) => {
               execution_metadata: { 
                 progress: 100,
                 currentStep: 'Computing results',
-                instrumentsProcessed: instruments.length,
-                instrumentsTotal: instruments.length,
-                patternsTotal: totalPatternScans,
-                scansCompleted: totalPatternScans,
+                instrumentsProcessed: instrumentList.length,
+                instrumentsTotal: instrumentList.length,
+                signalsTotal: allSignals.length,
+                tradesSimulated: allTrades.length,
                 heartbeatAt: new Date().toISOString(),
               } 
             })
             .eq('id', run.id);
           
-          console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
+          console.log(`[PatternLab] Signal Replay complete: ${allSignals.length} signals → ${allTrades.length} trades simulated`);
           ensureBudget('pattern-level analytics');
           
           // Calculate pattern-level stats
