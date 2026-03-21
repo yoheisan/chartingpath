@@ -436,7 +436,24 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                             ? 'bg-primary text-primary-foreground hover:bg-primary/80'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                         }`}
-                        onClick={() => onToggleBasket(trade.selectionKey)}
+                        onClick={() => {
+                          onToggleBasket(trade.selectionKey);
+                          if (trade.verdict === 'TAKE') {
+                            toast.success('Added to paper ✓');
+                          } else if (trade.verdict === 'WATCH') {
+                            toast('Partial match with your plan. Add anyway?', {
+                              duration: 10000,
+                              action: { label: 'Add anyway', onClick: () => toast.success('Added to paper ✓') },
+                              cancel: { label: 'Skip', onClick: () => {} },
+                            });
+                          } else {
+                            toast('Conflicts with your plan. Add anyway?', {
+                              duration: 10000,
+                              action: { label: 'Add anyway', onClick: () => toast.success('Added to paper ✓') },
+                              cancel: { label: 'Skip', onClick: () => {} },
+                            });
+                          }
+                        }}
                       >
                         {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                       </Button>
