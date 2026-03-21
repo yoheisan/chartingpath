@@ -86,13 +86,126 @@ function incrementGuestMsgCount(): number {
   return next;
 }
 
+// ── Page context mapping ───────────────────────────────────────
+
+interface PageContext {
+  pageName: string;
+  greeting: string;
+  chips: { label: string; prompt: string }[];
+}
+
+const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
+  '/members/dashboard': {
+    pageName: 'Dashboard',
+    greeting: "Here's your session so far. What do you need?",
+    chips: [
+      { label: "What did Copilot do today?", prompt: "What did Copilot do today?" },
+      { label: "Show my AI vs Human stats", prompt: "Show my AI vs Human stats" },
+      { label: "Set my mandate", prompt: "Set my mandate" },
+    ],
+  },
+  '/screener': {
+    pageName: 'Active Pattern Screener',
+    greeting: "I can see the screener. Want me to find setups matching your mandate?",
+    chips: [
+      { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
+      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
+    ],
+  },
+  '/patterns/live': {
+    pageName: 'Active Pattern Screener',
+    greeting: "I can see the screener. Want me to find setups matching your mandate?",
+    chips: [
+      { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
+      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
+    ],
+  },
+  '/tools/agent-scoring': {
+    pageName: 'Agent Scoring',
+    greeting: "You're on Agent Scoring. Want to adjust your weights or filters?",
+    chips: [
+      { label: "Make scoring more conservative", prompt: "Make scoring more conservative" },
+      { label: "Increase take rate", prompt: "Increase take rate" },
+      { label: "Show current weights", prompt: "Show current weights" },
+    ],
+  },
+  '/projects/pattern-lab/new': {
+    pageName: 'Pattern Lab',
+    greeting: "Pattern Lab is open. Want to run a backtest or send patterns to your Master Plan?",
+    chips: [
+      { label: "Most profitable pattern", prompt: "What is the most profitable pattern?" },
+      { label: "Send winner to Master Plan", prompt: "Send winner to Master Plan" },
+      { label: "Check my backtest quota", prompt: "Check my backtest quota" },
+    ],
+  },
+  '/alerts': {
+    pageName: 'Alerts',
+    greeting: "Manage your alerts. Want to create one for your top setup?",
+    chips: [
+      { label: "Create alert for my top setup", prompt: "Create alert for my top setup" },
+      { label: "Send alerts to Copilot paper", prompt: "Send alerts to Copilot paper" },
+    ],
+  },
+  '/scripts': {
+    pageName: 'Scripts',
+    greeting: "Scripts page is open. Want to generate a Pine Script or export a strategy?",
+    chips: [
+      { label: "Generate Pine Script for my mandate", prompt: "Generate Pine Script for my mandate" },
+      { label: "Export as Copilot Strategy", prompt: "Export as Copilot Strategy" },
+    ],
+  },
+  '/copilot': {
+    pageName: 'Copilot ACS',
+    greeting: "Your Copilot desk. Set your mandate, review trades, or ask anything.",
+    chips: [
+      { label: "Set my mandate", prompt: "Set my mandate" },
+      { label: "Why did Copilot flag this?", prompt: "Why did Copilot flag this?" },
+      { label: "Show today's paper trades", prompt: "Show today's paper trades" },
+    ],
+  },
+  '/edge-atlas': {
+    pageName: 'Edge Atlas',
+    greeting: "Edge Atlas is open. Want to check pattern win rates or plan alignment?",
+    chips: [
+      { label: "What patterns are in my plan?", prompt: "What patterns are in my plan?" },
+      { label: "Best win rate for breakouts", prompt: "Best win rate for breakouts" },
+    ],
+  },
+  '/chart-patterns/library': {
+    pageName: 'Pattern Library',
+    greeting: "Pattern Library is open. Want to add a pattern to your plan?",
+    chips: [
+      { label: "Add this pattern to my plan", prompt: "Add this pattern to my plan" },
+      { label: "Which patterns suit my mandate?", prompt: "Which patterns suit my mandate?" },
+    ],
+  },
+};
+
+const DEFAULT_PAGE_CONTEXT: PageContext = {
+  pageName: 'Unknown',
+  greeting: "How can I help you trade smarter?",
+  chips: [],
+};
+
+function getPageContext(pathname: string): PageContext {
+  // Exact match first
+  if (PAGE_CONTEXT_MAP[pathname]) return PAGE_CONTEXT_MAP[pathname];
+  // Prefix match for nested routes
+  for (const [route, ctx] of Object.entries(PAGE_CONTEXT_MAP)) {
+    if (pathname.startsWith(route)) return ctx;
+  }
+  return DEFAULT_PAGE_CONTEXT;
+}
+
 // ── Route-aware, auth-aware quick actions ──────────────────────
 
 interface QuickAction {
   labelKey: string;
   promptKey: string;
   icon: typeof TrendingUp;
-  label?: string; // fallback when i18n key missing in active locale
+  label?: string;
 }
 
 const GUEST_ACTIONS: QuickAction[] = [
@@ -110,61 +223,9 @@ const AUTH_DEFAULT_ACTIONS: QuickAction[] = [
   { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
 ];
 
-/** Route-specific overrides for authenticated users */
-const ROUTE_ACTIONS: Record<string, QuickAction[]> = {
-  '/tools/agent-scoring': [
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
-    { labelKey: "copilot.ctx.adjustWeights", promptKey: "copilot.ctx.adjustWeightsPrompt", icon: TrendingUp, label: "Adjust weights" },
-    { labelKey: "copilot.ctx.comparePresets", promptKey: "copilot.ctx.comparePresetsPrompt", icon: BarChart3, label: "Compare presets" },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
-  ],
-  '/patterns/live': [
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
-  ],
-  '/members/dashboard': [
-    { labelKey: "copilot.ctx.portfolioReview", promptKey: "copilot.ctx.portfolioReviewPrompt", icon: BarChart3, label: "Portfolio review" },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
-    { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell, label: "Create alert" },
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
-  ],
-  '/tools/market-breadth': [
-    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3, label: "Market breadth" },
-    { labelKey: "copilot.ctx.sectorAnalysis", promptKey: "copilot.ctx.sectorAnalysisPrompt", icon: TrendingUp, label: "Sector analysis" },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: Sparkles, label: "Find patterns" },
-  ],
-  '/chart-patterns/library': [
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
-  ],
-};
-
-/** Route-specific overrides for guests (lighter set — no locked features) */
-const GUEST_ROUTE_ACTIONS: Record<string, QuickAction[]> = {
-  '/patterns/live': [
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
-    { labelKey: "copilot.ctx.bestSetups", promptKey: "copilot.ctx.bestSetupsPrompt", icon: Sparkles, label: "Best setups now" },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
-  ],
-  '/tools/agent-scoring': [
-    { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles, label: "Score trades" },
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
-    { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3, label: "Market breadth" },
-  ],
-  '/chart-patterns/library': [
-    { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen, label: "Learn patterns" },
-    { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp, label: "Find patterns" },
-  ],
-};
-
 function getQuickActions(pathname: string, authenticated: boolean): QuickAction[] {
-  if (authenticated) {
-    return ROUTE_ACTIONS[pathname] || AUTH_DEFAULT_ACTIONS;
-  }
-  return GUEST_ROUTE_ACTIONS[pathname] || GUEST_ACTIONS;
+  if (!authenticated) return GUEST_ACTIONS;
+  return AUTH_DEFAULT_ACTIONS;
 }
 
 const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
