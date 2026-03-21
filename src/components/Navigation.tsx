@@ -317,18 +317,6 @@ const Navigation = () => {
                   </DropdownMenuGroup>
                   
                   <DropdownMenuSeparator />
-                  
-                  {/* AI Copilot Feature */}
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.features', 'Features')}</DropdownMenuLabel>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/features/trading-copilot" className="flex items-center gap-2">
-                        <Bot className="h-4 w-4 text-primary" />
-                        {t('navigation.aiCopilot', 'AI Copilot')}
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  
 
                   {/* Company Section */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.company', 'Company')}</DropdownMenuLabel>
@@ -348,6 +336,12 @@ const Navigation = () => {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {/* Copilot nav link */}
+              <Link to="/copilot" className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
+                <Bot className="h-4 w-4" />
+                Copilot ✦
+              </Link>
               
               <CopilotStatusIndicator />
               <AuthButton />

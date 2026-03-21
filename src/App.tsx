@@ -90,6 +90,7 @@ const EdgeAtlasIndexPage = lazy(() => import("./pages/EdgeAtlasIndexPage"));
 const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage"));
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
+const Copilot = lazy(() => import("./pages/Copilot"));
 const InstrumentPage = lazy(() => import("./pages/InstrumentPage"));
 const ProgrammaticPatternStatsPage = lazy(() => import("./pages/ProgrammaticPatternStatsPage"));
 const PatternStatsIndexPage = lazy(() => import("./pages/PatternStatsIndexPage"));
@@ -229,6 +230,7 @@ const App = () => (
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />
           <Route path="/patterns/stats/:patternSlug/:assetClass/:timeframe" element={withSuspense(<ProgrammaticPatternStatsPage />)} />
           <Route path="/instruments/:symbol" element={withSuspense(<InstrumentPage />)} />
+          <Route path="/copilot" element={withSuspense(<Copilot />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={withSuspense(<NotFound />)} />
