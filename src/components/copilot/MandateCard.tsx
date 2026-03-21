@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { type MandateRule } from "@/hooks/useMasterPlan";
 
-const MANDATE_RULES = [
+const FALLBACK_RULES: MandateRule[] = [
   { label: "3%", detail: "max per trade" },
   { label: "6", detail: "max open positions" },
   { label: "9:30–11:30", detail: "trading window" },
@@ -12,10 +12,13 @@ const MANDATE_RULES = [
 
 interface MandateCardProps {
   onFocusNLBar: (prefill?: string) => void;
+  rules?: MandateRule[];
+  hasPlan?: boolean;
 }
 
-export function MandateCard({ onFocusNLBar }: MandateCardProps) {
-  const [hasMandate] = useState(true);
+export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) {
+  const displayRules = rules && rules.length > 0 ? rules : FALLBACK_RULES;
+  const hasMandate = hasPlan !== undefined ? hasPlan : true;
 
   return (
     <Card className="rounded-lg border-border/60 bg-card">
@@ -34,7 +37,7 @@ export function MandateCard({ onFocusNLBar }: MandateCardProps) {
         {hasMandate ? (
           <>
             <div className="flex flex-wrap gap-1.5">
-              {MANDATE_RULES.map((rule) => (
+              {displayRules.map((rule) => (
                 <button
                   key={rule.label}
                   onClick={() => onFocusNLBar(`${rule.label} ${rule.detail}`)}
