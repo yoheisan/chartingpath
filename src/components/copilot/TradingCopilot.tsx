@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { TradingPlanBuilder } from "./TradingPlanBuilder";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
