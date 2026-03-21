@@ -713,7 +713,7 @@ export function TradingCopilot({
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ) : messages.length === 0 ? (
+            ) : messages.length === 0 && !showBuilder ? (
               (() => {
                 const pageCtx = getPageContext(location.pathname);
                 const tier2Chips = isAuthenticated ? pageCtx.chips : [];
