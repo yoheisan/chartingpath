@@ -558,12 +558,18 @@ const PatternLabWizard = () => {
     });
     setIsRunning(true);
     try {
+      // Always get a fresh token to avoid expired JWT errors
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const token = freshSession?.access_token || session?.access_token;
+      
+      if (!token) {
+        throw new Error('Unauthorized');
+      }
+      
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       };
-      if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`;
-      }
       
       const response = await fetch(
         'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/run',
