@@ -8,9 +8,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { SessionDebriefPanel } from './SessionDebriefPanel';
+import { useCopilotTrades, CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useAuth } from '@/contexts/AuthContext';
+
+const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
 const RightPanel = () => {
   const [debriefOpen, setDebriefOpen] = useState(false);
+  const { user } = useAuth();
+  const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
+
   return (
     <div className="flex flex-col h-full">
       {/* Section 1 — Header */}
@@ -23,24 +30,32 @@ const RightPanel = () => {
       <div className="flex border-b border-border/40">
         <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Copilot</span>
-          <span className="text-lg font-bold font-mono text-green-500">+3.5R</span>
-          <span className="text-[10px] font-mono text-muted-foreground">68% · 3 trades</span>
+          <span className={`text-lg font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatR(stats.aiPnlR)}
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
+          </span>
         </div>
         <div className="w-px bg-border/40" />
         <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Your overrides</span>
-          <span className="text-lg font-bold font-mono text-red-500">−2.0R</span>
-          <span className="text-[10px] font-mono text-muted-foreground">33% · 1 trade</span>
+          <span className={`text-lg font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+          </span>
         </div>
       </div>
 
       {/* Section 3 — Metric Cards 2×2 */}
       <div className="grid grid-cols-2 gap-1.5 p-2 border-b border-border/40">
         {[
-          { label: 'AI avg R', value: '+1.8', sub: 'per trade', positive: true },
-          { label: 'Override avg R', value: '−2.0', sub: 'per trade', positive: false },
-          { label: 'AI win rate', value: '68%', sub: 'rolling 20', positive: true },
-          { label: 'Override win rate', value: '33%', sub: 'rolling 20', positive: false },
+          { label: 'AI avg R', value: formatR(stats.aiAvgR), sub: 'per trade', positive: stats.aiAvgR >= 0 },
+          { label: 'Override avg R', value: formatR(stats.humanAvgR), sub: 'per trade', positive: stats.humanAvgR >= 0 },
+          { label: 'AI win rate', value: `${stats.aiWinRate}%`, sub: 'today', positive: stats.aiWinRate >= 50 },
+          { label: 'Override win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
         ].map((m) => (
           <div key={m.label} className="rounded-md bg-secondary/50 p-2 flex flex-col items-center gap-0.5">
             <span className="text-[10px] text-muted-foreground">{m.label}</span>
@@ -55,7 +70,9 @@ const RightPanel = () => {
       {/* Section 4 — Insight Card */}
       <div className="mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2">
         <p className="text-[11px] leading-[1.6] text-muted-foreground">
-          Your TSLA override lost −2R. Copilot flagged it as a conflict. Momentum overrides win 28% vs Copilot's 61% on the same pattern.
+          {todayTrades.length > 0
+            ? `Today: ${stats.aiTradeCount} AI trades (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
+            : 'No trades yet today. Copilot is scanning for setups matching your plan.'}
         </p>
       </div>
 
@@ -64,28 +81,45 @@ const RightPanel = () => {
         <span className="text-xs font-medium text-muted-foreground px-3 py-1.5">Today's trades</span>
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 pb-2">
-            {[
-              { badge: 'AI', ticker: 'NVDA', reason: 'Breakout · open', r: '+2.1R', positive: true },
-              { badge: 'AI', ticker: 'MSFT', reason: 'Mean rev · closed', r: '+1.4R', positive: true },
-              { badge: 'You', ticker: 'TSLA', reason: 'Override · stopped', r: '−2.0R', positive: false },
-            ].map((t, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
-                <Badge
-                  className={`text-[9px] px-1.5 py-0 font-medium rounded ${
-                    t.badge === 'AI'
-                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                      : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                  }`}
-                >
-                  {t.badge}
-                </Badge>
-                <span className="text-xs font-mono font-bold text-foreground w-10">{t.ticker}</span>
-                <span className="text-[10px] text-muted-foreground flex-1 truncate">{t.reason}</span>
-                <span className={`text-xs font-mono font-semibold ${t.positive ? 'text-green-500' : 'text-red-500'}`}>
-                  {t.r}
-                </span>
-              </div>
-            ))}
+            {loading ? (
+              <div className="text-[10px] text-muted-foreground/50 text-center py-4">Loading…</div>
+            ) : todayTrades.length === 0 ? (
+              <div className="text-[10px] text-muted-foreground/50 text-center py-4">No trades today</div>
+            ) : (
+              todayTrades.map((t: CopilotTrade) => {
+                const isAi = t.attribution === 'ai_approved';
+                const pnlR = t.outcome_r ?? 0;
+                const isPositive = pnlR >= 0;
+                const statusLabel = t.status === 'open'
+                  ? 'open'
+                  : t.close_reason?.toLowerCase().includes('stop')
+                    ? 'stopped'
+                    : 'closed';
+
+                return (
+                  <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
+                    <Badge
+                      className={`text-[9px] px-1.5 py-0 font-medium rounded ${
+                        isAi
+                          ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                          : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                      }`}
+                    >
+                      {isAi ? 'AI' : 'You'}
+                    </Badge>
+                    <span className="text-xs font-mono font-bold text-foreground w-10">{t.symbol}</span>
+                    <span className="text-[10px] text-muted-foreground flex-1 truncate">
+                      {t.setup_type || t.trade_type} · {statusLabel}
+                    </span>
+                    <span className={`text-xs font-mono font-semibold ${
+                      t.status === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {t.status === 'open' ? 'open' : formatR(pnlR)}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
         </ScrollArea>
       </div>
@@ -118,7 +152,11 @@ const RightPanel = () => {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="text-[10px] text-muted-foreground">47 paper trades · +18.4R track record</span>
+        <span className="text-[10px] text-muted-foreground">
+          {todayTrades.length > 0
+            ? `${todayTrades.length} trades today · ${formatR(stats.aiPnlR + stats.humanPnlR)} total`
+            : 'Paper running · scanning for setups'}
+        </span>
       </div>
 
       {/* Session Debrief slide-in */}
