@@ -25,6 +25,14 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {
   const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
   const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
+  // Open debrief from external trigger (session-end banner)
+  useEffect(() => {
+    if (openDebriefOnMount && !debriefOpen) {
+      setDebriefOpen(true);
+      onDebriefOpened?.();
+    }
+  }, [openDebriefOnMount, debriefOpen, onDebriefOpened]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Section 1 — Header */}
