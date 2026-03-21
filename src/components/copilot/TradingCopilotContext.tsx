@@ -15,9 +15,12 @@ interface TradingCopilotContextValue {
   close: () => void;
   openWithContext: (context: string, chartData?: ChartContextData) => void;
   openWithAnalysis: (context: string, analysis: ChartAnalysisResult) => void;
+  openPlanBuilder: () => void;
   pendingContext: string | null;
   pendingAnalysis: ChartAnalysisResult | null;
+  pendingPlanBuilder: boolean;
   consumePendingContext: () => string | null;
+  consumePendingPlanBuilder: () => boolean;
   setChartContext: (data: ChartContextData | null) => void;
   getChartContext: () => ChartContextData | null;
 }
