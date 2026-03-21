@@ -784,12 +784,12 @@ export function TradingCopilot({
                   {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
-                        <span className="text-xs">Review today's paper results</span>
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my trading plan")} disabled={isLoading}>
-                        <span className="text-xs">Update your trading plan</span>
-                      </Button>
+                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
+                       <span className="text-xs">Review today's paper results</span>
+                     </Button>
+                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
+                       <span className="text-xs">Update your trading plan</span>
+                     </Button>
                     </div>
                   )}
 
