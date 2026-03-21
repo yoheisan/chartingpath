@@ -17,7 +17,7 @@ import { ContactSupportDialog } from "@/components/support/ContactSupportDialog"
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CopilotRichMessage } from "./CopilotRichMessage";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
