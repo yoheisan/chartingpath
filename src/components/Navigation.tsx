@@ -349,6 +349,7 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
+              <CopilotStatusIndicator />
               <AuthButton />
             </nav>
 
