@@ -2086,6 +2086,7 @@ serve(async (req) => {
               maxDD = Math.max(maxDD, (peakR - runningR));
             }
             
+            const funnel = detectionFunnel[patternId] || { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
             patternResults.push({
               patternId,
               patternName: pattern.displayName,
@@ -2098,7 +2099,13 @@ serve(async (req) => {
               maxDrawdown: maxDD,
               sharpeRatio: avgR / (Math.sqrt(patternTrades.map(t => t.rMultiple).reduce((s, r) => s + r * r, 0) / patternTrades.length - avgR * avgR) || 1),
               regimeBreakdown,
-              doNotTradeRules
+              doNotTradeRules,
+              detectionFunnel: {
+                detected: funnel.detected,
+                gradeFiltered: funnel.gradeFiltered,
+                overlapSkipped: funnel.overlapSkipped,
+                traded: funnel.traded,
+              },
             });
           }
 
