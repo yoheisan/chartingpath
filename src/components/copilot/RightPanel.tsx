@@ -18,6 +18,7 @@ const RightPanel = () => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const { user } = useAuth();
   const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
+  const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
   return (
     <div className="flex flex-col h-full">
