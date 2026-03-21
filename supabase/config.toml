@@ -311,3 +311,6 @@ verify_jwt = false
 
 [functions.send-morning-briefing]
 verify_jwt = false
+
+[functions.copilot-mandate]
+verify_jwt = false
