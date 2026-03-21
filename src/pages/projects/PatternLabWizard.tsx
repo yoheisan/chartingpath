@@ -521,9 +521,9 @@ const PatternLabWizard = () => {
     return () => { clearTimeout(debounce); cancelled = true; };
   }, [selectedInstruments, selectedPatterns, timeframe, selectedGrades]);
 
-  const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.count === 0);
-  const hasLowPatterns = patternCoverage.some(p => p.count > 0 && p.count < 5);
-  const zeroPatternCombos = patternCoverage.filter(p => p.count === 0);
+  const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.gradePassCount === 0);
+  const hasLowPatterns = patternCoverage.some(p => p.gradePassCount > 0 && p.gradePassCount < 5);
+  const zeroPatternCombos = patternCoverage.filter(p => p.gradePassCount === 0);
 
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
