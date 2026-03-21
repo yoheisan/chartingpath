@@ -2046,7 +2046,8 @@ serve(async (req) => {
               })
               .eq('id', run.id);
             
-            const bars = await fetchYahooData(
+            const bars = await fetchBacktestData(
+              supabase,
               instrument,
               startDate.toISOString().split('T')[0],
               endDate.toISOString().split('T')[0],
