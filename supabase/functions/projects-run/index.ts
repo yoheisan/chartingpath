@@ -734,6 +734,23 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 // ============= DB-FIRST + EODHD FALLBACK DATA FETCHER =============
 const MIN_BARS_THRESHOLD = 50;
 
+/** Estimate expected bar count for a date range + interval to gauge coverage quality */
+function estimateExpectedBars(startDate: string, endDate: string, interval: string): number {
+  const msRange = new Date(endDate).getTime() - new Date(startDate).getTime();
+  const dayRange = msRange / (1000 * 60 * 60 * 24);
+  switch (interval) {
+    case '1h': return dayRange * 24 * 0.7;  // ~70% for weekends/gaps
+    case '4h': return dayRange * 6 * 0.7;
+    case '8h': return dayRange * 3 * 0.7;
+    case '1d': return dayRange * 0.7;
+    case '1wk': return dayRange / 7;
+    default: return dayRange * 0.7;
+  }
+}
+
+/** Coverage ratio threshold — if DB has less than 40% of expected bars, treat as insufficient */
+const MIN_COVERAGE_RATIO = 0.4;
+
 async function fetchBacktestData(
   supabaseClient: any,
   symbol: string,
@@ -744,16 +761,18 @@ async function fetchBacktestData(
   // For 4h/8h, always fetch 1h data and aggregate
   const fetchInterval = (interval === '4h' || interval === '8h') ? '1h' : interval;
   const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
+  const expectedBars = estimateExpectedBars(startDate, endDate, fetchInterval);
 
   // ─── Step 1: Try DB (historical_prices, EODHD-seeded) ───
   const dbBars = await fetchFromDB(supabaseClient, symbol, startDate, endDate, fetchInterval);
+  const dbCoverage = expectedBars > 0 ? dbBars.length / expectedBars : 0;
   
-  if (dbBars.length >= MIN_BARS_THRESHOLD) {
-    console.log(`[BacktestData] DB hit: ${symbol} ${fetchInterval} → ${dbBars.length} bars`);
+  if (dbBars.length >= MIN_BARS_THRESHOLD && dbCoverage >= MIN_COVERAGE_RATIO) {
+    console.log(`[BacktestData] DB hit: ${symbol} ${fetchInterval} → ${dbBars.length} bars (${(dbCoverage * 100).toFixed(0)}% coverage)`);
     return maybeAggregate(dbBars, aggregateSize, symbol, interval);
   }
   
-  console.log(`[BacktestData] DB miss: ${symbol} ${fetchInterval} (${dbBars.length} bars), falling back to EODHD API`);
+  console.log(`[BacktestData] DB insufficient: ${symbol} ${fetchInterval} → ${dbBars.length}/${Math.round(expectedBars)} bars (${(dbCoverage * 100).toFixed(0)}% coverage), falling back to EODHD API`);
 
   // ─── Step 2: Fallback to EODHD API ───
   const eodhBars = await fetchFromEODHD(symbol, startDate, endDate, fetchInterval);
