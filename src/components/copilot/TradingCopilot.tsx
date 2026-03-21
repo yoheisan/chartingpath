@@ -685,6 +685,10 @@ export function TradingCopilot({
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
+              (() => {
+                const pageCtx = getPageContext(location.pathname);
+                const contextChips = isAuthenticated ? pageCtx.chips : [];
+                return (
               <div className="space-y-4">
                 <div className="text-center py-6">
                   <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
@@ -692,7 +696,7 @@ export function TradingCopilot({
                   </div>
                   <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
                   <p className="text-sm text-muted-foreground">
-                    {t('copilot.welcomeDesc')}
+                    {isAuthenticated ? pageCtx.greeting : t('copilot.welcomeDesc')}
                   </p>
                   {!isAuthenticated && (
                     <p className="text-xs text-muted-foreground/70 mt-2">
@@ -701,6 +705,19 @@ export function TradingCopilot({
                   )}
                 </div>
                 <div className="space-y-2">
+                  {/* Page-contextual chips for authenticated users */}
+                  {contextChips.length > 0 && (
+                    <>
+                      <p className="text-xs text-muted-foreground font-medium px-1">Suggested for this page</p>
+                      <div className="flex flex-wrap gap-2">
+                        {contextChips.map((chip) => (
+                          <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                            <span className="text-xs">{chip.label}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
                   <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
                     {getQuickActions(location.pathname, isAuthenticated).map((action) => (
@@ -724,6 +741,8 @@ export function TradingCopilot({
                     />
                   </div>
                 </div>
+                );
+              })()
             ) : (
               <div className="space-y-4">
                 {messages.map((message, idx) => {
