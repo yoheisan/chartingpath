@@ -795,10 +795,10 @@ export function TradingCopilot({
                   {isAuthenticated && !hasPlan && (
                     <Button
                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                      onClick={() => handleQuickAction("Set my trading mandate")}
+                      onClick={() => handleQuickAction("Set my trading plan")}
                       disabled={isLoading}
                     >
-                      Set my trading mandate →
+                      Set your trading plan →
                     </Button>
                   )}
 
