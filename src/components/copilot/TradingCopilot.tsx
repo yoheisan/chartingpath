@@ -469,12 +469,18 @@ export function TradingCopilot({
     
     try {
       const pageCtx = getPageContext(location.pathname);
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+      };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-        },
+        headers,
         body: JSON.stringify({
           messages: [...messages, userMsg]
             .filter(m => m.role === "user" || m.content.trim().length > 0)
@@ -516,6 +522,9 @@ export function TradingCopilot({
 
       const assistantId = crypto.randomUUID();
       setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
+      const updateAssistantMsg = (content: string) => {
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content } : m));
+      };
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -531,12 +540,36 @@ export function TradingCopilot({
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") { streamDone = true; break; }
+
           try {
             const parsed = JSON.parse(jsonStr);
+
+            // Current streaming protocol
+            if (parsed.type === "status") {
+              updateAssistantMsg(`_${parsed.text}_`);
+              continue;
+            }
+            if (parsed.type === "token") {
+              assistantContent += parsed.text;
+              updateAssistantMsg(assistantContent);
+              continue;
+            }
+            if (parsed.type === "done") {
+              streamDone = true;
+              break;
+            }
+            if (parsed.type === "error") {
+              assistantContent = parsed.text || t('copilot.errorMsg');
+              updateAssistantMsg(assistantContent);
+              streamDone = true;
+              break;
+            }
+
+            // Legacy OpenAI delta fallback
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+              updateAssistantMsg(assistantContent);
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -556,13 +589,24 @@ export function TradingCopilot({
           if (jsonStr === "[DONE]") continue;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+            if (parsed.type === "token") {
+              assistantContent += parsed.text;
+            } else if (parsed.type === "error") {
+              assistantContent = parsed.text || t('copilot.errorMsg');
+            } else {
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                assistantContent += content;
+              }
             }
           } catch { /* ignore */ }
         }
+        updateAssistantMsg(assistantContent);
+      }
+
+      if (!assistantContent.trim()) {
+        assistantContent = t('copilot.emptyResponse', 'Sorry — no response was returned. Please try again.');
+        updateAssistantMsg(assistantContent);
       }
 
       // Persist assistant message and track for intent analysis
