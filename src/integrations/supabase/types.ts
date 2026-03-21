@@ -933,6 +933,48 @@ export type Database = {
           },
         ]
       }
+      broker_connections: {
+        Row: {
+          account_balance: number | null
+          api_key_encrypted: string | null
+          api_secret_encrypted: string | null
+          broker: string | null
+          capital_allocated: number | null
+          connected_at: string | null
+          created_at: string | null
+          id: string
+          is_live: boolean | null
+          is_paused: boolean | null
+          user_id: string
+        }
+        Insert: {
+          account_balance?: number | null
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          broker?: string | null
+          capital_allocated?: number | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          is_paused?: boolean | null
+          user_id: string
+        }
+        Update: {
+          account_balance?: number | null
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          broker?: string | null
+          capital_allocated?: number | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          is_paused?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cached_market_reports: {
         Row: {
           created_at: string
@@ -2636,6 +2678,99 @@ export type Database = {
           validation_layers_passed?: string[] | null
           validation_status?: string
           visual_spec?: Json
+        }
+        Relationships: []
+      }
+      live_trades: {
+        Row: {
+          attribution: string | null
+          broker: string | null
+          broker_order_id: string | null
+          copilot_reasoning: string | null
+          created_at: string | null
+          entry_price: number | null
+          entry_time: string | null
+          exit_price: number | null
+          exit_time: string | null
+          filled_price: number | null
+          gate_evaluation_id: string | null
+          gate_reason: string | null
+          gate_result: string | null
+          hold_duration_mins: number | null
+          id: string
+          master_plan_id: string | null
+          outcome: string | null
+          pnl_dollars: number | null
+          pnl_r: number | null
+          position_size_pct: number | null
+          setup_type: string | null
+          slippage_r: number | null
+          source: string | null
+          stop_price: number | null
+          target_price: number | null
+          ticker: string | null
+          user_action: string | null
+          user_id: string
+        }
+        Insert: {
+          attribution?: string | null
+          broker?: string | null
+          broker_order_id?: string | null
+          copilot_reasoning?: string | null
+          created_at?: string | null
+          entry_price?: number | null
+          entry_time?: string | null
+          exit_price?: number | null
+          exit_time?: string | null
+          filled_price?: number | null
+          gate_evaluation_id?: string | null
+          gate_reason?: string | null
+          gate_result?: string | null
+          hold_duration_mins?: number | null
+          id?: string
+          master_plan_id?: string | null
+          outcome?: string | null
+          pnl_dollars?: number | null
+          pnl_r?: number | null
+          position_size_pct?: number | null
+          setup_type?: string | null
+          slippage_r?: number | null
+          source?: string | null
+          stop_price?: number | null
+          target_price?: number | null
+          ticker?: string | null
+          user_action?: string | null
+          user_id: string
+        }
+        Update: {
+          attribution?: string | null
+          broker?: string | null
+          broker_order_id?: string | null
+          copilot_reasoning?: string | null
+          created_at?: string | null
+          entry_price?: number | null
+          entry_time?: string | null
+          exit_price?: number | null
+          exit_time?: string | null
+          filled_price?: number | null
+          gate_evaluation_id?: string | null
+          gate_reason?: string | null
+          gate_result?: string | null
+          hold_duration_mins?: number | null
+          id?: string
+          master_plan_id?: string | null
+          outcome?: string | null
+          pnl_dollars?: number | null
+          pnl_r?: number | null
+          position_size_pct?: number | null
+          setup_type?: string | null
+          slippage_r?: number | null
+          source?: string | null
+          stop_price?: number | null
+          target_price?: number | null
+          ticker?: string | null
+          user_action?: string | null
+          user_id?: string
         }
         Relationships: []
       }

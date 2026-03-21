@@ -1,18 +1,41 @@
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBrokerConnection } from "@/hooks/useBrokerConnection";
+import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 
 interface CopilotStatusIndicatorProps {
-  isActive?: boolean;
-  statusLabel?: string;
-  tradeCount?: number;
   className?: string;
 }
 
-export function CopilotStatusIndicator({
-  isActive = true,
-  statusLabel = "Paper running",
-  tradeCount = 47,
-  className,
-}: CopilotStatusIndicatorProps) {
+export function CopilotStatusIndicator({ className }: CopilotStatusIndicatorProps) {
+  const { user } = useAuth();
+  const { connection } = useBrokerConnection(user?.id);
+  const { todayTrades } = useCopilotTrades(user?.id);
+
+  const isLive = connection?.is_live ?? false;
+  const isPaused = connection?.is_paused ?? false;
+
+  let dotColor = "bg-emerald-500";
+  let pingColor = "bg-emerald-400";
+  let statusLabel = "Paper running";
+  let showPing = true;
+
+  if (isLive && isPaused) {
+    dotColor = "bg-amber-500";
+    pingColor = "bg-amber-400";
+    statusLabel = "Paused";
+  } else if (isLive) {
+    dotColor = "bg-blue-500";
+    pingColor = "bg-blue-400";
+    statusLabel = "Live — Alpaca";
+  } else if (!isLive && connection) {
+    dotColor = "bg-muted-foreground/50";
+    statusLabel = "Offline";
+    showPing = false;
+  }
+
+  const tradeCount = todayTrades.length;
+
   return (
     <div
       className={cn(
@@ -20,17 +43,11 @@ export function CopilotStatusIndicator({
         className
       )}
     >
-      {/* Pulsing status dot */}
       <span className="relative flex h-2 w-2 shrink-0">
-        {isActive && (
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        {showPing && (
+          <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", pingColor)} />
         )}
-        <span
-          className={cn(
-            "relative inline-flex rounded-full h-2 w-2",
-            isActive ? "bg-emerald-500" : "bg-muted-foreground/50"
-          )}
-        />
+        <span className={cn("relative inline-flex rounded-full h-2 w-2", dotColor)} />
       </span>
 
       <span className="text-muted-foreground whitespace-nowrap">{statusLabel}</span>
