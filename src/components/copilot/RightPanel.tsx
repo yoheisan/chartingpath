@@ -17,6 +17,7 @@ import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useDeployGuardrails } from '@/hooks/useDeployGuardrails';
 import { useBrokerConnection } from '@/hooks/useBrokerConnection';
 import { useAuth } from '@/contexts/AuthContext';
+import type { SelectedClosedTrade } from './CenterPanel';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 

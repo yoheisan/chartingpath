@@ -4,17 +4,23 @@ import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
+import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const Copilot = () => {
   const { rules, hasPlan, refreshPlan } = useMasterPlan();
   const { user } = useAuth();
+  const { openTrades } = useCopilotTrades(user?.id);
   const [conflictTicker, setConflictTicker] = useState<string | null>(null);
   const [conflictReason, setConflictReason] = useState<string | null>(null);
   const [sessionEndBanner, setSessionEndBanner] = useState<{ time: string } | null>(null);
   const [debriefFromBanner, setDebriefFromBanner] = useState(false);
+  const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
+
+  const activeTrade = openTrades.length > 0 ? openTrades[0] : null;
 
   const focusNLBar = useCallback((prefill?: string) => {
     const event = new KeyboardEvent("keydown", {
@@ -38,6 +44,14 @@ const Copilot = () => {
     setConflictReason(null);
   }, []);
 
+  const handleTradeSelect = useCallback((trade: SelectedClosedTrade) => {
+    setSelectedClosedTrade(trade);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setSelectedClosedTrade(null);
+  }, []);
+
   // Listen for session_logs updates to detect session end
   useEffect(() => {
     if (!user?.id) return;
@@ -57,7 +71,6 @@ const Copilot = () => {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             setSessionEndBanner({ time });
 
-            // Send browser notification if permitted
             if (Notification.permission === 'granted') {
               new Notification('Session Complete', {
                 body: 'Your session is complete. Copilot has your recap ready.',
@@ -105,12 +118,21 @@ const Copilot = () => {
           <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
         </aside>
 
-        <main className="flex-1 border-r border-border/40 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground/40">Center panel</p>
+        <main className="flex-1 border-r border-border/40 flex flex-col min-h-0">
+          <CenterPanel
+            activeTrade={activeTrade}
+            selectedClosedTrade={selectedClosedTrade}
+            onBack={handleBack}
+            onFocusNLBar={focusNLBar}
+          />
         </main>
 
         <aside className="w-[256px] shrink-0 overflow-hidden">
-          <RightPanel openDebriefOnMount={debriefFromBanner} onDebriefOpened={() => setDebriefFromBanner(false)} />
+          <RightPanel
+            openDebriefOnMount={debriefFromBanner}
+            onDebriefOpened={() => setDebriefFromBanner(false)}
+            onTradeSelect={handleTradeSelect}
+          />
         </aside>
       </div>
     </div>
