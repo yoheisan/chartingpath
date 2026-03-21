@@ -726,23 +726,23 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your AI trading desk — live demo</h4>
+                      <h4 className="font-semibold mb-1">Set your first trading plan and see how it performs</h4>
                       <p className="text-sm text-muted-foreground">
-                        Ask Copilot anything. See how it scans, scores, and trades for you. Sign up to activate your mandate and go live.
+                        Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.
                       </p>
                     </>
                   ) : hasPlan ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your desk is running</h4>
+                      <h4 className="font-semibold mb-1">Your trading plan is running</h4>
                       <p className="text-sm text-muted-foreground">
-                        Copilot is scanning. {todayTradeCount !== null ? `${todayTradeCount} paper trade${todayTradeCount !== 1 ? 's' : ''} taken today.` : ''}
+                        Copilot is paper-testing your plan live. {todayTradeCount !== null ? `${todayTradeCount} trade${todayTradeCount !== 1 ? 's' : ''} taken today. Review results before going live.` : 'Review results before going live.'}
                       </p>
                     </>
                   ) : (
                     <>
-                      <h4 className="font-semibold mb-1">Let's set up your trading mandate</h4>
+                      <h4 className="font-semibold mb-1">What's your trading plan?</h4>
                       <p className="text-sm text-muted-foreground">
-                        Tell me how you want to trade — patterns, risk rules, timing. I'll handle the rest.
+                        Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.
                       </p>
                     </>
                   )}
