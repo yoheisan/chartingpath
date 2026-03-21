@@ -96,23 +96,23 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: Righ
 
       {/* Section 2 — AI vs Human Head-to-Head */}
       <div className="flex border-b border-border/40">
-        <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground">Copilot</span>
-          <span className={`text-lg font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Copilot</span>
+          <span className={`text-base font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatR(stats.aiPnlR)}
           </span>
-          <span className="text-sm font-mono text-muted-foreground">
-            {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
+          <span className="text-sm font-mono text-muted-foreground truncate">
+            {stats.aiWinRate}% · {stats.aiTradeCount} trades
           </span>
         </div>
-        <div className="w-px bg-border/40" />
-        <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground">Your overrides</span>
-          <span className={`text-lg font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        <div className="w-px bg-border/40 shrink-0" />
+        <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Overrides</span>
+          <span className={`text-base font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
-          <span className="text-sm font-mono text-muted-foreground">
-            {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+          <span className="text-sm font-mono text-muted-foreground truncate">
+            {stats.humanWinRate}% · {stats.humanTradeCount} trades
           </span>
         </div>
       </div>
