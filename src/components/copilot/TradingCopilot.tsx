@@ -269,8 +269,29 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
   
   const contextProcessedRef = useRef(false);
+  const { hasPlan } = useMasterPlan();
+
+  // Fetch today's paper trade count for the greeting
+  useEffect(() => {
+    if (!isAuthenticated || !hasPlan) return;
+    const fetchTodayTrades = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const today = new Date().toISOString().slice(0, 10);
+        const { count } = await supabase
+          .from('paper_trades' as any)
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('entry_time', today);
+        setTodayTradeCount(count ?? 0);
+      } catch { setTodayTradeCount(0); }
+    };
+    fetchTodayTrades();
+  }, [isAuthenticated, hasPlan]);
   const isMobile = useIsMobile();
 
   const {
