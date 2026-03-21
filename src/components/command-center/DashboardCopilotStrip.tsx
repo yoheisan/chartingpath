@@ -1,39 +1,61 @@
+import { useCopilotTrades } from '@/hooks/useCopilotTrades';
+import { useAuth } from '@/components/auth/AuthProvider';
+
+const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
+
 export function DashboardCopilotBar() {
+  const { user } = useAuth();
+  const { openTrades, stats } = useCopilotTrades(user?.id);
+
+  const statusText = openTrades.length > 0
+    ? `${openTrades.length} open trade${openTrades.length !== 1 ? 's' : ''}: ${openTrades.map(t => t.symbol).join(', ')}. ${formatR(stats.aiPnlR)} today.`
+    : `Scanning candidates. ${stats.aiTradeCount} trade${stats.aiTradeCount !== 1 ? 's' : ''} taken today.`;
+
   return (
     <div className="w-full px-4 py-2 flex items-center gap-3 bg-blue-500/5 border-b border-blue-500/20">
-      {/* Avatar */}
       <div className="h-6 w-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-blue-400">C</span>
       </div>
-      {/* Status text */}
-      <p className="text-xs text-muted-foreground flex-1 truncate">
-        Scanning 94 candidates. 3 setups shortlisted — waiting for breakout confirmation on NVDA.
-      </p>
-      {/* Paper running label */}
-      <span className="text-[10px] text-muted-foreground shrink-0">Paper running</span>
+      <p className="text-xs text-muted-foreground flex-1 truncate">{statusText}</p>
+      <span className="text-[10px] text-muted-foreground shrink-0">
+        {openTrades.length > 0 ? 'Paper active' : 'Paper running'}
+      </span>
     </div>
   );
 }
 
 export function DashboardAIStrip() {
+  const { user } = useAuth();
+  const { stats } = useCopilotTrades(user?.id);
+
   return (
     <div className="w-full bg-card border-b border-border/40">
       <div className="flex items-center">
         <div className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4">
           <span className="text-xs text-muted-foreground">Copilot today</span>
-          <span className="text-sm font-bold font-mono text-green-500">+3.5R</span>
-          <span className="text-[10px] font-mono text-muted-foreground">· 68% · 3 trades</span>
+          <span className={`text-sm font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatR(stats.aiPnlR)}
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            · {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
+          </span>
         </div>
         <div className="w-px h-8 bg-border/40" />
         <div className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4">
           <span className="text-xs text-muted-foreground">Your overrides</span>
-          <span className="text-sm font-bold font-mono text-red-500">−2.0R</span>
-          <span className="text-[10px] font-mono text-muted-foreground">· 33% · 1 trade</span>
+          <span className={`text-sm font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            · {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+          </span>
         </div>
       </div>
       <div className="px-4 pb-1.5 -mt-1">
         <p className="text-[10px] text-muted-foreground/70 text-center">
-          Momentum overrides are down 2.4R this week vs Copilot +6.1R
+          {stats.aiTradeCount + stats.humanTradeCount > 0
+            ? `AI: ${formatR(stats.aiPnlR)} vs Overrides: ${formatR(stats.humanPnlR)} today`
+            : 'No trades yet today — Copilot is scanning'}
         </p>
       </div>
     </div>

@@ -317,3 +317,9 @@ verify_jwt = false
 
 [functions.evaluate-gate]
 verify_jwt = false
+
+[functions.scan-setups]
+verify_jwt = false
+
+[functions.manage-trades]
+verify_jwt = false
