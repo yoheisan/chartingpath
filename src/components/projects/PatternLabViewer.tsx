@@ -98,6 +98,12 @@ interface PatternResult {
     recommendation: 'trade' | 'caution' | 'avoid';
   }[];
   doNotTradeRules: string[];
+  detectionFunnel?: {
+    detected: number;
+    gradeFiltered: number;
+    overlapSkipped: number;
+    traded: number;
+  };
 }
 
 interface ExitOutcome {
