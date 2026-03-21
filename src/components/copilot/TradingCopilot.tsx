@@ -710,6 +710,9 @@ export function TradingCopilot({
               (() => {
                 const pageCtx = getPageContext(location.pathname);
                 const tier2Chips = isAuthenticated ? pageCtx.chips : [];
+                const redirectPath = typeof window !== 'undefined'
+                  ? encodeURIComponent(window.location.pathname + window.location.search)
+                  : '/';
                 return (
               <div className="space-y-4">
                 <div className="text-center py-6">
@@ -718,10 +721,9 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
-                      <p className="text-sm text-muted-foreground">{t('copilot.welcomeDesc')}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-2">
-                        {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
+                      <h4 className="font-semibold mb-1">Your AI trading desk — live demo</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Ask Copilot anything. See how it scans, scores, and trades for you. Sign up to activate your mandate and go live.
                       </p>
                     </>
                   ) : hasPlan ? (
@@ -742,7 +744,36 @@ export function TradingCopilot({
                 </div>
 
                 <div className="space-y-3">
-                  {/* Tier 1 — Mandate & Session */}
+                  {/* ── LOGGED-OUT: 3 demo chips ── */}
+                  {!isAuthenticated && (
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "What patterns are active right now?", prompt: "What patterns are active right now?" },
+                        { label: "Score a trade for me", prompt: "Score a trade for me" },
+                        { label: "How does the AI Gate work?", prompt: "How does the AI Gate work?" },
+                      ].map((chip) => (
+                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                          <span className="text-xs">{chip.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── LOGGED-OUT: Active setups banner ── */}
+                  {!isAuthenticated && (
+                    <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                      <p className="text-xs text-foreground/80 mb-2">
+                        Copilot found <span className="font-semibold text-accent">{activePatternCount ?? '…'}</span> active setups right now — sign up free to see them scored against your mandate.
+                      </p>
+                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                        <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
+                          Start free →
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's trades")} disabled={isLoading}>
@@ -754,7 +785,7 @@ export function TradingCopilot({
                     </div>
                   )}
 
-                  {/* Tier 1 — Getting started (no mandate) */}
+                  {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
                   {isAuthenticated && !hasPlan && (
                     <Button
                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
@@ -765,24 +796,12 @@ export function TradingCopilot({
                     </Button>
                   )}
 
-                  {/* Tier 2 — Page-aware chips */}
+                  {/* ── LOGGED-IN: Tier 2 — Page-aware chips ── */}
                   {tier2Chips.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tier2Chips.map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
                           <span className="text-xs">{chip.label}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Guest quick actions */}
-                  {!isAuthenticated && (
-                    <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                      {GUEST_ACTIONS.map((action) => (
-                        <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
-                          <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                          <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
                         </Button>
                       ))}
                     </div>
