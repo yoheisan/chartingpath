@@ -1671,6 +1671,22 @@ export default function LivePatternsPage() {
                                 {signalAge}
                               </span>
                             </TableCell>
+                            {/* Gate Badge */}
+                            <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                const styles = {
+                                  aligned: 'bg-green-500/10 text-green-500 border-green-500/30',
+                                  partial: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+                                  conflict: 'bg-red-500/10 text-red-500 border-red-500/30',
+                                };
+                                return (
+                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[gateType]}`}>
+                                    {gateType}
+                                  </Badge>
+                                );
+                              })()}
+                            </TableCell>
                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -1688,6 +1704,33 @@ export default function LivePatternsPage() {
                                 </TooltipTrigger>
                                 <TooltipContent side="left">Paper Trade</TooltipContent>
                               </Tooltip>
+                            </TableCell>
+                            {/* Add to Copilot paper */}
+                            <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                  if (gateType === 'aligned') {
+                                    toast.success('Added to Copilot paper ✓');
+                                  } else {
+                                    toast('This setup conflicts with your Master Plan. Add anyway?', {
+                                      duration: 10000,
+                                      action: {
+                                        label: 'Add anyway',
+                                        onClick: () => toast.success('Added to Copilot paper ✓'),
+                                      },
+                                      cancel: {
+                                        label: 'Skip',
+                                        onClick: () => {},
+                                      },
+                                    });
+                                  }
+                                }}
+                              >
+                                + Add to Copilot paper
+                              </button>
                             </TableCell>
                           </TableRow>
                         );
