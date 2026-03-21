@@ -67,12 +67,23 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   }, []);
 
+  const openPlanBuilder = useCallback(() => {
+    setPendingPlanBuilder(true);
+    setIsOpen(true);
+  }, []);
+
   const consumePendingContext = useCallback(() => {
     const context = pendingContext;
     setPendingContext(null);
     setPendingAnalysis(null);
     return context;
   }, [pendingContext]);
+
+  const consumePendingPlanBuilder = useCallback(() => {
+    const val = pendingPlanBuilder;
+    setPendingPlanBuilder(false);
+    return val;
+  }, [pendingPlanBuilder]);
 
   const setChartContext = useCallback((data: ChartContextData | null) => {
     contextRef.current = data;
