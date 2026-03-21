@@ -431,6 +431,15 @@ export function TradingCopilot({
     }
   }, [pendingContext, pendingAnalysis, isExpanded, isLoading, onContextConsumed]);
 
+  // Handle pending plan builder from context
+  useEffect(() => {
+    if (pendingPlanBuilder && isExpanded) {
+      setShowBuilder(true);
+      setMessages([]);
+      onPlanBuilderConsumed?.();
+    }
+  }, [pendingPlanBuilder, isExpanded, onPlanBuilderConsumed]);
+
   const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
