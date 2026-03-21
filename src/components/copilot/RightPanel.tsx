@@ -90,6 +90,16 @@ const RightPanel = () => {
         </ScrollArea>
       </div>
 
+      {/* Review today button */}
+      <div className="px-3 py-2 border-t border-border/40 flex justify-center">
+        <button
+          onClick={() => setDebriefOpen(true)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Review today →
+        </button>
+      </div>
+
       {/* Section 6 — Deploy Zone */}
       <div className="border-t border-border/40 px-3 py-3 flex flex-col items-center gap-1.5">
         <TooltipProvider delayDuration={200}>
@@ -110,6 +120,9 @@ const RightPanel = () => {
         </TooltipProvider>
         <span className="text-[10px] text-muted-foreground">47 paper trades · +18.4R track record</span>
       </div>
+
+      {/* Session Debrief slide-in */}
+      <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} />
     </div>
   );
 };
