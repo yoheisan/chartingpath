@@ -25,6 +25,7 @@ interface RightPanelProps {
   openDebriefOnMount?: boolean;
   onDebriefOpened?: () => void;
   onTradeSelect?: (trade: SelectedClosedTrade) => void;
+  debriefQuestion?: string | null;
 }
 
 const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: RightPanelProps = {}) => {
