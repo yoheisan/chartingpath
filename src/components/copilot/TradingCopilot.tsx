@@ -295,6 +295,17 @@ export function TradingCopilot({
 
   const { trackQuestion } = useCopilotFeedback();
 
+  // Track auth transition — preserve chat, show welcome toast
+  const prevAuthRef = useRef(isAuthenticated);
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthRef.current) {
+      // User just logged in mid-session
+      toast.success("Welcome — your mandate is ready to set up.");
+      setGuestMsgCount(0); // reset paywall
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+
   // Mandate handling — integrated into chat UI
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
     onSaved: () => {
