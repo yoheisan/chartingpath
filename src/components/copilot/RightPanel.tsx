@@ -96,37 +96,37 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: Righ
 
       {/* Section 2 — AI vs Human Head-to-Head */}
       <div className="flex border-b border-border/40">
-        <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground">Copilot</span>
-          <span className={`text-lg font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Copilot</span>
+          <span className={`text-base font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatR(stats.aiPnlR)}
           </span>
-          <span className="text-sm font-mono text-muted-foreground">
-            {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
+          <span className="text-sm font-mono text-muted-foreground truncate">
+            {stats.aiWinRate}% · {stats.aiTradeCount} trades
           </span>
         </div>
-        <div className="w-px bg-border/40" />
-        <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground">Your overrides</span>
-          <span className={`text-lg font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        <div className="w-px bg-border/40 shrink-0" />
+        <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Overrides</span>
+          <span className={`text-base font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
-          <span className="text-sm font-mono text-muted-foreground">
-            {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+          <span className="text-sm font-mono text-muted-foreground truncate">
+            {stats.humanWinRate}% · {stats.humanTradeCount} trades
           </span>
         </div>
       </div>
 
       {/* Section 3 — Metric Cards 2×2 */}
-      <div className="grid grid-cols-2 gap-1.5 p-2 border-b border-border/40">
+      <div className="grid grid-cols-2 gap-1 p-1.5 border-b border-border/40">
         {[
           { label: 'AI avg R', value: formatR(activeTab === 'paper' ? paperStats.aiAvgR : (liveStats.aiTradeCount > 0 ? liveStats.aiPnlR / liveStats.aiTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.aiAvgR : liveStats.aiPnlR) >= 0 },
-          { label: 'Override avg R', value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
+          { label: 'Ovr avg R', value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
           { label: 'AI win rate', value: `${stats.aiWinRate}%`, sub: 'today', positive: stats.aiWinRate >= 50 },
-          { label: 'Override win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
+          { label: 'Ovr win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
         ].map((m) => (
-          <div key={m.label} className="rounded-md bg-secondary/50 p-2 flex flex-col items-center gap-0.5">
-            <span className="text-sm text-muted-foreground">{m.label}</span>
+          <div key={m.label} className="rounded-md bg-secondary/50 p-1.5 flex flex-col items-center gap-0.5 min-w-0">
+            <span className="text-sm text-muted-foreground truncate w-full text-center">{m.label}</span>
             <span className={`text-sm font-bold font-mono ${m.positive ? 'text-green-500' : 'text-red-500'}`}>
               {m.value}
             </span>

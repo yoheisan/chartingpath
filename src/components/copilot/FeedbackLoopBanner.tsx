@@ -14,16 +14,16 @@ export function FeedbackLoopBanner({ onFocusNLBar }: FeedbackLoopBannerProps) {
       <p className="text-sm leading-[1.6] text-amber-200/90">
         You've added momentum plays 3 times despite your plan. Update your Master Plan to include them — or keep your rules?
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           onClick={() => onFocusNLBar('Update my plan to also include momentum setups when...')}
-          className="rounded-md border border-amber-500/30 bg-amber-500/20 px-2.5 py-1 text-sm font-medium text-amber-300 hover:bg-amber-500/30 transition-colors"
+          className="rounded-md border border-amber-500/30 bg-amber-500/20 px-2 py-1 text-sm font-medium text-amber-300 hover:bg-amber-500/30 transition-colors whitespace-nowrap"
         >
           Update Plan
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="rounded-md border border-border/40 bg-secondary/50 px-2.5 py-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="rounded-md border border-border/40 bg-secondary/50 px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
         >
           Keep My Rules
         </button>

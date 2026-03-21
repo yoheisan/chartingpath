@@ -36,15 +36,15 @@ export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) 
       <CardContent className="p-3 pt-0 space-y-3">
         {hasMandate ? (
           <>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               {displayRules.map((rule) => (
                 <button
                   key={rule.label}
                   onClick={() => onFocusNLBar(`${rule.label} ${rule.detail}`)}
-                  className="inline-flex items-center gap-1 rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-sm text-blue-300 hover:bg-blue-500/20 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-sm text-blue-300 hover:bg-blue-500/20 transition-colors"
                 >
                   <span className="font-mono font-bold text-blue-400">[{rule.label}]</span>
-                  <span className="text-muted-foreground">{rule.detail}</span>
+                  <span className="text-muted-foreground truncate">{rule.detail}</span>
                 </button>
               ))}
             </div>
