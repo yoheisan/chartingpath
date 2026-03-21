@@ -136,8 +136,20 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
           if (jsonStr === "[DONE]") break;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) assistantContent += content;
+            // Handle new streaming protocol
+            if (parsed.type === "token") {
+              assistantContent += parsed.text;
+            } else if (parsed.type === "error") {
+              assistantContent = parsed.text;
+              break;
+            } else if (parsed.type === "done") {
+              break;
+            } else if (parsed.type === "status") {
+              continue; // Skip status in non-streaming fallback
+            } else {
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) assistantContent += content;
+            }
           } catch {
             // ignore
           }
