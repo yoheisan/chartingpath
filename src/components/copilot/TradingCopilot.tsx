@@ -683,7 +683,7 @@ export function TradingCopilot({
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
               <p className="text-xs text-white/70">
-                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : t('copilot.subtitle')}
+                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : "See what AI-native trading looks like."}
               </p>
             </div>
           </div>
