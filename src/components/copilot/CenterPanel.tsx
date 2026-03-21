@@ -141,7 +141,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
           {isAi ? 'AI-Approved' : 'Human-Overwrite'}
         </Badge>
         <span className="ml-auto text-sm font-mono text-muted-foreground">
-          Paper · Entered {entryTime} · Position {positionPct}%
+          Paper trade · Entered {entryTime} · Position {positionPct}%
         </span>
       </div>
 
