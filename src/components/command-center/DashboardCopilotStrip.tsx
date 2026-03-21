@@ -28,6 +28,7 @@ export function DashboardCopilotBar() {
 export function DashboardAIStrip() {
   const { user } = useAuth();
   const { stats } = useCopilotTrades(user?.id);
+  const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
   return (
     <div className="w-full bg-card border-b border-border/40">
