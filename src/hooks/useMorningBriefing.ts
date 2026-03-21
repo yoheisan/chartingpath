@@ -184,7 +184,7 @@ export function useMorningBriefing(userId?: string) {
           .filter(s => detectionMap.has(s.detection_id))
           .map(s => {
             const detection = detectionMap.get(s.detection_id)!;
-            const composite = (s.analyst_raw + s.risk_raw + s.timing_raw + s.portfolio_raw) / 4;
+            const composite = (s.analyst_raw + s.risk_raw + s.timing_raw + s.portfolio_raw) / 4 * 100;
             return {
               detectionId: s.detection_id,
               instrument: s.instrument,

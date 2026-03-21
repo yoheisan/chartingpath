@@ -110,8 +110,8 @@ serve(async (req) => {
             .map((s: any) => ({
               instrument: s.instrument,
               patternName: detMap.get(s.detection_id),
-              composite: ((s.analyst_raw + s.risk_raw + s.timing_raw + s.portfolio_raw) / 4).toFixed(0),
-              winRate: s.win_rate ? (s.win_rate * 100).toFixed(0) : null,
+              composite: ((s.analyst_raw + s.risk_raw + s.timing_raw + s.portfolio_raw) / 4 * 100).toFixed(0),
+              winRate: s.win_rate ? s.win_rate.toFixed(0) : null,
               expectancyR: s.expectancy_r?.toFixed(2),
             }))
             .sort((a: any, b: any) => Number(b.composite) - Number(a.composite))
