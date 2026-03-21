@@ -179,6 +179,32 @@ export function PlatformImportGuide() {
                 warning={mt5('step7Warning')} />
             </div>
           </TabsContent>
+
+          <TabsContent value="copilot" className="space-y-4">
+            <Card className="border-blue-500/20 bg-blue-500/5">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  Export as Copilot Strategy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Convert this script's pattern logic into a Copilot Master Plan mandate. Copilot will use your script's setup rules to scan and execute automatically.
+                </p>
+                <Button
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => {
+                    toast.success('Strategy imported. Review your Master Plan to confirm.');
+                    navigate('/copilot');
+                  }}
+                >
+                  Import to Master Plan
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
