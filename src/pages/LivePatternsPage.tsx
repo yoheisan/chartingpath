@@ -14,6 +14,7 @@ import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
+import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
