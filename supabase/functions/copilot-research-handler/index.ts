@@ -400,61 +400,84 @@ serve(async (req) => {
 
     const MAX_TOOL_ROUNDS = 6;
 
-    for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
-      console.log(`[copilot-research] AI round ${round}`);
+    const { createSSEStream, getStatusMessage, STREAM_CORS_HEADERS, HARD_TIMEOUT_MS } = await import("../_shared/streaming.ts");
+    const { readable, writer } = createSSEStream();
 
-      const aiResp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GEMINI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gemini-2.0-flash",
-          messages: convoMessages,
-          tools,
-          tool_choice: "auto",
-          stream: false,
-          max_tokens: 8192,
-        }),
-      });
+    const processAsync = async () => {
+      const timeoutId = setTimeout(() => {
+        writer.sendError("This is taking longer than expected. Please try again.");
+        writer.close();
+      }, HARD_TIMEOUT_MS);
 
-      if (!aiResp.ok) {
-        const errText = await aiResp.text().catch(() => "");
-        console.error("[copilot-research] AI error:", aiResp.status, errText);
-        throw new Error(`AI gateway error: ${aiResp.status}`);
+      try {
+        for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
+          console.log(`[copilot-research] AI round ${round}`);
+          writer.sendStatus(getStatusMessage(round));
+
+          const aiResp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${GEMINI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gemini-2.0-flash",
+              messages: convoMessages,
+              tools,
+              tool_choice: "auto",
+              stream: false,
+              max_tokens: 8192,
+            }),
+          });
+
+          if (!aiResp.ok) {
+            const errText = await aiResp.text().catch(() => "");
+            console.error("[copilot-research] AI error:", aiResp.status, errText);
+            writer.sendError("Failed to get a response. Please try again.");
+            writer.close();
+            return;
+          }
+
+          const result = await aiResp.json();
+          const assistantMessage = result.choices?.[0]?.message;
+
+          if (assistantMessage?.tool_calls?.length) {
+            const toolResults = await Promise.all(
+              assistantMessage.tool_calls.map(async (tc: any) => {
+                let toolArgs: any = {};
+                try { toolArgs = JSON.parse(tc.function.arguments || "{}"); } catch { toolArgs = {}; }
+                const toolResult = await executeTool(tc.function.name, toolArgs, supabase, userId);
+                return { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) };
+              })
+            );
+
+            convoMessages.push(assistantMessage, ...toolResults);
+            continue;
+          }
+
+          const content = assistantMessage?.content || "I couldn't process that request.";
+          writer.sendToken(content);
+          writer.sendDone();
+          writer.close();
+          return;
+        }
+
+        const fallback = "I wasn't able to complete the research. Please try again or visit [Pattern Lab](/pattern-lab) directly.";
+        writer.sendToken(fallback);
+        writer.sendDone();
+        writer.close();
+      } catch (error) {
+        console.error("[copilot-research] Error:", error);
+        writer.sendError(error instanceof Error ? error.message : "Internal error");
+        writer.close();
+      } finally {
+        clearTimeout(timeoutId);
       }
+    };
 
-      const result = await aiResp.json();
-      const assistantMessage = result.choices?.[0]?.message;
+    processAsync();
 
-      if (assistantMessage?.tool_calls?.length) {
-        const toolResults = await Promise.all(
-          assistantMessage.tool_calls.map(async (tc: any) => {
-            let toolArgs: any = {};
-            try { toolArgs = JSON.parse(tc.function.arguments || "{}"); } catch { toolArgs = {}; }
-            const toolResult = await executeTool(tc.function.name, toolArgs, supabase, userId);
-            return { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) };
-          })
-        );
-
-        convoMessages.push(assistantMessage, ...toolResults);
-        continue;
-      }
-
-      const content = assistantMessage?.content || "I couldn't process that request.";
-      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
-
-      return new Response(sseData, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-      });
-    }
-
-    const fallback = "I wasn't able to complete the research. Please try again or visit [Pattern Lab](/pattern-lab) directly.";
-    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}\n\ndata: [DONE]\n\n`;
-    return new Response(sseData, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    return new Response(readable, { headers: STREAM_CORS_HEADERS });
   } catch (error) {
     console.error("[copilot-research] Error:", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Internal error" }), {

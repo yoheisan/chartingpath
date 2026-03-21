@@ -2653,214 +2653,228 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const { messages, language, context, viewContext } = await req.json();
-    
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+  // Import streaming utilities
+  const { createSSEStream, getStatusMessage, streamFinalResponse, STREAM_CORS_HEADERS, HARD_TIMEOUT_MS } = await import("../_shared/streaming.ts");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const { readable, writer } = createSSEStream();
 
-    // Extract user ID from auth header if available
-    let userId: string | null = null;
-    const authHeader = req.headers.get('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      try {
-        const { data: { user } } = await supabase.auth.getUser(token);
-        userId = user?.id || null;
-      } catch {
-        // Auth failed, continue without user context
-      }
-    }
+  // Start the async processing in the background
+  const processAsync = async () => {
+    let timeoutId: number | undefined;
+    try {
+      // Hard timeout safety net
+      timeoutId = setTimeout(() => {
+        writer.sendError("This is taking longer than expected. Please try again.");
+        writer.close();
+      }, HARD_TIMEOUT_MS);
 
-    // ============================================
-    // PHASE 1: Fetch all context layers in parallel
-    // ============================================
-    console.log('[trading-copilot] Fetching all context layers...');
-    const [learnedRulesPrompt, ragContext, platformContext, userBehavior] = await Promise.all([
-      fetchLearnedRules(supabase),
-      fetchRAGContext(supabase, messages),
-      fetchPlatformContext(supabase),
-      fetchUserBehavior(supabase, userId),
-    ]);
-    const temporalContext = computeTemporalContext();
-    const langCode = (language || "en").toLowerCase();
-    console.log(`[trading-copilot] Language requested: ${langCode}`);
-    const langInstruction = langCode !== "en"
-      ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
-      : "";
-    
-    // Build view context layer — tells the AI what the user is currently looking at
-    let viewContextLayer = '';
-    if (viewContext && typeof viewContext === 'object') {
-      const pageName = viewContext.pageName || viewContext.page || null;
-      const pageRoute = viewContext.pageRoute || null;
-      const parts: string[] = [];
-
-      if (pageName) {
-        parts.push(`The user is currently on the **${pageName}** page.`);
-        parts.push(`Adjust your responses and suggested actions to be relevant to what they can do on this page. Page context: ${pageRoute || pageName}`);
-      }
-      if (viewContext.instrument) parts.push(`They are focused on **${viewContext.instrument}**.`);
-      if (viewContext.patternName) parts.push(`Pattern: **${viewContext.patternName}**.`);
-      if (viewContext.timeframe) parts.push(`Timeframe: **${viewContext.timeframe}**.`);
-      if (viewContext.direction) parts.push(`Direction: **${viewContext.direction}**.`);
-      if (viewContext.grade) parts.push(`Quality grade: **${viewContext.grade}**.`);
-      if (viewContext.verdict) parts.push(`Agent verdict: **${viewContext.verdict}** (score: ${viewContext.compositeScore ?? 'N/A'}).`);
-      if (viewContext.detectionId) parts.push(`Detection ID: ${viewContext.detectionId}.`);
-      if (parts.length > 0) {
-        viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
-      }
-      console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
-    }
-
-    // Assemble enhanced system prompt with all context layers
-    const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer].filter(Boolean).join('\n\n');
-    const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
-      + (contextLayers ? '\n\n' + contextLayers : '')
-      + langInstruction 
-      + learnedRulesPrompt;
-    console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
-    console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
-
-    // Track tool calls/results for RLVR logging
-    const allToolCalls: any[] = [];
-    const allToolResults: any[] = [];
-
-    let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
-
-    const MAX_TOOL_ROUNDS = 5;
-
-    for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
-      console.log(`[trading-copilot] AI round ${round}`);
-
-      let aiResp: Response | null = null;
-      let lastError: string = '';
-      const MAX_RETRY_ATTEMPTS = 2;
+      const { messages, language, context, viewContext } = await req.json();
       
-      for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
-        aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${GEMINI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gemini-2.0-flash",
-            messages: convo,
-            tools,
-            tool_choice: "auto",
-            stream: false,
-            max_tokens: 8192,
-          }),
-        });
+      const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+      if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-        if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
-          const waitTime = 3000;
-          console.log(`[trading-copilot] Rate limited, retrying in ${waitTime}ms (attempt ${attempt}/${MAX_RETRY_ATTEMPTS})`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          continue;
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Extract user ID from auth header if available
+      let userId: string | null = null;
+      const authHeader = req.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        try {
+          const { data: { user } } = await supabase.auth.getUser(token);
+          userId = user?.id || null;
+        } catch {
+          // Auth failed, continue without user context
         }
+      }
+
+      // ============================================
+      // PHASE 1: Fetch all context layers in parallel
+      // ============================================
+      writer.sendStatus("Preparing context…");
+      console.log('[trading-copilot] Fetching all context layers...');
+      const [learnedRulesPrompt, ragContext, platformContext, userBehavior] = await Promise.all([
+        fetchLearnedRules(supabase),
+        fetchRAGContext(supabase, messages),
+        fetchPlatformContext(supabase),
+        fetchUserBehavior(supabase, userId),
+      ]);
+      const temporalContext = computeTemporalContext();
+      const langCode = (language || "en").toLowerCase();
+      console.log(`[trading-copilot] Language requested: ${langCode}`);
+      const langInstruction = langCode !== "en"
+        ? `\n\n## Language\nIMPORTANT: You MUST respond entirely in the language with code "${langCode}". All explanations, analysis, headings, and commentary must be in that language. Keep ticker symbols, pattern names (e.g. "Bull Flag"), and technical terms like RSI, MACD, ATR in English. Translate everything else.\n`
+        : "";
+      
+      // Build view context layer
+      let viewContextLayer = '';
+      if (viewContext && typeof viewContext === 'object') {
+        const pageName = viewContext.pageName || viewContext.page || null;
+        const pageRoute = viewContext.pageRoute || null;
+        const parts: string[] = [];
+
+        if (pageName) {
+          parts.push(`The user is currently on the **${pageName}** page.`);
+          parts.push(`Adjust your responses and suggested actions to be relevant to what they can do on this page. Page context: ${pageRoute || pageName}`);
+        }
+        if (viewContext.instrument) parts.push(`They are focused on **${viewContext.instrument}**.`);
+        if (viewContext.patternName) parts.push(`Pattern: **${viewContext.patternName}**.`);
+        if (viewContext.timeframe) parts.push(`Timeframe: **${viewContext.timeframe}**.`);
+        if (viewContext.direction) parts.push(`Direction: **${viewContext.direction}**.`);
+        if (viewContext.grade) parts.push(`Quality grade: **${viewContext.grade}**.`);
+        if (viewContext.verdict) parts.push(`Agent verdict: **${viewContext.verdict}** (score: ${viewContext.compositeScore ?? 'N/A'}).`);
+        if (viewContext.detectionId) parts.push(`Detection ID: ${viewContext.detectionId}.`);
+        if (parts.length > 0) {
+          viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
+        }
+        console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
+      }
+
+      // Assemble enhanced system prompt with all context layers
+      const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer].filter(Boolean).join('\n\n');
+      const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
+        + (contextLayers ? '\n\n' + contextLayers : '')
+        + langInstruction 
+        + learnedRulesPrompt;
+      console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
+      console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
+
+      // Track tool calls/results for RLVR logging
+      const allToolCalls: any[] = [];
+      const allToolResults: any[] = [];
+
+      let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
+
+      const MAX_TOOL_ROUNDS = 5;
+      const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+      const geminiHeaders = {
+        "Authorization": `Bearer ${GEMINI_API_KEY}`,
+        "Content-Type": "application/json",
+      };
+      const baseBody = {
+        model: "gemini-2.0-flash",
+        tools,
+        tool_choice: "auto",
+        max_tokens: 8192,
+      };
+
+      for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
+        console.log(`[trading-copilot] AI round ${round}`);
+        writer.sendStatus(getStatusMessage(round));
+
+        let aiResp: Response | null = null;
+        const MAX_RETRY_ATTEMPTS = 2;
         
-        break;
-      }
-
-      if (!aiResp || !aiResp.ok) {
-        if (aiResp?.status === 429) {
-          console.error("[trading-copilot] Rate limit exceeded after retries");
-          return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+          aiResp = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: geminiHeaders,
+            body: JSON.stringify({
+              ...baseBody,
+              messages: convo,
+              stream: false,
+            }),
           });
-        }
-        if (aiResp?.status === 402) {
-          return new Response(JSON.stringify({ error: "AI credits depleted" }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const t = await aiResp?.text().catch(() => "") || lastError;
-        console.error("[trading-copilot] AI gateway error:", aiResp?.status, t);
-        throw new Error(`AI gateway error: ${aiResp?.status || 'unknown'}`);
-      }
 
-      const responseText = await aiResp.text();
-      let assistantMessage: any = null;
+          if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
+            console.log(`[trading-copilot] Rate limited, retrying in 3s (attempt ${attempt}/${MAX_RETRY_ATTEMPTS})`);
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            continue;
+          }
+          break;
+        }
 
-      try {
-        const result = JSON.parse(responseText);
-        assistantMessage = result.choices?.[0]?.message;
-      } catch {
-        const lines = responseText.split("\n");
-        for (const line of lines) {
-          if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-            assistantMessage = data.choices?.[0]?.message ?? data.choices?.[0]?.delta;
-            if (assistantMessage) break;
-          } catch {
-            // ignore
+        if (!aiResp || !aiResp.ok) {
+          if (aiResp?.status === 429) {
+            writer.sendError("AI service is busy. Please try again in a moment.");
+            writer.close();
+            return;
+          }
+          const t = await aiResp?.text().catch(() => "");
+          console.error("[trading-copilot] AI gateway error:", aiResp?.status, t);
+          writer.sendError("Failed to get a response. Please try again.");
+          writer.close();
+          return;
+        }
+
+        const responseText = await aiResp.text();
+        let assistantMessage: any = null;
+
+        try {
+          const result = JSON.parse(responseText);
+          assistantMessage = result.choices?.[0]?.message;
+        } catch {
+          const lines = responseText.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              assistantMessage = data.choices?.[0]?.message ?? data.choices?.[0]?.delta;
+              if (assistantMessage) break;
+            } catch {
+              // ignore
+            }
           }
         }
+
+        console.log("[trading-copilot] Assistant message:", JSON.stringify(assistantMessage));
+
+        if (assistantMessage?.tool_calls?.length) {
+          console.log("[trading-copilot] Tool calls detected:", assistantMessage.tool_calls.length);
+
+          const toolResults = await Promise.all(
+            assistantMessage.tool_calls.map(async (tc: any) => {
+              let args: any = {};
+              try {
+                args = JSON.parse(tc.function.arguments || "{}");
+              } catch {
+                console.error("[trading-copilot] Failed to parse tool args:", tc.function.arguments);
+                args = {};
+              }
+
+              const result = await executeTool(tc.function.name, args, supabase, userId);
+              return {
+                role: "tool",
+                tool_call_id: tc.id,
+                content: JSON.stringify(result),
+              };
+            })
+          );
+
+          allToolCalls.push(...assistantMessage.tool_calls);
+          allToolResults.push(...toolResults);
+
+          convo = [...convo, assistantMessage, ...toolResults];
+          continue;
+        }
+
+        // No tool calls — this is the final response.
+        // If we got content directly (non-streaming round), send it as tokens
+        const directContent = assistantMessage?.content;
+        if (directContent) {
+          // Send the already-received content as a single token burst
+          writer.sendToken(directContent);
+          writer.sendDone();
+
+          // RLVR: Log training pair
+          const userPrompt = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+          logTrainingPair(supabase, userId, null, userPrompt, directContent, allToolCalls, allToolResults);
+
+          writer.close();
+          return;
+        }
+
+        // Fallback if no content
+        writer.sendToken("I couldn't process that request.");
+        writer.sendDone();
+        writer.close();
+        return;
       }
 
-      console.log("[trading-copilot] Assistant message:", JSON.stringify(assistantMessage));
-
-      if (assistantMessage?.tool_calls?.length) {
-        console.log("[trading-copilot] Tool calls detected:", assistantMessage.tool_calls.length);
-
-        const toolResults = await Promise.all(
-          assistantMessage.tool_calls.map(async (tc: any) => {
-            let args: any = {};
-            try {
-              args = JSON.parse(tc.function.arguments || "{}");
-            } catch {
-              console.error("[trading-copilot] Failed to parse tool args:", tc.function.arguments);
-              args = {};
-            }
-
-            const result = await executeTool(tc.function.name, args, supabase, userId);
-            return {
-              role: "tool",
-              tool_call_id: tc.id,
-              content: JSON.stringify(result),
-            };
-          })
-        );
-
-        allToolCalls.push(...assistantMessage.tool_calls);
-        allToolResults.push(...toolResults);
-
-        convo = [...convo, assistantMessage, ...toolResults];
-        continue;
-      }
-
-      const content = assistantMessage?.content || "I couldn't process that request.";
-
-      // RLVR: Log training pair (fire-and-forget)
-      const userPrompt = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
-      logTrainingPair(supabase, userId, null, userPrompt, content, allToolCalls, allToolResults);
-
-      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}
-
-data: [DONE]
-
-
-`;
-
-      return new Response(sseData, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-        },
-      });
-    }
-
-    const fallback = `I searched our pattern database but didn't find results matching your exact criteria. Here's what you can try:
+      // Fallback after max tool rounds
+      const fallback = `I searched our pattern database but didn't find results matching your exact criteria. Here's what you can try:
 
 🔍 **Broaden your search:**
 - Ask for "B-quality patterns" instead of A-only
@@ -2873,28 +2887,22 @@ data: [DONE]
 - Generate a Pine Script strategy
 
 What would you like to explore?`;
-    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}
+      writer.sendToken(fallback);
+      writer.sendDone();
+      writer.close();
+    } catch (error) {
+      console.error("[trading-copilot] Error:", error);
+      writer.sendError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      writer.close();
+    } finally {
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    }
+  };
 
-data: [DONE]
+  // Fire and forget — the readable stream will be returned immediately
+  processAsync();
 
-
-`;
-
-    return new Response(sseData, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-      },
-    });
-
-  } catch (error) {
-    console.error("[trading-copilot] Error:", error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error" 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  return new Response(readable, {
+    headers: STREAM_CORS_HEADERS,
+  });
 });

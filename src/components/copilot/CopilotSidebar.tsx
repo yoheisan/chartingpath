@@ -188,22 +188,8 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
 
     let assistantContent = "";
     const requestController = new AbortController();
-    const REQUEST_TIMEOUT_MS = 45000;
-    const STREAM_STALL_TIMEOUT_MS = 15000;
+    const REQUEST_TIMEOUT_MS = 65000; // slightly above 60s server timeout
     let requestTimeoutId: number | undefined;
-    let stallTimeoutId: number | undefined;
-
-    const clearTimeoutGuards = () => {
-      if (requestTimeoutId !== undefined) window.clearTimeout(requestTimeoutId);
-      if (stallTimeoutId !== undefined) window.clearTimeout(stallTimeoutId);
-    };
-
-    const resetStallTimeout = () => {
-      if (stallTimeoutId !== undefined) window.clearTimeout(stallTimeoutId);
-      stallTimeoutId = window.setTimeout(() => {
-        requestController.abort(new DOMException("Stream stalled", "AbortError"));
-      }, STREAM_STALL_TIMEOUT_MS);
-    };
 
     try {
       requestTimeoutId = window.setTimeout(() => {
@@ -257,12 +243,16 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
       const assistantId = crypto.randomUUID();
       setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", timestamp: new Date() }]);
 
-      resetStallTimeout();
+      // Helper to update the assistant message content
+      const updateAssistantMsg = (content: string) => {
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content } : m));
+      };
+
       while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
-        resetStallTimeout();
         textBuffer += decoder.decode(value, { stream: true });
+
         let newlineIndex: number;
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
           let line = textBuffer.slice(0, newlineIndex);
@@ -272,12 +262,37 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") { streamDone = true; break; }
+
           try {
             const parsed = JSON.parse(jsonStr);
+
+            // New streaming protocol: type-based events
+            if (parsed.type === "status") {
+              // Show status as italic muted text in the bubble
+              updateAssistantMsg(`_${parsed.text}_`);
+              continue;
+            }
+            if (parsed.type === "token") {
+              assistantContent += parsed.text;
+              updateAssistantMsg(assistantContent);
+              continue;
+            }
+            if (parsed.type === "done") {
+              streamDone = true;
+              break;
+            }
+            if (parsed.type === "error") {
+              assistantContent = parsed.text || "Something went wrong. Please try again.";
+              updateAssistantMsg(assistantContent);
+              streamDone = true;
+              break;
+            }
+
+            // Legacy format fallback: OpenAI-compatible delta
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+              updateAssistantMsg(assistantContent);
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -286,7 +301,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
         }
       }
 
-      // Final flush
+      // Final flush of remaining buffer
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -297,13 +312,17 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
           if (jsonStr === "[DONE]") continue;
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+            if (parsed.type === "token") {
+              assistantContent += parsed.text;
+            } else if (parsed.type === "error") {
+              assistantContent = parsed.text;
+            } else {
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) assistantContent += content;
             }
           } catch { /* ignore */ }
         }
+        updateAssistantMsg(assistantContent);
       }
 
       // ── Client-side navigation intent detection (fast path, no edge function needed)
@@ -328,7 +347,6 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
           try {
             const block = JSON.parse(jsonStr);
 
-            // Scoring update — dispatch to AgentBacktestPanel
             if (block.uiSync) {
               dispatchScoringUpdate({
                 ...block.uiSync,
@@ -338,7 +356,6 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               });
             }
 
-            // Navigate action
             if (block.navigateTo) {
               const route = fuzzyMatchRoute(block.navigateTo) ?? { path: block.navigateTo, label: block.navigateTo };
               setTimeout(() => {
@@ -348,18 +365,15 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               }, 300);
             }
 
-            // Run backtest trigger
             if (block.runBacktest === true) {
               setTimeout(() => dispatchRunBacktest(), 800);
             }
 
-            // Preset saved — invalidate settings cache
             if (block.saved && block.presetId) {
               queryClient.invalidateQueries({ queryKey: ['agent-scoring-settings'] });
               toast.success(`Preset "${block.presetName}" saved`);
             }
 
-            // Undo applied — dispatch uiSync
             if (block.undone && block.uiSync) {
               dispatchScoringUpdate({
                 ...block.uiSync,
@@ -368,7 +382,6 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
               });
             }
 
-            // Preset loaded — dispatch uiSync
             if (block.loaded && block.uiSync) {
               dispatchScoringUpdate({
                 ...block.uiSync,
@@ -386,7 +399,6 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
       if (convoId && assistantContent) saveMessage(convoId, "assistant", assistantContent);
       if (assistantContent) {
         trackQuestion(userMessage, assistantContent);
-        // Capture latest training pair ID for outcome tracking (background, best-effort)
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user?.id) {
@@ -425,7 +437,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
         return prev;
       });
     } finally {
-      clearTimeoutGuards();
+      if (requestTimeoutId !== undefined) window.clearTimeout(requestTimeoutId);
       setIsLoading(false);
     }
   };
