@@ -567,6 +567,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full flex flex-col bg-background">
+      {/* Copilot Context Bar + AI Strip */}
+      <DashboardCopilotBar />
+      <DashboardAIStrip />
+
       {/* Minimal auth nudge */}
       {!userId && <DashboardAuthNudge />}
       
