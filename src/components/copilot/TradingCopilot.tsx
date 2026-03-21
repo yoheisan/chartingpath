@@ -697,7 +697,9 @@ export function TradingCopilot({
             <Sparkles className="h-5 w-5 text-white/90" />
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
-              <p className="text-xs text-white/70">{t('copilot.subtitle')}</p>
+              <p className="text-xs text-white/70">
+                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : t('copilot.subtitle')}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
