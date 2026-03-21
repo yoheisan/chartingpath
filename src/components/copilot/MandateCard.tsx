@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { type MandateRule } from "@/hooks/useMasterPlan";
+import { useTradingCopilotContext } from "./TradingCopilotContext";
 
 const FALLBACK_RULES: MandateRule[] = [
   { label: "3%", detail: "max per trade" },
@@ -11,14 +12,23 @@ const FALLBACK_RULES: MandateRule[] = [
 ];
 
 interface MandateCardProps {
-  onFocusNLBar: (prefill?: string) => void;
+  onFocusNLBar?: (prefill?: string) => void;
   rules?: MandateRule[];
   hasPlan?: boolean;
 }
 
 export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) {
+  const copilot = useTradingCopilotContext();
   const displayRules = rules && rules.length > 0 ? rules : FALLBACK_RULES;
   const hasMandate = hasPlan !== undefined ? hasPlan : true;
+
+  const openCopilot = (prefill?: string) => {
+    if (prefill) {
+      copilot.openWithContext(prefill);
+    } else {
+      copilot.open();
+    }
+  };
 
   return (
     <Card className="rounded-lg border-border/60 bg-card">
@@ -27,7 +37,7 @@ export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) 
           Master Plan
         </span>
         <button
-          onClick={() => onFocusNLBar()}
+          onClick={() => openCopilot()}
           className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
         >
           Edit
@@ -40,7 +50,7 @@ export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) 
               {displayRules.map((rule) => (
                 <button
                   key={rule.label}
-                  onClick={() => onFocusNLBar(`${rule.label} ${rule.detail}`)}
+                  onClick={() => openCopilot(`${rule.label} ${rule.detail}`)}
                   className="inline-flex items-center gap-1 rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-sm text-blue-300 hover:bg-blue-500/20 transition-colors"
                 >
                   <span className="font-mono font-bold text-blue-400">[{rule.label}]</span>
@@ -58,7 +68,7 @@ export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) 
           </>
         ) : (
           <button
-            onClick={() => onFocusNLBar()}
+            onClick={() => openCopilot()}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Set your mandate to start →
