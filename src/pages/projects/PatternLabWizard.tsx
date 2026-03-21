@@ -1519,14 +1519,28 @@ const PatternLabWizard = () => {
                               <AlertCircle className="h-3 w-3" />
                               {t('patternLabWizard.none')}
                             </span>
-                          ) : p.count < 5 ? (
-                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
-                              {t('patternLabWizard.found', { count: p.count })}
-                            </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" />
-                              {t('patternLabWizard.found', { count: p.count })}
+                            <span className="flex items-center gap-1">
+                              {p.gradePassCount === 0 ? (
+                                <span className="text-destructive font-medium">
+                                  {p.count} found, 0 pass
+                                </span>
+                              ) : p.gradePassCount < p.count ? (
+                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
+                                  <span className="text-muted-foreground line-through">{p.count}</span>
+                                  {' '}
+                                  {t('patternLabWizard.found', { count: p.gradePassCount })}
+                                </span>
+                              ) : p.count < 5 ? (
+                                <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                                  {t('patternLabWizard.found', { count: p.count })}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  {t('patternLabWizard.found', { count: p.count })}
+                                </span>
+                              )}
                             </span>
                           )}
                         </div>
