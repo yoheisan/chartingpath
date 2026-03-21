@@ -113,9 +113,12 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
       close,
       openWithContext,
       openWithAnalysis,
+      openPlanBuilder,
       pendingContext,
       pendingAnalysis,
+      pendingPlanBuilder,
       consumePendingContext,
+      consumePendingPlanBuilder,
       setChartContext,
       getChartContext
     }}>
