@@ -428,6 +428,15 @@ export default function LivePatternsPage() {
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
         setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
+
+        // Trigger batch gate evaluations for loaded patterns
+        const items = activeOnly.slice(0, 20).map((s: any) => ({
+          ticker: s.instrument,
+          setup_type: s.patternName,
+          timeframe: tfToFetch,
+          direction: s.direction,
+        }));
+        evaluateBatch(items).catch(console.error);
       } else {
         // No patterns found but not an error - show empty state
         setPatterns([]);
