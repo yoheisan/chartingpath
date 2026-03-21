@@ -17,15 +17,17 @@ import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useDeployGuardrails } from '@/hooks/useDeployGuardrails';
 import { useBrokerConnection } from '@/hooks/useBrokerConnection';
 import { useAuth } from '@/contexts/AuthContext';
+import type { SelectedClosedTrade } from './CenterPanel';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
 interface RightPanelProps {
   openDebriefOnMount?: boolean;
   onDebriefOpened?: () => void;
+  onTradeSelect?: (trade: SelectedClosedTrade) => void;
 }
 
-const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {}) => {
+const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: RightPanelProps = {}) => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'paper' | 'live'>('paper');
@@ -160,7 +162,25 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {
                 const isPositive = pnlR >= 0;
                 const statusLabel = t.status === 'open' ? 'open' : t.close_reason?.toLowerCase().includes('stop') ? 'stopped' : 'closed';
                 return (
-                  <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
+                  <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-pointer" onClick={() => {
+                    if (t.status === 'closed' && onTradeSelect) {
+                      onTradeSelect({
+                        id: t.id,
+                        ticker: t.symbol,
+                        attribution: t.attribution ?? 'ai_approved',
+                        entry_price: t.entry_price,
+                        exit_price: t.exit_price,
+                        entry_time: t.created_at,
+                        exit_time: t.closed_at,
+                        pnl_r: t.outcome_r ?? 0,
+                        duration_mins: t.closed_at ? Math.round((new Date(t.closed_at).getTime() - new Date(t.created_at).getTime()) / 60000) : 0,
+                        gate_result: t.gate_result ?? 'aligned',
+                        gate_reason: t.close_reason ?? '',
+                        setup_type: t.setup_type ?? t.trade_type,
+                        copilot_reasoning: t.copilot_reasoning,
+                      });
+                    }
+                  }}>
                     <Badge className={`text-sm px-1.5 py-0 font-medium rounded ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
                       {isAi ? 'AI' : 'You'}
                     </Badge>
