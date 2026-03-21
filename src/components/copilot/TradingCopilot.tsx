@@ -626,6 +626,7 @@ export function TradingCopilot({
     startNewChat();
     activeConvoRef.current = null;
     setMessages([]);
+    setShowBuilder(false);
   }, [startNewChat]);
 
   const handleSelectConversation = useCallback((id: string) => {
