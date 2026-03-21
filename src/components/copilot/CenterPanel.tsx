@@ -70,7 +70,7 @@ const ScanningState = () => {
       <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
         <CopilotAvatar />
         <p className="text-sm text-muted-foreground">
-          Scanning 94 candidates · 3 setups shortlisted — waiting for breakout confirmation on NVDA.
+          Running your trading plan on paper · Scanning 94 candidates · 3 setups shortlisted — waiting for breakout confirmation on NVDA.
         </p>
       </div>
 
