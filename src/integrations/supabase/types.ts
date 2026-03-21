@@ -2658,6 +2658,63 @@ export type Database = {
         }
         Relationships: []
       }
+      master_plans: {
+        Row: {
+          created_at: string
+          excluded_conditions: Json | null
+          id: string
+          is_active: boolean | null
+          max_open_positions: number | null
+          max_position_pct: number | null
+          min_market_cap: string | null
+          preferred_patterns: Json | null
+          raw_nl_input: string | null
+          sector_filters: Json | null
+          stop_loss_rule: string | null
+          trading_window_end: string | null
+          trading_window_start: string | null
+          trend_direction: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          excluded_conditions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_open_positions?: number | null
+          max_position_pct?: number | null
+          min_market_cap?: string | null
+          preferred_patterns?: Json | null
+          raw_nl_input?: string | null
+          sector_filters?: Json | null
+          stop_loss_rule?: string | null
+          trading_window_end?: string | null
+          trading_window_start?: string | null
+          trend_direction?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          excluded_conditions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_open_positions?: number | null
+          max_position_pct?: number | null
+          min_market_cap?: string | null
+          preferred_patterns?: Json | null
+          raw_nl_input?: string | null
+          sector_filters?: Json | null
+          stop_loss_rule?: string | null
+          trading_window_end?: string | null
+          trading_window_start?: string | null
+          trend_direction?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       moderator_reports: {
         Row: {
           assigned_to: string | null
@@ -4082,6 +4139,30 @@ export type Database = {
           id?: string
           is_active?: boolean
           service_name?: string
+        }
+        Relationships: []
+      }
+      session_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          override_text: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          override_text: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          override_text?: string
+          session_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
