@@ -1492,7 +1492,12 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="signal" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-center whitespace-nowrap w-16">Gate</TableHead>
+                  <TableHead className="text-center whitespace-nowrap w-16">
+                    <span className="inline-flex items-center gap-1">
+                      Gate
+                      <InfoTooltip content="The AI Gate checks each setup against your trading plan. Aligned = matches your rules. Partial = some rules match. Conflict = breaks your plan rules." />
+                    </span>
+                  </TableHead>
                   <TableHead className="text-center whitespace-nowrap w-10">
                   </TableHead>
                   <TableHead className="whitespace-nowrap w-24"></TableHead>
