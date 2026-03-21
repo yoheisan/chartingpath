@@ -622,35 +622,6 @@ const PatternLabWizard = () => {
 
       <div className="flex-1 min-w-0">
       <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
-        {/* Copilot toggle */}
-        {!showCopilot && !isMobile && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mb-4 gap-2 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40"
-            onClick={() => setShowCopilot(true)}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
-            <kbd className="ml-1 text-sm text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
-          </Button>
-        )}
-
-        {isMobile && (
-          <Button
-            variant="default"
-            size="sm"
-            className="fixed bottom-20 right-4 z-40 rounded-full shadow-xl gap-1.5 bg-gradient-to-r from-primary to-accent"
-            onClick={() => setShowCopilot(v => !v)}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="text-xs">AI</span>
-          </Button>
-        )}
         <div className="mb-8">
           {prefilledState?.backUrl && (
             <button
