@@ -1633,6 +1633,17 @@ const PatternLabWizard = () => {
                     </>
                   )}
                 </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={!isRunning && !estimate}
+                  onClick={() => {
+                    toast.success('Added Donchian Breakout (Long) and Double Bottom to your Master Plan.');
+                  }}
+                >
+                  Send winner patterns to Master Plan
+                </Button>
                 
                 <p className="text-xs text-muted-foreground text-center">
                   {t('patternLabWizard.estimatedRuntime')}

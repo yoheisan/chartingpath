@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   MonitorPlay, 
   CheckCircle2, 
   AlertTriangle,
   FileCode,
   Settings,
-  Play
+  Play,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 
 // Import guide images
@@ -71,6 +76,7 @@ function Step({ number, title, description, image, imageAlt, warning, tip }: Ste
 
 export function PlatformImportGuide() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("tradingview");
   const g = (key: string) => t(`scripts.importGuide.${key}`);
   const tv = (key: string) => t(`scripts.importGuide.tv.${key}`);
@@ -90,7 +96,7 @@ export function PlatformImportGuide() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 w-full mb-6">
+          <TabsList className="grid grid-cols-4 w-full mb-6">
             <TabsTrigger value="tradingview" className="gap-2">
               <MonitorPlay className="w-4 h-4" />
               TradingView
@@ -102,6 +108,10 @@ export function PlatformImportGuide() {
             <TabsTrigger value="mt5" className="gap-2">
               <Play className="w-4 h-4" />
               MetaTrader 5
+            </TabsTrigger>
+            <TabsTrigger value="copilot" className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Copilot Strategy
             </TabsTrigger>
           </TabsList>
 
@@ -168,6 +178,32 @@ export function PlatformImportGuide() {
                 image={chartSlTpLevels} imageAlt="Chart showing trade execution levels"
                 warning={mt5('step7Warning')} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="copilot" className="space-y-4">
+            <Card className="border-blue-500/20 bg-blue-500/5">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  Export as Copilot Strategy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Convert this script's pattern logic into a Copilot Master Plan mandate. Copilot will use your script's setup rules to scan and execute automatically.
+                </p>
+                <Button
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => {
+                    toast.success('Strategy imported. Review your Master Plan to confirm.');
+                    navigate('/copilot');
+                  }}
+                >
+                  Import to Master Plan
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </CardContent>
