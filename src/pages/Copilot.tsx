@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
+import RightPanel from "@/components/copilot/RightPanel";
 
 const Copilot = () => {
   const focusNLBar = useCallback((prefill?: string) => {
@@ -36,8 +37,8 @@ const Copilot = () => {
       </main>
 
       {/* Right Panel placeholder */}
-      <aside className="w-[300px] shrink-0 flex items-center justify-center">
-        <p className="text-sm text-muted-foreground/40">Right panel</p>
+      <aside className="w-[256px] shrink-0 overflow-hidden">
+        <RightPanel />
       </aside>
     </div>
   );
