@@ -207,12 +207,6 @@ interface QuickAction {
   label?: string;
 }
 
-const GUEST_ACTIONS: QuickAction[] = [
-  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-  { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
-];
-
 // (Quick action tiers are now inline in the home screen render)
 
 export interface TradingCopilotProps {
