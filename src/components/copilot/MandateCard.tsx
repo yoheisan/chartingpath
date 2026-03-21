@@ -1,0 +1,67 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
+const MANDATE_RULES = [
+  { label: "3%", detail: "max per trade" },
+  { label: "6", detail: "max open positions" },
+  { label: "9:30–11:30", detail: "trading window" },
+  { label: "2R", detail: "stop loss always" },
+  { label: "No overnight", detail: "holds" },
+  { label: "Breakouts", detail: "preferred pattern" },
+];
+
+interface MandateCardProps {
+  onFocusNLBar: (prefill?: string) => void;
+}
+
+export function MandateCard({ onFocusNLBar }: MandateCardProps) {
+  const [hasMandate] = useState(true);
+
+  return (
+    <Card className="rounded-lg border-border/60 bg-card">
+      <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Master Plan
+        </span>
+        <button
+          onClick={() => onFocusNLBar()}
+          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          Edit
+        </button>
+      </CardHeader>
+      <CardContent className="p-3 pt-0 space-y-3">
+        {hasMandate ? (
+          <>
+            <div className="flex flex-wrap gap-1.5">
+              {MANDATE_RULES.map((rule) => (
+                <button
+                  key={rule.label}
+                  onClick={() => onFocusNLBar(`${rule.label} ${rule.detail}`)}
+                  className="inline-flex items-center gap-1 rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-[11px] text-blue-300 hover:bg-blue-500/20 transition-colors"
+                >
+                  <span className="font-mono font-bold text-blue-400">[{rule.label}]</span>
+                  <span className="text-muted-foreground">{rule.detail}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[10px] text-muted-foreground">Active</span>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={() => onFocusNLBar()}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Set your mandate to start →
+          </button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
