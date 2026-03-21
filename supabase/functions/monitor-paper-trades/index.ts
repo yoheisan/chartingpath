@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
                   template: 'trade_outcome',
                   data: {
                     instrument: trade.symbol,
-                    pattern: trade.pattern_id || trade.notes?.match(/\[pattern:(.*?)\]/)?.[1] ?? 'Pattern',
+                    pattern: trade.pattern_id || (trade.notes?.match(/\[pattern:(.*?)\]/)?.[1] ?? 'Pattern'),
                     direction: trade.trade_type,
                     entryPrice: trade.entry_price,
                     exitPrice,
