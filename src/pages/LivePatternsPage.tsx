@@ -1738,11 +1738,13 @@ export default function LivePatternsPage() {
                                 className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                  const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                  const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
                                   if (gateType === 'aligned') {
                                     toast.success('Added to Copilot paper ✓');
                                   } else {
-                                    toast('This setup conflicts with your Master Plan. Add anyway?', {
+                                    const reason = gateEval?.gate_reason || 'This setup conflicts with your Master Plan. Add anyway?';
+                                    toast(reason, {
                                       duration: 10000,
                                       action: {
                                         label: 'Add anyway',
