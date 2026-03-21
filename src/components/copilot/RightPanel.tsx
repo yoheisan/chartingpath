@@ -70,11 +70,11 @@ const RightPanel = () => {
       </div>
 
       {/* Section 4 — Insight Card */}
-      <div className="mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2">
+      <div className={`mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2 transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
         <p className="text-sm leading-[1.6] text-muted-foreground">
-          {todayTrades.length > 0
+          {insight || (todayTrades.length > 0
             ? `Today: ${stats.aiTradeCount} AI trades (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
-            : 'No trades yet today. Copilot is scanning for setups matching your plan.'}
+            : 'No trades yet today. Copilot is scanning for setups matching your plan.')}
         </p>
       </div>
 
