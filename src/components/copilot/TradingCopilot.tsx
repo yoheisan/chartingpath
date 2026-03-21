@@ -772,9 +772,10 @@ export function TradingCopilot({
                       </p>
                       <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
                         <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-                          Start free →
+                          Create your first trading plan →
                         </Link>
                       </Button>
+                      <p className="text-xs text-muted-foreground/60 text-center mt-1">Free to try · No real money · You decide when to go live</p>
                     </div>
                   )}
 
