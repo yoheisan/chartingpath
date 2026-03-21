@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
+import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
@@ -296,6 +297,7 @@ export default function LivePatternsPage() {
 
   // Gate evaluation hook for live AI gate badges
   const { evaluate, evaluateBatch, getEvaluation, isLoading: isGateLoading } = useGateEvaluation();
+  const { tradeWithGateCheck, isSubmitting: isPaperSubmitting } = usePaperTradeEntry();
 
   // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
   // ensure the UI doesn't stay stuck forever.
@@ -1694,33 +1696,28 @@ export default function LivePatternsPage() {
                                 <TooltipContent side="left">Paper Trade</TooltipContent>
                               </Tooltip>
                             </TableCell>
-                            {/* Add to Copilot paper */}
+                            {/* Trade button */}
                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                               <button
-                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
+                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap disabled:opacity-50"
+                                disabled={isPaperSubmitting}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
-                                  const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
-                                  if (gateType === 'aligned') {
-                                    toast.success('Added to Copilot paper ✓');
-                                  } else {
-                                    const reason = gateEval?.gate_reason || 'This setup conflicts with your Master Plan. Add anyway?';
-                                    toast(reason, {
-                                      duration: 10000,
-                                      action: {
-                                        label: 'Add anyway',
-                                        onClick: () => toast.success('Added to Copilot paper ✓'),
-                                      },
-                                      cancel: {
-                                        label: 'Skip',
-                                        onClick: () => {},
-                                      },
-                                    });
-                                  }
+                                  tradeWithGateCheck({
+                                    ticker: setup.instrument,
+                                    setup_type: setup.patternName,
+                                    timeframe,
+                                    direction: setup.direction,
+                                    entry_price: setup.currentPrice,
+                                    gate_result: gateEval?.gate_result ?? 'aligned',
+                                    gate_reason: gateEval?.gate_reason,
+                                    gate_evaluation_id: gateEval?.evaluation_id ?? undefined,
+                                    agent_score: gateEval?.agent_score ?? undefined,
+                                  });
                                 }}
                               >
-                                + Add to Copilot paper
+                                Trade
                               </button>
                             </TableCell>
                           </TableRow>
