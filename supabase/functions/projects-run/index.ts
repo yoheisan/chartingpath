@@ -2279,16 +2279,16 @@ serve(async (req) => {
               execution_metadata: { 
                 progress: 100,
                 currentStep: 'Computing results',
-                instrumentsProcessed: instruments.length,
-                instrumentsTotal: instruments.length,
-                patternsTotal: totalPatternScans,
-                scansCompleted: totalPatternScans,
+                instrumentsProcessed: instrumentList.length,
+                instrumentsTotal: instrumentList.length,
+                signalsTotal: allSignals.length,
+                tradesSimulated: allTrades.length,
                 heartbeatAt: new Date().toISOString(),
               } 
             })
             .eq('id', run.id);
           
-          console.log(`[PatternLab] Total trades after grade filter: ${allTrades.length}`);
+          console.log(`[PatternLab] Signal Replay complete: ${allSignals.length} signals → ${allTrades.length} trades simulated`);
           ensureBudget('pattern-level analytics');
           
           // Calculate pattern-level stats
