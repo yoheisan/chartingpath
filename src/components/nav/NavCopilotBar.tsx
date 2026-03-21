@@ -22,12 +22,19 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
   const dropdownInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { state, submit, confirmSave, reset } = useMandateSubmit(() => {
-    setIsOpen(false);
-    setFreeText("");
-    onMandateSaved?.();
-    // Broadcast global event for other components (e.g., Copilot page MandateCard)
-    window.dispatchEvent(new CustomEvent("mandate-saved"));
+  const { state, submit, confirmSave, reset } = useMandateSubmit({
+    onSaved: () => {
+      setIsOpen(false);
+      setFreeText("");
+      onMandateSaved?.();
+      window.dispatchEvent(new CustomEvent("mandate-saved"));
+    },
+    onQuestion: (question: string) => {
+      setIsOpen(false);
+      setFreeText("");
+      // Dispatch event for Copilot page to open debrief with question
+      window.dispatchEvent(new CustomEvent("copilot-question", { detail: question }));
+    },
   });
 
   // Global ⌘K handler
