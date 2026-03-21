@@ -1052,18 +1052,12 @@ export default function LivePatternsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       <PageMeta
         title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
         description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
         canonicalPath="/patterns/live"
       />
-      {/* Copilot Sidebar */}
-      {showCopilot && !isMobile && (
-        <div className="w-[420px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">
-          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
-        </div>
-      )}
 
       <div className="flex-1 min-w-0">
     <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
