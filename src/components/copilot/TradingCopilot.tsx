@@ -428,6 +428,7 @@ export function TradingCopilot({
     let assistantContent = "";
     
     try {
+      const pageCtx = getPageContext(location.pathname);
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -437,10 +438,13 @@ export function TradingCopilot({
         body: JSON.stringify({
           messages: [...messages, userMsg]
             .filter(m => m.role === "user" || m.content.trim().length > 0)
-            .slice(-20) // Cap context window to last 20 messages for speed
+            .slice(-20)
             .map(m => ({ role: m.role, content: m.content })),
           language: i18n.language,
-          // Include pre-warmed dashboard context for faster first response
+          viewContext: {
+            pageName: pageCtx.pageName,
+            pageRoute: location.pathname,
+          },
           ...(prewarmedCtx.ready && {
             prewarmed: {
               watchlist: prewarmedCtx.watchlistSymbols,
