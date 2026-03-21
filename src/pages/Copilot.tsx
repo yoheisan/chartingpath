@@ -37,8 +37,8 @@ const Copilot = () => {
       </main>
 
       {/* Right Panel placeholder */}
-      <aside className="w-[300px] shrink-0 flex items-center justify-center">
-        <p className="text-sm text-muted-foreground/40">Right panel</p>
+      <aside className="w-[256px] shrink-0 overflow-hidden">
+        <RightPanel />
       </aside>
     </div>
   );
