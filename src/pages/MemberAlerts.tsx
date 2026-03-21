@@ -803,6 +803,33 @@ const MemberAlerts = () => {
               </div>
             </div>
 
+            {/* Copilot paper toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-border/50 p-3 mb-4">
+              <div className="space-y-0.5">
+                <label htmlFor="copilot-paper-toggle" className="text-sm font-medium cursor-pointer">
+                  Also send to Copilot paper when triggered
+                </label>
+                {copilotPaperEnabled && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Copilot will evaluate this setup against your Master Plan when the alert fires.
+                  </p>
+                )}
+              </div>
+              <button
+                id="copilot-paper-toggle"
+                role="switch"
+                aria-checked={copilotPaperEnabled}
+                onClick={() => setCopilotPaperEnabled(!copilotPaperEnabled)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                  copilotPaperEnabled ? 'bg-blue-500' : 'bg-muted'
+                }`}
+              >
+                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                  copilotPaperEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
             {!canCreateMore ? (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">

@@ -96,7 +96,7 @@ export function PlatformImportGuide() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 w-full mb-6">
+          <TabsList className="grid grid-cols-4 w-full mb-6">
             <TabsTrigger value="tradingview" className="gap-2">
               <MonitorPlay className="w-4 h-4" />
               TradingView
@@ -108,6 +108,10 @@ export function PlatformImportGuide() {
             <TabsTrigger value="mt5" className="gap-2">
               <Play className="w-4 h-4" />
               MetaTrader 5
+            </TabsTrigger>
+            <TabsTrigger value="copilot" className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Copilot Strategy
             </TabsTrigger>
           </TabsList>
 
