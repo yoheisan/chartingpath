@@ -1416,23 +1416,41 @@ function computeExitOutcomes(
   return outcomes;
 }
 
+interface PatternBacktestResult {
+  trades: BacktestTrade[];
+  detectedCount: number;
+  gradeFilteredCount: number;
+  overlapSkippedCount: number;
+}
+
 function runPatternBacktest(
   bars: any[],
   patternId: string,
   pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[], scale?: number) => PatternDetectionResult },
   instrument: string,
   gradeFilter: string[] = ['A', 'B', 'C', 'D', 'F']
-): BacktestTrade[] {
+): PatternBacktestResult {
   const trades: BacktestTrade[] = [];
   const lookback = 20;
   const maxBarsInTrade = 50;
   const scale = getAssetThresholdScale(instrument);
+  let detectedCount = 0;
+  let gradeFilteredCount = 0;
+  let overlapSkippedCount = 0;
+  let lastTradeEndIndex = -1;
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
     const detectionResult = pattern.detector(window, scale);
     
     if (!detectionResult.detected) continue;
+    detectedCount++;
+    
+    // Skip if overlapping with previous trade
+    if (i <= lastTradeEndIndex) {
+      overlapSkippedCount++;
+      continue;
+    }
     
     const entryBar = bars[i];
     const entryPrice = entryBar.close;
@@ -1441,7 +1459,8 @@ function runPatternBacktest(
     // Calculate grade and apply filter
     const { grade, score } = calculatePatternGrade(bars, i, pattern.direction);
     if (!gradeFilter.includes(grade)) {
-      continue; // Skip trades that don't meet grade filter
+      gradeFilteredCount++;
+      continue;
     }
     
     const stopDistance = atr * 2;
@@ -1483,15 +1502,16 @@ function runPatternBacktest(
       exitReason,
       grade,
       rrOutcomes,
-      exitOutcomes, // Add exit strategy outcomes
-      entryBarIndex: i, // Store for potential future use
+      exitOutcomes,
+      entryBarIndex: i,
     } as any);
     
     // Skip ahead to avoid overlapping trades
+    lastTradeEndIndex = i + 5;
     i += 5;
   }
   
-  return trades;
+  return { trades, detectedCount, gradeFilteredCount, overlapSkippedCount };
 }
 
 // (Portfolio Simulation Engine removed — deprecated feature)
@@ -1920,6 +1940,8 @@ serve(async (req) => {
           const allTrades: BacktestTrade[] = [];
           const patternResults: any[] = [];
           const equity: { date: string; value: number; drawdown: number }[] = [];
+          // Track detection funnel per pattern
+          const detectionFunnel: Record<string, { detected: number; gradeFiltered: number; overlapSkipped: number; traded: number }> = {};
           
           // Fetch data and run backtests
           let completedPatternScans = 0;
@@ -1974,8 +1996,18 @@ serve(async (req) => {
                 continue;
               }
               
-              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-              allTrades.push(...trades);
+              const result = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
+              allTrades.push(...result.trades);
+              
+              // Accumulate funnel stats per pattern
+              if (!detectionFunnel[patternId]) {
+                detectionFunnel[patternId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+              }
+              detectionFunnel[patternId].detected += result.detectedCount;
+              detectionFunnel[patternId].gradeFiltered += result.gradeFilteredCount;
+              detectionFunnel[patternId].overlapSkipped += result.overlapSkippedCount;
+              detectionFunnel[patternId].traded += result.trades.length;
+              
               completedPatternScans += 1;
             }
           }
@@ -2054,6 +2086,7 @@ serve(async (req) => {
               maxDD = Math.max(maxDD, (peakR - runningR));
             }
             
+            const funnel = detectionFunnel[patternId] || { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
             patternResults.push({
               patternId,
               patternName: pattern.displayName,
@@ -2066,7 +2099,13 @@ serve(async (req) => {
               maxDrawdown: maxDD,
               sharpeRatio: avgR / (Math.sqrt(patternTrades.map(t => t.rMultiple).reduce((s, r) => s + r * r, 0) / patternTrades.length - avgR * avgR) || 1),
               regimeBreakdown,
-              doNotTradeRules
+              doNotTradeRules,
+              detectionFunnel: {
+                detected: funnel.detected,
+                gradeFiltered: funnel.gradeFiltered,
+                overlapSkipped: funnel.overlapSkipped,
+                traded: funnel.traded,
+              },
             });
           }
 

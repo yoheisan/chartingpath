@@ -98,6 +98,12 @@ interface PatternResult {
     recommendation: 'trade' | 'caution' | 'avoid';
   }[];
   doNotTradeRules: string[];
+  detectionFunnel?: {
+    detected: number;
+    gradeFiltered: number;
+    overlapSkipped: number;
+    traded: number;
+  };
 }
 
 interface ExitOutcome {
@@ -1248,7 +1254,29 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     )}
                     <div>
                       <CardTitle className="text-base">{pattern.patternName}</CardTitle>
-                      <CardDescription>{pattern.totalTrades} trades</CardDescription>
+                      <CardDescription>
+                        {pattern.detectionFunnel ? (
+                          <span className="flex items-center gap-1.5 flex-wrap">
+                            <span>{pattern.detectionFunnel.detected} detected</span>
+                            <span className="text-muted-foreground/50">→</span>
+                            {pattern.detectionFunnel.gradeFiltered > 0 && (
+                              <>
+                                <span className="text-yellow-500">-{pattern.detectionFunnel.gradeFiltered} grade</span>
+                                <span className="text-muted-foreground/50">→</span>
+                              </>
+                            )}
+                            {pattern.detectionFunnel.overlapSkipped > 0 && (
+                              <>
+                                <span className="text-orange-500">-{pattern.detectionFunnel.overlapSkipped} overlap</span>
+                                <span className="text-muted-foreground/50">→</span>
+                              </>
+                            )}
+                            <span className="text-foreground font-medium">{pattern.totalTrades} traded</span>
+                          </span>
+                        ) : (
+                          <span>{pattern.totalTrades} trades</span>
+                        )}
+                      </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
