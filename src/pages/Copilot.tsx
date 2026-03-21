@@ -106,7 +106,7 @@ const Copilot = () => {
       )}
 
       <div className="flex flex-1 min-h-0">
-        <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-hidden">
+        <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-y-auto overflow-x-hidden">
           <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
           <MandateCard onFocusNLBar={focusNLBar} rules={rules} hasPlan={hasPlan} />
           <ConflictBanner

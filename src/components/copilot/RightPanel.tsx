@@ -118,15 +118,15 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: Righ
       </div>
 
       {/* Section 3 — Metric Cards 2×2 */}
-      <div className="grid grid-cols-2 gap-1.5 p-2 border-b border-border/40">
+      <div className="grid grid-cols-2 gap-1 p-1.5 border-b border-border/40">
         {[
           { label: 'AI avg R', value: formatR(activeTab === 'paper' ? paperStats.aiAvgR : (liveStats.aiTradeCount > 0 ? liveStats.aiPnlR / liveStats.aiTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.aiAvgR : liveStats.aiPnlR) >= 0 },
-          { label: 'Override avg R', value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
+          { label: 'Ovr avg R', value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
           { label: 'AI win rate', value: `${stats.aiWinRate}%`, sub: 'today', positive: stats.aiWinRate >= 50 },
-          { label: 'Override win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
+          { label: 'Ovr win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
         ].map((m) => (
-          <div key={m.label} className="rounded-md bg-secondary/50 p-2 flex flex-col items-center gap-0.5">
-            <span className="text-sm text-muted-foreground">{m.label}</span>
+          <div key={m.label} className="rounded-md bg-secondary/50 p-1.5 flex flex-col items-center gap-0.5 min-w-0">
+            <span className="text-sm text-muted-foreground truncate w-full text-center">{m.label}</span>
             <span className={`text-sm font-bold font-mono ${m.positive ? 'text-green-500' : 'text-red-500'}`}>
               {m.value}
             </span>
