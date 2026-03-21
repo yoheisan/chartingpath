@@ -192,7 +192,7 @@ const Navigation = () => {
               </span>
             </div>
             
-            <NavCopilotBar className="ml-4 flex-1 max-w-[480px]" />
+            
             
             <nav className="hidden md:flex items-center gap-4 ml-4">
             {/* 0. Dashboard - Command Center */}
