@@ -238,7 +238,6 @@ export default function LivePatternsPage() {
   const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
   const navigate = useNavigate();
   
-  const [showCopilot, setShowCopilot] = useState(false);
   const isMobile = useIsMobile();
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
