@@ -290,7 +290,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       </div>
 
       {/* Modals */}
-      <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} />
+      <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} initialQuestion={debriefQuestion} />
       <DeployModal
         open={deployOpen}
         onClose={() => setDeployOpen(false)}
