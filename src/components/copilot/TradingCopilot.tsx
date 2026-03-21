@@ -216,6 +216,8 @@ export interface TradingCopilotProps {
   pendingContext?: string | null;
   pendingAnalysis?: ChartAnalysisResult | null;
   onContextConsumed?: () => void;
+  pendingPlanBuilder?: boolean;
+  onPlanBuilderConsumed?: () => void;
 }
 
 export function TradingCopilot({ 
