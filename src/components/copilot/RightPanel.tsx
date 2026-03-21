@@ -14,7 +14,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
-const RightPanel = () => {
+interface RightPanelProps {
+  openDebriefOnMount?: boolean;
+  onDebriefOpened?: () => void;
+}
+
+const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {}) => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const { user } = useAuth();
   const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
