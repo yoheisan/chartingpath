@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { NavCopilotBar } from "@/components/nav/NavCopilotBar";
+import { CopilotStatusIndicator } from "@/components/nav/CopilotStatusIndicator";
 import { Link, useLocation } from "react-router-dom";
 import { 
   TrendingUp, 
