@@ -1416,23 +1416,41 @@ function computeExitOutcomes(
   return outcomes;
 }
 
+interface PatternBacktestResult {
+  trades: BacktestTrade[];
+  detectedCount: number;
+  gradeFilteredCount: number;
+  overlapSkippedCount: number;
+}
+
 function runPatternBacktest(
   bars: any[],
   patternId: string,
   pattern: { direction: 'long' | 'short'; displayName: string; detector: (w: any[], scale?: number) => PatternDetectionResult },
   instrument: string,
   gradeFilter: string[] = ['A', 'B', 'C', 'D', 'F']
-): BacktestTrade[] {
+): PatternBacktestResult {
   const trades: BacktestTrade[] = [];
   const lookback = 20;
   const maxBarsInTrade = 50;
   const scale = getAssetThresholdScale(instrument);
+  let detectedCount = 0;
+  let gradeFilteredCount = 0;
+  let overlapSkippedCount = 0;
+  let lastTradeEndIndex = -1;
   
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
     const detectionResult = pattern.detector(window, scale);
     
     if (!detectionResult.detected) continue;
+    detectedCount++;
+    
+    // Skip if overlapping with previous trade
+    if (i <= lastTradeEndIndex) {
+      overlapSkippedCount++;
+      continue;
+    }
     
     const entryBar = bars[i];
     const entryPrice = entryBar.close;
@@ -1441,7 +1459,8 @@ function runPatternBacktest(
     // Calculate grade and apply filter
     const { grade, score } = calculatePatternGrade(bars, i, pattern.direction);
     if (!gradeFilter.includes(grade)) {
-      continue; // Skip trades that don't meet grade filter
+      gradeFilteredCount++;
+      continue;
     }
     
     const stopDistance = atr * 2;
@@ -1483,15 +1502,16 @@ function runPatternBacktest(
       exitReason,
       grade,
       rrOutcomes,
-      exitOutcomes, // Add exit strategy outcomes
-      entryBarIndex: i, // Store for potential future use
+      exitOutcomes,
+      entryBarIndex: i,
     } as any);
     
     // Skip ahead to avoid overlapping trades
+    lastTradeEndIndex = i + 5;
     i += 5;
   }
   
-  return trades;
+  return { trades, detectedCount, gradeFilteredCount, overlapSkippedCount };
 }
 
 // (Portfolio Simulation Engine removed — deprecated feature)
