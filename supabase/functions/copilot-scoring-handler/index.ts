@@ -636,80 +636,101 @@ serve(async (req) => {
 
     const MAX_TOOL_ROUNDS = 4;
 
-    for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
-      console.log(`[copilot-scoring] AI round ${round}`);
+    const { createSSEStream, getStatusMessage, STREAM_CORS_HEADERS, HARD_TIMEOUT_MS } = await import("../_shared/streaming.ts");
+    const { readable, writer } = createSSEStream();
 
-      const aiRequestBody = {
-        model: "google/gemini-2.5-flash",
-        messages: convoMessages,
-        tools,
-        tool_choice: "auto",
-        stream: false,
-        max_tokens: 4096,
-      };
+    const processAsync = async () => {
+      const timeoutId = setTimeout(() => {
+        writer.sendError("This is taking longer than expected. Please try again.");
+        writer.close();
+      }, HARD_TIMEOUT_MS);
 
-      const aiResp = LOVABLE_API_KEY
-        ? await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(aiRequestBody),
-            signal: AbortSignal.timeout(25000),
-          })
-        : GEMINI_API_KEY
-          ? await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${GEMINI_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ ...aiRequestBody, model: "gemini-2.5-flash" }),
-              signal: AbortSignal.timeout(25000),
-            })
-          : (() => {
-              throw new Error("Neither LOVABLE_API_KEY nor GEMINI_API_KEY is configured");
-            })();
+      try {
+        for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
+          console.log(`[copilot-scoring] AI round ${round}`);
+          writer.sendStatus(getStatusMessage(round));
 
-      if (!aiResp.ok) {
-        const errText = await aiResp.text().catch(() => "");
-        console.error("[copilot-scoring] AI error:", aiResp.status, errText);
-        throw new Error(`AI gateway error: ${aiResp.status}`);
+          const aiRequestBody = {
+            model: "google/gemini-2.5-flash",
+            messages: convoMessages,
+            tools,
+            tool_choice: "auto",
+            stream: false,
+            max_tokens: 4096,
+          };
+
+          const aiResp = LOVABLE_API_KEY
+            ? await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(aiRequestBody),
+                signal: AbortSignal.timeout(25000),
+              })
+            : GEMINI_API_KEY
+              ? await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${GEMINI_API_KEY}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ ...aiRequestBody, model: "gemini-2.5-flash" }),
+                  signal: AbortSignal.timeout(25000),
+                })
+              : (() => {
+                  throw new Error("Neither LOVABLE_API_KEY nor GEMINI_API_KEY is configured");
+                })();
+
+          if (!aiResp.ok) {
+            const errText = await aiResp.text().catch(() => "");
+            console.error("[copilot-scoring] AI error:", aiResp.status, errText);
+            writer.sendError("Failed to get a response. Please try again.");
+            writer.close();
+            return;
+          }
+
+          const result = await aiResp.json();
+          const assistantMessage = result.choices?.[0]?.message;
+
+          if (assistantMessage?.tool_calls?.length) {
+            const toolResults = await Promise.all(
+              assistantMessage.tool_calls.map(async (tc: any) => {
+                let args: any = {};
+                try { args = JSON.parse(tc.function.arguments || "{}"); } catch { args = {}; }
+                const toolResult = await executeTool(tc.function.name, args, supabase, userId, panelMounted);
+                return { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) };
+              })
+            );
+
+            convoMessages.push(assistantMessage, ...toolResults);
+            continue;
+          }
+
+          const content = assistantMessage?.content || "I couldn't process that request.";
+          writer.sendToken(content);
+          writer.sendDone();
+          writer.close();
+          return;
+        }
+
+        const fallback = "I wasn't able to complete the scoring adjustment. Please try again or visit [Agent Scoring](/tools/agent-scoring) directly.";
+        writer.sendToken(fallback);
+        writer.sendDone();
+        writer.close();
+      } catch (error) {
+        console.error("[copilot-scoring] Error:", error);
+        writer.sendError(error instanceof Error ? error.message : "Internal error");
+        writer.close();
+      } finally {
+        clearTimeout(timeoutId);
       }
+    };
 
-      const result = await aiResp.json();
-      const assistantMessage = result.choices?.[0]?.message;
+    processAsync();
 
-      if (assistantMessage?.tool_calls?.length) {
-        const toolResults = await Promise.all(
-          assistantMessage.tool_calls.map(async (tc: any) => {
-            let args: any = {};
-            try { args = JSON.parse(tc.function.arguments || "{}"); } catch { args = {}; }
-            const toolResult = await executeTool(tc.function.name, args, supabase, userId, panelMounted);
-            return { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) };
-          })
-        );
-
-        convoMessages.push(assistantMessage, ...toolResults);
-        continue;
-      }
-
-      // Final text response — stream as SSE
-      const content = assistantMessage?.content || "I couldn't process that request.";
-      const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(content)}}}]}\n\ndata: [DONE]\n\n`;
-
-      return new Response(sseData, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-      });
-    }
-
-    // Fallback after max rounds
-    const fallback = "I wasn't able to complete the scoring adjustment. Please try again or visit [Agent Scoring](/tools/agent-scoring) directly.";
-    const sseData = `data: {"choices":[{"delta":{"content":${JSON.stringify(fallback)}}}]}\n\ndata: [DONE]\n\n`;
-    return new Response(sseData, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    return new Response(readable, { headers: STREAM_CORS_HEADERS });
   } catch (error) {
     console.error("[copilot-scoring] Error:", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Internal error" }), {
