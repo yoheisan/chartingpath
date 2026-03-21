@@ -2944,83 +2944,116 @@ export type Database = {
       paper_trades: {
         Row: {
           asset_type: string | null
+          attribution: string | null
           close_reason: string | null
           closed_at: string | null
+          copilot_reasoning: string | null
           created_at: string
           detection_id: string | null
           entry_price: number
           exit_price: number | null
           gate_evaluation_id: string | null
+          gate_reason: string | null
+          gate_result: string | null
+          hold_duration_mins: number | null
           id: string
+          master_plan_id: string | null
           notes: string | null
           notified_at: string | null
+          outcome: string | null
           outcome_r: number | null
           override_notes: string | null
           override_reason: string | null
           pattern_id: string | null
           pnl: number | null
           portfolio_id: string
+          position_size_pct: number | null
           quantity: number
+          setup_type: string | null
+          source: string | null
           status: string
           stop_loss: number | null
           symbol: string
           take_profit: number | null
           timeframe: string | null
           trade_type: string
+          user_action: string | null
           user_id: string
         }
         Insert: {
           asset_type?: string | null
+          attribution?: string | null
           close_reason?: string | null
           closed_at?: string | null
+          copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
           entry_price: number
           exit_price?: number | null
           gate_evaluation_id?: string | null
+          gate_reason?: string | null
+          gate_result?: string | null
+          hold_duration_mins?: number | null
           id?: string
+          master_plan_id?: string | null
           notes?: string | null
           notified_at?: string | null
+          outcome?: string | null
           outcome_r?: number | null
           override_notes?: string | null
           override_reason?: string | null
           pattern_id?: string | null
           pnl?: number | null
           portfolio_id: string
+          position_size_pct?: number | null
           quantity: number
+          setup_type?: string | null
+          source?: string | null
           status?: string
           stop_loss?: number | null
           symbol: string
           take_profit?: number | null
           timeframe?: string | null
           trade_type: string
+          user_action?: string | null
           user_id: string
         }
         Update: {
           asset_type?: string | null
+          attribution?: string | null
           close_reason?: string | null
           closed_at?: string | null
+          copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
           entry_price?: number
           exit_price?: number | null
           gate_evaluation_id?: string | null
+          gate_reason?: string | null
+          gate_result?: string | null
+          hold_duration_mins?: number | null
           id?: string
+          master_plan_id?: string | null
           notes?: string | null
           notified_at?: string | null
+          outcome?: string | null
           outcome_r?: number | null
           override_notes?: string | null
           override_reason?: string | null
           pattern_id?: string | null
           pnl?: number | null
           portfolio_id?: string
+          position_size_pct?: number | null
           quantity?: number
+          setup_type?: string | null
+          source?: string | null
           status?: string
           stop_loss?: number | null
           symbol?: string
           take_profit?: number | null
           timeframe?: string | null
           trade_type?: string
+          user_action?: string | null
           user_id?: string
         }
         Relationships: [
@@ -3036,6 +3069,13 @@ export type Database = {
             columns: ["gate_evaluation_id"]
             isOneToOne: false
             referencedRelation: "gate_evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paper_trades_master_plan_id_fkey"
+            columns: ["master_plan_id"]
+            isOneToOne: false
+            referencedRelation: "master_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -4205,6 +4245,42 @@ export type Database = {
           id?: string
           is_active?: boolean
           service_name?: string
+        }
+        Relationships: []
+      }
+      session_logs: {
+        Row: {
+          ai_pnl_r: number | null
+          created_at: string | null
+          human_pnl_r: number | null
+          id: string
+          session_date: string
+          summary_text: string | null
+          total_scanned: number | null
+          trades_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_pnl_r?: number | null
+          created_at?: string | null
+          human_pnl_r?: number | null
+          id?: string
+          session_date: string
+          summary_text?: string | null
+          total_scanned?: number | null
+          trades_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_pnl_r?: number | null
+          created_at?: string | null
+          human_pnl_r?: number | null
+          id?: string
+          session_date?: string
+          summary_text?: string | null
+          total_scanned?: number | null
+          trades_taken?: number | null
+          user_id?: string
         }
         Relationships: []
       }
