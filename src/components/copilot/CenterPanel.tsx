@@ -104,7 +104,7 @@ const ScanningState = () => {
 
           <div className="border-t border-border/40 pt-3 mt-1">
             <p className="text-sm text-muted-foreground text-center">
-              Copilot auto-enters when conditions are met. No action needed.
+              Copilot paper-enters when conditions are met. You review results and decide when to go live.
             </p>
           </div>
         </div>
