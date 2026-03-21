@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
@@ -8,6 +8,8 @@ import { useMasterPlan } from "@/hooks/useMasterPlan";
 
 const Copilot = () => {
   const { rules, hasPlan, refreshPlan } = useMasterPlan();
+  const [conflictTicker, setConflictTicker] = useState<string | null>(null);
+  const [conflictReason, setConflictReason] = useState<string | null>(null);
 
   const focusNLBar = useCallback((prefill?: string) => {
     const event = new KeyboardEvent("keydown", {
@@ -21,17 +23,28 @@ const Copilot = () => {
     }
   }, []);
 
-  // Listen for mandate saved events to refresh
-  // This is triggered via the NavCopilotBar's onMandateSaved callback
-  // which is wired in the parent layout
+  const handleConflictDetected = useCallback((ticker: string, reason: string) => {
+    setConflictTicker(ticker);
+    setConflictReason(reason);
+  }, []);
+
+  const dismissConflict = useCallback(() => {
+    setConflictTicker(null);
+    setConflictReason(null);
+  }, []);
 
   return (
     <div className="container mx-auto flex h-[calc(100vh-64px)]">
       <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-hidden">
         <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
         <MandateCard onFocusNLBar={focusNLBar} rules={rules} hasPlan={hasPlan} />
-        <ConflictBanner onFocusNLBar={focusNLBar} />
-        <AIGatedWatchlist />
+        <ConflictBanner
+          onFocusNLBar={focusNLBar}
+          conflictTicker={conflictTicker}
+          conflictReason={conflictReason}
+          onDismiss={dismissConflict}
+        />
+        <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
       </aside>
 
       <main className="flex-1 border-r border-border/40 flex items-center justify-center">
