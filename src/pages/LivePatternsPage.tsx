@@ -297,6 +297,7 @@ export default function LivePatternsPage() {
 
   // Gate evaluation hook for live AI gate badges
   const { evaluate, evaluateBatch, getEvaluation, isLoading: isGateLoading } = useGateEvaluation();
+  const { tradeWithGateCheck, isSubmitting: isPaperSubmitting } = usePaperTradeEntry();
 
   // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
   // ensure the UI doesn't stay stuck forever.
