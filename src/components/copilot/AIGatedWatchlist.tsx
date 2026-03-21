@@ -13,13 +13,7 @@ interface WatchlistRow {
   gateReason?: string;
 }
 
-const INITIAL_WATCHLIST: WatchlistRow[] = [
-  { symbol: "NVDA", gate: "aligned", source: "AI", pnl: "+2.1R" },
-  { symbol: "MSFT", gate: "aligned", source: "AI", pnl: "+1.4R" },
-  { symbol: "TSLA", gate: "conflict", source: "you", pnl: "−2.0R" },
-  { symbol: "AMD", gate: "partial", source: "AI", pnl: "open" },
-  { symbol: "AAPL", gate: "aligned", source: "you", pnl: "queued" },
-];
+const INITIAL_WATCHLIST: WatchlistRow[] = [];
 
 const GATE_STYLES = {
   aligned: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
