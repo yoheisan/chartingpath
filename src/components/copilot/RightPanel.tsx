@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SessionDebriefPanel } from './SessionDebriefPanel';
 import { useCopilotTrades, CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
