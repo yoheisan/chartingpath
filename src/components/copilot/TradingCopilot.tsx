@@ -17,7 +17,7 @@ import { ContactSupportDialog } from "@/components/support/ContactSupportDialog"
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CopilotRichMessage } from "./CopilotRichMessage";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { ChartAnalysisSummary } from "./ChartAnalysisSummary";
 import { ChartAnalysisResult } from "@/hooks/useChartAnalysis";
 import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
@@ -207,12 +207,6 @@ interface QuickAction {
   label?: string;
 }
 
-const GUEST_ACTIONS: QuickAction[] = [
-  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-  { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
-];
-
 // (Quick action tiers are now inline in the home screen render)
 
 export interface TradingCopilotProps {
@@ -260,6 +254,7 @@ export function TradingCopilot({
   } = useCopilotConversations();
 
   const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
+  const [activePatternCount, setActivePatternCount] = useState<number | null>(null);
 
   // Fetch today's paper trade count for the greeting
   useEffect(() => {
@@ -280,7 +275,30 @@ export function TradingCopilot({
     fetchTodayTrades();
   }, [isAuthenticated, hasPlan]);
 
+  // Fetch active pattern count for anonymous banner (public RPC)
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const fetchCount = async () => {
+      try {
+        const { data } = await supabase.rpc('get_active_pattern_count');
+        setActivePatternCount(typeof data === 'number' ? data : 0);
+      } catch { setActivePatternCount(0); }
+    };
+    fetchCount();
+  }, [isAuthenticated]);
+
   const { trackQuestion } = useCopilotFeedback();
+
+  // Track auth transition — preserve chat, show welcome toast
+  const prevAuthRef = useRef(isAuthenticated);
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthRef.current) {
+      // User just logged in mid-session
+      toast.success("Welcome — your mandate is ready to set up.");
+      setGuestMsgCount(0); // reset paywall
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated]);
 
   // Mandate handling — integrated into chat UI
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
@@ -670,7 +688,7 @@ export function TradingCopilot({
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
               <p className="text-xs text-white/70">
-                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : t('copilot.subtitle')}
+                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : "See what AI-native trading looks like."}
               </p>
             </div>
           </div>
@@ -697,6 +715,9 @@ export function TradingCopilot({
               (() => {
                 const pageCtx = getPageContext(location.pathname);
                 const tier2Chips = isAuthenticated ? pageCtx.chips : [];
+                const redirectPath = typeof window !== 'undefined'
+                  ? encodeURIComponent(window.location.pathname + window.location.search)
+                  : '/';
                 return (
               <div className="space-y-4">
                 <div className="text-center py-6">
@@ -705,10 +726,9 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
-                      <p className="text-sm text-muted-foreground">{t('copilot.welcomeDesc')}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-2">
-                        {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
+                      <h4 className="font-semibold mb-1">Your AI trading desk — live demo</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Ask Copilot anything. See how it scans, scores, and trades for you. Sign up to activate your mandate and go live.
                       </p>
                     </>
                   ) : hasPlan ? (
@@ -729,7 +749,36 @@ export function TradingCopilot({
                 </div>
 
                 <div className="space-y-3">
-                  {/* Tier 1 — Mandate & Session */}
+                  {/* ── LOGGED-OUT: 3 demo chips ── */}
+                  {!isAuthenticated && (
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "What patterns are active right now?", prompt: "What patterns are active right now?" },
+                        { label: "Score a trade for me", prompt: "Score a trade for me" },
+                        { label: "How does the AI Gate work?", prompt: "How does the AI Gate work?" },
+                      ].map((chip) => (
+                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                          <span className="text-xs">{chip.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── LOGGED-OUT: Active setups banner ── */}
+                  {!isAuthenticated && (
+                    <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                      <p className="text-xs text-foreground/80 mb-2">
+                        Copilot found <span className="font-semibold text-accent">{activePatternCount ?? '…'}</span> active setups right now — sign up free to see them scored against your mandate.
+                      </p>
+                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                        <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
+                          Start free →
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's trades")} disabled={isLoading}>
@@ -741,7 +790,7 @@ export function TradingCopilot({
                     </div>
                   )}
 
-                  {/* Tier 1 — Getting started (no mandate) */}
+                  {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
                   {isAuthenticated && !hasPlan && (
                     <Button
                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
@@ -752,24 +801,12 @@ export function TradingCopilot({
                     </Button>
                   )}
 
-                  {/* Tier 2 — Page-aware chips */}
+                  {/* ── LOGGED-IN: Tier 2 — Page-aware chips ── */}
                   {tier2Chips.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tier2Chips.map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
                           <span className="text-xs">{chip.label}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Guest quick actions */}
-                  {!isAuthenticated && (
-                    <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                      {GUEST_ACTIONS.map((action) => (
-                        <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
-                          <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                          <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
                         </Button>
                       ))}
                     </div>
@@ -907,7 +944,7 @@ export function TradingCopilot({
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "Tell me how you want to trade..." : t('copilot.placeholder', 'Tell Copilot how to trade, or ask anything...')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "Tell me how you want to trade..." : "Ask Copilot anything — no sign up needed to try"} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
               <div className="flex flex-col gap-1 items-center justify-end">
                 <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

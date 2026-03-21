@@ -1,4 +1,4 @@
-import { Lock, LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
@@ -18,44 +18,29 @@ export function CopilotAuthGate({ messagesUsed, maxMessages }: CopilotAuthGatePr
   return (
     <div className="p-4 border-t bg-gradient-to-r from-primary/5 to-accent/5">
       <div className="flex flex-col items-center gap-3 py-2">
-        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <Lock className="h-5 w-5 text-primary" />
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-medium">{t('copilot.usedAllMessages', "You've used all {{count}} free messages", { count: maxMessages })}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t('copilot.signInUnlimited', 'Sign in for unlimited access to the Trading Copilot')}
-          </p>
-        </div>
-        
-        {/* Google sign-in */}
-        <div className="w-full max-w-xs">
-          <GoogleSignInButton size="sm" className="w-full" />
+        <div className="text-center space-y-2">
+          <p className="text-sm font-medium">You've seen what Copilot can do.</p>
+          <p className="text-xs text-muted-foreground">Sign up free to:</p>
+          <ul className="text-xs text-muted-foreground text-left space-y-1 mx-auto max-w-[240px]">
+            <li>✦ Set your trading mandate</li>
+            <li>✦ Run paper trades automatically</li>
+            <li>✦ Track your AI vs Human edge</li>
+            <li>✦ Deploy to live when you're ready</li>
+          </ul>
         </div>
 
-        <div className="relative w-full max-w-xs">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">{t('copilot.or', 'or')}</span>
-          </div>
-        </div>
+        <Button asChild className="w-full max-w-xs bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+          <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
+            Create free account →
+          </Link>
+        </Button>
 
-        <div className="flex gap-2 w-full max-w-xs">
-          <Button asChild size="sm" className="flex-1">
-            <Link to={`/auth?redirect=${redirectPath}`}>
-              <LogIn className="h-3.5 w-3.5 mr-1.5" />
-              {t('copilot.signIn', 'Sign In')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="flex-1">
-            <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-              {t('copilot.register', 'Register')}
-            </Link>
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Already have an account?{' '}
+          <Link to={`/auth?redirect=${redirectPath}`} className="text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
