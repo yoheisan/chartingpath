@@ -235,10 +235,11 @@ export function TradingCopilot({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
+  const [showBuilder, setShowBuilder] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
-  const { hasPlan } = useMasterPlan();
+  const { plan, hasPlan, refreshPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
   const {
