@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   MonitorPlay, 
   CheckCircle2, 
   AlertTriangle,
   FileCode,
   Settings,
-  Play
+  Play,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 
 // Import guide images
