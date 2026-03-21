@@ -198,25 +198,23 @@ Deno.serve(async (req) => {
           const targetPrice = entryPrice + 3 * rUnit;
           const quantity = (portfolio.current_balance * positionPct / 100) / entryPrice;
 
-          // Generate copilot reasoning via Lovable AI
+          // Generate copilot reasoning via Anthropic Claude Sonnet
           let reasoning = `Automated entry: ${det.pattern_name || "pattern"} on ${det.instrument} (${det.timeframe}). Risk: ${positionPct}% of portfolio.`;
           try {
-            const aiKey = Deno.env.get("LOVABLE_API_KEY");
-            if (aiKey) {
-              const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+            if (anthropicKey) {
+              const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST",
                 headers: {
-                  Authorization: `Bearer ${aiKey}`,
+                  "x-api-key": anthropicKey,
+                  "anthropic-version": "2023-06-01",
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  model: "google/gemini-3-flash-preview",
+                  model: "claude-sonnet-4-20250514",
+                  max_tokens: 200,
+                  system: "Generate a 2-sentence entry rationale for a paper trade. Be specific about the setup type and risk. Plain text only. No markdown.",
                   messages: [
-                    {
-                      role: "system",
-                      content:
-                        "Generate a 2-sentence entry rationale for a paper trade. Be specific about the setup type and risk. Plain text only. No markdown.",
-                    },
                     {
                       role: "user",
                       content: JSON.stringify({
@@ -231,12 +229,11 @@ Deno.serve(async (req) => {
                       }),
                     },
                   ],
-                  max_tokens: 150,
                 }),
               });
               if (aiRes.ok) {
                 const aiData = await aiRes.json();
-                reasoning = aiData.choices?.[0]?.message?.content || reasoning;
+                reasoning = aiData.content?.[0]?.text || reasoning;
               }
             }
           } catch (e) {

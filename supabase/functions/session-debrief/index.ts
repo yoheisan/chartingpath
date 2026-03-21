@@ -198,23 +198,25 @@ If there are no trades say so briefly.`,
         });
       }
 
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "x-api-key": ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are Copilot a trading desk assistant answering questions about today's trading session. Answer based only on the trade data provided. Be direct and specific. Maximum 3 sentences. If the question cannot be answered from the available data say so honestly. Plain text only, no markdown.",
-            },
-            ...chatMessages,
-          ],
+          model: "claude-sonnet-4-20250514",
           max_tokens: 200,
+          system: "You are Copilot a trading desk assistant answering questions about today's trading session. Answer based only on the trade data provided. Be direct and specific. Maximum 3 sentences. If the question cannot be answered from the available data say so honestly. Plain text only, no markdown.",
+          messages: chatMessages,
         }),
       });
 
@@ -225,18 +227,13 @@ If there are no trades say so briefly.`,
             status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        if (status === 402) {
-          return new Response(JSON.stringify({ error: "Credits exhausted" }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        return new Response(JSON.stringify({ error: "AI gateway error" }), {
+        return new Response(JSON.stringify({ error: "Anthropic API error" }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const result = await aiResponse.json();
-      const reply = result.choices?.[0]?.message?.content?.trim() || "I couldn't generate a response.";
+      const reply = result.content?.[0]?.text?.trim() || "I couldn't generate a response.";
 
       return new Response(JSON.stringify({ reply }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
