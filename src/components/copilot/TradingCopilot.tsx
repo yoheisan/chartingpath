@@ -495,8 +495,33 @@ export function TradingCopilot({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || guestLimitReached) return;
+    const trimmed = input.trim();
+
+    // If mandate is awaiting confirmation, check for "yes"/"save"
+    if (mandateState.step === 'confirming') {
+      const lower = trimmed.toLowerCase();
+      if (lower === 'yes' || lower === 'save' || lower === 'looks good' || lower === 'confirm') {
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+        setInput("");
+        mandateConfirm();
+        return;
+      } else {
+        // User wants to adjust — reset mandate and re-submit as new mandate
+        mandateReset();
+      }
+    }
+
     if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
-    streamChat(input.trim());
+
+    // Add user message to chat immediately
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+    setInput("");
+
+    // Try mandate classification first via the mandate hook
+    mandateSubmit(trimmed);
+
+    // Also send to regular copilot for standard Q&A (mandate hook will handle mandate/override intents and show results in chat; the regular copilot handles everything else)
+    streamChat(trimmed);
   };
 
   const handleQuickAction = (prompt: string) => {
