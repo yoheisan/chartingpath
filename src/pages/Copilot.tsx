@@ -18,7 +18,18 @@ const Copilot = () => {
   const [conflictReason, setConflictReason] = useState<string | null>(null);
   const [sessionEndBanner, setSessionEndBanner] = useState<{ time: string } | null>(null);
   const [debriefFromBanner, setDebriefFromBanner] = useState(false);
+  const [debriefQuestion, setDebriefQuestion] = useState<string | null>(null);
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
+
+  // Listen for question routing from NL Command Bar
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setDebriefQuestion(e.detail);
+      setDebriefFromBanner(true);
+    };
+    window.addEventListener('copilot-question', handler as EventListener);
+    return () => window.removeEventListener('copilot-question', handler as EventListener);
+  }, []);
 
   const activeTrade = openTrades.length > 0 ? openTrades[0] : null;
 
