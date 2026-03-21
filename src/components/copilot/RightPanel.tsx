@@ -264,7 +264,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
                     <span className={`relative inline-flex rounded-full h-2 w-2 ${allPassed ? 'bg-green-500' : 'bg-muted-foreground/50'}`} />
                   </span>
                   <span className={`text-sm font-medium ${allPassed ? 'text-green-400' : 'text-muted-foreground'}`}>
-                    Deploy to Live · Alpaca
+                    Go live with your plan · Alpaca
                   </span>
                 </button>
               </TooltipTrigger>
