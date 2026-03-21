@@ -260,6 +260,7 @@ export function TradingCopilot({
   } = useCopilotConversations();
 
   const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
+  const [activePatternCount, setActivePatternCount] = useState<number | null>(null);
 
   // Fetch today's paper trade count for the greeting
   useEffect(() => {
@@ -279,6 +280,18 @@ export function TradingCopilot({
     };
     fetchTodayTrades();
   }, [isAuthenticated, hasPlan]);
+
+  // Fetch active pattern count for anonymous banner (public RPC)
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const fetchCount = async () => {
+      try {
+        const { data } = await supabase.rpc('get_active_pattern_count');
+        setActivePatternCount(typeof data === 'number' ? data : 0);
+      } catch { setActivePatternCount(0); }
+    };
+    fetchCount();
+  }, [isAuthenticated]);
 
   const { trackQuestion } = useCopilotFeedback();
 
