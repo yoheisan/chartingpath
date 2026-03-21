@@ -817,22 +817,36 @@ async function fetchFromDB(
   timeframe: string
 ): Promise<any[]> {
   try {
-    const { data, error } = await supabaseClient
-      .from('historical_prices')
-      .select('date, open, high, low, close, volume')
-      .eq('symbol', symbol)
-      .eq('timeframe', timeframe)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: true })
-      .limit(5000);
+    // Supabase PostgREST often caps responses to 1000 rows/request.
+    // Page manually to get a fuller local history window for backtests.
+    const PAGE_SIZE = 1000;
+    const MAX_DB_BARS = 5000;
+    const rows: any[] = [];
 
-    if (error || !data) {
-      console.warn(`[BacktestData] DB query error for ${symbol}:`, error?.message);
-      return [];
+    for (let from = 0; from < MAX_DB_BARS; from += PAGE_SIZE) {
+      const to = Math.min(from + PAGE_SIZE - 1, MAX_DB_BARS - 1);
+      const { data, error } = await supabaseClient
+        .from('historical_prices')
+        .select('date, open, high, low, close, volume')
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: true })
+        .range(from, to);
+
+      if (error) {
+        console.warn(`[BacktestData] DB query error for ${symbol}:`, error.message);
+        return [];
+      }
+
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+
+      if (data.length < PAGE_SIZE) break;
     }
 
-    return data.map((r: any) => ({
+    return rows.map((r: any) => ({
       timestamp: new Date(r.date).getTime(),
       date: r.date,
       open: Number(r.open),
@@ -871,7 +885,9 @@ async function fetchFromEODHD(
   
   let url: string;
   if (period === 'intraday') {
-    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=1h&from=${startDate}&to=${endDate}&fmt=json`;
+    const fromTs = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
+    const toTs = Math.floor(new Date(`${endDate}T23:59:59Z`).getTime() / 1000);
+    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=1h&from=${fromTs}&to=${toTs}&fmt=json`;
   } else {
     url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startDate}&to=${endDate}&period=${period}&fmt=json`;
   }
