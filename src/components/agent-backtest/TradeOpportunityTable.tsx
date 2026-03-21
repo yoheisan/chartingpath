@@ -429,37 +429,31 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                   className={`border-t border-border/50 transition-all duration-500 ${rowBg[trade.verdict]}`}
                 >
                   {onToggleBasket && (
-                    <td className="px-3 py-3 text-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-6 w-6 p-0 rounded-full transition-all ${
-                          basketSelections.includes(trade.selectionKey)
-                            ? 'bg-primary text-primary-foreground hover:bg-primary/80'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        }`}
-                        onClick={() => {
-                          onToggleBasket(trade.selectionKey);
-                          if (trade.verdict === 'TAKE') {
-                            toast.success('Added to paper ✓');
-                          } else if (trade.verdict === 'WATCH') {
-                            toast('Partial match with your plan. Add anyway?', {
-                              duration: 10000,
-                              action: { label: 'Add anyway', onClick: () => toast.success('Added to paper ✓') },
-                              cancel: { label: 'Skip', onClick: () => {} },
+                      <td className="px-3 py-3 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-6 w-6 p-0 rounded-full transition-all ${
+                            basketSelections.includes(trade.selectionKey)
+                              ? 'bg-primary text-primary-foreground hover:bg-primary/80'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                          disabled={isPaperSubmitting}
+                          onClick={() => {
+                            onToggleBasket(trade.selectionKey);
+                            const gateResult = trade.verdict === 'TAKE' ? 'aligned' as const : trade.verdict === 'WATCH' ? 'partial' as const : 'conflict' as const;
+                            tradeWithGateCheck({
+                              ticker: trade.symbol,
+                              setup_type: trade.pattern,
+                              timeframe: trade.timeframe,
+                              direction: trade.direction?.toLowerCase(),
+                              gate_result: gateResult,
                             });
-                          } else {
-                            toast('Conflicts with your plan. Add anyway?', {
-                              duration: 10000,
-                              action: { label: 'Add anyway', onClick: () => toast.success('Added to paper ✓') },
-                              cancel: { label: 'Skip', onClick: () => {} },
-                            });
-                          }
-                        }}
-                      >
-                        {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                      </Button>
-                    </td>
+                          }}
+                        >
+                          {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        </Button>
+                      </td>
                   )}
                   <td className="px-4 py-3 font-semibold text-foreground">{trade.symbol}</td>
                   <td className="px-4 py-3 text-muted-foreground">{trade.pattern}</td>
