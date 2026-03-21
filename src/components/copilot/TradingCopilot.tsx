@@ -8,23 +8,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 import { 
-  Sparkles, 
-  Send, 
-  X, 
-  Home,
-  Loader2, 
-  TrendingUp,
-  BookOpen,
-  BarChart3,
-  PanelLeftOpen,
-  PanelLeftClose,
-  ChevronDown,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquarePlus,
-  Info
+  Sparkles, Send, X, Home, Loader2, TrendingUp, BookOpen, BarChart3,
+  PanelLeftOpen, PanelLeftClose, ChevronDown, ThumbsUp, ThumbsDown,
+  MessageSquarePlus, Info
 } from "lucide-react";
 import { ContactSupportDialog } from "@/components/support/ContactSupportDialog";
 import { cn } from "@/lib/utils";
