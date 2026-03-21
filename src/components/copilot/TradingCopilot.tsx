@@ -225,7 +225,9 @@ export function TradingCopilot({
   onToggle,
   pendingContext,
   pendingAnalysis,
-  onContextConsumed
+  onContextConsumed,
+  pendingPlanBuilder,
+  onPlanBuilderConsumed
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
