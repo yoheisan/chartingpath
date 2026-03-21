@@ -597,6 +597,13 @@ export function TradingCopilot({
     }
   };
 
+  // Detect intent to edit/update trading plan
+  const isEditPlanIntent = (text: string): boolean => {
+    const lower = text.toLowerCase();
+    const editKeywords = ['edit my trading', 'update my trading', 'change my trading', 'edit my plan', 'update my plan', 'change my plan', 'edit trading setting', 'edit trading plan', 'modify my plan', 'modify my trading'];
+    return editKeywords.some(k => lower.includes(k));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || guestLimitReached) return;
@@ -611,26 +618,28 @@ export function TradingCopilot({
         mandateConfirm();
         return;
       } else {
-        // User wants to adjust — reset mandate and re-submit as new mandate
         mandateReset();
       }
     }
 
     if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
 
-    // Add user message to chat immediately
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+    // Check if user wants to edit their trading plan — open builder instead
+    if (isEditPlanIntent(trimmed) && isAuthenticated) {
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+      setInput("");
+      setShowBuilder(true);
+      return;
+    }
+
     setInput("");
 
-    // Try mandate classification first via the mandate hook
-    mandateSubmit(trimmed);
-
-    // Also send to regular copilot for standard Q&A (mandate hook will handle mandate/override intents and show results in chat; the regular copilot handles everything else)
+    // Send to copilot (streamChat adds the user message to state)
     streamChat(trimmed);
   };
 
   const handleQuickAction = (prompt: string) => {
-    if (guestLimitReached) return;
+    if (isLoading || guestLimitReached) return;
     if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
     streamChat(prompt);
   };
