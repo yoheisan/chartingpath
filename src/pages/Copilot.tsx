@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
+import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 
 const Copilot = () => {
@@ -23,6 +24,9 @@ const Copilot = () => {
     <div className="container mx-auto flex h-[calc(100vh-64px)]">
       {/* Left Panel */}
       <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-hidden">
+        {/* Zone 0: Feedback Loop Banner */}
+        <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
+
         {/* Zone 1: Mandate + Conflict */}
         <MandateCard onFocusNLBar={focusNLBar} />
         <ConflictBanner onFocusNLBar={focusNLBar} />
