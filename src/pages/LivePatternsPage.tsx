@@ -14,6 +14,7 @@ import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
+import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
@@ -296,6 +297,9 @@ export default function LivePatternsPage() {
   // Hover prefetch hook for instant chart loading
   const { onRowHover, cancelPrefetch, getAndConsume, getCached } = usePatternPrefetch();
 
+  // Gate evaluation hook for live AI gate badges
+  const { evaluate, evaluateBatch, getEvaluation, isLoading: isGateLoading } = useGateEvaluation();
+
   // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
   // ensure the UI doesn't stay stuck forever.
   useEffect(() => {
@@ -424,6 +428,15 @@ export default function LivePatternsPage() {
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
         setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
+
+        // Trigger batch gate evaluations for loaded patterns
+        const items = activeOnly.slice(0, 20).map((s: any) => ({
+          ticker: s.instrument,
+          setup_type: s.patternName,
+          timeframe: tfToFetch,
+          direction: s.direction,
+        }));
+        evaluateBatch(items).catch(console.error);
       } else {
         // No patterns found but not an error - show empty state
         setPatterns([]);
@@ -1674,16 +1687,30 @@ export default function LivePatternsPage() {
                             {/* Gate Badge */}
                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                               {(() => {
-                                const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                const gateLoading = isGateLoading(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                if (gateLoading) {
+                                  return <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/30 text-muted-foreground border-border/30 animate-pulse">…</Badge>;
+                                }
+                                const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
                                 const styles = {
                                   aligned: 'bg-green-500/10 text-green-500 border-green-500/30',
                                   partial: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
                                   conflict: 'bg-red-500/10 text-red-500 border-red-500/30',
                                 };
                                 return (
-                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[gateType]}`}>
-                                    {gateType}
-                                  </Badge>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 cursor-help ${styles[gateType as keyof typeof styles] || styles.partial}`}>
+                                        {gateType}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    {gateEval?.gate_reason && (
+                                      <TooltipContent side="left" className="max-w-xs text-xs">
+                                        {gateEval.gate_reason}
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
                                 );
                               })()}
                             </TableCell>
@@ -1711,11 +1738,13 @@ export default function LivePatternsPage() {
                                 className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                  const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                  const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
                                   if (gateType === 'aligned') {
                                     toast.success('Added to Copilot paper ✓');
                                   } else {
-                                    toast('This setup conflicts with your Master Plan. Add anyway?', {
+                                    const reason = gateEval?.gate_reason || 'This setup conflicts with your Master Plan. Add anyway?';
+                                    toast(reason, {
                                       duration: 10000,
                                       action: {
                                         label: 'Add anyway',
