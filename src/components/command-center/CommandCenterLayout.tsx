@@ -34,6 +34,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
 import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
+import { DashboardCopilotBar, DashboardAIStrip } from './DashboardCopilotStrip';
 
 
 // Lazy load mobile layout for code splitting
@@ -566,6 +567,10 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full flex flex-col bg-background">
+      {/* Copilot Context Bar + AI Strip */}
+      <DashboardCopilotBar />
+      <DashboardAIStrip />
+
       {/* Minimal auth nudge */}
       {!userId && <DashboardAuthNudge />}
       
