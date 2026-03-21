@@ -192,6 +192,7 @@ const SortableHeader: React.FC<{
 
 export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, watchCutoff, detections, isLoading, onSendToBacktest, basketSelections = [], onToggleBasket, economicEvents = [], agentScores, lastScoredAt }) => {
   const { t } = useTranslation();
+  const { tradeWithGateCheck, isSubmitting: isPaperSubmitting } = usePaperTradeEntry();
   const [sortKey, setSortKey] = useState<SortKey>('composite');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showEmerging, setShowEmerging] = useState(false);
