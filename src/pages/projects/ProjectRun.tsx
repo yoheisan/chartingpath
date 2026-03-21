@@ -118,8 +118,24 @@ const ProjectRun = () => {
   const fetchRun = useCallback(async (isInitial = false) => {
     if (!runId || !isMountedRef.current) return;
     
+    // Safety timeout: ensure loading never hangs forever
+    const safetyTimeout = isInitial ? setTimeout(() => {
+      if (isMountedRef.current) {
+        console.warn('[ProjectRun] Safety timeout — fetch took too long');
+        setLoading(false);
+        setError('Loading took too long. Please refresh or click Retry.');
+      }
+    }, 20_000) : undefined;
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.debug('[ProjectRun] fetchRun start', { isInitial, runId });
+      
+      // Wrap getSession in a timeout to prevent auth hangs
+      const sessionPromise = supabase.auth.getSession();
+      const sessionTimeout = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Auth session timeout')), 8000)
+      );
+      const { data: { session } } = await Promise.race([sessionPromise, sessionTimeout]);
       
       if (!session?.access_token) {
         navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
@@ -212,6 +228,7 @@ const ProjectRun = () => {
         setError(err instanceof Error ? err.message : 'Failed to fetch run');
       }
     } finally {
+      if (safetyTimeout) clearTimeout(safetyTimeout);
       if (isMountedRef.current) {
         setLoading(false);
       }
