@@ -192,7 +192,9 @@ const Navigation = () => {
               </span>
             </div>
             
-            <nav className="hidden md:flex items-center gap-4 ml-8">
+            <NavCopilotBar className="ml-4 flex-1 max-w-[480px]" />
+            
+            <nav className="hidden md:flex items-center gap-4 ml-4">
             {/* 0. Dashboard - Command Center */}
             <Link to="/members/dashboard" className={navLinkClass('/members/dashboard')}>
               <BarChart3 className="h-4 w-4 text-blue-500" />
