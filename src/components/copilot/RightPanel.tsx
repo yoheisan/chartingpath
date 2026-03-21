@@ -146,10 +146,18 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       </div>
 
       {/* Section 5 — Trade Log */}
-      <div className="flex-1 min-h-0 flex flex-col border-t border-border/40">
-        <span className="text-xs font-medium text-muted-foreground px-3 py-1.5">
-          Today's trades {activeTab === 'live' && '(live)'}
-        </span>
+      <div className="flex-1 min-h-0 flex flex-col border-t border-border/40 overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Today's trades {activeTab === 'live' && '(live)'}
+          </span>
+          <button
+            onClick={() => setDebriefOpen(true)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            Review →
+          </button>
+        </div>
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {isLoading ? (
