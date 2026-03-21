@@ -314,3 +314,6 @@ verify_jwt = false
 
 [functions.copilot-mandate]
 verify_jwt = false
+
+[functions.evaluate-gate]
+verify_jwt = false
