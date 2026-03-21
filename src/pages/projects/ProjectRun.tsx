@@ -636,6 +636,79 @@ const ProjectRun = () => {
             ) : (
               <PatternLabViewer artifact={artifact as any} runId={runId!} previousMetrics={previousMetrics} />
             )}
+
+            {/* Add winners to Trading Plan */}
+            {(() => {
+              const winners = (artifact.patterns || []).filter(
+                (p: any) => p.expectancy > 0 && p.totalTrades >= 10
+              );
+              if (winners.length === 0) return null;
+              const winnerNames = winners.map((p: any) => p.patternName);
+              const winnerIds = winners.map((p: any) => p.patternId);
+              return (
+                <Card className="mt-6 border-primary/20 bg-primary/5">
+                  <CardContent className="py-5">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div>
+                        <h3 className="font-semibold text-sm mb-1">Patterns with a proven edge</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {winnerNames.join(', ')} — positive expectancy with ≥10 trades
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const { data: { session: freshSession } } = await supabase.auth.getSession();
+                            if (!freshSession?.user) {
+                              toast.error('Please sign in first');
+                              return;
+                            }
+                            // Fetch existing plan
+                            const { data: existingPlan } = await supabase
+                              .from('master_plans')
+                              .select('id, preferred_patterns')
+                              .eq('user_id', freshSession.user.id)
+                              .eq('is_active', true)
+                              .maybeSingle();
+
+                            const currentPatterns: string[] = (existingPlan?.preferred_patterns as string[]) || [];
+                            const merged = [...new Set([...currentPatterns, ...winnerIds])];
+
+                            if (existingPlan) {
+                              await supabase
+                                .from('master_plans')
+                                .update({ preferred_patterns: merged })
+                                .eq('id', existingPlan.id);
+                            } else {
+                              await supabase
+                                .from('master_plans')
+                                .insert({
+                                  user_id: freshSession.user.id,
+                                  preferred_patterns: merged,
+                                  is_active: true,
+                                });
+                            }
+
+                            trackEvent('pattern_lab.send_winners_to_plan', {
+                              patterns: winnerIds.join(','),
+                              count: winnerIds.length,
+                            });
+                            toast.success(`Added ${winnerNames.join(', ')} to your Trading Plan`);
+                          } catch (err: any) {
+                            toast.error(err.message || 'Failed to update Trading Plan');
+                          }
+                        }}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Add to Trading Plan
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             <DisclaimerBanner className="mt-8" />
           </>
         )}
