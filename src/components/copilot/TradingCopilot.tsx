@@ -1,28 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
+import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
-  Sparkles, 
-  Send, 
-  X, 
-  Home,
-  Loader2, 
-  TrendingUp,
-  Bell,
-  Code,
-  BookOpen,
-  BarChart3,
-  PanelLeftOpen,
-  PanelLeftClose,
-  ChevronDown,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquarePlus
+  Sparkles, Send, X, Home, Loader2, TrendingUp, BookOpen, BarChart3,
+  PanelLeftOpen, PanelLeftClose, ChevronDown, ThumbsUp, ThumbsDown,
+  MessageSquarePlus, Info
 } from "lucide-react";
 import { ContactSupportDialog } from "@/components/support/ContactSupportDialog";
 import { cn } from "@/lib/utils";
@@ -101,7 +90,7 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     chips: [
       { label: "What did Copilot do today?", prompt: "What did Copilot do today?" },
       { label: "Show my AI vs Human stats", prompt: "Show my AI vs Human stats" },
-      { label: "Set my mandate", prompt: "Set my mandate" },
+      { label: "What's the market doing?", prompt: "What's the market doing?" },
     ],
   },
   '/screener': {
@@ -109,8 +98,8 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
     chips: [
       { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Show A-grade setups only", prompt: "Show A-grade setups only" },
       { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
-      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
     ],
   },
   '/patterns/live': {
@@ -118,8 +107,8 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
     chips: [
       { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Show A-grade setups only", prompt: "Show A-grade setups only" },
       { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
-      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
     ],
   },
   '/tools/agent-scoring': {
@@ -127,16 +116,16 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "You're on Agent Scoring. Want to adjust your weights or filters?",
     chips: [
       { label: "Make scoring more conservative", prompt: "Make scoring more conservative" },
-      { label: "Increase take rate", prompt: "Increase take rate" },
-      { label: "Show current weights", prompt: "Show current weights" },
+      { label: "Increase my take rate", prompt: "Increase my take rate" },
+      { label: "Show current scoring weights", prompt: "Show current scoring weights" },
     ],
   },
   '/projects/pattern-lab/new': {
     pageName: 'Pattern Lab',
     greeting: "Pattern Lab is open. Want to run a backtest or send patterns to your Master Plan?",
     chips: [
-      { label: "Most profitable pattern", prompt: "What is the most profitable pattern?" },
-      { label: "Send winner to Master Plan", prompt: "Send winner to Master Plan" },
+      { label: "What's my most profitable pattern?", prompt: "What's my most profitable pattern?" },
+      { label: "Send winners to my Master Plan", prompt: "Send winners to my Master Plan" },
       { label: "Check my backtest quota", prompt: "Check my backtest quota" },
     ],
   },
@@ -146,6 +135,14 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     chips: [
       { label: "Create alert for my top setup", prompt: "Create alert for my top setup" },
       { label: "Send alerts to Copilot paper", prompt: "Send alerts to Copilot paper" },
+    ],
+  },
+  '/members/scripts': {
+    pageName: 'Scripts',
+    greeting: "Scripts page is open. Want to generate a Pine Script or export a strategy?",
+    chips: [
+      { label: "Generate Pine Script for my mandate", prompt: "Generate Pine Script for my mandate" },
+      { label: "Export as Copilot Strategy", prompt: "Export as Copilot Strategy" },
     ],
   },
   '/scripts': {
@@ -160,9 +157,9 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     pageName: 'Copilot ACS',
     greeting: "Your Copilot desk. Set your mandate, review trades, or ask anything.",
     chips: [
-      { label: "Set my mandate", prompt: "Set my mandate" },
-      { label: "Why did Copilot flag this?", prompt: "Why did Copilot flag this?" },
+      { label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
       { label: "Show today's paper trades", prompt: "Show today's paper trades" },
+      { label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
     ],
   },
   '/edge-atlas': {
@@ -186,13 +183,15 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
 const DEFAULT_PAGE_CONTEXT: PageContext = {
   pageName: 'Unknown',
   greeting: "How can I help you trade smarter?",
-  chips: [],
+  chips: [
+    { label: "Find setups matching my mandate", prompt: "Find setups matching my mandate" },
+    { label: "Generate a Pine Script", prompt: "Generate a Pine Script" },
+    { label: "What's the market doing?", prompt: "What's the market doing?" },
+  ],
 };
 
 function getPageContext(pathname: string): PageContext {
-  // Exact match first
   if (PAGE_CONTEXT_MAP[pathname]) return PAGE_CONTEXT_MAP[pathname];
-  // Prefix match for nested routes
   for (const [route, ctx] of Object.entries(PAGE_CONTEXT_MAP)) {
     if (pathname.startsWith(route)) return ctx;
   }
@@ -214,21 +213,7 @@ const GUEST_ACTIONS: QuickAction[] = [
   { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
 ];
 
-const AUTH_DEFAULT_ACTIONS: QuickAction[] = [
-  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-  { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
-  { labelKey: "copilot.generateScript", promptKey: "copilot.generateScriptPrompt", icon: Code },
-  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-  { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
-  { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
-];
-
-function getQuickActions(pathname: string, authenticated: boolean): QuickAction[] {
-  if (!authenticated) return GUEST_ACTIONS;
-  return AUTH_DEFAULT_ACTIONS;
-}
-
-const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
+// (Quick action tiers are now inline in the home screen render)
 
 export interface TradingCopilotProps {
   isExpanded?: boolean;
@@ -258,6 +243,7 @@ export function TradingCopilot({
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
+  const { hasPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
   const {
@@ -272,6 +258,27 @@ export function TradingCopilot({
     startNewChat,
     isAuthenticated,
   } = useCopilotConversations();
+
+  const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
+
+  // Fetch today's paper trade count for the greeting
+  useEffect(() => {
+    if (!isAuthenticated || !hasPlan) return;
+    const fetchTodayTrades = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const today = new Date().toISOString().slice(0, 10);
+        const { count } = await supabase
+          .from('paper_trades' as any)
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('entry_time', today);
+        setTodayTradeCount(count ?? 0);
+      } catch { setTodayTradeCount(0); }
+    };
+    fetchTodayTrades();
+  }, [isAuthenticated, hasPlan]);
 
   const { trackQuestion } = useCopilotFeedback();
 
@@ -662,7 +669,9 @@ export function TradingCopilot({
             <Sparkles className="h-5 w-5 text-white/90" />
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
-              <p className="text-xs text-white/70">{t('copilot.subtitle')}</p>
+              <p className="text-xs text-white/70">
+                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : t('copilot.subtitle')}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -687,52 +696,98 @@ export function TradingCopilot({
             ) : messages.length === 0 ? (
               (() => {
                 const pageCtx = getPageContext(location.pathname);
-                const contextChips = isAuthenticated ? pageCtx.chips : [];
+                const tier2Chips = isAuthenticated ? pageCtx.chips : [];
                 return (
               <div className="space-y-4">
                 <div className="text-center py-6">
                   <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {isAuthenticated ? pageCtx.greeting : t('copilot.welcomeDesc')}
-                  </p>
-                  {!isAuthenticated && (
-                    <p className="text-xs text-muted-foreground/70 mt-2">
-                      {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {/* Page-contextual chips for authenticated users */}
-                  {contextChips.length > 0 && (
+                  {!isAuthenticated ? (
                     <>
-                      <p className="text-xs text-muted-foreground font-medium px-1">Suggested for this page</p>
-                      <div className="flex flex-wrap gap-2">
-                        {contextChips.map((chip) => (
-                          <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                            <span className="text-xs">{chip.label}</span>
-                          </Button>
-                        ))}
-                      </div>
+                      <h4 className="font-semibold mb-1">{t('copilot.welcome')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('copilot.welcomeDesc')}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-2">
+                        {t('copilot.guestLimit', 'Try {{count}} free messages — sign in for unlimited access', { count: GUEST_MSG_LIMIT })}
+                      </p>
+                    </>
+                  ) : hasPlan ? (
+                    <>
+                      <h4 className="font-semibold mb-1">Your desk is running</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Copilot is scanning. {todayTradeCount !== null ? `${todayTradeCount} paper trade${todayTradeCount !== 1 ? 's' : ''} taken today.` : ''}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="font-semibold mb-1">Let's set up your trading mandate</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Tell me how you want to trade — patterns, risk rules, timing. I'll handle the rest.
+                      </p>
                     </>
                   )}
-                  <p className="text-xs text-muted-foreground font-medium px-1">{t('copilot.quickActions')}</p>
-                  <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
-                    {getQuickActions(location.pathname, isAuthenticated).map((action) => (
-                      <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
-                        <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                        <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Tier 1 — Mandate & Session */}
+                  {isAuthenticated && hasPlan && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's trades")} disabled={isLoading}>
+                        <span className="text-xs">Review today's trades</span>
                       </Button>
-                    ))}
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my mandate")} disabled={isLoading}>
+                        <span className="text-xs">Update my mandate</span>
+                      </Button>
                     </div>
+                  )}
+
+                  {/* Tier 1 — Getting started (no mandate) */}
+                  {isAuthenticated && !hasPlan && (
+                    <Button
+                      className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                      onClick={() => handleQuickAction("Set my trading mandate")}
+                      disabled={isLoading}
+                    >
+                      Set my trading mandate →
+                    </Button>
+                  )}
+
+                  {/* Tier 2 — Page-aware chips */}
+                  {tier2Chips.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tier2Chips.map((chip) => (
+                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                          <span className="text-xs">{chip.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Guest quick actions */}
+                  {!isAuthenticated && (
+                    <div className={cn("grid gap-2", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+                      {GUEST_ACTIONS.map((action) => (
+                        <Button key={action.labelKey} variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left" onClick={() => handleQuickAction(t(action.promptKey))} disabled={isLoading}>
+                          <action.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
+                          <span className="text-xs">{t(action.labelKey, action.label || action.labelKey)}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tier 3 — Utility row (small text links) */}
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>Generate script</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>Create alert</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>Learn patterns</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>Market breadth</button>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
                     <ContactSupportDialog
                       trigger={
-                        <Button variant="outline" size="sm" className="justify-start h-auto py-2 px-3 text-left w-full">
-                          <SUPPORT_ACTION.icon className="h-3.5 w-3.5 mr-2 shrink-0" />
-                          <span className="text-xs">{t(SUPPORT_ACTION.labelKey, 'Contact Support')}</span>
-                        </Button>
+                        <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact Support</button>
                       }
                       defaultCategory="other"
                       defaultSubject=""
@@ -741,6 +796,7 @@ export function TradingCopilot({
                     />
                   </div>
                 </div>
+              </div>
                 );
               })()
             ) : (
@@ -851,14 +907,25 @@ export function TradingCopilot({
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder', 'Tell Copilot how to trade, or ask anything...')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "Tell me how you want to trade..." : t('copilot.placeholder', 'Tell Copilot how to trade, or ask anything...')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <div className="flex flex-col gap-1 items-center justify-end">
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[200px] text-xs">
+                      {t('copilot.disclaimer', 'For educational purposes only. Not financial advice.')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </form>
-            <p className="text-sm text-muted-foreground mt-2 text-center">
-              {t('copilot.disclaimer')}
-            </p>
           </div>
         )}
       </div>
