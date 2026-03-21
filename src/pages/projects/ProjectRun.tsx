@@ -639,7 +639,8 @@ const ProjectRun = () => {
 
             {/* Add winners to Trading Plan */}
             {(() => {
-              const winners = (artifact.patterns || []).filter(
+              const art = artifact as any;
+              const winners = (art.patterns || []).filter(
                 (p: any) => p.expectancy > 0 && p.totalTrades >= 10
               );
               if (winners.length === 0) return null;
