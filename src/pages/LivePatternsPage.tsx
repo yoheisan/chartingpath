@@ -297,6 +297,9 @@ export default function LivePatternsPage() {
   // Hover prefetch hook for instant chart loading
   const { onRowHover, cancelPrefetch, getAndConsume, getCached } = usePatternPrefetch();
 
+  // Gate evaluation hook for live AI gate badges
+  const { evaluate, evaluateBatch, getEvaluation, isLoading: isGateLoading } = useGateEvaluation();
+
   // Safety: if details loading somehow never resolves (network hang, aborted request, etc.),
   // ensure the UI doesn't stay stuck forever.
   useEffect(() => {
