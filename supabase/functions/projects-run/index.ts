@@ -731,112 +731,191 @@ async function estimateCacheHitRatio(
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchYahooData(symbol: string, startDate: string, endDate: string, interval: string) {
-  // Yahoo Finance intraday limits: 1h data max ~730 days
-  const MAX_INTRADAY_DAYS = 729;
-  const REQUEST_TIMEOUT_MS = 15000;
-  const MAX_RETRIES = 2;
-  const isIntraday = ['1h', '4h', '8h'].includes(interval);
+// ============= DB-FIRST + EODHD FALLBACK DATA FETCHER =============
+const MIN_BARS_THRESHOLD = 50;
 
-  let period1 = Math.floor(new Date(startDate).getTime() / 1000);
-  const period2 = Math.floor(new Date(endDate).getTime() / 1000);
+async function fetchBacktestData(
+  supabaseClient: any,
+  symbol: string,
+  startDate: string,
+  endDate: string,
+  interval: string
+): Promise<any[]> {
+  // For 4h/8h, always fetch 1h data and aggregate
+  const fetchInterval = (interval === '4h' || interval === '8h') ? '1h' : interval;
+  const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
 
-  // Cap intraday lookback to Yahoo's maximum
-  if (isIntraday) {
-    const maxStart = Math.floor((Date.now() - MAX_INTRADAY_DAYS * 86400000) / 1000);
-    if (period1 < maxStart) {
-      console.log(`[fetchYahoo] Capping ${symbol} ${interval} start from ${new Date(period1 * 1000).toISOString().slice(0, 10)} to ${new Date(maxStart * 1000).toISOString().slice(0, 10)} (Yahoo ${MAX_INTRADAY_DAYS}d limit)`);
-      period1 = maxStart;
-    }
+  // ─── Step 1: Try DB (historical_prices, EODHD-seeded) ───
+  const dbBars = await fetchFromDB(supabaseClient, symbol, startDate, endDate, fetchInterval);
+  
+  if (dbBars.length >= MIN_BARS_THRESHOLD) {
+    console.log(`[BacktestData] DB hit: ${symbol} ${fetchInterval} → ${dbBars.length} bars`);
+    return maybeAggregate(dbBars, aggregateSize, symbol, interval);
+  }
+  
+  console.log(`[BacktestData] DB miss: ${symbol} ${fetchInterval} (${dbBars.length} bars), falling back to EODHD API`);
+
+  // ─── Step 2: Fallback to EODHD API ───
+  const eodhBars = await fetchFromEODHD(symbol, startDate, endDate, fetchInterval);
+  
+  if (eodhBars.length >= MIN_BARS_THRESHOLD) {
+    console.log(`[BacktestData] EODHD API: ${symbol} ${fetchInterval} → ${eodhBars.length} bars`);
+    return maybeAggregate(eodhBars, aggregateSize, symbol, interval);
   }
 
-  const yahooInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '1d' ? '1d' : interval === '1wk' ? '1wk' : '1h';
-  const encodedSymbol = encodeURIComponent(symbol);
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?period1=${period1}&period2=${period2}&interval=${yahooInterval}&events=history`;
+  // If EODHD also fails, return whatever we got (could be DB partial data)
+  const bestBars = eodhBars.length > dbBars.length ? eodhBars : dbBars;
+  console.warn(`[BacktestData] Insufficient data for ${symbol}: DB=${dbBars.length}, EODHD=${eodhBars.length}`);
+  return maybeAggregate(bestBars, aggregateSize, symbol, interval);
+}
 
-  console.log(`[fetchYahoo] ${symbol} interval=${interval} yahooInterval=${yahooInterval} range=${new Date(period1 * 1000).toISOString().slice(0, 10)}..${new Date(period2 * 1000).toISOString().slice(0, 10)}`);
+function maybeAggregate(bars: any[], aggregateSize: number, symbol: string, interval: string): any[] {
+  if (aggregateSize <= 0 || bars.length === 0) return bars;
+  
+  const aggregated: any[] = [];
+  for (let i = 0; i < bars.length; i += aggregateSize) {
+    const chunk = bars.slice(i, i + aggregateSize);
+    if (chunk.length === 0) continue;
+    aggregated.push({
+      timestamp: chunk[0].timestamp,
+      date: chunk[0].date,
+      open: chunk[0].open,
+      high: Math.max(...chunk.map((c: any) => c.high)),
+      low: Math.min(...chunk.map((c: any) => c.low)),
+      close: chunk[chunk.length - 1].close,
+      volume: chunk.reduce((sum: number, c: any) => sum + c.volume, 0),
+    });
+  }
+  console.log(`[BacktestData] ${symbol}: aggregated ${bars.length} 1h bars → ${aggregated.length} ${interval} bars`);
+  return aggregated;
+}
+
+async function fetchFromDB(
+  supabaseClient: any,
+  symbol: string,
+  startDate: string,
+  endDate: string,
+  timeframe: string
+): Promise<any[]> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('historical_prices')
+      .select('date, open, high, low, close, volume')
+      .eq('symbol', symbol)
+      .eq('timeframe', timeframe)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: true })
+      .limit(5000);
+
+    if (error || !data) {
+      console.warn(`[BacktestData] DB query error for ${symbol}:`, error?.message);
+      return [];
+    }
+
+    return data.map((r: any) => ({
+      timestamp: new Date(r.date).getTime(),
+      date: r.date,
+      open: Number(r.open),
+      high: Number(r.high),
+      low: Number(r.low),
+      close: Number(r.close),
+      volume: Number(r.volume ?? 0),
+    })).filter((b: any) => b.close > 0);
+  } catch (err: any) {
+    console.warn(`[BacktestData] DB exception for ${symbol}:`, err?.message);
+    return [];
+  }
+}
+
+async function fetchFromEODHD(
+  symbol: string,
+  startDate: string,
+  endDate: string,
+  interval: string
+): Promise<any[]> {
+  const REQUEST_TIMEOUT_MS = 15000;
+  const MAX_RETRIES = 2;
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  
+  if (!EODHD_API_KEY) {
+    console.warn(`[BacktestData] EODHD_API_KEY not configured, skipping EODHD fallback`);
+    return [];
+  }
+
+  // Map interval to EODHD period
+  const periodMap: Record<string, string> = { '1d': 'd', '1wk': 'w', '1M': 'm', '1h': 'intraday' };
+  const period = periodMap[interval] || 'd';
+  
+  // EODHD symbol format: AAPL.US, BTC-USD.CC, EURUSD.FOREX
+  const eodhSymbol = convertToEODHDSymbol(symbol);
+  
+  let url: string;
+  if (period === 'intraday') {
+    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=1h&from=${startDate}&to=${endDate}&fmt=json`;
+  } else {
+    url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startDate}&to=${endDate}&period=${period}&fmt=json`;
+  }
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await fetch(yahooUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-        signal: controller.signal,
-      });
+      const response = await fetch(url, { signal: controller.signal });
 
       if (!response.ok) {
         const shouldRetry = response.status === 429 || response.status >= 500;
-        console.warn(`[fetchYahoo] HTTP ${response.status} for ${symbol} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+        console.warn(`[BacktestData] EODHD HTTP ${response.status} for ${symbol} (attempt ${attempt + 1})`);
+        // Consume body to prevent resource leak
+        await response.text();
         if (shouldRetry && attempt < MAX_RETRIES) {
-          await sleep(500 * (attempt + 1));
+          await sleep(700 * (attempt + 1));
           continue;
         }
         return [];
       }
 
       const data = await response.json();
-      if (!data.chart?.result?.[0]) {
-        console.error(`[fetchYahoo] No chart result for ${symbol}`, JSON.stringify(data.chart?.error || 'unknown'));
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn(`[BacktestData] EODHD returned empty data for ${symbol}`);
         return [];
       }
 
-      const result = data.chart.result[0];
-      const timestamps = result.timestamp || [];
-      const quotes = result.indicators?.quote?.[0] || {};
-
-      console.log(`[fetchYahoo] ${symbol}: ${timestamps.length} raw bars received`);
-
-      const bars = timestamps.map((ts: number, idx: number) => ({
-        timestamp: ts * 1000,
-        date: new Date(ts * 1000).toISOString(),
-        open: quotes.open?.[idx] || 0,
-        high: quotes.high?.[idx] || 0,
-        low: quotes.low?.[idx] || 0,
-        close: quotes.close?.[idx] || 0,
-        volume: quotes.volume?.[idx] || 0,
+      return data.map((r: any) => ({
+        timestamp: new Date(r.date || r.datetime).getTime(),
+        date: r.date || r.datetime,
+        open: Number(r.open ?? 0),
+        high: Number(r.high ?? 0),
+        low: Number(r.low ?? 0),
+        close: Number(r.close ?? 0),
+        volume: Number(r.volume ?? 0),
       })).filter((b: any) => b.close > 0);
-
-      // Aggregate 1h bars to 4h or 8h if needed
-      const aggregateSize = interval === '8h' ? 8 : interval === '4h' ? 4 : 0;
-      if (aggregateSize > 0 && bars.length > 0) {
-        const aggregated: any[] = [];
-        for (let i = 0; i < bars.length; i += aggregateSize) {
-          const chunk = bars.slice(i, i + aggregateSize);
-          if (chunk.length === 0) continue;
-          aggregated.push({
-            timestamp: chunk[0].timestamp,
-            date: chunk[0].date,
-            open: chunk[0].open,
-            high: Math.max(...chunk.map((c: any) => c.high)),
-            low: Math.min(...chunk.map((c: any) => c.low)),
-            close: chunk[chunk.length - 1].close,
-            volume: chunk.reduce((sum: number, c: any) => sum + c.volume, 0),
-          });
-        }
-        console.log(`[fetchYahoo] ${symbol}: aggregated ${bars.length} 1h bars → ${aggregated.length} ${interval} bars`);
-        return aggregated;
-      }
-
-      return bars;
     } catch (error: any) {
       const isTimeout = error instanceof DOMException && error.name === 'AbortError';
-      const isLastAttempt = attempt >= MAX_RETRIES;
-      console.warn(`[fetchYahoo] ${symbol} request ${isTimeout ? 'timed out' : 'failed'} (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
-
-      if (isLastAttempt) {
-        console.error(`[fetchYahoo] Giving up on ${symbol}:`, error?.message || error);
-        return [];
-      }
-
-      await sleep(500 * (attempt + 1));
+      console.warn(`[BacktestData] EODHD ${isTimeout ? 'timeout' : 'error'} for ${symbol} (attempt ${attempt + 1})`);
+      if (attempt >= MAX_RETRIES) return [];
+      await sleep(700 * (attempt + 1));
     } finally {
       clearTimeout(timeoutId);
     }
   }
-
   return [];
+}
+
+/** Convert platform symbols to EODHD format */
+function convertToEODHDSymbol(symbol: string): string {
+  const s = symbol.toUpperCase();
+  // Crypto: BTC-USD → BTC-USD.CC
+  if (s.endsWith('-USD') || s.endsWith('USDT')) return `${s}.CC`;
+  // Forex: EURUSD=X → EURUSD.FOREX
+  if (s.endsWith('=X')) return `${s.replace('=X', '')}.FOREX`;
+  // Commodities: GC=F → GC.COMEX (simplified)
+  if (s.endsWith('=F')) return `${s.replace('=F', '')}.COMEX`;
+  // Indices: ^GSPC → GSPC.INDX
+  if (s.startsWith('^')) return `${s.replace('^', '')}.INDX`;
+  // Stocks: default to .US
+  return `${s}.US`;
 }
 
 // ============= BACKTEST ENGINE =============
