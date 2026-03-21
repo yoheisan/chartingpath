@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
+import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
