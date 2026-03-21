@@ -16,6 +16,7 @@ import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
@@ -257,8 +258,7 @@ export default function LivePatternsPage() {
     ...(urlPattern ? { pattern: urlPattern } : {}),
   }));
   const [showInstrumentList, setShowInstrumentList] = useState(false);
-  
-  
+
   // Sorting for list view
   type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate' | 'expectancy' | 'rot';
   const [sortKey, setSortKey] = useState<SortKey>('signal');
@@ -1492,7 +1492,12 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="signal" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-center whitespace-nowrap w-16">Gate</TableHead>
+                  <TableHead className="text-center whitespace-nowrap w-16">
+                    <span className="inline-flex items-center gap-1">
+                      Gate
+                      <InfoTooltip content="The AI Gate checks each setup against your trading plan. Aligned = matches your rules. Partial = some rules match. Conflict = breaks your plan rules." />
+                    </span>
+                  </TableHead>
                   <TableHead className="text-center whitespace-nowrap w-10">
                   </TableHead>
                   <TableHead className="whitespace-nowrap w-24"></TableHead>
