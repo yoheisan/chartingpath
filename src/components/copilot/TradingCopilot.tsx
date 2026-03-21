@@ -104,7 +104,7 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     chips: [
       { label: "What did Copilot do today?", prompt: "What did Copilot do today?" },
       { label: "Show my AI vs Human stats", prompt: "Show my AI vs Human stats" },
-      { label: "Set my mandate", prompt: "Set my mandate" },
+      { label: "What's the market doing?", prompt: "What's the market doing?" },
     ],
   },
   '/screener': {
@@ -112,8 +112,8 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
     chips: [
       { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Show A-grade setups only", prompt: "Show A-grade setups only" },
       { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
-      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
     ],
   },
   '/patterns/live': {
@@ -121,8 +121,8 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
     chips: [
       { label: "What's working right now?", prompt: "What's working right now?" },
+      { label: "Show A-grade setups only", prompt: "Show A-grade setups only" },
       { label: "Add top setup to Copilot", prompt: "Add top setup to Copilot" },
-      { label: "Filter A-grade only", prompt: "Filter A-grade only" },
     ],
   },
   '/tools/agent-scoring': {
@@ -130,16 +130,16 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     greeting: "You're on Agent Scoring. Want to adjust your weights or filters?",
     chips: [
       { label: "Make scoring more conservative", prompt: "Make scoring more conservative" },
-      { label: "Increase take rate", prompt: "Increase take rate" },
-      { label: "Show current weights", prompt: "Show current weights" },
+      { label: "Increase my take rate", prompt: "Increase my take rate" },
+      { label: "Show current scoring weights", prompt: "Show current scoring weights" },
     ],
   },
   '/projects/pattern-lab/new': {
     pageName: 'Pattern Lab',
     greeting: "Pattern Lab is open. Want to run a backtest or send patterns to your Master Plan?",
     chips: [
-      { label: "Most profitable pattern", prompt: "What is the most profitable pattern?" },
-      { label: "Send winner to Master Plan", prompt: "Send winner to Master Plan" },
+      { label: "What's my most profitable pattern?", prompt: "What's my most profitable pattern?" },
+      { label: "Send winners to my Master Plan", prompt: "Send winners to my Master Plan" },
       { label: "Check my backtest quota", prompt: "Check my backtest quota" },
     ],
   },
@@ -149,6 +149,14 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     chips: [
       { label: "Create alert for my top setup", prompt: "Create alert for my top setup" },
       { label: "Send alerts to Copilot paper", prompt: "Send alerts to Copilot paper" },
+    ],
+  },
+  '/members/scripts': {
+    pageName: 'Scripts',
+    greeting: "Scripts page is open. Want to generate a Pine Script or export a strategy?",
+    chips: [
+      { label: "Generate Pine Script for my mandate", prompt: "Generate Pine Script for my mandate" },
+      { label: "Export as Copilot Strategy", prompt: "Export as Copilot Strategy" },
     ],
   },
   '/scripts': {
@@ -163,9 +171,9 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     pageName: 'Copilot ACS',
     greeting: "Your Copilot desk. Set your mandate, review trades, or ask anything.",
     chips: [
-      { label: "Set my mandate", prompt: "Set my mandate" },
-      { label: "Why did Copilot flag this?", prompt: "Why did Copilot flag this?" },
+      { label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
       { label: "Show today's paper trades", prompt: "Show today's paper trades" },
+      { label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
     ],
   },
   '/edge-atlas': {
@@ -189,13 +197,15 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
 const DEFAULT_PAGE_CONTEXT: PageContext = {
   pageName: 'Unknown',
   greeting: "How can I help you trade smarter?",
-  chips: [],
+  chips: [
+    { label: "Find setups matching my mandate", prompt: "Find setups matching my mandate" },
+    { label: "Generate a Pine Script", prompt: "Generate a Pine Script" },
+    { label: "What's the market doing?", prompt: "What's the market doing?" },
+  ],
 };
 
 function getPageContext(pathname: string): PageContext {
-  // Exact match first
   if (PAGE_CONTEXT_MAP[pathname]) return PAGE_CONTEXT_MAP[pathname];
-  // Prefix match for nested routes
   for (const [route, ctx] of Object.entries(PAGE_CONTEXT_MAP)) {
     if (pathname.startsWith(route)) return ctx;
   }
