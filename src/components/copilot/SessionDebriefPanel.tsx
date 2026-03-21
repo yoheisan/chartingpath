@@ -15,9 +15,10 @@ type ChatMsg = { role: 'user' | 'assistant'; content: string };
 interface SessionDebriefPanelProps {
   open: boolean;
   onClose: () => void;
+  initialQuestion?: string | null;
 }
 
-export function SessionDebriefPanel({ open, onClose }: SessionDebriefPanelProps) {
+export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionDebriefPanelProps) {
   const { user } = useAuth();
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -26,6 +27,55 @@ export function SessionDebriefPanel({ open, onClose }: SessionDebriefPanelProps)
   const [input, setInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const initialQuestionSent = useRef(false);
+
+  // Auto-submit initial question once summary is loaded
+  useEffect(() => {
+    if (open && initialQuestion && summary && !summaryLoading && !initialQuestionSent.current && tradeData) {
+      initialQuestionSent.current = true;
+      setInput(initialQuestion);
+      // Auto-submit after a short delay to let UI settle
+      setTimeout(() => {
+        const fakeInput = initialQuestion;
+        setInput('');
+        // Trigger sendChat logic inline
+        const userMsg: ChatMsg = { role: 'user', content: fakeInput };
+        const contextMsg: ChatMsg = {
+          role: 'user',
+          content: `Here is my complete trade data for today: ${JSON.stringify(tradeData)}`,
+        };
+        const contextReply: ChatMsg = {
+          role: 'assistant',
+          content: "Got it. What would you like to know about today's session?",
+        };
+        const fullHistory = [contextMsg, contextReply, userMsg];
+
+        setChatHistory(prev => [...prev, userMsg]);
+        setChatLoading(true);
+
+        supabase.functions.invoke('session-debrief', {
+          body: {
+            action: 'chat',
+            messages: fullHistory.map(m => ({ role: m.role, content: m.content })),
+          },
+        }).then(res => {
+          const reply = res.data?.reply || "I couldn't process that question.";
+          setChatHistory(prev => [...prev, { role: 'assistant', content: reply }]);
+        }).catch(() => {
+          setChatHistory(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }]);
+        }).finally(() => {
+          setChatLoading(false);
+        });
+      }, 300);
+    }
+  }, [open, initialQuestion, summary, summaryLoading, tradeData]);
+
+  // Reset initialQuestion tracking when panel closes
+  useEffect(() => {
+    if (!open) {
+      initialQuestionSent.current = false;
+    }
+  }, [open]);
 
   // Generate summary on open
   useEffect(() => {
