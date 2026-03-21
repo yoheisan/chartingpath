@@ -76,6 +76,7 @@ function Step({ number, title, description, image, imageAlt, warning, tip }: Ste
 
 export function PlatformImportGuide() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("tradingview");
   const g = (key: string) => t(`scripts.importGuide.${key}`);
   const tv = (key: string) => t(`scripts.importGuide.tv.${key}`);
