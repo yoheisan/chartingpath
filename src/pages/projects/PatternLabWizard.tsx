@@ -1642,15 +1642,6 @@ const PatternLabWizard = () => {
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="backtesting" />
       </div>
 
-      {/* Mobile: bottom sheet copilot */}
-      {showCopilot && isMobile && (
-        <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
-          <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
-            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'research', route: '/projects/pattern-lab', quickPrompts: [t('copilot.ctx.researchPrompt1'), t('copilot.ctx.researchPrompt2'), t('copilot.ctx.researchPrompt3')] }} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
