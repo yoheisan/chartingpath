@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useMandateSubmit } from "@/hooks/useMandateSubmit";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -212,6 +213,47 @@ export function TradingCopilot({
   } = useCopilotConversations();
 
   const { trackQuestion } = useCopilotFeedback();
+
+  // Mandate handling — integrated into chat UI
+  const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
+    onSaved: () => {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "✅ Master Plan saved. Your mandate is now active across all Copilot surfaces.",
+        timestamp: new Date(),
+      }]);
+      window.dispatchEvent(new CustomEvent("mandate-saved"));
+    },
+    onQuestion: (question: string) => {
+      // Route question to debrief
+      window.dispatchEvent(new CustomEvent("copilot-question", { detail: question }));
+    },
+  });
+
+  // Show mandate confirmation in chat
+  useEffect(() => {
+    if (mandateState.step === 'confirming') {
+      setMessages(prev => {
+        // Remove any previous confirmation message
+        const filtered = prev.filter(m => !(m.role === 'assistant' && m.content.startsWith('📋')));
+        return [...filtered, {
+          id: 'mandate-confirm',
+          role: "assistant",
+          content: `📋 **Confirm your Master Plan:**\n\n${mandateState.confirmation}\n\n_Reply "yes" or "save" to confirm, or type adjustments._`,
+          timestamp: new Date(),
+        }];
+      });
+    }
+    if (mandateState.step === 'error') {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `⚠️ ${mandateState.message}`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [mandateState.step]);
 
   const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
 
@@ -453,8 +495,33 @@ export function TradingCopilot({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || guestLimitReached) return;
+    const trimmed = input.trim();
+
+    // If mandate is awaiting confirmation, check for "yes"/"save"
+    if (mandateState.step === 'confirming') {
+      const lower = trimmed.toLowerCase();
+      if (lower === 'yes' || lower === 'save' || lower === 'looks good' || lower === 'confirm') {
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+        setInput("");
+        mandateConfirm();
+        return;
+      } else {
+        // User wants to adjust — reset mandate and re-submit as new mandate
+        mandateReset();
+      }
+    }
+
     if (!isAuthenticated) setGuestMsgCount(incrementGuestMsgCount());
-    streamChat(input.trim());
+
+    // Add user message to chat immediately
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date() }]);
+    setInput("");
+
+    // Try mandate classification first via the mandate hook
+    mandateSubmit(trimmed);
+
+    // Also send to regular copilot for standard Q&A (mandate hook will handle mandate/override intents and show results in chat; the regular copilot handles everything else)
+    streamChat(trimmed);
   };
 
   const handleQuickAction = (prompt: string) => {
@@ -700,7 +767,7 @@ export function TradingCopilot({
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder')} disabled={isLoading} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={t('copilot.placeholder', 'Tell Copilot how to trade, or ask anything...')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
               <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>

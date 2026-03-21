@@ -181,8 +181,6 @@ import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
 import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
-import { CopilotSidebar } from '@/components/copilot/CopilotSidebar';
-import { Sparkles, PanelLeftOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
@@ -240,7 +238,6 @@ export default function LivePatternsPage() {
   const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
   const navigate = useNavigate();
   
-  const [showCopilot, setShowCopilot] = useState(false);
   const isMobile = useIsMobile();
   const [patterns, setPatterns] = useState<LiveSetup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1055,50 +1052,15 @@ export default function LivePatternsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       <PageMeta
         title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
         description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
         canonicalPath="/patterns/live"
       />
-      {/* Copilot Sidebar */}
-      {showCopilot && !isMobile && (
-        <div className="w-[420px] shrink-0 h-[calc(100dvh-4rem)] sticky top-16 border-r border-border animate-in slide-in-from-left-4 duration-200 overflow-hidden">
-          <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
-        </div>
-      )}
 
       <div className="flex-1 min-w-0">
     <div className="w-full px-4 md:px-6 lg:px-8 pt-6 pb-12">
-      {/* Copilot toggle */}
-      {!showCopilot && !isMobile && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="mb-4 gap-2 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40"
-          onClick={() => setShowCopilot(true)}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-          </span>
-          <Sparkles className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
-          <kbd className="ml-1 text-sm text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
-        </Button>
-      )}
-
-      {isMobile && (
-        <Button
-          variant="default"
-          size="sm"
-          className="fixed bottom-20 right-4 z-40 rounded-full shadow-xl gap-1.5 bg-gradient-to-r from-primary to-accent"
-          onClick={() => setShowCopilot(v => !v)}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-xs">AI</span>
-        </Button>
-      )}
       {/* First-visit guidance banner */}
       {showWelcome && !loading && patterns.length > 0 && (
         <div className="mb-6 p-4 rounded-lg border border-primary/30 bg-primary/5 relative">
@@ -1867,15 +1829,6 @@ export default function LivePatternsPage() {
     </div>
       </div>
 
-      {/* Mobile: bottom sheet copilot */}
-      {showCopilot && isMobile && (
-        <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
-          <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
-            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

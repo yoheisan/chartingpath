@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { NavCopilotBar } from "@/components/nav/NavCopilotBar";
+
 import { CopilotStatusIndicator } from "@/components/nav/CopilotStatusIndicator";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -192,7 +192,7 @@ const Navigation = () => {
               </span>
             </div>
             
-            <NavCopilotBar className="ml-4 flex-1 max-w-[480px]" />
+            
             
             <nav className="hidden md:flex items-center gap-4 ml-4">
             {/* 0. Dashboard - Command Center */}
