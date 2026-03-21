@@ -98,11 +98,11 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You are Copilot a trading performance analyst. Generate one single insight about the trader's recent performance. Compare AI-approved trades vs human overrides. Be direct and specific — use exact numbers from the data. Maximum 2 sentences. Plain text only. No markdown. No headers. Focus on the most actionable pattern you see.",
+              "Generate one trading performance insight in 2 sentences. Compare AI-approved trades vs human overrides. Use exact numbers. Be direct. No filler. Focus on the most actionable pattern. Plain text only. No markdown.",
           },
           { role: "user", content: userMessage },
         ],
-        max_tokens: 150,
+        max_tokens: 100,
       }),
     });
 
