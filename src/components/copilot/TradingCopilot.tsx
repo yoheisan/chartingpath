@@ -16,8 +16,6 @@ import {
   Home,
   Loader2, 
   TrendingUp,
-  Bell,
-  Code,
   BookOpen,
   BarChart3,
   PanelLeftOpen,
@@ -25,7 +23,8 @@ import {
   ChevronDown,
   ThumbsUp,
   ThumbsDown,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Info
 } from "lucide-react";
 import { ContactSupportDialog } from "@/components/support/ContactSupportDialog";
 import { cn } from "@/lib/utils";
