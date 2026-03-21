@@ -688,7 +688,7 @@ export function TradingCopilot({
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
               <p className="text-xs text-white/70">
-                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading mandate" : "See what AI-native trading looks like."}
+                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading plan" : "See what AI-native trading looks like."}
               </p>
             </div>
           </div>
@@ -726,23 +726,23 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your AI trading desk — live demo</h4>
+                      <h4 className="font-semibold mb-1">Set your first trading plan and see how it performs</h4>
                       <p className="text-sm text-muted-foreground">
-                        Ask Copilot anything. See how it scans, scores, and trades for you. Sign up to activate your mandate and go live.
+                        Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.
                       </p>
                     </>
                   ) : hasPlan ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your desk is running</h4>
+                      <h4 className="font-semibold mb-1">Your trading plan is running</h4>
                       <p className="text-sm text-muted-foreground">
-                        Copilot is scanning. {todayTradeCount !== null ? `${todayTradeCount} paper trade${todayTradeCount !== 1 ? 's' : ''} taken today.` : ''}
+                        Copilot is paper-testing your plan live. {todayTradeCount !== null ? `${todayTradeCount} trade${todayTradeCount !== 1 ? 's' : ''} taken today. Review results before going live.` : 'Review results before going live.'}
                       </p>
                     </>
                   ) : (
                     <>
-                      <h4 className="font-semibold mb-1">Let's set up your trading mandate</h4>
+                      <h4 className="font-semibold mb-1">What's your trading plan?</h4>
                       <p className="text-sm text-muted-foreground">
-                        Tell me how you want to trade — patterns, risk rules, timing. I'll handle the rest.
+                        Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.
                       </p>
                     </>
                   )}
@@ -772,20 +772,21 @@ export function TradingCopilot({
                       </p>
                       <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
                         <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-                          Start free →
+                          Create your first trading plan →
                         </Link>
                       </Button>
+                      <p className="text-xs text-muted-foreground/60 text-center mt-1">Free to try · No real money · You decide when to go live</p>
                     </div>
                   )}
 
                   {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's trades")} disabled={isLoading}>
-                        <span className="text-xs">Review today's trades</span>
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
+                        <span className="text-xs">Review today's paper results</span>
                       </Button>
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my mandate")} disabled={isLoading}>
-                        <span className="text-xs">Update my mandate</span>
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my trading plan")} disabled={isLoading}>
+                        <span className="text-xs">Update your trading plan</span>
                       </Button>
                     </div>
                   )}
@@ -794,10 +795,10 @@ export function TradingCopilot({
                   {isAuthenticated && !hasPlan && (
                     <Button
                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                      onClick={() => handleQuickAction("Set my trading mandate")}
+                      onClick={() => handleQuickAction("Set my trading plan")}
                       disabled={isLoading}
                     >
-                      Set my trading mandate →
+                      Set your trading plan →
                     </Button>
                   )}
 
@@ -944,7 +945,7 @@ export function TradingCopilot({
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "Tell me how you want to trade..." : "Ask Copilot anything — no sign up needed to try"} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "e.g. Only take breakouts, max 3% risk, mornings only..." : "Ask Copilot anything — no sign up needed to try"} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
               <div className="flex flex-col gap-1 items-center justify-end">
                 <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

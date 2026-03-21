@@ -70,7 +70,7 @@ const ScanningState = () => {
       <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
         <CopilotAvatar />
         <p className="text-sm text-muted-foreground">
-          Scanning 94 candidates · 3 setups shortlisted — waiting for breakout confirmation on NVDA.
+          Running your trading plan on paper · Scanning 94 candidates · 3 setups shortlisted — waiting for breakout confirmation on NVDA.
         </p>
       </div>
 
@@ -104,7 +104,7 @@ const ScanningState = () => {
 
           <div className="border-t border-border/40 pt-3 mt-1">
             <p className="text-sm text-muted-foreground text-center">
-              Copilot auto-enters when conditions are met. No action needed.
+              Copilot paper-enters when conditions are met. You review results and decide when to go live.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
           {isAi ? 'AI-Approved' : 'Human-Overwrite'}
         </Badge>
         <span className="ml-auto text-sm font-mono text-muted-foreground">
-          Paper · Entered {entryTime} · Position {positionPct}%
+          Paper trade · Entered {entryTime} · Position {positionPct}%
         </span>
       </div>
 
@@ -149,7 +149,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
       <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
         <CopilotAvatar />
         <p className="text-sm text-muted-foreground">
-          {trade.copilot_reasoning ?? `Entered ${trade.symbol} at ${entryTime} on a breakout above VWAP. Sized ${positionPct}% — within your 3% limit. Trailing 2R stop active at $${(trade.stop_loss ?? trade.entry_price * 0.98).toFixed(2)}. ${formatR(pnlR)} — momentum holding, no exit signal yet.`}
+          Paper trade open · {trade.symbol} · {formatR(pnlR)} · {trade.copilot_reasoning ?? `Your plan is being tested live — entered at ${entryTime} on a breakout above VWAP. Trailing 2R stop active at $${(trade.stop_loss ?? trade.entry_price * 0.98).toFixed(2)}.`}
         </p>
       </div>
 
