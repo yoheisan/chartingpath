@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { TradingPlanBuilder } from "./TradingPlanBuilder";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,6 +216,8 @@ export interface TradingCopilotProps {
   pendingContext?: string | null;
   pendingAnalysis?: ChartAnalysisResult | null;
   onContextConsumed?: () => void;
+  pendingPlanBuilder?: boolean;
+  onPlanBuilderConsumed?: () => void;
 }
 
 export function TradingCopilot({ 
@@ -222,7 +225,9 @@ export function TradingCopilot({
   onToggle,
   pendingContext,
   pendingAnalysis,
-  onContextConsumed
+  onContextConsumed,
+  pendingPlanBuilder,
+  onPlanBuilderConsumed
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
@@ -234,10 +239,11 @@ export function TradingCopilot({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
+  const [showBuilder, setShowBuilder] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
-  const { hasPlan } = useMasterPlan();
+  const { plan, hasPlan, refreshPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
   const {
@@ -424,6 +430,15 @@ export function TradingCopilot({
       contextProcessedRef.current = false;
     }
   }, [pendingContext, pendingAnalysis, isExpanded, isLoading, onContextConsumed]);
+
+  // Handle pending plan builder from context
+  useEffect(() => {
+    if (pendingPlanBuilder && isExpanded) {
+      setShowBuilder(true);
+      setMessages([]);
+      onPlanBuilderConsumed?.();
+    }
+  }, [pendingPlanBuilder, isExpanded, onPlanBuilderConsumed]);
 
   const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
@@ -624,6 +639,7 @@ export function TradingCopilot({
     startNewChat();
     activeConvoRef.current = null;
     setMessages([]);
+    setShowBuilder(false);
   }, [startNewChat]);
 
   const handleSelectConversation = useCallback((id: string) => {
@@ -711,7 +727,7 @@ export function TradingCopilot({
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ) : messages.length === 0 ? (
+            ) : messages.length === 0 && !showBuilder ? (
               (() => {
                 const pageCtx = getPageContext(location.pathname);
                 const tier2Chips = isAuthenticated ? pageCtx.chips : [];
@@ -782,25 +798,25 @@ export function TradingCopilot({
                   {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
-                        <span className="text-xs">Review today's paper results</span>
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Update my trading plan")} disabled={isLoading}>
-                        <span className="text-xs">Update your trading plan</span>
-                      </Button>
+                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
+                       <span className="text-xs">Review today's paper results</span>
+                     </Button>
+                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
+                       <span className="text-xs">Update your trading plan</span>
+                     </Button>
                     </div>
                   )}
 
                   {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
-                  {isAuthenticated && !hasPlan && (
-                    <Button
-                      className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                      onClick={() => handleQuickAction("Set my trading plan")}
-                      disabled={isLoading}
-                    >
-                      Set your trading plan →
-                    </Button>
-                  )}
+                   {isAuthenticated && !hasPlan && (
+                     <Button
+                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                       onClick={() => setShowBuilder(true)}
+                       disabled={isLoading}
+                     >
+                       Set your trading plan →
+                     </Button>
+                   )}
 
                   {/* ── LOGGED-IN: Tier 2 — Page-aware chips ── */}
                   {tier2Chips.length > 0 && (
@@ -837,6 +853,26 @@ export function TradingCopilot({
               </div>
                 );
               })()
+            ) : showBuilder ? (
+              <TradingPlanBuilder
+                existingPlan={plan}
+                onSaved={() => {
+                  setShowBuilder(false);
+                  refreshPlan();
+                  setMessages(prev => [...prev, {
+                    id: crypto.randomUUID(),
+                    role: "assistant" as const,
+                    content: `✅ Your trading plan is set. Copilot is now paper-testing it live.\n\nI'll scan for ${plan ? "your updated" : "matching"} setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
+                    timestamp: new Date(),
+                  }]);
+                }}
+                onCancel={() => setShowBuilder(false)}
+                onSwitchToNL={() => {
+                  setShowBuilder(false);
+                  setInput(hasPlan ? "Update my trading plan: " : "");
+                  setTimeout(() => inputRef.current?.focus(), 100);
+                }}
+              />
             ) : (
               <div className="space-y-4">
                 {messages.map((message, idx) => {

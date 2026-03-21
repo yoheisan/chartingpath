@@ -26,7 +26,7 @@ export function MandateCard({ onFocusNLBar, rules, hasPlan }: MandateCardProps) 
     if (prefill) {
       copilot.openWithContext(prefill);
     } else {
-      copilot.open();
+      copilot.openPlanBuilder();
     }
   };
 

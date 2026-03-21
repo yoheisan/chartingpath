@@ -49,6 +49,8 @@ const Layout = ({ children }: LayoutProps) => {
             pendingContext={copilot.pendingContext}
             pendingAnalysis={copilot.pendingAnalysis}
             onContextConsumed={copilot.consumePendingContext}
+            pendingPlanBuilder={copilot.pendingPlanBuilder}
+            onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
           />
         )}
         <CaptureButton />
@@ -70,6 +72,8 @@ const Layout = ({ children }: LayoutProps) => {
           pendingContext={copilot.pendingContext}
           pendingAnalysis={copilot.pendingAnalysis}
           onContextConsumed={copilot.consumePendingContext}
+          pendingPlanBuilder={copilot.pendingPlanBuilder}
+          onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
         />
       )}
       <GuestSignupNudge />
