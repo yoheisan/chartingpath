@@ -5867,6 +5867,7 @@ export type Database = {
         Returns: number
       }
       expire_stale_patterns: { Args: never; Returns: undefined }
+      get_active_pattern_count: { Args: never; Returns: number }
       get_article_by_slug: {
         Args: { p_slug: string }
         Returns: {
