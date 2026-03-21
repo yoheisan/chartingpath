@@ -67,10 +67,10 @@ serve(async (req) => {
     // Most recent closed trade
     const lastTrade = tradeList[0];
     const lastTradeInfo = lastTrade
-      ? `Most recent closed trade: ${lastTrade.ticker} ${lastTrade.attribution} ${lastTrade.outcome} ${(lastTrade.pnl_r || 0).toFixed(1)}R gate was ${lastTrade.gate_result || "unknown"} reason: ${lastTrade.gate_reason || "none"}`
+      ? `Last closed: ${lastTrade.symbol || lastTrade.ticker} ${lastTrade.attribution} ${lastTrade.outcome} ${(lastTrade.pnl_r || lastTrade.outcome_r || 0).toFixed(1)}R gate: ${lastTrade.gate_result || "unknown"} — ${lastTrade.gate_reason || "none"}`
       : "No recent closed trades.";
 
-    const userMessage = `AI trades: ${aiStats.count} trades ${aiStats.winRate}% win rate avg ${aiStats.avgR}R per trade total ${aiStats.totalR}R\nHuman overrides: ${humanStats.count} trades ${humanStats.winRate}% win rate avg ${humanStats.avgR}R per trade total ${humanStats.totalR}R\n${lastTradeInfo}`;
+    const userMessage = `AI trades: ${aiStats.count} trades, ${aiStats.winRate}% wins, avg ${aiStats.avgR}R, total ${aiStats.totalR}R\nHuman overrides: ${humanStats.count} trades, ${humanStats.winRate}% wins, avg ${humanStats.avgR}R, total ${humanStats.totalR}R\n${lastTradeInfo}`;
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
