@@ -214,6 +214,47 @@ export function TradingCopilot({
 
   const { trackQuestion } = useCopilotFeedback();
 
+  // Mandate handling — integrated into chat UI
+  const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
+    onSaved: () => {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "✅ Master Plan saved. Your mandate is now active across all Copilot surfaces.",
+        timestamp: new Date(),
+      }]);
+      window.dispatchEvent(new CustomEvent("mandate-saved"));
+    },
+    onQuestion: (question: string) => {
+      // Route question to debrief
+      window.dispatchEvent(new CustomEvent("copilot-question", { detail: question }));
+    },
+  });
+
+  // Show mandate confirmation in chat
+  useEffect(() => {
+    if (mandateState.step === 'confirming') {
+      setMessages(prev => {
+        // Remove any previous confirmation message
+        const filtered = prev.filter(m => !(m.role === 'assistant' && m.content.startsWith('📋')));
+        return [...filtered, {
+          id: 'mandate-confirm',
+          role: "assistant",
+          content: `📋 **Confirm your Master Plan:**\n\n${mandateState.confirmation}\n\n_Reply "yes" or "save" to confirm, or type adjustments._`,
+          timestamp: new Date(),
+        }];
+      });
+    }
+    if (mandateState.step === 'error') {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `⚠️ ${mandateState.message}`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [mandateState.step]);
+
   const guestLimitReached = !isAuthenticated && guestMsgCount >= GUEST_MSG_LIMIT;
 
   const logFeedback = useCallback(async (responseContent: string, helpful: boolean) => {
