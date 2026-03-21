@@ -567,9 +567,16 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
                               ? 'bg-primary text-primary-foreground hover:bg-primary/80'
                               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                           }`}
+                          disabled={isPaperSubmitting}
                           onClick={() => {
                             onToggleBasket(trade.selectionKey);
-                            toast.success('Added to paper ✓');
+                            tradeWithGateCheck({
+                              ticker: trade.symbol,
+                              setup_type: trade.pattern,
+                              timeframe: trade.timeframe,
+                              direction: trade.direction?.toLowerCase(),
+                              gate_result: 'partial',
+                            });
                           }}
                         >
                           {basketSelections.includes(trade.selectionKey) ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
