@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -6,8 +7,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SessionDebriefPanel } from './SessionDebriefPanel';
 
 const RightPanel = () => {
+  const [debriefOpen, setDebriefOpen] = useState(false);
   return (
     <div className="flex flex-col h-full">
       {/* Section 1 — Header */}
