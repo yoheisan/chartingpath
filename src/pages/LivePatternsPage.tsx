@@ -1829,15 +1829,6 @@ export default function LivePatternsPage() {
     </div>
       </div>
 
-      {/* Mobile: bottom sheet copilot */}
-      {showCopilot && isMobile && (
-        <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-background/80 backdrop-blur-sm" onClick={() => setShowCopilot(false)} />
-          <div className="h-[70vh] bg-background border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-4 duration-200">
-            <CopilotSidebar onClose={() => setShowCopilot(false)} context={{ domain: 'screener', route: '/patterns/live', quickPrompts: [t('copilot.ctx.screenerPrompt1'), t('copilot.ctx.screenerPrompt2'), t('copilot.ctx.screenerPrompt3')] }} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
