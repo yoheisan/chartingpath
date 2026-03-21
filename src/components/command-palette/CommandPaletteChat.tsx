@@ -188,15 +188,25 @@ export function CommandPaletteChat({ initialPrompt, onBack }: CommandPaletteChat
 
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantContent += content;
-              setMessages((prev) =>
-                prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m))
-              );
+            if (parsed.type === "status") {
+              setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: `_${parsed.text}_` } : m));
+            } else if (parsed.type === "token") {
+              assistantContent += parsed.text;
+              setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
+            } else if (parsed.type === "done") {
+              streamDone = true; break;
+            } else if (parsed.type === "error") {
+              assistantContent = parsed.text || "Something went wrong.";
+              setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
+              streamDone = true; break;
+            } else {
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                assistantContent += content;
+                setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
+              }
             }
           } catch {
-            // Incomplete JSON split across chunks: put it back and wait for more data
             textBuffer = line + "\n" + textBuffer;
             break;
           }
