@@ -1,4 +1,5 @@
 import { useCopilotTrades } from '@/hooks/useCopilotTrades';
+import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
