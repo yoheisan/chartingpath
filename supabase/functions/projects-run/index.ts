@@ -1940,6 +1940,8 @@ serve(async (req) => {
           const allTrades: BacktestTrade[] = [];
           const patternResults: any[] = [];
           const equity: { date: string; value: number; drawdown: number }[] = [];
+          // Track detection funnel per pattern
+          const detectionFunnel: Record<string, { detected: number; gradeFiltered: number; overlapSkipped: number; traded: number }> = {};
           
           // Fetch data and run backtests
           let completedPatternScans = 0;
@@ -1994,8 +1996,18 @@ serve(async (req) => {
                 continue;
               }
               
-              const trades = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
-              allTrades.push(...trades);
+              const result = runPatternBacktest(bars, patternId, pattern, instrument, gradeFilter);
+              allTrades.push(...result.trades);
+              
+              // Accumulate funnel stats per pattern
+              if (!detectionFunnel[patternId]) {
+                detectionFunnel[patternId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+              }
+              detectionFunnel[patternId].detected += result.detectedCount;
+              detectionFunnel[patternId].gradeFiltered += result.gradeFilteredCount;
+              detectionFunnel[patternId].overlapSkipped += result.overlapSkippedCount;
+              detectionFunnel[patternId].traded += result.trades.length;
+              
               completedPatternScans += 1;
             }
           }
