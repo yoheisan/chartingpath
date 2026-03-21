@@ -657,7 +657,7 @@ export function TradingCopilot({
 
   if (!isExpanded) {
     return (
-      <div className={cn("fixed z-50 flex flex-col items-end gap-2", isMobile ? "bottom-20 right-4" : "bottom-6 right-6")}>
+      <div className={cn("fixed z-50 flex flex-col items-end gap-2", isMobile ? "bottom-20 right-4" : "bottom-[72px] right-6")}>
         {/* First-visit tooltip — disappears after first open */}
         {typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
           <div className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
