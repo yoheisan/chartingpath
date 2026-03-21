@@ -1515,8 +1515,10 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="signal" />
                     </div>
                   </TableHead>
+                  <TableHead className="text-center whitespace-nowrap w-16">Gate</TableHead>
                   <TableHead className="text-center whitespace-nowrap w-10">
                   </TableHead>
+                  <TableHead className="whitespace-nowrap w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
