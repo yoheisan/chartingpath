@@ -258,7 +258,6 @@ export default function LivePatternsPage() {
     ...(urlPattern ? { pattern: urlPattern } : {}),
   }));
   const [showInstrumentList, setShowInstrumentList] = useState(false);
-import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
   // Sorting for list view
   type SortKey = 'instrument' | 'direction' | 'rr' | 'signal' | 'grade' | 'winRate' | 'expectancy' | 'rot';
