@@ -141,8 +141,9 @@ const Copilot = () => {
         <aside className="w-[256px] shrink-0 overflow-hidden">
           <RightPanel
             openDebriefOnMount={debriefFromBanner}
-            onDebriefOpened={() => setDebriefFromBanner(false)}
+            onDebriefOpened={() => { setDebriefFromBanner(false); }}
             onTradeSelect={handleTradeSelect}
+            debriefQuestion={debriefQuestion}
           />
         </aside>
       </div>
