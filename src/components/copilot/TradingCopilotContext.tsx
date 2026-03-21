@@ -135,9 +135,12 @@ const NOOP_CONTEXT: TradingCopilotContextValue = {
   close: () => {},
   openWithContext: () => {},
   openWithAnalysis: () => {},
+  openPlanBuilder: () => {},
   pendingContext: null,
   pendingAnalysis: null,
+  pendingPlanBuilder: false,
   consumePendingContext: () => null,
+  consumePendingPlanBuilder: () => false,
   setChartContext: () => {},
   getChartContext: () => null
 };
