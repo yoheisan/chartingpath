@@ -88,7 +88,7 @@ export function SupportedPatternsList({
                   <Badge
                     variant={isActive ? 'default' : 'outline'}
                     className={cn(
-                      'text-[10px] px-2 py-0.5 cursor-pointer transition-all',
+                      'text-sm px-2 py-0.5 cursor-pointer transition-all',
                       isLocked && 'opacity-50 border-dashed',
                       isActive && 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30',
                       !isActive && !isLocked && 'hover:bg-muted',
@@ -191,7 +191,7 @@ export function SupportedPatternsList({
                   
                   {isActive ? (
                     <div className="space-y-1">
-                      <div className="flex items-center justify-center gap-2 text-[10px]">
+                      <div className="flex items-center justify-center gap-2 text-sm">
                         <span className="text-green-600 dark:text-green-400 flex items-center gap-0.5">
                           <TrendingUp className="h-3 w-3" />
                           {data?.longCount || 0}
@@ -202,7 +202,7 @@ export function SupportedPatternsList({
                         </span>
                       </div>
                       {/* Edge metrics row */}
-                      <div className="flex items-center justify-center gap-1 text-[10px] pt-1 border-t border-border/30">
+                      <div className="flex items-center justify-center gap-1 text-sm pt-1 border-t border-border/30">
                         {blurEdgeMetrics ? (
                           <>
                             <span className="text-muted-foreground blur-[2px] select-none">55%</span>
@@ -224,7 +224,7 @@ export function SupportedPatternsList({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center text-[10px] text-muted-foreground">
+                    <div className="flex items-center justify-center text-sm text-muted-foreground">
                       <Minus className="h-3 w-3 mr-1" />
                       {t('screener.noSignals')}
                     </div>

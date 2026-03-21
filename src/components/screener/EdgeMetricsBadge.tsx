@@ -63,7 +63,7 @@ function BlurredMetric({ label, icon: Icon }: { label: string; icon: React.Eleme
   return (
     <div className="flex items-center gap-1">
       <Icon className="h-3 w-3 text-muted-foreground" />
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <span className="font-mono text-xs blur-sm select-none">88.8%</span>
     </div>
   );
@@ -89,7 +89,7 @@ export function EdgeMetricsBadge({
       )}>
         <Lock className="h-3 w-3 text-muted-foreground" />
         {compact ? (
-          <span className="text-[10px] text-muted-foreground blur-[3px] select-none">
+          <span className="text-sm text-muted-foreground blur-[3px] select-none">
             Win 55% | 0.4R
           </span>
         ) : (
@@ -172,7 +172,7 @@ export function EdgeMetricsBadge({
       {metrics.winRate !== null && (
         <div className="flex items-center gap-1">
           <TrendingUp className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground">Win</span>
+          <span className="text-sm text-muted-foreground">Win</span>
           <span className={cn('font-mono text-xs font-medium', getMetricColor(metrics.winRate, 'winRate'))}>
             {metrics.winRate.toFixed(0)}%
           </span>
@@ -181,7 +181,7 @@ export function EdgeMetricsBadge({
       {metrics.avgRMultiple !== null && (
         <div className="flex items-center gap-1">
           <Target className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground">Exp</span>
+          <span className="text-sm text-muted-foreground">Exp</span>
           <span className={cn('font-mono text-xs font-medium', getMetricColor(metrics.avgRMultiple, 'expectancy'))}>
             {metrics.avgRMultiple >= 0 ? '+' : ''}{metrics.avgRMultiple.toFixed(2)}R
           </span>
@@ -190,7 +190,7 @@ export function EdgeMetricsBadge({
       {metrics.profitFactor !== null && (
         <div className="flex items-center gap-1">
           <BarChart3 className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground">PF</span>
+          <span className="text-sm text-muted-foreground">PF</span>
           <span className={cn('font-mono text-xs font-medium', getMetricColor(metrics.profitFactor, 'profitFactor'))}>
             {metrics.profitFactor.toFixed(2)}
           </span>
@@ -254,7 +254,7 @@ function EdgeMetricsTooltipContent({ metrics }: { metrics: EdgeMetrics }) {
           </div>
         )}
       </div>
-      <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+      <p className="text-sm text-muted-foreground pt-1 border-t border-border/50">
         Based on historical backtest data. Not a guarantee of future results.
       </p>
     </div>

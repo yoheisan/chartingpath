@@ -241,12 +241,12 @@ export function AutoFollowQueueManager() {
                   const heightPct = (d.count / maxCount) * 100;
                   return (
                     <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">{d.count}</span>
+                      <span className="text-sm text-muted-foreground">{d.count}</span>
                       <div
                         className="w-full bg-primary/70 rounded-t-sm min-h-[2px]"
                         style={{ height: `${Math.max(heightPct, 3)}%` }}
                       />
-                      <span className="text-[9px] text-muted-foreground">{d.day.split(" ")[1]}</span>
+                      <span className="text-sm text-muted-foreground">{d.day.split(" ")[1]}</span>
                     </div>
                   );
                 })}
@@ -324,11 +324,11 @@ export function AutoFollowQueueManager() {
             <TabsList className="mb-4">
               <TabsTrigger value="pending" className="gap-1">
                 <Clock className="h-3 w-3" /> Pending
-                <Badge variant="outline" className="ml-1 text-[10px] px-1.5">{stats?.pending?.toLocaleString() ?? 0}</Badge>
+                <Badge variant="outline" className="ml-1 text-sm px-1.5">{stats?.pending?.toLocaleString() ?? 0}</Badge>
               </TabsTrigger>
               <TabsTrigger value="followed" className="gap-1">
                 <CheckCircle className="h-3 w-3" /> Followed
-                <Badge variant="outline" className="ml-1 text-[10px] px-1.5">{stats?.followed?.toLocaleString() ?? 0}</Badge>
+                <Badge variant="outline" className="ml-1 text-sm px-1.5">{stats?.followed?.toLocaleString() ?? 0}</Badge>
               </TabsTrigger>
               <TabsTrigger value="skipped" className="gap-1">
                 <SkipForward className="h-3 w-3" /> Skipped

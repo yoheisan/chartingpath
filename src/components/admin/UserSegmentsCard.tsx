@@ -80,7 +80,7 @@ export function UserSegmentsCard({ segments, trafficSources }: UserSegmentsCardP
               
               <div className="mt-3 flex flex-wrap gap-1">
                 {segment.characteristics.map((char, i) => (
-                  <Badge key={i} variant="secondary" className="text-[10px]">
+                  <Badge key={i} variant="secondary" className="text-sm">
                     {char}
                   </Badge>
                 ))}

@@ -97,7 +97,7 @@ export function SessionDebriefPanel({ open, onClose }: SessionDebriefPanelProps)
             <button
               key={q}
               onClick={() => setInput(q)}
-              className="rounded-md border border-border/40 bg-secondary/50 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="rounded-md border border-border/40 bg-secondary/50 px-2.5 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
               {q}
             </button>

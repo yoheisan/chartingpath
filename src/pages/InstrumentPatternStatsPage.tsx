@@ -218,12 +218,12 @@ export default function InstrumentPatternStatsPage() {
             <h2 className="text-2xl font-semibold mb-4">{t('patternStats.performanceByTimeframe', 'Performance by Timeframe')}</h2>
             <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
               <div className="hidden sm:grid grid-cols-[1fr_80px_80px_80px_90px_80px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('patternStats.timeframe', 'Timeframe')}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.winRate', 'Win Rate')}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.expR', 'Exp (R)')}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgRR', 'Avg R:R')}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.trades', 'Trades')}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgBars', 'Avg Bars')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('patternStats.timeframe', 'Timeframe')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.winRate', 'Win Rate')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.expR', 'Exp (R)')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgRR', 'Avg R:R')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.trades', 'Trades')}</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('patternStats.avgBars', 'Avg Bars')}</span>
               </div>
 
               {data.breakdowns.map((b) => (

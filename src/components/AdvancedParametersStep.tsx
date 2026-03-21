@@ -96,7 +96,7 @@ export const AdvancedParametersStep: React.FC<AdvancedParametersStepProps> = ({
         <TooltipContent side="left" className="max-w-sm space-y-2 p-3">
           <p className="text-xs font-medium">{doc.summary}</p>
           <p className="text-xs text-muted-foreground leading-relaxed">{doc.reasoning}</p>
-          <p className="text-[10px] text-muted-foreground/70 italic border-t border-border pt-1.5">{doc.reference}</p>
+          <p className="text-sm text-muted-foreground/70 italic border-t border-border pt-1.5">{doc.reference}</p>
         </TooltipContent>
       </Tooltip>
     );

@@ -401,7 +401,7 @@ const AIJourneyAnalytics = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                   {analytics.conversionFunnel.map((stage, idx) => (
                     <div key={stage.stage} className="text-center p-3 rounded-lg bg-background/50 relative">
-                      <p className="text-[10px] text-muted-foreground mb-1 truncate" title={stage.displayName}>
+                      <p className="text-sm text-muted-foreground mb-1 truncate" title={stage.displayName}>
                         {stage.displayName}
                       </p>
                       <p className="text-xl font-bold">{stage.count.toLocaleString()}</p>

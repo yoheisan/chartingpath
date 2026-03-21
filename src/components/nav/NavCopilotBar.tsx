@@ -105,7 +105,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
           readOnly
         />
 
-        <kbd className="pointer-events-none shrink-0 inline-flex items-center gap-0.5 rounded border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+        <kbd className="pointer-events-none shrink-0 inline-flex items-center gap-0.5 rounded border border-border/80 bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
           ⌘K
         </kbd>
       </div>
@@ -116,14 +116,14 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
           {/* Quick commands - hide during confirm/error */}
           {state.step !== "confirming" && state.step !== "error" && (
             <div className="px-3 pt-3 pb-2">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">
                 Quick commands
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {QUICK_COMMANDS.map((cmd) => (
                   <button
                     key={cmd}
-                    className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
                       setFreeText(cmd);
                       submit(cmd);
@@ -139,7 +139,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
           {/* Confirmation view */}
           {state.step === "confirming" && (
             <div className="px-3 pt-3 pb-2 space-y-3">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Confirm your Master Plan
               </p>
               <p className="text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed">
@@ -148,7 +148,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
               <div className="flex gap-2">
                 <button
                   onClick={confirmSave}
-                  className="rounded-md bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 text-[11px] font-medium text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                  className="rounded-md bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 text-sm font-medium text-emerald-400 hover:bg-emerald-500/30 transition-colors"
                 >
                   Looks good — save it
                 </button>
@@ -157,7 +157,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
                     reset();
                     setFreeText("");
                   }}
-                  className="rounded-md border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted/40 transition-colors"
+                  className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"
                 >
                   Let me adjust
                 </button>
@@ -176,7 +176,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
                   reset();
                   setTimeout(() => dropdownInputRef.current?.focus(), 50);
                 }}
-                className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Try again
               </button>

@@ -421,7 +421,7 @@ function StatCards({ metrics }: { metrics: StatMetric[] }) {
         <Card key={i} className="p-3 bg-card border">
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
             {m.icon}
-            <span className="text-[10px] font-medium uppercase tracking-wider">{m.label}</span>
+            <span className="text-sm font-medium uppercase tracking-wider">{m.label}</span>
           </div>
           <p className={cn("text-lg font-bold", m.color)}>{m.value}</p>
         </Card>

@@ -35,7 +35,7 @@ export function CopilotStatusIndicator({
 
       <span className="text-muted-foreground whitespace-nowrap">{statusLabel}</span>
 
-      <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none whitespace-nowrap">
+      <span className="rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-sm font-semibold leading-none whitespace-nowrap">
         {tradeCount} trades
       </span>
     </div>

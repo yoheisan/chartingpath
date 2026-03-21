@@ -1240,7 +1240,7 @@ export default function FullChartViewer({
                   />
                   
                   {/* Indicator Legend */}
-                  <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none z-10">
+                  <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 text-sm pointer-events-none z-10">
                     {indicators.ema20 && (
                       <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-orange-500">
                         EMA 20
@@ -1274,18 +1274,18 @@ export default function FullChartViewer({
                     {!isDragging && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="text-[10px] text-muted-foreground bg-background/90 border border-border/40 px-2 py-1 rounded cursor-help hidden lg:inline-flex items-center gap-1.5">
-                            <kbd className="px-1 py-0.5 text-[9px] bg-muted rounded font-mono">Shift</kbd>
+                          <span className="text-sm text-muted-foreground bg-background/90 border border-border/40 px-2 py-1 rounded cursor-help hidden lg:inline-flex items-center gap-1.5">
+                            <kbd className="px-1 py-0.5 text-sm bg-muted rounded font-mono">Shift</kbd>
                             <span>+ drag to pan</span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="max-w-[200px]">
-                          <p className="text-xs">Hold <kbd className="px-1 py-0.5 bg-muted rounded font-mono text-[10px]">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.</p>
+                          <p className="text-xs">Hold <kbd className="px-1 py-0.5 bg-muted rounded font-mono text-sm">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.</p>
                         </TooltipContent>
                       </Tooltip>
                     )}
                     {isDragging && (
-                      <span className="text-[10px] text-amber-500 bg-background/90 border border-amber-500/30 px-2 py-1 rounded inline-flex items-center gap-1">
+                      <span className="text-sm text-amber-500 bg-background/90 border border-amber-500/30 px-2 py-1 rounded inline-flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                         Panning...
                       </span>
@@ -1390,7 +1390,7 @@ export default function FullChartViewer({
                           </div>
 
                           <div className="pt-2 border-t border-border/50">
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               {fc('indicatorsActive', { count: Object.values(indicators).filter(Boolean).length })}
                             </p>
                           </div>
@@ -1453,7 +1453,7 @@ export default function FullChartViewer({
                   }`}>
                     {(setup as any).historicalPerformance.winRate.toFixed(1)}%
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     ({fc('samples', { count: (setup as any).historicalPerformance.sampleSize })})
                   </p>
                 </div>
@@ -1465,7 +1465,7 @@ export default function FullChartViewer({
                     {(setup as any).historicalPerformance.avgRMultiple >= 0 ? '+' : ''}
                     {(setup as any).historicalPerformance.avgRMultiple.toFixed(2)}R
                   </p>
-                  <p className="text-[10px] text-muted-foreground">{fc('perTrade')}</p>
+                  <p className="text-sm text-muted-foreground">{fc('perTrade')}</p>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-muted-foreground mb-1">{fc('avgDuration')}</div>
@@ -1474,7 +1474,7 @@ export default function FullChartViewer({
                       ? `${(setup as any).historicalPerformance.avgDurationBars} bars` 
                       : '—'}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">{fc('toOutcome')}</p>
+                  <p className="text-sm text-muted-foreground">{fc('toOutcome')}</p>
                 </div>
               </div>
             )}
@@ -1672,7 +1672,7 @@ export default function FullChartViewer({
                     </div>
                     <div className="flex-1 min-w-0">
                        <p className="text-xs font-medium">{fc('researchHistory')}</p>
-                       <p className="text-[10px] text-muted-foreground truncate">{fc('backtestFor', { pattern: translatedPatternName })}</p>
+                       <p className="text-sm text-muted-foreground truncate">{fc('backtestFor', { pattern: translatedPatternName })}</p>
                     </div>
                   </div>
                 </a>
@@ -1689,7 +1689,7 @@ export default function FullChartViewer({
                     </div>
                     <div className="flex-1 min-w-0">
                        <p className="text-xs font-medium">{fc('automateWithScripts')}</p>
-                       <p className="text-[10px] text-muted-foreground truncate">{fc('pineScriptExport')}</p>
+                       <p className="text-sm text-muted-foreground truncate">{fc('pineScriptExport')}</p>
                     </div>
                   </div>
                 </a>

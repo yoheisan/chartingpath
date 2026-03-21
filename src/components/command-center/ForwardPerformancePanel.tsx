@@ -60,7 +60,7 @@ export function ForwardPerformancePanel({ userId }: ForwardPerformancePanelProps
                   <Badge
                     variant="secondary"
                     className={cn(
-                      'text-[10px] px-1.5',
+                      'text-sm px-1.5',
                       item.confidenceScore >= 70
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : item.confidenceScore >= 40
@@ -76,7 +76,7 @@ export function ForwardPerformancePanel({ userId }: ForwardPerformancePanelProps
               {/* Live metrics */}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
+                  <div className="text-sm text-muted-foreground flex items-center justify-center gap-0.5">
                     {t('forwardPerformance.liveWR', { defaultValue: 'Live WR' })}
                     <InfoTooltip term="winRate" size="h-3 w-3" />
                   </div>
@@ -85,13 +85,13 @@ export function ForwardPerformancePanel({ userId }: ForwardPerformancePanelProps
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-sm text-muted-foreground">
                     {t('forwardPerformance.trades', { defaultValue: 'Trades' })}
                   </div>
                   <div className="text-sm font-semibold tabular-nums">{item.liveTrades}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
+                  <div className="text-sm text-muted-foreground flex items-center justify-center gap-0.5">
                     P&L
                     <InfoTooltip term="totalPnl" size="h-3 w-3" />
                   </div>
@@ -104,7 +104,7 @@ export function ForwardPerformancePanel({ userId }: ForwardPerformancePanelProps
               {/* Backtest comparison */}
               {item.backtestWinRate !== null && (
                 <div className="border-t border-border/40 pt-2">
-                  <div className="text-[10px] text-muted-foreground mb-1">
+                  <div className="text-sm text-muted-foreground mb-1">
                     {t('forwardPerformance.backtestComparison', { defaultValue: 'vs. Backtest' })}
                   </div>
                   <div className="flex items-center gap-3 text-xs">
@@ -139,7 +139,7 @@ function DeltaInline({ live, backtest, format }: { live: number; backtest: numbe
       <span>{format(live)}</span>
       <span className="text-muted-foreground/60">vs</span>
       <span>{format(backtest)}</span>
-      <span className={cn('text-[10px]', isPositive ? 'text-emerald-500' : 'text-red-500')}>
+      <span className={cn('text-sm', isPositive ? 'text-emerald-500' : 'text-red-500')}>
         {isPositive ? <TrendingUp className="h-3 w-3 inline" /> : <TrendingDown className="h-3 w-3 inline" />}
       </span>
     </span>

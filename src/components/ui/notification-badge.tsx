@@ -40,7 +40,7 @@ export function NotificationBadge({
   const displayCount = count > maxCount ? `${maxCount}+` : count.toString();
 
   const sizeClasses = {
-    sm: showDot ? "h-2 w-2" : "h-4 min-w-4 text-[10px]",
+    sm: showDot ? "h-2 w-2" : "h-4 min-w-4 text-sm",
     md: showDot ? "h-2.5 w-2.5" : "h-5 min-w-5 text-xs",
     lg: showDot ? "h-3 w-3" : "h-6 min-w-6 text-sm",
   };

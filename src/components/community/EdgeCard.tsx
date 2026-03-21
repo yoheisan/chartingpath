@@ -26,7 +26,7 @@ export const EdgeCard: React.FC<EdgeCardProps> = ({ card, onLike, onBookmark }) 
     <Card className="group relative overflow-hidden border-border/60 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
       {/* Verified Badge */}
       <div className="absolute top-3 right-3 z-10">
-        <Badge variant="outline" className="text-[10px] gap-1 bg-background/80 backdrop-blur-sm border-primary/20 text-primary">
+        <Badge variant="outline" className="text-sm gap-1 bg-background/80 backdrop-blur-sm border-primary/20 text-primary">
           <ShieldCheck className="w-3 h-3" />
           Verified
         </Badge>
@@ -45,7 +45,7 @@ export const EdgeCard: React.FC<EdgeCardProps> = ({ card, onLike, onBookmark }) 
             )}
             <span className="font-bold text-sm">{displaySymbol}</span>
           </div>
-          <Badge variant="secondary" className="text-[10px] shrink-0">
+          <Badge variant="secondary" className="text-sm shrink-0">
             {card.timeframe}
           </Badge>
         </div>
@@ -96,7 +96,7 @@ export const EdgeCard: React.FC<EdgeCardProps> = ({ card, onLike, onBookmark }) 
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
+            <span className="text-sm text-muted-foreground">{timeAgo}</span>
             {shareLink && (
               <Link to={shareLink} className="text-primary hover:underline">
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -112,7 +112,7 @@ export const EdgeCard: React.FC<EdgeCardProps> = ({ card, onLike, onBookmark }) 
 function StatCell({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <span className={cn(
         'font-mono font-semibold text-xs',
         positive === true && 'text-[hsl(var(--bullish))]',

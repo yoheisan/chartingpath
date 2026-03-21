@@ -42,7 +42,7 @@ export function CopilotHistorySidebar({
               <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground" />
               <div className="flex-1 min-w-0">
                 <p className="truncate">{c.title}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}
                 </p>
               </div>
@@ -60,7 +60,7 @@ export function CopilotHistorySidebar({
             </div>
           ))}
           {conversations.length === 0 && (
-            <p className="text-[10px] text-muted-foreground text-center py-4">No conversations yet</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No conversations yet</p>
           )}
         </div>
       </ScrollArea>

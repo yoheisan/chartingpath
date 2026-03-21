@@ -112,7 +112,7 @@ export default function PatternStatsIndexPage() {
                         <Link
                           key={tf}
                           to={`/patterns/stats/${patternSlug}/${ac}/${tf}`}
-                          className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] text-muted-foreground hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          className="text-sm px-1.5 py-0.5 rounded bg-[#0f1117] text-muted-foreground hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
                         >
                           {tf}
                         </Link>

@@ -89,7 +89,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     (0–5 pts, log₂ scale of sample size relative to the 30-trade minimum). Signals below the Proof Gate
                     threshold receive a 50% confidence penalty. Only scored for proven signals.
                   </p>
-                  <p className="text-[11px] text-muted-foreground/80 italic">
+                  <p className="text-sm text-muted-foreground/80 italic">
                     High weight → You prioritize setups with a proven statistical edge — patterns that have historically delivered
                     consistent returns on this specific ticker.
                   </p>
@@ -111,7 +111,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     <em> K = winRate − (1−winRate)/R:R</em>, capped at 25% to prevent over-betting). Higher combined
                     score means the trade has a well-defined risk bracket with room for sensible position sizing.
                   </p>
-                  <p className="text-[11px] text-muted-foreground/80 italic">
+                  <p className="text-sm text-muted-foreground/80 italic">
                     High weight → You prioritize tight risk control — only taking setups with well-defined stops and
                     favorable risk-to-reward (typically 2:1 or better). Recommended for capital preservation strategies.
                   </p>
@@ -135,7 +135,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     </li>
                     <li>
                       <strong>Event Score</strong> — starts at <strong>1.0</strong> (clear calendar). The system queries the
-                      <code className="text-[10px] bg-muted/60 px-1 rounded">economic_events</code> table for events within a
+                      <code className="text-sm bg-muted/60 px-1 rounded">economic_events</code> table for events within a
                       <strong> 48-hour lookahead window</strong>, then matches them to the instrument by currency
                       (e.g., GBPJPY is affected by both GB and JP events). Each relevant <strong>high-impact</strong> event
                       (FOMC, NFP, CPI, rate decisions) deducts <strong>−0.15</strong>; each <strong>medium-impact</strong> event
@@ -143,11 +143,11 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     </li>
                   </ul>
                   <div className="bg-muted/40 border border-border rounded-lg p-2 mt-1">
-                    <code className="text-[11px] text-foreground font-mono">
+                    <code className="text-sm text-foreground font-mono">
                       Timing = trendScore × 0.5 + eventScore × 0.5
                     </code>
                   </div>
-                  <p className="text-[11px] text-muted-foreground/80 italic mt-1">
+                  <p className="text-sm text-muted-foreground/80 italic mt-1">
                     High weight → You prioritize event-aware, trend-aligned entries — avoiding trades right before major
                     announcements or against the prevailing trend. Essential for news-sensitive instruments like forex.
                   </p>
@@ -167,7 +167,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     When the basket has multiple symbols, it checks asset-class overlap, shared currency exposure
                     (e.g. multiple USD pairs), and whether too many signals lean the same direction (all-long / all-short).
                   </p>
-                  <p className="text-[11px] text-muted-foreground/80 italic">
+                  <p className="text-sm text-muted-foreground/80 italic">
                     Without a basket (single signal), the score falls back to a quality-grade proxy.
                     Add multiple symbols to the basket for meaningful diversification analysis.
                     High weight → You prioritize basket balance — useful when screening many setups at once.
@@ -196,7 +196,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 <code className="text-xs text-foreground font-mono block">
                   K = winRate − (1 − winRate) / R:R
                 </code>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   A positive K means the trade has a genuine mathematical edge. A negative K means losses outpace wins over time.
                 </p>
               </div>
@@ -214,7 +214,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-foreground">Example Scenarios</p>
                 <div className="rounded-lg border border-border overflow-hidden">
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/40">
                         <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground">Win Rate</th>
@@ -247,7 +247,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 </div>
               </div>
 
-              <p className="text-[11px] text-muted-foreground/80 italic leading-relaxed">
+              <p className="text-sm text-muted-foreground/80 italic leading-relaxed">
                 Key takeaway: Kelly ensures only setups with a genuine mathematical edge contribute to a passing Risk score,
                 filtering out patterns that "look good but don't pay" over a large sample.
               </p>
@@ -267,7 +267,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                 ].map((v) => (
                   <div key={v.badge} className="flex gap-2 items-start">
                     <span className={`text-xs font-mono font-bold shrink-0 w-20 ${v.color}`}>{v.badge}</span>
-                    <p className="text-[11px] text-muted-foreground">{v.desc}</p>
+                    <p className="text-sm text-muted-foreground">{v.desc}</p>
                   </div>
                 ))}
               </div>
@@ -289,7 +289,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
                     <span className="text-sm shrink-0">{p.emoji}</span>
                     <div>
                       <span className="text-xs font-medium text-foreground">{p.name}</span>
-                      <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+                      <p className="text-sm text-muted-foreground">{p.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -315,7 +315,7 @@ export const AgentWeightsFAQ: React.FC<{ trigger: React.ReactNode }> = ({ trigge
             {/* References */}
             <section className="space-y-2 pb-2">
               <h3 className="text-sm font-semibold text-foreground">References</h3>
-              <ul className="text-[11px] text-muted-foreground space-y-1 list-disc pl-4">
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
                 <li>Bulkowski, T. — <em>Encyclopedia of Chart Patterns</em> (pattern win-rate methodology)</li>
                 <li>Vince, R. — <em>The Mathematics of Money Management</em> (Kelly criterion & optimal f)</li>
                 <li>Wilder, J.W. — <em>New Concepts in Technical Trading Systems</em> (ATR-based stops)</li>

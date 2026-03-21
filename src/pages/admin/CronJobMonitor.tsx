@@ -358,7 +358,7 @@ export default function CronJobMonitor() {
                                   {lastRun.status}
                                 </span>
                                 {fails >= 3 && (
-                                  <Badge variant="destructive" className="text-[10px] ml-1">{fails}×</Badge>
+                                  <Badge variant="destructive" className="text-sm ml-1">{fails}×</Badge>
                                 )}
                               </div>
                             ) : (

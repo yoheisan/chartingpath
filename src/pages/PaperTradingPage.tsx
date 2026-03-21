@@ -66,19 +66,19 @@ export default function PaperTradingPage() {
         </div>
         <div className="flex items-center gap-4 text-right">
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Balance</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">Balance</div>
             <div className="text-lg font-bold tabular-nums">
               ${(portfolio?.current_balance ?? 100000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">P&L</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">P&L</div>
             <div className={cn('text-lg font-bold tabular-nums', totalPnl > 0 ? 'text-emerald-500' : totalPnl < 0 ? 'text-red-500' : 'text-muted-foreground')}>
               {totalPnl >= 0 ? '+' : ''}${totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Win Rate</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">Win Rate</div>
             <div className="text-lg font-bold tabular-nums">{closedTrades.length > 0 ? `${winRate.toFixed(0)}%` : '—'}</div>
           </div>
         </div>

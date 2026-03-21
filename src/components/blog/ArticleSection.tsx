@@ -114,7 +114,7 @@ export function PatternChecklist({ items, title = 'Pattern Validation Checklist'
                 item.critical && 'font-medium'
               )}>
                 {item.text}
-                {item.critical && <Badge variant="destructive" className="ml-2 text-[10px]">Critical</Badge>}
+                {item.critical && <Badge variant="destructive" className="ml-2 text-sm">Critical</Badge>}
               </span>
             </li>
           ))}
@@ -270,7 +270,7 @@ export function TableOfContents({ sections }: TableOfContentsProps) {
                   <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
                   {section.title}
                   {section.level && (
-                    <Badge variant="outline" className="text-[10px] ml-auto">
+                    <Badge variant="outline" className="text-sm ml-auto">
                       {section.level}
                     </Badge>
                   )}

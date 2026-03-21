@@ -347,10 +347,10 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                       <span className="font-semibold text-foreground">
                         {inst.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
                       </span>
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getExchangeColor(inst.exchange)}`}>
+                      <Badge variant="outline" className={`text-sm px-1.5 py-0 ${getExchangeColor(inst.exchange)}`}>
                         {EXCHANGE_SHORT[inst.exchange] || inst.exchange}
                       </Badge>
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${getCategoryColor(inst.asset_type)}`}>
+                      <Badge variant="outline" className={`text-sm px-1.5 py-0 capitalize ${getCategoryColor(inst.asset_type)}`}>
                         {inst.asset_type}
                       </Badge>
                     </div>
@@ -375,7 +375,7 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                     </span>
                     <div className="flex-1 h-px bg-border" />
                     {webLoading && (
-                      <span className="text-[10px] text-muted-foreground animate-pulse">Searching...</span>
+                      <span className="text-sm text-muted-foreground animate-pulse">Searching...</span>
                     )}
                   </div>
                   {filteredWebResults.map((result) => (
@@ -392,13 +392,13 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
                           <span className="font-semibold text-foreground">
                             {result.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
                           </span>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/50 text-muted-foreground border-border">
+                          <Badge variant="outline" className="text-sm px-1.5 py-0 bg-muted/50 text-muted-foreground border-border">
                             {result.exchange || 'Global'}
                           </Badge>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${getCategoryColor(result.asset_type)}`}>
+                          <Badge variant="outline" className={`text-sm px-1.5 py-0 capitalize ${getCategoryColor(result.asset_type)}`}>
                             {result.asset_type}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/20">
+                          <Badge variant="outline" className="text-sm px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/20">
                             <Globe className="h-2.5 w-2.5 mr-0.5" />
                             Web
                           </Badge>
@@ -436,9 +436,9 @@ export function UniversalSymbolSearch({ onSelect, trigger, defaultOpen = false }
             {' '}results • Search any ticker worldwide
           </span>
           <span className="flex items-center gap-2">
-            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↵</kbd>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded text-sm">↵</kbd>
             <span>select</span>
-            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">esc</kbd>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded text-sm">esc</kbd>
             <span>close</span>
           </span>
         </div>

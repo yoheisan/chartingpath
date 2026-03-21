@@ -167,7 +167,7 @@ export function JourneyFlowVisualization({ flow, funnel }: JourneyFlowVisualizat
                       {stageInfo?.label}
                     </span>
                     {node.isRequired && (
-                      <Badge variant="outline" className="text-[10px] h-4">
+                      <Badge variant="outline" className="text-sm h-4">
                         Critical
                       </Badge>
                     )}
@@ -211,7 +211,7 @@ export function JourneyFlowVisualization({ flow, funnel }: JourneyFlowVisualizat
                     <div className="flex flex-col items-center">
                       <ArrowRight className={`h-5 w-5 ${edge?.isBottleneck ? 'text-red-500' : 'text-muted-foreground'}`} />
                       {edge && (
-                        <span className={`text-[10px] ${edge.isBottleneck ? 'text-red-500' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm ${edge.isBottleneck ? 'text-red-500' : 'text-muted-foreground'}`}>
                           {edge.conversionRate.toFixed(1)}%
                         </span>
                       )}

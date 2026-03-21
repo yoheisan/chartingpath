@@ -135,7 +135,7 @@ export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[9px] px-1 py-0 h-4',
+                          'text-sm px-1 py-0 h-4',
                           isLong ? 'text-emerald-500 border-emerald-500/30' : 'text-red-500 border-red-500/30'
                         )}
                       >
@@ -152,7 +152,7 @@ export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
                   <TableCell className="py-2 text-center">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 h-5', outcomeBadgeClass)}>
+                        <Badge variant="outline" className={cn('text-sm px-1.5 py-0 h-5', outcomeBadgeClass)}>
                           {outcome.icon} {outcome.label}
                         </Badge>
                       </TooltipTrigger>

@@ -445,43 +445,43 @@ export function DashboardPatternStudy({
           <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold">{stats.totalPatterns}</p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.patterns')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.patterns')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-primary">{stats.activePatterns}</p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.activeNow')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.activeNow')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.winRate >= 50 ? 'text-emerald-500' : 'text-amber-500')}>
                 {stats.winRate.toFixed(1)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">{t('screener.winRate')}</p>
+              <p className="text-sm text-muted-foreground">{t('screener.winRate')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.avgPnl >= 0 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.avgPnl >= 0 ? '+' : ''}{stats.avgPnl.toFixed(2)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.avgPnl')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.avgPnl')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.totalPnl >= 0 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(1)}%
               </p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.totalPnl')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.totalPnl')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className={cn("text-xl font-bold", stats.profitFactor >= 1 ? 'text-emerald-500' : 'text-destructive')}>
                 {stats.profitFactor.toFixed(2)}
               </p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.profitFactor')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.profitFactor')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-emerald-500">{stats.wins}</p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.wins')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.wins')}</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-xl font-bold text-destructive">{stats.losses}</p>
-              <p className="text-[10px] text-muted-foreground">{t('commandCenter.losses')}</p>
+              <p className="text-sm text-muted-foreground">{t('commandCenter.losses')}</p>
             </div>
           </div>
         </CardContent>
@@ -494,7 +494,7 @@ export function DashboardPatternStudy({
           <button
             onClick={() => setSelectedPatternFilter(null)}
             className={cn(
-              "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+              "px-2.5 py-1 rounded-full text-sm font-medium transition-colors border",
               !selectedPatternFilter
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
@@ -509,7 +509,7 @@ export function DashboardPatternStudy({
                 key={patternId}
                 onClick={() => setSelectedPatternFilter(selectedPatternFilter === patternId ? null : patternId)}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
+                  "px-2.5 py-1 rounded-full text-sm font-medium transition-colors border",
                   selectedPatternFilter === patternId
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
@@ -575,7 +575,7 @@ export function DashboardPatternStudy({
                         <span className="font-medium text-sm">
                           {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
                         </span>
-                        <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-[10px]" />
+                        <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-sm" />
                       </div>
                     </TableCell>
                     <TableCell className="py-2">

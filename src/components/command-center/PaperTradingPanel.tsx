@@ -39,19 +39,19 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
       {/* Portfolio Summary */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Balance</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Balance</span>
           <span className="text-sm font-bold tabular-nums">
             ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total P&L</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Total P&L</span>
           <span className={cn('text-sm font-bold tabular-nums', totalPnl > 0 ? 'text-emerald-500' : totalPnl < 0 ? 'text-red-500' : 'text-muted-foreground')}>
             {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Win Rate</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Win Rate</span>
           <span className="text-sm font-bold tabular-nums">{closedTrades.length > 0 ? `${winRate.toFixed(0)}%` : '—'}</span>
         </div>
       </div>
@@ -63,7 +63,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
             <Activity className="h-3 w-3 text-primary" />
             Open Positions
           </span>
-          <Badge variant="outline" className="text-[10px] px-1.5 h-4">{openTrades.length}</Badge>
+          <Badge variant="outline" className="text-sm px-1.5 h-4">{openTrades.length}</Badge>
         </div>
         {openTrades.slice(0, 3).map(trade => {
           const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
@@ -82,7 +82,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
           );
         })}
         {openTrades.length > 3 && (
-          <p className="text-[10px] text-muted-foreground text-center">+{openTrades.length - 3} more</p>
+          <p className="text-sm text-muted-foreground text-center">+{openTrades.length - 3} more</p>
         )}
       </div>
 

@@ -89,7 +89,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
 
         {/* Portfolio Snapshot */}
         <div className="rounded-lg border border-border/60 p-2.5 space-y-1.5 bg-muted/20">
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+          <div className="flex items-center gap-1.5 text-sm uppercase tracking-wider text-muted-foreground font-medium">
             <Wallet className="h-3 w-3" />
             {t('morningBriefing.portfolio', 'Portfolio')}
           </div>
@@ -109,7 +109,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
             </span>
           </div>
           {data.openTrades.length > 0 && (
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {t('morningBriefing.openPositions', '{{count}} open position(s)', { count: data.openTrades.length })}
             </div>
           )}
@@ -118,7 +118,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
         {/* Market Regime */}
         {data.regimeSummaries.length > 0 && (
           <div className="space-y-1.5">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">
               {t('morningBriefing.marketRegime', 'Market Regime')}
             </div>
             <div className="space-y-1">
@@ -132,12 +132,12 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
         {/* Watchlist Signals */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            <div className="flex items-center gap-1 text-sm uppercase tracking-wider text-muted-foreground font-medium">
               <Eye className="h-3 w-3" />
               {t('morningBriefing.watchlistSignals', 'Watchlist Signals')}
             </div>
             {data.watchlistSignals.length > 0 && (
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+              <Badge variant="secondary" className="text-sm h-4 px-1.5">
                 {data.watchlistSignals.length}
               </Badge>
             )}
@@ -152,7 +152,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
                 <SignalRow key={signal.id} signal={signal} onSelect={onSymbolSelect} />
               ))}
               {data.watchlistSignals.length > 5 && (
-                <p className="text-[10px] text-muted-foreground text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   +{data.watchlistSignals.length - 5} {t('morningBriefing.more', 'more')}
                 </p>
               )}
@@ -162,7 +162,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
 
         {/* AI Verdict Highlights */}
         <div className="space-y-1.5">
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+          <div className="flex items-center gap-1 text-sm uppercase tracking-wider text-muted-foreground font-medium">
             <Zap className="h-3 w-3" />
             {t('morningBriefing.topVerdicts', 'Top AI Verdicts')}
           </div>
@@ -182,7 +182,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
         {/* Open Trades */}
         {data.openTrades.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            <div className="flex items-center gap-1 text-sm uppercase tracking-wider text-muted-foreground font-medium">
               <Target className="h-3 w-3" />
               {t('morningBriefing.openTrades', 'Open Trades')}
             </div>
@@ -197,7 +197,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
         {/* Recently Closed */}
         {data.recentlyClosed.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            <div className="flex items-center gap-1 text-sm uppercase tracking-wider text-muted-foreground font-medium">
               <Clock className="h-3 w-3" />
               {t('morningBriefing.recentlyClosed', 'Closed (24h)')}
             </div>
@@ -210,7 +210,7 @@ export function MorningBriefingPanel({ userId, onSymbolSelect }: MorningBriefing
         )}
 
         {/* Timestamp */}
-        <p className="text-[10px] text-muted-foreground/60 text-center">
+        <p className="text-sm text-muted-foreground/60 text-center">
           {t('morningBriefing.lastUpdated', 'Updated')} {new Date(data.lastUpdated).toLocaleTimeString()}
         </p>
       </div>
@@ -247,13 +247,13 @@ function SignalRow({ signal, onSelect }: { signal: WatchlistSignal; onSelect?: (
         <div className="flex items-center gap-1">
           <span className="text-xs font-medium truncate">{signal.instrument}</span>
           <Badge variant="outline" className={cn(
-            'text-[9px] h-3.5 px-1',
+            'text-sm h-3.5 px-1',
             isLong ? 'border-emerald-500/40 text-emerald-600' : 'border-red-500/40 text-red-600'
           )}>
             {isLong ? '▲' : '▼'} {signal.patternName}
           </Badge>
         </div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-sm text-muted-foreground">
           {signal.timeframe} · R:R {signal.riskReward.toFixed(1)}
           {signal.trendAlignment === 'with_trend' && ' · With Trend'}
         </div>
@@ -273,9 +273,9 @@ function VerdictRow({ verdict, onSelect }: { verdict: AIVerdict; onSelect?: (s: 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span className="text-xs font-medium truncate">{verdict.instrument}</span>
-          <span className="text-[10px] text-muted-foreground">{verdict.patternName}</span>
+          <span className="text-sm text-muted-foreground">{verdict.patternName}</span>
         </div>
-        <div className="flex items-center gap-2 text-[10px]">
+        <div className="flex items-center gap-2 text-sm">
           <div className="flex items-center gap-0.5">
             <Shield className="h-2.5 w-2.5 text-muted-foreground" />
             <span>{verdict.winRate ? `${(verdict.winRate * 100).toFixed(0)}%` : '—'}</span>
@@ -303,7 +303,7 @@ function TradeRow({ trade, onSelect }: { trade: PaperTradeUpdate; onSelect?: (s:
       <InstrumentLogo instrument={trade.symbol} size="sm" showName={false} />
       <div className="flex-1 min-w-0">
         <span className="text-xs font-medium truncate block">{trade.symbol}</span>
-        <span className="text-[10px] text-muted-foreground capitalize">
+        <span className="text-sm text-muted-foreground capitalize">
           {trade.tradeType} · {trade.status === 'closed' ? (trade.closeReason || 'Closed') : 'Open'}
         </span>
       </div>
@@ -317,7 +317,7 @@ function TradeRow({ trade, onSelect }: { trade: PaperTradeUpdate; onSelect?: (s:
       )}
       {trade.outcomeR != null && (
         <span className={cn(
-          'text-[10px] tabular-nums',
+          'text-sm tabular-nums',
           trade.outcomeR >= 0 ? 'text-emerald-500' : 'text-red-500'
         )}>
           {trade.outcomeR >= 0 ? '+' : ''}{trade.outcomeR.toFixed(1)}R

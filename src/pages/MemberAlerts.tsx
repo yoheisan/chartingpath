@@ -811,7 +811,7 @@ const MemberAlerts = () => {
                   Also send to Copilot paper when triggered
                 </label>
                 {copilotPaperEnabled && (
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Copilot will evaluate this setup against your Master Plan when the alert fires.
                   </p>
                 )}

@@ -682,7 +682,7 @@ export function TradingCopilot({
               aria-label="Scroll down for more"
             >
               <ChevronDown className="h-5 w-5 animate-bounce" />
-              <span className="text-[10px] font-medium">{t('copilot.moreBelow')}</span>
+              <span className="text-sm font-medium">{t('copilot.moreBelow')}</span>
             </button>
           )}
         </div>
@@ -694,7 +694,7 @@ export function TradingCopilot({
           <div className="p-4 border-t bg-background">
             {!isAuthenticated && guestMsgCount > 0 && (
               <div className="flex justify-center mb-2">
-                <Badge variant="secondary" className="text-[10px] font-normal">
+                <Badge variant="secondary" className="text-sm font-normal">
                   {t('activation.freeMessagesRemaining', '{{count}} of {{total}} free messages remaining', { count: GUEST_MSG_LIMIT - guestMsgCount, total: GUEST_MSG_LIMIT })}
                 </Badge>
               </div>
@@ -705,7 +705,7 @@ export function TradingCopilot({
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
-            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            <p className="text-sm text-muted-foreground mt-2 text-center">
               {t('copilot.disclaimer')}
             </p>
           </div>

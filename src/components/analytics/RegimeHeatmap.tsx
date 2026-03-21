@@ -148,7 +148,7 @@ export function RegimeHeatmap({
                                   : '—'
                                 }
                               </div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
+                              <div className="text-sm text-muted-foreground mt-0.5">
                                 n={n}
                               </div>
                             </div>
@@ -195,7 +195,7 @@ export function RegimeHeatmap({
       </div>
       
       {/* Legend */}
-      <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded bg-emerald-400/60" />
           <span>Positive</span>

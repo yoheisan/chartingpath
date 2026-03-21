@@ -194,7 +194,7 @@ function PatternRow({ pattern, rank }: { pattern: PatternStrengthScore; rank: nu
           <div className="flex flex-col">
             <span className="font-mono">{pattern.totalTrades}</span>
             <span className={cn(
-              'text-[10px]',
+              'text-sm',
               sampleTier === 'insufficient' && 'text-red-500',
               sampleTier === 'low' && 'text-amber-500',
               sampleTier === 'moderate' && 'text-muted-foreground',

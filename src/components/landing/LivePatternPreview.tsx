@@ -178,7 +178,7 @@ export default function LivePatternPreview() {
                     </span>
                     <Badge 
                       variant={setup.direction === 'long' ? 'default' : 'secondary'}
-                      className={`text-[10px] px-1.5 py-0 ${
+                      className={`text-sm px-1.5 py-0 ${
                         setup.direction === 'long' 
                           ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30' 
                           : 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30'
@@ -195,7 +195,7 @@ export default function LivePatternPreview() {
                   <p className="text-xs text-muted-foreground truncate">
                     {t(`patternNames.${setup.patternName}`, setup.patternName)}
                   </p>
-                  <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
                     <span>R:R {setup.tradePlan.rr.toFixed(1)}</span>
                     <span>{new Date(setup.signalTs).toLocaleDateString()}</span>
                   </div>

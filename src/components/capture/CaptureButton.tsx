@@ -159,7 +159,7 @@ export const CaptureButton = () => {
                 />
               </div>
 
-              <p className="text-[10px] text-muted-foreground px-2">
+              <p className="text-sm text-muted-foreground px-2">
                 {t('capture.maxDuration', { seconds: maxVideoDuration })}
               </p>
             </div>

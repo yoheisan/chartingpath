@@ -110,7 +110,7 @@ export function TranslationDebugPanel() {
                           <span className="truncate flex-1">{entry.key}</span>
                           <div className="flex items-center gap-2 ml-2 shrink-0">
                             {entry.route && <span className="text-muted-foreground">{entry.route}</span>}
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="secondary" className="text-sm">
                               ×{entry.count}
                             </Badge>
                           </div>

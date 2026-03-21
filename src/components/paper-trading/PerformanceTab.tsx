@@ -285,10 +285,10 @@ function StatCard({ label, value, subtitle, icon, color }: {
       <CardContent className="p-3">
         <div className="flex items-center gap-2 mb-1">
           <div className="text-muted-foreground">{icon}</div>
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{label}</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">{label}</span>
         </div>
         <div className={cn('text-lg font-bold tabular-nums', color)}>{value}</div>
-        {subtitle && <div className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</div>}
+        {subtitle && <div className="text-sm text-muted-foreground mt-0.5">{subtitle}</div>}
       </CardContent>
     </Card>
   );

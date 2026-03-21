@@ -265,7 +265,7 @@ export function EconomicCalendarWidget() {
               <Filter className="h-3 w-3" />
               {t('commandCenter.filters', 'Filters')}
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-1">
+                <Badge variant="secondary" className="h-4 px-1 text-sm ml-1">
                   {activeFilterCount}
                 </Badge>
               )}
@@ -325,7 +325,7 @@ export function EconomicCalendarWidget() {
           <div className="p-2 space-y-3">
             {Object.entries(groupedEvents).map(([date, dateEvents]) => (
               <div key={date}>
-                <div className="text-[10px] font-medium text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
+                <div className="text-sm font-medium text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {date}
                 </div>
@@ -343,7 +343,7 @@ export function EconomicCalendarWidget() {
                           'border-border/50'
                         )}
                       >
-                        <div className="text-[10px] font-mono text-muted-foreground w-10 shrink-0 pt-0.5">
+                        <div className="text-sm font-mono text-muted-foreground w-10 shrink-0 pt-0.5">
                           {time}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -357,18 +357,18 @@ export function EconomicCalendarWidget() {
                           </div>
                           {event.released && event.actual_value && (
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-sm text-muted-foreground">
                                 {t('economicCalendar.actual')} <span className="font-medium text-foreground">{event.actual_value}</span>
                               </span>
                               {event.forecast_value && (
-                                <span className="text-[10px] text-muted-foreground">
+                                <span className="text-sm text-muted-foreground">
                                   {t('economicCalendar.forecast')} {event.forecast_value}
                                 </span>
                               )}
                             </div>
                           )}
                           {!event.released && event.forecast_value && (
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-sm text-muted-foreground">
                               {t('economicCalendar.forecast')} {event.forecast_value}
                             </span>
                           )}

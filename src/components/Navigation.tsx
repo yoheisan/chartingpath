@@ -187,7 +187,7 @@ const Navigation = () => {
               <Link to="/" className={`${dashboardMobileCompact ? 'text-base' : 'text-lg sm:text-xl'} font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent`}>
                 ChartingPath
               </Link>
-              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
+              <span className="ml-1.5 px-1.5 py-0.5 text-sm font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
                 Beta
               </span>
             </div>
@@ -387,7 +387,7 @@ const Navigation = () => {
             <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               ChartingPath
             </Link>
-            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
+            <span className="ml-1.5 px-1.5 py-0.5 text-sm font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
               Beta
             </span>
           </div>

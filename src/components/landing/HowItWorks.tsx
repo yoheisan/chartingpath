@@ -76,7 +76,7 @@ export const HowItWorks = () => {
                   <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
                     <item.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-[11px] font-mono text-muted-foreground/40 uppercase tracking-widest">
+                  <span className="text-sm font-mono text-muted-foreground/40 uppercase tracking-widest">
                     {i + 1}/{useCases.length}
                   </span>
                 </div>

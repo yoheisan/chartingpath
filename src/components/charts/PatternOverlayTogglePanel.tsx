@@ -130,7 +130,7 @@ function ToggleRow({ label, color, checked, onChange }: {
           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
         />
-        <Label className="text-[11px] font-normal text-muted-foreground cursor-pointer" onClick={onChange}>
+        <Label className="text-sm font-normal text-muted-foreground cursor-pointer" onClick={onChange}>
           {label}
         </Label>
       </div>

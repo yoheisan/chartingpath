@@ -1787,7 +1787,7 @@ const StudyChart = memo(({
       )}
 
       {/* Indicator Legend - only show active ones */}
-      <div className="absolute top-10 left-2 flex flex-wrap gap-1.5 text-[10px] pointer-events-none">
+      <div className="absolute top-10 left-2 flex flex-wrap gap-1.5 text-sm pointer-events-none">
         {indicators.ema20 && (
           <span className="px-1.5 py-0.5 rounded bg-background/90 border border-border/50 text-orange-500">
             EMA 20
@@ -1827,7 +1827,7 @@ const StudyChart = memo(({
 
       {/* Analysis Overlay Legend */}
       {showAnalysisOverlay && analysis.analysisResult && (
-        <div className="absolute top-2 right-2 flex flex-col gap-1 text-[10px] pointer-events-none">
+        <div className="absolute top-2 right-2 flex flex-col gap-1 text-sm pointer-events-none">
           <span className="px-1.5 py-0.5 rounded bg-background/90 border border-emerald-500/30 text-emerald-500">
             Support / TP
           </span>
@@ -1840,17 +1840,17 @@ const StudyChart = memo(({
         </div>
       )}
       {!hideAnalysisToolbar && (
-      <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-[10px] text-muted-foreground/70 pointer-events-none">
+      <div className="hidden md:flex absolute bottom-2 left-2 items-center gap-1 text-sm text-muted-foreground/70 pointer-events-none">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="flex items-center gap-1 pointer-events-auto cursor-help">
-                <kbd className="px-1 py-0.5 bg-muted/50 border border-border/50 rounded text-[9px] font-mono">Shift</kbd>
+                <kbd className="px-1 py-0.5 bg-muted/50 border border-border/50 rounded text-sm font-mono">Shift</kbd>
                 <span>+ drag to pan</span>
               </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs max-w-[200px]">
-              Hold <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[10px] font-mono mx-0.5">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.
+              Hold <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-sm font-mono mx-0.5">Shift</kbd> + left-click drag to move the chart up/down. Or use middle-mouse drag.
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -1971,7 +1971,7 @@ const StudyChart = memo(({
                 </div>
 
                 <div className="pt-2 border-t border-border/50">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
                     Oscillators
                   </p>
                 </div>
@@ -2002,7 +2002,7 @@ const StudyChart = memo(({
               </div>
 
               <div className="pt-2 border-t border-border/50">
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {activeIndicators.length} of {Object.keys(indicators).length} indicators active
                 </p>
               </div>

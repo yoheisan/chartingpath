@@ -607,7 +607,7 @@ const CopilotAITab = () => (
                   <td className="px-3 py-2 border-b text-xs">{source}</td>
                   <td className="px-3 py-2 border-b text-xs">{auth}</td>
                   <td className="px-3 py-2 border-b text-xs">
-                    <Badge variant="outline" className="text-[10px]">{domain}</Badge>
+                    <Badge variant="outline" className="text-sm">{domain}</Badge>
                   </td>
                 </tr>
               ))}
@@ -639,7 +639,7 @@ const CopilotAITab = () => (
               ].map(([type, tools, example]) => (
                 <tr key={type}>
                   <td className="px-3 py-2 border-b text-xs font-medium">{type}</td>
-                  <td className="px-3 py-2 border-b font-mono text-[10px]">{tools}</td>
+                  <td className="px-3 py-2 border-b font-mono text-sm">{tools}</td>
                   <td className="px-3 py-2 border-b text-xs text-muted-foreground italic">{example}</td>
                 </tr>
               ))}
@@ -1472,7 +1472,7 @@ const AnalyticsTab = () => (
           ].map(({ metric, desc }) => (
             <div key={metric} className="p-2 bg-muted rounded text-center">
               <p className="text-xs font-semibold">{metric}</p>
-              <p className="text-[10px] text-muted-foreground">{desc}</p>
+              <p className="text-sm text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>
@@ -1959,7 +1959,7 @@ Agent Scoring UI (/tools/agent-scoring)
             <div key={preset} className="p-3 border rounded-lg bg-card">
               <p className="font-semibold text-sm mb-1">{preset}</p>
               <p className="text-xs font-mono text-primary mb-1">{weights}</p>
-              <p className="text-[10px] text-muted-foreground">{desc}</p>
+              <p className="text-sm text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>

@@ -176,7 +176,7 @@ export function EdgeInsightsPanel({ symbol, onSelectWinners, onDeselectLosers }:
               <div className="flex items-center gap-2 shrink-0 ml-2">
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-1.5 ${
+                  className={`text-sm px-1.5 ${
                     p.hasEdge ? 'text-emerald-600 border-emerald-500/30' : 'text-destructive border-destructive/30'
                   }`}
                 >
@@ -185,7 +185,7 @@ export function EdgeInsightsPanel({ symbol, onSelectWinners, onDeselectLosers }:
                 <span className={`text-xs font-mono ${p.expectancy_r > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                   {p.expectancy_r > 0 ? '+' : ''}{p.expectancy_r}R
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   n={p.total_trades}
                 </span>
               </div>

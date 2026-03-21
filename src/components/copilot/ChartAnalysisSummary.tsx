@@ -242,7 +242,7 @@ export function ChartAnalysisSummary({ analysis, compact = false }: ChartAnalysi
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-emerald-500 font-medium">{t('chartAnalysisDialog.bull')} {confluence.bullishPct}%</span>
-            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('chartAnalysisDialog.confluence')}</span>
+            <span className="text-muted-foreground text-sm uppercase tracking-wide">{t('chartAnalysisDialog.confluence')}</span>
             <span className="text-red-500 font-medium">{t('chartAnalysisDialog.bear')} {confluence.bearishPct}%</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden flex">
@@ -317,7 +317,7 @@ function IndicatorItem({
           <span className="text-muted-foreground">{label}</span>
           <span className="font-medium">{value}</span>
         </div>
-        <div className="text-[10px] text-muted-foreground truncate capitalize">
+        <div className="text-sm text-muted-foreground truncate capitalize">
           {detail}
         </div>
       </div>

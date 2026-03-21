@@ -17,7 +17,7 @@ export function DashboardCopilotBar() {
         <span className="text-xs font-bold text-blue-400">C</span>
       </div>
       <p className="text-xs text-muted-foreground flex-1 truncate">{statusText}</p>
-      <span className="text-[10px] text-muted-foreground shrink-0">
+      <span className="text-sm text-muted-foreground shrink-0">
         {openTrades.length > 0 ? 'Paper active' : 'Paper running'}
       </span>
     </div>
@@ -36,7 +36,7 @@ export function DashboardAIStrip() {
           <span className={`text-sm font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatR(stats.aiPnlR)}
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-sm font-mono text-muted-foreground">
             · {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
           </span>
         </div>
@@ -46,13 +46,13 @@ export function DashboardAIStrip() {
           <span className={`text-sm font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-sm font-mono text-muted-foreground">
             · {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
       <div className="px-4 pb-1.5 -mt-1">
-        <p className="text-[10px] text-muted-foreground/70 text-center">
+        <p className="text-sm text-muted-foreground/70 text-center">
           {stats.aiTradeCount + stats.humanTradeCount > 0
             ? `AI: ${formatR(stats.aiPnlR)} vs Overrides: ${formatR(stats.humanPnlR)} today`
             : 'No trades yet today — Copilot is scanning'}
