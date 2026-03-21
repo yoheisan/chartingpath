@@ -1914,6 +1914,62 @@ export type Database = {
           },
         ]
       }
+      gate_evaluations: {
+        Row: {
+          agent_score: number | null
+          agent_verdict: string | null
+          created_at: string
+          direction: string | null
+          gate_reason: string | null
+          gate_result: string
+          id: string
+          master_plan_id: string | null
+          setup_type: string | null
+          source: string | null
+          ticker: string
+          timeframe: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_score?: number | null
+          agent_verdict?: string | null
+          created_at?: string
+          direction?: string | null
+          gate_reason?: string | null
+          gate_result: string
+          id?: string
+          master_plan_id?: string | null
+          setup_type?: string | null
+          source?: string | null
+          ticker: string
+          timeframe?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_score?: number | null
+          agent_verdict?: string | null
+          created_at?: string
+          direction?: string | null
+          gate_reason?: string | null
+          gate_result?: string
+          id?: string
+          master_plan_id?: string | null
+          setup_type?: string | null
+          source?: string | null
+          ticker?: string
+          timeframe?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gate_evaluations_master_plan_id_fkey"
+            columns: ["master_plan_id"]
+            isOneToOne: false
+            referencedRelation: "master_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guided_strategies: {
         Row: {
           answers: Json
@@ -2894,6 +2950,7 @@ export type Database = {
           detection_id: string | null
           entry_price: number
           exit_price: number | null
+          gate_evaluation_id: string | null
           id: string
           notes: string | null
           notified_at: string | null
@@ -2920,6 +2977,7 @@ export type Database = {
           detection_id?: string | null
           entry_price: number
           exit_price?: number | null
+          gate_evaluation_id?: string | null
           id?: string
           notes?: string | null
           notified_at?: string | null
@@ -2946,6 +3004,7 @@ export type Database = {
           detection_id?: string | null
           entry_price?: number
           exit_price?: number | null
+          gate_evaluation_id?: string | null
           id?: string
           notes?: string | null
           notified_at?: string | null
@@ -2970,6 +3029,13 @@ export type Database = {
             columns: ["detection_id"]
             isOneToOne: false
             referencedRelation: "live_pattern_detections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paper_trades_gate_evaluation_id_fkey"
+            columns: ["gate_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "gate_evaluations"
             referencedColumns: ["id"]
           },
         ]
