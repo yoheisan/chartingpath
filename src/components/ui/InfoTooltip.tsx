@@ -38,7 +38,7 @@ export function InfoTooltip({ term, content, className, size = 'h-3.5 w-3.5' }: 
             )}
             tabIndex={-1}
           >
-            <HelpCircle className={size} />
+            <Info className={size} />
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-sm whitespace-normal text-sm" side="top">
