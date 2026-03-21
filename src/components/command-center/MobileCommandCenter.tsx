@@ -476,7 +476,7 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
               className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
              >
               <BarChart3 className="h-4 w-4" />
-               <span className="text-[11px]">Chart</span>
+               <span className="text-sm">Chart</span>
               </TabsTrigger>
              <TabsTrigger 
                value="watchlist" 
@@ -486,21 +486,21 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
                  <Star className="h-4 w-4" />
                  <NotificationBadge count={watchlistCount} size="sm" position="top-right" variant="warning" />
                </span>
-               <span className="text-[11px]">Watchlist</span>
+               <span className="text-sm">Watchlist</span>
              </TabsTrigger>
               <TabsTrigger 
                 value="patterns" 
                className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
               >
                <TrendingUp className="h-4 w-4" />
-                <span className="text-[11px]">Patterns</span>
+                <span className="text-sm">Patterns</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="research" 
                className="flex-1 flex-col gap-0.5 h-11 data-[state=active]:bg-primary/10 rounded-lg"
               >
                <FlaskConical className="h-4 w-4" />
-                <span className="text-[11px]">Research</span>
+                <span className="text-sm">Research</span>
               </TabsTrigger>
              <TabsTrigger 
                value="alerts" 
@@ -510,7 +510,7 @@ export function MobileCommandCenter({ userId, initialPlaybackPattern }: MobileCo
                  <Bell className="h-4 w-4" />
                  <NotificationBadge count={alertCount} size="sm" position="top-right" />
                </span>
-               <span className="text-[11px]">Alerts</span>
+               <span className="text-sm">Alerts</span>
             </TabsTrigger>
            </TabsList>
          </Tabs>

@@ -695,7 +695,7 @@ interface InstrumentLogoProps {
 
 const SIZES = {
   sm: 'w-5 h-5 text-[8px]',
-  md: 'w-7 h-7 text-[10px]',
+  md: 'w-7 h-7 text-sm',
   lg: 'w-10 h-10 text-xs',
 };
 

@@ -62,7 +62,7 @@ export const AgentImpactSimulator: React.FC<AgentImpactSimulatorProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-foreground">{t('agentScoring.liveScenarioSimulator')}</label>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('agentScoring.updatesAsYouAdjust')}</span>
+        <span className="text-sm text-muted-foreground uppercase tracking-wider">{t('agentScoring.updatesAsYouAdjust')}</span>
       </div>
 
       <div className="grid gap-2">
@@ -75,11 +75,11 @@ export const AgentImpactSimulator: React.FC<AgentImpactSimulatorProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-foreground truncate">{r.name}</span>
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${verdictStyle[r.verdict]} shrink-0`}>
+                <span className={`text-sm font-bold px-1.5 py-0.5 rounded border ${verdictStyle[r.verdict]} shrink-0`}>
                   {r.verdict}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{r.description}</p>
+              <p className="text-sm text-muted-foreground mt-0.5 truncate">{r.description}</p>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">

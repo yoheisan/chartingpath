@@ -124,7 +124,7 @@ export function TimeframeSelector({
         })}
         
         {!isPaidUser && (
-          <Badge variant="secondary" className="ml-2 text-[10px] gap-1">
+          <Badge variant="secondary" className="ml-2 text-sm gap-1">
             <Crown className="h-3 w-3 text-amber-500" />
             Upgrade for more
           </Badge>

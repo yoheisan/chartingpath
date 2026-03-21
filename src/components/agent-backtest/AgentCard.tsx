@@ -34,12 +34,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-            <p className="text-[11px] text-muted-foreground leading-tight">{description}</p>
+            <p className="text-sm text-muted-foreground leading-tight">{description}</p>
           </div>
         </div>
         <div className="text-right">
           <div className={`text-2xl font-mono font-bold ${color}`}>{weight}</div>
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('agentScoring.weight')}</div>
+          <div className="text-sm text-muted-foreground uppercase tracking-wider">{t('agentScoring.weight')}</div>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       {/* Live Score Bar */}
       {liveScore != null && (
         <div className="mb-2">
-          <div className="flex items-center justify-between text-[11px] mb-1">
+          <div className="flex items-center justify-between text-sm mb-1">
             <span className="text-muted-foreground">{t('agentScoring.lastScore')}</span>
             <span className={`font-mono font-semibold ${color}`}>{liveScore.toFixed(1)}/{weight}</span>
           </div>
@@ -78,7 +78,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       {factors && factors.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {factors.map((f) => (
-            <span key={f} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/40 text-muted-foreground">
+            <span key={f} className="text-sm px-1.5 py-0.5 rounded-md bg-muted/40 text-muted-foreground">
               {f}
             </span>
           ))}

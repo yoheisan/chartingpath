@@ -121,7 +121,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
                 </button>
                 <Badge
                   className={cn(
-                    'text-[10px] px-1.5 py-0 h-5 font-semibold',
+                    'text-sm px-1.5 py-0 h-5 font-semibold',
                     isLong
                       ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
                       : 'bg-red-500/15 text-red-500 border-red-500/30'
@@ -131,7 +131,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
                   {isLong ? <><ArrowUpRight className="h-3 w-3 mr-0.5" />Long</> : <><ArrowDownRight className="h-3 w-3 mr-0.5" />Short</>}
                 </Badge>
                 {isAuto && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 border-amber-500/50 text-amber-500">
+                  <Badge variant="outline" className="text-sm px-1 py-0 h-5 border-amber-500/50 text-amber-500">
                     Auto
                   </Badge>
                 )}
@@ -170,7 +170,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
             {/* Progress Bar */}
             {currentPrice && trade.take_profit && trade.stop_loss && (
               <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-muted-foreground">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>SL</span>
                   <span>Entry</span>
                   <span>TP</span>
@@ -205,7 +205,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
             </div>
 
             {/* Time open */}
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Clock className="h-3 w-3" />
               <span>Opened {formatDistanceToNow(new Date(trade.created_at), { addSuffix: true })}</span>
             </div>

@@ -138,7 +138,7 @@ export function ScreenerFilters({
             onClick={() => onChange({ direction: 'all' })}
           >
             {t('screener.all')}
-            <Badge variant="outline" className="ml-1.5 h-4 text-[10px] px-1.5 bg-background">
+            <Badge variant="outline" className="ml-1.5 h-4 text-sm px-1.5 bg-background">
               {stats.total}
             </Badge>
           </Button>
@@ -155,7 +155,7 @@ export function ScreenerFilters({
             {t('screener.long')}
             {stats.longCount > 0 && (
               <Badge variant="outline" className={cn(
-                "ml-0.5 h-4 text-[10px] px-1.5",
+                "ml-0.5 h-4 text-sm px-1.5",
                 filters.direction === 'long' ? "bg-emerald-700/50 border-emerald-500/50" : "bg-background"
               )}>
                 {stats.longCount}
@@ -175,7 +175,7 @@ export function ScreenerFilters({
             {t('screener.short')}
             {stats.shortCount > 0 && (
               <Badge variant="outline" className={cn(
-                "ml-0.5 h-4 text-[10px] px-1.5",
+                "ml-0.5 h-4 text-sm px-1.5",
                 filters.direction === 'short' ? "bg-red-700/50 border-red-500/50" : "bg-background"
               )}>
                 {stats.shortCount}
@@ -197,7 +197,7 @@ export function ScreenerFilters({
                 <span className="flex items-center justify-between w-full">
                   <span>{p.name}</span>
                   {p.count > 0 && (
-                    <Badge variant="secondary" className="ml-2 h-4 text-[10px] px-1.5">
+                    <Badge variant="secondary" className="ml-2 h-4 text-sm px-1.5">
                       {p.count}
                     </Badge>
                   )}
@@ -225,7 +225,7 @@ export function ScreenerFilters({
                     <ArrowUpRight className="h-3 w-3 text-emerald-500" />
                     {t('screener.trend')}
                     {stats.withTrend > 0 && (
-                      <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                      <Badge variant="secondary" className="h-4 text-sm px-1 ml-0.5">
                         {stats.withTrend}
                       </Badge>
                     )}
@@ -234,7 +234,7 @@ export function ScreenerFilters({
                     <ArrowDownRight className="h-3 w-3 text-amber-500" />
                     {t('screener.counter')}
                     {stats.counterTrend > 0 && (
-                      <Badge variant="secondary" className="h-4 text-[10px] px-1 ml-0.5">
+                      <Badge variant="secondary" className="h-4 text-sm px-1 ml-0.5">
                         {stats.counterTrend}
                       </Badge>
                     )}
@@ -267,37 +267,37 @@ export function ScreenerFilters({
             <SelectItem value="all">{t('screener.allGrades')}</SelectItem>
             <SelectItem value="A">
               <span className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-grade-a/15 text-grade-a border border-grade-a/30 flex items-center justify-center text-[10px] font-bold">A</span>
+                <span className="w-5 h-5 rounded-full bg-grade-a/15 text-grade-a border border-grade-a/30 flex items-center justify-center text-sm font-bold">A</span>
                 <span>{t('screener.gradeA')}</span>
-                {stats.gradeA > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeA}</Badge>}
+                {stats.gradeA > 0 && <Badge variant="secondary" className="h-4 text-sm px-1.5">{stats.gradeA}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="B">
               <span className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-grade-b/15 text-grade-b border border-grade-b/30 flex items-center justify-center text-[10px] font-bold">B</span>
+                <span className="w-5 h-5 rounded-full bg-grade-b/15 text-grade-b border border-grade-b/30 flex items-center justify-center text-sm font-bold">B</span>
                 <span>{t('screener.gradeB')}</span>
-                {stats.gradeB > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeB}</Badge>}
+                {stats.gradeB > 0 && <Badge variant="secondary" className="h-4 text-sm px-1.5">{stats.gradeB}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="C">
               <span className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-grade-c/15 text-grade-c border border-grade-c/30 flex items-center justify-center text-[10px] font-bold">C</span>
+                <span className="w-5 h-5 rounded-full bg-grade-c/15 text-grade-c border border-grade-c/30 flex items-center justify-center text-sm font-bold">C</span>
                 <span>{t('screener.gradeC')}</span>
-                {stats.gradeC > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeC}</Badge>}
+                {stats.gradeC > 0 && <Badge variant="secondary" className="h-4 text-sm px-1.5">{stats.gradeC}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="D">
               <span className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-grade-d/15 text-grade-d border border-grade-d/30 flex items-center justify-center text-[10px] font-bold">D</span>
+                <span className="w-5 h-5 rounded-full bg-grade-d/15 text-grade-d border border-grade-d/30 flex items-center justify-center text-sm font-bold">D</span>
                 <span>{t('screener.gradeD')}</span>
-                {stats.gradeD > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeD}</Badge>}
+                {stats.gradeD > 0 && <Badge variant="secondary" className="h-4 text-sm px-1.5">{stats.gradeD}</Badge>}
               </span>
             </SelectItem>
             <SelectItem value="F">
               <span className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-grade-f/15 text-grade-f border border-grade-f/30 flex items-center justify-center text-[10px] font-bold">F</span>
+                <span className="w-5 h-5 rounded-full bg-grade-f/15 text-grade-f border border-grade-f/30 flex items-center justify-center text-sm font-bold">F</span>
                 <span>{t('screener.gradeF')}</span>
-                {stats.gradeF > 0 && <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{stats.gradeF}</Badge>}
+                {stats.gradeF > 0 && <Badge variant="secondary" className="h-4 text-sm px-1.5">{stats.gradeF}</Badge>}
               </span>
             </SelectItem>
           </SelectContent>
@@ -355,7 +355,7 @@ export function ScreenerFilters({
                     {t('screener.major')}
                     {(stats.fxMajor ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
-                        "h-4 text-[10px] px-1",
+                        "h-4 text-sm px-1",
                         filters.fxCategory === 'major' ? "bg-blue-700/50 border-blue-500/50" : "bg-background"
                       )}>
                         {stats.fxMajor}
@@ -374,7 +374,7 @@ export function ScreenerFilters({
                     {t('screener.minor')}
                     {(stats.fxMinor ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
-                        "h-4 text-[10px] px-1",
+                        "h-4 text-sm px-1",
                         filters.fxCategory === 'minor' ? "bg-purple-700/50 border-purple-500/50" : "bg-background"
                       )}>
                         {stats.fxMinor}
@@ -393,7 +393,7 @@ export function ScreenerFilters({
                     {t('screener.exotic')}
                     {(stats.fxExotic ?? 0) > 0 && (
                       <Badge variant="outline" className={cn(
-                        "h-4 text-[10px] px-1",
+                        "h-4 text-sm px-1",
                         filters.fxCategory === 'exotic' ? "bg-amber-700/50 border-amber-500/50" : "bg-background"
                       )}>
                         {stats.fxExotic}
@@ -440,7 +440,7 @@ export function ScreenerFilters({
                    {t('screener.fresh')}
                   {stats.freshCount > 0 && (
                     <Badge variant="outline" className={cn(
-                      "h-4 text-[10px] px-1",
+                      "h-4 text-sm px-1",
                       filters.age === 'fresh' ? "bg-primary-foreground/20" : "bg-background"
                     )}>
                       {stats.freshCount}
@@ -459,7 +459,7 @@ export function ScreenerFilters({
                    {t('screener.recent')}
                   {stats.recentCount > 0 && (
                     <Badge variant="outline" className={cn(
-                      "h-4 text-[10px] px-1",
+                      "h-4 text-sm px-1",
                       filters.age === 'recent' ? "bg-primary-foreground/20" : "bg-background"
                     )}>
                       {stats.recentCount}

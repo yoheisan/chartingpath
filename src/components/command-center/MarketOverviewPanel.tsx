@@ -496,7 +496,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {t('commandCenter.topGainers')}
                 </h4>
                 {topGainers.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
+                  <p className="text-sm text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topGainers.map((mover) => (
@@ -507,7 +507,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
                         <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-bullish/10 text-bullish border-0 text-[11px]">
+                        <Badge className="bg-bullish/10 text-bullish border-0 text-sm">
                           +{mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>
@@ -523,7 +523,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {t('commandCenter.topLosers')}
                 </h4>
                 {topLosers.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
+                  <p className="text-sm text-muted-foreground px-2">{t('commandCenter.noDataAvailable')}</p>
                 ) : (
                   <div className="space-y-1">
                     {topLosers.map((mover) => (
@@ -534,7 +534,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
                         <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
-                        <Badge className="bg-bearish/10 text-bearish border-0 text-[11px]">
+                        <Badge className="bg-bearish/10 text-bearish border-0 text-sm">
                           {mover.changePercent.toFixed(2)}%
                         </Badge>
                       </button>

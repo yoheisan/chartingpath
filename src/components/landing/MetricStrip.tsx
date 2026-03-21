@@ -47,7 +47,7 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
       <div className="text-2xl font-bold font-mono text-foreground tracking-tight">
         {display.toLocaleString()}{suffix}
       </div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
+      <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
     </div>
   );
 };

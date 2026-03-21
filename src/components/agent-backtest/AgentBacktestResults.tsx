@@ -86,7 +86,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
         {chartData.length > 0 && (
           <div className="flex flex-col gap-1">
             <div>
-              <span className="text-[11px] font-medium text-muted-foreground ml-1">{t('agentScoring.equity')}</span>
+              <span className="text-sm font-medium text-muted-foreground ml-1">{t('agentScoring.equity')}</span>
               <div className="h-36 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
@@ -130,7 +130,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
 
             {chartData.some((d: any) => (d.drawdown ?? 0) > 0) && (
               <div>
-                <span className="text-[11px] font-medium text-muted-foreground ml-1">{t('agentScoring.drawdown')}</span>
+                <span className="text-sm font-medium text-muted-foreground ml-1">{t('agentScoring.drawdown')}</span>
                 <div className="h-16 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
@@ -212,7 +212,7 @@ export const AgentBacktestResults: React.FC<AgentBacktestResultsProps> = ({ resu
                       <td className="px-3 py-2 text-center font-mono">{trade.compositeScore?.toFixed(0) ?? '—'}</td>
                       <td className="px-3 py-2 text-center">
                         {trade.verdict ? (
-                          <Badge variant="outline" className={`text-[10px] ${
+                          <Badge variant="outline" className={`text-sm ${
                             trade.verdict === 'TAKE' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
                             trade.verdict === 'WATCH' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
                             'bg-red-500/15 text-red-400 border-red-500/30'

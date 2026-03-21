@@ -208,14 +208,14 @@ const RunHistory = ({ currentRunId }: RunHistoryProps) => {
                           <Pencil className="h-3 w-3" />
                         </button>
                         {isCurrent && (
-                          <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0">now</Badge>
+                          <Badge variant="outline" className="text-sm px-1 h-4 shrink-0">now</Badge>
                         )}
                       </>
                     )}
                   </div>
 
                   {!isEditing && (
-                    <div className="text-[11px] text-muted-foreground mt-0.5 pl-5 truncate">
+                    <div className="text-sm text-muted-foreground mt-0.5 pl-5 truncate">
                       {timeAgo}
                       {run.credits_used > 0 && ` · ${run.credits_used}cr`}
                     </div>

@@ -932,7 +932,7 @@ export default function PatternScreenerTable() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{t('screener.patternsWeDetect')}</span>
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-sm">
                 {ALL_PATTERN_IDS.length} {t('screener.types')}
               </Badge>
             </div>

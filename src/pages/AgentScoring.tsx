@@ -71,7 +71,7 @@ const AgentScoring = () => {
               </span>
               <Sparkles className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
-              <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
+              <kbd className="ml-1 text-sm text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
             </Button>
           )}
 

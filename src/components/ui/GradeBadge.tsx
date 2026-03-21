@@ -131,13 +131,13 @@ export function GradeBadge({
   const config = getGradeConfig(displayGrade);
   
   const circleSizeClasses = {
-    sm: 'w-5 h-5 text-[10px]',
+    sm: 'w-5 h-5 text-sm',
     md: 'w-7 h-7 text-xs',
     lg: 'w-9 h-9 text-sm',
   };
 
   const pillSizeClasses = {
-    sm: 'px-2 py-0.5 text-[11px]',
+    sm: 'px-2 py-0.5 text-sm',
     md: 'px-2.5 py-0.5 text-xs',
     lg: 'px-3 py-1 text-sm',
   };

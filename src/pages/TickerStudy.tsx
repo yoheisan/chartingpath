@@ -935,7 +935,7 @@ export default function TickerStudy() {
                             >
                               {PATTERN_DISPLAY_NAMES[patternId] || patternId}
                             </label>
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="secondary" className="text-sm">
                               {historicalPatterns.filter(p => p.pattern_id === patternId).length}
                             </Badge>
                           </div>
@@ -1082,7 +1082,7 @@ export default function TickerStudy() {
                           <span className="font-medium">
                             {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
                           </span>
-                          <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-[10px]" />
+                          <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-sm" />
                         </div>
                       </TableCell>
                       <TableCell className="py-2">

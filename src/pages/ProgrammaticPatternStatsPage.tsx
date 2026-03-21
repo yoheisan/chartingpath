@@ -566,7 +566,7 @@ function MetricTile({
         {icon} {label}
       </div>
       <div className={`text-2xl font-bold ${colorClass}`}>{value}</div>
-      {badge && <Badge variant={badgeVariant} className="mt-1 text-[10px]">{badge}</Badge>}
+      {badge && <Badge variant={badgeVariant} className="mt-1 text-sm">{badge}</Badge>}
     </div>
   );
 }

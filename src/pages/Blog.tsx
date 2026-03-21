@@ -388,7 +388,7 @@ const Blog = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {hasSkillLevels && (
-                          <Badge variant="outline" className="text-[10px] gap-1">
+                          <Badge variant="outline" className="text-sm gap-1">
                             <GraduationCap className="h-3 w-3" />
                             All Levels
                           </Badge>
@@ -411,7 +411,7 @@ const Blog = () => {
                           <Badge 
                             key={level} 
                             variant="secondary" 
-                            className="text-[10px] px-1.5 py-0"
+                            className="text-sm px-1.5 py-0"
                           >
                             {level}
                           </Badge>

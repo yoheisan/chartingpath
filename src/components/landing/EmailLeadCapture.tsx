@@ -68,7 +68,7 @@ export function EmailLeadCapture() {
             {loading ? '...' : t('emailCapture.subscribe', 'Subscribe')}
           </Button>
         </form>
-        <p className="text-[11px] text-muted-foreground mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           {t('emailCapture.privacy', 'We respect your privacy. Unsubscribe anytime.')}
         </p>
       </div>

@@ -178,7 +178,7 @@ export const EdgeRankingsCard = () => {
                           <span className="font-medium">{r.pattern_name}</span>
                         </td>
                         <td className="py-2 text-center">
-                          <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+                          <Badge variant="outline" className="text-sm font-mono px-1.5 py-0">
                             {r.timeframe}
                           </Badge>
                         </td>

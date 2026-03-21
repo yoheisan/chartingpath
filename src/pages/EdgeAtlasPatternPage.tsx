@@ -247,13 +247,13 @@ export default function EdgeAtlasPatternPage() {
           <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
             {/* Column headers */}
             <div className="hidden sm:grid grid-cols-[1fr_80px_80px_90px_80px_70px_170px] gap-4 px-4 py-2.5 border-b border-border/30 bg-muted/20">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('edgeAtlas.instrument')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.winRate')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">{t('edgeAtlas.expectancyR')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.estAnnualCol')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.trades')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.avgBars')}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"></span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('edgeAtlas.instrument')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.winRate')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right" title="Expectancy in R per trade — average risk-units gained per trade">{t('edgeAtlas.expectancyR')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.estAnnualCol')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.trades')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">{t('edgeAtlas.avgBars')}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground"></span>
             </div>
 
             {tickers.map((tk, i) => {
@@ -274,7 +274,7 @@ export default function EdgeAtlasPatternPage() {
                         >
                           {tk.symbol.replace('=X', '').replace('^', '')}
                         </button>
-                        {isLowSample && <span className="text-[10px] text-yellow-500">⚠️</span>}
+                        {isLowSample && <span className="text-sm text-yellow-500">⚠️</span>}
                       </div>
                       <div className="flex items-center gap-2 sm:hidden text-xs text-muted-foreground mt-0.5">
                         <span>{t('edgeAtlas.win')} <span className={tk.win_rate_pct >= 55 ? 'text-green-500' : 'text-foreground'}>{tk.win_rate_pct}%</span></span>
@@ -294,7 +294,7 @@ export default function EdgeAtlasPatternPage() {
                     <span className={`text-sm font-medium ${tk.win_rate_pct >= 55 ? 'text-green-500' : tk.win_rate_pct >= 45 ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {tk.win_rate_pct}%
                     </span>
-                    <div className="text-[10px] text-muted-foreground">{tk.wins}W / {tk.losses}L</div>
+                    <div className="text-sm text-muted-foreground">{tk.wins}W / {tk.losses}L</div>
                   </div>
 
                   {/* Expectancy */}
@@ -336,7 +336,7 @@ export default function EdgeAtlasPatternPage() {
                         >
                           <Zap className={`h-3 w-3 ${liveCount > 0 ? 'text-primary' : ''}`} />
                           {t('edgeAtlas.live')}
-                          <span className={`text-[10px] font-bold ${liveCount > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+                          <span className={`text-sm font-bold ${liveCount > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
                             {liveCount}
                           </span>
                         </Button>

@@ -789,16 +789,16 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     const roi = equityVal != null ? ((equityVal - initialCapital) / initialCapital) * 100 : null;
                     return (
                       <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[180px]">
-                        <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
+                        <p className="text-sm font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
                           {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                         {equityVal != null && (
                           <div className="flex items-center justify-between gap-4 mb-1">
-                            <span className="text-[11px] text-muted-foreground">Equity</span>
+                            <span className="text-sm text-muted-foreground">Equity</span>
                             <div className="text-right">
                               <span className="text-[13px] font-semibold text-foreground">${equityVal.toFixed(2)}</span>
                               {roi != null && (
-                                <span className={`ml-1.5 text-[11px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                <span className={`ml-1.5 text-sm font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
                                 </span>
                               )}
@@ -807,7 +807,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                         )}
                         {ddVal != null && ddVal > 0 && (
                           <div className="flex items-center justify-between gap-4">
-                            <span className="text-[11px] text-muted-foreground">Drawdown</span>
+                            <span className="text-sm text-muted-foreground">Drawdown</span>
                             <span className="text-[13px] font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
                           </div>
                         )}
@@ -819,7 +819,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                     <div className="flex flex-col gap-1">
                       {/* Equity Curve — Top Panel */}
                       <div>
-                        <span className="text-[11px] font-medium text-muted-foreground ml-1">Equity</span>
+                        <span className="text-sm font-medium text-muted-foreground ml-1">Equity</span>
                         <div className="h-[224px]">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={directionFilteredEquity} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
@@ -862,7 +862,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
 
                       {/* Drawdown "Underwater" — Bottom Panel */}
                       <div>
-                        <span className="text-[11px] font-medium text-muted-foreground ml-1">Drawdown</span>
+                        <span className="text-sm font-medium text-muted-foreground ml-1">Drawdown</span>
                         <div className="h-[96px]">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={directionFilteredEquity} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
@@ -895,7 +895,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                                 const ddVal = payload[0]?.value as number | undefined;
                                 return ddVal != null && ddVal > 0 ? (
                                   <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-3 py-2">
-                                    <p className="text-[11px] text-muted-foreground mb-1">
+                                    <p className="text-sm text-muted-foreground mb-1">
                                       {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </p>
                                     <span className="text-[13px] font-semibold text-destructive">-{(ddVal * 100).toFixed(2)}%</span>

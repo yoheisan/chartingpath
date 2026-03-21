@@ -42,7 +42,7 @@ export function ActivationChecklist() {
           {t('activation.title', 'Getting Started')}
         </h4>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">{completedCount}/3</span>
+          <span className="text-sm text-muted-foreground">{completedCount}/3</span>
           <button onClick={dismiss} className="text-muted-foreground hover:text-foreground">
             <X className="h-3.5 w-3.5" />
           </button>

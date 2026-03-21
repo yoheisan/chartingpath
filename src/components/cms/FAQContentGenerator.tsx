@@ -460,7 +460,7 @@ export function FAQContentGenerator() {
                                         Preview
                                       </Button>
                                     </a>
-                                    <span className="text-[10px] text-muted-foreground">
+                                    <span className="text-sm text-muted-foreground">
                                       {tweet.length}/280 chars
                                     </span>
                                   </div>

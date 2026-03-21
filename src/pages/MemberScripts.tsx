@@ -533,14 +533,14 @@ const MemberScripts = () => {
                                   {/* Edge badge */}
                                   {edgeTicker && (() => {
                                     const edge = edgeData.get(p.id);
-                                    if (!edge || !edge.sufficient) return <Badge variant="outline" className="text-[10px] px-1.5 text-muted-foreground border-muted">No data</Badge>;
+                                    if (!edge || !edge.sufficient) return <Badge variant="outline" className="text-sm px-1.5 text-muted-foreground border-muted">No data</Badge>;
                                     return (
-                                      <Badge variant="outline" className={`text-[10px] px-1.5 ${edge.hasEdge ? 'text-emerald-600 border-emerald-500/30' : 'text-destructive border-destructive/30'}`}>
+                                      <Badge variant="outline" className={`text-sm px-1.5 ${edge.hasEdge ? 'text-emerald-600 border-emerald-500/30' : 'text-destructive border-destructive/30'}`}>
                                         {edge.win_rate_pct}% WR
                                       </Badge>
                                     );
                                   })()}
-                                  <Badge variant="outline" className={`text-[10px] px-1.5 ${
+                                  <Badge variant="outline" className={`text-sm px-1.5 ${
                                     p.direction === 'long' ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'
                                   }`}>
                                     {p.direction === 'long' ? t('scripts.long') : t('scripts.short')}

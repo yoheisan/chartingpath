@@ -29,21 +29,21 @@ const RightPanel = () => {
       {/* Section 2 — AI vs Human Head-to-Head */}
       <div className="flex border-b border-border/40">
         <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Copilot</span>
+          <span className="text-sm uppercase tracking-wider text-muted-foreground">Copilot</span>
           <span className={`text-lg font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatR(stats.aiPnlR)}
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-sm font-mono text-muted-foreground">
             {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
           </span>
         </div>
         <div className="w-px bg-border/40" />
         <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Your overrides</span>
+          <span className="text-sm uppercase tracking-wider text-muted-foreground">Your overrides</span>
           <span className={`text-lg font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-sm font-mono text-muted-foreground">
             {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
           </span>
         </div>
@@ -58,18 +58,18 @@ const RightPanel = () => {
           { label: 'Override win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
         ].map((m) => (
           <div key={m.label} className="rounded-md bg-secondary/50 p-2 flex flex-col items-center gap-0.5">
-            <span className="text-[10px] text-muted-foreground">{m.label}</span>
+            <span className="text-sm text-muted-foreground">{m.label}</span>
             <span className={`text-sm font-bold font-mono ${m.positive ? 'text-green-500' : 'text-red-500'}`}>
               {m.value}
             </span>
-            <span className="text-[9px] text-muted-foreground">{m.sub}</span>
+            <span className="text-sm text-muted-foreground">{m.sub}</span>
           </div>
         ))}
       </div>
 
       {/* Section 4 — Insight Card */}
       <div className="mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2">
-        <p className="text-[11px] leading-[1.6] text-muted-foreground">
+        <p className="text-sm leading-[1.6] text-muted-foreground">
           {todayTrades.length > 0
             ? `Today: ${stats.aiTradeCount} AI trades (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
             : 'No trades yet today. Copilot is scanning for setups matching your plan.'}
@@ -82,9 +82,9 @@ const RightPanel = () => {
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {loading ? (
-              <div className="text-[10px] text-muted-foreground/50 text-center py-4">Loading…</div>
+              <div className="text-sm text-muted-foreground/50 text-center py-4">Loading…</div>
             ) : todayTrades.length === 0 ? (
-              <div className="text-[10px] text-muted-foreground/50 text-center py-4">No trades today</div>
+              <div className="text-sm text-muted-foreground/50 text-center py-4">No trades today</div>
             ) : (
               todayTrades.map((t: CopilotTrade) => {
                 const isAi = t.attribution === 'ai_approved';
@@ -99,7 +99,7 @@ const RightPanel = () => {
                 return (
                   <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
                     <Badge
-                      className={`text-[9px] px-1.5 py-0 font-medium rounded ${
+                      className={`text-sm px-1.5 py-0 font-medium rounded ${
                         isAi
                           ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                           : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
@@ -108,7 +108,7 @@ const RightPanel = () => {
                       {isAi ? 'AI' : 'You'}
                     </Badge>
                     <span className="text-xs font-mono font-bold text-foreground w-10">{t.symbol}</span>
-                    <span className="text-[10px] text-muted-foreground flex-1 truncate">
+                    <span className="text-sm text-muted-foreground flex-1 truncate">
                       {t.setup_type || t.trade_type} · {statusLabel}
                     </span>
                     <span className={`text-xs font-mono font-semibold ${
@@ -152,7 +152,7 @@ const RightPanel = () => {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           {todayTrades.length > 0
             ? `${todayTrades.length} trades today · ${formatR(stats.aiPnlR + stats.humanPnlR)} total`
             : 'Paper running · scanning for setups'}

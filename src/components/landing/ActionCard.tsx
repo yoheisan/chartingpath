@@ -49,7 +49,7 @@ export const ActionCard = ({
         <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium whitespace-nowrap">
+        <span className="ml-auto text-sm uppercase tracking-wider text-muted-foreground/60 font-medium whitespace-nowrap">
           {bestFor}
         </span>
       </div>

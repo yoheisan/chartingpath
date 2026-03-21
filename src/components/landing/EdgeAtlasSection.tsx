@@ -334,7 +334,7 @@ export function EdgeAtlasSection() {
                 }`}
               >
                 {assetTabLabels[tabKey]}
-                <span className={`text-[10px] font-mono ${
+                <span className={`text-sm font-mono ${
                   activeTab === tabKey
                     ? 'text-primary-foreground/70'
                     : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'
@@ -420,14 +420,14 @@ export function EdgeAtlasSection() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button onClick={() => handlePatternClick(r)} className="font-semibold text-sm truncate hover:text-primary hover:underline underline-offset-2 transition-colors text-left">{t(`patternNames.${r.pattern_name}`, r.pattern_name)}</button>
-                        <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 shrink-0">
+                        <Badge variant="outline" className="text-sm font-mono px-1.5 py-0 shrink-0">
                           {TF_LABEL[r.timeframe] || r.timeframe}
                         </Badge>
                         {['donchian-breakout-long', 'double-bottom', 'ascending-triangle'].includes(r.pattern_id) && (
-                          <span className="text-[9px] bg-blue-500/15 text-blue-400 rounded px-1.5 py-0.5 leading-none">In your plan</span>
+                          <span className="text-sm bg-blue-500/15 text-blue-400 rounded px-1.5 py-0.5 leading-none">In your plan</span>
                         )}
                         {isLowSample && (
-                          <span className="text-[10px] text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
+                          <span className="text-sm text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
@@ -454,7 +454,7 @@ export function EdgeAtlasSection() {
                     <div className={`text-lg font-bold ${r.est_annualized_pct >= 20 ? 'text-green-400' : r.est_annualized_pct >= 8 ? 'text-green-500' : 'text-green-600'}`}>
                       +{r.est_annualized_pct.toFixed(1)}%
                     </div>
-                    <div className="text-[10px] text-muted-foreground">{t('edgeAtlas.estAnnual')}</div>
+                    <div className="text-sm text-muted-foreground">{t('edgeAtlas.estAnnual')}</div>
                   </div>
 
                   {/* CTAs */}
@@ -462,7 +462,7 @@ export function EdgeAtlasSection() {
                     <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => handleFindSignals(r)}>
                       <Zap className="h-3 w-3" />
                       {t('edgeAtlas.liveSetups')}
-                      <span className={`ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                      <span className={`ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-sm font-bold ${
                         liveCount > 0
                           ? 'bg-green-500/20 text-green-500'
                           : 'bg-muted text-muted-foreground'

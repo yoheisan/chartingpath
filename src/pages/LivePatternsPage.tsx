@@ -1084,7 +1084,7 @@ export default function LivePatternsPage() {
           </span>
           <Sparkles className="h-3.5 w-3.5" />
           <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
-          <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
+          <kbd className="ml-1 text-sm text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
         </Button>
       )}
 
@@ -1320,7 +1320,7 @@ export default function LivePatternsPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{t('livePatterns.patternsWeDetect')}</span>
-             <Badge variant="secondary" className="text-[10px]">
+             <Badge variant="secondary" className="text-sm">
                {ALL_PATTERN_IDS.length} {t('screener.types')}
             </Badge>
           </div>
@@ -1607,7 +1607,7 @@ export default function LivePatternsPage() {
                                     <span className="inline-flex align-middle">
                                       <Badge 
                                         variant="outline"
-                                        className={`ml-1.5 text-[10px] px-1.5 py-0 cursor-help ${
+                                        className={`ml-1.5 text-sm px-1.5 py-0 cursor-help ${
                                           setup.trendAlignment === 'with_trend' 
                                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
                                             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
@@ -1690,7 +1690,7 @@ export default function LivePatternsPage() {
                                 const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
                                 const gateLoading = isGateLoading(setup.instrument, setup.patternName, timeframe, setup.direction);
                                 if (gateLoading) {
-                                  return <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/30 text-muted-foreground border-border/30 animate-pulse">…</Badge>;
+                                  return <Badge variant="outline" className="text-sm px-1.5 py-0 bg-muted/30 text-muted-foreground border-border/30 animate-pulse">…</Badge>;
                                 }
                                 const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
                                 const styles = {
@@ -1701,7 +1701,7 @@ export default function LivePatternsPage() {
                                 return (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 cursor-help ${styles[gateType as keyof typeof styles] || styles.partial}`}>
+                                      <Badge variant="outline" className={`text-sm px-1.5 py-0 cursor-help ${styles[gateType as keyof typeof styles] || styles.partial}`}>
                                         {gateType}
                                       </Badge>
                                     </TooltipTrigger>
@@ -1735,7 +1735,7 @@ export default function LivePatternsPage() {
                             {/* Add to Copilot paper */}
                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                               <button
-                                className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
+                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);

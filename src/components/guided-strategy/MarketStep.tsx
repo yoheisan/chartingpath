@@ -200,7 +200,7 @@ const HorizontalTrendAnalysis: React.FC<{ instrument: string }> = ({ instrument 
         <div className="text-xs text-muted-foreground">No trend data available</div>
       )}
       
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         EMA 20/50 trend analysis (live data) • {bias === 'Bullish' ? 'Consider Long patterns' : bias === 'Bearish' ? 'Consider Short patterns' : 'Use caution with pattern selection'}
       </p>
     </div>

@@ -148,24 +148,24 @@ export function LandingEngagementCard({ days }: Props) {
           <div className="p-3 rounded-lg bg-muted/30 text-center">
             <Eye className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
             <p className="text-xl font-bold">{stats.totalPageViews}</p>
-            <p className="text-[10px] text-muted-foreground">Landing Views</p>
+            <p className="text-sm text-muted-foreground">Landing Views</p>
           </div>
           <div className="p-3 rounded-lg bg-muted/30 text-center">
             <MousePointerClick className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
             <p className="text-xl font-bold">{stats.totalClicks}</p>
-            <p className="text-[10px] text-muted-foreground">Total Clicks</p>
+            <p className="text-sm text-muted-foreground">Total Clicks</p>
           </div>
           <div className="p-3 rounded-lg bg-muted/30 text-center">
             <TrendingUp className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
             <p className="text-xl font-bold">{stats.uniqueClickers}</p>
-            <p className="text-[10px] text-muted-foreground">Unique Clickers</p>
+            <p className="text-sm text-muted-foreground">Unique Clickers</p>
           </div>
           <div className={`p-3 rounded-lg text-center ${stats.ctr >= 30 ? 'bg-green-500/10' : stats.ctr >= 15 ? 'bg-amber-500/10' : 'bg-red-500/10'}`}>
             <ArrowRight className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
             <p className={`text-xl font-bold ${stats.ctr >= 30 ? 'text-green-500' : stats.ctr >= 15 ? 'text-amber-500' : 'text-red-500'}`}>
               {stats.ctr.toFixed(1)}%
             </p>
-            <p className="text-[10px] text-muted-foreground">CTR</p>
+            <p className="text-sm text-muted-foreground">CTR</p>
           </div>
         </div>
 

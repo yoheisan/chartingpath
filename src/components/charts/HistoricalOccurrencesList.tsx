@@ -449,7 +449,7 @@ export function HistoricalOccurrencesList({
           <CardTitle className="text-sm flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             Historical Occurrences
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] font-medium bg-muted rounded text-muted-foreground">
+            <span className="ml-1 px-1.5 py-0.5 text-sm font-medium bg-muted rounded text-muted-foreground">
               R:R 1:{selectedRR}
             </span>
           </CardTitle>

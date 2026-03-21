@@ -644,7 +644,7 @@ const PatternLabWizard = () => {
             </span>
             <Sparkles className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">{t('copilot.openSidebar', 'AI Copilot')}</span>
-            <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
+            <kbd className="ml-1 text-sm text-muted-foreground bg-muted px-1 py-0.5 rounded">⌘K</kbd>
           </Button>
         )}
 
@@ -1529,7 +1529,7 @@ const PatternLabWizard = () => {
                           <span className="font-medium text-foreground truncate max-w-[100px]">
                             {p.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
                           </span>
-                          <span className="text-muted-foreground truncate max-w-[80px] text-[10px]">{p.patternName}</span>
+                          <span className="text-muted-foreground truncate max-w-[80px] text-sm">{p.patternName}</span>
                           {p.count === 0 ? (
                             <span className="flex items-center gap-1 text-destructive font-medium">
                               <AlertCircle className="h-3 w-3" />

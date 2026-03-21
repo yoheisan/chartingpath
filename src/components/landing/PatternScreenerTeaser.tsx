@@ -367,7 +367,7 @@ export function PatternScreenerTeaser() {
                 <TabsTrigger key={tab.value} value={tab.value} className="text-sm gap-1.5">
                   {t(tab.i18nKey)}
                   {!loading[tab.value] && (
-                    <span className={`text-[10px] font-mono ${
+                    <span className={`text-sm font-mono ${
                       isActive
                         ? 'opacity-70'
                         : count > 0 ? 'text-green-500' : 'text-muted-foreground/50'

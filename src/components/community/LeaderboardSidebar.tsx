@@ -146,14 +146,14 @@ function LeaderboardSection({ title, icon, entries }: { title: string; icon: Rea
               <div key={entry.id} className="flex items-center justify-between text-xs py-1">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={cn(
-                    'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0',
+                    'w-5 h-5 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
                     i === 0 ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                   )}>
                     {i + 1}
                   </span>
                   <span className="font-medium truncate">{symbol}</span>
                 </div>
-                <Badge variant="secondary" className="text-[10px] font-mono shrink-0">
+                <Badge variant="secondary" className="text-sm font-mono shrink-0">
                   {entry.metricLabel}
                 </Badge>
               </div>

@@ -79,7 +79,7 @@ const CommandCenterDemo = memo(function CommandCenterDemo() {
                   <nav.icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-foreground flex-1">{nav.label}</span>
                   <span className="text-xs text-muted-foreground hidden sm:block">{nav.dest}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 bg-muted ml-2">
+                  <Badge variant="outline" className="text-sm font-mono px-1.5 py-0 bg-muted ml-2">
                     {nav.key}
                   </Badge>
                 </div>

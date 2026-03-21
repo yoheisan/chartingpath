@@ -156,7 +156,7 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
             <Minus className="w-4 h-4" />
             <span className="text-xs font-semibold">{tf.label}</span>
           </div>
-          <span className="text-[10px] opacity-80">No data</span>
+          <span className="text-sm opacity-80">No data</span>
         </div>
       );
     }
@@ -170,7 +170,7 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
           {getTrendIcon(trend.trend)}
           <span className="text-xs font-semibold">{trend.label}</span>
         </div>
-        <span className="text-[10px] opacity-80">{getTrendLabel(trend.trend)}</span>
+        <span className="text-sm opacity-80">{getTrendLabel(trend.trend)}</span>
       </div>
     );
   };
@@ -298,7 +298,7 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
                     </div>
 
                     {/* EMA Legend */}
-                    <div className="text-[10px] text-muted-foreground pt-1 border-t">
+                    <div className="text-sm text-muted-foreground pt-1 border-t">
                       Trend calculated using EMA 20/50 crossover: Price above both EMAs = Bullish, below both = Bearish, between = Sideways
                     </div>
                   </>
@@ -312,7 +312,7 @@ export const MultiTimeframeTrendAnalysis: React.FC<MultiTimeframeTrendAnalysisPr
                 )}
 
                 {/* EMA Legend */}
-                <div className="text-[10px] text-muted-foreground pt-1 border-t">
+                <div className="text-sm text-muted-foreground pt-1 border-t">
                   Trend calculated using EMA 20/50 crossover: Price above both EMAs = Bullish, below both = Bearish, between = Sideways
                 </div>
               </>

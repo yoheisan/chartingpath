@@ -130,7 +130,7 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                       {winRate.toFixed(0)}%
                     </span>
                     {setup.historicalPerformance?.sampleSize != null && (
-                      <span className="text-[10px] text-muted-foreground/70 font-mono">
+                      <span className="text-sm text-muted-foreground/70 font-mono">
                         n={setup.historicalPerformance.sampleSize}
                       </span>
                     )}

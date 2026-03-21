@@ -231,7 +231,7 @@ export const ExitEquityOverlay = ({
                   const sorted = [...payload].sort((a, b) => (b.value as number) - (a.value as number));
                   return (
                     <div className="rounded-lg border border-border/60 bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[220px] max-h-[280px] overflow-y-auto">
-                      <p className="text-[11px] font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
+                      <p className="text-sm font-medium text-muted-foreground mb-2 border-b border-border/40 pb-1.5">
                         {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                       <div className="space-y-1.5">
@@ -243,11 +243,11 @@ export const ExitEquityOverlay = ({
                             <div key={entry.dataKey as string} className="flex items-center justify-between gap-3">
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
-                                <span className="text-[11px] text-muted-foreground truncate">{s?.strategyName || entry.dataKey}</span>
+                                <span className="text-sm text-muted-foreground truncate">{s?.strategyName || entry.dataKey}</span>
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
                                 <span className="text-[12px] font-semibold text-foreground">${val.toFixed(0)}</span>
-                                <span className={`text-[10px] font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                <span className={`text-sm font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
                                 </span>
                               </div>

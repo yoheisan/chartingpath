@@ -140,7 +140,7 @@ export const UserGeographyCard = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">{countryFlag(s.country)}</span>
                     <span className="font-semibold text-sm">{s.country}</span>
-                    {i === 0 && <Badge variant="default" className="text-[10px] px-1.5 py-0">Top</Badge>}
+                    {i === 0 && <Badge variant="default" className="text-sm px-1.5 py-0">Top</Badge>}
                   </div>
                   <div className="text-2xl font-bold">{s.unique_users}</div>
                   <div className="text-xs text-muted-foreground">{((s.unique_users / totalUsers) * 100).toFixed(1)}% of users</div>
@@ -176,7 +176,7 @@ export const UserGeographyCard = () => {
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {s.top_cities.map(city => (
-                            <Badge key={city} variant="outline" className="text-[10px] px-1.5 py-0">
+                            <Badge key={city} variant="outline" className="text-sm px-1.5 py-0">
                               <MapPin className="h-2.5 w-2.5 mr-0.5" />{city}
                             </Badge>
                           ))}

@@ -72,7 +72,7 @@ export const CompositeScoreRing: React.FC<CompositeScoreRingProps> = ({
           <span className={`text-3xl font-mono font-bold ${vc.color} transition-colors duration-300`}>
             {score}
           </span>
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">/ 100</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-widest">/ 100</span>
         </div>
       </div>
 

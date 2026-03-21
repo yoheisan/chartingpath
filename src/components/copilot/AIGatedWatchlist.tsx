@@ -98,7 +98,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="px-3 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Watchlist · AI Gate
         </span>
       </div>
@@ -116,19 +116,19 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
               <Badge
                 variant="outline"
                 className={cn(
-                  "text-[9px] px-1.5 py-0 h-4 font-medium border",
+                  "text-sm px-1.5 py-0 h-4 font-medium border",
                   GATE_STYLES[row.gate]
                 )}
                 title={row.gateReason}
               >
                 {row.gate}
               </Badge>
-              <span className="text-[10px] text-muted-foreground/60 ml-auto">
+              <span className="text-sm text-muted-foreground/60 ml-auto">
                 {row.source}
               </span>
               <span
                 className={cn(
-                  "text-[11px] font-mono font-medium min-w-[40px] text-right",
+                  "text-sm font-mono font-medium min-w-[40px] text-right",
                   isPnlPositive(row.pnl) && "text-emerald-400",
                   isPnlNegative(row.pnl) && "text-red-400",
                   !isPnlPositive(row.pnl) && !isPnlNegative(row.pnl) && "text-muted-foreground"

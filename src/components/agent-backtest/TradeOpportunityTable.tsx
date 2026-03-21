@@ -358,7 +358,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       <div className="flex items-center gap-3 text-sm">
       <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
         {lastScoredAt && (
-          <span className="text-[10px] text-muted-foreground ml-auto">
+          <span className="text-sm text-muted-foreground ml-auto">
             Scored {formatDistanceToNow(new Date(lastScoredAt))} ago
           </span>
         )}
@@ -663,7 +663,7 @@ const ScoreCell: React.FC<{ score: number; max: number; color: string; estimated
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-[9px] text-muted-foreground/70 bg-muted/50 rounded px-1 py-0.5 cursor-help">{estimatedLabel || 'Est.'}</span>
+              <span className="text-sm text-muted-foreground/70 bg-muted/50 rounded px-1 py-0.5 cursor-help">{estimatedLabel || 'Est.'}</span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs text-xs">
               {estimatedLabel === 'Prior' 

@@ -1019,7 +1019,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                     >
                       <ChevronLeft className="h-3 w-3" />
                     </button>
-                    <span className="text-[11px] font-medium text-foreground tabular-nums min-w-[3ch] text-center">
+                    <span className="text-sm font-medium text-foreground tabular-nums min-w-[3ch] text-center">
                       {selectedPatternIndex + 1}/{eligibleOverlayPatterns.length}
                     </span>
                     <button
@@ -1033,11 +1033,11 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                 {patternOverlayVisible && overlayPattern && (
                   <>
                     <span className="w-px h-3 bg-border/60" />
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                    <span className="text-sm text-muted-foreground truncate max-w-[140px]">
                       {PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name}
                     </span>
                     <span className={cn(
-                      "text-[10px] font-medium px-1 rounded",
+                      "text-sm font-medium px-1 rounded",
                       overlayPattern.direction === 'long' || overlayPattern.direction === 'bullish' 
                         ? 'text-emerald-400' : 'text-red-400'
                     )}>

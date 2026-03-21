@@ -232,7 +232,7 @@ const TradingCopilotFeature = () => {
                           {challenge.copilot.stats?.map((s) => (
                             <div key={s.label} className="rounded-lg bg-muted/50 p-2.5 text-center">
                               <p className="text-lg font-bold tabular-nums">{s.value}</p>
-                              <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                              <p className="text-sm text-muted-foreground">{s.label}</p>
                             </div>
                           ))}
                         </div>
@@ -246,8 +246,8 @@ const TradingCopilotFeature = () => {
 
                       {challenge.copilot.hasActions && (
                         <div className="flex gap-2 pt-1">
-                          <Badge variant="secondary" className="text-[10px]">{t('tradingCopilot.openInPatternLab')}</Badge>
-                          <Badge variant="secondary" className="text-[10px]">{t('tradingCopilot.createAlert')}</Badge>
+                          <Badge variant="secondary" className="text-sm">{t('tradingCopilot.openInPatternLab')}</Badge>
+                          <Badge variant="secondary" className="text-sm">{t('tradingCopilot.createAlert')}</Badge>
                         </div>
                       )}
                     </div>

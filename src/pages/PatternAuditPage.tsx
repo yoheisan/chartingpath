@@ -288,7 +288,7 @@ const PatternAuditPage = () => {
                             <span className="font-medium">{example.symbol}</span>
                             <Badge 
                               variant="outline" 
-                              className={`text-[10px] ${
+                              className={`text-sm ${
                                 example.quality_score === 'A' ? 'border-emerald-500 text-emerald-500' :
                                 example.quality_score === 'B' ? 'border-blue-500 text-blue-500' :
                                 'border-yellow-500 text-yellow-500'
@@ -304,7 +304,7 @@ const PatternAuditPage = () => {
                             {example.outcome && (
                               <Badge 
                                 variant="outline" 
-                                className={`text-[10px] ${
+                                className={`text-sm ${
                                   example.outcome === 'hit_tp' ? 'border-green-500 text-green-500' :
                                   example.outcome === 'hit_sl' ? 'border-red-500 text-red-500' :
                                   'border-muted-foreground'
@@ -384,11 +384,11 @@ const PatternAuditPage = () => {
                 <span>Missing Data (Needs Seeding)</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-500">A</Badge>
+                <Badge variant="outline" className="text-sm border-emerald-500 text-emerald-500">A</Badge>
                 <span>Excellent Quality</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] border-blue-500 text-blue-500">B</Badge>
+                <Badge variant="outline" className="text-sm border-blue-500 text-blue-500">B</Badge>
                 <span>Good Quality</span>
               </div>
             </div>

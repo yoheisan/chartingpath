@@ -141,7 +141,7 @@ export const CryptoPresetPanel: React.FC<CryptoPresetPanelProps> = ({
                       {option.label}
                       <Badge 
                         variant="outline" 
-                        className={`text-[10px] px-1 py-0 ${
+                        className={`text-sm px-1 py-0 ${
                           option.direction === 'bullish' 
                             ? 'text-green-600 border-green-600' 
                             : 'text-red-600 border-red-600'

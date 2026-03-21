@@ -257,13 +257,13 @@ export default function InstrumentPage() {
             <h2 className="text-2xl font-semibold mb-4">Pattern Performance</h2>
             <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
               <div className="hidden sm:grid grid-cols-[1fr_70px_70px_80px_80px_70px_40px] gap-3 px-4 py-2.5 border-b border-border/30 bg-muted/20">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pattern</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">TF</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Win %</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Exp (R)</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Bars</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right"></span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Pattern</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">TF</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">Win %</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">Exp (R)</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">Trades</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right">Bars</span>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground text-right"></span>
               </div>
               {patterns.map((p, i) => (
                 <Link
