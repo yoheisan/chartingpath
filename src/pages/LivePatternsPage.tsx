@@ -1687,16 +1687,30 @@ export default function LivePatternsPage() {
                             {/* Gate Badge */}
                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                               {(() => {
-                                const gateType = currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict';
+                                const gateEval = getEvaluation(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                const gateLoading = isGateLoading(setup.instrument, setup.patternName, timeframe, setup.direction);
+                                if (gateLoading) {
+                                  return <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/30 text-muted-foreground border-border/30 animate-pulse">…</Badge>;
+                                }
+                                const gateType = gateEval?.gate_result || (currentRow < 3 ? 'aligned' : currentRow < 5 ? 'partial' : 'conflict');
                                 const styles = {
                                   aligned: 'bg-green-500/10 text-green-500 border-green-500/30',
                                   partial: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
                                   conflict: 'bg-red-500/10 text-red-500 border-red-500/30',
                                 };
                                 return (
-                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[gateType]}`}>
-                                    {gateType}
-                                  </Badge>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 cursor-help ${styles[gateType as keyof typeof styles] || styles.partial}`}>
+                                        {gateType}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    {gateEval?.gate_reason && (
+                                      <TooltipContent side="left" className="max-w-xs text-xs">
+                                        {gateEval.gate_reason}
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
                                 );
                               })()}
                             </TableCell>
