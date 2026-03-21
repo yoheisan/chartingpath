@@ -224,15 +224,8 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
         </ScrollArea>
       </div>
 
-      {/* Review today button */}
-      <div className="px-3 py-2 border-t border-border/40 flex justify-center">
-        <button
-          onClick={() => setDebriefOpen(true)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Review today →
-        </button>
-      </div>
+
+
 
       {/* Live Controls (pause/stop) — only when live */}
       {isLive && (
