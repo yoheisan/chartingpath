@@ -97,6 +97,10 @@ export function useMasterPlan() {
 
   useEffect(() => {
     fetchPlan();
+    // Listen for mandate-saved events from NavCopilotBar
+    const handler = () => fetchPlan();
+    window.addEventListener("mandate-saved", handler);
+    return () => window.removeEventListener("mandate-saved", handler);
   }, [fetchPlan]);
 
   const refreshPlan = useCallback(() => {

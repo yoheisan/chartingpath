@@ -26,6 +26,8 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
     setIsOpen(false);
     setFreeText("");
     onMandateSaved?.();
+    // Broadcast global event for other components (e.g., Copilot page MandateCard)
+    window.dispatchEvent(new CustomEvent("mandate-saved"));
   });
 
   // Global ⌘K handler
