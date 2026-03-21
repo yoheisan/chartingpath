@@ -460,7 +460,7 @@ const PatternLabWizard = () => {
   const hasLowData = dataCoverage.some(d => d.bars > 0 && d.bars < 50);
 
   // Pattern occurrence pre-check — queries historical_pattern_occurrences to warn when no patterns exist
-  interface PatternCoverage { symbol: string; patternId: string; patternName: string; count: number }
+  interface PatternCoverage { symbol: string; patternId: string; patternName: string; count: number; gradePassCount: number }
   const [patternCoverage, setPatternCoverage] = useState<PatternCoverage[]>([]);
   const [isCheckingPatterns, setIsCheckingPatterns] = useState(false);
 
@@ -477,12 +477,26 @@ const PatternLabWizard = () => {
         // Build all symbol variants for matching (e.g. AAPL, aapl)
         for (const sym of selectedInstruments) {
           for (const patId of selectedPatterns) {
+            // Total count
             const { count } = await supabase
               .from('historical_pattern_occurrences')
               .select('id', { count: 'exact', head: true })
               .eq('symbol', sym)
               .eq('pattern_id', patId)
               .eq('timeframe', timeframe);
+            
+            // Count passing grade filter
+            let gradePassCount = count ?? 0;
+            if ((count ?? 0) > 0 && selectedGrades.length < 5) {
+              const { count: gradeCount } = await supabase
+                .from('historical_pattern_occurrences')
+                .select('id', { count: 'exact', head: true })
+                .eq('symbol', sym)
+                .eq('pattern_id', patId)
+                .eq('timeframe', timeframe)
+                .in('quality_score', selectedGrades);
+              gradePassCount = gradeCount ?? 0;
+            }
             
             if (!cancelled) {
               const patInfo = PATTERNS.find(p => p.id === patId);
@@ -491,6 +505,7 @@ const PatternLabWizard = () => {
                 patternId: patId,
                 patternName: patInfo?.name || patId,
                 count: count ?? 0,
+                gradePassCount,
               });
             }
           }
@@ -504,11 +519,11 @@ const PatternLabWizard = () => {
     };
     const debounce = setTimeout(check, 700);
     return () => { clearTimeout(debounce); cancelled = true; };
-  }, [selectedInstruments, selectedPatterns, timeframe]);
+  }, [selectedInstruments, selectedPatterns, timeframe, selectedGrades]);
 
-  const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.count === 0);
-  const hasLowPatterns = patternCoverage.some(p => p.count > 0 && p.count < 5);
-  const zeroPatternCombos = patternCoverage.filter(p => p.count === 0);
+  const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.gradePassCount === 0);
+  const hasLowPatterns = patternCoverage.some(p => p.gradePassCount > 0 && p.gradePassCount < 5);
+  const zeroPatternCombos = patternCoverage.filter(p => p.gradePassCount === 0);
 
   const handleInstrumentToggle = (symbol: string) => {
     setSelectedInstruments(prev => 
@@ -1504,14 +1519,28 @@ const PatternLabWizard = () => {
                               <AlertCircle className="h-3 w-3" />
                               {t('patternLabWizard.none')}
                             </span>
-                          ) : p.count < 5 ? (
-                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
-                              {t('patternLabWizard.found', { count: p.count })}
-                            </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" />
-                              {t('patternLabWizard.found', { count: p.count })}
+                            <span className="flex items-center gap-1">
+                              {p.gradePassCount === 0 ? (
+                                <span className="text-destructive font-medium">
+                                  {p.count} found, 0 pass
+                                </span>
+                              ) : p.gradePassCount < p.count ? (
+                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
+                                  <span className="text-muted-foreground line-through">{p.count}</span>
+                                  {' '}
+                                  {t('patternLabWizard.found', { count: p.gradePassCount })}
+                                </span>
+                              ) : p.count < 5 ? (
+                                <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                                  {t('patternLabWizard.found', { count: p.count })}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  {t('patternLabWizard.found', { count: p.count })}
+                                </span>
+                              )}
                             </span>
                           )}
                         </div>
