@@ -24,9 +24,10 @@ const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R
 interface RightPanelProps {
   openDebriefOnMount?: boolean;
   onDebriefOpened?: () => void;
+  onTradeSelect?: (trade: SelectedClosedTrade) => void;
 }
 
-const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {}) => {
+const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect }: RightPanelProps = {}) => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'paper' | 'live'>('paper');
