@@ -9,6 +9,40 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+// Cheap model for classification, confirmation, override summaries
+const FAST_MODEL = "google/gemini-2.5-flash-lite";
+// Stronger model for mandate JSON parsing
+const PARSE_MODEL = "google/gemini-3-flash-preview";
+
+async function callAI(apiKey: string, model: string, systemPrompt: string, userMessage: string, maxTokens: number) {
+  const resp = await fetch(AI_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      max_tokens: maxTokens,
+    }),
+  });
+
+  if (!resp.ok) {
+    const t = await resp.text();
+    console.error(`AI ${model} error:`, resp.status, t);
+    if (resp.status === 429) throw { status: 429, message: "Rate limited, please try again later." };
+    if (resp.status === 402) throw { status: 402, message: "Credits exhausted. Add funds in Settings." };
+    throw new Error(`AI call failed (${resp.status})`);
+  }
+
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content?.trim() || "";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,192 +67,108 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     const { action, text, mandate } = await req.json();
 
-    // ACTION: classify
+    // ═══ CLASSIFY — Gemini Flash Lite (cheapest) ═══
     if (action === "classify") {
-      const resp = await fetch(AI_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content: `Classify this input as exactly one of these three words: new_mandate, override, or question.
-new_mandate: sets multiple new trading rules
-override: a temporary session adjustment such as pause entries or skip momentum today
-question: asking about a trade or past result
-Return only the classification word. Nothing else.`,
-            },
-            { role: "user", content: text },
-          ],
-          max_tokens: 20,
-        }),
-      });
-
-      if (!resp.ok) {
-        const t = await resp.text();
-        console.error("AI classify error:", resp.status, t);
-        throw new Error("AI classification failed");
-      }
-
-      const data = await resp.json();
-      const classification = data.choices?.[0]?.message?.content?.trim().toLowerCase() || "question";
-
+      const result = await callAI(
+        LOVABLE_API_KEY,
+        FAST_MODEL,
+        "Classify this trading input as exactly one word: new_mandate, override, or question.\nnew_mandate = sets trading rules\noverride = temporary session change\nquestion = asks about a trade or result\nReply with one word only.",
+        text,
+        10
+      );
+      const classification = result.toLowerCase().replace(/[^a-z_]/g, "") || "question";
       return new Response(JSON.stringify({ classification }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ACTION: parse
+    // ═══ PARSE — Stronger model for JSON extraction ═══
     if (action === "parse") {
       const systemPrompt = `You are a trading mandate parser for ChartingPath.
-Extract structured trading rules from natural language and return ONLY a valid JSON object. No preamble, no explanation, no markdown — raw JSON only.
-Return this exact structure:
+Extract structured rules from natural language and return ONLY valid JSON. No preamble, no markdown — raw JSON only.
+Return exactly:
 {
   "max_position_pct": number or null,
   "max_open_positions": number or null,
   "trading_window_start": "HH:MM" 24hr or null,
   "trading_window_end": "HH:MM" 24hr or null,
-  "stop_loss_rule": string or null,
-  "excluded_conditions": string array,
-  "preferred_patterns": string array,
-  "sector_filters": string array,
+  "stop_loss_rule": string like "2R" or null,
+  "excluded_conditions": string array or [],
+  "preferred_patterns": string array or [],
+  "sector_filters": string array or [],
   "trend_direction": "long_only" or "short_only" or "both" or null,
   "min_market_cap": string or null,
-  "raw_nl_input": string the original input verbatim
+  "raw_nl_input": original input verbatim
 }
-If a field is not mentioned set it to null or empty array.
-Never invent values not stated in the input.`;
+Never invent values not stated. Null missing fields.`;
 
       let parsed: any = null;
       let attempts = 0;
 
       while (attempts < 2) {
         attempts++;
-        const resp = await fetch(AI_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: text },
-            ],
-            max_tokens: 1000,
-          }),
-        });
-
-        if (!resp.ok) {
-          if (resp.status === 429) {
-            return new Response(JSON.stringify({ error: "Rate limited, please try again later." }), {
-              status: 429,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          if (resp.status === 402) {
-            return new Response(JSON.stringify({ error: "Credits exhausted. Add funds in Settings." }), {
-              status: 402,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          const t = await resp.text();
-          console.error("AI parse error:", resp.status, t);
-          if (attempts >= 2) throw new Error("AI parse failed");
-          continue;
-        }
-
-        const data = await resp.json();
-        let content = data.choices?.[0]?.message?.content?.trim() || "";
-
-        // Strip markdown fencing if present
-        content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
-
         try {
+          let content = await callAI(LOVABLE_API_KEY, PARSE_MODEL, systemPrompt, text, 1000);
+          content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
           parsed = JSON.parse(content);
           break;
-        } catch {
-          console.error("JSON parse failed, attempt", attempts, content);
+        } catch (e: any) {
+          if (e.status === 429 || e.status === 402) {
+            return new Response(JSON.stringify({ error: e.message }), {
+              status: e.status,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          console.error("Parse attempt", attempts, "failed:", e.message);
           if (attempts >= 2) {
             return new Response(
-              JSON.stringify({ error: "Couldn't parse that — try being more specific.\nExample: Max 3% per trade, breakouts only, 9:30-11:30am" }),
+              JSON.stringify({ error: "Couldn't parse that — try: Max 3% per trade, breakouts only, 9:30-11:30am, 2R stop" }),
               { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
         }
       }
 
-      // Ensure raw_nl_input is set
-      if (parsed) {
-        parsed.raw_nl_input = text;
-      }
+      if (parsed) parsed.raw_nl_input = text;
 
       return new Response(JSON.stringify({ parsed }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ACTION: confirm
+    // ═══ CONFIRM — Gemini Flash Lite (cheap) ═══
     if (action === "confirm") {
-      const resp = await fetch(AI_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content: `You are Copilot, a trading assistant. The user has set a trading mandate. Confirm it back in 2-4 plain language bullet points. Be direct and specific. Use their exact values. End with: Is this right? No markdown headers. Do not add anything they did not specify.`,
-            },
-            { role: "user", content: JSON.stringify(mandate) },
-          ],
-          max_tokens: 300,
-        }),
-      });
-
-      if (!resp.ok) {
-        const t = await resp.text();
-        console.error("AI confirm error:", resp.status, t);
-        throw new Error("AI confirmation failed");
-      }
-
-      const data = await resp.json();
-      const confirmation = data.choices?.[0]?.message?.content?.trim() || "";
-
+      const confirmation = await callAI(
+        LOVABLE_API_KEY,
+        FAST_MODEL,
+        "The user set a trading mandate. Confirm it back as 2-4 plain bullet points using their exact values. End with: Is this right? Plain text only. No markdown. No extra commentary. Only include what they specified.",
+        JSON.stringify(mandate),
+        300
+      );
       return new Response(JSON.stringify({ confirmation }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ACTION: save
+    // ═══ SAVE ═══
     if (action === "save") {
-      // Deactivate existing plans
       await supabase
         .from("master_plans")
         .update({ is_active: false })
         .eq("user_id", userId)
         .eq("is_active", true);
 
-      // Insert new plan
       const { data: newPlan, error: insertErr } = await supabase
         .from("master_plans")
         .insert({
@@ -249,33 +199,18 @@ Never invent values not stated in the input.`;
       });
     }
 
-    // ACTION: override
+    // ═══ OVERRIDE — Gemini Flash Lite (cheap) ═══
     if (action === "override") {
-      // Get a plain-language summary
-      const resp = await fetch(AI_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            {
-              role: "system",
-              content: "Summarize this session override in one short sentence (under 15 words). No quotes.",
-            },
-            { role: "user", content: text },
-          ],
-          max_tokens: 50,
-        }),
-      });
-
       let summary = text;
-      if (resp.ok) {
-        const data = await resp.json();
-        summary = data.choices?.[0]?.message?.content?.trim() || text;
-      }
+      try {
+        summary = await callAI(
+          LOVABLE_API_KEY,
+          FAST_MODEL,
+          "Summarise this trading override in 6 words or less. Plain text only.",
+          text,
+          20
+        );
+      } catch { /* fallback to raw text */ }
 
       const { error: overrideErr } = await supabase
         .from("session_overrides")
@@ -285,9 +220,7 @@ Never invent values not stated in the input.`;
           override_text: text,
         });
 
-      if (overrideErr) {
-        console.error("Override save error:", overrideErr);
-      }
+      if (overrideErr) console.error("Override save error:", overrideErr);
 
       return new Response(JSON.stringify({ summary }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -298,11 +231,12 @@ Never invent values not stated in the input.`;
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("copilot-mandate error:", e);
+    const status = e.status || 500;
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: e instanceof Error ? e.message : e.message || "Unknown error" }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
