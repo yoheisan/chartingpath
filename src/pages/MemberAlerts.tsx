@@ -54,6 +54,7 @@ const MemberAlerts = () => {
   const [dataLoading, setDataLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [copilotPaperEnabled, setCopilotPaperEnabled] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { playbookContext, clearPlaybookContext } = usePlaybookContext();

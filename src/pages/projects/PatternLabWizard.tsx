@@ -1637,7 +1637,7 @@ const PatternLabWizard = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  disabled={!hasResults}
+                  disabled={!isRunning && !estimate}
                   onClick={() => {
                     toast.success('Added Donchian Breakout (Long) and Double Bottom to your Master Plan.');
                   }}
