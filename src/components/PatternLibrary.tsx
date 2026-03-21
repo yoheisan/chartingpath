@@ -379,6 +379,13 @@ export const PatternLibrary = () => {
                       <Badge className={`text-xs ${getDifficultyColor(pattern.difficulty)}`}>
                         {t(`patternLibrary.difficulty.${pattern.difficulty}`)}
                       </Badge>
+                      {['Donchian Breakout (Long)', 'Double Bottom', 'Ascending Triangle', 'Bull Flag'].includes(pattern.name) && (
+                        <Link to="/copilot" onClick={(e) => e.stopPropagation()}>
+                          <Badge className="text-xs bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25 cursor-pointer">
+                            In plan
+                          </Badge>
+                        </Link>
+                      )}
                       <div className="flex items-center gap-1 bg-success/10 px-2 py-0.5 rounded-md">
                         <span className="text-xs font-semibold text-success">
                           {pattern.successRate}%

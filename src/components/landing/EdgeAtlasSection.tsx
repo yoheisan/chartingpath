@@ -423,6 +423,9 @@ export function EdgeAtlasSection() {
                         <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 shrink-0">
                           {TF_LABEL[r.timeframe] || r.timeframe}
                         </Badge>
+                        {['donchian-breakout-long', 'double-bottom', 'ascending-triangle'].includes(r.pattern_id) && (
+                          <span className="text-[9px] bg-blue-500/15 text-blue-400 rounded px-1.5 py-0.5 leading-none">In your plan</span>
+                        )}
                         {isLowSample && (
                           <span className="text-[10px] text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
                         )}
