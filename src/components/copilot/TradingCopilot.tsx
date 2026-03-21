@@ -794,15 +794,15 @@ export function TradingCopilot({
                   )}
 
                   {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
-                  {isAuthenticated && !hasPlan && (
-                    <Button
-                      className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                      onClick={() => handleQuickAction("Set my trading plan")}
-                      disabled={isLoading}
-                    >
-                      Set your trading plan →
-                    </Button>
-                  )}
+                   {isAuthenticated && !hasPlan && (
+                     <Button
+                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                       onClick={() => setShowBuilder(true)}
+                       disabled={isLoading}
+                     >
+                       Set your trading plan →
+                     </Button>
+                   )}
 
                   {/* ── LOGGED-IN: Tier 2 — Page-aware chips ── */}
                   {tier2Chips.length > 0 && (
