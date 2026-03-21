@@ -1,4 +1,5 @@
 import { useCopilotTrades } from '@/hooks/useCopilotTrades';
+import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
@@ -27,6 +28,7 @@ export function DashboardCopilotBar() {
 export function DashboardAIStrip() {
   const { user } = useAuth();
   const { stats } = useCopilotTrades(user?.id);
+  const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
   return (
     <div className="w-full bg-card border-b border-border/40">
@@ -52,10 +54,10 @@ export function DashboardAIStrip() {
         </div>
       </div>
       <div className="px-4 pb-1.5 -mt-1">
-        <p className="text-sm text-muted-foreground/70 text-center">
-          {stats.aiTradeCount + stats.humanTradeCount > 0
+        <p className={`text-sm text-muted-foreground/70 text-center transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
+          {insight || (stats.aiTradeCount + stats.humanTradeCount > 0
             ? `AI: ${formatR(stats.aiPnlR)} vs Overrides: ${formatR(stats.humanPnlR)} today`
-            : 'No trades yet today — Copilot is scanning'}
+            : 'No trades yet today — Copilot is scanning')}
         </p>
       </div>
     </div>

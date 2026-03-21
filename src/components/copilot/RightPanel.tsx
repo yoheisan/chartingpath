@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SessionDebriefPanel } from './SessionDebriefPanel';
 import { useCopilotTrades, CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
@@ -17,6 +18,7 @@ const RightPanel = () => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const { user } = useAuth();
   const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
+  const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
   return (
     <div className="flex flex-col h-full">
@@ -68,11 +70,11 @@ const RightPanel = () => {
       </div>
 
       {/* Section 4 — Insight Card */}
-      <div className="mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2">
+      <div className={`mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2 transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
         <p className="text-sm leading-[1.6] text-muted-foreground">
-          {todayTrades.length > 0
+          {insight || (todayTrades.length > 0
             ? `Today: ${stats.aiTradeCount} AI trades (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
-            : 'No trades yet today. Copilot is scanning for setups matching your plan.'}
+            : 'No trades yet today. Copilot is scanning for setups matching your plan.')}
         </p>
       </div>
 

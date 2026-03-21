@@ -2231,6 +2231,27 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_cache: {
+        Row: {
+          generated_at: string
+          id: string
+          insight: string
+          user_id: string
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          insight: string
+          user_id: string
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          insight?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       instrument_search_analytics: {
         Row: {
           created_at: string | null
