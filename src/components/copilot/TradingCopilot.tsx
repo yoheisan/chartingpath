@@ -839,6 +839,26 @@ export function TradingCopilot({
               </div>
                 );
               })()
+            ) : showBuilder ? (
+              <TradingPlanBuilder
+                existingPlan={plan}
+                onSaved={() => {
+                  setShowBuilder(false);
+                  refreshPlan();
+                  setMessages(prev => [...prev, {
+                    id: crypto.randomUUID(),
+                    role: "assistant" as const,
+                    content: `✅ Your trading plan is set. Copilot is now paper-testing it live.\n\nI'll scan for ${plan ? "your updated" : "matching"} setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
+                    timestamp: new Date(),
+                  }]);
+                }}
+                onCancel={() => setShowBuilder(false)}
+                onSwitchToNL={() => {
+                  setShowBuilder(false);
+                  setInput(hasPlan ? "Update my trading plan: " : "");
+                  setTimeout(() => inputRef.current?.focus(), 100);
+                }}
+              />
             ) : (
               <div className="space-y-4">
                 {messages.map((message, idx) => {
