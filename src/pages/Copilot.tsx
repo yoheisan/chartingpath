@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
+import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 
 const Copilot = () => {
