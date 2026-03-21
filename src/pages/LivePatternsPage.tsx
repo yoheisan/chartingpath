@@ -16,6 +16,7 @@ import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import {
