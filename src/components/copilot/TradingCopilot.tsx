@@ -227,21 +227,7 @@ const GUEST_ACTIONS: QuickAction[] = [
   { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
 ];
 
-const AUTH_DEFAULT_ACTIONS: QuickAction[] = [
-  { labelKey: "copilot.findPatterns", promptKey: "copilot.findPatternsPrompt", icon: TrendingUp },
-  { labelKey: "copilot.createAlert", promptKey: "copilot.createAlertPrompt", icon: Bell },
-  { labelKey: "copilot.generateScript", promptKey: "copilot.generateScriptPrompt", icon: Code },
-  { labelKey: "copilot.learnPatterns", promptKey: "copilot.learnPatternsPrompt", icon: BookOpen },
-  { labelKey: "copilot.marketBreadth", promptKey: "copilot.marketBreadthPrompt", icon: BarChart3 },
-  { labelKey: "copilot.agentScoring", promptKey: "copilot.agentScoringPrompt", icon: Sparkles },
-];
-
-function getQuickActions(pathname: string, authenticated: boolean): QuickAction[] {
-  if (!authenticated) return GUEST_ACTIONS;
-  return AUTH_DEFAULT_ACTIONS;
-}
-
-const SUPPORT_ACTION = { labelKey: "copilot.contactSupport", icon: MessageSquarePlus };
+// (Quick action tiers are now inline in the home screen render)
 
 export interface TradingCopilotProps {
   isExpanded?: boolean;
