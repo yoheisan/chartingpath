@@ -2695,8 +2695,15 @@ serve(async (req) => {
     
     // Build view context layer — tells the AI what the user is currently looking at
     let viewContextLayer = '';
-    if (viewContext && typeof viewContext === 'object' && viewContext.page) {
-      const parts: string[] = [`The user is currently on the **${viewContext.page}** page.`];
+    if (viewContext && typeof viewContext === 'object') {
+      const pageName = viewContext.pageName || viewContext.page || null;
+      const pageRoute = viewContext.pageRoute || null;
+      const parts: string[] = [];
+
+      if (pageName) {
+        parts.push(`The user is currently on the **${pageName}** page.`);
+        parts.push(`Adjust your responses and suggested actions to be relevant to what they can do on this page. Page context: ${pageRoute || pageName}`);
+      }
       if (viewContext.instrument) parts.push(`They are focused on **${viewContext.instrument}**.`);
       if (viewContext.patternName) parts.push(`Pattern: **${viewContext.patternName}**.`);
       if (viewContext.timeframe) parts.push(`Timeframe: **${viewContext.timeframe}**.`);
@@ -2704,8 +2711,10 @@ serve(async (req) => {
       if (viewContext.grade) parts.push(`Quality grade: **${viewContext.grade}**.`);
       if (viewContext.verdict) parts.push(`Agent verdict: **${viewContext.verdict}** (score: ${viewContext.compositeScore ?? 'N/A'}).`);
       if (viewContext.detectionId) parts.push(`Detection ID: ${viewContext.detectionId}.`);
-      viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
-      console.log(`[trading-copilot] View context: page=${viewContext.page}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
+      if (parts.length > 0) {
+        viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
+      }
+      console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
     }
 
     // Assemble enhanced system prompt with all context layers
