@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -14,11 +14,24 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
-const RightPanel = () => {
+interface RightPanelProps {
+  openDebriefOnMount?: boolean;
+  onDebriefOpened?: () => void;
+}
+
+const RightPanel = ({ openDebriefOnMount, onDebriefOpened }: RightPanelProps = {}) => {
   const [debriefOpen, setDebriefOpen] = useState(false);
   const { user } = useAuth();
   const { todayTrades, stats, loading } = useCopilotTrades(user?.id);
   const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
+
+  // Open debrief from external trigger (session-end banner)
+  useEffect(() => {
+    if (openDebriefOnMount && !debriefOpen) {
+      setDebriefOpen(true);
+      onDebriefOpened?.();
+    }
+  }, [openDebriefOnMount, debriefOpen, onDebriefOpened]);
 
   return (
     <div className="flex flex-col h-full">

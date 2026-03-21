@@ -326,3 +326,6 @@ verify_jwt = false
 
 [functions.generate-insight]
 verify_jwt = false
+
+[functions.session-debrief]
+verify_jwt = false
