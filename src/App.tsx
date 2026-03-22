@@ -91,6 +91,7 @@ const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage")
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
 const Copilot = lazy(() => import("./pages/Copilot"));
+const CopilotReport = lazy(() => import("./pages/CopilotReport"));
 const InstrumentPage = lazy(() => import("./pages/InstrumentPage"));
 const ProgrammaticPatternStatsPage = lazy(() => import("./pages/ProgrammaticPatternStatsPage"));
 const PatternStatsIndexPage = lazy(() => import("./pages/PatternStatsIndexPage"));
