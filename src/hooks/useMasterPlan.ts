@@ -30,7 +30,7 @@ export interface MandateRule {
   detail: string;
 }
 
-function planToRules(plan: MasterPlan): MandateRule[] {
+export function planToRules(plan: MasterPlan): MandateRule[] {
   const rules: MandateRule[] = [];
   if (plan.max_position_pct != null) {
     rules.push({ label: `${plan.max_position_pct}%`, detail: "max per trade" });
