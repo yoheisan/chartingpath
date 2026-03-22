@@ -22,7 +22,7 @@ const AdminKPIDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
-  const [planCounts, setPlanCounts] = useState({ free: 0, lite: 0, plus: 0, pro: 0, team: 0 });
+  const [planCounts, setPlanCounts] = useState({ free: 0, lite: 0, plus: 0, pro: 0, elite: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
