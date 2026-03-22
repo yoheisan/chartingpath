@@ -59,7 +59,7 @@ export function DashboardAIStrip() {
       <div className="px-4 pb-1.5 -mt-1">
         <p className={`text-sm text-muted-foreground/70 text-center transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
           {insight || (stats.aiTradeCount + stats.humanTradeCount > 0
-            ? `AI: ${formatR(stats.aiPnlR)} vs Overrides: ${formatR(stats.humanPnlR)} today`
+            ? `AI: ${formatR(stats.aiPnlR)} vs ${t('commandCenter.overrides', 'Overrides')}: ${formatR(stats.humanPnlR)}`
             : t('commandCenter.noTradesYet', 'No trades yet today — Copilot is scanning'))}
         </p>
       </div>
