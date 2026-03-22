@@ -23,6 +23,11 @@ export interface MasterPlan {
   min_agent_score: number | null;
   trend_context_filter: string | null;
   min_confluence_score: number | null;
+  // Instrument universe
+  asset_classes: string[];
+  fx_categories: string[];
+  crypto_categories: string[];
+  stock_exchanges: string[];
 }
 
 export interface MandateRule {
