@@ -141,7 +141,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Lista obserwowanych · AI Gate",
+    "gate_aligned": "wyrównany",
+    "gate_partial": "częściowy",
+    "gate_conflict": "konflikt",
+    "addTickerAiGate": "Dodaj ticker → uruchamia AI Gate"
   },
   "hero": {
     "headlinePrimary": "Sprawdź, czy formacja działa",
@@ -5422,7 +5427,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Oceniono {{time}} temu",
+    "emergingCount": "Wschodzące: {{count}}",
+    "noProvenSignals": "Nie znaleziono sprawdzonych sygnałów.",
+    "checkEmergingBelow": "Sprawdź wschodzące sygnały poniżej.",
+    "emergingTitle": "Sygnały wschodzące — Brak historycznej przewagi",
+    "emergingDesc": "Te wzorce nie mają wystarczającej historii transakcji (<{{minSample}} transakcji lub wskaźnik <{{minWinRate}}%). Wyślij do Pattern Lab w celu zbadania."
   },
   "emails": {
     "welcome": {

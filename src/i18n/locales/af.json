@@ -2160,7 +2160,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Kyklys · AI-hek",
+    "gate_aligned": "belyn",
+    "gate_partial": "gedeeltelik",
+    "gate_conflict": "konflik",
+    "addTickerAiGate": "Voeg tikker by → loop AI-hek"
   },
   "copilotShowcase": {
     "title": "Hoekom Ons Medevlieënier Gebruik In Plaats Van ChatGPT?",
@@ -5470,7 +5475,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}} gelede gegradeer",
+    "emergingCount": "Opkomend: {{count}}",
+    "noProvenSignals": "Geen bewese seine gevind nie.",
+    "checkEmergingBelow": "Kyk na opkomende seine hieronder.",
+    "emergingTitle": "Opkomende seine — Nog geen historiese voorsprong",
+    "emergingDesc": "Hierdie patrone het nie genoeg handelsrekord nie (<{{minSample}} verhandelinge of koers <{{minWinRate}}%). Stuur na Pattern Lab om te ondersoek."
   },
   "emails": {
     "welcome": {

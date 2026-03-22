@@ -2098,7 +2098,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "قائمة المراقبة · AI Gate",
+    "gate_aligned": "متوافق",
+    "gate_partial": "جزئي",
+    "gate_conflict": "تعارض",
+    "addTickerAiGate": "إضافة رمز → تشغيل AI Gate"
   },
   "copilotShowcase": {
     "exportPineScript": "تصدير Pine Script",
@@ -5469,7 +5474,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "تم التقييم منذ {{time}}",
+    "emergingCount": "ناشئة: {{count}}",
+    "noProvenSignals": "لم يتم العثور على إشارات مثبتة.",
+    "checkEmergingBelow": "تحقق من الإشارات الناشئة أدناه.",
+    "emergingTitle": "إشارات ناشئة — لا توجد ميزة تاريخية بعد",
+    "emergingDesc": "تفتقر هذه الأنماط إلى تاريخ تداول كافٍ (<{{minSample}} صفقات أو معدل <{{minWinRate}}%). أرسل إلى Pattern Lab للتحقيق."
   },
   "emails": {
     "welcome": {

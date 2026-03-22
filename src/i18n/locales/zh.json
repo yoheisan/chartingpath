@@ -2039,7 +2039,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "观察列表 · AI门控",
+    "gate_aligned": "一致",
+    "gate_partial": "部分",
+    "gate_conflict": "冲突",
+    "addTickerAiGate": "添加代码 → 运行AI门控"
   },
   "copilotShowcase": {
     "pressToTry": "或按 <kbd>⌘K</kbd> 立即尝试",
@@ -5469,7 +5474,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}}前评分",
+    "emergingCount": "新兴: {{count}}",
+    "noProvenSignals": "未找到已验证的信号。",
+    "checkEmergingBelow": "查看下方的新兴信号。",
+    "emergingTitle": "新兴信号 — 尚无历史优势",
+    "emergingDesc": "这些形态缺乏足够的交易历史（<{{minSample}}笔交易或胜率<{{minWinRate}}%）。发送到形态实验室进行调查。"
   },
   "emails": {
     "welcome": {

@@ -141,7 +141,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Watchlist · AI Gate",
+    "gate_aligned": "uitgelijnd",
+    "gate_partial": "gedeeltelijk",
+    "gate_conflict": "conflict",
+    "addTickerAiGate": "Ticker toevoegen → AI Gate uitvoeren"
   },
   "hero": {
     "headlinePrimary": "Weet of een patroon werkt",
@@ -5422,7 +5427,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}} geleden gescoord",
+    "emergingCount": "Opkomend: {{count}}",
+    "noProvenSignals": "Geen bewezen signalen gevonden.",
+    "checkEmergingBelow": "Controleer de opkomende signalen hieronder.",
+    "emergingTitle": "Opkomende signalen — Nog geen historisch voordeel",
+    "emergingDesc": "Deze patronen missen voldoende handelsgeschiedenis (<{{minSample}} trades of ratio <{{minWinRate}}%). Stuur naar Pattern Lab om te onderzoeken."
   },
   "emails": {
     "welcome": {
