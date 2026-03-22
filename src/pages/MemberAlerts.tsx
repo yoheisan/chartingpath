@@ -917,12 +917,23 @@ const MemberAlerts = () => {
                       onClick={() => navigate('/members/dashboard', { state: { symbol: alert.symbol } })}
                       className="flex items-center gap-4 cursor-pointer text-left flex-1 min-w-0"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
+                       <div>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">{alert.symbol}</span>
                           <Badge variant={alert.status === 'active' ? 'default' : 'secondary'}>
                             {alert.status === 'active' ? t('alerts.statusActive') : t('alerts.statusPaused')}
                           </Badge>
+                          {/* Plan vs Manual badge */}
+                          {alert.master_plan_id ? (
+                            <Badge variant="outline" className="text-xs gap-1 border-primary/40 text-primary">
+                              <Sparkles className="h-3 w-3" />
+                              Plan
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                              Manual
+                            </Badge>
+                          )}
                           {alert.auto_paper_trade && (
                             <Badge variant="outline" className="text-xs gap-1">
                               <Bot className="h-3 w-3" />
