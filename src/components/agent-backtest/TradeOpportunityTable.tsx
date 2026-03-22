@@ -522,9 +522,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       {showEmerging && emergingDetections.length > 0 && (
         <div className="space-y-2">
           <div className="px-1">
-            <h3 className="text-sm font-medium text-muted-foreground">Emerging Signals — No Historical Edge Yet</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('agentScoring.emergingTitle')}</h3>
             <p className="text-xs text-muted-foreground/70">
-              These patterns lack sufficient trade history (&lt;{PROOF_GATE_MIN_SAMPLE} trades or win rate &lt;{Math.round(PROOF_GATE_MIN_WIN_RATE * 100)}%). Send to Pattern Lab to investigate.
+              {t('agentScoring.emergingDesc', { minSample: PROOF_GATE_MIN_SAMPLE, minWinRate: Math.round(PROOF_GATE_MIN_WIN_RATE * 100) })}
             </p>
           </div>
           <div className="overflow-x-auto rounded-lg border border-border/50">
