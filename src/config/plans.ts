@@ -84,7 +84,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
-      maxWatchlistSlots: 0, // No custom watchlist monitoring
+      maxWatchlistSlots: 0,
+      maxActivePlans: 1,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
