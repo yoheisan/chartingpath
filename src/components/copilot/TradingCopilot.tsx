@@ -278,7 +278,7 @@ export function TradingCopilot({
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
-  const { plan, hasPlan, refreshPlan } = useMasterPlan();
+  const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
   const {
