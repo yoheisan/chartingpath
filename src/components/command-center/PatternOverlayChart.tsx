@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import { SetupWithVisuals } from '@/types/VisualSpec';
 import { FullChartPlaybackView } from '@/components/charts/FullChartPlaybackView';
 import StudyChart from '@/components/charts/StudyChart';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { cn } from '@/lib/utils';
 
 interface PatternOverlayChartProps {
