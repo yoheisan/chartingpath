@@ -107,7 +107,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 10,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 5,
-      maxPlanAlerts: 5,
+      maxPlanAlerts: 5, // 5 per plan × 2 plans = 10 max
       maxWatchlistSlots: 20,
       maxActivePlans: 2,
       screener: {
