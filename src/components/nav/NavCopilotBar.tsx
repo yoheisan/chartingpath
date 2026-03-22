@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
+import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { Loader2 } from "lucide-react";
 
 const QUICK_COMMANDS = [
+  "Create new plan",
   "Pause entries",
   "Resume entries",
   "Why did you exit last trade?",
@@ -21,6 +23,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const copilot = useTradingCopilotContext();
 
   const { state, submit, confirmSave, reset } = useMandateSubmit({
     onSaved: () => {
@@ -132,6 +135,11 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
                     key={cmd}
                     className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
+                      if (cmd === "Create new plan") {
+                        setIsOpen(false);
+                        copilot.openNewPlanBuilder();
+                        return;
+                      }
                       setFreeText(cmd);
                       submit(cmd);
                     }}
