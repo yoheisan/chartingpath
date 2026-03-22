@@ -2878,13 +2878,18 @@ export type Database = {
           is_active: boolean | null
           max_open_positions: number | null
           max_position_pct: number | null
+          min_agent_score: number | null
+          min_confluence_score: number | null
           min_market_cap: string | null
+          mtf_min_aligned: number | null
+          mtf_required_timeframes: string[] | null
           preferred_patterns: Json | null
           raw_nl_input: string | null
           sector_filters: Json | null
           stop_loss_rule: string | null
           trading_window_end: string | null
           trading_window_start: string | null
+          trend_context_filter: string | null
           trend_direction: string | null
           updated_at: string
           user_id: string
@@ -2896,13 +2901,18 @@ export type Database = {
           is_active?: boolean | null
           max_open_positions?: number | null
           max_position_pct?: number | null
+          min_agent_score?: number | null
+          min_confluence_score?: number | null
           min_market_cap?: string | null
+          mtf_min_aligned?: number | null
+          mtf_required_timeframes?: string[] | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
           stop_loss_rule?: string | null
           trading_window_end?: string | null
           trading_window_start?: string | null
+          trend_context_filter?: string | null
           trend_direction?: string | null
           updated_at?: string
           user_id: string
@@ -2914,13 +2924,18 @@ export type Database = {
           is_active?: boolean | null
           max_open_positions?: number | null
           max_position_pct?: number | null
+          min_agent_score?: number | null
+          min_confluence_score?: number | null
           min_market_cap?: string | null
+          mtf_min_aligned?: number | null
+          mtf_required_timeframes?: string[] | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
           stop_loss_rule?: string | null
           trading_window_end?: string | null
           trading_window_start?: string | null
+          trend_context_filter?: string | null
           trend_direction?: string | null
           updated_at?: string
           user_id?: string

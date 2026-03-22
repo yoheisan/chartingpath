@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Check, Minus, Plus, ChevronRight, Loader2 } from "lucide-react";
+import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MasterPlan } from "@/hooks/useMasterPlan";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // ── All 15 patterns ChartingPath detects ──
 const ALL_PATTERNS = [
@@ -46,6 +47,20 @@ const EXCLUSION_OPTIONS = [
   "No small caps under $2",
 ] as const;
 
+const MTF_TIMEFRAME_OPTIONS = [
+  { value: "15m", label: "15M" },
+  { value: "1h", label: "1H" },
+  { value: "4h", label: "4H" },
+  { value: "1d", label: "Daily" },
+  { value: "1w", label: "Weekly" },
+] as const;
+
+const TREND_CONTEXT_OPTIONS = [
+  { value: "any", label: "Any", desc: "No filter" },
+  { value: "with_trend", label: "With trend only", desc: "Higher win rate" },
+  { value: "counter_trend", label: "Allow counter", desc: "More setups" },
+] as const;
+
 interface TradingPlanBuilderProps {
   existingPlan?: MasterPlan | null;
   onSaved: () => void;
@@ -68,6 +83,15 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   const [activePreset, setActivePreset] = useState<string | null>("Full day 09:30–16:00");
   // Section 6 — Exclusions
   const [exclusions, setExclusions] = useState<string[]>([]);
+  // Advanced settings
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [mtfTimeframes, setMtfTimeframes] = useState<string[]>([]);
+  const [mtfMinAligned, setMtfMinAligned] = useState(2);
+  const [minAgentScore, setMinAgentScore] = useState(70);
+  const [agentScoreEnabled, setAgentScoreEnabled] = useState(false);
+  const [trendContext, setTrendContext] = useState("any");
+  const [confluenceEnabled, setConfluenceEnabled] = useState(false);
+  const [minConfluence, setMinConfluence] = useState(60);
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,6 +119,28 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     if (existingPlan.excluded_conditions?.length) {
       setExclusions(existingPlan.excluded_conditions);
     }
+    // Advanced settings
+    if (existingPlan.mtf_required_timeframes?.length) {
+      setMtfTimeframes(existingPlan.mtf_required_timeframes);
+      setShowAdvanced(true);
+    }
+    if (existingPlan.mtf_min_aligned != null) {
+      setMtfMinAligned(existingPlan.mtf_min_aligned);
+    }
+    if (existingPlan.min_agent_score != null) {
+      setMinAgentScore(existingPlan.min_agent_score);
+      setAgentScoreEnabled(true);
+      setShowAdvanced(true);
+    }
+    if (existingPlan.trend_context_filter && existingPlan.trend_context_filter !== "any") {
+      setTrendContext(existingPlan.trend_context_filter);
+      setShowAdvanced(true);
+    }
+    if (existingPlan.min_confluence_score != null) {
+      setMinConfluence(existingPlan.min_confluence_score);
+      setConfluenceEnabled(true);
+      setShowAdvanced(true);
+    }
     // Check if window matches a preset
     const matchedPreset = WINDOW_PRESETS.find(
       p => p.start === existingPlan.trading_window_start && p.end === existingPlan.trading_window_end
@@ -110,10 +156,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     setExclusions(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
   };
 
+  const toggleMtfTimeframe = (tf: string) => {
+    setMtfTimeframes(prev => prev.includes(tf) ? prev.filter(x => x !== tf) : [...prev, tf]);
+  };
+
   const exampleRisk = useMemo(() => {
     const accountSize = 10000;
     return Math.round(accountSize * (riskPct / 100));
   }, [riskPct]);
+
+  const hasAdvancedSettings = mtfTimeframes.length > 0 || agentScoreEnabled || trendContext !== "any" || confluenceEnabled;
 
   const summaryText = useMemo(() => {
     if (selectedPatterns.length === 0) return null;
@@ -122,8 +174,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       : `${selectedPatterns.slice(0, 2).join(", ")} +${selectedPatterns.length - 2} more`;
     const dir = direction === "both" ? "" : ` ${direction.replace("_", " ")}`;
     const excl = exclusions.length > 0 ? ` Excluding: ${exclusions.join(", ")}.` : "";
-    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}`;
-  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions]);
+    let adv = "";
+    if (mtfTimeframes.length > 0) {
+      adv += ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} timeframes must align.`;
+    }
+    if (agentScoreEnabled) {
+      adv += ` Agent score ≥${minAgentScore}.`;
+    }
+    if (trendContext !== "any") {
+      adv += ` ${trendContext.replace("_", " ")} setups only.`;
+    }
+    if (confluenceEnabled) {
+      adv += ` Confluence ≥${minConfluence}%.`;
+    }
+    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}`;
+  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence]);
 
   const canSave = selectedPatterns.length > 0;
 
@@ -142,7 +207,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         .eq("is_active", true);
 
       // Build the raw NL summary for the record
-      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}`;
+      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}`;
 
       const { error } = await supabase
         .from("master_plans" as any)
@@ -160,6 +225,12 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           sector_filters: [],
           trend_direction: direction,
           min_market_cap: exclusions.includes("No small caps under $2") ? "$2" : null,
+          // Advanced settings
+          mtf_required_timeframes: mtfTimeframes.length > 0 ? mtfTimeframes : [],
+          mtf_min_aligned: mtfTimeframes.length > 0 ? mtfMinAligned : null,
+          min_agent_score: agentScoreEnabled ? minAgentScore : null,
+          trend_context_filter: trendContext,
+          min_confluence_score: confluenceEnabled ? minConfluence : null,
         } as any);
 
       if (error) throw error;
@@ -385,6 +456,180 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             })}
           </div>
         </section>
+
+        {/* ── Section 7: Advanced Settings (Collapsible) ── */}
+        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
+              <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              Advanced settings
+              {hasAdvancedSettings && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+                  Active
+                </span>
+              )}
+              <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-5 pt-2">
+
+            {/* ── 7a: Multi-Timeframe Alignment ── */}
+            <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
+              <h5 className="text-xs font-semibold text-foreground">Multi-Timeframe Alignment</h5>
+              <p className="text-[11px] text-muted-foreground">
+                Require trend agreement across multiple timeframes before entering a trade.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {MTF_TIMEFRAME_OPTIONS.map(tf => {
+                  const selected = mtfTimeframes.includes(tf.value);
+                  return (
+                    <button
+                      key={tf.value}
+                      onClick={() => toggleMtfTimeframe(tf.value)}
+                      className={cn(
+                        "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border",
+                        selected
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-3 w-3 mr-1 inline" />}
+                      {tf.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {mtfTimeframes.length >= 2 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-muted-foreground">Min aligned:</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setMtfMinAligned(Math.max(2, mtfMinAligned - 1))}
+                      className="h-6 w-6 rounded border border-border/50 bg-muted/40 flex items-center justify-center text-xs hover:bg-muted"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="text-sm font-semibold text-foreground w-6 text-center">{mtfMinAligned}</span>
+                    <button
+                      onClick={() => setMtfMinAligned(Math.min(mtfTimeframes.length, mtfMinAligned + 1))}
+                      className="h-6 w-6 rounded border border-border/50 bg-muted/40 flex items-center justify-center text-xs hover:bg-muted"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <span className="text-xs text-muted-foreground">of {mtfTimeframes.length} timeframes</span>
+                </div>
+              )}
+              {mtfTimeframes.length === 1 && (
+                <p className="text-[11px] text-muted-foreground/70">Select at least 2 timeframes for alignment checks</p>
+              )}
+            </div>
+
+            {/* ── 7b: Agent Score Threshold ── */}
+            <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-semibold text-foreground">Agent Score Threshold</h5>
+                <button
+                  onClick={() => setAgentScoreEnabled(!agentScoreEnabled)}
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                    agentScoreEnabled
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "bg-muted/40 border-border/50 text-muted-foreground"
+                  )}
+                >
+                  {agentScoreEnabled ? "ON" : "OFF"}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Only paper-trade setups that pass the 4-agent scoring system with a minimum composite score.
+              </p>
+              {agentScoreEnabled && (
+                <div className="space-y-1">
+                  <Slider
+                    value={[minAgentScore]}
+                    onValueChange={([v]) => setMinAgentScore(v)}
+                    min={40}
+                    max={95}
+                    step={5}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>40 (Watch)</span>
+                    <span className="font-semibold text-foreground">{minAgentScore}</span>
+                    <span>95 (Elite)</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/70">
+                    {minAgentScore >= 70 ? "TAKE signals only — highest conviction" : minAgentScore >= 50 ? "TAKE + WATCH signals" : "Most signals will pass"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* ── 7c: Trend Context Filter ── */}
+            <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
+              <h5 className="text-xs font-semibold text-foreground">Trend Context</h5>
+              <p className="text-[11px] text-muted-foreground">
+                Filter setups by their alignment with the prevailing trend direction.
+              </p>
+              <div className="flex gap-1.5">
+                {TREND_CONTEXT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setTrendContext(opt.value)}
+                    className={cn(
+                      "flex-1 py-2 rounded-md text-xs font-medium transition-all border text-center",
+                      trendContext === opt.value
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                    )}
+                  >
+                    <div>{opt.label}</div>
+                    <div className="text-[10px] opacity-60 mt-0.5">{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 7d: Confluence Requirements ── */}
+            <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-semibold text-foreground">Confluence Score</h5>
+                <button
+                  onClick={() => setConfluenceEnabled(!confluenceEnabled)}
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                    confluenceEnabled
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "bg-muted/40 border-border/50 text-muted-foreground"
+                  )}
+                >
+                  {confluenceEnabled ? "ON" : "OFF"}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Require minimum confluence from support/resistance, divergence, and volume confirmation.
+              </p>
+              {confluenceEnabled && (
+                <div className="space-y-1">
+                  <Slider
+                    value={[minConfluence]}
+                    onValueChange={([v]) => setMinConfluence(v)}
+                    min={30}
+                    max={90}
+                    step={5}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>30%</span>
+                    <span className="font-semibold text-foreground">{minConfluence}%</span>
+                    <span>90%</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* ── Plan Summary ── */}
         {summaryText && (
