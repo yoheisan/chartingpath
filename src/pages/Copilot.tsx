@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const Copilot = () => {
-  const { rules, hasPlan, refreshPlan } = useMasterPlan();
+  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
   const { user } = useAuth();
   const { openTrades } = useCopilotTrades(user?.id);
   const [conflictTicker, setConflictTicker] = useState<string | null>(null);
@@ -119,7 +119,19 @@ const Copilot = () => {
       <div className="flex flex-1 min-h-0">
         <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-y-auto overflow-x-hidden">
           <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
-          <MandateCard onFocusNLBar={focusNLBar} rules={rules} hasPlan={hasPlan} />
+          <MandateCard
+            onFocusNLBar={focusNLBar}
+            rules={rules}
+            hasPlan={hasPlan}
+            plans={plans}
+            selectedPlanId={selectedPlanId}
+            onSelectPlan={selectPlan}
+            onNewPlan={() => {
+              // Open copilot plan builder for new plan
+              const copilotEl = document.querySelector('[data-copilot-trigger]') as HTMLButtonElement;
+              copilotEl?.click();
+            }}
+          />
           <ConflictBanner
             onFocusNLBar={focusNLBar}
             conflictTicker={conflictTicker}

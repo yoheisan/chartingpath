@@ -67,6 +67,7 @@ export interface TierConfig {
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
   maxWatchlistSlots: number;
+  maxActivePlans: number;
   screener: ScreenerCaps;
   study: StudyCaps;
   projects: ProjectCaps;
@@ -83,7 +84,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
-      maxWatchlistSlots: 0, // No custom watchlist monitoring
+      maxWatchlistSlots: 0,
+      maxActivePlans: 1,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle']
@@ -103,7 +105,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 10,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 5,
-      maxWatchlistSlots: 20, // 20 custom tickers to monitor
+      maxWatchlistSlots: 20,
+      maxActivePlans: 2,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders']
@@ -123,7 +126,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 30,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
-      maxWatchlistSlots: 100, // 100 custom tickers to monitor
+      maxWatchlistSlots: 100,
+      maxActivePlans: 5,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
@@ -143,7 +147,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 100,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
-      maxWatchlistSlots: 300, // 300 custom tickers to monitor
+      maxWatchlistSlots: 300,
+      maxActivePlans: 10,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
@@ -163,7 +168,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
-      maxWatchlistSlots: 9999, // Unlimited custom tickers
+      maxWatchlistSlots: 9999,
+      maxActivePlans: 99,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
