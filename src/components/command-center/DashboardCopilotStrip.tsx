@@ -11,8 +11,8 @@ export function DashboardCopilotBar() {
   const { openTrades, stats } = useCopilotTrades(user?.id);
 
   const statusText = openTrades.length > 0
-    ? `Paper trade open · ${openTrades.map(t => t.symbol).join(', ')} · ${formatR(stats.aiPnlR)} · Your plan is being tested live`
-    : stats.aiTradeCount > 0 ? `Running your trading plan on paper · ${stats.aiTradeCount} trade${stats.aiTradeCount !== 1 ? 's' : ''} taken today` : 'No trading plan set · Set one to start paper testing';
+    ? t('commandCenter.paperTradeOpen', { symbols: openTrades.map(t => t.symbol).join(', '), pnl: formatR(stats.aiPnlR) })
+    : stats.aiTradeCount > 0 ? t('commandCenter.runningPlan', { count: stats.aiTradeCount }) : t('commandCenter.noPlanSet', 'No trading plan set · Set one to start paper testing');
 
   return (
     <div className="w-full px-4 py-2 flex items-center gap-3 bg-blue-500/5 border-b border-blue-500/20">
