@@ -67,6 +67,7 @@ export interface TierConfig {
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
   maxWatchlistSlots: number;
+  maxActivePlans: number;
   screener: ScreenerCaps;
   study: StudyCaps;
   projects: ProjectCaps;
