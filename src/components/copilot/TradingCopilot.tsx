@@ -472,10 +472,11 @@ export function TradingCopilot({
   useEffect(() => {
     if (pendingPlanBuilder && isExpanded) {
       setShowBuilder(true);
+      setBuilderIsNewPlan(!!pendingNewPlan);
       setMessages([]);
       onPlanBuilderConsumed?.();
     }
-  }, [pendingPlanBuilder, isExpanded, onPlanBuilderConsumed]);
+  }, [pendingPlanBuilder, pendingNewPlan, isExpanded, onPlanBuilderConsumed]);
 
   const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
