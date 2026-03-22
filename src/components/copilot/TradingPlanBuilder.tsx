@@ -350,6 +350,113 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           />
         </section>
 
+        {/* ── Instrument Universe ── */}
+        <section className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground">What markets should Copilot trade? <span className="font-normal text-muted-foreground">(optional)</span></h4>
+          <p className="text-xs text-muted-foreground">Leave empty for all assets. Select specific asset classes to narrow the scan universe.</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ASSET_CLASS_OPTIONS.map(ac => {
+              const selected = assetClasses.includes(ac.value);
+              return (
+                <button
+                  key={ac.value}
+                  onClick={() => toggleAssetClass(ac.value)}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border",
+                    selected
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                  )}
+                >
+                  {selected && <Check className="h-3 w-3" />}
+                  {ac.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-filters for Stocks */}
+          {assetClasses.includes("stocks") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">Stock exchanges</p>
+              <div className="flex flex-wrap gap-1.5">
+                {STOCK_EXCHANGE_OPTIONS.map(ex => {
+                  const selected = stockExchanges.includes(ex);
+                  return (
+                    <button
+                      key={ex}
+                      onClick={() => toggleStockExchange(ex)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {ex}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-filters for Forex */}
+          {assetClasses.includes("forex") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">FX pair categories</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FX_CATEGORY_OPTIONS.map(cat => {
+                  const selected = fxCategories.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => toggleFxCategory(cat.value)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-filters for Crypto */}
+          {assetClasses.includes("crypto") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">Crypto categories</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CRYPTO_CATEGORY_OPTIONS.map(cat => {
+                  const selected = cryptoCategories.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => toggleCryptoCategory(cat.value)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* ── Section 1: Patterns ── */}
         <section className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">Which patterns should Copilot watch for?</h4>
