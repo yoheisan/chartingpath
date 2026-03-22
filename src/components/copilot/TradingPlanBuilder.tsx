@@ -108,6 +108,11 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   const [windowStart, setWindowStart] = useState("09:30");
   const [windowEnd, setWindowEnd] = useState("16:00");
   const [activePreset, setActivePreset] = useState<string | null>("Full day 09:30–16:00");
+  // Instrument universe
+  const [assetClasses, setAssetClasses] = useState<string[]>([]);
+  const [stockExchanges, setStockExchanges] = useState<string[]>([]);
+  const [fxCategories, setFxCategories] = useState<string[]>([]);
+  const [cryptoCategories, setCryptoCategories] = useState<string[]>([]);
   // Section 6 — Exclusions
   const [exclusions, setExclusions] = useState<string[]>([]);
   // Advanced settings
