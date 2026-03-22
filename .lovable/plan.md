@@ -1,36 +1,28 @@
 
 
-## Add "Products" Dropdown Menu to Header Navigation
+## Increase Header & Footer Text Sizes to Match TradingView
 
-### Problem
-The header has 6 individual product links (Dashboard, Screener, Agent Scoring, Pattern Lab, Alerts, Scripts) as top-level items, making it crowded. These should be grouped under a single "Products" parent dropdown.
+### Analysis
+TradingView's header nav items render at **16px (1rem)** with medium font weight. Their footer links are also **16px**. ChartingPath currently uses:
+- **Header nav**: `text-[13px]` — 3px smaller than TradingView
+- **Footer links**: `text-sm` (14px) — 2px smaller than TradingView
 
 ### What Changes
 
-**Desktop nav (lines 197–234 in Navigation.tsx)**
+**Navigation.tsx** — bump all desktop nav text from `text-[13px]` to `text-base` (16px):
+- Products dropdown trigger (line 201)
+- Learning dropdown trigger (line 257)
+- Pricing link (line 296) via `navLinkClass`
+- More dropdown trigger (line 303)
+- Copilot link (line 359)
+- Update `navLinkClass` helper if it uses `text-[13px]`
 
-Replace the 6 individual top-level links with a single "Products" `DropdownMenu`:
-
-```text
-Before:  Dashboard | Screener | Agent Scoring | Pattern Lab | Alerts | Scripts | Learning ▾ | Pricing | More ▾ | Copilot
-After:   Products ▾ | Learning ▾ | Pricing | More ▾ | Copilot
-```
-
-The "Products" dropdown contains:
-- **Dashboard** — `/members/dashboard` (BarChart3 icon, blue)
-- **Screener** — `/patterns/live` (Activity icon, amber)
-- **Agent Scoring** — `/tools/agent-scoring` (Bot icon, amber)
-- **Pattern Lab** — `/projects/pattern-lab/new` (FlaskConical icon, violet)
-- **Alerts** — `/members/alerts` (Bell icon, emerald, with notification badge)
-- **Scripts** — `/members/scripts` (FileCode icon, cyan)
-
-The trigger highlights when any product route is active. Uses the same `DropdownMenu` pattern already used by Learning and More menus.
-
-**Mobile nav** — no change needed (already has the right structure).
-
-**i18n** — add `navigation.products` key: `"Products"`.
+**Footer.tsx** — bump footer links from `text-sm` to `text-base` (16px):
+- All `<Link>` elements in both wedge and full footer modes
+- Footer section headers stay `font-semibold` but also bump to `text-base`
+- Copyright/legal row stays `text-sm` (it's fine smaller)
 
 ### Files to modify
-- `src/components/Navigation.tsx` — replace 6 top-level links with Products dropdown (desktop section only)
-- `src/i18n/locales/en.json` — add `navigation.products` string
+- `src/components/Navigation.tsx` — replace `text-[13px]` with `text-base` on all desktop nav items
+- `src/components/Footer.tsx` — replace `text-sm` with `text-base` on footer link elements
 
