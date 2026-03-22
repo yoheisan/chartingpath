@@ -179,6 +179,40 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { label: "Which patterns suit my mandate?", prompt: "Which patterns suit my mandate?" },
     ],
   },
+  '/projects/runs': {
+    pageName: 'Backtest Results',
+    greeting: "You're viewing backtest results. Want to analyze the performance?",
+    chips: [
+      { label: "Explain these results", prompt: "Explain these backtest results" },
+      { label: "What's my win rate?", prompt: "What's my win rate in this backtest?" },
+      { label: "Send winners to my plan", prompt: "Send winning patterns to my trading plan" },
+    ],
+  },
+  '/projects/pattern-lab': {
+    pageName: 'Pattern Lab',
+    greeting: "Pattern Lab is open. Want to run a backtest or send patterns to your Master Plan?",
+    chips: [
+      { label: "What's my most profitable pattern?", prompt: "What's my most profitable pattern?" },
+      { label: "Send winners to my Master Plan", prompt: "Send winners to my Master Plan" },
+      { label: "Check my backtest quota", prompt: "Check my backtest quota" },
+    ],
+  },
+  '/members': {
+    pageName: 'Members Area',
+    greeting: "How can I help you with your account?",
+    chips: [
+      { label: "Show my trading plan", prompt: "Open my trading plan" },
+      { label: "What's my performance?", prompt: "What's my trading performance?" },
+    ],
+  },
+  '/tools': {
+    pageName: 'Tools',
+    greeting: "You're in the tools section. What would you like to do?",
+    chips: [
+      { label: "Open Agent Scoring", prompt: "Open Agent Scoring" },
+      { label: "Run a backtest", prompt: "Run a backtest" },
+    ],
+  },
 };
 
 const DEFAULT_PAGE_CONTEXT: PageContext = {
