@@ -52,6 +52,7 @@ const MemberAlerts = () => {
   const { t } = useTranslation();
   const { user, isAuthLoading: authLoading } = useAuth();
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("alerts");
+  const { plans: masterPlans } = useMasterPlan();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
