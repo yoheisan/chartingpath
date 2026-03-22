@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
@@ -9,6 +9,8 @@ import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
