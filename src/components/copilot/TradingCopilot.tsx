@@ -922,17 +922,17 @@ export function TradingCopilot({
 
                   {/* Tier 3 — Utility row (small text links) */}
                   <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>Generate script</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>Create alert</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>Learn patterns</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>Market breadth</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>{t('copilot.generateScript', 'Generate script')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>{t('copilot.createAlert', 'Create alert')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>{t('copilot.learnPatterns', 'Learn patterns')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>{t('copilot.marketBreadth', 'Market breadth')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
                     <ContactSupportDialog
                       trigger={
-                        <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact Support</button>
+                        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('copilot.contactSupport', 'Contact Support')}</button>
                       }
                       defaultCategory="other"
                       defaultSubject=""
