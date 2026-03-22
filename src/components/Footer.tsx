@@ -35,16 +35,16 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('footer.research', 'Research')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/patterns/live" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/patterns/live" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.screener', 'Screener')}
                 </Link>
-                <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/projects/pattern-lab/new" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.patternLab', 'Pattern Lab')}
                 </Link>
-                <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/members/scripts" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.scripts', 'Scripts')}
                 </Link>
-                <Link to="/projects/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/projects/pricing" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pricing', 'Pricing')}
                 </Link>
               </nav>
