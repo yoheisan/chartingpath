@@ -88,25 +88,25 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
     switch (outcome) {
       case 'hit_tp': 
         return { 
-          label: 'TP Hit', 
+          label: t('commandCenter.outcomeTpHit', 'TP Hit'), 
           color: 'border-emerald-500/50 text-emerald-600 bg-emerald-500/10',
           Icon: CheckCircle2
         };
       case 'hit_sl': 
         return { 
-          label: 'SL Hit', 
+          label: t('commandCenter.outcomeSlHit', 'SL Hit'), 
           color: 'border-red-500/50 text-red-600 bg-red-500/10',
           Icon: XCircle
         };
       case 'timeout': 
         return { 
-          label: 'Timeout', 
+          label: t('commandCenter.outcomeTimeout', 'Timeout'), 
           color: 'border-amber-500/50 text-amber-600 bg-amber-500/10',
           Icon: Clock
         };
       case 'pending': 
         return { 
-          label: 'Pending', 
+          label: t('commandCenter.outcomePending', 'Pending'), 
           color: 'border-border text-muted-foreground bg-muted',
           Icon: Clock
         };
