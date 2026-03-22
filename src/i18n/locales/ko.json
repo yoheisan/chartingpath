@@ -1118,7 +1118,8 @@
     "winRateColumnTooltip": "Historical win rate from backtested data. Upgrade to see full edge metrics.",
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
-    "activePatternScreener": "Active Pattern Screener"
+    "activePatternScreener": "Active Pattern Screener",
+    "winRate": "승률"
   },
   "alerts": {
     "subtitle": "관심 있는 종목에서 차트 패턴이 형성될 때 이메일 및 푸시 알림을 받으세요.",

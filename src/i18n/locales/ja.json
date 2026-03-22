@@ -1305,7 +1305,8 @@
     "welcomeClickRowSuffix": "to see the pattern on a chart.",
     "welcomeGrade": "Grade A or B",
     "welcomeGradeSuffix": "setups for the highest-quality signals.",
-    "welcomeLookFor": "Look for"
+    "welcomeLookFor": "Look for",
+    "winRate": "勝率"
   },
   "alerts": {
     "prefilledFromPlaybook": "プレイブックから事前入力",

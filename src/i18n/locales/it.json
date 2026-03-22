@@ -659,7 +659,8 @@
     "winRateColumnTooltip": "Historical win rate from backtested data. Upgrade to see full edge metrics.",
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
-    "activePatternScreener": "Active Pattern Screener"
+    "activePatternScreener": "Active Pattern Screener",
+    "winRate": "Percentuale vittorie"
   },
   "alerts": {
     "deliveryMethod": "Metodo di consegna",
