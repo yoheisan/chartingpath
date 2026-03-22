@@ -28,6 +28,7 @@ import { PushNotificationPrompt } from "@/components/alerts/PushNotificationProm
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
 import { PlanAlertCard } from "@/components/alerts/PlanAlertCard";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useTranslation } from "react-i18next";
 
 interface UserProfile {
