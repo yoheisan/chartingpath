@@ -26,7 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
-import { PlanAlertGenerator } from "@/components/alerts/PlanAlertGenerator";
+import { PlanAlertCard } from "@/components/alerts/PlanAlertCard";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useTranslation } from "react-i18next";
 
