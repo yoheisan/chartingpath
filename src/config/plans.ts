@@ -163,9 +163,9 @@ export const PLANS_CONFIG: PlansConfig = {
       },
       projects: {
         setup_finder: { maxInstruments: 50, maxLookbackYears: 5, maxPatterns: 8, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 15, maxLookbackYears: 7, maxPatterns: 8, maxSweeps: 5, allowedTimeframes: ['4h', '1d'] },
+        pattern_lab: { enabled: true, maxInstruments: 15, maxLookbackYears: 5, maxPatterns: 8, maxSweeps: 5, allowedTimeframes: ['4h', '1d'] },
         portfolio_checkup: { maxHoldings: 100, maxLookbackYears: 5, allowedTimeframes: ['1d', '4h'] },
-        portfolio_sim: { maxHoldings: 30, maxLookbackYears: 15, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
+        portfolio_sim: { maxHoldings: 30, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
     TEAM: {
