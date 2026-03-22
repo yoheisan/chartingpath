@@ -419,7 +419,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
             {scoredProven.length === 0 ? (
               <tr>
                 <td colSpan={99} className="px-4 py-10 text-center text-muted-foreground text-sm">
-                  No proven signals found. {emergingDetections.length > 0 && 'Check emerging signals below.'}
+                  {t('agentScoring.noProvenSignals')} {emergingDetections.length > 0 && t('agentScoring.checkEmergingBelow')}
                 </td>
               </tr>
             ) : (
