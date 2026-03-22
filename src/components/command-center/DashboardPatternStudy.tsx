@@ -516,7 +516,7 @@ export function DashboardPatternStudy({
                     : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                {displayName} ({count})
+                {translatePatternName(displayName)} ({count})
               </button>
             );
           })}
