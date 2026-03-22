@@ -860,12 +860,12 @@ export function TradingCopilot({
                   {!isAuthenticated && (
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { label: "What patterns are active right now?", prompt: "What patterns are active right now?" },
-                        { label: "Score a trade for me", prompt: "Score a trade for me" },
-                        { label: "How does the AI Gate work?", prompt: "How does the AI Gate work?" },
+                        { label: t('copilot.panel.chipPatterns', 'What patterns are active right now?'), prompt: "What patterns are active right now?" },
+                        { label: t('copilot.panel.chipScore', 'Score a trade for me'), prompt: "Score a trade for me" },
+                        { label: t('copilot.panel.chipGate', 'How does the AI Gate work?'), prompt: "How does the AI Gate work?" },
                       ].map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-xs">{chip.label}</span>
+                          <span className="text-sm">{chip.label}</span>
                         </Button>
                       ))}
                     </div>
