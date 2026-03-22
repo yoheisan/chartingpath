@@ -147,7 +147,8 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 100,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
-      maxWatchlistSlots: 300, // 300 custom tickers to monitor
+      maxWatchlistSlots: 300,
+      maxActivePlans: 10,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag']
