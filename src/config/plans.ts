@@ -85,7 +85,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
-      maxPlanAlerts: 0, // No plan-based alerts on free — incentivizes upgrade
+      maxPlanAlerts: 0, // Locked on free — incentivizes upgrade
       maxWatchlistSlots: 0,
       maxActivePlans: 1,
       screener: {
