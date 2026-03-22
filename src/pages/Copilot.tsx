@@ -139,11 +139,7 @@ const Copilot = () => {
             plans={plans}
             selectedPlanId={selectedPlanId}
             onSelectPlan={selectPlan}
-            onNewPlan={() => {
-              // Open copilot plan builder for new plan
-              const copilotEl = document.querySelector('[data-copilot-trigger]') as HTMLButtonElement;
-              copilotEl?.click();
-            }}
+            canCreateMore={canCreateMore}
           />
           <ConflictBanner
             onFocusNLBar={focusNLBar}
