@@ -205,44 +205,49 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Deactivate existing plans
-      await supabase
-        .from("master_plans" as any)
-        .update({ is_active: false } as any)
-        .eq("user_id", user.id)
-        .eq("is_active", true);
-
       // Build the raw NL summary for the record
       const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}`;
 
-      const { error } = await supabase
-        .from("master_plans" as any)
-        .insert({
-          user_id: user.id,
-          is_active: true,
-          raw_nl_input: rawNl,
-          max_position_pct: riskPct,
-          max_open_positions: maxPositions,
-          trading_window_start: windowStart,
-          trading_window_end: windowEnd,
-          stop_loss_rule: "2R",
-          excluded_conditions: exclusions,
-          preferred_patterns: selectedPatterns,
-          sector_filters: [],
-          trend_direction: direction,
-          min_market_cap: exclusions.includes("No small caps under $2") ? "$2" : null,
-          // Advanced settings
-          mtf_required_timeframes: mtfTimeframes.length > 0 ? mtfTimeframes : [],
-          mtf_min_aligned: mtfTimeframes.length > 0 ? mtfMinAligned : null,
-          min_agent_score: agentScoreEnabled ? minAgentScore : null,
-          trend_context_filter: trendContext,
-          min_confluence_score: confluenceEnabled ? minConfluence : null,
-        } as any);
+      const planData = {
+        user_id: user.id,
+        is_active: true,
+        name: planName,
+        raw_nl_input: rawNl,
+        max_position_pct: riskPct,
+        max_open_positions: maxPositions,
+        trading_window_start: windowStart,
+        trading_window_end: windowEnd,
+        stop_loss_rule: "2R",
+        excluded_conditions: exclusions,
+        preferred_patterns: selectedPatterns,
+        sector_filters: [],
+        trend_direction: direction,
+        min_market_cap: exclusions.includes("No small caps under $2") ? "$2" : null,
+        mtf_required_timeframes: mtfTimeframes.length > 0 ? mtfTimeframes : [],
+        mtf_min_aligned: mtfTimeframes.length > 0 ? mtfMinAligned : null,
+        min_agent_score: agentScoreEnabled ? minAgentScore : null,
+        trend_context_filter: trendContext,
+        min_confluence_score: confluenceEnabled ? minConfluence : null,
+      } as any;
+
+      let error;
+      if (existingPlan && !isNewPlan) {
+        // Update existing plan
+        ({ error } = await supabase
+          .from("master_plans" as any)
+          .update(planData)
+          .eq("id", existingPlan.id));
+      } else {
+        // Insert new plan
+        ({ error } = await supabase
+          .from("master_plans" as any)
+          .insert(planData));
+      }
 
       if (error) throw error;
 
       window.dispatchEvent(new CustomEvent("mandate-saved"));
-      toast.success("Trading plan saved — Copilot is now paper-testing it.");
+      toast.success(existingPlan && !isNewPlan ? "Trading plan updated." : "Trading plan created — Copilot is now paper-testing it.");
       onSaved();
     } catch (err: any) {
       console.error("Save plan error:", err);
