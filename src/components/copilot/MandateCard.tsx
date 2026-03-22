@@ -71,12 +71,32 @@ export function MandateCard({
             </button>
           )}
         </div>
-        <button
-          onClick={() => openCopilot()}
-          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          Edit
-        </button>
+        <div className="flex items-center gap-1.5">
+          {canCreateMore ? (
+            <button
+              onClick={handleNewPlan}
+              className="inline-flex items-center gap-0.5 text-xs text-primary/70 hover:text-primary transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              New
+            </button>
+          ) : (
+            <button
+              disabled
+              className="inline-flex items-center gap-0.5 text-xs text-muted-foreground/50 cursor-not-allowed"
+              title="Upgrade for more plans"
+            >
+              <Lock className="h-3 w-3" />
+              New
+            </button>
+          )}
+          <button
+            onClick={() => openCopilot()}
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Edit
+          </button>
+        </div>
       </CardHeader>
 
       {/* Plan selector dropdown */}

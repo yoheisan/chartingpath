@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
+import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { Loader2 } from "lucide-react";
 
 const QUICK_COMMANDS = [
+  "Create new plan",
   "Pause entries",
   "Resume entries",
   "Why did you exit last trade?",
