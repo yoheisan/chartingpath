@@ -300,7 +300,7 @@ const Navigation = () => {
               
               {/* 6. More - Tools & Company */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-1 text-base whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                   {t('navigation.more', 'More')}
                 </DropdownMenuTrigger>
