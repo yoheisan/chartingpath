@@ -74,7 +74,7 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
   const navLinkClass = (path: string) => 
-    `flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
+    `flex items-center gap-1 text-base whitespace-nowrap transition-colors ${
       isActive(path) 
         ? 'text-foreground font-medium' 
         : 'text-muted-foreground hover:text-foreground'
