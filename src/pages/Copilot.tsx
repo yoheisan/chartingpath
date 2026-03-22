@@ -155,6 +155,14 @@ const Copilot = () => {
             onDismiss={dismissConflict}
           />
           <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
+          <ActiveTradesStrip
+            trades={openTrades}
+            selectedTradeId={selectedTradeId}
+            onSelectTrade={(id) => {
+              setSelectedClosedTrade(null);
+              setSelectedTradeId(id);
+            }}
+          />
         </aside>
 
         <main className="flex-1 border-r border-border/40 flex flex-col min-h-0">
