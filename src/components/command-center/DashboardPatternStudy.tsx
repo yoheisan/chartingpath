@@ -390,7 +390,7 @@ export function DashboardPatternStudy({
                             ) : (
                               <TrendingDown className="h-3 w-3 mr-1" />
                             )}
-                            {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
+                            {translatePatternName(PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name)}
                           </Badge>
                           <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} />
                         </div>
