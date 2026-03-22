@@ -31,6 +31,7 @@ import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useDashboardPrefetch } from '@/hooks/useDashboardPrefetch';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
+import { useMasterPlan } from '@/hooks/useMasterPlan';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
 import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
