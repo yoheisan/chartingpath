@@ -15,7 +15,18 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 const Copilot = () => {
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
   const { user } = useAuth();
+  const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
+
+  const canCreateMore = useMemo(() => {
+    const planMapping: Record<string, PlanTier> = {
+      free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'PLUS',
+      pro: 'PRO', pro_plus: 'PRO', elite: 'TEAM', team: 'TEAM',
+    };
+    const tier = planMapping[subscriptionPlan?.toLowerCase() ?? 'free'] || 'FREE';
+    const maxPlans = PLANS_CONFIG.tiers[tier].maxActivePlans;
+    return plans.length < maxPlans;
+  }, [subscriptionPlan, plans.length]);
   const [conflictTicker, setConflictTicker] = useState<string | null>(null);
   const [conflictReason, setConflictReason] = useState<string | null>(null);
   const [sessionEndBanner, setSessionEndBanner] = useState<{ time: string } | null>(null);
