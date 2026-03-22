@@ -361,7 +361,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
         {lastScoredAt && (
           <span className="text-sm text-muted-foreground ml-auto">
-            Scored {formatDistanceToNow(new Date(lastScoredAt))} ago
+            {t('agentScoring.scoredAgo', { time: formatDistanceToNow(new Date(lastScoredAt)) })}
           </span>
         )}
         {!lastScoredAt && <span className="ml-auto" />}
