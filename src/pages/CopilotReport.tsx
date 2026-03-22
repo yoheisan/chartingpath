@@ -113,7 +113,6 @@ const ranges: { label: string; value: DateRange }[] = [
           )}
         </div>
       </div>
-    </div>
   );
 };
 

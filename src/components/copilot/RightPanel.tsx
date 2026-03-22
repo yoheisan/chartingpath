@@ -71,7 +71,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       {/* Section 1 — Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
         <span className="text-sm font-semibold text-foreground">Your Edge</span>
-        <span className="text-xs text-muted-foreground cursor-default">Full report</span>
+        <Link to="/copilot/report" className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer">Full report →</Link>
       </div>
 
       {/* Paper / Live tab toggle */}
