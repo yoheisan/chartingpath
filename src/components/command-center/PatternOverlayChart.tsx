@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import { SetupWithVisuals } from '@/types/VisualSpec';
 import { FullChartPlaybackView } from '@/components/charts/FullChartPlaybackView';
 import StudyChart from '@/components/charts/StudyChart';
 import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { cn } from '@/lib/utils';
 
 interface PatternOverlayChartProps {
@@ -40,6 +42,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
   onClose,
   onOpenFullChart,
 }: PatternOverlayChartProps) {
+  const { t } = useTranslation();
   if (loading || !setup) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 bg-background">
@@ -85,25 +88,25 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
     switch (outcome) {
       case 'hit_tp': 
         return { 
-          label: 'TP Hit', 
+          label: t('commandCenter.outcomeTpHit', 'TP Hit'), 
           color: 'border-emerald-500/50 text-emerald-600 bg-emerald-500/10',
           Icon: CheckCircle2
         };
       case 'hit_sl': 
         return { 
-          label: 'SL Hit', 
+          label: t('commandCenter.outcomeSlHit', 'SL Hit'), 
           color: 'border-red-500/50 text-red-600 bg-red-500/10',
           Icon: XCircle
         };
       case 'timeout': 
         return { 
-          label: 'Timeout', 
+          label: t('commandCenter.outcomeTimeout', 'Timeout'), 
           color: 'border-amber-500/50 text-amber-600 bg-amber-500/10',
           Icon: Clock
         };
       case 'pending': 
         return { 
-          label: 'Pending', 
+          label: t('commandCenter.outcomePending', 'Pending'), 
           color: 'border-border text-muted-foreground bg-muted',
           Icon: Clock
         };
@@ -148,13 +151,13 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               )}
             </div>
             <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span className="font-medium">{patternName}</span>
+              <span className="font-medium">{translatePatternName(patternName)}</span>
               <span>•</span>
               <span>{timeframe}</span>
               {isHistoricalPattern && (
                 <>
                   <span>•</span>
-                  <span className="text-xs">Historical</span>
+                  <span className="text-xs">{t('commandCenter.historical', 'Historical')}</span>
                 </>
               )}
             </div>
@@ -165,17 +168,17 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
         <div className="hidden md:flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5 text-primary" />
-            <span className="text-muted-foreground">Entry:</span>
+            <span className="text-muted-foreground">{t('commandCenter.entryLabel', 'Entry:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.entry)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ShieldAlert className="h-3.5 w-3.5 text-destructive" />
-            <span className="text-muted-foreground">SL:</span>
+            <span className="text-muted-foreground">{t('commandCenter.slLabel', 'SL:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.stopLoss)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-muted-foreground">TP:</span>
+            <span className="text-muted-foreground">{t('commandCenter.tpLabel', 'TP:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.takeProfit)}</span>
           </div>
           <Badge variant="secondary" className="text-xs">
@@ -191,7 +194,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               size="icon"
               className="h-8 w-8"
               onClick={onOpenFullChart}
-              title="Open full chart"
+              title={t('commandCenter.openFullChart', 'Open full chart')}
             >
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -201,7 +204,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
             size="icon"
             className="h-8 w-8"
             onClick={onClose}
-            title="Back to study chart"
+            title={t('commandCenter.backToStudyChart', 'Back to study chart')}
           >
             <X className="h-4 w-4" />
           </Button>

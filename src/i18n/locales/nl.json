@@ -2199,7 +2199,7 @@
     "noSetups": "No high-quality setups detected today"
   },
   "commandCenter": {
-    "watchlist": "Watchlist",
+    "watchlist": "Lista de seguimiento",
     "custom": "Custom",
     "addSymbol": "Add symbol...",
     "upgradeToAdd": "Upgrade to add custom symbols",
@@ -2265,7 +2265,7 @@
     "hidePatternsMetrics": "Hide Patterns & Metrics",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "alerts": "Alerts",
+    "alerts": "Alertas",
     "tradePlayback": "Trade Playback: {{symbol}} - {{patternName}}",
     "usePlaybackControls": "Use playback controls to replay this trade bar-by-bar",
     "tradePlanCopied": "Trade plan copied to clipboard",
@@ -2287,7 +2287,7 @@
     "activePatterns": "Active Patterns ({{count}})",
     "performanceMetrics": "Performance Metrics",
     "basedOnTrades": "Based on {{count}} resolved trades",
-    "patterns": "Patterns",
+    "patterns": "Patrones",
     "activeNow": "Active Now",
     "avgPnl": "Avg P&L",
     "totalPnl": "Total P&L",
@@ -2317,7 +2317,27 @@
     "historical": "Historical ({{count}})",
     "viewPatternOnChart": "View pattern on chart",
     "replayTrade": "Replay trade",
-    "noPatternsFound": "No patterns found for {{symbol}} ({{timeframe}})"
+    "noPatternsFound": "No patterns found for {{symbol}} ({{timeframe}})",
+    "outcomeTargetHit": "Objetivo alcanzado",
+    "outcomeStopHit": "Stop alcanzado",
+    "outcomeTimeout": "Tiempo agotado",
+    "outcomePending": "Pendiente",
+    "outcomeTpHit": "TP alcanzado",
+    "outcomeSlHit": "SL alcanzado",
+    "all": "Todos",
+    "copilotToday": "Copilot hoy",
+    "yourOverrides": "Tus intervenciones",
+    "noTradesYet": "Sin operaciones hoy — Copilot escaneando",
+    "paperActive": "Paper activo",
+    "paperRunning": "Paper ejecutando",
+    "search": "Buscar",
+    "entryLabel": "Entrada:",
+    "slLabel": "SL:",
+    "tpLabel": "TP:",
+    "openFullChart": "Abrir gráfico completo",
+    "backToStudyChart": "Volver al gráfico de estudio",
+    "chart": "Gráfico",
+    "research": "Investigación"
   },
   "tradingStrategiesPage": {
     "headerTitle": "Professional Trading Strategies",
@@ -2919,7 +2939,8 @@
     "winRateColumnTooltip": "Historical win rate from backtested data. Upgrade to see full edge metrics.",
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
-    "activePatternScreener": "Active Pattern Screener"
+    "activePatternScreener": "Active Pattern Screener",
+    "winRate": "Winstpercentage"
   },
   "scripts": {
     "adxTrendDesc": "ADX must be above threshold to confirm trending state",

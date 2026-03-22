@@ -1540,7 +1540,8 @@
     "winRateColumnTooltip": "Historical win rate from backtested data. Upgrade to see full edge metrics.",
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
-    "activePatternScreener": "Active Pattern Screener"
+    "activePatternScreener": "Active Pattern Screener",
+    "winRate": "Gewinnrate"
   },
   "alerts": {
     "deliveryMethod": "Zustellmethode",
@@ -2212,7 +2213,27 @@
     "collapseSidebar": "Seitenleiste einklappen",
     "pnl": "G&V",
     "losses": "Verluste",
-    "targetHit": "Ziel erreicht"
+    "targetHit": "Ziel erreicht",
+    "outcomeTargetHit": "Objetivo alcanzado",
+    "outcomeStopHit": "Stop alcanzado",
+    "outcomeTimeout": "Tiempo agotado",
+    "outcomePending": "Pendiente",
+    "outcomeTpHit": "TP alcanzado",
+    "outcomeSlHit": "SL alcanzado",
+    "all": "Todos",
+    "copilotToday": "Copilot hoy",
+    "yourOverrides": "Tus intervenciones",
+    "noTradesYet": "Sin operaciones hoy — Copilot escaneando",
+    "paperActive": "Paper activo",
+    "paperRunning": "Paper ejecutando",
+    "search": "Buscar",
+    "entryLabel": "Entrada:",
+    "slLabel": "SL:",
+    "tpLabel": "TP:",
+    "openFullChart": "Abrir gráfico completo",
+    "backToStudyChart": "Volver al gráfico de estudio",
+    "chart": "Gráfico",
+    "research": "Investigación"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

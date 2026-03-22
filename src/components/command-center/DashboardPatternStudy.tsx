@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 const ThumbnailChart = lazy(() => import('@/components/charts/ThumbnailChart'));
 import { PatternOccurrence } from './PatternOccurrencesPanel';
@@ -326,10 +327,10 @@ export function DashboardPatternStudy({
 
   const getOutcomeLabel = (outcome: string | null) => {
     switch (outcome) {
-      case 'hit_tp': return 'Target Hit';
-      case 'hit_sl': return 'Stop Hit';
-      case 'timeout': return 'Timeout';
-      case 'pending': return 'Pending';
+      case 'hit_tp': return t('commandCenter.outcomeTargetHit', 'Target Hit');
+      case 'hit_sl': return t('commandCenter.outcomeStopHit', 'Stop Hit');
+      case 'timeout': return t('commandCenter.outcomeTimeout', 'Timeout');
+      case 'pending': return t('commandCenter.outcomePending', 'Pending');
       default: return '—';
     }
   };
@@ -389,7 +390,7 @@ export function DashboardPatternStudy({
                             ) : (
                               <TrendingDown className="h-3 w-3 mr-1" />
                             )}
-                            {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
+                            {translatePatternName(PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name)}
                           </Badge>
                           <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} />
                         </div>
@@ -500,7 +501,7 @@ export function DashboardPatternStudy({
                 : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
             )}
           >
-            All ({historicalPatterns.length})
+            {t('commandCenter.all', 'All')} ({historicalPatterns.length})
           </button>
           {uniquePatternNames.map(([patternId, displayName]) => {
             const count = historicalPatterns.filter(p => p.pattern_id === patternId).length;
@@ -515,7 +516,7 @@ export function DashboardPatternStudy({
                     : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                {displayName} ({count})
+                {translatePatternName(displayName)} ({count})
               </button>
             );
           })}

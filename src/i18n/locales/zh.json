@@ -849,7 +849,8 @@
     "winRateColumnTooltip": "Historical win rate from backtested data. Upgrade to see full edge metrics.",
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
-    "activePatternScreener": "Active Pattern Screener"
+    "activePatternScreener": "Active Pattern Screener",
+    "winRate": "胜率"
   },
   "alerts": {
     "prefilledFromPlaybook": "从剧本预填充",
@@ -1829,7 +1830,27 @@
     "noEventsMatchFilters": "没有事件符合您的筛选条件",
     "tomorrow": "明天",
     "losses": "亏损",
-    "patternHistoryWillPopulate": "当检测到并解决形态时，形态历史记录将填充"
+    "patternHistoryWillPopulate": "当检测到并解决形态时，形态历史记录将填充",
+    "outcomeTargetHit": "目标达成",
+    "outcomeStopHit": "止损触发",
+    "outcomeTimeout": "超时",
+    "outcomePending": "待定",
+    "outcomeTpHit": "TP达成",
+    "outcomeSlHit": "SL触发",
+    "all": "全部",
+    "copilotToday": "今日Copilot",
+    "yourOverrides": "你的覆盖操作",
+    "noTradesYet": "今日暂无交易 — Copilot扫描中",
+    "paperActive": "模拟交易中",
+    "paperRunning": "模拟运行中",
+    "search": "搜索",
+    "entryLabel": "入场:",
+    "slLabel": "SL:",
+    "tpLabel": "TP:",
+    "openFullChart": "打开完整图表",
+    "backToStudyChart": "返回研究图表",
+    "chart": "图表",
+    "research": "研究"
   },
   "tradingStrategiesPage": {
     "waitConfirmationDesc": "不要在第一个信号蜡烛出现时立即入场",
