@@ -194,7 +194,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               size="icon"
               className="h-8 w-8"
               onClick={onOpenFullChart}
-              title="Open full chart"
+              title={t('commandCenter.openFullChart', 'Open full chart')}
             >
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -204,7 +204,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
             size="icon"
             className="h-8 w-8"
             onClick={onClose}
-            title="Back to study chart"
+            title={t('commandCenter.backToStudyChart', 'Back to study chart')}
           >
             <X className="h-4 w-4" />
           </Button>
