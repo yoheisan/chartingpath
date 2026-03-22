@@ -325,10 +325,10 @@ export function WatchlistPanel({
                     >
                       <InstrumentLogo instrument={item.symbol} size="sm" showName={false} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1">
                           <span className="text-[13px] font-medium truncate">{item.symbol}</span>
                           {isOutside && (
-                            <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" title={alignment.reasons[0]} />
+                            <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
                           )}
                         </div>
                         {'name' in item && item.name && (
