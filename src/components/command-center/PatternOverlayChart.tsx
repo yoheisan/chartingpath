@@ -168,17 +168,17 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
         <div className="hidden md:flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5 text-primary" />
-            <span className="text-muted-foreground">Entry:</span>
+            <span className="text-muted-foreground">{t('commandCenter.entryLabel', 'Entry:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.entry)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ShieldAlert className="h-3.5 w-3.5 text-destructive" />
-            <span className="text-muted-foreground">SL:</span>
+            <span className="text-muted-foreground">{t('commandCenter.slLabel', 'SL:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.stopLoss)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-muted-foreground">TP:</span>
+            <span className="text-muted-foreground">{t('commandCenter.tpLabel', 'TP:')}</span>
             <span className="font-medium">{formatPrice(tradePlan.takeProfit)}</span>
           </div>
           <Badge variant="secondary" className="text-xs">
