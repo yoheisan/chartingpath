@@ -73,6 +73,13 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
 
   const openPlanBuilder = useCallback(() => {
     setPendingPlanBuilder(true);
+    setPendingNewPlan(false);
+    setIsOpen(true);
+  }, []);
+
+  const openNewPlanBuilder = useCallback(() => {
+    setPendingPlanBuilder(true);
+    setPendingNewPlan(true);
     setIsOpen(true);
   }, []);
 
