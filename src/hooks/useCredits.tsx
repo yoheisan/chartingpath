@@ -19,7 +19,7 @@ const PLAN_MAP: Record<string, PlanTier> = {
   starter: 'LITE',
   pro: 'PRO',
   pro_plus: 'PRO',
-  elite: 'TEAM',
+  elite: 'ELITE',
 };
 
 export function useCredits(): CreditsInfo & { refetch: () => Promise<void> } {

@@ -44,7 +44,7 @@ function getPlanTier(subscriptionPlan: string): PlanTier {
     'starter': 'PLUS',
     'pro': 'PRO',
     'pro_plus': 'PRO',
-    'elite': 'TEAM',
+    'elite': 'ELITE',
   };
   return planMapping[subscriptionPlan.toLowerCase()] || 'FREE';
 }
