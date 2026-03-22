@@ -124,6 +124,7 @@ export function GradeBadge({
   showTooltip = true,
   className 
 }: GradeBadgeProps) {
+  const { t } = useTranslation();
   // Extract grade from either prop
   const displayGrade = grade 
     ? ((/^[A-F]$/.test(grade) ? grade : 'C') as GradeLetter)
@@ -153,7 +154,7 @@ export function GradeBadge({
         className
       )}
     >
-      {variant === 'pill' ? `Grade ${displayGrade}` : displayGrade}
+      {variant === 'pill' ? t(`grades.grade${displayGrade}`, `Grade ${displayGrade}`) : displayGrade}
     </span>
   );
   
@@ -167,10 +168,10 @@ export function GradeBadge({
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <p className="text-xs font-medium mb-1">
-            Pattern Grade: {displayGrade} ({config.label})
+            {t('grades.patternGrade', 'Pattern Grade')}: {displayGrade} ({t(`grades.label${displayGrade}`, config.label)})
           </p>
           <p className="text-xs text-muted-foreground">
-            Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.
+            {t('grades.tooltip', 'Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.')}
           </p>
         </TooltipContent>
       </Tooltip>
