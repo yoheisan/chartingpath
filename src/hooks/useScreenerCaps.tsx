@@ -13,7 +13,7 @@ export const ALL_PATTERN_IDS = [
   // Extended (PLUS+)
   'head-and-shoulders', 'inverse-head-and-shoulders',
   'rising-wedge', 'falling-wedge',
-  // Premium (PRO/TEAM)
+  // Premium (PRO/ELITE)
   'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom'
 ];
 
