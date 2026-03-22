@@ -434,7 +434,7 @@ const InfraTab = () => (
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-2 mb-2">
-                {[["21","LITE"],["9","PLUS"],["4","PRO"],["2","TEAM"]].map(([n,l]) => (
+                {[["21","LITE"],["9","PLUS"],["4","PRO"],["2","ELITE"]].map(([n,l]) => (
                   <div key={l} className="text-center p-1 bg-background rounded">
                     <p className="text-sm font-bold">{n}</p>
                     <p className="text-xs text-muted-foreground">{l}</p>
@@ -451,7 +451,7 @@ const InfraTab = () => (
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-2 mb-2">
-                {[["208","LITE"],["86","PLUS"],["32","PRO"],["13","TEAM"]].map(([n,l]) => (
+                {[["208","LITE"],["86","PLUS"],["32","PRO"],["13","ELITE"]].map(([n,l]) => (
                   <div key={l} className="text-center p-1 bg-background rounded">
                     <p className="text-sm font-bold">{n}</p>
                     <p className="text-xs text-muted-foreground">{l}</p>
@@ -464,8 +464,8 @@ const InfraTab = () => (
         </div>
 
         <div className="p-4 bg-muted rounded-lg text-sm mt-4 space-y-1">
-          <p className="font-mono">Paying Users = SUM(LITE + PLUS + PRO + TEAM)</p>
-          <p className="font-mono">Monthly Revenue = (LITE×12) + (PLUS×29) + (PRO×79) + (TEAM×199)</p>
+          <p className="font-mono">Paying Users = SUM(LITE + PLUS + PRO + ELITE)</p>
+          <p className="font-mono">Monthly Revenue = (LITE×12) + (PLUS×29) + (PRO×79) + (ELITE×199)</p>
           <p className="font-mono pt-2 border-t mt-2">Upgrade to Extended when: Monthly Revenue &gt; $249</p>
           <p className="font-mono">Upgrade to Enterprise when: Monthly Revenue &gt; $2,499</p>
         </div>

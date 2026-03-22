@@ -891,7 +891,7 @@ const MemberAlerts = () => {
             {(() => {
               const planMapping: Record<string, PlanTier> = {
                 free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'PLUS',
-                pro: 'PRO', pro_plus: 'PRO', elite: 'TEAM', team: 'TEAM',
+                pro: 'PRO', pro_plus: 'PRO', elite: 'ELITE', team: 'ELITE',
               };
               const tier = planMapping[profile?.subscription_plan?.toLowerCase() ?? 'free'] || 'FREE';
               const maxPlanAlerts = PLANS_CONFIG.tiers[tier].maxPlanAlerts;

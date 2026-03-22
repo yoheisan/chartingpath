@@ -9,7 +9,7 @@ interface DataScalingCardProps {
     lite: number;
     plus: number;
     pro: number;
-    team: number;
+    elite: number;
   };
 }
 
@@ -37,12 +37,12 @@ const PLANS = {
 };
 
 export const DataScalingCard = ({ planCounts }: DataScalingCardProps) => {
-  const payingUsers = planCounts.lite + planCounts.plus + planCounts.pro + planCounts.team;
+  const payingUsers = planCounts.lite + planCounts.plus + planCounts.pro + planCounts.elite;
   const monthlyRevenue = 
     (planCounts.lite * 12) + 
     (planCounts.plus * 29) + 
     (planCounts.pro * 79) + 
-    (planCounts.team * 199);
+    (planCounts.elite * 199);
 
   // Determine current and next milestone
   const extendedProgress = Math.min(100, (payingUsers / PLANS.extended.minUsers) * 100);
@@ -104,7 +104,7 @@ export const DataScalingCard = ({ planCounts }: DataScalingCardProps) => {
           <Badge variant="outline">LITE: {planCounts.lite}</Badge>
           <Badge variant="outline">PLUS: {planCounts.plus}</Badge>
           <Badge variant="outline">PRO: {planCounts.pro}</Badge>
-          <Badge variant="outline">TEAM: {planCounts.team}</Badge>
+          <Badge variant="outline">ELITE: {planCounts.elite}</Badge>
         </div>
 
         {/* Milestones */}

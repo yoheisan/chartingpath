@@ -62,9 +62,9 @@ describe('Plans Configuration Sync', () => {
       expect(edgeFnContent).toContain('monthlyCredits: 900');
       expect(PLANS_CONFIG.tiers.PRO.monthlyCredits).toBe(900);
       
-      // Check TEAM tier credits
+      // Check ELITE tier credits
       expect(edgeFnContent).toContain('monthlyCredits: 3000');
-      expect(PLANS_CONFIG.tiers.TEAM.monthlyCredits).toBe(3000);
+      expect(PLANS_CONFIG.tiers.ELITE.monthlyCredits).toBe(3000);
     });
 
     it('should have matching estimateCredits function (core logic comparison)', () => {

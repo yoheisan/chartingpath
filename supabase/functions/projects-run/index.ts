@@ -697,7 +697,8 @@ function mapDbTierToPlanTier(dbTier: string | null): PlanTier {
     'free': 'FREE',
     'plus': 'PLUS', 
     'pro': 'PRO',
-    'team': 'TEAM',
+    'team': 'ELITE',
+    'elite': 'ELITE',
     'starter': 'FREE',
   };
   return tierMap[dbTier.toLowerCase()] || 'FREE';
@@ -1706,7 +1707,7 @@ serve(async (req) => {
           if (isAdmin === true) {
             console.log(`Admin user ${user.id} - bypassing all caps`);
             capInfo.allowed = true;
-            capInfo.tier = 'TEAM';
+            capInfo.tier = 'ELITE';
             capInfo.creditsBalance = 999999;
             capInfo.dailyRunCap = 999999;
             capInfo.dailyRuns = 0;

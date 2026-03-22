@@ -13,7 +13,7 @@ export const ALL_PATTERN_IDS = [
   // Extended (PLUS+)
   'head-and-shoulders', 'inverse-head-and-shoulders',
   'rising-wedge', 'falling-wedge',
-  // Premium (PRO/TEAM)
+  // Premium (PRO/ELITE)
   'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom'
 ];
 
@@ -64,8 +64,8 @@ export function useScreenerCaps() {
       'free': 'FREE',
       'plus': 'PLUS',
       'pro': 'PRO',
-      'elite': 'TEAM',
-      'team': 'TEAM'
+      'elite': 'ELITE',
+      'team': 'ELITE'
     };
     
     return planMapping[profile.subscription_plan.toLowerCase()] || 'FREE';

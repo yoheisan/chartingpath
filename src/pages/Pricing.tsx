@@ -29,7 +29,7 @@ const Pricing = () => {
     lite: 'starter',
     plus: 'pro',
     pro: 'pro_plus',
-    team: 'elite',
+    elite: 'elite',
   };
 
   const handlePlanSelect = (planKey: string) => {
@@ -138,7 +138,7 @@ const Pricing = () => {
       cta: 'Start Lite Plan',
     },
     {
-      key: 'team',
+      key: 'elite',
       price: 199,
       annualPrice: 1990,
       features: [
@@ -152,7 +152,7 @@ const Pricing = () => {
         "Early access to new features",
       ],
       icon: Crown,
-      cta: 'Start Team Plan',
+      cta: 'Start Elite Plan',
     },
   ];
 
@@ -327,13 +327,13 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* Expand to see Lite & Team */}
+        {/* Expand to see Lite & Elite */}
         <div className="text-center mb-12">
           <button
             onClick={() => setShowAllPlans(!showAllPlans)}
             className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
           >
-            {showAllPlans ? 'Show fewer plans' : 'See Lite ($12/mo) and Team ($199/mo) plans'}
+            {showAllPlans ? 'Show fewer plans' : 'See Lite ($12/mo) and Elite ($199/mo) plans'}
           </button>
 
           {showAllPlans && (

@@ -2199,10 +2199,10 @@
         "description": "Complete toolkit for the professional trader",
         "name": "Pro"
       },
-      "team": {
-        "button": "Join Team",
-        "description": "Enterprise-grade features for trading teams",
-        "name": "Team"
+      "elite": {
+        "button": "Join Elite",
+        "description": "Premium features for power traders",
+        "name": "Elite"
       }
     },
     "proFeatures": "Pro features, fair pricing",
@@ -2221,7 +2221,7 @@
         "lite": "Hobbyist traders starting out",
         "plus": "Active traders testing ideas",
         "pro": "Serious traders scanning daily",
-        "team": "Trading teams & portfolio managers"
+        "elite": "Power traders & portfolio managers"
       },
       "creditsExplained": "Credits scale with symbols × history × patterns × timeframe",
       "cta": {
@@ -2229,7 +2229,7 @@
         "lite": "Get Lite",
         "plus": "Get Plus",
         "pro": "Upgrade to Pro",
-        "team": "Get Team"
+        "elite": "Get Elite"
       },
       "estimatedBefore": "Credits are estimated before you run.",
       "examples": {
@@ -3069,7 +3069,7 @@
     "subtitle": "Deep backtest patterns with regime analysis",
     "visualAudit": "Visual Audit",
     "plusRequired": "Plus+ Required",
-    "tierGateMessage": "Pattern Lab is available on Plus, Pro, and Team plans.",
+    "tierGateMessage": "Pattern Lab is available on Plus, Pro, and Elite plans.",
     "upgradeToUnlock": "Upgrade to unlock",
     "modePrompt": "What's your goal for this session?",
     "validateSignal": "Validate a Signal",
@@ -4899,7 +4899,7 @@
     "s3plan2": "Lite – $12/month or $120/year",
     "s3plan3": "Plus – $29/month or $290/year",
     "s3plan4": "Pro – $79/month or $790/year",
-    "s3plan5": "Team – $199/month or $1,990/year",
+    "s3plan5": "Elite – $199/month or $1,990/year",
     "s3p2": "3.2 Payments are processed via Stripe.",
     "s3p3": "3.3 Monthly plans bill every month on the signup date. Annual plans bill once every 12 months.",
     "s3p4": "3.4 Annual plans offer up to 17% savings compared to monthly billing and are billed once every 12 months on the signup date.",

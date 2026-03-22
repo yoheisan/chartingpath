@@ -20,7 +20,7 @@ const ProjectsPricing = () => {
     LITE: 'starter',
     PLUS: 'pro',
     PRO: 'pro_plus',
-    TEAM: 'elite',
+    ELITE: 'elite',
   };
 
   const handlePlanSelect = async (tierKey: string) => {
@@ -44,11 +44,11 @@ const ProjectsPricing = () => {
     LITE: Math.round(20500 / 12 / 100),
     PLUS: Math.round(42100 / 12 / 100),
     PRO: Math.round(85300 / 12 / 100),
-    TEAM: Math.round(160900 / 12 / 100),
+    ELITE: Math.round(160900 / 12 / 100),
   };
 
   const monthlyPrices: Record<string, number> = {
-    FREE: 0, LITE: 19, PLUS: 39, PRO: 79, TEAM: 149,
+    FREE: 0, LITE: 19, PLUS: 39, PRO: 79, ELITE: 149,
   };
 
   const tiers: Array<{
@@ -83,9 +83,9 @@ const ProjectsPricing = () => {
       cta: p('cta.pro'), bestFor: p('bestFor.pro'),
     },
     {
-      key: 'TEAM', name: 'Team', monthlyPrice: 149, annualMonthlyPrice: annualMonthlyPrices.TEAM, annualYearlyPrice: 1609,
-      config: PLANS_CONFIG.tiers.TEAM, popular: false,
-      cta: p('cta.team'), bestFor: p('bestFor.team'),
+      key: 'ELITE', name: 'Elite', monthlyPrice: 149, annualMonthlyPrice: annualMonthlyPrices.ELITE, annualYearlyPrice: 1609,
+      config: PLANS_CONFIG.tiers.ELITE, popular: false,
+      cta: p('cta.elite'), bestFor: p('bestFor.elite'),
     },
   ];
 

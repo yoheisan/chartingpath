@@ -22,7 +22,7 @@ const AdminKPIDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
-  const [planCounts, setPlanCounts] = useState({ free: 0, lite: 0, plus: 0, pro: 0, team: 0 });
+  const [planCounts, setPlanCounts] = useState({ free: 0, lite: 0, plus: 0, pro: 0, elite: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -79,14 +79,14 @@ const AdminKPIDashboard = () => {
         .select('subscription_plan');
       
       if (planData) {
-        const counts = { free: 0, lite: 0, plus: 0, pro: 0, team: 0 };
+        const counts = { free: 0, lite: 0, plus: 0, pro: 0, elite: 0 };
         planData.forEach((p: { subscription_plan: string | null }) => {
           const plan = (p.subscription_plan || 'free').toLowerCase();
           if (plan === 'starter' || plan === 'free') counts.free++;
           else if (plan === 'lite') counts.lite++;
           else if (plan === 'plus') counts.plus++;
           else if (plan === 'pro') counts.pro++;
-          else if (plan === 'elite' || plan === 'team') counts.team++;
+          else if (plan === 'elite' || plan === 'team') counts.elite++;
         });
         setPlanCounts(counts);
       }

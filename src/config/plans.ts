@@ -13,7 +13,7 @@
  * BETA v3.0: Simplified to credits-only constraint (no daily run caps)
  */
 
-export type PlanTier = 'FREE' | 'LITE' | 'PLUS' | 'PRO' | 'TEAM';
+export type PlanTier = 'FREE' | 'LITE' | 'PLUS' | 'PRO' | 'ELITE';
 export type ProjectType = 'pattern_lab' | 'setup_finder' | 'portfolio_checkup' | 'portfolio_sim'; // legacy types kept for DB compat
 
 export interface SetupFinderCaps {
@@ -168,14 +168,14 @@ export const PLANS_CONFIG: PlansConfig = {
         portfolio_sim: { maxHoldings: 30, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
-    TEAM: {
+    ELITE: {
       monthlyCredits: 3000,
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
-      maxPlanAlerts: 50, // 50 per plan × 99 plans = 4,950 max
+      maxPlanAlerts: 50, // 50 per plan × 20 plans = 1,000 max
       maxWatchlistSlots: 9999,
-      maxActivePlans: 99,
+      maxActivePlans: 20,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
@@ -366,15 +366,15 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
   },
-  TEAM: {
-    name: 'Team',
+  ELITE: {
+    name: 'Elite',
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
     monthlyScripts: -1,
     maxActiveAlerts: 500,
     maxPlanAlerts: 50, // per plan
-    bestFor: 'Trading teams & portfolio managers',
+    bestFor: 'Power traders & portfolio managers',
     color: 'text-amber-500'
   }
 };
