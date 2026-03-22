@@ -94,7 +94,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
     <div className="flex flex-col flex-1 min-h-0">
       <div className="px-3 py-2">
         <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Watchlist · AI Gate
+          {t('copilot.watchlistAiGate', 'Watchlist · AI Gate')}
         </span>
       </div>
 
