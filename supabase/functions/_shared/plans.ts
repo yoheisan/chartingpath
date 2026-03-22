@@ -184,10 +184,10 @@ export const PLANS_CONFIG: PlansConfig = {
         allowedTimeframes: ['15m', '1h', '4h', '8h', '1d', '1wk']
       },
       projects: {
-        setup_finder: { maxInstruments: 100, maxLookbackYears: 7, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 25, maxLookbackYears: 10, maxPatterns: 10, maxSweeps: 10, allowedTimeframes: ['4h', '1d'] },
-        portfolio_checkup: { maxHoldings: 250, maxLookbackYears: 10, allowedTimeframes: ['1d', '4h'] },
-        portfolio_sim: { maxHoldings: 100, maxLookbackYears: 20, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
+        setup_finder: { maxInstruments: 100, maxLookbackYears: 5, maxPatterns: 10, allowedTimeframes: ['4h', '1d'] },
+        pattern_lab: { enabled: true, maxInstruments: 25, maxLookbackYears: 5, maxPatterns: 10, maxSweeps: 10, allowedTimeframes: ['4h', '1d'] },
+        portfolio_checkup: { maxHoldings: 250, maxLookbackYears: 5, allowedTimeframes: ['1d', '4h'] },
+        portfolio_sim: { maxHoldings: 100, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     }
   }
