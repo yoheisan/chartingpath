@@ -176,6 +176,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       setConfluenceEnabled(true);
       setShowAdvanced(true);
     }
+    // Instrument universe
+    if (existingPlan.asset_classes?.length) {
+      setAssetClasses(existingPlan.asset_classes);
+    }
+    if (existingPlan.stock_exchanges?.length) {
+      setStockExchanges(existingPlan.stock_exchanges);
+    }
+    if (existingPlan.fx_categories?.length) {
+      setFxCategories(existingPlan.fx_categories);
+    }
+    if (existingPlan.crypto_categories?.length) {
+      setCryptoCategories(existingPlan.crypto_categories);
+    }
     // Check if window matches a preset
     const matchedPreset = WINDOW_PRESETS.find(
       p => p.start === existingPlan.trading_window_start && p.end === existingPlan.trading_window_end
@@ -193,6 +206,29 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
   const toggleMtfTimeframe = (tf: string) => {
     setMtfTimeframes(prev => prev.includes(tf) ? prev.filter(x => x !== tf) : [...prev, tf]);
+  };
+
+  const toggleAssetClass = (ac: string) => {
+    setAssetClasses(prev => {
+      const next = prev.includes(ac) ? prev.filter(x => x !== ac) : [...prev, ac];
+      // Clear sub-filters when asset class removed
+      if (!next.includes("stocks")) setStockExchanges([]);
+      if (!next.includes("forex")) setFxCategories([]);
+      if (!next.includes("crypto")) setCryptoCategories([]);
+      return next;
+    });
+  };
+
+  const toggleStockExchange = (ex: string) => {
+    setStockExchanges(prev => prev.includes(ex) ? prev.filter(x => x !== ex) : [...prev, ex]);
+  };
+
+  const toggleFxCategory = (cat: string) => {
+    setFxCategories(prev => prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]);
+  };
+
+  const toggleCryptoCategory = (cat: string) => {
+    setCryptoCategories(prev => prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]);
   };
 
   const exampleRisk = useMemo(() => {
