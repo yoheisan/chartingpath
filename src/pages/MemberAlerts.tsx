@@ -570,6 +570,19 @@ const MemberAlerts = () => {
         </div>
       </div>
 
+      {/* Plan Alert Generator */}
+      {user && masterPlans.length > 0 && (
+        <div className="mb-8">
+          <PlanAlertGenerator
+            userId={user.id}
+            plans={masterPlans}
+            onAlertsCreated={() => fetchAlerts(user.id)}
+            canCreateMore={canCreateMore}
+            remainingSlots={planLimits.max === 999999 ? 999 : Math.max(0, planLimits.max - activeAlerts.length)}
+          />
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Create Alert Form */}
         <Card>
