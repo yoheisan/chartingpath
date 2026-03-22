@@ -768,7 +768,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
                       {rightPanelTab === 'alerts' && (
-                        <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                        <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} activePlan={activePlan} plans={masterPlans} />
                       )}
                     </TabsContent>
                     <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
