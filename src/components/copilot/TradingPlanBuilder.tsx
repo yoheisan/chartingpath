@@ -69,7 +69,9 @@ interface TradingPlanBuilderProps {
   isNewPlan?: boolean;
 }
 
-export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchToNL }: TradingPlanBuilderProps) {
+export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchToNL, isNewPlan }: TradingPlanBuilderProps) {
+  // Plan name
+  const [planName, setPlanName] = useState("My Trading Plan");
   // Section 1 — Patterns
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
   // Section 2 — Direction
