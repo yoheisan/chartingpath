@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTradeReport, type DateRange } from '@/hooks/useTradeReport';
-import { CopilotAuthGate } from '@/components/copilot/CopilotAuthGate';
+import { useAuth } from '@/contexts/AuthContext';
 import { ReadinessScore } from '@/components/report/ReadinessScore';
 import { KeyMetricsRow } from '@/components/report/KeyMetricsRow';
 import { EquityCurve } from '@/components/report/EquityCurve';
