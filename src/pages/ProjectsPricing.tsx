@@ -44,7 +44,7 @@ const ProjectsPricing = () => {
     LITE: Math.round(20500 / 12 / 100),
     PLUS: Math.round(42100 / 12 / 100),
     PRO: Math.round(85300 / 12 / 100),
-    TEAM: Math.round(160900 / 12 / 100),
+    ELITE: Math.round(160900 / 12 / 100),
   };
 
   const monthlyPrices: Record<string, number> = {
