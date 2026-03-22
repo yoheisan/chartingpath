@@ -697,7 +697,8 @@ function mapDbTierToPlanTier(dbTier: string | null): PlanTier {
     'free': 'FREE',
     'plus': 'PLUS', 
     'pro': 'PRO',
-    'team': 'TEAM',
+    'team': 'ELITE',
+    'elite': 'ELITE',
     'starter': 'FREE',
   };
   return tierMap[dbTier.toLowerCase()] || 'FREE';
