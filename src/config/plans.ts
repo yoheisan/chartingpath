@@ -351,7 +351,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 300,
     monthlyScripts: 30,
     maxActiveAlerts: 25,
-    maxPlanAlerts: 25,
+    maxPlanAlerts: 10, // per plan
     bestFor: 'Active traders testing ideas',
     color: 'text-blue-500'
   },
