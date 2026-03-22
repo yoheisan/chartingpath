@@ -66,6 +66,7 @@ export interface TierConfig {
   monthlyScripts: number; // -1 = unlimited
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
+  maxPlanAlerts: number; // Auto-generated plan-based alerts cap
   maxWatchlistSlots: number;
   maxActivePlans: number;
   screener: ScreenerCaps;
@@ -84,6 +85,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
+      maxPlanAlerts: 0,
       maxWatchlistSlots: 0,
       maxActivePlans: 1,
       screener: {
@@ -105,6 +107,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 10,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 5,
+      maxPlanAlerts: 5,
       maxWatchlistSlots: 20,
       maxActivePlans: 2,
       screener: {
@@ -126,6 +129,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 30,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
+      maxPlanAlerts: 25,
       maxWatchlistSlots: 100,
       maxActivePlans: 5,
       screener: {
@@ -147,6 +151,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 100,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
+      maxPlanAlerts: 100,
       maxWatchlistSlots: 300,
       maxActivePlans: 10,
       screener: {
@@ -168,6 +173,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
+      maxPlanAlerts: 500,
       maxWatchlistSlots: 9999,
       maxActivePlans: 99,
       screener: {

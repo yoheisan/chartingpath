@@ -66,6 +66,7 @@ export interface TierConfig {
   monthlyScripts: number; // -1 = unlimited
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
+  maxPlanAlerts: number; // Auto-generated plan-based alerts cap
   maxWatchlistSlots: number;
   maxActivePlans: number;
   screener: ScreenerCaps;
@@ -84,6 +85,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 3,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 3,
+      maxPlanAlerts: 0, // No plan-based alerts on free — incentivizes upgrade
       maxWatchlistSlots: 0,
       maxActivePlans: 1,
       screener: {
@@ -105,6 +107,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 10,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 5,
+      maxPlanAlerts: 5, // 5 auto plan alerts
       maxWatchlistSlots: 20,
       maxActivePlans: 2,
       screener: {
@@ -126,6 +129,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 30,
       maxConcurrentRuns: 1,
       maxActiveAlerts: 25,
+      maxPlanAlerts: 25, // Matches manual alert cap
       maxWatchlistSlots: 100,
       maxActivePlans: 5,
       screener: {
@@ -147,6 +151,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: 100,
       maxConcurrentRuns: 2,
       maxActiveAlerts: 100,
+      maxPlanAlerts: 100,
       maxWatchlistSlots: 300,
       maxActivePlans: 10,
       screener: {
@@ -168,6 +173,7 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
+      maxPlanAlerts: 500,
       maxWatchlistSlots: 9999,
       maxActivePlans: 99,
       screener: {
@@ -310,6 +316,7 @@ export interface TierDisplayInfo {
   monthlyCredits: number;
   monthlyScripts: number; // -1 = unlimited
   maxActiveAlerts: number;
+  maxPlanAlerts: number;
   bestFor: string;
   color: string;
 }
@@ -322,6 +329,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 50,
     monthlyScripts: 3,
     maxActiveAlerts: 3,
+    maxPlanAlerts: 0,
     bestFor: 'Explore the platform',
     color: 'text-muted-foreground'
   },
@@ -332,6 +340,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 100,
     monthlyScripts: 10,
     maxActiveAlerts: 5,
+    maxPlanAlerts: 5,
     bestFor: 'Hobbyist traders starting out',
     color: 'text-emerald-500'
   },
@@ -342,6 +351,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 300,
     monthlyScripts: 30,
     maxActiveAlerts: 25,
+    maxPlanAlerts: 25,
     bestFor: 'Active traders testing ideas',
     color: 'text-blue-500'
   },
@@ -352,6 +362,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 900,
     monthlyScripts: 100,
     maxActiveAlerts: 100,
+    maxPlanAlerts: 100,
     bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
   },
@@ -362,6 +373,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 3000,
     monthlyScripts: -1,
     maxActiveAlerts: 500,
+    maxPlanAlerts: 500,
     bestFor: 'Trading teams & portfolio managers',
     color: 'text-amber-500'
   }

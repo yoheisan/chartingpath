@@ -28,6 +28,7 @@ import { PushNotificationPrompt } from "@/components/alerts/PushNotificationProm
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
 import { PlanAlertCard } from "@/components/alerts/PlanAlertCard";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useTranslation } from "react-i18next";
 
 interface UserProfile {
@@ -887,12 +888,25 @@ const MemberAlerts = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Master Plan auto-alert card */}
-            <PlanAlertCard
-              plans={masterPlans}
-              selectedPlanId={masterSelectedPlanId}
-              onSelectPlan={masterSelectPlan}
-              planAlertCount={alerts.filter(a => a.master_plan_id && a.status === 'active').length}
-            />
+            {(() => {
+              const planMapping: Record<string, PlanTier> = {
+                free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'PLUS',
+                pro: 'PRO', pro_plus: 'PRO', elite: 'TEAM', team: 'TEAM',
+              };
+              const tier = planMapping[profile?.subscription_plan?.toLowerCase() ?? 'free'] || 'FREE';
+              const maxPlanAlerts = PLANS_CONFIG.tiers[tier].maxPlanAlerts;
+              const tierName = tier.charAt(0) + tier.slice(1).toLowerCase();
+              return (
+                <PlanAlertCard
+                  plans={masterPlans}
+                  selectedPlanId={masterSelectedPlanId}
+                  onSelectPlan={masterSelectPlan}
+                  planAlertCount={alerts.filter(a => a.master_plan_id && a.status === 'active').length}
+                  maxPlanAlerts={maxPlanAlerts}
+                  tierName={tierName}
+                />
+              );
+            })()}
 
             {alerts.length === 0 ? (
               <div className="text-center py-8">
