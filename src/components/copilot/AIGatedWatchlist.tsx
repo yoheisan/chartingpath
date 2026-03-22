@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useGateEvaluation, GateEvaluation } from "@/hooks/useGateEvaluation";
 import { toast } from "sonner";
+import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
+import { Plus } from "lucide-react";
 
 interface WatchlistRow {
   symbol: string;
@@ -26,7 +28,6 @@ interface AIGatedWatchlistProps {
 }
 
 export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) {
-  const [ticker, setTicker] = useState("");
   const [watchlist, setWatchlist] = useState<WatchlistRow[]>(INITIAL_WATCHLIST);
   const { evaluate, getEvaluation, isLoading } = useGateEvaluation();
 
@@ -51,40 +52,38 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleAddTicker = useCallback(async () => {
-    if (!ticker.trim()) return;
-    const symbol = ticker.trim().toUpperCase();
+  const handleAddTicker = useCallback(async (symbol: string) => {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return;
 
     // Check if already in watchlist
-    if (watchlist.some((r) => r.symbol === symbol)) {
-      toast.info(`${symbol} is already in your watchlist`);
-      setTicker("");
+    if (watchlist.some((r) => r.symbol === cleanSymbol)) {
+      toast.info(`${cleanSymbol} is already in your watchlist`);
       return;
     }
 
     // Add with loading state
     setWatchlist((prev) => [
       ...prev,
-      { symbol, gate: "partial", source: "you", pnl: "scanning" },
+      { symbol: cleanSymbol, gate: "partial", source: "you", pnl: "scanning" },
     ]);
-    setTicker("");
 
     // Evaluate gate
-    const eval_ = await evaluate(symbol, undefined, undefined, undefined, "user_selected");
+    const eval_ = await evaluate(cleanSymbol, undefined, undefined, undefined, "user_selected");
     if (eval_) {
       setWatchlist((prev) =>
         prev.map((r) =>
-          r.symbol === symbol
+          r.symbol === cleanSymbol
             ? { ...r, gate: eval_.gate_result, pnl: "queued", gateReason: eval_.gate_reason }
             : r
         )
       );
       if (eval_.gate_result === "conflict" && onConflictDetected) {
-        onConflictDetected(symbol, eval_.gate_reason);
+        onConflictDetected(cleanSymbol, eval_.gate_reason);
       }
-      toast.success(`${symbol} evaluated: ${eval_.gate_result}`);
+      toast.success(`${cleanSymbol} evaluated: ${eval_.gate_result}`);
     }
-  }, [ticker, watchlist, evaluate, onConflictDetected]);
+  }, [watchlist, evaluate, onConflictDetected]);
 
   const isPnlPositive = (pnl: string) => pnl.startsWith("+");
   const isPnlNegative = (pnl: string) => pnl.startsWith("−") || pnl.startsWith("-");
@@ -136,15 +135,14 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
       </ScrollArea>
 
       <div className="p-2 border-t border-border/40">
-        <input
-          type="text"
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value.toUpperCase())}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddTicker();
-          }}
-          placeholder="+ Add ticker → runs AI Gate"
-          className="w-full bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-blue-500/40 transition-colors"
+        <UniversalSymbolSearch
+          onSelect={(symbol) => handleAddTicker(symbol)}
+          trigger={
+            <button className="w-full flex items-center gap-2 bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:border-primary/40 hover:text-muted-foreground transition-colors">
+              <Plus className="h-3 w-3" />
+              Add ticker → runs AI Gate
+            </button>
+          }
         />
       </div>
     </div>
