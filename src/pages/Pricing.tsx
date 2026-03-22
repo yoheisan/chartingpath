@@ -29,7 +29,7 @@ const Pricing = () => {
     lite: 'starter',
     plus: 'pro',
     pro: 'pro_plus',
-    team: 'elite',
+    elite: 'elite',
   };
 
   const handlePlanSelect = (planKey: string) => {
