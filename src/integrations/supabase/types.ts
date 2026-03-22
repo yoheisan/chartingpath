@@ -2872,8 +2872,11 @@ export type Database = {
       }
       master_plans: {
         Row: {
+          asset_classes: string[] | null
           created_at: string
+          crypto_categories: string[] | null
           excluded_conditions: Json | null
+          fx_categories: string[] | null
           id: string
           is_active: boolean | null
           max_open_positions: number | null
@@ -2888,6 +2891,7 @@ export type Database = {
           preferred_patterns: Json | null
           raw_nl_input: string | null
           sector_filters: Json | null
+          stock_exchanges: string[] | null
           stop_loss_rule: string | null
           trading_window_end: string | null
           trading_window_start: string | null
@@ -2897,8 +2901,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          asset_classes?: string[] | null
           created_at?: string
+          crypto_categories?: string[] | null
           excluded_conditions?: Json | null
+          fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
           max_open_positions?: number | null
@@ -2913,6 +2920,7 @@ export type Database = {
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
+          stock_exchanges?: string[] | null
           stop_loss_rule?: string | null
           trading_window_end?: string | null
           trading_window_start?: string | null
@@ -2922,8 +2930,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          asset_classes?: string[] | null
           created_at?: string
+          crypto_categories?: string[] | null
           excluded_conditions?: Json | null
+          fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
           max_open_positions?: number | null
@@ -2938,6 +2949,7 @@ export type Database = {
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
+          stock_exchanges?: string[] | null
           stop_loss_rule?: string | null
           trading_window_end?: string | null
           trading_window_start?: string | null
