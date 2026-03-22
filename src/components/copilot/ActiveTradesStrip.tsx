@@ -26,15 +26,17 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-semibold text-foreground">Active Trades</span>
+        <span className="text-xs font-semibold text-foreground">
+          Active Trades {isDemo && <span className="text-muted-foreground font-normal">(preview)</span>}
+        </span>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono">
-          {trades.length}
+          {displayTrades.length}
         </Badge>
       </div>
 
       <ScrollArea className="max-h-[200px]">
         <div className="flex flex-col gap-1">
-          {trades.map((trade) => {
+          {displayTrades.map((trade) => {
             const isSelected = trade.id === selectedTradeId;
             const pnlR = trade.outcome_r ?? 0;
             const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
