@@ -384,7 +384,12 @@ const PatternLabWizard = () => {
           setEstimate(data);
           setEstimateError(null);
           if (data.tier) {
-            setUserTier(data.tier);
+            // Map legacy tier names to current ones (e.g. TEAM → ELITE)
+            const tierMap: Record<string, PlanTier> = { TEAM: 'ELITE' };
+            const mappedTier = (tierMap[data.tier] || data.tier) as PlanTier;
+            if (PLANS_CONFIG.tiers[mappedTier]) {
+              setUserTier(mappedTier);
+            }
           }
         }
       } catch (error) {
