@@ -31,6 +31,7 @@ import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useDashboardPrefetch } from '@/hooks/useDashboardPrefetch';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthGate } from '@/hooks/useAuthGate';
+import { useMasterPlan } from '@/hooks/useMasterPlan';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
 import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
@@ -99,6 +100,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
 
   // Auth gate for write actions
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate('dashboard features');
+  const { plan: activePlan, plans: masterPlans } = useMasterPlan();
 
   // Persisted dashboard settings — skip writes for anonymous users
   const { settings, updateSettings: _updateSettings } = useDashboardSettings();
@@ -761,11 +763,12 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                         refreshTrigger={watchlistVersion}
                         defaultTab={settings.watchlistTab}
                         onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
+                        activePlan={activePlan}
                       />
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
                       {rightPanelTab === 'alerts' && (
-                        <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
+                        <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} activePlan={activePlan} plans={masterPlans} />
                       )}
                     </TabsContent>
                     <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">

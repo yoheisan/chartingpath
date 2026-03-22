@@ -305,6 +305,7 @@ export type Database = {
           auto_paper_trade: boolean
           created_at: string | null
           id: string
+          master_plan_id: string | null
           pattern: Database["public"]["Enums"]["chart_pattern"]
           risk_percent: number
           status: Database["public"]["Enums"]["alert_status"] | null
@@ -319,6 +320,7 @@ export type Database = {
           auto_paper_trade?: boolean
           created_at?: string | null
           id?: string
+          master_plan_id?: string | null
           pattern: Database["public"]["Enums"]["chart_pattern"]
           risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
@@ -333,6 +335,7 @@ export type Database = {
           auto_paper_trade?: boolean
           created_at?: string | null
           id?: string
+          master_plan_id?: string | null
           pattern?: Database["public"]["Enums"]["chart_pattern"]
           risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
@@ -343,7 +346,15 @@ export type Database = {
           webhook_secret?: string | null
           webhook_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "alerts_master_plan_id_fkey"
+            columns: ["master_plan_id"]
+            isOneToOne: false
+            referencedRelation: "master_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alerts_log: {
         Row: {
