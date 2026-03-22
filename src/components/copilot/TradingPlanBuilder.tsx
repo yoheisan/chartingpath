@@ -55,6 +55,30 @@ const MTF_TIMEFRAME_OPTIONS = [
   { value: "1w", label: "Weekly" },
 ] as const;
 
+const ASSET_CLASS_OPTIONS = [
+  { value: "stocks", label: "Stocks" },
+  { value: "forex", label: "Forex" },
+  { value: "crypto", label: "Crypto" },
+  { value: "commodities", label: "Commodities" },
+  { value: "indices", label: "Indices" },
+  { value: "etfs", label: "ETFs" },
+] as const;
+
+const STOCK_EXCHANGE_OPTIONS = [
+  "NYSE", "NASDAQ", "S&P 500", "Russell 2000", "LSE", "TSX",
+] as const;
+
+const FX_CATEGORY_OPTIONS = [
+  { value: "major", label: "Major" },
+  { value: "minor", label: "Minor" },
+  { value: "exotic", label: "Exotic" },
+] as const;
+
+const CRYPTO_CATEGORY_OPTIONS = [
+  { value: "major", label: "Major (Top 10)" },
+  { value: "alt", label: "Altcoins" },
+] as const;
+
 const TREND_CONTEXT_OPTIONS = [
   { value: "any", label: "Any", desc: "No filter" },
   { value: "with_trend", label: "With trend only", desc: "Higher win rate" },
