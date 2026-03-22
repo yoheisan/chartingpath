@@ -5170,7 +5170,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Danh sách theo dõi · AI Gate",
+    "gate_aligned": "phù hợp",
+    "gate_partial": "một phần",
+    "gate_conflict": "xung đột",
+    "addTickerAiGate": "Thêm mã → chạy AI Gate"
   },
   "commandPalette": {
     "searchMobile": "Search or ask AI...",
@@ -5422,7 +5427,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Đã chấm điểm {{time}} trước",
+    "emergingCount": "Mới nổi: {{count}}",
+    "noProvenSignals": "Không tìm thấy tín hiệu đã được chứng minh.",
+    "checkEmergingBelow": "Kiểm tra tín hiệu mới nổi bên dưới.",
+    "emergingTitle": "Tín hiệu mới nổi — Chưa có lợi thế lịch sử",
+    "emergingDesc": "Các mẫu hình này thiếu lịch sử giao dịch đủ (<{{minSample}} giao dịch hoặc tỷ lệ <{{minWinRate}}%). Gửi đến Pattern Lab để điều tra."
   },
   "emails": {
     "welcome": {

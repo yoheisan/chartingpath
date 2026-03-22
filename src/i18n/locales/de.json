@@ -235,7 +235,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Beobachtungsliste · AI Gate",
+    "gate_aligned": "ausgerichtet",
+    "gate_partial": "teilweise",
+    "gate_conflict": "Konflikt",
+    "addTickerAiGate": "Ticker hinzufügen → AI Gate ausführen"
   },
   "copilotShowcase": {
     "actionBridgingCant": "Keine externe KI kann sich in die Tools von ChartingPath einklinken.",
@@ -5470,7 +5475,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Vor {{time}} bewertet",
+    "emergingCount": "Aufkommend: {{count}}",
+    "noProvenSignals": "Keine bewährten Signale gefunden.",
+    "checkEmergingBelow": "Prüfen Sie die aufkommenden Signale unten.",
+    "emergingTitle": "Aufkommende Signale — Noch kein historischer Vorteil",
+    "emergingDesc": "Diesen Mustern fehlt ausreichende Handelshistorie (<{{minSample}} Trades oder Rate <{{minWinRate}}%). Zur Untersuchung an Pattern Lab senden."
   },
   "emails": {
     "welcome": {

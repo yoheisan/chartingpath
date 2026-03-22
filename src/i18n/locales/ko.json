@@ -2105,7 +2105,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "관심목록 · AI 게이트",
+    "gate_aligned": "정렬됨",
+    "gate_partial": "부분적",
+    "gate_conflict": "충돌",
+    "addTickerAiGate": "티커 추가 → AI 게이트 실행"
   },
   "copilotShowcase": {
     "backtestedCant": "ChatGPT는 추측합니다: \"교과서에 따르면 일반적으로 60-70%입니다.\"",
@@ -5466,7 +5471,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}} 전에 스코어링",
+    "emergingCount": "신흥: {{count}}",
+    "noProvenSignals": "입증된 신호를 찾을 수 없습니다.",
+    "checkEmergingBelow": "아래에서 신흥 신호를 확인하세요.",
+    "emergingTitle": "신흥 신호 — 아직 역사적 우위 없음",
+    "emergingDesc": "이 패턴은 충분한 거래 이력이 없습니다 (<{{minSample}}건의 거래 또는 승률 <{{minWinRate}}%). Pattern Lab으로 보내어 조사하세요."
   },
   "emails": {
     "welcome": {

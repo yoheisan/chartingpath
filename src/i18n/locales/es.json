@@ -2062,7 +2062,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Lista de seguimiento · AI Gate",
+    "gate_aligned": "alineado",
+    "gate_partial": "parcial",
+    "gate_conflict": "conflicto",
+    "addTickerAiGate": "Añadir ticker → ejecuta AI Gate"
   },
   "copilotShowcase": {
     "liveMarketAccessDesc": "Escanea más de 8500 instrumentos en tiempo real para detectar configuraciones de patrones activos.",
@@ -5468,7 +5473,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Puntuado hace {{time}}",
+    "emergingCount": "Emergentes: {{count}}",
+    "noProvenSignals": "No se encontraron señales probadas.",
+    "checkEmergingBelow": "Revise las señales emergentes abajo.",
+    "emergingTitle": "Señales emergentes — Sin ventaja histórica aún",
+    "emergingDesc": "Estos patrones carecen de historial suficiente (<{{minSample}} operaciones o tasa <{{minWinRate}}%). Envíe al Pattern Lab para investigar."
   },
   "emails": {
     "welcome": {

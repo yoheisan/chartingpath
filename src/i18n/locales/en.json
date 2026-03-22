@@ -5082,7 +5082,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Watchlist · AI Gate",
+    "gate_aligned": "aligned",
+    "gate_partial": "partial",
+    "gate_conflict": "conflict",
+    "addTickerAiGate": "Add ticker → runs AI Gate"
   },
   "commandPalette": {
     "searchMobile": "Search or ask AI...",
@@ -5334,7 +5339,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Scored {{time}} ago",
+    "emergingCount": "Emerging: {{count}}",
+    "noProvenSignals": "No proven signals found.",
+    "checkEmergingBelow": "Check emerging signals below.",
+    "emergingTitle": "Emerging Signals — No Historical Edge Yet",
+    "emergingDesc": "These patterns lack sufficient trade history (<{{minSample}} trades or win rate <{{minWinRate}}%). Send to Pattern Lab to investigate."
   },
   "onboarding": {
     "welcomeTitle": "Welcome to ChartingPath",

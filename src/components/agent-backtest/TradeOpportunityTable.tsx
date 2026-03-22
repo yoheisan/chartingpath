@@ -361,7 +361,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       <span className="text-muted-foreground">{t('agentScoring.opportunitiesScored', { count: scoredProven.length })}</span>
         {lastScoredAt && (
           <span className="text-sm text-muted-foreground ml-auto">
-            Scored {formatDistanceToNow(new Date(lastScoredAt))} ago
+            {t('agentScoring.scoredAgo', { time: formatDistanceToNow(new Date(lastScoredAt)) })}
           </span>
         )}
         {!lastScoredAt && <span className="ml-auto" />}
@@ -378,7 +378,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
           onClick={() => setShowEmerging(v => !v)}
           className="text-xs text-muted-foreground border border-border/50 rounded px-2 py-0.5 hover:border-border transition-colors"
         >
-          Emerging: {emergingDetections.length} {showEmerging ? '↑' : '↓'}
+          {t('agentScoring.emergingCount', { count: emergingDetections.length })} {showEmerging ? '↑' : '↓'}
         </button>
       </div>
 
@@ -419,7 +419,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
             {scoredProven.length === 0 ? (
               <tr>
                 <td colSpan={99} className="px-4 py-10 text-center text-muted-foreground text-sm">
-                  No proven signals found. {emergingDetections.length > 0 && 'Check emerging signals below.'}
+                  {t('agentScoring.noProvenSignals')} {emergingDetections.length > 0 && t('agentScoring.checkEmergingBelow')}
                 </td>
               </tr>
             ) : (
@@ -522,9 +522,9 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
       {showEmerging && emergingDetections.length > 0 && (
         <div className="space-y-2">
           <div className="px-1">
-            <h3 className="text-sm font-medium text-muted-foreground">Emerging Signals — No Historical Edge Yet</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('agentScoring.emergingTitle')}</h3>
             <p className="text-xs text-muted-foreground/70">
-              These patterns lack sufficient trade history (&lt;{PROOF_GATE_MIN_SAMPLE} trades or win rate &lt;{Math.round(PROOF_GATE_MIN_WIN_RATE * 100)}%). Send to Pattern Lab to investigate.
+              {t('agentScoring.emergingDesc', { minSample: PROOF_GATE_MIN_SAMPLE, minWinRate: Math.round(PROOF_GATE_MIN_WIN_RATE * 100) })}
             </p>
           </div>
           <div className="overflow-x-auto rounded-lg border border-border/50">

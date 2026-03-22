@@ -2030,7 +2030,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "İzleme listesi · AI Gate",
+    "gate_aligned": "uyumlu",
+    "gate_partial": "kısmi",
+    "gate_conflict": "çakışma",
+    "addTickerAiGate": "Ticker ekle → AI Gate çalıştır"
   },
   "copilotShowcase": {
     "liveMarketAccessCant": "ChatGPT şöyle derdi: \"Gerçek zamanlı piyasa verilerine erişimim yok.\"",
@@ -5466,7 +5471,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}} önce puanlandı",
+    "emergingCount": "Gelişen: {{count}}",
+    "noProvenSignals": "Kanıtlanmış sinyal bulunamadı.",
+    "checkEmergingBelow": "Aşağıdaki gelişen sinyalleri kontrol edin.",
+    "emergingTitle": "Gelişen sinyaller — Henüz tarihsel avantaj yok",
+    "emergingDesc": "Bu kalıplar yeterli işlem geçmişine sahip değil (<{{minSample}} işlem veya oran <{{minWinRate}}%). Araştırmak için Pattern Lab'a gönderin."
   },
   "emails": {
     "welcome": {

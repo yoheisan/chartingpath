@@ -1518,7 +1518,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "Daftar pantau · AI Gate",
+    "gate_aligned": "selaras",
+    "gate_partial": "sebagian",
+    "gate_conflict": "konflik",
+    "addTickerAiGate": "Tambah ticker → jalankan AI Gate"
   },
   "copilotShowcase": {
     "pineScript": "Pine Script Sekali Klik",
@@ -5457,7 +5462,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "Dinilai {{time}} lalu",
+    "emergingCount": "Muncul: {{count}}",
+    "noProvenSignals": "Tidak ada sinyal terbukti ditemukan.",
+    "checkEmergingBelow": "Periksa sinyal yang muncul di bawah.",
+    "emergingTitle": "Sinyal muncul — Belum ada keunggulan historis",
+    "emergingDesc": "Pola ini tidak memiliki riwayat perdagangan yang cukup (<{{minSample}} perdagangan atau tingkat <{{minWinRate}}%). Kirim ke Pattern Lab untuk investigasi."
   },
   "emails": {
     "welcome": {

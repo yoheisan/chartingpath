@@ -3343,7 +3343,12 @@
       "researchPrompt1": "このシンボルで最も収益性の高いパターンを見つけて",
       "researchPrompt2": "EURUSDで勝率>60%は何？",
       "researchPrompt3": "バックテストのクォータを確認"
-    }
+    },
+    "watchlistAiGate": "ウォッチリスト · AIゲート",
+    "gate_aligned": "整合",
+    "gate_partial": "部分的",
+    "gate_conflict": "矛盾",
+    "addTickerAiGate": "ティッカー追加 → AIゲート実行"
   },
   "activation": {
     "title": "はじめに",
@@ -6390,7 +6395,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}}前にスコアリング",
+    "emergingCount": "新興: {{count}}",
+    "noProvenSignals": "実証済みのシグナルが見つかりません。",
+    "checkEmergingBelow": "下の新興シグナルを確認してください。",
+    "emergingTitle": "新興シグナル — まだ統計的優位性なし",
+    "emergingDesc": "これらのパターンは十分な取引履歴がありません（<{{minSample}}件の取引またはレート<{{minWinRate}}%）。パターンラボに送信して調査してください。"
   },
   "emails": {
     "welcome": {

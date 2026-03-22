@@ -211,7 +211,12 @@
     "signInUnlimited": "Sign in for unlimited access to the Trading Copilot",
     "or": "or",
     "signIn": "Sign In",
-    "register": "Register"
+    "register": "Register",
+    "watchlistAiGate": "वॉचलिस्ट · AI गेट",
+    "gate_aligned": "संरेखित",
+    "gate_partial": "आंशिक",
+    "gate_conflict": "संघर्ष",
+    "addTickerAiGate": "टिकर जोड़ें → AI गेट चलाता है"
   },
   "copilotShowcase": {
     "seeItInAction": "इसे क्रिया में देखें",
@@ -5470,7 +5475,13 @@
     "greatSignalOverexposed": "Great Signal, Overexposed",
     "greatSignalOverexposedDesc": "A+ setup but portfolio already concentrated in this sector",
     "preFomcUncertainty": "Pre-FOMC Uncertainty",
-    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars"
+    "preFomcUncertaintyDesc": "Decent pattern but high-impact event within 2 bars",
+    "scoredAgo": "{{time}} पहले स्कोर किया गया",
+    "emergingCount": "उभरते: {{count}}",
+    "noProvenSignals": "कोई सिद्ध संकेत नहीं मिला।",
+    "checkEmergingBelow": "नीचे उभरते संकेतों की जाँच करें।",
+    "emergingTitle": "उभरते संकेत — अभी तक कोई ऐतिहासिक बढ़त नहीं",
+    "emergingDesc": "इन पैटर्न में पर्याप्त ट्रेड इतिहास नहीं है (<{{minSample}} ट्रेड या दर <{{minWinRate}}%)। जांच के लिए Pattern Lab में भेजें।"
   },
   "emails": {
     "welcome": {

@@ -6,6 +6,7 @@ import { useGateEvaluation, GateEvaluation } from "@/hooks/useGateEvaluation";
 import { toast } from "sonner";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface WatchlistRow {
   symbol: string;
@@ -28,6 +29,7 @@ interface AIGatedWatchlistProps {
 }
 
 export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) {
+  const { t } = useTranslation();
   const [watchlist, setWatchlist] = useState<WatchlistRow[]>(INITIAL_WATCHLIST);
   const { evaluate, getEvaluation, isLoading } = useGateEvaluation();
 
@@ -92,7 +94,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
     <div className="flex flex-col flex-1 min-h-0">
       <div className="px-3 py-2">
         <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Watchlist · AI Gate
+          {t('copilot.watchlistAiGate', 'Watchlist · AI Gate')}
         </span>
       </div>
 
@@ -114,7 +116,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
                 )}
                 title={row.gateReason}
               >
-                {row.gate}
+                {t(`copilot.gate_${row.gate}`, row.gate)}
               </Badge>
               <span className="text-sm text-muted-foreground/60 ml-auto">
                 {row.source}
@@ -140,7 +142,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
           trigger={
             <button className="w-full flex items-center gap-2 bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:border-primary/40 hover:text-muted-foreground transition-colors">
               <Plus className="h-3 w-3" />
-              Add ticker → runs AI Gate
+              {t('copilot.addTickerAiGate', 'Add ticker → runs AI Gate')}
             </button>
           }
         />
