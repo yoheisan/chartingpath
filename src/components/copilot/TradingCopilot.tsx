@@ -262,6 +262,7 @@ export function TradingCopilot({
   pendingAnalysis,
   onContextConsumed,
   pendingPlanBuilder,
+  pendingNewPlan,
   onPlanBuilderConsumed
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
