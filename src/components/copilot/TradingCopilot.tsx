@@ -890,12 +890,12 @@ export function TradingCopilot({
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
-                       <span className="text-xs">Review today's paper results</span>
-                     </Button>
-                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
-                       <span className="text-xs">Update your trading plan</span>
-                     </Button>
-                    </div>
+                       <span className="text-sm">{t('copilot.panel.reviewResults', "Review today's paper results")}</span>
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
+                        <span className="text-sm">{t('copilot.panel.updatePlan', 'Update your trading plan')}</span>
+                      </Button>
+                     </div>
                   )}
 
                   {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
