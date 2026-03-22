@@ -34,7 +34,7 @@ export const EXTENDED_PATTERNS = [
   'rising-wedge', 'falling-wedge'
 ];
 
-// Premium patterns (PRO/TEAM tier) - adds flags, cup & handle, inverse cup
+// Premium patterns (PRO/ELITE tier) - adds flags, cup & handle, inverse cup
 export const PREMIUM_PATTERNS = [
   'bull-flag', 'bear-flag', 'cup-and-handle', 'inverse-cup-and-handle', 'triple-top', 'triple-bottom'
 ];

@@ -464,8 +464,8 @@ const InfraTab = () => (
         </div>
 
         <div className="p-4 bg-muted rounded-lg text-sm mt-4 space-y-1">
-          <p className="font-mono">Paying Users = SUM(LITE + PLUS + PRO + TEAM)</p>
-          <p className="font-mono">Monthly Revenue = (LITE×12) + (PLUS×29) + (PRO×79) + (TEAM×199)</p>
+          <p className="font-mono">Paying Users = SUM(LITE + PLUS + PRO + ELITE)</p>
+          <p className="font-mono">Monthly Revenue = (LITE×12) + (PLUS×29) + (PRO×79) + (ELITE×199)</p>
           <p className="font-mono pt-2 border-t mt-2">Upgrade to Extended when: Monthly Revenue &gt; $249</p>
           <p className="font-mono">Upgrade to Enterprise when: Monthly Revenue &gt; $2,499</p>
         </div>
