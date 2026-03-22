@@ -135,6 +135,11 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
                     key={cmd}
                     className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
+                      if (cmd === "Create new plan") {
+                        setIsOpen(false);
+                        copilot.openNewPlanBuilder();
+                        return;
+                      }
                       setFreeText(cmd);
                       submit(cmd);
                     }}
