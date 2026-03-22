@@ -168,7 +168,7 @@ export const PLANS_CONFIG: PlansConfig = {
         portfolio_sim: { maxHoldings: 30, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
-    TEAM: {
+    ELITE: {
       monthlyCredits: 3000,
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
