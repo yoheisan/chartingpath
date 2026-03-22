@@ -66,6 +66,19 @@ function planToRules(plan: MasterPlan): MandateRule[] {
   if (plan.min_market_cap) {
     rules.push({ label: plan.min_market_cap, detail: "min market cap" });
   }
+  // Advanced rules
+  if (plan.mtf_required_timeframes?.length && plan.mtf_min_aligned) {
+    rules.push({ label: `${plan.mtf_min_aligned}/${plan.mtf_required_timeframes.length} TFs`, detail: "MTF alignment" });
+  }
+  if (plan.min_agent_score != null) {
+    rules.push({ label: `≥${plan.min_agent_score}`, detail: "min agent score" });
+  }
+  if (plan.trend_context_filter && plan.trend_context_filter !== "any") {
+    rules.push({ label: plan.trend_context_filter.replace("_", " "), detail: "trend context" });
+  }
+  if (plan.min_confluence_score != null) {
+    rules.push({ label: `≥${plan.min_confluence_score}%`, detail: "min confluence" });
+  }
   return rules;
 }
 
