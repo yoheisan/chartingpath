@@ -35,6 +35,7 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   const [pendingContext, setPendingContext] = useState<string | null>(null);
   const [pendingAnalysis, setPendingAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [pendingPlanBuilder, setPendingPlanBuilder] = useState(false);
+  const [pendingNewPlan, setPendingNewPlan] = useState(false);
   const contextRef = useRef<ChartContextData | null>(null);
 
   const toggle = useCallback(() => {
