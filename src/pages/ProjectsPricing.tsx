@@ -48,7 +48,7 @@ const ProjectsPricing = () => {
   };
 
   const monthlyPrices: Record<string, number> = {
-    FREE: 0, LITE: 19, PLUS: 39, PRO: 79, TEAM: 149,
+    FREE: 0, LITE: 19, PLUS: 39, PRO: 79, ELITE: 149,
   };
 
   const tiers: Array<{
