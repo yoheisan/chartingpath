@@ -1,82 +1,49 @@
 
 
-## Multiple Master Plans — Design Plan
+## Add Active Trades Panel to Copilot Page
 
-### Why It Makes Sense
+### Problem
+When trades are active, users can only see one trade on the Copilot center panel. To view all open positions, they must navigate away to `/tools/paper-trading`.
 
-Yes, this is a strong feature for both user value and monetization:
+### Solution
+Add an **Active Trades strip/panel** to the Copilot page that shows all open positions at a glance, with quick actions.
 
-1. **User value**: Traders often run different strategies (e.g., "Momentum Breakouts" for US stocks, "Mean Reversion" for FX, "Swing Longs" for crypto). A single plan forces them to constantly reconfigure.
-2. **Gating**: Multiple plans map naturally to tier limits — FREE gets 1, paid tiers get more.
+### Changes
 
-### Proposed Tier Limits
+**1. New component: `src/components/copilot/ActiveTradesStrip.tsx`**
+- Horizontal strip below the MandateCard (left panel) or above the CenterPanel
+- Lists all open trades: ticker, direction (long/short icon), entry price, current P&L in R
+- Click a trade → selects it in the CenterPanel for chart view
+- Shows count badge: "3 Active Trades"
+- Each trade has a quick "Close" button that triggers the override dialog
 
-| Tier | Max Active Plans |
-|------|-----------------|
-| FREE | 1 |
-| LITE | 2 |
-| PLUS | 5 |
-| PRO  | 10 |
-| TEAM | Unlimited |
+**2. Update `src/pages/Copilot.tsx`**
+- Import and render `ActiveTradesStrip` when `openTrades.length > 0`
+- Pass `openTrades` from `useCopilotTrades` and a callback to set the selected trade in CenterPanel
+- Wire the close action to the existing `handleCloseTrade` from `usePaperTrading`
 
-### What Changes
+**3. Update CenterPanel selection**
+- Allow clicking a trade in the strip to switch which trade the CenterPanel displays (currently hardcoded to `openTrades[0]`)
+- Add `selectedTradeId` state to Copilot page, default to first open trade
 
-**1. Database — `master_plans` table update**
-- Add a `name` column (text, default "My Trading Plan") so users can label each plan
-- Add a `plan_order` column (integer) for sorting
-- Remove the "deactivate all others" logic — multiple plans can be `is_active = true`
-
-**2. Plans config — add `maxActivePlans` cap**
-- Add `maxActivePlans` to each tier in `plans.ts` (both frontend and edge function copies)
-
-**3. UI — Plan Selector in Copilot**
-- Replace the single MandateCard with a plan selector dropdown/tabs showing all active plans
-- "New Plan" button (gated by tier limit) opens the builder
-- Each plan card shows its name, rule count, and a badge (Active/Inactive)
-- Clicking a plan loads its rules into the Copilot context
-
-**4. Trading Plan Builder updates**
-- Add a "Plan Name" text input at the top of the builder
-- Remove the "deactivate all existing plans" logic on save
-- Add a "Duplicate Plan" action for quick iteration
-- Show tier-gated message when limit is reached: "Upgrade to create more plans"
-
-**5. Copilot & Paper Trading integration**
-- When evaluating a signal, the AI Gate checks the **currently selected** plan (not all plans)
-- Add a plan selector to the Copilot header so users can switch context
-- Paper trades are tagged with `master_plan_id` so performance can be tracked per-plan
-
-**6. Edge function updates**
-- `trading-copilot`: Read the selected plan ID from the request instead of always fetching the single active one
-- `projects-run`: No change needed (backtests are independent of master plans)
-
-### Technical Details
-
-Migration SQL:
-```sql
-ALTER TABLE public.master_plans
-  ADD COLUMN IF NOT EXISTS name text DEFAULT 'My Trading Plan',
-  ADD COLUMN IF NOT EXISTS plan_order integer DEFAULT 0;
+### Layout
+```text
+┌─────────────────────────────────────────────────┐
+│ Left Panel          │ Center Panel    │ Right   │
+│ ┌─────────────────┐ │                 │         │
+│ │ Mandate Card    │ │  Selected Trade │         │
+│ │ (accordion)     │ │  Chart View     │         │
+│ ├─────────────────┤ │                 │         │
+│ │ Active Trades   │ │                 │         │
+│ │ AAPL ▲ +0.5R   │ │                 │         │
+│ │ MSFT ▼ -0.2R   │ │                 │         │
+│ │ TSLA ▲ +1.1R   │ │                 │         │
+│ └─────────────────┘ │                 │         │
+└─────────────────────────────────────────────────┘
 ```
 
-Plans config addition (both files):
-```typescript
-// In TierConfig interface
-maxActivePlans: number;
-
-// In tiers
-FREE:  { maxActivePlans: 1,  ... },
-LITE:  { maxActivePlans: 2,  ... },
-PLUS:  { maxActivePlans: 5,  ... },
-PRO:   { maxActivePlans: 10, ... },
-TEAM:  { maxActivePlans: 99, ... },
-```
-
-Files to modify:
-- `supabase/migrations/` — new migration for `name` and `plan_order` columns
-- `src/config/plans.ts` + `supabase/functions/_shared/plans.ts` — add `maxActivePlans`
-- `src/hooks/useMasterPlan.ts` — fetch all active plans, track selected plan
-- `src/components/copilot/MandateCard.tsx` — plan selector UI
-- `src/components/copilot/TradingPlanBuilder.tsx` — plan naming, remove deactivation logic, tier gate
-- `src/components/copilot/TradingCopilot.tsx` — pass selected plan context
+### Files to create/modify
+- **Create**: `src/components/copilot/ActiveTradesStrip.tsx`
+- **Modify**: `src/pages/Copilot.tsx` — add state for selected trade, render strip
+- **Modify**: `src/components/copilot/CenterPanel.tsx` — accept `selectedTradeId` prop instead of always using first trade
 
