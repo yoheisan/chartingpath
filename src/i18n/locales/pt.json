@@ -2122,7 +2122,8 @@
     "seeItInAction": "Veja em ação",
     "tradingCopilot": "Copiloto de Negociação",
     "demo": "Demonstração",
-    "tryNow": "Try Copilot Now"
+    "tryNow": "Experimentar Copilot agora",
+    "demoDesc": "Pergunte sobre qualquer padrão, instrumento ou estratégia. O copilot busca dados ao vivo e resultados de backtest em tempo real."
   },
   "alertsLibrary": {
     "error": "Erro",
@@ -2171,24 +2172,25 @@
     "automateSubtitle": "Exportar Scripts",
     "automateDesc": "Gerar código Pine Script ou de bot de trading para execução automatizada.",
     "footerNote": "Cada etapa se baseia na anterior—comece em qualquer lugar com base nas suas necessidades atuais.",
-    "findTitle": "Find Setups",
-    "findDesc": "See which chart patterns are forming right now across 800+ instruments.",
-    "findBullet1": "Live pattern detection",
-    "findBullet2": "Quality scores & grades",
-    "findBullet3": "Filter by asset, timeframe, direction",
-    "findCta": "Open Screener",
-    "validateTitle": "Validate with Data",
-    "validateDesc": "Check win rates and expectancy before you take the trade.",
-    "validateBullet1": "320,000+ backtested outcomes",
-    "validateBullet2": "Win rate & expectancy stats",
-    "validateBullet3": "Visual Proof charts",
-    "validateCta": "Try a Backtest",
-    "actTitle": "Act on It",
-    "actDesc": "Set alerts, export Pine Script, or track setups on your dashboard.",
-    "actBullet1": "Email & webhook alerts",
-    "actBullet2": "Pine Script & MQL export",
-    "actBullet3": "Full trading dashboard",
-    "actCta": "Get Started"
+    "findTitle": "Encontrar setups",
+    "findDesc": "Veja quais padrões gráficos estão se formando agora em mais de 800 instrumentos.",
+    "findBullet1": "Detecção de padrões ao vivo",
+    "findBullet2": "Pontuações e graus de qualidade",
+    "findBullet3": "Filtrar por ativo, timeframe, direção",
+    "findCta": "Abrir Screener",
+    "validateTitle": "Validar com dados",
+    "validateDesc": "Verifique as taxas de acerto e expectativa antes de fazer a operação.",
+    "validateBullet1": "Mais de 320.000 resultados backtested",
+    "validateBullet2": "Taxa de acerto e estatísticas de expectativa",
+    "validateBullet3": "Gráficos de prova visual",
+    "validateCta": "Testar um Backtest",
+    "actTitle": "Agir",
+    "actDesc": "Defina alertas, exporte Pine Script ou acompanhe setups no seu dashboard.",
+    "actBullet1": "Alertas por email e webhook",
+    "actBullet2": "Exportação Pine Script e MQL",
+    "actBullet3": "Dashboard de trading completo",
+    "actCta": "Começar",
+    "sectionDesc": "Da detecção à execução em três passos. Cada um apoiado por dados reais."
   },
   "teaserSignals": {
     "age": "Idade",
@@ -2199,12 +2201,12 @@
     "grade": "Classificação",
     "signal": "Sinal",
     "winRate": "Taxa de Acerto",
-    "actions": "Actions",
-    "screen": "Screen",
-    "validate": "Validate",
-    "agentScore": "Score",
+    "actions": "Ações",
+    "screen": "Analisar",
+    "validate": "Validar",
+    "agentScore": "Pontuar",
     "rot": "ROT",
-    "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
+    "rotTooltip": "Return on Time — R ganho por barra de exposição. Maior = mais eficiente em capital.",
     "openInTradingView": "Open in TradingView",
     "signUpForAlerts": "Sign up to create alerts"
   },
@@ -5589,18 +5591,18 @@
     "orContinueWith": "or continue with"
   },
   "socialProof": {
-    "sectionLabel": "Trusted by Traders",
-    "title": "What traders are saying",
-    "subtitle": "Real feedback from traders using ChartingPath to validate their setups.",
-    "quote1": "Finally, a tool that tells me if a pattern actually works before I risk money on it. The win rate data changed how I trade.",
+    "sectionLabel": "Confiado por traders",
+    "title": "O que os traders dizem",
+    "subtitle": "Feedback real de traders que usam ChartingPath para validar suas configurações.",
+    "quote1": "Finalmente, uma ferramenta que me diz se um padrão realmente funciona antes de arriscar dinheiro. Os dados de taxa de acerto mudaram minha forma de operar.",
     "author1": "Swing Trader",
-    "role1": "US Equities",
-    "quote2": "I was skeptical about pattern trading until I saw the backtest data. 320K outcomes don't lie — now I only trade patterns with real edge.",
+    "role1": "Ações EUA",
+    "quote2": "Eu era cético sobre trading de padrões até ver os dados de backtest. 320 mil resultados não mentem — agora só opero padrões com vantagem real.",
     "author2": "Day Trader",
-    "role2": "Forex & Crypto",
-    "quote3": "The screener saves me hours every day. Grade A setups delivered straight to me, each one backed by historical performance.",
+    "role2": "Forex e Cripto",
+    "quote3": "O screener me economiza horas todos os dias. Setups Grau A entregues diretamente, cada um com base em desempenho histórico.",
     "author3": "Position Trader",
-    "role3": "Multi-Asset"
+    "role3": "Multi-ativos"
   },
   "morningBriefing": {
     "title": "Morning Briefing",
@@ -5639,5 +5641,13 @@
     "upgradeForMore": "Upgrade for more",
     "more": "more",
     "editInCopilot": "Edit plan in Copilot"
+  },
+  "emailCapture": {
+    "title": "Receba setups Grau A na sua caixa",
+    "subtitle": "Resumo semanal dos sinais de padrões de maior qualidade. Sem spam, cancele a qualquer momento.",
+    "placeholder": "seu@email.com",
+    "subscribe": "Inscrever-se",
+    "privacy": "Respeitamos sua privacidade. Cancele a qualquer momento.",
+    "thankYou": "Você está dentro! Enviaremos os melhores setups."
   }
 }

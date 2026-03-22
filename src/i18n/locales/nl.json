@@ -405,7 +405,7 @@
     "scriptsBullet3": "Subscriber access"
   },
   "copilotShowcase": {
-    "tryNow": "Try Copilot Now",
+    "tryNow": "Copilot nu proberen",
     "badge": "AI Copilot",
     "title": "Why Use Our Copilot Instead of ChatGPT?",
     "subtitle": "Six capabilities that are <strong>impossible to replicate</strong> by pasting a chart into ChatGPT or Gemini.",
@@ -442,7 +442,8 @@
     "exportPineScript": "Export Pine Script",
     "chatgptFootnote": "💬 ChatGPT would say: \"I don't have access to real-time market data.\"",
     "learnMore": "Learn More About the Copilot",
-    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now"
+    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now",
+    "demoDesc": "Vraag naar elk patroon, instrument of strategie. De copilot haalt live data en backtestresultaten op in real-time."
   },
   "patternCTA": {
     "exclusiveData": "Exclusive Data",
@@ -3242,24 +3243,25 @@
   "howItWorks": {
     "sectionTitle": "What You Can Do",
     "sectionSubtitle": "Three steps from pattern to action",
-    "findTitle": "Find Setups",
-    "findDesc": "See which chart patterns are forming right now across 800+ instruments.",
-    "findBullet1": "Live pattern detection",
-    "findBullet2": "Quality scores & grades",
-    "findBullet3": "Filter by asset, timeframe, direction",
-    "findCta": "Open Screener",
-    "validateTitle": "Validate with Data",
-    "validateDesc": "Check win rates and expectancy before you take the trade.",
-    "validateBullet1": "320,000+ backtested outcomes",
-    "validateBullet2": "Win rate & expectancy stats",
-    "validateBullet3": "Visual Proof charts",
-    "validateCta": "Try a Backtest",
-    "actTitle": "Act on It",
-    "actDesc": "Set alerts, export Pine Script, or track setups on your dashboard.",
-    "actBullet1": "Email & webhook alerts",
+    "findTitle": "Setups vinden",
+    "findDesc": "Bekijk welke grafiekpatronen nu vormen over 800+ instrumenten.",
+    "findBullet1": "Live patroondetectie",
+    "findBullet2": "Kwaliteitsscores en graden",
+    "findBullet3": "Filter op asset, tijdsframe, richting",
+    "findCta": "Screener openen",
+    "validateTitle": "Valideren met data",
+    "validateDesc": "Controleer winstpercentages en verwachting voordat u de trade neemt.",
+    "validateBullet1": "320.000+ backtestresultaten",
+    "validateBullet2": "Winstpercentage- en verwachtingsstatistieken",
+    "validateBullet3": "Visuele bewijsgrafieken",
+    "validateCta": "Backtest proberen",
+    "actTitle": "Actie ondernemen",
+    "actDesc": "Stel alerts in, exporteer Pine Script of volg setups op uw dashboard.",
+    "actBullet1": "E-mail- en webhook-alerts",
     "actBullet2": "Pine Script & MQL export",
-    "actBullet3": "Full trading dashboard",
-    "actCta": "Get Started"
+    "actBullet3": "Volledig trading dashboard",
+    "actCta": "Beginnen",
+    "sectionDesc": "Van detectie tot uitvoering in drie stappen. Elk ondersteund door echte data."
   },
   "patternStats": {
     "avgBars": "Avg Bars",
@@ -3393,19 +3395,19 @@
   },
   "teaserSignals": {
     "symbol": "Symbol",
-    "pattern": "Pattern",
+    "pattern": "Patroon",
     "grade": "Grade",
     "signal": "Signal",
     "winRate": "Win Rate",
     "age": "Age",
     "long": "Long",
     "short": "Short",
-    "actions": "Actions",
-    "screen": "Screen",
-    "validate": "Validate",
+    "actions": "Acties",
+    "screen": "Screenen",
+    "validate": "Valideren",
     "agentScore": "Score",
     "rot": "ROT",
-    "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
+    "rotTooltip": "Return on Time — R verdiend per blootstellingsbar. Hoger = meer kapitaalefficiënt.",
     "openInTradingView": "Open in TradingView",
     "signUpForAlerts": "Sign up to create alerts"
   },
@@ -5543,16 +5545,16 @@
     "orContinueWith": "or continue with"
   },
   "socialProof": {
-    "sectionLabel": "Trusted by Traders",
-    "title": "What traders are saying",
-    "subtitle": "Real feedback from traders using ChartingPath to validate their setups.",
-    "quote1": "Finally, a tool that tells me if a pattern actually works before I risk money on it. The win rate data changed how I trade.",
+    "sectionLabel": "Vertrouwd door traders",
+    "title": "Wat traders zeggen",
+    "subtitle": "Echte feedback van traders die ChartingPath gebruiken om hun setups te valideren.",
+    "quote1": "Eindelijk een tool die me vertelt of een patroon echt werkt voordat ik geld riskeer. De winstpercentage-data hebben mijn manier van handelen veranderd.",
     "author1": "Swing Trader",
-    "role1": "US Equities",
-    "quote2": "I was skeptical about pattern trading until I saw the backtest data. 320K outcomes don't lie — now I only trade patterns with real edge.",
+    "role1": "US Aandelen",
+    "quote2": "Ik was sceptisch over patroonhandel tot ik de backtestdata zag. 320K uitkomsten liegen niet — nu handel ik alleen patronen met echte edge.",
     "author2": "Day Trader",
     "role2": "Forex & Crypto",
-    "quote3": "The screener saves me hours every day. Grade A setups delivered straight to me, each one backed by historical performance.",
+    "quote3": "De screener bespaart me dagelijks uren. Graad A setups direct geleverd, elk ondersteund door historische prestaties.",
     "author3": "Position Trader",
     "role3": "Multi-Asset"
   },
@@ -5593,5 +5595,13 @@
     "upgradeForMore": "Upgrade for more",
     "more": "more",
     "editInCopilot": "Edit plan in Copilot"
+  },
+  "emailCapture": {
+    "title": "Ontvang Graad A setups in uw inbox",
+    "subtitle": "Wekelijkse samenvatting van de hoogste kwaliteit patroonsignalen. Geen spam, altijd opzegbaar.",
+    "placeholder": "uw@email.com",
+    "subscribe": "Abonneren",
+    "privacy": "Wij respecteren uw privacy. Altijd opzegbaar.",
+    "thankYou": "U bent ingeschreven! We sturen u de beste setups."
   }
 }
