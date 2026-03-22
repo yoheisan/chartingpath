@@ -101,6 +101,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Pre-fill from existing plan
   useEffect(() => {
     if (!existingPlan) return;
+    if ((existingPlan as any).name) {
+      setPlanName((existingPlan as any).name);
+    }
     if (existingPlan.preferred_patterns?.length) {
       setSelectedPatterns(existingPlan.preferred_patterns);
     }
