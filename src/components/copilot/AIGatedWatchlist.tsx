@@ -29,6 +29,7 @@ interface AIGatedWatchlistProps {
 }
 
 export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) {
+  const { t } = useTranslation();
   const [watchlist, setWatchlist] = useState<WatchlistRow[]>(INITIAL_WATCHLIST);
   const { evaluate, getEvaluation, isLoading } = useGateEvaluation();
 
