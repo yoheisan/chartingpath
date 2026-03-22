@@ -356,7 +356,7 @@ const Navigation = () => {
               </DropdownMenu>
               
               {/* Copilot nav link */}
-              <Link to="/copilot" className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
+              <Link to="/copilot" className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
                 <Bot className="h-4 w-4" />
                 Copilot ✦
               </Link>

@@ -172,16 +172,16 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">{t('footer.company', 'Company')}</h3>
             <nav className="flex flex-col gap-2">
-              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/about" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.about', 'About')}
               </Link>
-              <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.faq', 'FAQ')}
               </Link>
-              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/pricing" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pricing', 'Pricing')}
               </Link>
-              <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/support" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.contactSupport', 'Contact Support')}
               </Link>
             </nav>
