@@ -24,7 +24,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   const isDemo = trades.length === 0;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
       <div className="flex items-center justify-between px-1">
         <span className="text-xs font-semibold text-foreground">
           Active Trades {isDemo && <span className="text-muted-foreground font-normal">(preview)</span>}
