@@ -763,6 +763,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                         refreshTrigger={watchlistVersion}
                         defaultTab={settings.watchlistTab}
                         onTabChange={(tab) => updateSettings({ watchlistTab: tab })}
+                        activePlan={activePlan}
                       />
                     </TabsContent>
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
