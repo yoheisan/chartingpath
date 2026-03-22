@@ -874,15 +874,15 @@ export function TradingCopilot({
                   {/* ── LOGGED-OUT: Active setups banner ── */}
                   {!isAuthenticated && (
                     <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
-                      <p className="text-xs text-foreground/80 mb-2">
-                        Copilot found <span className="font-semibold text-accent">{activePatternCount ?? '…'}</span> active setups right now — sign up free to see them scored against your mandate.
+                       <p className="text-sm text-foreground/80 mb-2">
+                        {t('copilot.panel.activeSetups', 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.', { count: activePatternCount ?? '…' })}
                       </p>
-                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-sm">
                         <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-                          Create your first trading plan →
+                          {t('copilot.panel.createFirstPlan', 'Create your first trading plan →')}
                         </Link>
                       </Button>
-                      <p className="text-xs text-muted-foreground/60 text-center mt-1">Free to try · No real money · You decide when to go live</p>
+                      <p className="text-sm text-muted-foreground/60 text-center mt-1">{t('copilot.panel.freeToTry', 'Free to try · No real money · You decide when to go live')}</p>
                     </div>
                   )}
 
