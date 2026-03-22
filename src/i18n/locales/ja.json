@@ -2793,7 +2793,12 @@
     "openFullChart": "フルチャートを開く",
     "backToStudyChart": "スタディチャートに戻る",
     "chart": "チャート",
-    "research": "リサーチ"
+    "research": "リサーチ",
+    "noPlanSet": "トレーディングプランが未設定 · ペーパーテストを開始するにはプランを作成してください",
+    "paperTradeOpen": "ペーパートレード実行中 · {{symbols}} · {{pnl}} · プランがライブテスト中",
+    "runningPlan": "トレーディングプランをペーパーで実行中 · 本日{{count}}件のトレード",
+    "trades": "トレード",
+    "overrides": "オーバーライド"
   },
   "tradingStrategiesPage": {
     "confirmEntryDesc": "すべてのインジケーターを再確認し、設定が基準を満たしていることを確認します。",
@@ -6241,8 +6246,8 @@
     "highRisk": "high"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "ウォッチリストの保存、アラートの作成、プレイバックの利用にはサインインが必要です。",
+    "emailSignIn": "メールでサインイン",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -6571,5 +6576,26 @@
     "subscribe": "購読する",
     "privacy": "お客様のプライバシーを尊重します。いつでも解除可能です。",
     "thankYou": "登録完了！最高のセットアップをお届けします。"
+  },
+  "market": {
+    "advancing": "上昇",
+    "declining": "下落"
+  },
+  "paperTrading": {
+    "signInRequired": "ペーパートレードを追跡するにはサインインしてください"
+  },
+  "grades": {
+    "gradeA": "グレード A",
+    "gradeB": "グレード B",
+    "gradeC": "グレード C",
+    "gradeD": "グレード D",
+    "gradeF": "グレード F",
+    "patternGrade": "パターングレード",
+    "labelA": "優秀",
+    "labelB": "良好",
+    "labelC": "普通",
+    "labelD": "弱い",
+    "labelF": "不良",
+    "tooltip": "トレンド整合性、R:R構造、出来高、対称性、過去の勝率、ボラティリティレジームに基づいています。"
   }
 }

@@ -2343,7 +2343,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Brak planu handlowego · Ustaw jeden, aby rozpocząć paper trading",
+    "paperTradeOpen": "Paper trade otwarty · {{symbols}} · {{pnl}} · Twój plan jest testowany na żywo",
+    "runningPlan": "Uruchamianie planu handlowego na papierze · {{count}} transakcji dzisiaj",
+    "trades": "transakcji",
+    "overrides": "Nadpisania"
   },
   "tradingStrategiesPage": {
     "headerTitle": "Professional Trading Strategies",
@@ -5273,8 +5278,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Zaloguj się, aby zapisać listę obserwowanych, tworzyć alerty i odblokować odtwarzanie.",
+    "emailSignIn": "Logowanie e-mail",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5603,5 +5608,26 @@
     "subscribe": "Subskrybuj",
     "privacy": "Szanujemy Twoją prywatność. Wypisz się kiedy chcesz.",
     "thankYou": "Jesteś zapisany! Wyślemy Ci najlepsze setupy."
+  },
+  "market": {
+    "advancing": "Rosnące",
+    "declining": "Spadające"
+  },
+  "paperTrading": {
+    "signInRequired": "Zaloguj się, aby śledzić paper trade"
+  },
+  "grades": {
+    "gradeA": "Klasa A",
+    "gradeB": "Klasa B",
+    "gradeC": "Klasa C",
+    "gradeD": "Klasa D",
+    "gradeF": "Klasa F",
+    "patternGrade": "Klasa wzorca",
+    "labelA": "Doskonały",
+    "labelB": "Dobry",
+    "labelC": "Przeciętny",
+    "labelD": "Słaby",
+    "labelF": "Zły",
+    "tooltip": "Na podstawie wyrównania trendu, struktury R:R, wolumenu, symetrii, historycznego win rate i reżimu zmienności."
   }
 }

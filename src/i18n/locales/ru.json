@@ -454,7 +454,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Торговый план не настроен · Создайте его для начала бумажной торговли",
+    "paperTradeOpen": "Бумажная сделка открыта · {{symbols}} · {{pnl}} · Ваш план тестируется вживую",
+    "runningPlan": "Выполнение торгового плана на бумаге · {{count}} сделок сегодня",
+    "trades": "сделок",
+    "overrides": "Корректировки"
   },
   "footer": {
     "terms": "Условия",
@@ -5320,8 +5325,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Войдите, чтобы сохранить список отслеживания, создать оповещения и разблокировать воспроизведение.",
+    "emailSignIn": "Вход по email",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5650,5 +5655,26 @@
     "subscribe": "Подписаться",
     "privacy": "Мы уважаем вашу конфиденциальность. Отписка в любое время.",
     "thankYou": "Вы зарегистрированы! Мы пришлём вам лучшие сетапы."
+  },
+  "market": {
+    "advancing": "Растущие",
+    "declining": "Падающие"
+  },
+  "paperTrading": {
+    "signInRequired": "Войдите, чтобы отслеживать бумажные сделки"
+  },
+  "grades": {
+    "gradeA": "Класс A",
+    "gradeB": "Класс B",
+    "gradeC": "Класс C",
+    "gradeD": "Класс D",
+    "gradeF": "Класс F",
+    "patternGrade": "Класс паттерна",
+    "labelA": "Отлично",
+    "labelB": "Хорошо",
+    "labelC": "Средне",
+    "labelD": "Слабо",
+    "labelF": "Плохо",
+    "tooltip": "На основе выравнивания тренда, структуры R:R, объёма, симметрии, исторического winrate и режима волатильности."
   }
 }

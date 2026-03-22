@@ -11,8 +11,8 @@ export function DashboardCopilotBar() {
   const { openTrades, stats } = useCopilotTrades(user?.id);
 
   const statusText = openTrades.length > 0
-    ? `Paper trade open · ${openTrades.map(t => t.symbol).join(', ')} · ${formatR(stats.aiPnlR)} · Your plan is being tested live`
-    : stats.aiTradeCount > 0 ? `Running your trading plan on paper · ${stats.aiTradeCount} trade${stats.aiTradeCount !== 1 ? 's' : ''} taken today` : 'No trading plan set · Set one to start paper testing';
+    ? t('commandCenter.paperTradeOpen', { symbols: openTrades.map(t => t.symbol).join(', '), pnl: formatR(stats.aiPnlR) })
+    : stats.aiTradeCount > 0 ? t('commandCenter.runningPlan', { count: stats.aiTradeCount }) : t('commandCenter.noPlanSet', 'No trading plan set · Set one to start paper testing');
 
   return (
     <div className="w-full px-4 py-2 flex items-center gap-3 bg-blue-500/5 border-b border-blue-500/20">
@@ -42,7 +42,7 @@ export function DashboardAIStrip() {
             {formatR(stats.aiPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground">
-            · {stats.aiWinRate}% · {stats.aiTradeCount} trade{stats.aiTradeCount !== 1 ? 's' : ''}
+            · {stats.aiWinRate}% · {stats.aiTradeCount} {t('commandCenter.trades', 'trades')}
           </span>
         </div>
         <div className="w-px h-8 bg-border/40" />
@@ -52,14 +52,14 @@ export function DashboardAIStrip() {
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground">
-            · {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+            · {stats.humanWinRate}% · {stats.humanTradeCount} {t('commandCenter.trades', 'trades')}
           </span>
         </div>
       </div>
       <div className="px-4 pb-1.5 -mt-1">
         <p className={`text-sm text-muted-foreground/70 text-center transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
           {insight || (stats.aiTradeCount + stats.humanTradeCount > 0
-            ? `AI: ${formatR(stats.aiPnlR)} vs Overrides: ${formatR(stats.humanPnlR)} today`
+            ? `AI: ${formatR(stats.aiPnlR)} vs ${t('commandCenter.overrides', 'Overrides')}: ${formatR(stats.humanPnlR)}`
             : t('commandCenter.noTradesYet', 'No trades yet today — Copilot is scanning'))}
         </p>
       </div>

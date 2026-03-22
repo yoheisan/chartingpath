@@ -1850,7 +1850,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "لا توجد خطة تداول · قم بإعداد واحدة لبدء التداول الورقي",
+    "paperTradeOpen": "صفقة ورقية مفتوحة · {{symbols}} · {{pnl}} · خطتك قيد الاختبار المباشر",
+    "runningPlan": "تشغيل خطة التداول على الورق · {{count}} صفقة اليوم",
+    "trades": "صفقات",
+    "overrides": "التجاوزات"
   },
   "tradingStrategiesPage": {
     "riskManagementDesc": "حماية رأس المال بأي ثمن",
@@ -5320,8 +5325,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "سجّل الدخول لحفظ قائمة المراقبة وإنشاء التنبيهات وفتح التشغيل.",
+    "emailSignIn": "تسجيل الدخول بالبريد",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5650,5 +5655,26 @@
     "subscribe": "اشترك",
     "privacy": "نحترم خصوصيتك. إلغاء الاشتراك في أي وقت.",
     "thankYou": "أنت مسجل! سنرسل لك أفضل الإعدادات."
+  },
+  "market": {
+    "advancing": "صاعدة",
+    "declining": "هابطة"
+  },
+  "paperTrading": {
+    "signInRequired": "سجّل الدخول لتتبع الصفقات الورقية"
+  },
+  "grades": {
+    "gradeA": "الدرجة A",
+    "gradeB": "الدرجة B",
+    "gradeC": "الدرجة C",
+    "gradeD": "الدرجة D",
+    "gradeF": "الدرجة F",
+    "patternGrade": "درجة النمط",
+    "labelA": "ممتاز",
+    "labelB": "جيد",
+    "labelC": "مقبول",
+    "labelD": "ضعيف",
+    "labelF": "سيء",
+    "tooltip": "بناءً على محاذاة الاتجاه وبنية R:R والحجم والتماثل ومعدل الفوز التاريخي ونظام التقلبات."
   }
 }

@@ -1850,7 +1850,12 @@
     "openFullChart": "打开完整图表",
     "backToStudyChart": "返回研究图表",
     "chart": "图表",
-    "research": "研究"
+    "research": "研究",
+    "noPlanSet": "未设置交易计划 · 设置一个以开始模拟测试",
+    "paperTradeOpen": "模拟交易进行中 · {{symbols}} · {{pnl}} · 您的计划正在实时测试",
+    "runningPlan": "正在模拟执行您的交易计划 · 今天{{count}}笔交易",
+    "trades": "笔交易",
+    "overrides": "手动覆盖"
   },
   "tradingStrategiesPage": {
     "waitConfirmationDesc": "不要在第一个信号蜡烛出现时立即入场",
@@ -5320,8 +5325,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "登录以保存您的关注列表、创建警报和解锁回放。",
+    "emailSignIn": "邮箱登录",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5650,5 +5655,26 @@
     "subscribe": "订阅",
     "privacy": "我们尊重您的隐私。随时退订。",
     "thankYou": "已注册！我们会向您发送最佳设置。"
+  },
+  "market": {
+    "advancing": "上涨",
+    "declining": "下跌"
+  },
+  "paperTrading": {
+    "signInRequired": "登录以跟踪模拟交易"
+  },
+  "grades": {
+    "gradeA": "等级 A",
+    "gradeB": "等级 B",
+    "gradeC": "等级 C",
+    "gradeD": "等级 D",
+    "gradeF": "等级 F",
+    "patternGrade": "形态等级",
+    "labelA": "优秀",
+    "labelB": "良好",
+    "labelC": "一般",
+    "labelD": "弱",
+    "labelF": "差",
+    "tooltip": "基于趋势对齐、R:R结构、成交量、对称性、历史胜率和波动率状态。"
   }
 }

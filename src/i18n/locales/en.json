@@ -2031,7 +2031,12 @@
     "openFullChart": "Open full chart",
     "backToStudyChart": "Back to study chart",
     "chart": "Chart",
-    "research": "Research"
+    "research": "Research",
+    "noPlanSet": "No trading plan set · Set one to start paper testing",
+    "paperTradeOpen": "Paper trade open · {{symbols}} · {{pnl}} · Your plan is being tested live",
+    "runningPlan": "Running your trading plan on paper · {{count}} trades taken today",
+    "trades": "trades",
+    "overrides": "Overrides"
   },
   "tradingStrategiesPage": {
     "headerTitle": "Professional Trading Strategies",
@@ -5600,5 +5605,26 @@
     "subscribe": "Subscribe",
     "privacy": "We respect your privacy. Unsubscribe anytime.",
     "thankYou": "You're in! We'll send you the best setups."
+  },
+  "market": {
+    "advancing": "Advancing",
+    "declining": "Declining"
+  },
+  "paperTrading": {
+    "signInRequired": "Sign in to track paper trades"
+  },
+  "grades": {
+    "gradeA": "Grade A",
+    "gradeB": "Grade B",
+    "gradeC": "Grade C",
+    "gradeD": "Grade D",
+    "gradeF": "Grade F",
+    "patternGrade": "Pattern Grade",
+    "labelA": "Excellent",
+    "labelB": "Good",
+    "labelC": "Fair",
+    "labelD": "Weak",
+    "labelF": "Poor",
+    "tooltip": "Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime."
   }
 }

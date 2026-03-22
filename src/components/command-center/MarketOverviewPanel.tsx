@@ -396,8 +396,8 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                     {/* Visual Bar */}
                     <div className="space-y-1">
                        <div className="flex justify-between text-xs text-muted-foreground">
-                        <span className="text-bullish">Advancing: {breadthData.advances.toLocaleString()}</span>
-                        <span className="text-bearish">Declining: {breadthData.declines.toLocaleString()}</span>
+                        <span className="text-bullish">{t('market.advancing', 'Advancing')}: {breadthData.advances.toLocaleString()}</span>
+                        <span className="text-bearish">{t('market.declining', 'Declining')}: {breadthData.declines.toLocaleString()}</span>
                       </div>
                       <div className="flex h-3 rounded-full overflow-hidden bg-muted">
                         <div 

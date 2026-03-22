@@ -2274,7 +2274,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Chưa có kế hoạch giao dịch · Thiết lập một kế hoạch để bắt đầu paper testing",
+    "paperTradeOpen": "Paper trade đang mở · {{symbols}} · {{pnl}} · Kế hoạch của bạn đang được kiểm tra trực tiếp",
+    "runningPlan": "Đang chạy kế hoạch giao dịch trên giấy · {{count}} giao dịch hôm nay",
+    "trades": "giao dịch",
+    "overrides": "Ghi đè"
   },
   "tradingStrategiesPage": {
     "headerTitle": "Professional Trading Strategies",
@@ -5273,8 +5278,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Đăng nhập để lưu danh sách theo dõi, tạo cảnh báo và mở khóa phát lại.",
+    "emailSignIn": "Đăng nhập email",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5603,5 +5608,26 @@
     "subscribe": "Đăng ký",
     "privacy": "Chúng tôi tôn trọng quyền riêng tư của bạn. Hủy đăng ký bất cứ lúc nào.",
     "thankYou": "Bạn đã đăng ký! Chúng tôi sẽ gửi cho bạn các thiết lập tốt nhất."
+  },
+  "market": {
+    "advancing": "Tăng",
+    "declining": "Giảm"
+  },
+  "paperTrading": {
+    "signInRequired": "Đăng nhập để theo dõi paper trade"
+  },
+  "grades": {
+    "gradeA": "Hạng A",
+    "gradeB": "Hạng B",
+    "gradeC": "Hạng C",
+    "gradeD": "Hạng D",
+    "gradeF": "Hạng F",
+    "patternGrade": "Hạng mẫu hình",
+    "labelA": "Xuất sắc",
+    "labelB": "Tốt",
+    "labelC": "Trung bình",
+    "labelD": "Yếu",
+    "labelF": "Kém",
+    "tooltip": "Dựa trên sự liên kết xu hướng, cấu trúc R:R, khối lượng, tính đối xứng, tỷ lệ thắng lịch sử và chế độ biến động."
   }
 }

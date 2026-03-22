@@ -2240,7 +2240,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Kein Handelsplan · Erstellen Sie einen, um mit dem Paper-Trading zu beginnen",
+    "paperTradeOpen": "Paper Trade offen · {{symbols}} · {{pnl}} · Ihr Plan wird live getestet",
+    "runningPlan": "Handelsplan auf Papier ausführen · {{count}} Trades heute",
+    "trades": "Trades",
+    "overrides": "Überschreibungen"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",
@@ -5321,8 +5326,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Melden Sie sich an, um Ihre Watchlist zu speichern, Alerts zu erstellen und die Wiedergabe freizuschalten.",
+    "emailSignIn": "E-Mail-Anmeldung",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5651,5 +5656,26 @@
     "subscribe": "Abonnieren",
     "privacy": "Wir respektieren Ihre Privatsphäre. Jederzeit abbestellbar.",
     "thankYou": "Sie sind dabei! Wir senden Ihnen die besten Setups."
+  },
+  "market": {
+    "advancing": "Steigend",
+    "declining": "Fallend"
+  },
+  "paperTrading": {
+    "signInRequired": "Melden Sie sich an, um Paper Trades zu verfolgen"
+  },
+  "grades": {
+    "gradeA": "Grad A",
+    "gradeB": "Grad B",
+    "gradeC": "Grad C",
+    "gradeD": "Grad D",
+    "gradeF": "Grad F",
+    "patternGrade": "Musterbewertung",
+    "labelA": "Ausgezeichnet",
+    "labelB": "Gut",
+    "labelC": "Mittelmäßig",
+    "labelD": "Schwach",
+    "labelF": "Schlecht",
+    "tooltip": "Basierend auf Trendausrichtung, R:R-Struktur, Volumen, Symmetrie, historischer Gewinnrate und Volatilitätsregime."
   }
 }

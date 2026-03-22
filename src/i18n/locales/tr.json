@@ -1860,7 +1860,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "İşlem planı yok · Kağıt ticarete başlamak için bir plan oluşturun",
+    "paperTradeOpen": "Kağıt işlem açık · {{symbols}} · {{pnl}} · Planınız canlı test ediliyor",
+    "runningPlan": "İşlem planınız kağıt üzerinde çalışıyor · Bugün {{count}} işlem",
+    "trades": "işlem",
+    "overrides": "Geçersiz kılmalar"
   },
   "tradingStrategiesPage": {
     "setStopLoss": "Hemen stop loss belirleyin",
@@ -5317,8 +5322,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "İzleme listenizi kaydetmek, alarm oluşturmak ve kaydı açmak için giriş yapın.",
+    "emailSignIn": "E-posta ile giriş",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5647,5 +5652,26 @@
     "subscribe": "Abone Ol",
     "privacy": "Gizliliğinize saygı duyuyoruz. İstediğiniz zaman abonelikten çıkın.",
     "thankYou": "Kaydoldunuz! Size en iyi kurulumları göndereceğiz."
+  },
+  "market": {
+    "advancing": "Yükselen",
+    "declining": "Düşen"
+  },
+  "paperTrading": {
+    "signInRequired": "Kağıt işlemleri takip etmek için giriş yapın"
+  },
+  "grades": {
+    "gradeA": "Sınıf A",
+    "gradeB": "Sınıf B",
+    "gradeC": "Sınıf C",
+    "gradeD": "Sınıf D",
+    "gradeF": "Sınıf F",
+    "patternGrade": "Formasyon derecesi",
+    "labelA": "Mükemmel",
+    "labelB": "İyi",
+    "labelC": "Orta",
+    "labelD": "Zayıf",
+    "labelF": "Kötü",
+    "tooltip": "Trend hizalaması, R:R yapısı, hacim, simetri, tarihsel kazanma oranı ve volatilite rejimine dayanır."
   }
 }
