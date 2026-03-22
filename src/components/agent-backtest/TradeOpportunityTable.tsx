@@ -378,7 +378,7 @@ export const TradeOpportunityTable: React.FC<Props> = ({ weights, takeCutoff, wa
           onClick={() => setShowEmerging(v => !v)}
           className="text-xs text-muted-foreground border border-border/50 rounded px-2 py-0.5 hover:border-border transition-colors"
         >
-          Emerging: {emergingDetections.length} {showEmerging ? '↑' : '↓'}
+          {t('agentScoring.emergingCount', { count: emergingDetections.length })} {showEmerging ? '↑' : '↓'}
         </button>
       </div>
 
