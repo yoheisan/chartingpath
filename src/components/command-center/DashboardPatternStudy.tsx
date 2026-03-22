@@ -500,7 +500,7 @@ export function DashboardPatternStudy({
                 : "bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
             )}
           >
-            All ({historicalPatterns.length})
+            {t('commandCenter.all', 'All')} ({historicalPatterns.length})
           </button>
           {uniquePatternNames.map(([patternId, displayName]) => {
             const count = historicalPatterns.filter(p => p.pattern_id === patternId).length;
