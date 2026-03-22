@@ -15,6 +15,12 @@ export interface MasterPlan {
   trend_direction: string | null;
   min_market_cap: string | null;
   is_active: boolean;
+  // Advanced settings
+  mtf_required_timeframes: string[];
+  mtf_min_aligned: number | null;
+  min_agent_score: number | null;
+  trend_context_filter: string | null;
+  min_confluence_score: number | null;
 }
 
 export interface MandateRule {
