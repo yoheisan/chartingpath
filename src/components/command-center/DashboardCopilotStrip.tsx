@@ -52,7 +52,7 @@ export function DashboardAIStrip() {
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground">
-            · {stats.humanWinRate}% · {stats.humanTradeCount} trade{stats.humanTradeCount !== 1 ? 's' : ''}
+            · {stats.humanWinRate}% · {stats.humanTradeCount} {t('commandCenter.trades', 'trades')}
           </span>
         </div>
       </div>
