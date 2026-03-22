@@ -173,9 +173,9 @@ export const PLANS_CONFIG: PlansConfig = {
       monthlyScripts: -1, // Unlimited
       maxConcurrentRuns: 5,
       maxActiveAlerts: 500,
-      maxPlanAlerts: 50, // 50 per plan × 99 plans = 4,950 max
+      maxPlanAlerts: 50, // 50 per plan × 20 plans = 1,000 max
       maxWatchlistSlots: 9999,
-      maxActivePlans: 99,
+      maxActivePlans: 20,
       screener: {
         maxTickersPerClass: 100,
         allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge', 'bull-flag', 'bear-flag', 'cup-and-handle', 'triple-top', 'triple-bottom']
