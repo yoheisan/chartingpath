@@ -5585,5 +5585,23 @@
     "openTrades": "Open Trades",
     "recentlyClosed": "Closed (24h)",
     "lastUpdated": "Updated"
+  },
+  "planAlerts": {
+    "title": "Auto-alerts from your Trading Plan",
+    "createPlanPrompt": "Create a Master Plan in the Copilot to automatically receive alerts when the system detects matching patterns in your defined instrument universe.",
+    "lockedMessage": "Plan-based alerts available on Lite and above",
+    "upgradeToUnlock": "Upgrade to unlock",
+    "createPlan": "Create a Trading Plan",
+    "planBasedAlerts": "Plan-based Alerts",
+    "lockedDescription": "You have a Trading Plan configured, but auto-alerts require a paid plan. Upgrade to have the system automatically alert you when patterns matching your plan are detected.",
+    "tierStatus": "{{tier}} plan — 0 plan alerts",
+    "tierComparison": "Lite: 5/plan · Plus: 10/plan · Pro: 20/plan",
+    "upgradeForPlanAlerts": "Upgrade for plan alerts",
+    "perPlanUsage": "{{used}}/{{max}} per plan",
+    "autoDescription": "Alerts are auto-generated when patterns matching your plan are detected. Each plan gets its own alert pool — separate from manual alerts.",
+    "limitReached": "Per-plan alert limit reached.",
+    "upgradeForMore": "Upgrade for more",
+    "more": "more",
+    "editInCopilot": "Edit plan in Copilot"
   }
 }
