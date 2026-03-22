@@ -42,6 +42,7 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
   onClose,
   onOpenFullChart,
 }: PatternOverlayChartProps) {
+  const { t } = useTranslation();
   if (loading || !setup) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 bg-background">
