@@ -5,6 +5,7 @@ import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
+import ActiveTradesStrip from "@/components/copilot/ActiveTradesStrip";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
