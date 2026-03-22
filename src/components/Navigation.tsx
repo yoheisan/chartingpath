@@ -254,7 +254,7 @@ const Navigation = () => {
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-[13px] whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                className={`flex items-center gap-1 text-base whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                 onMouseEnter={prefetchArticles}
               >
                 <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
