@@ -70,22 +70,22 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('navigation.more', 'More')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/pip-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pipCalculator', 'Pip Calculator')}
                 </Link>
-                <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/risk-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.riskCalculator', 'Risk Calculator')}
                 </Link>
-                <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/economic-calendar" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.economicCalendar', 'Economic Calendar')}
                 </Link>
-                <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.faq', 'FAQ')}
                 </Link>
-                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/about" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.about', 'About')}
                 </Link>
-                <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/support" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.contactSupport', 'Contact Support')}
                 </Link>
               </nav>
