@@ -326,10 +326,10 @@ export function DashboardPatternStudy({
 
   const getOutcomeLabel = (outcome: string | null) => {
     switch (outcome) {
-      case 'hit_tp': return 'Target Hit';
-      case 'hit_sl': return 'Stop Hit';
-      case 'timeout': return 'Timeout';
-      case 'pending': return 'Pending';
+      case 'hit_tp': return t('commandCenter.outcomeTargetHit', 'Target Hit');
+      case 'hit_sl': return t('commandCenter.outcomeStopHit', 'Stop Hit');
+      case 'timeout': return t('commandCenter.outcomeTimeout', 'Timeout');
+      case 'pending': return t('commandCenter.outcomePending', 'Pending');
       default: return '—';
     }
   };
