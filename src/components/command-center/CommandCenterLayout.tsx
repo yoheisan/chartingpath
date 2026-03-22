@@ -100,6 +100,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
 
   // Auth gate for write actions
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate('dashboard features');
+  const { plan: activePlan, plans: masterPlans } = useMasterPlan();
 
   // Persisted dashboard settings — skip writes for anonymous users
   const { settings, updateSettings: _updateSettings } = useDashboardSettings();
