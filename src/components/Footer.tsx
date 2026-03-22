@@ -54,13 +54,13 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/chart-patterns/library" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.patternLibrary', 'Pattern Library')}
                 </Link>
-                <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/learn" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.blogArticles', 'Blog & Articles')}
                 </Link>
-                <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/chart-patterns/quiz" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.patternQuizzes', 'Pattern Quizzes')}
                 </Link>
               </nav>
