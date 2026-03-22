@@ -26,7 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
-import { PlanAlertGenerator } from "@/components/alerts/PlanAlertGenerator";
+import { PlanAlertCard } from "@/components/alerts/PlanAlertCard";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useTranslation } from "react-i18next";
 
@@ -52,7 +52,7 @@ const MemberAlerts = () => {
   const { t } = useTranslation();
   const { user, isAuthLoading: authLoading } = useAuth();
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("alerts");
-  const { plans: masterPlans } = useMasterPlan();
+  const { plans: masterPlans, selectedPlanId: masterSelectedPlanId, selectPlan: masterSelectPlan } = useMasterPlan();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
@@ -570,18 +570,6 @@ const MemberAlerts = () => {
         </div>
       </div>
 
-      {/* Plan Alert Generator */}
-      {user && masterPlans.length > 0 && (
-        <div className="mb-8">
-          <PlanAlertGenerator
-            userId={user.id}
-            plans={masterPlans}
-            onAlertsCreated={() => fetchAlerts(user.id)}
-            canCreateMore={canCreateMore}
-            remainingSlots={planLimits.max === 999999 ? 999 : Math.max(0, planLimits.max - activeAlerts.length)}
-          />
-        </div>
-      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Create Alert Form */}
@@ -897,7 +885,15 @@ const MemberAlerts = () => {
                {t('alerts.manageAlerts')}
              </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Master Plan auto-alert card */}
+            <PlanAlertCard
+              plans={masterPlans}
+              selectedPlanId={masterSelectedPlanId}
+              onSelectPlan={masterSelectPlan}
+              planAlertCount={alerts.filter(a => a.master_plan_id && a.status === 'active').length}
+            />
+
             {alerts.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
