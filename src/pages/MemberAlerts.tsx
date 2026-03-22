@@ -45,6 +45,7 @@ interface Alert {
   created_at: string;
   auto_paper_trade?: boolean;
   webhook_url?: string | null;
+  master_plan_id?: string | null;
 }
 
 const MemberAlerts = () => {
