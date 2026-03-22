@@ -316,6 +316,7 @@ export interface TierDisplayInfo {
   monthlyCredits: number;
   monthlyScripts: number; // -1 = unlimited
   maxActiveAlerts: number;
+  maxPlanAlerts: number; // per plan
   bestFor: string;
   color: string;
 }
