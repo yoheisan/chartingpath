@@ -885,7 +885,15 @@ const MemberAlerts = () => {
                {t('alerts.manageAlerts')}
              </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Master Plan auto-alert card */}
+            <PlanAlertCard
+              plans={masterPlans}
+              selectedPlanId={masterSelectedPlanId}
+              onSelectPlan={masterSelectPlan}
+              planAlertCount={alerts.filter(a => a.master_plan_id && a.status === 'active').length}
+            />
+
             {alerts.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
