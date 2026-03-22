@@ -103,7 +103,7 @@ export function MandateCard({
             onClick={() => {
               setShowSelector(false);
               if (canCreateMore) {
-                onNewPlan?.();
+                handleNewPlan();
               }
             }}
             className={cn(
