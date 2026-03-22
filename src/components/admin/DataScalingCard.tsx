@@ -104,7 +104,7 @@ export const DataScalingCard = ({ planCounts }: DataScalingCardProps) => {
           <Badge variant="outline">LITE: {planCounts.lite}</Badge>
           <Badge variant="outline">PLUS: {planCounts.plus}</Badge>
           <Badge variant="outline">PRO: {planCounts.pro}</Badge>
-          <Badge variant="outline">TEAM: {planCounts.team}</Badge>
+          <Badge variant="outline">ELITE: {planCounts.elite}</Badge>
         </div>
 
         {/* Milestones */}
