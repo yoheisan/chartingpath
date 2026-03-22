@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface MasterPlan {
   id: string;
+  name: string;
   raw_nl_input: string | null;
   max_position_pct: number | null;
   max_open_positions: number | null;
@@ -15,6 +16,7 @@ export interface MasterPlan {
   trend_direction: string | null;
   min_market_cap: string | null;
   is_active: boolean;
+  plan_order: number;
   // Advanced settings
   mtf_required_timeframes: string[];
   mtf_min_aligned: number | null;
@@ -83,11 +85,14 @@ function planToRules(plan: MasterPlan): MandateRule[] {
 }
 
 export function useMasterPlan() {
-  const [plan, setPlan] = useState<MasterPlan | null>(null);
+  const [plans, setPlans] = useState<MasterPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [rules, setRules] = useState<MandateRule[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPlan = useCallback(async () => {
+  const selectedPlan = plans.find(p => p.id === selectedPlanId) ?? plans[0] ?? null;
+
+  const fetchPlans = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
@@ -99,32 +104,52 @@ export function useMasterPlan() {
       .select("*")
       .eq("user_id", user.id)
       .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("plan_order", { ascending: true });
 
-    if (!error && data) {
-      const p = data as any as MasterPlan;
-      setPlan(p);
-      setRules(planToRules(p));
+    if (!error && data && (data as any[]).length > 0) {
+      const allPlans = data as any as MasterPlan[];
+      setPlans(allPlans);
+      // Keep selection if still valid, otherwise select first
+      if (!selectedPlanId || !allPlans.find(p => p.id === selectedPlanId)) {
+        setSelectedPlanId(allPlans[0].id);
+        setRules(planToRules(allPlans[0]));
+      } else {
+        const current = allPlans.find(p => p.id === selectedPlanId)!;
+        setRules(planToRules(current));
+      }
     } else {
-      setPlan(null);
+      setPlans([]);
+      setSelectedPlanId(null);
       setRules([]);
     }
     setLoading(false);
-  }, []);
+  }, [selectedPlanId]);
 
   useEffect(() => {
-    fetchPlan();
-    // Listen for mandate-saved events from NavCopilotBar
-    const handler = () => fetchPlan();
+    fetchPlans();
+    const handler = () => fetchPlans();
     window.addEventListener("mandate-saved", handler);
     return () => window.removeEventListener("mandate-saved", handler);
-  }, [fetchPlan]);
+  }, [fetchPlans]);
+
+  const selectPlan = useCallback((planId: string) => {
+    setSelectedPlanId(planId);
+    const p = plans.find(pl => pl.id === planId);
+    if (p) setRules(planToRules(p));
+  }, [plans]);
 
   const refreshPlan = useCallback(() => {
-    fetchPlan();
-  }, [fetchPlan]);
+    fetchPlans();
+  }, [fetchPlans]);
 
-  return { plan, rules, loading, refreshPlan, hasPlan: !!plan };
+  return {
+    plan: selectedPlan,
+    plans,
+    rules,
+    loading,
+    refreshPlan,
+    hasPlan: plans.length > 0,
+    selectedPlanId,
+    selectPlan,
+  };
 }
