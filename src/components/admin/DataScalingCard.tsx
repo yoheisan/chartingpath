@@ -9,7 +9,7 @@ interface DataScalingCardProps {
     lite: number;
     plus: number;
     pro: number;
-    team: number;
+    elite: number;
   };
 }
 
