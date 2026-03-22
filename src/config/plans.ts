@@ -329,6 +329,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 50,
     monthlyScripts: 3,
     maxActiveAlerts: 3,
+    maxPlanAlerts: 0,
     bestFor: 'Explore the platform',
     color: 'text-muted-foreground'
   },
@@ -339,6 +340,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 100,
     monthlyScripts: 10,
     maxActiveAlerts: 5,
+    maxPlanAlerts: 5,
     bestFor: 'Hobbyist traders starting out',
     color: 'text-emerald-500'
   },
@@ -349,6 +351,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 300,
     monthlyScripts: 30,
     maxActiveAlerts: 25,
+    maxPlanAlerts: 25,
     bestFor: 'Active traders testing ideas',
     color: 'text-blue-500'
   },
@@ -359,6 +362,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 900,
     monthlyScripts: 100,
     maxActiveAlerts: 100,
+    maxPlanAlerts: 100,
     bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
   },
@@ -369,6 +373,7 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     monthlyCredits: 3000,
     monthlyScripts: -1,
     maxActiveAlerts: 500,
+    maxPlanAlerts: 500,
     bestFor: 'Trading teams & portfolio managers',
     color: 'text-amber-500'
   }
