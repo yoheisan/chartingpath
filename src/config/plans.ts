@@ -366,15 +366,15 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     bestFor: 'Serious traders scanning daily',
     color: 'text-violet-500'
   },
-  TEAM: {
-    name: 'Team',
+  ELITE: {
+    name: 'Elite',
     monthlyPrice: 199,
     annualPrice: 1990,
     monthlyCredits: 3000,
     monthlyScripts: -1,
     maxActiveAlerts: 500,
     maxPlanAlerts: 50, // per plan
-    bestFor: 'Trading teams & portfolio managers',
+    bestFor: 'Power traders & portfolio managers',
     color: 'text-amber-500'
   }
 };

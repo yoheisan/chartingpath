@@ -64,8 +64,8 @@ export function useScreenerCaps() {
       'free': 'FREE',
       'plus': 'PLUS',
       'pro': 'PRO',
-      'elite': 'TEAM',
-      'team': 'TEAM'
+      'elite': 'ELITE',
+      'team': 'ELITE'
     };
     
     return planMapping[profile.subscription_plan.toLowerCase()] || 'FREE';
