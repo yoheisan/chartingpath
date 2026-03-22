@@ -138,7 +138,7 @@ const Pricing = () => {
       cta: 'Start Lite Plan',
     },
     {
-      key: 'team',
+      key: 'elite',
       price: 199,
       annualPrice: 1990,
       features: [
@@ -152,7 +152,7 @@ const Pricing = () => {
         "Early access to new features",
       ],
       icon: Crown,
-      cta: 'Start Team Plan',
+      cta: 'Start Elite Plan',
     },
   ];
 
