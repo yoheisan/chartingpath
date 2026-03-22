@@ -301,6 +301,10 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         min_agent_score: agentScoreEnabled ? minAgentScore : null,
         trend_context_filter: trendContext,
         min_confluence_score: confluenceEnabled ? minConfluence : null,
+        asset_classes: assetClasses,
+        fx_categories: fxCategories,
+        crypto_categories: cryptoCategories,
+        stock_exchanges: stockExchanges,
       } as any;
 
       let error;
