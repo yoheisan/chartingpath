@@ -46,7 +46,12 @@ const Copilot = () => {
     return () => window.removeEventListener('copilot-question', handler as EventListener);
   }, []);
 
-  const activeTrade = openTrades.length > 0 ? openTrades[0] : null;
+  const activeTrade = useMemo(() => {
+    if (selectedTradeId) {
+      return openTrades.find(t => t.id === selectedTradeId) ?? openTrades[0] ?? null;
+    }
+    return openTrades[0] ?? null;
+  }, [openTrades, selectedTradeId]);
 
   const focusNLBar = useCallback((prefill?: string) => {
     const event = new KeyboardEvent("keydown", {
