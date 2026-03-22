@@ -451,7 +451,7 @@ const InfraTab = () => (
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-2 mb-2">
-                {[["208","LITE"],["86","PLUS"],["32","PRO"],["13","TEAM"]].map(([n,l]) => (
+                {[["208","LITE"],["86","PLUS"],["32","PRO"],["13","ELITE"]].map(([n,l]) => (
                   <div key={l} className="text-center p-1 bg-background rounded">
                     <p className="text-sm font-bold">{n}</p>
                     <p className="text-xs text-muted-foreground">{l}</p>
