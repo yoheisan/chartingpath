@@ -96,6 +96,12 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
     return val;
   }, [pendingPlanBuilder]);
 
+  const consumePendingNewPlan = useCallback(() => {
+    const val = pendingNewPlan;
+    setPendingNewPlan(false);
+    return val;
+  }, [pendingNewPlan]);
+
   const setChartContext = useCallback((data: ChartContextData | null) => {
     contextRef.current = data;
   }, []);
