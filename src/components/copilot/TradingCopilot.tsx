@@ -274,6 +274,7 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
