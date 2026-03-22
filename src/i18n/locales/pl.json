@@ -405,7 +405,7 @@
     "scriptsBullet3": "Subscriber access"
   },
   "copilotShowcase": {
-    "tryNow": "Try Copilot Now",
+    "tryNow": "Wypróbuj Copilot teraz",
     "badge": "AI Copilot",
     "title": "Why Use Our Copilot Instead of ChatGPT?",
     "subtitle": "Six capabilities that are <strong>impossible to replicate</strong> by pasting a chart into ChatGPT or Gemini.",
@@ -442,7 +442,8 @@
     "exportPineScript": "Export Pine Script",
     "chatgptFootnote": "💬 ChatGPT would say: \"I don't have access to real-time market data.\"",
     "learnMore": "Learn More About the Copilot",
-    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now"
+    "pressToTry": "Or press <kbd>⌘K</kbd> to try it now",
+    "demoDesc": "Zapytaj o dowolny wzorzec, instrument lub strategię. Copilot pobiera dane na żywo i wyniki backtestów w czasie rzeczywistym."
   },
   "patternCTA": {
     "exclusiveData": "Exclusive Data",
@@ -3242,24 +3243,25 @@
   "howItWorks": {
     "sectionTitle": "What You Can Do",
     "sectionSubtitle": "Three steps from pattern to action",
-    "findTitle": "Find Setups",
-    "findDesc": "See which chart patterns are forming right now across 800+ instruments.",
-    "findBullet1": "Live pattern detection",
-    "findBullet2": "Quality scores & grades",
-    "findBullet3": "Filter by asset, timeframe, direction",
-    "findCta": "Open Screener",
-    "validateTitle": "Validate with Data",
-    "validateDesc": "Check win rates and expectancy before you take the trade.",
-    "validateBullet1": "320,000+ backtested outcomes",
-    "validateBullet2": "Win rate & expectancy stats",
-    "validateBullet3": "Visual Proof charts",
-    "validateCta": "Try a Backtest",
-    "actTitle": "Act on It",
-    "actDesc": "Set alerts, export Pine Script, or track setups on your dashboard.",
-    "actBullet1": "Email & webhook alerts",
-    "actBullet2": "Pine Script & MQL export",
-    "actBullet3": "Full trading dashboard",
-    "actCta": "Get Started"
+    "findTitle": "Znajdź setupy",
+    "findDesc": "Zobacz, jakie wzorce wykresów tworzą się teraz na 800+ instrumentach.",
+    "findBullet1": "Wykrywanie wzorców na żywo",
+    "findBullet2": "Oceny jakości i stopnie",
+    "findBullet3": "Filtruj według aktywa, timeframe'u, kierunku",
+    "findCta": "Otwórz Screener",
+    "validateTitle": "Sprawdź danymi",
+    "validateDesc": "Sprawdź win rate i oczekiwaną wartość przed wejściem w transakcję.",
+    "validateBullet1": "320 000+ przetestowanych wyników",
+    "validateBullet2": "Statystyki win rate i oczekiwanej wartości",
+    "validateBullet3": "Wykresy wizualnych dowodów",
+    "validateCta": "Wypróbuj Backtest",
+    "actTitle": "Działaj",
+    "actDesc": "Ustaw alerty, eksportuj Pine Script lub śledź setupy na dashboardzie.",
+    "actBullet1": "Alerty e-mail i webhook",
+    "actBullet2": "Eksport Pine Script i MQL",
+    "actBullet3": "Pełny dashboard tradingowy",
+    "actCta": "Rozpocznij",
+    "sectionDesc": "Od wykrycia do realizacji w trzech krokach. Każdy poparty prawdziwymi danymi."
   },
   "patternStats": {
     "avgBars": "Avg Bars",
@@ -3393,19 +3395,19 @@
   },
   "teaserSignals": {
     "symbol": "Symbol",
-    "pattern": "Pattern",
+    "pattern": "Wzorzec",
     "grade": "Grade",
     "signal": "Signal",
     "winRate": "Win Rate",
     "age": "Age",
     "long": "Long",
     "short": "Short",
-    "actions": "Actions",
-    "screen": "Screen",
-    "validate": "Validate",
-    "agentScore": "Score",
+    "actions": "Akcje",
+    "screen": "Skanuj",
+    "validate": "Zweryfikuj",
+    "agentScore": "Ocena",
     "rot": "ROT",
-    "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
+    "rotTooltip": "Return on Time — R zarobiony na bar ekspozycji. Wyższy = bardziej efektywny kapitałowo.",
     "openInTradingView": "Open in TradingView",
     "signUpForAlerts": "Sign up to create alerts"
   },
@@ -5543,16 +5545,16 @@
     "orContinueWith": "or continue with"
   },
   "socialProof": {
-    "sectionLabel": "Trusted by Traders",
-    "title": "What traders are saying",
-    "subtitle": "Real feedback from traders using ChartingPath to validate their setups.",
-    "quote1": "Finally, a tool that tells me if a pattern actually works before I risk money on it. The win rate data changed how I trade.",
+    "sectionLabel": "Zaufanie traderów",
+    "title": "Co mówią traderzy",
+    "subtitle": "Prawdziwe opinie traderów, którzy używają ChartingPath do walidacji swoich setupów.",
+    "quote1": "Wreszcie narzędzie, które mówi mi, czy wzorzec naprawdę działa, zanim zaryzykuję pieniądze. Dane o win rate zmieniły mój sposób tradingu.",
     "author1": "Swing Trader",
-    "role1": "US Equities",
-    "quote2": "I was skeptical about pattern trading until I saw the backtest data. 320K outcomes don't lie — now I only trade patterns with real edge.",
+    "role1": "Akcje US",
+    "quote2": "Byłem sceptyczny wobec tradingu na wzorcach, aż zobaczyłem dane z backtestów. 320K wyników nie kłamie — teraz handluję tylko wzorcami z prawdziwą przewagą.",
     "author2": "Day Trader",
-    "role2": "Forex & Crypto",
-    "quote3": "The screener saves me hours every day. Grade A setups delivered straight to me, each one backed by historical performance.",
+    "role2": "Forex i Krypto",
+    "quote3": "Skaner oszczędza mi godziny każdego dnia. Setupy klasy A dostarczane bezpośrednio, każdy poparty historyczną wydajnością.",
     "author3": "Position Trader",
     "role3": "Multi-Asset"
   },
@@ -5593,5 +5595,13 @@
     "upgradeForMore": "Upgrade for more",
     "more": "more",
     "editInCopilot": "Edit plan in Copilot"
+  },
+  "emailCapture": {
+    "title": "Otrzymuj setupy klasy A w skrzynce",
+    "subtitle": "Tygodniowy przegląd najwyższej jakości sygnałów wzorcowych. Bez spamu, wypisz się kiedy chcesz.",
+    "placeholder": "twoj@email.com",
+    "subscribe": "Subskrybuj",
+    "privacy": "Szanujemy Twoją prywatność. Wypisz się kiedy chcesz.",
+    "thankYou": "Jesteś zapisany! Wyślemy Ci najlepsze setupy."
   }
 }

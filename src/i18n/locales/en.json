@@ -2947,7 +2947,8 @@
     "actBullet1": "Email & webhook alerts",
     "actBullet2": "Pine Script & MQL export",
     "actBullet3": "Full trading dashboard",
-    "actCta": "Get Started"
+    "actCta": "Get Started",
+    "sectionDesc": "From detection to execution in three steps. Each one backed by real data."
   },
   "copilotShowcase": {
     "badge": "AI Copilot",
@@ -5590,5 +5591,13 @@
     "upgradeForMore": "Upgrade for more",
     "more": "more",
     "editInCopilot": "Edit plan in Copilot"
+  },
+  "emailCapture": {
+    "title": "Get Grade A setups in your inbox",
+    "subtitle": "Weekly digest of the highest-quality pattern signals. No spam, unsubscribe anytime.",
+    "placeholder": "your@email.com",
+    "subscribe": "Subscribe",
+    "privacy": "We respect your privacy. Unsubscribe anytime.",
+    "thankYou": "You're in! We'll send you the best setups."
   }
 }
