@@ -20,7 +20,7 @@ const ProjectsPricing = () => {
     LITE: 'starter',
     PLUS: 'pro',
     PRO: 'pro_plus',
-    TEAM: 'elite',
+    ELITE: 'elite',
   };
 
   const handlePlanSelect = async (tierKey: string) => {
