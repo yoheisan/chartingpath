@@ -116,7 +116,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
                 )}
                 title={row.gateReason}
               >
-                {row.gate}
+                {t(`copilot.gate_${row.gate}`, row.gate)}
               </Badge>
               <span className="text-sm text-muted-foreground/60 ml-auto">
                 {row.source}
