@@ -398,7 +398,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "कोई ट्रेडिंग प्लान सेट नहीं · पेपर टेस्टिंग शुरू करने के लिए एक सेट करें",
+    "paperTradeOpen": "पेपर ट्रेड ओपन · {{symbols}} · {{pnl}} · आपका प्लान लाइव टेस्ट हो रहा है",
+    "runningPlan": "आपका ट्रेडिंग प्लान पेपर पर चल रहा है · आज {{count}} ट्रेड",
+    "trades": "ट्रेड",
+    "overrides": "ओवरराइड"
   },
   "footer": {
     "terms": "शर्तें",
@@ -5321,8 +5326,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "अपनी वॉचलिस्ट सहेजने, अलर्ट बनाने और प्लेबैक अनलॉक करने के लिए साइन इन करें।",
+    "emailSignIn": "ईमेल साइन इन",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5651,5 +5656,26 @@
     "subscribe": "सदस्यता लें",
     "privacy": "हम आपकी गोपनीयता का सम्मान करते हैं। कभी भी अनसब्सक्राइब करें।",
     "thankYou": "आप शामिल हो गए! हम आपको सबसे अच्छे सेटअप भेजेंगे।"
+  },
+  "market": {
+    "advancing": "बढ़ रहे",
+    "declining": "गिर रहे"
+  },
+  "paperTrading": {
+    "signInRequired": "पेपर ट्रेड ट्रैक करने के लिए साइन इन करें"
+  },
+  "grades": {
+    "gradeA": "ग्रेड A",
+    "gradeB": "ग्रेड B",
+    "gradeC": "ग्रेड C",
+    "gradeD": "ग्रेड D",
+    "gradeF": "ग्रेड F",
+    "patternGrade": "पैटर्न ग्रेड",
+    "labelA": "उत्कृष्ट",
+    "labelB": "अच्छा",
+    "labelC": "ठीक",
+    "labelD": "कमज़ोर",
+    "labelF": "खराब",
+    "tooltip": "ट्रेंड एलाइनमेंट, R:R संरचना, वॉल्यूम, सिमेट्री, ऐतिहासिक जीत दर और अस्थिरता व्यवस्था पर आधारित।"
   }
 }

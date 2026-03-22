@@ -1848,7 +1848,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Nenhum plano de trading · Defina um para começar o paper testing",
+    "paperTradeOpen": "Paper trade aberto · {{symbols}} · {{pnl}} · Seu plano está sendo testado ao vivo",
+    "runningPlan": "Executando seu plano em papel · {{count}} operações hoje",
+    "trades": "operações",
+    "overrides": "Ajustes manuais"
   },
   "tradingStrategiesPage": {
     "headerTitle": "Estratégias de Trading Profissionais",
@@ -5319,8 +5324,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Faça login para salvar sua lista de observação, criar alertas e desbloquear a reprodução.",
+    "emailSignIn": "Entrar com email",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5649,5 +5654,26 @@
     "subscribe": "Inscrever-se",
     "privacy": "Respeitamos sua privacidade. Cancele a qualquer momento.",
     "thankYou": "Você está dentro! Enviaremos os melhores setups."
+  },
+  "market": {
+    "advancing": "Em alta",
+    "declining": "Em queda"
+  },
+  "paperTrading": {
+    "signInRequired": "Faça login para acompanhar paper trades"
+  },
+  "grades": {
+    "gradeA": "Grau A",
+    "gradeB": "Grau B",
+    "gradeC": "Grau C",
+    "gradeD": "Grau D",
+    "gradeF": "Grau F",
+    "patternGrade": "Grau do padrão",
+    "labelA": "Excelente",
+    "labelB": "Bom",
+    "labelC": "Regular",
+    "labelD": "Fraco",
+    "labelF": "Ruim",
+    "tooltip": "Baseado em alinhamento de tendência, estrutura R:R, volume, simetria, taxa de acerto histórica e regime de volatilidade."
   }
 }

@@ -2204,7 +2204,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Belum ada rencana trading · Buat satu untuk memulai paper testing",
+    "paperTradeOpen": "Paper trade terbuka · {{symbols}} · {{pnl}} · Rencana Anda sedang diuji langsung",
+    "runningPlan": "Menjalankan rencana trading di kertas · {{count}} trade hari ini",
+    "trades": "trade",
+    "overrides": "Override"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",
@@ -5308,8 +5313,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Masuk untuk menyimpan watchlist, membuat alert, dan membuka playback.",
+    "emailSignIn": "Masuk dengan email",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5638,5 +5643,26 @@
     "subscribe": "Berlangganan",
     "privacy": "Kami menghormati privasi Anda. Berhenti berlangganan kapan saja.",
     "thankYou": "Anda terdaftar! Kami akan mengirimkan setup terbaik."
+  },
+  "market": {
+    "advancing": "Naik",
+    "declining": "Turun"
+  },
+  "paperTrading": {
+    "signInRequired": "Masuk untuk melacak paper trade"
+  },
+  "grades": {
+    "gradeA": "Grade A",
+    "gradeB": "Grade B",
+    "gradeC": "Grade C",
+    "gradeD": "Grade D",
+    "gradeF": "Grade F",
+    "patternGrade": "Grade pola",
+    "labelA": "Sangat Baik",
+    "labelB": "Baik",
+    "labelC": "Cukup",
+    "labelD": "Lemah",
+    "labelF": "Buruk",
+    "tooltip": "Berdasarkan keselarasan tren, struktur R:R, volume, simetri, win rate historis, dan rezim volatilitas."
   }
 }

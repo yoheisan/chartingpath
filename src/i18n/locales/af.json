@@ -1911,7 +1911,12 @@
     "openFullChart": "Abrir gráfico completo",
     "backToStudyChart": "Volver al gráfico de estudio",
     "chart": "Gráfico",
-    "research": "Investigación"
+    "research": "Investigación",
+    "noPlanSet": "Geen handelsplan nie · Stel een op om papierhandel te begin",
+    "paperTradeOpen": "Papierhandel oop · {{symbols}} · {{pnl}} · Jou plan word regstreeks getoets",
+    "runningPlan": "Handelsplan op papier uitgevoer · {{count}} transaksies vandag",
+    "trades": "transaksies",
+    "overrides": "Oorskrywings"
   },
   "tradingStrategiesPage": {
     "positionSizingDesc": "Moet nooit meer as 1-2% per transaksie waag nie",
@@ -5321,8 +5326,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "Meld aan om jou waglys te stoor, waarskuwings te skep en terugspeel te ontsluit.",
+    "emailSignIn": "E-pos aanmelding",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5651,5 +5656,26 @@
     "subscribe": "Teken in",
     "privacy": "Ons respekteer jou privaatheid. Teken enige tyd af.",
     "thankYou": "Jy is ingeskryf! Ons sal jou die beste opstellings stuur."
+  },
+  "market": {
+    "advancing": "Stygende",
+    "declining": "Dalende"
+  },
+  "paperTrading": {
+    "signInRequired": "Meld aan om papierhandel te volg"
+  },
+  "grades": {
+    "gradeA": "Graad A",
+    "gradeB": "Graad B",
+    "gradeC": "Graad C",
+    "gradeD": "Graad D",
+    "gradeF": "Graad F",
+    "patternGrade": "Patroongraad",
+    "labelA": "Uitstekend",
+    "labelB": "Goed",
+    "labelC": "Redelik",
+    "labelD": "Swak",
+    "labelF": "Swak",
+    "tooltip": "Gebaseer op tendensbelyning, R:R-struktuur, volume, simmetrie, historiese winskoers en volatiliteitsregime."
   }
 }

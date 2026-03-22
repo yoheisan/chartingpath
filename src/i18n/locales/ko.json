@@ -1860,7 +1860,12 @@
     "openFullChart": "전체 차트 열기",
     "backToStudyChart": "스터디 차트로 돌아가기",
     "chart": "차트",
-    "research": "리서치"
+    "research": "리서치",
+    "noPlanSet": "트레이딩 플랜 미설정 · 페이퍼 테스팅을 시작하려면 설정하세요",
+    "paperTradeOpen": "페이퍼 트레이드 오픈 · {{symbols}} · {{pnl}} · 플랜이 라이브 테스트 중",
+    "runningPlan": "페이퍼로 트레이딩 플랜 실행 중 · 오늘 {{count}}건 트레이드",
+    "trades": "트레이드",
+    "overrides": "오버라이드"
   },
   "tradingStrategiesPage": {
     "setupGuideTitle": "🎯 완벽한 트레이딩 셋업 실행 방법",
@@ -5317,8 +5322,8 @@
     "openForm": "Open Support Form"
   },
   "authNudge": {
-    "signInMessage": "Sign in to save your watchlist, create alerts, and unlock playback.",
-    "emailSignIn": "Email Sign In",
+    "signInMessage": "로그인하여 관심 목록 저장, 알림 생성 및 재생 잠금 해제.",
+    "emailSignIn": "이메일 로그인",
     "continueWithGoogle": "Continue with Google",
     "connecting": "Connecting…"
   },
@@ -5647,5 +5652,26 @@
     "subscribe": "구독하기",
     "privacy": "귀하의 개인정보를 존중합니다. 언제든 구독 취소 가능.",
     "thankYou": "등록 완료! 최고의 셋업을 보내드리겠습니다."
+  },
+  "market": {
+    "advancing": "상승",
+    "declining": "하락"
+  },
+  "paperTrading": {
+    "signInRequired": "페이퍼 트레이드를 추적하려면 로그인하세요"
+  },
+  "grades": {
+    "gradeA": "등급 A",
+    "gradeB": "등급 B",
+    "gradeC": "등급 C",
+    "gradeD": "등급 D",
+    "gradeF": "등급 F",
+    "patternGrade": "패턴 등급",
+    "labelA": "우수",
+    "labelB": "양호",
+    "labelC": "보통",
+    "labelD": "약함",
+    "labelF": "나쁨",
+    "tooltip": "추세 정렬, R:R 구조, 거래량, 대칭성, 과거 승률 및 변동성 체제를 기반으로 합니다."
   }
 }
