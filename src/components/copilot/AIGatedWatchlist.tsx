@@ -6,6 +6,7 @@ import { useGateEvaluation, GateEvaluation } from "@/hooks/useGateEvaluation";
 import { toast } from "sonner";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface WatchlistRow {
   symbol: string;
