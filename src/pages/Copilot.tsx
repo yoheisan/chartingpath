@@ -5,6 +5,7 @@ import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
+import ActiveTradesStrip from "@/components/copilot/ActiveTradesStrip";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ const Copilot = () => {
   const [debriefFromBanner, setDebriefFromBanner] = useState(false);
   const [debriefQuestion, setDebriefQuestion] = useState<string | null>(null);
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
 
   // Listen for question routing from NL Command Bar
   useEffect(() => {
@@ -44,7 +46,12 @@ const Copilot = () => {
     return () => window.removeEventListener('copilot-question', handler as EventListener);
   }, []);
 
-  const activeTrade = openTrades.length > 0 ? openTrades[0] : null;
+  const activeTrade = useMemo(() => {
+    if (selectedTradeId) {
+      return openTrades.find(t => t.id === selectedTradeId) ?? openTrades[0] ?? null;
+    }
+    return openTrades[0] ?? null;
+  }, [openTrades, selectedTradeId]);
 
   const focusNLBar = useCallback((prefill?: string) => {
     const event = new KeyboardEvent("keydown", {
@@ -148,6 +155,14 @@ const Copilot = () => {
             onDismiss={dismissConflict}
           />
           <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
+          <ActiveTradesStrip
+            trades={openTrades}
+            selectedTradeId={selectedTradeId}
+            onSelectTrade={(id) => {
+              setSelectedClosedTrade(null);
+              setSelectedTradeId(id);
+            }}
+          />
         </aside>
 
         <main className="flex-1 border-r border-border/40 flex flex-col min-h-0">
