@@ -875,7 +875,7 @@ export function TradingCopilot({
                   {!isAuthenticated && (
                     <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
                        <p className="text-sm text-foreground/80 mb-2">
-                        {t('copilot.panel.activeSetups', { count: String(activePatternCount ?? '…'), defaultValue: 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.' })}
+                        {(t as any)('copilot.panel.activeSetups', { count: String(activePatternCount ?? '…'), defaultValue: 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.' })}
                       </p>
                       <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-sm">
                         <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
