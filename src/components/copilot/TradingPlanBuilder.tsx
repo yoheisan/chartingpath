@@ -258,8 +258,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     if (confluenceEnabled) {
       adv += ` Confluence ≥${minConfluence}%.`;
     }
-    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}`;
-  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence]);
+    let universe = "";
+    if (assetClasses.length > 0) {
+      const parts = assetClasses.map(a => a.charAt(0).toUpperCase() + a.slice(1));
+      universe = ` Universe: ${parts.join(", ")}.`;
+      if (stockExchanges.length) universe += ` Exchanges: ${stockExchanges.join(", ")}.`;
+      if (fxCategories.length) universe += ` FX: ${fxCategories.join(", ")}.`;
+      if (cryptoCategories.length) universe += ` Crypto: ${cryptoCategories.join(", ")}.`;
+    }
+    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}${universe}`;
+  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories]);
 
   const canSave = selectedPatterns.length > 0;
 
