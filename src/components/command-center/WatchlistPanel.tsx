@@ -307,7 +307,7 @@ export function WatchlistPanel({
                 </div>
               )}
               {displayList.map((item) => {
-                const alignment = getWatchlistAlignment(item.symbol, 'asset_type' in item ? item.asset_type : undefined);
+                const alignment = getWatchlistAlignment(item.symbol, 'asset_type' in item ? (item.asset_type as string) : undefined);
                 const isOutside = alignment && !alignment.aligned;
 
                 return (
