@@ -2199,10 +2199,10 @@
         "description": "Complete toolkit for the professional trader",
         "name": "Pro"
       },
-      "team": {
-        "button": "Join Team",
-        "description": "Enterprise-grade features for trading teams",
-        "name": "Team"
+      "elite": {
+        "button": "Join Elite",
+        "description": "Premium features for power traders",
+        "name": "Elite"
       }
     },
     "proFeatures": "Pro features, fair pricing",
