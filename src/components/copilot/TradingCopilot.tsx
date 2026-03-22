@@ -840,9 +840,9 @@ export function TradingCopilot({
                     </>
                   ) : hasPlan ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your trading plan is running</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.planRunning', 'Your trading plan is running')}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Copilot is paper-testing your plan live. {todayTradeCount !== null ? `${todayTradeCount} trade${todayTradeCount !== 1 ? 's' : ''} taken today. Review results before going live.` : 'Review results before going live.'}
+                        {t('copilot.panel.paperTesting', 'Copilot is paper-testing your plan live.')} {todayTradeCount !== null ? `${todayTradeCount} ${t('copilot.panel.tradesTakenToday', 'trade(s) taken today.')} ${t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}` : t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}
                       </p>
                     </>
                   ) : (
