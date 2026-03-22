@@ -151,13 +151,13 @@ export const PatternOverlayChart = memo(function PatternOverlayChart({
               )}
             </div>
             <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span className="font-medium">{patternName}</span>
+              <span className="font-medium">{translatePatternName(patternName)}</span>
               <span>•</span>
               <span>{timeframe}</span>
               {isHistoricalPattern && (
                 <>
                   <span>•</span>
-                  <span className="text-xs">Historical</span>
+                  <span className="text-xs">{t('commandCenter.historical', 'Historical')}</span>
                 </>
               )}
             </div>
