@@ -21,13 +21,20 @@ const ranges: { label: string; value: DateRange }[] = [
   { label: 'All time', value: 'all' },
 ];
 
-const CopilotReport = () => {
+  const { user } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const data = useTradeReport(dateRange);
   const { closedTrades, sessions, plans, loading, firstTradeDate } = data;
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Please sign in to view your report.</p>
+      </div>
+    );
+  }
+
   return (
-    <CopilotAuthGate>
       <div className="min-h-screen bg-background">
         <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
           {/* HEADER */}
