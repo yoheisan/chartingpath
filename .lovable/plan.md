@@ -1,29 +1,82 @@
 
 
-# Market Pulse Chart — Long vs Short (No Asset Breakdown)
+## Multiple Master Plans — Design Plan
 
-## Rationale
+### Why It Makes Sense
 
-Asset-level breakdown on the public landing page is biased due to uneven ticker coverage (474 stocks vs 28 commodities). FX shows only 5 active detections despite 99 tickers. Showing raw counts by asset would mislead visitors. Keep the landing page chart clean: total long vs short over 30 days.
+Yes, this is a strong feature for both user value and monetization:
 
-## What We Build
+1. **User value**: Traders often run different strategies (e.g., "Momentum Breakouts" for US stocks, "Mean Reversion" for FX, "Swing Longs" for crypto). A single plan forces them to constantly reconfigure.
+2. **Gating**: Multiple plans map naturally to tier limits — FREE gets 1, paid tiers get more.
 
-A single stacked bar chart showing daily long vs short pattern detections across all asset types for the last 30 days.
+### Proposed Tier Limits
 
-### New file: `src/components/landing/MarketPulseChart.tsx`
-- Query `live_pattern_detections` where `first_detected_at >= now() - 30 days`
-- Aggregate client-side: group by date + direction → `{ date, long, short }[]`
-- Recharts `BarChart` with stacked bars using existing `ChartContainer` / `ChartTooltip`
-- Green for long, red for short
-- Section header + subtitle with i18n keys
-- Loading skeleton while data fetches
+| Tier | Max Active Plans |
+|------|-----------------|
+| FREE | 1 |
+| LITE | 2 |
+| PLUS | 5 |
+| PRO  | 10 |
+| TEAM | Unlimited |
 
-### Edit: `src/pages/Index.tsx`
-- Import `MarketPulseChart`
-- Place between `LivePatternPreview` and `SocialProof`
+### What Changes
 
-### Edit: `src/i18n/locales/en.json`
-- Add 4 keys under `landing.marketPulse`: title, subtitle, long, short
+**1. Database — `master_plans` table update**
+- Add a `name` column (text, default "My Trading Plan") so users can label each plan
+- Add a `plan_order` column (integer) for sorting
+- Remove the "deactivate all others" logic — multiple plans can be `is_active = true`
 
-## Result
-A clean, unbiased visualization showing the market's directional pulse — how many bullish vs bearish patterns are being detected daily — without misleading asset-level comparisons.
+**2. Plans config — add `maxActivePlans` cap**
+- Add `maxActivePlans` to each tier in `plans.ts` (both frontend and edge function copies)
+
+**3. UI — Plan Selector in Copilot**
+- Replace the single MandateCard with a plan selector dropdown/tabs showing all active plans
+- "New Plan" button (gated by tier limit) opens the builder
+- Each plan card shows its name, rule count, and a badge (Active/Inactive)
+- Clicking a plan loads its rules into the Copilot context
+
+**4. Trading Plan Builder updates**
+- Add a "Plan Name" text input at the top of the builder
+- Remove the "deactivate all existing plans" logic on save
+- Add a "Duplicate Plan" action for quick iteration
+- Show tier-gated message when limit is reached: "Upgrade to create more plans"
+
+**5. Copilot & Paper Trading integration**
+- When evaluating a signal, the AI Gate checks the **currently selected** plan (not all plans)
+- Add a plan selector to the Copilot header so users can switch context
+- Paper trades are tagged with `master_plan_id` so performance can be tracked per-plan
+
+**6. Edge function updates**
+- `trading-copilot`: Read the selected plan ID from the request instead of always fetching the single active one
+- `projects-run`: No change needed (backtests are independent of master plans)
+
+### Technical Details
+
+Migration SQL:
+```sql
+ALTER TABLE public.master_plans
+  ADD COLUMN IF NOT EXISTS name text DEFAULT 'My Trading Plan',
+  ADD COLUMN IF NOT EXISTS plan_order integer DEFAULT 0;
+```
+
+Plans config addition (both files):
+```typescript
+// In TierConfig interface
+maxActivePlans: number;
+
+// In tiers
+FREE:  { maxActivePlans: 1,  ... },
+LITE:  { maxActivePlans: 2,  ... },
+PLUS:  { maxActivePlans: 5,  ... },
+PRO:   { maxActivePlans: 10, ... },
+TEAM:  { maxActivePlans: 99, ... },
+```
+
+Files to modify:
+- `supabase/migrations/` — new migration for `name` and `plan_order` columns
+- `src/config/plans.ts` + `supabase/functions/_shared/plans.ts` — add `maxActivePlans`
+- `src/hooks/useMasterPlan.ts` — fetch all active plans, track selected plan
+- `src/components/copilot/MandateCard.tsx` — plan selector UI
+- `src/components/copilot/TradingPlanBuilder.tsx` — plan naming, remove deactivation logic, tier gate
+- `src/components/copilot/TradingCopilot.tsx` — pass selected plan context
+
