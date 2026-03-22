@@ -28,7 +28,6 @@ interface AIGatedWatchlistProps {
 }
 
 export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) {
-  const [ticker, setTicker] = useState("");
   const [watchlist, setWatchlist] = useState<WatchlistRow[]>(INITIAL_WATCHLIST);
   const { evaluate, getEvaluation, isLoading } = useGateEvaluation();
 
