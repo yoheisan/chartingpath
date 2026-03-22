@@ -23,6 +23,7 @@ export function NavCopilotBar({ className, onMandateSaved }: NavCopilotBarProps)
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const copilot = useTradingCopilotContext();
 
   const { state, submit, confirmSave, reset } = useMandateSubmit({
     onSaved: () => {
