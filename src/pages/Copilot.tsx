@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
@@ -9,11 +9,24 @@ import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
   const { user } = useAuth();
+  const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
+
+  const canCreateMore = useMemo(() => {
+    const planMapping: Record<string, PlanTier> = {
+      free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'PLUS',
+      pro: 'PRO', pro_plus: 'PRO', elite: 'TEAM', team: 'TEAM',
+    };
+    const tier = planMapping[subscriptionPlan?.toLowerCase() ?? 'free'] || 'FREE';
+    const maxPlans = PLANS_CONFIG.tiers[tier].maxActivePlans;
+    return plans.length < maxPlans;
+  }, [subscriptionPlan, plans.length]);
   const [conflictTicker, setConflictTicker] = useState<string | null>(null);
   const [conflictReason, setConflictReason] = useState<string | null>(null);
   const [sessionEndBanner, setSessionEndBanner] = useState<{ time: string } | null>(null);
@@ -126,11 +139,7 @@ const Copilot = () => {
             plans={plans}
             selectedPlanId={selectedPlanId}
             onSelectPlan={selectPlan}
-            onNewPlan={() => {
-              // Open copilot plan builder for new plan
-              const copilotEl = document.querySelector('[data-copilot-trigger]') as HTMLButtonElement;
-              copilotEl?.click();
-            }}
+            canCreateMore={canCreateMore}
           />
           <ConflictBanner
             onFocusNLBar={focusNLBar}

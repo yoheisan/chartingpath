@@ -50,6 +50,7 @@ const Layout = ({ children }: LayoutProps) => {
             pendingAnalysis={copilot.pendingAnalysis}
             onContextConsumed={copilot.consumePendingContext}
             pendingPlanBuilder={copilot.pendingPlanBuilder}
+            pendingNewPlan={copilot.pendingNewPlan}
             onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
           />
         )}
@@ -73,6 +74,7 @@ const Layout = ({ children }: LayoutProps) => {
           pendingAnalysis={copilot.pendingAnalysis}
           onContextConsumed={copilot.consumePendingContext}
           pendingPlanBuilder={copilot.pendingPlanBuilder}
+          pendingNewPlan={copilot.pendingNewPlan}
           onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
         />
       )}

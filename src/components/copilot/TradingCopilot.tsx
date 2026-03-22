@@ -251,6 +251,7 @@ export interface TradingCopilotProps {
   pendingAnalysis?: ChartAnalysisResult | null;
   onContextConsumed?: () => void;
   pendingPlanBuilder?: boolean;
+  pendingNewPlan?: boolean;
   onPlanBuilderConsumed?: () => void;
 }
 
@@ -261,6 +262,7 @@ export function TradingCopilot({
   pendingAnalysis,
   onContextConsumed,
   pendingPlanBuilder,
+  pendingNewPlan,
   onPlanBuilderConsumed
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
@@ -274,10 +276,11 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const contextProcessedRef = useRef(false);
-  const { plan, hasPlan, refreshPlan } = useMasterPlan();
+  const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
   const {
@@ -469,10 +472,11 @@ export function TradingCopilot({
   useEffect(() => {
     if (pendingPlanBuilder && isExpanded) {
       setShowBuilder(true);
+      setBuilderIsNewPlan(!!pendingNewPlan);
       setMessages([]);
       onPlanBuilderConsumed?.();
     }
-  }, [pendingPlanBuilder, isExpanded, onPlanBuilderConsumed]);
+  }, [pendingPlanBuilder, pendingNewPlan, isExpanded, onPlanBuilderConsumed]);
 
   const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
@@ -942,20 +946,25 @@ export function TradingCopilot({
               })()
             ) : showBuilder ? (
               <TradingPlanBuilder
-                existingPlan={plan}
+                existingPlan={builderIsNewPlan ? null : plan}
+                isNewPlan={builderIsNewPlan}
                 onSaved={() => {
                   setShowBuilder(false);
+                  setBuilderIsNewPlan(false);
                   refreshPlan();
                   setMessages(prev => [...prev, {
                     id: crypto.randomUUID(),
                     role: "assistant" as const,
-                    content: `✅ Your trading plan is set. Copilot is now paper-testing it live.\n\nI'll scan for ${plan ? "your updated" : "matching"} setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
+                    content: builderIsNewPlan
+                      ? `✅ New trading plan created! Copilot is now paper-testing it live.\n\nSwitch between plans from the Master Plan card on your desk.`
+                      : `✅ Your trading plan is updated. Copilot is now paper-testing it live.\n\nI'll scan for matching setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
                     timestamp: new Date(),
                   }]);
                 }}
-                onCancel={() => setShowBuilder(false)}
+                onCancel={() => { setShowBuilder(false); setBuilderIsNewPlan(false); }}
                 onSwitchToNL={() => {
                   setShowBuilder(false);
+                  setBuilderIsNewPlan(false);
                   setInput(hasPlan ? "Update my trading plan: " : "");
                   setTimeout(() => inputRef.current?.focus(), 100);
                 }}

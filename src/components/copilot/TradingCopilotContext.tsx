@@ -16,11 +16,14 @@ interface TradingCopilotContextValue {
   openWithContext: (context: string, chartData?: ChartContextData) => void;
   openWithAnalysis: (context: string, analysis: ChartAnalysisResult) => void;
   openPlanBuilder: () => void;
+  openNewPlanBuilder: () => void;
   pendingContext: string | null;
   pendingAnalysis: ChartAnalysisResult | null;
   pendingPlanBuilder: boolean;
+  pendingNewPlan: boolean;
   consumePendingContext: () => string | null;
   consumePendingPlanBuilder: () => boolean;
+  consumePendingNewPlan: () => boolean;
   setChartContext: (data: ChartContextData | null) => void;
   getChartContext: () => ChartContextData | null;
 }
@@ -32,6 +35,7 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   const [pendingContext, setPendingContext] = useState<string | null>(null);
   const [pendingAnalysis, setPendingAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [pendingPlanBuilder, setPendingPlanBuilder] = useState(false);
+  const [pendingNewPlan, setPendingNewPlan] = useState(false);
   const contextRef = useRef<ChartContextData | null>(null);
 
   const toggle = useCallback(() => {
@@ -69,6 +73,13 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
 
   const openPlanBuilder = useCallback(() => {
     setPendingPlanBuilder(true);
+    setPendingNewPlan(false);
+    setIsOpen(true);
+  }, []);
+
+  const openNewPlanBuilder = useCallback(() => {
+    setPendingPlanBuilder(true);
+    setPendingNewPlan(true);
     setIsOpen(true);
   }, []);
 
@@ -84,6 +95,12 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
     setPendingPlanBuilder(false);
     return val;
   }, [pendingPlanBuilder]);
+
+  const consumePendingNewPlan = useCallback(() => {
+    const val = pendingNewPlan;
+    setPendingNewPlan(false);
+    return val;
+  }, [pendingNewPlan]);
 
   const setChartContext = useCallback((data: ChartContextData | null) => {
     contextRef.current = data;
@@ -114,11 +131,14 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
       openWithContext,
       openWithAnalysis,
       openPlanBuilder,
+      openNewPlanBuilder,
       pendingContext,
       pendingAnalysis,
       pendingPlanBuilder,
+      pendingNewPlan,
       consumePendingContext,
       consumePendingPlanBuilder,
+      consumePendingNewPlan,
       setChartContext,
       getChartContext
     }}>
@@ -136,11 +156,14 @@ const NOOP_CONTEXT: TradingCopilotContextValue = {
   openWithContext: () => {},
   openWithAnalysis: () => {},
   openPlanBuilder: () => {},
+  openNewPlanBuilder: () => {},
   pendingContext: null,
   pendingAnalysis: null,
   pendingPlanBuilder: false,
+  pendingNewPlan: false,
   consumePendingContext: () => null,
   consumePendingPlanBuilder: () => false,
+  consumePendingNewPlan: () => false,
   setChartContext: () => {},
   getChartContext: () => null
 };

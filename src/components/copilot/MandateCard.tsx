@@ -50,6 +50,10 @@ export function MandateCard({
     }
   };
 
+  const handleNewPlan = () => {
+    copilot.openNewPlanBuilder();
+  };
+
   return (
     <Card className="rounded-lg border-border/60 bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
@@ -99,7 +103,7 @@ export function MandateCard({
             onClick={() => {
               setShowSelector(false);
               if (canCreateMore) {
-                onNewPlan?.();
+                handleNewPlan();
               }
             }}
             className={cn(
