@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2, Bot, Webhook, Copy, ShieldCheck } from "lucide-react";
+import { Bell, Plus, TrendingUp, ArrowLeft, Star, Crown, Zap, Pause, Play, Trash2, AlertTriangle, Lock, RefreshCw, Search, X, Mail, Smartphone, Code, Repeat, ArrowRight, CheckCircle2, Bot, Webhook, Copy, ShieldCheck, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
@@ -26,6 +26,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PushNotificationPrompt } from "@/components/alerts/PushNotificationPrompt";
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
+import { PlanAlertGenerator } from "@/components/alerts/PlanAlertGenerator";
+import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useTranslation } from "react-i18next";
 
 interface UserProfile {
@@ -43,12 +45,14 @@ interface Alert {
   created_at: string;
   auto_paper_trade?: boolean;
   webhook_url?: string | null;
+  master_plan_id?: string | null;
 }
 
 const MemberAlerts = () => {
   const { t } = useTranslation();
   const { user, isAuthLoading: authLoading } = useAuth();
   const { requireAuth, showAuthDialog, setShowAuthDialog } = useAuthGate("alerts");
+  const { plans: masterPlans } = useMasterPlan();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
@@ -566,6 +570,19 @@ const MemberAlerts = () => {
         </div>
       </div>
 
+      {/* Plan Alert Generator */}
+      {user && masterPlans.length > 0 && (
+        <div className="mb-8">
+          <PlanAlertGenerator
+            userId={user.id}
+            plans={masterPlans}
+            onAlertsCreated={() => fetchAlerts(user.id)}
+            canCreateMore={canCreateMore}
+            remainingSlots={planLimits.max === 999999 ? 999 : Math.max(0, planLimits.max - activeAlerts.length)}
+          />
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Create Alert Form */}
         <Card>
@@ -900,12 +917,23 @@ const MemberAlerts = () => {
                       onClick={() => navigate('/members/dashboard', { state: { symbol: alert.symbol } })}
                       className="flex items-center gap-4 cursor-pointer text-left flex-1 min-w-0"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
+                       <div>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">{alert.symbol}</span>
                           <Badge variant={alert.status === 'active' ? 'default' : 'secondary'}>
                             {alert.status === 'active' ? t('alerts.statusActive') : t('alerts.statusPaused')}
                           </Badge>
+                          {/* Plan vs Manual badge */}
+                          {alert.master_plan_id ? (
+                            <Badge variant="outline" className="text-xs gap-1 border-primary/40 text-primary">
+                              <Sparkles className="h-3 w-3" />
+                              Plan
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                              Manual
+                            </Badge>
+                          )}
                           {alert.auto_paper_trade && (
                             <Badge variant="outline" className="text-xs gap-1">
                               <Bot className="h-3 w-3" />
