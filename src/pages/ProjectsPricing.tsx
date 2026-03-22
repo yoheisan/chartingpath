@@ -241,8 +241,20 @@ const ProjectsPricing = () => {
                     <span className="font-semibold text-foreground">{tier.config.monthlyCredits}/mo</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{p('labels.alerts')}</span>
+                    <span className="text-muted-foreground">{p('labels.manualAlerts')}</span>
                     <span className="font-semibold text-foreground">{tier.config.maxActiveAlerts}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{p('labels.planAlerts')}</span>
+                    <span className={`font-semibold ${tier.config.maxPlanAlerts === 0 ? 'text-muted-foreground' : 'text-emerald-600'}`}>
+                      {tier.config.maxPlanAlerts === 0 ? '—' : `${tier.config.maxPlanAlerts}/${p('labels.perPlan')}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{p('labels.tradingPlans')}</span>
+                    <span className={`font-semibold ${tier.config.maxActivePlans <= 1 ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      {tier.config.maxActivePlans >= 99 ? p('labels.unlimited') : tier.config.maxActivePlans}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Scripts</span>
