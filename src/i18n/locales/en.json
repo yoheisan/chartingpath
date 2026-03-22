@@ -2258,6 +2258,10 @@
       "labels": {
         "credits": "Credits",
         "alerts": "Alerts",
+        "manualAlerts": "Manual Alerts",
+        "planAlerts": "Plan Alerts",
+        "perPlan": "plan",
+        "tradingPlans": "Trading Plans",
         "instruments": "Instruments",
         "lookback": "Lookback",
         "studyTFs": "Study TFs",
