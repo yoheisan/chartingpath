@@ -198,7 +198,7 @@ const Navigation = () => {
             {/* Products dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${
                   isActive('/members/dashboard') || isActive('/patterns/live') || isActive('/tools/agent-scoring') || isActive('/projects/pattern-lab') || isActive('/members/alerts') || isActive('/members/scripts')
                     ? 'text-foreground font-medium' 
                     : 'text-muted-foreground hover:text-foreground'
