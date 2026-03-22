@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const Copilot = () => {
-  const { rules, hasPlan, refreshPlan } = useMasterPlan();
+  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
   const { user } = useAuth();
   const { openTrades } = useCopilotTrades(user?.id);
   const [conflictTicker, setConflictTicker] = useState<string | null>(null);
