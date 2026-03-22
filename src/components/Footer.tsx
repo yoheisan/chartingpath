@@ -35,16 +35,16 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('footer.research', 'Research')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/patterns/live" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/patterns/live" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.screener', 'Screener')}
                 </Link>
-                <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/projects/pattern-lab/new" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.patternLab', 'Pattern Lab')}
                 </Link>
-                <Link to="/members/scripts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/members/scripts" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.scripts', 'Scripts')}
                 </Link>
-                <Link to="/projects/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/projects/pricing" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pricing', 'Pricing')}
                 </Link>
               </nav>
@@ -54,13 +54,13 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/chart-patterns/library" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.patternLibrary', 'Pattern Library')}
                 </Link>
-                <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/learn" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.blogArticles', 'Blog & Articles')}
                 </Link>
-                <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/chart-patterns/quiz" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.patternQuizzes', 'Pattern Quizzes')}
                 </Link>
               </nav>
@@ -70,22 +70,22 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold mb-4 text-foreground">{t('navigation.more', 'More')}</h3>
               <nav className="flex flex-col gap-2">
-                <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/pip-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.pipCalculator', 'Pip Calculator')}
                 </Link>
-                <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/risk-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.riskCalculator', 'Risk Calculator')}
                 </Link>
-                <Link to="/tools/economic-calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/tools/economic-calendar" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.economicCalendar', 'Economic Calendar')}
                 </Link>
-                <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.faq', 'FAQ')}
                 </Link>
-                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/about" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.about', 'About')}
                 </Link>
-                <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/support" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                   {t('navigation.contactSupport', 'Contact Support')}
                 </Link>
               </nav>
@@ -130,16 +130,16 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">{t('footer.tools', 'Tools')}</h3>
             <nav className="flex flex-col gap-2">
-              <Link to="/projects/pattern-lab/new" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/projects/pattern-lab/new" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.patternLab', 'Pattern Lab')}
               </Link>
-              <Link to="/tools/pip-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/tools/pip-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pipCalculator', 'Pip Calculator')}
               </Link>
-              <Link to="/tools/risk-calculator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/tools/risk-calculator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.riskCalculator', 'Risk Calculator')}
               </Link>
-              <Link to="/tools/market-breadth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/tools/market-breadth" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.marketBreadth', 'Market Breadth Report')}
               </Link>
             </nav>
@@ -149,19 +149,19 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">{t('footer.learning', 'Learning')}</h3>
             <nav className="flex flex-col gap-2">
-              <Link to="/learn" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/learn" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.learningCenter', 'Learning Center')}
               </Link>
-              <Link to="/chart-patterns/generator" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/chart-patterns/generator" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.patternGenerator', 'Pattern Generator')}
               </Link>
-              <Link to="/chart-patterns/library" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/chart-patterns/library" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.patternLibrary', 'Pattern Library')}
               </Link>
-              <Link to="/chart-patterns/strategies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/chart-patterns/strategies" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.tradingStrategies', 'Trading Strategies')}
               </Link>
-              <Link to="/chart-patterns/quiz" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/chart-patterns/quiz" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.patternQuiz', 'Pattern Quiz')}
               </Link>
             </nav>
@@ -172,16 +172,16 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">{t('footer.company', 'Company')}</h3>
             <nav className="flex flex-col gap-2">
-              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/about" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.about', 'About')}
               </Link>
-              <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.faq', 'FAQ')}
               </Link>
-              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/pricing" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.pricing', 'Pricing')}
               </Link>
-              <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/support" className="text-base text-muted-foreground hover:text-foreground transition-colors">
                 {t('navigation.contactSupport', 'Contact Support')}
               </Link>
             </nav>

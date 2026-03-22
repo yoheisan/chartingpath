@@ -74,7 +74,7 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
   
   const navLinkClass = (path: string) => 
-    `flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
+    `flex items-center gap-1 text-base whitespace-nowrap transition-colors ${
       isActive(path) 
         ? 'text-foreground font-medium' 
         : 'text-muted-foreground hover:text-foreground'
@@ -198,7 +198,7 @@ const Navigation = () => {
             {/* Products dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${
                   isActive('/members/dashboard') || isActive('/patterns/live') || isActive('/tools/agent-scoring') || isActive('/projects/pattern-lab') || isActive('/members/alerts') || isActive('/members/scripts')
                     ? 'text-foreground font-medium' 
                     : 'text-muted-foreground hover:text-foreground'
@@ -254,7 +254,7 @@ const Navigation = () => {
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
               <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-[13px] whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
+                className={`flex items-center gap-1 text-base whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
                 onMouseEnter={prefetchArticles}
               >
                 <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
@@ -300,7 +300,7 @@ const Navigation = () => {
               
               {/* 6. More - Tools & Company */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-1 text-base whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                   {t('navigation.more', 'More')}
                 </DropdownMenuTrigger>
@@ -356,7 +356,7 @@ const Navigation = () => {
               </DropdownMenu>
               
               {/* Copilot nav link */}
-              <Link to="/copilot" className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
+              <Link to="/copilot" className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
                 <Bot className="h-4 w-4" />
                 Copilot ✦
               </Link>
