@@ -18,7 +18,7 @@ export function PaperTradingPanel({ userId, onSymbolSelect }: PaperTradingPanelP
     return (
       <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground text-sm gap-2">
         <Wallet className="h-8 w-8 opacity-40" />
-        <p>Sign in to track paper trades</p>
+        <p>{t('paperTrading.signInRequired', 'Sign in to track paper trades')}</p>
       </div>
     );
   }
