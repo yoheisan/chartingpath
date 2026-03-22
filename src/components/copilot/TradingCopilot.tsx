@@ -833,9 +833,9 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">Set your first trading plan and see how it performs</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.setFirstPlan', 'Set your first trading plan and see how it performs')}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.
+                        {t('copilot.panel.likeBacktesting', 'Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.')}
                       </p>
                     </>
                   ) : hasPlan ? (
