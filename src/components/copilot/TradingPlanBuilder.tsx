@@ -66,6 +66,7 @@ interface TradingPlanBuilderProps {
   onSaved: () => void;
   onCancel: () => void;
   onSwitchToNL: () => void;
+  isNewPlan?: boolean;
 }
 
 export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchToNL }: TradingPlanBuilderProps) {
