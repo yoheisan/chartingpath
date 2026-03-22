@@ -195,43 +195,61 @@ const Navigation = () => {
             
             
             <nav className="hidden md:flex items-center gap-4 ml-4">
-            {/* 0. Dashboard - Command Center */}
-            <Link to="/members/dashboard" className={navLinkClass('/members/dashboard')}>
-              <BarChart3 className="h-4 w-4 text-blue-500" />
-              {t('navigation.dashboard', 'Dashboard')}
-            </Link>
-            
-            {/* 1. Screener - Discover signals */}
-            <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
-              <Activity className="h-4 w-4 text-amber-500" />
-              {t('navigation.screener', 'Screener')}
-            </Link>
-            
-            {/* 1b. Agent Scoring - Score signals */}
-            <Link to="/tools/agent-scoring" className={navLinkClass('/tools/agent-scoring')}>
-              <Bot className="h-4 w-4 text-amber-500" />
-              {t('navigation.agentScoring', 'Agent Scoring')}
-            </Link>
-            
-            {/* 2. Pattern Lab - Backtest historically */}
-            <Link to="/projects/pattern-lab/new" className={navLinkClass('/projects/pattern-lab')}>
-              <FlaskConical className="h-4 w-4 text-violet-500" />
-              {t('navigation.patternLab', 'Pattern Lab')}
-            </Link>
-            
-            {/* 3. Alerts - Get notified */}
-            <Link to="/members/alerts" className={navLinkClass('/members/alerts')}>
-              <WithNotificationBadge count={alertCount} size="sm">
-                <Bell className="h-4 w-4 text-emerald-500" />
-              </WithNotificationBadge>
-              {t('navigation.alerts', 'Alerts')}
-            </Link>
-            
-            {/* 4. Scripts - Automate trading */}
-            <Link to="/members/scripts" className={navLinkClass('/members/scripts')}>
-              <FileCode className="h-4 w-4 text-cyan-500" />
-              {t('navigation.scripts', 'Scripts')}
-            </Link>
+            {/* Products dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger 
+                className={`flex items-center gap-1 text-[13px] whitespace-nowrap transition-colors ${
+                  isActive('/members/dashboard') || isActive('/patterns/live') || isActive('/tools/agent-scoring') || isActive('/projects/pattern-lab') || isActive('/members/alerts') || isActive('/members/scripts')
+                    ? 'text-foreground font-medium' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <FolderKanban className="h-4 w-4" />
+                {t('navigation.products', 'Products')}
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-popover z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/members/dashboard" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-blue-500" />
+                    {t('navigation.dashboard', 'Dashboard')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/patterns/live" className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-amber-500" />
+                    {t('navigation.screener', 'Screener')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/tools/agent-scoring" className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-amber-500" />
+                    {t('navigation.agentScoring', 'Agent Scoring')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
+                    <FlaskConical className="h-4 w-4 text-violet-500" />
+                    {t('navigation.patternLab', 'Pattern Lab')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/members/alerts" className="flex items-center gap-2">
+                    <WithNotificationBadge count={alertCount} size="sm">
+                      <Bell className="h-4 w-4 text-emerald-500" />
+                    </WithNotificationBadge>
+                    {t('navigation.alerts', 'Alerts')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/members/scripts" className="flex items-center gap-2">
+                    <FileCode className="h-4 w-4 text-cyan-500" />
+                    {t('navigation.scripts', 'Scripts')}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
