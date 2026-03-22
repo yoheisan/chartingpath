@@ -23,6 +23,11 @@ export interface MasterPlan {
   min_agent_score: number | null;
   trend_context_filter: string | null;
   min_confluence_score: number | null;
+  // Instrument universe
+  asset_classes: string[];
+  fx_categories: string[];
+  crypto_categories: string[];
+  stock_exchanges: string[];
 }
 
 export interface MandateRule {
@@ -80,6 +85,16 @@ export function planToRules(plan: MasterPlan): MandateRule[] {
   }
   if (plan.min_confluence_score != null) {
     rules.push({ label: `≥${plan.min_confluence_score}%`, detail: "min confluence" });
+  }
+  // Instrument universe rules
+  if (plan.asset_classes?.length) {
+    const subDetails: string[] = [];
+    if (plan.stock_exchanges?.length) subDetails.push(plan.stock_exchanges.join(", "));
+    if (plan.fx_categories?.length) subDetails.push(plan.fx_categories.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ") + " FX");
+    if (plan.crypto_categories?.length) subDetails.push(plan.crypto_categories.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ") + " crypto");
+    const label = plan.asset_classes.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(", ");
+    const detail = subDetails.length ? subDetails.join(" · ") : "instrument universe";
+    rules.push({ label, detail });
   }
   return rules;
 }

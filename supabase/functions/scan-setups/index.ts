@@ -140,6 +140,20 @@ Deno.serve(async (req) => {
 
         // Master Plan rule checks
         const reasons: string[] = [];
+
+        // Instrument universe check
+        const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
+        if (planAssetClasses.length > 0 && det.asset_type) {
+          const assetTypeMap: Record<string, string> = {
+            stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
+            crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
+          };
+          const mappedType = assetTypeMap[det.asset_type.toLowerCase()] || det.asset_type.toLowerCase();
+          if (!planAssetClasses.includes(mappedType)) {
+            gateResult = "conflict";
+            reasons.push(`${det.asset_type} outside instrument universe`);
+          }
+        }
         if (plan.trend_direction && plan.trend_direction !== "both" && det.direction) {
           const planDir = plan.trend_direction.replace("_", " ");
           const setupDir = det.direction.toLowerCase();

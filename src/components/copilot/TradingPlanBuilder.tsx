@@ -55,6 +55,30 @@ const MTF_TIMEFRAME_OPTIONS = [
   { value: "1w", label: "Weekly" },
 ] as const;
 
+const ASSET_CLASS_OPTIONS = [
+  { value: "stocks", label: "Stocks" },
+  { value: "forex", label: "Forex" },
+  { value: "crypto", label: "Crypto" },
+  { value: "commodities", label: "Commodities" },
+  { value: "indices", label: "Indices" },
+  { value: "etfs", label: "ETFs" },
+] as const;
+
+const STOCK_EXCHANGE_OPTIONS = [
+  "NYSE", "NASDAQ", "S&P 500", "Russell 2000", "LSE", "TSX",
+] as const;
+
+const FX_CATEGORY_OPTIONS = [
+  { value: "major", label: "Major" },
+  { value: "minor", label: "Minor" },
+  { value: "exotic", label: "Exotic" },
+] as const;
+
+const CRYPTO_CATEGORY_OPTIONS = [
+  { value: "major", label: "Major (Top 10)" },
+  { value: "alt", label: "Altcoins" },
+] as const;
+
 const TREND_CONTEXT_OPTIONS = [
   { value: "any", label: "Any", desc: "No filter" },
   { value: "with_trend", label: "With trend only", desc: "Higher win rate" },
@@ -84,6 +108,11 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   const [windowStart, setWindowStart] = useState("09:30");
   const [windowEnd, setWindowEnd] = useState("16:00");
   const [activePreset, setActivePreset] = useState<string | null>("Full day 09:30–16:00");
+  // Instrument universe
+  const [assetClasses, setAssetClasses] = useState<string[]>([]);
+  const [stockExchanges, setStockExchanges] = useState<string[]>([]);
+  const [fxCategories, setFxCategories] = useState<string[]>([]);
+  const [cryptoCategories, setCryptoCategories] = useState<string[]>([]);
   // Section 6 — Exclusions
   const [exclusions, setExclusions] = useState<string[]>([]);
   // Advanced settings
@@ -147,6 +176,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       setConfluenceEnabled(true);
       setShowAdvanced(true);
     }
+    // Instrument universe
+    if (existingPlan.asset_classes?.length) {
+      setAssetClasses(existingPlan.asset_classes);
+    }
+    if (existingPlan.stock_exchanges?.length) {
+      setStockExchanges(existingPlan.stock_exchanges);
+    }
+    if (existingPlan.fx_categories?.length) {
+      setFxCategories(existingPlan.fx_categories);
+    }
+    if (existingPlan.crypto_categories?.length) {
+      setCryptoCategories(existingPlan.crypto_categories);
+    }
     // Check if window matches a preset
     const matchedPreset = WINDOW_PRESETS.find(
       p => p.start === existingPlan.trading_window_start && p.end === existingPlan.trading_window_end
@@ -164,6 +206,29 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
   const toggleMtfTimeframe = (tf: string) => {
     setMtfTimeframes(prev => prev.includes(tf) ? prev.filter(x => x !== tf) : [...prev, tf]);
+  };
+
+  const toggleAssetClass = (ac: string) => {
+    setAssetClasses(prev => {
+      const next = prev.includes(ac) ? prev.filter(x => x !== ac) : [...prev, ac];
+      // Clear sub-filters when asset class removed
+      if (!next.includes("stocks")) setStockExchanges([]);
+      if (!next.includes("forex")) setFxCategories([]);
+      if (!next.includes("crypto")) setCryptoCategories([]);
+      return next;
+    });
+  };
+
+  const toggleStockExchange = (ex: string) => {
+    setStockExchanges(prev => prev.includes(ex) ? prev.filter(x => x !== ex) : [...prev, ex]);
+  };
+
+  const toggleFxCategory = (cat: string) => {
+    setFxCategories(prev => prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]);
+  };
+
+  const toggleCryptoCategory = (cat: string) => {
+    setCryptoCategories(prev => prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]);
   };
 
   const exampleRisk = useMemo(() => {
@@ -193,8 +258,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     if (confluenceEnabled) {
       adv += ` Confluence ≥${minConfluence}%.`;
     }
-    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}`;
-  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence]);
+    let universe = "";
+    if (assetClasses.length > 0) {
+      const parts = assetClasses.map(a => a.charAt(0).toUpperCase() + a.slice(1));
+      universe = ` Universe: ${parts.join(", ")}.`;
+      if (stockExchanges.length) universe += ` Exchanges: ${stockExchanges.join(", ")}.`;
+      if (fxCategories.length) universe += ` FX: ${fxCategories.join(", ")}.`;
+      if (cryptoCategories.length) universe += ` Crypto: ${cryptoCategories.join(", ")}.`;
+    }
+    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}${universe}`;
+  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories]);
 
   const canSave = selectedPatterns.length > 0;
 
@@ -206,7 +279,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       if (!user) throw new Error("Not authenticated");
 
       // Build the raw NL summary for the record
-      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}`;
+      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}${assetClasses.length ? ` Universe: ${assetClasses.join(", ")}.` : ""}`;
 
       const planData = {
         user_id: user.id,
@@ -228,6 +301,10 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         min_agent_score: agentScoreEnabled ? minAgentScore : null,
         trend_context_filter: trendContext,
         min_confluence_score: confluenceEnabled ? minConfluence : null,
+        asset_classes: assetClasses,
+        fx_categories: fxCategories,
+        crypto_categories: cryptoCategories,
+        stock_exchanges: stockExchanges,
       } as any;
 
       let error;
@@ -271,6 +348,113 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground"
             maxLength={60}
           />
+        </section>
+
+        {/* ── Instrument Universe ── */}
+        <section className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground">What markets should Copilot trade? <span className="font-normal text-muted-foreground">(optional)</span></h4>
+          <p className="text-xs text-muted-foreground">Leave empty for all assets. Select specific asset classes to narrow the scan universe.</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ASSET_CLASS_OPTIONS.map(ac => {
+              const selected = assetClasses.includes(ac.value);
+              return (
+                <button
+                  key={ac.value}
+                  onClick={() => toggleAssetClass(ac.value)}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border",
+                    selected
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                  )}
+                >
+                  {selected && <Check className="h-3 w-3" />}
+                  {ac.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-filters for Stocks */}
+          {assetClasses.includes("stocks") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">Stock exchanges</p>
+              <div className="flex flex-wrap gap-1.5">
+                {STOCK_EXCHANGE_OPTIONS.map(ex => {
+                  const selected = stockExchanges.includes(ex);
+                  return (
+                    <button
+                      key={ex}
+                      onClick={() => toggleStockExchange(ex)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {ex}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-filters for Forex */}
+          {assetClasses.includes("forex") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">FX pair categories</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FX_CATEGORY_OPTIONS.map(cat => {
+                  const selected = fxCategories.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => toggleFxCategory(cat.value)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-filters for Crypto */}
+          {assetClasses.includes("crypto") && (
+            <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground font-medium">Crypto categories</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CRYPTO_CATEGORY_OPTIONS.map(cat => {
+                  const selected = cryptoCategories.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => toggleCryptoCategory(cat.value)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        selected
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ── Section 1: Patterns ── */}
