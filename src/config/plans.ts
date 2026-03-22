@@ -66,7 +66,7 @@ export interface TierConfig {
   monthlyScripts: number; // -1 = unlimited
   maxConcurrentRuns: number;
   maxActiveAlerts: number;
-  maxPlanAlerts: number; // Auto-generated plan-based alerts cap
+  maxPlanAlerts: number; // Auto-generated plan-based alerts cap (PER master plan, not total)
   maxWatchlistSlots: number;
   maxActivePlans: number;
   screener: ScreenerCaps;
