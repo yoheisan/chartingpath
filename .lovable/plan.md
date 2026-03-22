@@ -1,55 +1,65 @@
 
 
-## Add Asset Class & Instrument Universe to Master Plan
+## Connect Master Plan to Dashboard Watchlist & Alerts
 
-### Problem
-The Trading Plan Builder has no way to specify **which asset classes and sub-categories** the Copilot should trade. Users need to scope their plan to specific markets (e.g., "only NYSE stocks" or "only major FX pairs").
+### Current State
+- **Master Plan** defines asset classes, exchanges, patterns, direction, sector filters, trading window — but only the Copilot uses it
+- **Dashboard Watchlist** (`WatchlistPanel.tsx`) is fully manual — users add any ticker with no plan filtering
+- **Dashboard Alerts** (`AlertsHistoryPanel.tsx`) have no `master_plan_id` — no link to which strategy triggered them
+- **Active Patterns** tab shows all `live_pattern_detections` regardless of plan universe
 
 ### What Changes
 
-**1. Database — new columns on `master_plans`**
+**1. Database — link alerts to plans**
+
+Add `master_plan_id` column to the `alerts` table (FK to `master_plans`). This lets each alert be scoped to a specific trading strategy.
 
 ```sql
-ALTER TABLE public.master_plans
-  ADD COLUMN IF NOT EXISTS asset_classes text[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS fx_categories text[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS crypto_categories text[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS stock_exchanges text[] DEFAULT '{}';
+ALTER TABLE public.alerts
+  ADD COLUMN IF NOT EXISTS master_plan_id uuid REFERENCES public.master_plans(id);
 ```
 
-- `asset_classes`: e.g. `['stocks', 'forex', 'crypto']`
-- `fx_categories`: e.g. `['major', 'minor']` (reuses existing `FXPairCategory` types)
-- `crypto_categories`: e.g. `['major']` or `['alt']` (reuses `CRYPTO_MAJORS` logic)
-- `stock_exchanges`: e.g. `['NYSE', 'NASDAQ', 'S&P 500', 'Russell 2000']`
+**2. Dashboard Watchlist — plan-aware filtering**
 
-**2. TradingPlanBuilder — new "Instrument Universe" section (after Plan Name, before Patterns)**
+- Add a small plan selector dropdown at the top of the WatchlistPanel (optional — "All" or a specific plan name)
+- When a plan is selected, the Active Patterns tab filters `live_pattern_detections` by:
+  - Asset class matches `plan.asset_classes`
+  - Exchange matches `plan.stock_exchanges`
+  - Pattern name matches `plan.preferred_patterns` (if set)
+  - Direction matches `plan.trend_direction` (if not "both")
+- Show a subtle badge on each pattern: "Aligned" / "Outside plan" based on universe match
+- The manual watchlist stays user-controlled but shows a warning icon on tickers outside the selected plan's universe
 
-New section with:
-- **Asset class multi-select chips**: Stocks, Forex, Crypto, Commodities, Indices, ETFs
-- **Conditional sub-filters** (same pattern as `InstrumentSubFilters.tsx`):
-  - If Stocks selected → show exchange chips: NYSE, NASDAQ, S&P 500, Russell 2000, LSE, TSX
-  - If Forex selected → show pair category chips: Major, Minor, Exotic
-  - If Crypto selected → show coin category chips: Major (Top 10), Altcoins
-- Empty selection = "All assets" (no filter applied)
+**3. Alerts — plan tagging**
 
-**3. MasterPlan interface & rules display**
+- When creating an alert (from Pattern Lab deploy or manual), attach the currently active `master_plan_id`
+- In `AlertsHistoryPanel`, show a small plan name badge next to each alert
+- Add a filter to view alerts by plan
 
-- Add the 4 new fields to `MasterPlan` interface in `useMasterPlan.ts`
-- Add rules to `planToRules()`: "Stocks (NYSE, NASDAQ)", "FX Majors", "Crypto Alts", etc.
+**4. Shared hook — `useMasterPlanFilter`**
 
-**4. Save logic update**
+Create a reusable hook that:
+- Takes a plan and an instrument/pattern
+- Returns whether it's within the plan's universe (asset class, exchange, pattern, direction)
+- Used by both WatchlistPanel and AlertsHistoryPanel to show alignment status
 
-- Include `asset_classes`, `fx_categories`, `crypto_categories`, `stock_exchanges` in the save payload
-- Pre-fill from `existingPlan` on edit
-- Include in the summary text
+**5. UI indicators**
 
-**5. AI Gate / scan-setups integration**
-
-- When evaluating a setup, check if the instrument's asset type and sub-category match the plan's universe filters
-- No match → `conflict` with reason "Outside instrument universe"
+- Patterns/tickers inside plan universe: normal display
+- Patterns/tickers outside plan universe: muted with a small "Outside plan" label
+- No hard blocking — users can still view everything, but plan-aligned items are visually prioritized
 
 ### Files to create/modify
-- **New migration**: add 4 columns to `master_plans`
-- **Modify**: `src/hooks/useMasterPlan.ts` — add fields to interface + `planToRules()`
-- **Modify**: `src/components/copilot/TradingPlanBuilder.tsx` — add instrument universe section with state, UI, save logic, pre-fill, and summary text
+
+- **New migration**: add `master_plan_id` to `alerts` table
+- **Create**: `src/hooks/useMasterPlanFilter.ts` — shared plan-matching logic
+- **Modify**: `src/components/command-center/WatchlistPanel.tsx` — add plan selector, filter active patterns, show alignment badges
+- **Modify**: `src/components/command-center/AlertsHistoryPanel.tsx` — show plan badge, add plan filter
+- **Modify**: `src/components/command-center/CommandCenterLayout.tsx` — pass selected plan context down to panels
+- **Modify**: alert creation flow — attach `master_plan_id` when deploying alerts
+
+### What stays the same
+- Users can still manually add any ticker to their watchlist
+- Alerts without a plan still work (backwards compatible)
+- The Copilot AI Gate logic is unchanged — this is purely Dashboard-side awareness
 
