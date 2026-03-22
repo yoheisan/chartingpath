@@ -847,9 +847,9 @@ export function TradingCopilot({
                     </>
                   ) : (
                     <>
-                      <h4 className="font-semibold mb-1">What's your trading plan?</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.whatsYourPlan', "What's your trading plan?")}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.
+                        {t('copilot.panel.describeTrading', 'Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.')}
                       </p>
                     </>
                   )}
