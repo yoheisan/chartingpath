@@ -136,15 +136,14 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
       </ScrollArea>
 
       <div className="p-2 border-t border-border/40">
-        <input
-          type="text"
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value.toUpperCase())}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddTicker();
-          }}
-          placeholder="+ Add ticker → runs AI Gate"
-          className="w-full bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-blue-500/40 transition-colors"
+        <UniversalSymbolSearch
+          onSelect={(symbol) => handleAddTicker(symbol)}
+          trigger={
+            <button className="w-full flex items-center gap-2 bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:border-primary/40 hover:text-muted-foreground transition-colors">
+              <Plus className="h-3 w-3" />
+              Add ticker → runs AI Gate
+            </button>
+          }
         />
       </div>
     </div>
