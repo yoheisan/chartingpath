@@ -905,7 +905,7 @@ export function TradingCopilot({
                        onClick={() => setShowBuilder(true)}
                        disabled={isLoading}
                      >
-                       Set your trading plan →
+                       {t('copilot.panel.setPlan', 'Set your trading plan →')}
                      </Button>
                    )}
 
