@@ -794,8 +794,8 @@ export function TradingCopilot({
             <Sparkles className="h-5 w-5 text-white/90" />
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
-              <p className="text-xs text-white/70">
-                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading plan" : "See what AI-native trading looks like."}
+              <p className="text-sm text-white/70">
+                {isAuthenticated && hasPlan ? t('copilot.panel.yourDesk', 'Your trading desk') : isAuthenticated ? t('copilot.panel.setupPlan', 'Set up your trading plan') : t('copilot.panel.seeAiTrading', 'See what AI-native trading looks like.')}
               </p>
             </div>
           </div>
