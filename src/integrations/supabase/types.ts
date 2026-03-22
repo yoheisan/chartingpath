@@ -2883,6 +2883,8 @@ export type Database = {
           min_market_cap: string | null
           mtf_min_aligned: number | null
           mtf_required_timeframes: string[] | null
+          name: string | null
+          plan_order: number | null
           preferred_patterns: Json | null
           raw_nl_input: string | null
           sector_filters: Json | null
@@ -2906,6 +2908,8 @@ export type Database = {
           min_market_cap?: string | null
           mtf_min_aligned?: number | null
           mtf_required_timeframes?: string[] | null
+          name?: string | null
+          plan_order?: number | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
@@ -2929,6 +2933,8 @@ export type Database = {
           min_market_cap?: string | null
           mtf_min_aligned?: number | null
           mtf_required_timeframes?: string[] | null
+          name?: string | null
+          plan_order?: number | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
