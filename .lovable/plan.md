@@ -1,49 +1,55 @@
 
 
-## Add Active Trades Panel to Copilot Page
+## Add Asset Class & Instrument Universe to Master Plan
 
 ### Problem
-When trades are active, users can only see one trade on the Copilot center panel. To view all open positions, they must navigate away to `/tools/paper-trading`.
+The Trading Plan Builder has no way to specify **which asset classes and sub-categories** the Copilot should trade. Users need to scope their plan to specific markets (e.g., "only NYSE stocks" or "only major FX pairs").
 
-### Solution
-Add an **Active Trades strip/panel** to the Copilot page that shows all open positions at a glance, with quick actions.
+### What Changes
 
-### Changes
+**1. Database — new columns on `master_plans`**
 
-**1. New component: `src/components/copilot/ActiveTradesStrip.tsx`**
-- Horizontal strip below the MandateCard (left panel) or above the CenterPanel
-- Lists all open trades: ticker, direction (long/short icon), entry price, current P&L in R
-- Click a trade → selects it in the CenterPanel for chart view
-- Shows count badge: "3 Active Trades"
-- Each trade has a quick "Close" button that triggers the override dialog
-
-**2. Update `src/pages/Copilot.tsx`**
-- Import and render `ActiveTradesStrip` when `openTrades.length > 0`
-- Pass `openTrades` from `useCopilotTrades` and a callback to set the selected trade in CenterPanel
-- Wire the close action to the existing `handleCloseTrade` from `usePaperTrading`
-
-**3. Update CenterPanel selection**
-- Allow clicking a trade in the strip to switch which trade the CenterPanel displays (currently hardcoded to `openTrades[0]`)
-- Add `selectedTradeId` state to Copilot page, default to first open trade
-
-### Layout
-```text
-┌─────────────────────────────────────────────────┐
-│ Left Panel          │ Center Panel    │ Right   │
-│ ┌─────────────────┐ │                 │         │
-│ │ Mandate Card    │ │  Selected Trade │         │
-│ │ (accordion)     │ │  Chart View     │         │
-│ ├─────────────────┤ │                 │         │
-│ │ Active Trades   │ │                 │         │
-│ │ AAPL ▲ +0.5R   │ │                 │         │
-│ │ MSFT ▼ -0.2R   │ │                 │         │
-│ │ TSLA ▲ +1.1R   │ │                 │         │
-│ └─────────────────┘ │                 │         │
-└─────────────────────────────────────────────────┘
+```sql
+ALTER TABLE public.master_plans
+  ADD COLUMN IF NOT EXISTS asset_classes text[] DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS fx_categories text[] DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS crypto_categories text[] DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS stock_exchanges text[] DEFAULT '{}';
 ```
 
+- `asset_classes`: e.g. `['stocks', 'forex', 'crypto']`
+- `fx_categories`: e.g. `['major', 'minor']` (reuses existing `FXPairCategory` types)
+- `crypto_categories`: e.g. `['major']` or `['alt']` (reuses `CRYPTO_MAJORS` logic)
+- `stock_exchanges`: e.g. `['NYSE', 'NASDAQ', 'S&P 500', 'Russell 2000']`
+
+**2. TradingPlanBuilder — new "Instrument Universe" section (after Plan Name, before Patterns)**
+
+New section with:
+- **Asset class multi-select chips**: Stocks, Forex, Crypto, Commodities, Indices, ETFs
+- **Conditional sub-filters** (same pattern as `InstrumentSubFilters.tsx`):
+  - If Stocks selected → show exchange chips: NYSE, NASDAQ, S&P 500, Russell 2000, LSE, TSX
+  - If Forex selected → show pair category chips: Major, Minor, Exotic
+  - If Crypto selected → show coin category chips: Major (Top 10), Altcoins
+- Empty selection = "All assets" (no filter applied)
+
+**3. MasterPlan interface & rules display**
+
+- Add the 4 new fields to `MasterPlan` interface in `useMasterPlan.ts`
+- Add rules to `planToRules()`: "Stocks (NYSE, NASDAQ)", "FX Majors", "Crypto Alts", etc.
+
+**4. Save logic update**
+
+- Include `asset_classes`, `fx_categories`, `crypto_categories`, `stock_exchanges` in the save payload
+- Pre-fill from `existingPlan` on edit
+- Include in the summary text
+
+**5. AI Gate / scan-setups integration**
+
+- When evaluating a setup, check if the instrument's asset type and sub-category match the plan's universe filters
+- No match → `conflict` with reason "Outside instrument universe"
+
 ### Files to create/modify
-- **Create**: `src/components/copilot/ActiveTradesStrip.tsx`
-- **Modify**: `src/pages/Copilot.tsx` — add state for selected trade, render strip
-- **Modify**: `src/components/copilot/CenterPanel.tsx` — accept `selectedTradeId` prop instead of always using first trade
+- **New migration**: add 4 columns to `master_plans`
+- **Modify**: `src/hooks/useMasterPlan.ts` — add fields to interface + `planToRules()`
+- **Modify**: `src/components/copilot/TradingPlanBuilder.tsx` — add instrument universe section with state, UI, save logic, pre-fill, and summary text
 
