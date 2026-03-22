@@ -943,20 +943,25 @@ export function TradingCopilot({
               })()
             ) : showBuilder ? (
               <TradingPlanBuilder
-                existingPlan={plan}
+                existingPlan={builderIsNewPlan ? null : plan}
+                isNewPlan={builderIsNewPlan}
                 onSaved={() => {
                   setShowBuilder(false);
+                  setBuilderIsNewPlan(false);
                   refreshPlan();
                   setMessages(prev => [...prev, {
                     id: crypto.randomUUID(),
                     role: "assistant" as const,
-                    content: `✅ Your trading plan is set. Copilot is now paper-testing it live.\n\nI'll scan for ${plan ? "your updated" : "matching"} setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
+                    content: builderIsNewPlan
+                      ? `✅ New trading plan created! Copilot is now paper-testing it live.\n\nSwitch between plans from the Master Plan card on your desk.`
+                      : `✅ Your trading plan is updated. Copilot is now paper-testing it live.\n\nI'll scan for matching setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
                     timestamp: new Date(),
                   }]);
                 }}
-                onCancel={() => setShowBuilder(false)}
+                onCancel={() => { setShowBuilder(false); setBuilderIsNewPlan(false); }}
                 onSwitchToNL={() => {
                   setShowBuilder(false);
+                  setBuilderIsNewPlan(false);
                   setInput(hasPlan ? "Update my trading plan: " : "");
                   setTimeout(() => inputRef.current?.focus(), 100);
                 }}
