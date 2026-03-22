@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { PATTERN_DISPLAY_NAMES } from '@/hooks/useScreenerCaps';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { CompressedBar, VisualSpec, SetupWithVisuals } from '@/types/VisualSpec';
 const ThumbnailChart = lazy(() => import('@/components/charts/ThumbnailChart'));
 import { PatternOccurrence } from './PatternOccurrencesPanel';
