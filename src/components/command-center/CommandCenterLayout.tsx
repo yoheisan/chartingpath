@@ -646,76 +646,76 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         {/* Right Sidebar — auto-collapse on smaller screens, TradingView-style icon strip */}
         <div className={cn(
           "flex h-full border-l border-border/60 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
-          rightSidebarCollapsed ? "w-10" : "w-[280px]"
+          rightSidebarCollapsed ? "w-12" : "w-[280px]"
         )}>
           {rightSidebarCollapsed ? (
-            /* Icon strip — minimal, like TradingView right toolbar */
-            <div className="flex flex-col items-center w-10 py-2 gap-0.5">
+            /* Icon strip — TradingView-style right toolbar */
+            <div className="flex flex-col items-center w-12 py-2 gap-1">
               <button
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                 onClick={() => toggleSidebar(false)}
                 title={t('commandCenter.expandSidebar')}
               >
-                <PanelRightOpen className="h-3.5 w-3.5" />
+                <PanelRightOpen className="h-[18px] w-[18px]" />
               </button>
-              <div className="w-5 h-px bg-border/40 my-1" />
+              <div className="w-6 h-px bg-border/40 my-1" />
               <button
                 className={cn(
-                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'watchlist' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('watchlist'); toggleSidebar(false); }}
                 title={t('commandCenter.watchlist')}
               >
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-[18px] w-[18px]" />
               </button>
               <button
                 className={cn(
-                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'alerts' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('alerts'); toggleSidebar(false); }}
                 title={t('commandCenter.alerts')}
               >
-                <Bell className="h-3.5 w-3.5" />
+                <Bell className="h-[18px] w-[18px]" />
               </button>
               <button
                 className={cn(
-                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'paper' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('paper'); toggleSidebar(false); }}
                 title="Paper Trading"
               >
-                <Wallet className="h-3.5 w-3.5" />
+                <Wallet className="h-[18px] w-[18px]" />
               </button>
               <button
                 className={cn(
-                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'forward' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('forward'); toggleSidebar(false); }}
                 title="Forward Performance"
               >
-                <Activity className="h-3.5 w-3.5" />
+                <Activity className="h-[18px] w-[18px]" />
               </button>
               <button
                 className={cn(
-                  "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'briefing' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('briefing'); toggleSidebar(false); }}
                 title={t('morningBriefing.title', 'Morning Briefing')}
               >
-                <Sunrise className="h-3.5 w-3.5" />
+                <Sunrise className="h-[18px] w-[18px]" />
               </button>
               <div className="flex-1" />
               <button
-                className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
                 onClick={() => { toggleSidebar(false); }}
                 title={t('commandCenter.marketOverview')}
               >
-                <Globe className="h-3.5 w-3.5" />
+                <Globe className="h-[18px] w-[18px]" />
               </button>
             </div>
           ) : (
