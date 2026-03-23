@@ -5611,12 +5611,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 {{total}} canlı sinyalden {{visible}} tanesini görüyorsunuz",
+    "unlockMessage": "Tüm sonuçları açmak, uyarı ayarlamak ve backtest çalıştırmak için ücretsiz hesap oluşturun.",
+    "createFreeAccount": "Ücretsiz Hesap Oluştur →",
+    "signIn": "Giriş Yap",
+    "noCreditCard": "Kredi kartı gerekmez. Sonsuza kadar ücretsiz.",
+    "orContinueWith": "veya şununla devam et"
   },
   "socialProof": {
     "sectionLabel": "Traderlar tarafından güvenilen",
@@ -5698,5 +5698,18 @@
     "labelD": "Zayıf",
     "labelF": "Kötü",
     "tooltip": "Trend hizalaması, R:R yapısı, hacim, simetri, tarihsel kazanma oranı ve volatilite rejimine dayanır."
+  },
+  "authGate": {
+    "thisFeature": "bu özellik",
+    "signInToContinue": "Devam etmek için giriş yapın",
+    "createAccountOrSignIn": "{{feature}} erişmek için ücretsiz hesap oluşturun veya giriş yapın.",
+    "benefit1": "Günde 3 backtest",
+    "benefit2": "Canlı tarayıcı erişimi",
+    "benefit3": "Kalıp uyarıları",
+    "benefit4": "Edge Atlas sıralaması",
+    "or": "veya",
+    "signIn": "Giriş Yap",
+    "createFreeAccount": "Ücretsiz Hesap Oluştur",
+    "noCreditCard": "Kredi kartı gerekmez · Sonsuza kadar ücretsiz"
   }
 }

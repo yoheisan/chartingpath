@@ -6535,12 +6535,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 {{total}}件のライブシグナルのうち{{visible}}件を表示中",
+    "unlockMessage": "無料アカウントを作成して、全結果のロック解除、パターンアラート設定、バックテスト実行が可能に。",
+    "createFreeAccount": "無料アカウント作成 →",
+    "signIn": "サインイン",
+    "noCreditCard": "クレジットカード不要。永久無料プランあり。",
+    "orContinueWith": "または次の方法で続行"
   },
   "socialProof": {
     "sectionLabel": "トレーダーの声",
@@ -6622,5 +6622,18 @@
     "labelD": "弱い",
     "labelF": "不良",
     "tooltip": "トレンド整合性、R:R構造、出来高、対称性、過去の勝率、ボラティリティレジームに基づいています。"
+  },
+  "authGate": {
+    "thisFeature": "この機能",
+    "signInToContinue": "続行するにはサインインしてください",
+    "createAccountOrSignIn": "無料アカウントを作成するかサインインして{{feature}}にアクセス。",
+    "benefit1": "1日3回のバックテスト",
+    "benefit2": "ライブスクリーナーアクセス",
+    "benefit3": "パターンアラート",
+    "benefit4": "Edge Atlasランキング",
+    "or": "または",
+    "signIn": "サインイン",
+    "createFreeAccount": "無料アカウント作成",
+    "noCreditCard": "クレジットカード不要 · 永久無料プランあり"
   }
 }

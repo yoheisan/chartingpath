@@ -5613,12 +5613,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Estás viendo {{visible}} de {{total}} señales en vivo",
+    "unlockMessage": "Crea una cuenta gratuita para desbloquear todos los resultados, configurar alertas y ejecutar backtests.",
+    "createFreeAccount": "Crear cuenta gratuita →",
+    "signIn": "Iniciar sesión",
+    "noCreditCard": "Sin tarjeta de crédito. Plan gratuito para siempre.",
+    "orContinueWith": "o continuar con"
   },
   "socialProof": {
     "sectionLabel": "De confianza de los traders",
@@ -5700,5 +5700,18 @@
     "labelD": "Débil",
     "labelF": "Pobre",
     "tooltip": "Basado en alineación de tendencia, estructura R:R, volumen, simetría, tasa de éxito histórica y régimen de volatilidad."
+  },
+  "authGate": {
+    "thisFeature": "esta función",
+    "signInToContinue": "Inicia sesión para continuar",
+    "createAccountOrSignIn": "Crea una cuenta gratuita o inicia sesión para acceder a {{feature}}.",
+    "benefit1": "3 backtests/día",
+    "benefit2": "Acceso al screener en vivo",
+    "benefit3": "Alertas de patrones",
+    "benefit4": "Rankings Edge Atlas",
+    "or": "o",
+    "signIn": "Iniciar sesión",
+    "createFreeAccount": "Crear cuenta gratuita",
+    "noCreditCard": "Sin tarjeta de crédito · Plan gratuito para siempre"
   }
 }

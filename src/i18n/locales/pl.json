@@ -5567,12 +5567,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Widzisz {{visible}} z {{total}} sygnałów na żywo",
+    "unlockMessage": "Utwórz darmowe konto, aby odblokować wszystkie wyniki, ustawić alerty i uruchomić backtesty.",
+    "createFreeAccount": "Utwórz darmowe konto →",
+    "signIn": "Zaloguj się",
+    "noCreditCard": "Bez karty kredytowej. Darmowy plan na zawsze.",
+    "orContinueWith": "lub kontynuuj przez"
   },
   "socialProof": {
     "sectionLabel": "Zaufanie traderów",
@@ -5654,5 +5654,18 @@
     "labelD": "Słaby",
     "labelF": "Zły",
     "tooltip": "Na podstawie wyrównania trendu, struktury R:R, wolumenu, symetrii, historycznego win rate i reżimu zmienności."
+  },
+  "authGate": {
+    "thisFeature": "tę funkcję",
+    "signInToContinue": "Zaloguj się, aby kontynuować",
+    "createAccountOrSignIn": "Utwórz darmowe konto lub zaloguj się, aby uzyskać dostęp do {{feature}}.",
+    "benefit1": "3 backtesty/dzień",
+    "benefit2": "Dostęp do skanera na żywo",
+    "benefit3": "Alerty wzorców",
+    "benefit4": "Rankingi Edge Atlas",
+    "or": "lub",
+    "signIn": "Zaloguj się",
+    "createFreeAccount": "Utwórz darmowe konto",
+    "noCreditCard": "Bez karty kredytowej · Darmowy plan na zawsze"
   }
 }

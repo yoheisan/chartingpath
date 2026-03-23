@@ -5613,12 +5613,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Vous voyez {{visible}} sur {{total}} signaux en direct",
+    "unlockMessage": "Créez un compte gratuit pour débloquer tous les résultats, configurer des alertes et lancer des backtests.",
+    "createFreeAccount": "Créer un compte gratuit →",
+    "signIn": "Se connecter",
+    "noCreditCard": "Pas de carte bancaire requise. Plan gratuit à vie.",
+    "orContinueWith": "ou continuer avec"
   },
   "socialProof": {
     "sectionLabel": "Approuvé par les traders",
@@ -5700,5 +5700,18 @@
     "labelD": "Faible",
     "labelF": "Mauvais",
     "tooltip": "Basé sur l'alignement de tendance, la structure R:R, le volume, la symétrie, le taux de réussite historique et le régime de volatilité."
+  },
+  "authGate": {
+    "thisFeature": "cette fonctionnalité",
+    "signInToContinue": "Connectez-vous pour continuer",
+    "createAccountOrSignIn": "Créez un compte gratuit ou connectez-vous pour accéder à {{feature}}.",
+    "benefit1": "3 backtests/jour",
+    "benefit2": "Accès au screener en direct",
+    "benefit3": "Alertes de patterns",
+    "benefit4": "Classements Edge Atlas",
+    "or": "ou",
+    "signIn": "Se connecter",
+    "createFreeAccount": "Créer un compte gratuit",
+    "noCreditCard": "Pas de carte bancaire requise · Plan gratuit à vie"
   }
 }

@@ -5614,12 +5614,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 أنت تشاهد {{visible}} من {{total}} إشارة مباشرة",
+    "unlockMessage": "أنشئ حساباً مجانياً لفتح جميع النتائج وإعداد التنبيهات وتشغيل الاختبارات الخلفية.",
+    "createFreeAccount": "إنشاء حساب مجاني →",
+    "signIn": "تسجيل الدخول",
+    "noCreditCard": "لا حاجة لبطاقة ائتمان. خطة مجانية للأبد.",
+    "orContinueWith": "أو المتابعة بـ"
   },
   "socialProof": {
     "sectionLabel": "موثوق من المتداولين",
@@ -5701,5 +5701,18 @@
     "labelD": "ضعيف",
     "labelF": "سيء",
     "tooltip": "بناءً على محاذاة الاتجاه وبنية R:R والحجم والتماثل ومعدل الفوز التاريخي ونظام التقلبات."
+  },
+  "authGate": {
+    "thisFeature": "هذه الميزة",
+    "signInToContinue": "سجّل الدخول للمتابعة",
+    "createAccountOrSignIn": "أنشئ حساباً مجانياً أو سجّل الدخول للوصول إلى {{feature}}.",
+    "benefit1": "3 اختبارات خلفية/يوم",
+    "benefit2": "الوصول للمسح المباشر",
+    "benefit3": "تنبيهات الأنماط",
+    "benefit4": "تصنيفات Edge Atlas",
+    "or": "أو",
+    "signIn": "تسجيل الدخول",
+    "createFreeAccount": "إنشاء حساب مجاني",
+    "noCreditCard": "لا حاجة لبطاقة ائتمان · خطة مجانية للأبد"
   }
 }

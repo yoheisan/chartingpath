@@ -5567,12 +5567,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Bạn đang xem {{visible}} trong {{total}} tín hiệu trực tiếp",
+    "unlockMessage": "Tạo tài khoản miễn phí để mở khóa tất cả kết quả, thiết lập cảnh báo và chạy backtest.",
+    "createFreeAccount": "Tạo tài khoản miễn phí →",
+    "signIn": "Đăng nhập",
+    "noCreditCard": "Không cần thẻ tín dụng. Gói miễn phí mãi mãi.",
+    "orContinueWith": "hoặc tiếp tục với"
   },
   "socialProof": {
     "sectionLabel": "Được tin tưởng bởi các trader",
@@ -5654,5 +5654,18 @@
     "labelD": "Yếu",
     "labelF": "Kém",
     "tooltip": "Dựa trên sự liên kết xu hướng, cấu trúc R:R, khối lượng, tính đối xứng, tỷ lệ thắng lịch sử và chế độ biến động."
+  },
+  "authGate": {
+    "thisFeature": "tính năng này",
+    "signInToContinue": "Đăng nhập để tiếp tục",
+    "createAccountOrSignIn": "Tạo tài khoản miễn phí hoặc đăng nhập để truy cập {{feature}}.",
+    "benefit1": "3 backtest/ngày",
+    "benefit2": "Truy cập screener trực tiếp",
+    "benefit3": "Cảnh báo mẫu hình",
+    "benefit4": "Xếp hạng Edge Atlas",
+    "or": "hoặc",
+    "signIn": "Đăng nhập",
+    "createFreeAccount": "Tạo tài khoản miễn phí",
+    "noCreditCard": "Không cần thẻ tín dụng · Gói miễn phí mãi mãi"
   }
 }

@@ -5651,5 +5651,18 @@
     "labelD": "Weak",
     "labelF": "Poor",
     "tooltip": "Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime."
+  },
+  "authGate": {
+    "thisFeature": "this feature",
+    "signInToContinue": "Sign in to continue",
+    "createAccountOrSignIn": "Create a free account or sign in to access {{feature}}.",
+    "benefit1": "3 backtests/day",
+    "benefit2": "Live screener access",
+    "benefit3": "Pattern alerts",
+    "benefit4": "Edge Atlas rankings",
+    "or": "or",
+    "signIn": "Sign In",
+    "createFreeAccount": "Create Free Account",
+    "noCreditCard": "No credit card required · Free forever tier"
   }
 }

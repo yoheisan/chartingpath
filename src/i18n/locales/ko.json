@@ -5611,12 +5611,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 {{total}}개 실시간 신호 중 {{visible}}개를 보고 있습니다",
+    "unlockMessage": "무료 계정을 만들어 모든 결과 잠금 해제, 패턴 알림 설정, 백테스트 실행을 이용하세요.",
+    "createFreeAccount": "무료 계정 생성 →",
+    "signIn": "로그인",
+    "noCreditCard": "신용카드 불필요. 영구 무료 플랜.",
+    "orContinueWith": "또는 다음으로 계속"
   },
   "socialProof": {
     "sectionLabel": "트레이더가 신뢰하는",
@@ -5698,5 +5698,18 @@
     "labelD": "약함",
     "labelF": "나쁨",
     "tooltip": "추세 정렬, R:R 구조, 거래량, 대칭성, 과거 승률 및 변동성 체제를 기반으로 합니다."
+  },
+  "authGate": {
+    "thisFeature": "이 기능",
+    "signInToContinue": "계속하려면 로그인하세요",
+    "createAccountOrSignIn": "무료 계정을 만들거나 로그인하여 {{feature}}에 접근하세요.",
+    "benefit1": "일일 3회 백테스트",
+    "benefit2": "실시간 스크리너 접근",
+    "benefit3": "패턴 알림",
+    "benefit4": "Edge Atlas 순위",
+    "or": "또는",
+    "signIn": "로그인",
+    "createFreeAccount": "무료 계정 생성",
+    "noCreditCard": "신용카드 불필요 · 영구 무료 플랜"
   }
 }
