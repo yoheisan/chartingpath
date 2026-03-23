@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PaperTrade, OVERRIDE_REASONS } from '@/hooks/usePaperTrading';
+import { useTranslation } from 'react-i18next';
 
 interface OverrideDialogProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface OverrideDialogProps {
 }
 
 export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting }: OverrideDialogProps) {
+  const { t } = useTranslation();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
 
@@ -27,29 +29,29 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Pull Breaker — Close Trade Early</DialogTitle>
-          <DialogDescription>Override the system and close this trade before SL/TP is hit.</DialogDescription>
+          <DialogTitle>{t('paperTrading.pullBreakerTitle')}</DialogTitle>
+          <DialogDescription>{t('paperTrading.pullBreakerDesc')}</DialogDescription>
         </DialogHeader>
 
         {trade && (
           <div className="space-y-4">
             <div className="rounded-md bg-muted/30 p-3 text-sm space-y-1">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Symbol</span>
+                <span className="text-muted-foreground">{t('paperTrading.symbol')}</span>
                 <span className="font-medium">{trade.symbol}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Direction</span>
+                <span className="text-muted-foreground">{t('paperTrading.direction')}</span>
                 <span className="font-medium capitalize">{trade.trade_type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Entry</span>
+                <span className="text-muted-foreground">{t('paperTrading.entry')}</span>
                 <span className="font-medium tabular-nums">{trade.entry_price.toFixed(2)}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-medium mb-2">Why are you closing early?</p>
+              <p className="text-sm font-medium mb-2">{t('paperTrading.whyClosingEarly')}</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {OVERRIDE_REASONS.map((reason) => (
                   <Button
@@ -66,11 +68,11 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
             </div>
 
             <div>
-              <p className="text-sm font-medium mb-1.5">Notes (optional)</p>
+              <p className="text-sm font-medium mb-1.5">{t('paperTrading.notesOptional')}</p>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional context..."
+                placeholder={t('paperTrading.notesPlaceholder')}
                 className="h-16 text-sm resize-none"
               />
             </div>
@@ -78,9 +80,9 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('paperTrading.cancel')}</Button>
           <Button variant="destructive" onClick={handleConfirm} disabled={!selectedReason || submitting}>
-            {submitting ? 'Closing...' : 'Confirm Close'}
+            {submitting ? t('paperTrading.closing') : t('paperTrading.confirmClose')}
           </Button>
         </DialogFooter>
       </DialogContent>

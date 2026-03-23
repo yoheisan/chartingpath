@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuardrailCheck } from '@/hooks/useDeployGuardrails';
 import { Shield, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface DeployModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface DeployModalProps {
 }
 
 export function DeployModal({ open, onClose, checks, paperStats }: DeployModalProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
@@ -52,7 +54,6 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
 
   const goLive = async () => {
     if (!user) return;
-    // Upsert broker_connections
     await supabase.from('broker_connections').upsert({
       user_id: user.id,
       broker: 'alpaca',
@@ -65,11 +66,16 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
       connected_at: new Date().toISOString(),
     } as any, { onConflict: 'user_id' });
 
-    toast({ title: 'Copilot is now trading live', description: 'Orders will be routed through Alpaca.' });
+    toast({ title: t('paperTrading.copilotLiveTitle'), description: t('paperTrading.copilotLiveDesc') });
     onClose();
   };
 
-  const stepTitles = ['Connect your Alpaca account', 'Set capital allocation', 'Before you go live', 'Confirm and go live'];
+  const stepTitles = [
+    t('paperTrading.connectAlpaca'),
+    t('paperTrading.setCapital'),
+    t('paperTrading.beforeGoLive'),
+    t('paperTrading.confirmGoLive'),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -81,7 +87,6 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
           </DialogTitle>
         </DialogHeader>
 
-        {/* Step indicators */}
         <div className="flex gap-1 mb-2">
           {[0,1,2,3].map(i => (
             <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-blue-500' : 'bg-muted'}`} />
@@ -92,21 +97,21 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
           <div className="flex flex-col gap-3">
             <Input
               type="password"
-              placeholder="API Key"
+              placeholder={t('paperTrading.apiKey')}
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
               className="bg-secondary/50 border-border"
             />
             <Input
               type="password"
-              placeholder="Secret Key"
+              placeholder={t('paperTrading.secretKey')}
               value={apiSecret}
               onChange={e => setApiSecret(e.target.value)}
               className="bg-secondary/50 border-border"
             />
             {verifyError && <p className="text-sm text-red-400">{verifyError}</p>}
             <Button onClick={verifyConnection} disabled={!apiKey || !apiSecret || verifying}>
-              {verifying ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Verifying…</> : 'Verify connection'}
+              {verifying ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t('paperTrading.verifying')}</> : t('paperTrading.verifyConnection')}
             </Button>
           </div>
         )}
@@ -114,7 +119,7 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
         {step === 1 && (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Account balance: <span className="text-foreground font-mono">${accountBalance.toLocaleString()}</span>
+              {t('paperTrading.accountBalance')}: <span className="text-foreground font-mono">${accountBalance.toLocaleString()}</span>
             </p>
             <Slider
               min={0}
@@ -131,21 +136,21 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
                 className="w-32 bg-secondary/50 border-border font-mono"
               />
               <span className="text-sm text-muted-foreground">
-                ${capital.toLocaleString()} allocated
+                {t('paperTrading.allocated', { amount: `$${capital.toLocaleString()}` })}
               </span>
             </div>
-            <Button onClick={() => setStep(2)}>Continue</Button>
+            <Button onClick={() => setStep(2)}>{t('paperTrading.continue')}</Button>
           </div>
         )}
 
         {step === 2 && (
           <div className="flex flex-col gap-3">
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Copilot will place <span className="text-foreground">real orders</span> with real money</li>
-              <li>• Trades execute autonomously within your mandate</li>
-              <li>• You can <span className="text-foreground">pause or stop at any time</span> from the dashboard</li>
-              <li>• Past paper performance does not guarantee live results</li>
-              <li>• ChartingPath is <span className="text-foreground">not</span> a registered investment adviser</li>
+              <li>• <span className="text-foreground">{t('paperTrading.riskRealOrders')}</span></li>
+              <li>• {t('paperTrading.riskAutonomous')}</li>
+              <li>• <span className="text-foreground">{t('paperTrading.riskPauseAnytime')}</span></li>
+              <li>• {t('paperTrading.riskPastPerformance')}</li>
+              <li>• <span className="text-foreground">{t('paperTrading.riskNotAdviser')}</span></li>
             </ul>
             <div className="flex items-center gap-2 pt-2">
               <Checkbox
@@ -154,10 +159,10 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
                 onCheckedChange={(v) => setRiskAgreed(v === true)}
               />
               <label htmlFor="risk-ack" className="text-sm text-foreground cursor-pointer">
-                I understand Copilot will trade autonomously with real capital
+                {t('paperTrading.riskAcknowledge')}
               </label>
             </div>
-            <Button onClick={() => setStep(3)} disabled={!riskAgreed}>Continue</Button>
+            <Button onClick={() => setStep(3)} disabled={!riskAgreed}>{t('paperTrading.continue')}</Button>
           </div>
         )}
 
@@ -165,22 +170,21 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
           <div className="flex flex-col gap-3">
             <div className="rounded-md bg-secondary/50 p-3 space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Broker</span>
+                <span className="text-muted-foreground">{t('paperTrading.broker')}</span>
                 <span className="text-foreground font-mono">Alpaca</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Capital</span>
+                <span className="text-muted-foreground">{t('paperTrading.capital')}</span>
                 <span className="text-foreground font-mono">${capital.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Paper track record</span>
+                <span className="text-muted-foreground">{t('paperTrading.paperTrackRecord')}</span>
                 <span className="text-foreground font-mono">
-                  {paperStats.tradeCount} trades · {paperStats.winRate}% · {paperStats.totalR >= 0 ? '+' : ''}{paperStats.totalR.toFixed(1)}R
+                  {paperStats.tradeCount} {t('paperTrading.trades').toLowerCase()} · {paperStats.winRate}% · {paperStats.totalR >= 0 ? '+' : ''}{paperStats.totalR.toFixed(1)}R
                 </span>
               </div>
             </div>
 
-            {/* Guardrail checks summary */}
             <div className="space-y-1">
               {checks.map((c, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
@@ -198,7 +202,7 @@ export function DeployModal({ open, onClose, checks, paperStats }: DeployModalPr
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
               </span>
-              Go Live
+              {t('paperTrading.goLive')}
             </Button>
           </div>
         )}

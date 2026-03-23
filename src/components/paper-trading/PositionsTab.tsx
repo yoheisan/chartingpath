@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { PaperTrade } from '@/hooks/usePaperTrading';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface PositionsTabProps {
   trades: PaperTrade[];
@@ -27,6 +28,7 @@ function extractTimeframe(notes: string | null): string {
 }
 
 export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride, onSymbolSelect }: PositionsTabProps) {
+  const { t } = useTranslation();
   const [prices, setPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -59,8 +61,8 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
           <Wallet className="h-6 w-6 text-muted-foreground/60" />
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">No open positions</p>
-          <p className="text-xs text-muted-foreground mt-1">Paper trade any signal from the Screener to start tracking.</p>
+          <p className="text-sm font-medium text-foreground">{t('paperTrading.noOpenPositions')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('paperTrading.noOpenPositionsDesc')}</p>
         </div>
       </div>
     );
@@ -75,7 +77,6 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
         const pattern = extractPattern(trade.notes);
         const timeframe = extractTimeframe(trade.notes);
 
-        // Unrealised P&L
         let unrealisedPnl = 0;
         let unrealisedR = 0;
         let progressPercent = 0;
@@ -90,7 +91,6 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
           const riskAmount = Math.abs(trade.entry_price - (trade.stop_loss ?? trade.entry_price));
           unrealisedR = riskAmount > 0 ? Math.round((priceMove / riskAmount) * 100) / 100 : 0;
 
-          // Progress bar: 0% at entry, 100% at TP or SL
           if (trade.take_profit && trade.stop_loss) {
             const tpDistance = Math.abs(trade.take_profit - trade.entry_price);
             const slDistance = Math.abs(trade.entry_price - trade.stop_loss);
@@ -110,7 +110,6 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
             key={trade.id}
             className="rounded-lg border border-border bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
           >
-            {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <button
@@ -128,17 +127,16 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
                   )}
                   variant="outline"
                 >
-                  {isLong ? <><ArrowUpRight className="h-3 w-3 mr-0.5" />Long</> : <><ArrowDownRight className="h-3 w-3 mr-0.5" />Short</>}
+                  {isLong ? <><ArrowUpRight className="h-3 w-3 mr-0.5" />{t('paperTrading.long')}</> : <><ArrowDownRight className="h-3 w-3 mr-0.5" />{t('paperTrading.short')}</>}
                 </Badge>
                 {isAuto && (
                   <Badge variant="outline" className="text-sm px-1 py-0 h-5 border-amber-500/50 text-amber-500">
-                    Auto
+                    {t('paperTrading.auto')}
                   </Badge>
                 )}
               </div>
             </div>
 
-            {/* Pattern + Timeframe */}
             {(pattern || timeframe) && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {pattern && <span className="capitalize">{pattern}</span>}
@@ -147,33 +145,31 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
               </div>
             )}
 
-            {/* Price Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Entry</span>
+                <span className="text-muted-foreground">{t('paperTrading.entry')}</span>
                 <span className="font-mono tabular-nums">{trade.entry_price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Current</span>
+                <span className="text-muted-foreground">{t('paperTrading.current')}</span>
                 <span className="font-mono tabular-nums">{currentPrice?.toFixed(2) ?? '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">SL</span>
+                <span className="text-muted-foreground">{t('paperTrading.sl')}</span>
                 <span className="font-mono tabular-nums text-red-400">{trade.stop_loss?.toFixed(2) ?? '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">TP</span>
+                <span className="text-muted-foreground">{t('paperTrading.tp')}</span>
                 <span className="font-mono tabular-nums text-emerald-400">{trade.take_profit?.toFixed(2) ?? '—'}</span>
               </div>
             </div>
 
-            {/* Progress Bar */}
             {currentPrice && trade.take_profit && trade.stop_loss && (
               <div className="space-y-1">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>SL</span>
-                  <span>Entry</span>
-                  <span>TP</span>
+                  <span>{t('paperTrading.sl')}</span>
+                  <span>{t('paperTrading.entry')}</span>
+                  <span>{t('paperTrading.tp')}</span>
                 </div>
                 <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
@@ -191,9 +187,8 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
               </div>
             )}
 
-            {/* Unrealised P&L */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Unrealised P&L</span>
+              <span className="text-xs text-muted-foreground">{t('paperTrading.unrealisedPnl')}</span>
               <div className="flex items-center gap-2">
                 <span className={cn('text-sm font-bold tabular-nums', unrealisedPnl > 0 ? 'text-emerald-500' : unrealisedPnl < 0 ? 'text-red-500' : 'text-muted-foreground')}>
                   {unrealisedPnl >= 0 ? '+' : ''}{unrealisedPnl.toFixed(2)}$
@@ -204,13 +199,11 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
               </div>
             </div>
 
-            {/* Time open */}
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Clock className="h-3 w-3" />
-              <span>Opened {formatDistanceToNow(new Date(trade.created_at), { addSuffix: true })}</span>
+              <span>{t('paperTrading.opened')} {formatDistanceToNow(new Date(trade.created_at), { addSuffix: true })}</span>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 pt-1 border-t border-border/50">
               <Button
                 size="sm"
@@ -220,7 +213,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
                 onClick={() => onCloseTrade(trade.id, trade.symbol)}
               >
                 <LogOut className="h-3 w-3 mr-1" />
-                Close Trade
+                {t('paperTrading.closeTrade')}
               </Button>
               <Button
                 size="sm"
@@ -230,7 +223,7 @@ export function PositionsTab({ trades, closingTradeId, onCloseTrade, onOverride,
                 onClick={() => onOverride(trade)}
               >
                 <X className="h-3 w-3 mr-1" />
-                Pull Breaker 🔴
+                {t('paperTrading.pullBreaker')}
               </Button>
             </div>
           </div>

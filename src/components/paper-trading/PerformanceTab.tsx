@@ -8,6 +8,7 @@ import {
   BarChart, Bar, Cell, CartesianGrid,
 } from 'recharts';
 import { useForwardPerformance } from '@/hooks/useForwardPerformance';
+import { useTranslation } from 'react-i18next';
 
 interface PerformanceTabProps {
   closedTrades: PaperTrade[];
@@ -31,6 +32,7 @@ const chartTooltipStyle = {
 };
 
 export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceTabProps) {
+  const { t } = useTranslation();
   const { data: forwardData } = useForwardPerformance(userId);
 
   const stats = useMemo(() => {
@@ -57,7 +59,6 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
     return { totalTrades, winRate, avgR, totalPnl, bestTrade, worstTrade, avgHoldHours };
   }, [closedTrades]);
 
-  // Equity curve data
   const equityCurve = useMemo(() => {
     const sorted = [...closedTrades].sort((a, b) => new Date(a.closed_at ?? a.created_at).getTime() - new Date(b.closed_at ?? b.created_at).getTime());
     let cumPnl = 0;
@@ -70,7 +71,6 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
     });
   }, [closedTrades]);
 
-  // Win/Loss by pattern
   const patternStats = useMemo(() => {
     const grouped: Record<string, { wins: number; losses: number; total: number }> = {};
     for (const t of closedTrades) {
@@ -92,7 +92,6 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
       .slice(0, 8);
   }, [closedTrades]);
 
-  // R distribution
   const rDistribution = useMemo(() => {
     const buckets = [
       { label: '<-1R', min: -Infinity, max: -1, count: 0 },
@@ -118,8 +117,8 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
           <BarChart3 className="h-6 w-6 text-muted-foreground/60" />
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">No performance data yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Close some trades to see your analytics.</p>
+          <p className="text-sm font-medium text-foreground">{t('paperTrading.noPerformanceData')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('paperTrading.noPerformanceDataDesc')}</p>
         </div>
       </div>
     );
@@ -129,63 +128,60 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
 
   return (
     <div className="space-y-6">
-      {/* Row 1 — Key Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total Trades" value={stats.totalTrades.toString()} icon={<Activity className="h-4 w-4" />} />
+        <StatCard label={t('paperTrading.totalTrades')} value={stats.totalTrades.toString()} icon={<Activity className="h-4 w-4" />} />
         <StatCard
-          label="Win Rate"
+          label={t('paperTrading.winRate')}
           value={`${stats.winRate.toFixed(0)}%`}
           icon={<Target className="h-4 w-4" />}
           color={stats.winRate >= 50 ? 'text-emerald-500' : 'text-red-500'}
         />
         <StatCard
-          label="Avg R/Trade"
+          label={t('paperTrading.avgRTrade')}
           value={`${stats.avgR >= 0 ? '+' : ''}${stats.avgR.toFixed(2)}R`}
           icon={<TrendingUp className="h-4 w-4" />}
           color={stats.avgR >= 0 ? 'text-emerald-500' : 'text-red-500'}
         />
         <StatCard
-          label="Total P&L"
+          label={t('paperTrading.totalPnl')}
           value={`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}
           icon={stats.totalPnl >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           color={stats.totalPnl >= 0 ? 'text-emerald-500' : 'text-red-500'}
         />
       </div>
 
-      {/* Row 2 — Secondary Stats */}
       <div className="grid grid-cols-3 gap-3">
         <StatCard
-          label="Best Trade"
+          label={t('paperTrading.bestTrade')}
           value={`+${(stats.bestTrade.outcome_r ?? 0).toFixed(1)}R`}
           subtitle={stats.bestTrade.symbol}
           icon={<Award className="h-4 w-4" />}
           color="text-emerald-500"
         />
         <StatCard
-          label="Worst Trade"
+          label={t('paperTrading.worstTrade')}
           value={`${(stats.worstTrade.outcome_r ?? 0).toFixed(1)}R`}
           subtitle={stats.worstTrade.symbol}
           icon={<TrendingDown className="h-4 w-4" />}
           color="text-red-500"
         />
         <StatCard
-          label="Avg Hold Time"
+          label={t('paperTrading.avgHoldTime')}
           value={stats.avgHoldHours < 24 ? `${stats.avgHoldHours.toFixed(0)}h` : `${(stats.avgHoldHours / 24).toFixed(1)}d`}
           icon={<Clock className="h-4 w-4" />}
         />
       </div>
 
-      {/* Chart 1 — Equity Curve */}
       {equityCurve.length > 1 && (
         <Card className="border-border bg-card">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Equity Curve</h3>
+            <h3 className="text-sm font-semibold mb-3">{t('paperTrading.equityCurve')}</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={equityCurve}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 15% 20%)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(217 10% 65%)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: 'hsl(217 10% 65%)' }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                <RechartsTooltip {...chartTooltipStyle} formatter={(value: number) => [`$${value.toFixed(2)}`, 'Cumulative P&L']} />
+                <RechartsTooltip {...chartTooltipStyle} formatter={(value: number) => [`$${value.toFixed(2)}`, t('paperTrading.cumulativePnl')]} />
                 <Line type="monotone" dataKey="pnl" stroke={equityFinalPositive ? '#10b981' : '#ef4444'} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -193,17 +189,16 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
         </Card>
       )}
 
-      {/* Chart 2 — Win/Loss by Pattern */}
       {patternStats.length > 0 && (
         <Card className="border-border bg-card">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Win Rate by Pattern</h3>
+            <h3 className="text-sm font-semibold mb-3">{t('paperTrading.winRateByPattern')}</h3>
             <ResponsiveContainer width="100%" height={patternStats.length * 36 + 20}>
               <BarChart data={patternStats} layout="vertical" barSize={16}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 15% 20%)" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'hsl(217 10% 65%)' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: 'hsl(217 10% 65%)' }} axisLine={false} tickLine={false} width={100} />
-                <RechartsTooltip {...chartTooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name === 'winRate' ? 'Win' : 'Loss']} />
+                <RechartsTooltip {...chartTooltipStyle} formatter={(value: number, name: string) => [`${value}%`, name === 'winRate' ? t('paperTrading.win') : t('paperTrading.loss')]} />
                 <Bar dataKey="winRate" stackId="a" fill="#10b981" radius={[4, 0, 0, 4]} />
                 <Bar dataKey="lossRate" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -212,10 +207,9 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
         </Card>
       )}
 
-      {/* Chart 3 — R Distribution */}
       <Card className="border-border bg-card">
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold mb-3">R Distribution</h3>
+          <h3 className="text-sm font-semibold mb-3">{t('paperTrading.rDistribution')}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={rDistribution}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 15% 20%)" />
@@ -232,20 +226,19 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
         </CardContent>
       </Card>
 
-      {/* Pattern Edge Comparison */}
       {forwardData.length > 0 && (
         <Card className="border-border bg-card">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Pattern Edge Comparison</h3>
+            <h3 className="text-sm font-semibold mb-3">{t('paperTrading.patternEdgeComparison')}</h3>
             <div className="rounded-lg border border-border overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left p-2 font-medium text-muted-foreground">Pattern</th>
-                    <th className="text-right p-2 font-medium text-muted-foreground">Backtest Win %</th>
-                    <th className="text-right p-2 font-medium text-muted-foreground">Your Win %</th>
-                    <th className="text-right p-2 font-medium text-muted-foreground">Trades</th>
-                    <th className="text-right p-2 font-medium text-muted-foreground">Edge Delta</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">{t('paperTrading.pattern')}</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">{t('paperTrading.backtestWinPct')}</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">{t('paperTrading.yourWinPct')}</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">{t('paperTrading.trades')}</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">{t('paperTrading.edgeDelta')}</th>
                   </tr>
                 </thead>
                 <tbody>
