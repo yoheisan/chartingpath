@@ -332,22 +332,35 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
 };
 
 /* ═══ MAIN CENTER PANEL ═══ */
-const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar }: CenterPanelProps) => {
+const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade }: CenterPanelProps) => {
   const state: CenterPanelState = useMemo(() => {
     if (selectedClosedTrade) return 'review';
     if (activeTrade) return 'active';
     return 'scanning';
   }, [selectedClosedTrade, activeTrade]);
 
-  if (state === 'review' && selectedClosedTrade) {
-    return <ReviewState trade={selectedClosedTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
-  }
+  const mainContent = (() => {
+    if (state === 'review' && selectedClosedTrade) {
+      return <ReviewState trade={selectedClosedTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
+    }
+    if (state === 'active' && activeTrade) {
+      return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
+    }
+    return <ScanningState />;
+  })();
 
-  if (state === 'active' && activeTrade) {
-    return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
-  }
-
-  return <ScanningState />;
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {mainContent}
+      </div>
+      <TradeBlotter
+        trades={openTrades}
+        selectedTradeId={selectedTradeId}
+        onSelectTrade={onSelectTrade}
+      />
+    </div>
+  );
 };
 
 export default CenterPanel;
