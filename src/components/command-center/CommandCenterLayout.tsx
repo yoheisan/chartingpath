@@ -34,7 +34,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import { useMasterPlan } from '@/hooks/useMasterPlan';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Activity, Sunrise } from 'lucide-react';
 import { DashboardCopilotBar, DashboardAIStrip } from './DashboardCopilotStrip';
 
 
