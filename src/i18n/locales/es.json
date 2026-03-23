@@ -486,13 +486,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "Pulso del Mercado",
+      "subtitle": "Patrones alcistas vs bajistas detectados diariamente en todos los instrumentos — últimos 30 días",
+      "long": "Largo (Alcista)",
+      "short": "Corto (Bajista)",
+      "totalDetections": "Detecciones Totales",
+      "last30Days": "Últimos 30 días",
+      "peakDay": "Día Más Activo"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

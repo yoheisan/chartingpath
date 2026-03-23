@@ -428,13 +428,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "마켓 펄스",
+      "subtitle": "모든 종목에서 매일 감지된 상승 vs 하락 패턴 — 최근 30일",
+      "long": "롱 (상승)",
+      "short": "숏 (하락)",
+      "totalDetections": "총 감지 수",
+      "last30Days": "최근 30일",
+      "peakDay": "가장 활발한 날"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

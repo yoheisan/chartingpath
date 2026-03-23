@@ -1839,13 +1839,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
+      "title": "Denyut Pasar",
+      "subtitle": "Pola bullish vs bearish yang terdeteksi setiap hari di semua instrumen — 30 hari terakhir",
       "long": "Long (Bullish)",
       "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "totalDetections": "Total Deteksi",
+      "last30Days": "30 hari terakhir",
+      "peakDay": "Hari Paling Aktif"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

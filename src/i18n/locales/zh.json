@@ -158,13 +158,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "市场脉搏",
+      "subtitle": "所有品种每日检测到的多头与空头形态 — 过去30天",
+      "long": "做多（看涨）",
+      "short": "做空（看跌）",
+      "totalDetections": "总检测数",
+      "last30Days": "过去30天",
+      "peakDay": "最活跃日"
     },
     "chooseActionSubtitle": "Select an activity based on your current goal",
     "platformBadge": "Chart Pattern Backtesting Platform"

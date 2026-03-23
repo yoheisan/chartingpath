@@ -226,13 +226,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "Nhịp Thị Trường",
+      "subtitle": "Mô hình tăng vs giảm được phát hiện hàng ngày trên tất cả công cụ — 30 ngày qua",
+      "long": "Mua (Tăng)",
+      "short": "Bán (Giảm)",
+      "totalDetections": "Tổng Phát Hiện",
+      "last30Days": "30 ngày qua",
+      "peakDay": "Ngày Hoạt Động Nhất"
     },
     "alertsBullet1": "Multi-pattern support",
     "alertsBullet2": "Email notifications",

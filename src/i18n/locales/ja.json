@@ -272,13 +272,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "マーケットパルス",
+      "subtitle": "全銘柄で日々検出された強気vs弱気パターン — 過去30日間",
+      "long": "ロング（強気）",
+      "short": "ショート（弱気）",
+      "totalDetections": "総検出数",
+      "last30Days": "過去30日間",
+      "peakDay": "最も活発な日"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },
