@@ -14,8 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-export default function PaperTradingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
