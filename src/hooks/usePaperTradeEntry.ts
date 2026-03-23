@@ -28,7 +28,7 @@ export function usePaperTradeEntry() {
 
       setIsSubmitting(true);
       try {
-        // Get active master plan
+        // Get active master plan — required for paper trading
         const { data: plan } = await supabase
           .from("master_plans" as any)
           .select("id, max_position_pct")
@@ -37,6 +37,13 @@ export function usePaperTradeEntry() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
+
+        if (!plan) {
+          toast.error("Create a Trading Plan first", {
+            description: "Paper trading requires an active Master Plan to track performance accurately.",
+          });
+          return false;
+        }
 
         const positionPct = (plan as any)?.max_position_pct ?? 2;
         const entryPrice = params.entry_price ?? 100; // Simulated mid price
