@@ -32,6 +32,9 @@ interface CenterPanelProps {
   selectedClosedTrade: SelectedClosedTrade | null;
   onBack: () => void;
   onFocusNLBar: (prefill?: string) => void;
+  openTrades: CopilotTrade[];
+  selectedTradeId: string | null;
+  onSelectTrade: (id: string) => void;
 }
 
 /* ─── helpers ─── */
