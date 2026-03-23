@@ -124,7 +124,7 @@ const Copilot = () => {
       {sessionEndBanner && (
         <div className="w-full px-4 py-2 flex items-center justify-between bg-blue-500/10 border-b border-blue-500/20">
           <span className="text-sm text-muted-foreground">
-            Session ended · {sessionEndBanner.time}
+            {t('copilotPage.sessionEnded', { time: sessionEndBanner.time })}
           </span>
           <button
             onClick={() => {
@@ -133,7 +133,7 @@ const Copilot = () => {
             }}
             className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            Review today →
+            {t('copilotPage.reviewToday')}
           </button>
         </div>
       )}
