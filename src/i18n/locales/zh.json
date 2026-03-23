@@ -5614,12 +5614,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 您正在查看{{total}}个实时信号中的{{visible}}个",
+    "unlockMessage": "创建免费账户以解锁所有结果、设置模式提醒并运行回测。",
+    "createFreeAccount": "创建免费账户 →",
+    "signIn": "登录",
+    "noCreditCard": "无需信用卡。永久免费计划。",
+    "orContinueWith": "或通过以下方式继续"
   },
   "socialProof": {
     "sectionLabel": "交易者信赖",
@@ -5701,5 +5701,18 @@
     "labelD": "弱",
     "labelF": "差",
     "tooltip": "基于趋势对齐、R:R结构、成交量、对称性、历史胜率和波动率状态。"
+  },
+  "authGate": {
+    "thisFeature": "此功能",
+    "signInToContinue": "登录以继续",
+    "createAccountOrSignIn": "创建免费账户或登录以访问{{feature}}。",
+    "benefit1": "每日3次回测",
+    "benefit2": "实时筛选器访问",
+    "benefit3": "模式提醒",
+    "benefit4": "Edge Atlas排名",
+    "or": "或",
+    "signIn": "登录",
+    "createFreeAccount": "创建免费账户",
+    "noCreditCard": "无需信用卡 · 永久免费计划"
   }
 }

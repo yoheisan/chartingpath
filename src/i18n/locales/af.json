@@ -5615,12 +5615,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Jy sien {{visible}} van {{total}} regstreekse seine",
+    "unlockMessage": "Skep 'n gratis rekening om alle resultate te ontsluit, waarskuwings te stel en terugtoetse te doen.",
+    "createFreeAccount": "Skep gratis rekening →",
+    "signIn": "Meld aan",
+    "noCreditCard": "Geen kredietkaart nodig. Vir altyd gratis.",
+    "orContinueWith": "of gaan voort met"
   },
   "socialProof": {
     "sectionLabel": "Vertrou deur handelaars",
@@ -5702,5 +5702,18 @@
     "labelD": "Swak",
     "labelF": "Swak",
     "tooltip": "Gebaseer op tendensbelyning, R:R-struktuur, volume, simmetrie, historiese winskoers en volatiliteitsregime."
+  },
+  "authGate": {
+    "thisFeature": "hierdie funksie",
+    "signInToContinue": "Meld aan om voort te gaan",
+    "createAccountOrSignIn": "Skep 'n gratis rekening of meld aan om toegang te kry tot {{feature}}.",
+    "benefit1": "3 terugtoetse/dag",
+    "benefit2": "Regstreekse skandeerder-toegang",
+    "benefit3": "Patroon-waarskuwings",
+    "benefit4": "Edge Atlas-ranglyste",
+    "or": "of",
+    "signIn": "Meld aan",
+    "createFreeAccount": "Skep gratis rekening",
+    "noCreditCard": "Geen kredietkaart nodig · Vir altyd gratis"
   }
 }

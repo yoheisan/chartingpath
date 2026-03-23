@@ -5615,12 +5615,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 आप {{total}} लाइव सिग्नल में से {{visible}} देख रहे हैं",
+    "unlockMessage": "सभी परिणाम अनलॉक करने, पैटर्न अलर्ट सेट करने और बैकटेस्ट चलाने के लिए मुफ्त खाता बनाएं।",
+    "createFreeAccount": "मुफ्त खाता बनाएं →",
+    "signIn": "साइन इन",
+    "noCreditCard": "क्रेडिट कार्ड आवश्यक नहीं। हमेशा मुफ्त प्लान उपलब्ध।",
+    "orContinueWith": "या इसके साथ जारी रखें"
   },
   "socialProof": {
     "sectionLabel": "ट्रेडर्स द्वारा विश्वसनीय",
@@ -5702,5 +5702,18 @@
     "labelD": "कमज़ोर",
     "labelF": "खराब",
     "tooltip": "ट्रेंड एलाइनमेंट, R:R संरचना, वॉल्यूम, सिमेट्री, ऐतिहासिक जीत दर और अस्थिरता व्यवस्था पर आधारित।"
+  },
+  "authGate": {
+    "thisFeature": "इस सुविधा",
+    "signInToContinue": "जारी रखने के लिए साइन इन करें",
+    "createAccountOrSignIn": "{{feature}} तक पहुंचने के लिए मुफ्त खाता बनाएं या साइन इन करें।",
+    "benefit1": "3 बैकटेस्ट/दिन",
+    "benefit2": "लाइव स्क्रीनर एक्सेस",
+    "benefit3": "पैटर्न अलर्ट",
+    "benefit4": "Edge Atlas रैंकिंग",
+    "or": "या",
+    "signIn": "साइन इन",
+    "createFreeAccount": "मुफ्त खाता बनाएं",
+    "noCreditCard": "क्रेडिट कार्ड आवश्यक नहीं · हमेशा मुफ्त प्लान"
   }
 }

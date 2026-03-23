@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { LogIn, UserPlus, Lock } from "lucide-react";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { useTranslation } from "react-i18next";
 
 interface AuthGateDialogProps {
   open: boolean;
@@ -10,10 +11,13 @@ interface AuthGateDialogProps {
   featureLabel?: string;
 }
 
-export function AuthGateDialog({ open, onOpenChange, featureLabel = "this feature" }: AuthGateDialogProps) {
+export function AuthGateDialog({ open, onOpenChange, featureLabel }: AuthGateDialogProps) {
+  const { t } = useTranslation();
   const redirectPath = typeof window !== 'undefined' 
     ? encodeURIComponent(window.location.pathname + window.location.search) 
     : '/';
+
+  const label = featureLabel || t('authGate.thisFeature', 'this feature');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -22,15 +26,20 @@ export function AuthGateDialog({ open, onOpenChange, featureLabel = "this featur
           <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Lock className="h-6 w-6 text-primary" />
           </div>
-          <DialogTitle className="text-center">Sign in to continue</DialogTitle>
+          <DialogTitle className="text-center">{t('authGate.signInToContinue', 'Sign in to continue')}</DialogTitle>
           <DialogDescription className="text-center">
-            Create a free account or sign in to access {featureLabel}.
+            {t('authGate.createAccountOrSignIn', 'Create a free account or sign in to access {{feature}}.', { feature: label })}
           </DialogDescription>
         </DialogHeader>
         
         {/* Benefits list */}
         <div className="space-y-2 my-3 text-sm">
-          {["3 backtests/day", "Live screener access", "Pattern alerts", "Edge Atlas rankings"].map((b) => (
+          {[
+            t('authGate.benefit1', '3 backtests/day'),
+            t('authGate.benefit2', 'Live screener access'),
+            t('authGate.benefit3', 'Pattern alerts'),
+            t('authGate.benefit4', 'Edge Atlas rankings'),
+          ].map((b) => (
             <div key={b} className="flex items-center gap-2 text-muted-foreground">
               <span className="text-green-500">✓</span> {b}
             </div>
@@ -46,25 +55,25 @@ export function AuthGateDialog({ open, onOpenChange, featureLabel = "this featur
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">or</span>
+              <span className="bg-background px-2 text-muted-foreground">{t('authGate.or', 'or')}</span>
             </div>
           </div>
 
           <Button asChild size="lg" className="w-full">
             <Link to={`/auth?redirect=${redirectPath}`} onClick={() => onOpenChange(false)}>
               <LogIn className="h-4 w-4 mr-2" />
-              Sign In
+              {t('authGate.signIn', 'Sign In')}
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full">
             <Link to={`/auth?redirect=${redirectPath}&mode=register`} onClick={() => onOpenChange(false)}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Create Free Account
+              {t('authGate.createFreeAccount', 'Create Free Account')}
             </Link>
           </Button>
         </div>
         <p className="text-xs text-muted-foreground text-center mt-2">
-          No credit card required · Free forever tier
+          {t('authGate.noCreditCard', 'No credit card required · Free forever tier')}
         </p>
       </DialogContent>
     </Dialog>

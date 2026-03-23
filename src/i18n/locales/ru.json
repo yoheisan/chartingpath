@@ -5614,12 +5614,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Вы видите {{visible}} из {{total}} сигналов",
+    "unlockMessage": "Создайте бесплатный аккаунт для разблокировки всех результатов, настройки оповещений и запуска бэктестов.",
+    "createFreeAccount": "Создать бесплатный аккаунт →",
+    "signIn": "Войти",
+    "noCreditCard": "Кредитная карта не требуется. Бесплатный план навсегда.",
+    "orContinueWith": "или продолжить через"
   },
   "socialProof": {
     "sectionLabel": "Доверие трейдеров",
@@ -5701,5 +5701,18 @@
     "labelD": "Слабо",
     "labelF": "Плохо",
     "tooltip": "На основе выравнивания тренда, структуры R:R, объёма, симметрии, исторического winrate и режима волатильности."
+  },
+  "authGate": {
+    "thisFeature": "эту функцию",
+    "signInToContinue": "Войдите для продолжения",
+    "createAccountOrSignIn": "Создайте бесплатный аккаунт или войдите для доступа к {{feature}}.",
+    "benefit1": "3 бэктеста/день",
+    "benefit2": "Доступ к скринеру",
+    "benefit3": "Оповещения о паттернах",
+    "benefit4": "Рейтинги Edge Atlas",
+    "or": "или",
+    "signIn": "Войти",
+    "createFreeAccount": "Создать бесплатный аккаунт",
+    "noCreditCard": "Кредитная карта не требуется · Бесплатный план навсегда"
   }
 }

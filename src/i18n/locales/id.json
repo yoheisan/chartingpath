@@ -5602,12 +5602,12 @@
     }
   },
   "guestScreenerOverlay": {
-    "seeingSignals": "🔓 You're seeing {{visible}} of {{total}} live signals",
-    "unlockMessage": "Create a free account to unlock all results, set pattern alerts, and run backtests.",
-    "createFreeAccount": "Create Free Account →",
-    "signIn": "Sign In",
-    "noCreditCard": "No credit card required. Free forever tier available.",
-    "orContinueWith": "or continue with"
+    "seeingSignals": "🔓 Anda melihat {{visible}} dari {{total}} sinyal langsung",
+    "unlockMessage": "Buat akun gratis untuk membuka semua hasil, mengatur peringatan, dan menjalankan backtest.",
+    "createFreeAccount": "Buat Akun Gratis →",
+    "signIn": "Masuk",
+    "noCreditCard": "Tanpa kartu kredit. Paket gratis selamanya.",
+    "orContinueWith": "atau lanjutkan dengan"
   },
   "socialProof": {
     "sectionLabel": "Dipercaya oleh trader",
@@ -5689,5 +5689,18 @@
     "labelD": "Lemah",
     "labelF": "Buruk",
     "tooltip": "Berdasarkan keselarasan tren, struktur R:R, volume, simetri, win rate historis, dan rezim volatilitas."
+  },
+  "authGate": {
+    "thisFeature": "fitur ini",
+    "signInToContinue": "Masuk untuk melanjutkan",
+    "createAccountOrSignIn": "Buat akun gratis atau masuk untuk mengakses {{feature}}.",
+    "benefit1": "3 backtest/hari",
+    "benefit2": "Akses screener langsung",
+    "benefit3": "Peringatan pola",
+    "benefit4": "Peringkat Edge Atlas",
+    "or": "atau",
+    "signIn": "Masuk",
+    "createFreeAccount": "Buat Akun Gratis",
+    "noCreditCard": "Tanpa kartu kredit · Paket gratis selamanya"
   }
 }
