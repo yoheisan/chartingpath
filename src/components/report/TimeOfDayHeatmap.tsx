@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type PaperTrade } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
@@ -11,13 +12,15 @@ interface HourBucket {
 }
 
 export function TimeOfDayHeatmap({ trades }: Props) {
+  const { t } = useTranslation();
+
   const buckets = useMemo(() => {
     const map = new Map<number, PaperTrade[]>();
     for (let i = 0; i < 24; i++) map.set(i, []);
-    for (const t of trades) {
-      const d = new Date(t.created_at);
+    for (const tr of trades) {
+      const d = new Date(tr.created_at);
       const h = d.getHours();
-      map.get(h)!.push(t);
+      map.get(h)!.push(tr);
     }
 
     const result: HourBucket[] = [];
@@ -25,8 +28,8 @@ export function TimeOfDayHeatmap({ trades }: Props) {
       if (pts.length === 0) {
         result.push({ hour, trades: 0, avgR: 0, winRate: 0 });
       } else {
-        const sum = pts.reduce((s, t) => s + (t.outcome_r ?? 0), 0);
-        const wins = pts.filter(t => (t.outcome_r ?? 0) > 0).length;
+        const sum = pts.reduce((s, tr) => s + (tr.outcome_r ?? 0), 0);
+        const wins = pts.filter(tr => (tr.outcome_r ?? 0) > 0).length;
         result.push({
           hour,
           trades: pts.length,
@@ -50,18 +53,13 @@ export function TimeOfDayHeatmap({ trades }: Props) {
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Time of Day Performance</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">{t('report.timeOfDay')}</h2>
 
       <div className="flex gap-0.5 items-end">
         {buckets.map(b => {
           let bg = 'bg-muted/30';
           if (b.trades > 0) {
-            const intensity = Math.min(1, Math.abs(b.avgR) / maxAbsR);
-            if (b.avgR >= 0) {
-              bg = `bg-[hsl(var(--bullish))]`;
-            } else {
-              bg = `bg-[hsl(var(--bearish))]`;
-            }
+            bg = b.avgR >= 0 ? 'bg-[hsl(var(--bullish))]' : 'bg-[hsl(var(--bearish))]';
           }
 
           return (
@@ -79,7 +77,7 @@ export function TimeOfDayHeatmap({ trades }: Props) {
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                 <div className="bg-popover border border-border rounded-md px-2 py-1.5 text-[10px] whitespace-nowrap shadow-lg">
                   <p className="font-medium">{String(b.hour).padStart(2, '0')}:00</p>
-                  <p>{b.trades} trades · avg {b.avgR >= 0 ? '+' : ''}{b.avgR.toFixed(1)}R · {b.winRate}%</p>
+                  <p>{t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}</p>
                 </div>
               </div>
             </div>
@@ -88,8 +86,8 @@ export function TimeOfDayHeatmap({ trades }: Props) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mt-4 text-xs text-muted-foreground">
-        {bestHour && <span>Best trading hour: <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {bestHour.winRate}% win rate</span>}
-        {worstHour && <span>Worst trading hour: <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {worstHour.winRate}% win rate</span>}
+        {bestHour && <span>{t('report.bestTradingHour')} <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: bestHour.winRate })}</span>}
+        {worstHour && <span>{t('report.worstTradingHour')} <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: worstHour.winRate })}</span>}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useTradeReport, type DateRange } from '@/hooks/useTradeReport';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReadinessScore } from '@/components/report/ReadinessScore';
@@ -15,22 +16,23 @@ import { PlanChangeHistory } from '@/components/report/PlanChangeHistory';
 import { PeerComparison } from '@/components/report/PeerComparison';
 import { ReportEmptyState } from '@/components/report/ReportEmptyState';
 
-const ranges: { label: string; value: DateRange }[] = [
-  { label: '7 days', value: '7d' },
-  { label: '30 days', value: '30d' },
-  { label: 'All time', value: 'all' },
-];
-
 const CopilotReport = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const data = useTradeReport(dateRange);
   const { closedTrades, sessions, plans, loading, firstTradeDate } = data;
 
+  const ranges: { label: string; value: DateRange }[] = [
+    { label: t('report.range7d'), value: '7d' },
+    { label: t('report.range30d'), value: '30d' },
+    { label: t('report.rangeAll'), value: 'all' },
+  ];
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to view your report.</p>
+        <p className="text-muted-foreground">{t('report.signInRequired')}</p>
       </div>
     );
   }
@@ -42,12 +44,13 @@ const CopilotReport = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <Link to="/copilot" className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 inline-flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Back to Copilot desk
+              <ArrowLeft className="h-3 w-3" /> {t('report.backToCopilot')}
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">Your trading plan report</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('report.title')}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Based on {closedTrades.length} paper trades
-              {firstTradeDate && ` since ${format(new Date(firstTradeDate), 'MMM d, yyyy')}`}
+              {firstTradeDate
+                ? t('report.basedOnSince', { count: closedTrades.length, date: format(new Date(firstTradeDate), 'MMM d, yyyy') })
+                : t('report.basedOn', { count: closedTrades.length })}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -67,7 +70,7 @@ const CopilotReport = () => {
               ))}
             </div>
             <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-primary/50 text-primary rounded-md hover:bg-primary/10 transition-colors">
-              <Download className="h-3 w-3" /> Export PDF
+              <Download className="h-3 w-3" /> {t('report.exportPdf')}
             </button>
           </div>
         </div>

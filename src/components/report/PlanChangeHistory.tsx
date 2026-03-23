@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { calcWinRate, calcAvgR, type PaperTrade, type MasterPlanRow } from '@/hooks/useTradeReport';
 
@@ -8,14 +9,16 @@ interface Props {
 }
 
 export function PlanChangeHistory({ trades, plans }: Props) {
+  const { t } = useTranslation();
+
   const timeline = useMemo(() => {
     if (plans.length === 0) return [];
 
     return plans.map((plan, i) => {
       const start = new Date(plan.created_at);
       const end = i < plans.length - 1 ? new Date(plans[i + 1].created_at) : new Date();
-      const periodTrades = trades.filter(t => {
-        const d = new Date(t.closed_at || t.created_at);
+      const periodTrades = trades.filter(tr => {
+        const d = new Date(tr.closed_at || tr.created_at);
         return d >= start && d < end;
       });
 
@@ -26,8 +29,8 @@ export function PlanChangeHistory({ trades, plans }: Props) {
       if (i > 0) {
         const prevStart = new Date(plans[i - 1].created_at);
         const prevEnd = start;
-        const prevTrades = trades.filter(t => {
-          const d = new Date(t.closed_at || t.created_at);
+        const prevTrades = trades.filter(tr => {
+          const d = new Date(tr.closed_at || tr.created_at);
           return d >= prevStart && d < prevEnd;
         });
         prevWr = calcWinRate(prevTrades);
@@ -54,15 +57,15 @@ export function PlanChangeHistory({ trades, plans }: Props) {
   if (plans.length === 0) {
     return (
       <div className="bg-card border border-border/40 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-2">Plan Change History</h2>
-        <p className="text-sm text-muted-foreground">No trading plan found. Create one on the Copilot page.</p>
+        <h2 className="text-lg font-semibold text-foreground mb-2">{t('report.planChangeHistory')}</h2>
+        <p className="text-sm text-muted-foreground">{t('report.noPlanFound')}</p>
       </div>
     );
   }
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Plan Change History</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">{t('report.planChangeHistory')}</h2>
 
       <div className="space-y-4">
         {timeline.map((entry, i) => (
@@ -76,7 +79,7 @@ export function PlanChangeHistory({ trades, plans }: Props) {
             <div className="flex-1 pb-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium text-foreground">
-                  {entry.plan.name || 'Trading Plan'}
+                  {entry.plan.name || t('report.tradingPlan')}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {format(new Date(entry.plan.created_at), 'MMM d, yyyy')}
@@ -87,12 +90,12 @@ export function PlanChangeHistory({ trades, plans }: Props) {
                     entry.verdict === 'declined' ? 'bg-[hsl(var(--bearish))]/20 text-[hsl(var(--bearish))]' :
                     'bg-muted text-muted-foreground'
                   }`}>
-                    {entry.verdict === 'improved' ? 'Improved' : entry.verdict === 'declined' ? 'Declined' : 'Too early'}
+                    {entry.verdict === 'improved' ? t('report.improved') : entry.verdict === 'declined' ? t('report.declined') : t('report.tooEarly')}
                   </span>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {entry.tradesCount} trades · {entry.wr}% win rate · avg {entry.avgR >= 0 ? '+' : ''}{entry.avgR.toFixed(1)}R
+                {t('report.planStats', { count: entry.tradesCount, wr: entry.wr, avgR: `${entry.avgR >= 0 ? '+' : ''}${entry.avgR.toFixed(1)}` })}
               </p>
             </div>
           </div>
@@ -101,7 +104,7 @@ export function PlanChangeHistory({ trades, plans }: Props) {
 
       {plans.length === 1 && (
         <p className="text-xs text-muted-foreground mt-2">
-          You haven't changed your plan yet. Paper test for longer before evaluating changes.
+          {t('report.noPlanChangeYet')}
         </p>
       )}
     </div>
