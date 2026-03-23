@@ -1,14 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-
-const SUGGESTED_QUESTIONS = [
-  'Why did you skip AMD?',
-  'What if you held MSFT longer?',
-  "Why didn't you take more trades?",
-];
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
 
@@ -19,6 +14,7 @@ interface SessionDebriefPanelProps {
 }
 
 export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionDebriefPanelProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -29,16 +25,19 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
   const chatEndRef = useRef<HTMLDivElement>(null);
   const initialQuestionSent = useRef(false);
 
-  // Auto-submit initial question once summary is loaded
+  const SUGGESTED_QUESTIONS = [
+    t('copilotPage.suggestSkipAMD'),
+    t('copilotPage.suggestHeldMSFT'),
+    t('copilotPage.suggestMoreTrades'),
+  ];
+
   useEffect(() => {
     if (open && initialQuestion && summary && !summaryLoading && !initialQuestionSent.current && tradeData) {
       initialQuestionSent.current = true;
       setInput(initialQuestion);
-      // Auto-submit after a short delay to let UI settle
       setTimeout(() => {
         const fakeInput = initialQuestion;
         setInput('');
-        // Trigger sendChat logic inline
         const userMsg: ChatMsg = { role: 'user', content: fakeInput };
         const contextMsg: ChatMsg = {
           role: 'user',
@@ -46,7 +45,7 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
         };
         const contextReply: ChatMsg = {
           role: 'assistant',
-          content: "Got it. What would you like to know about today's session?",
+          content: t('copilotPage.gotItSession'),
         };
         const fullHistory = [contextMsg, contextReply, userMsg];
 
@@ -59,28 +58,26 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
             messages: fullHistory.map(m => ({ role: m.role, content: m.content })),
           },
         }).then(res => {
-          const reply = res.data?.reply || "I couldn't process that question.";
+          const reply = res.data?.reply || t('copilotPage.couldntProcess');
           setChatHistory(prev => [...prev, { role: 'assistant', content: reply }]);
         }).catch(() => {
-          setChatHistory(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }]);
+          setChatHistory(prev => [...prev, { role: 'assistant', content: t('copilotPage.somethingWentWrong') }]);
         }).finally(() => {
           setChatLoading(false);
         });
       }, 300);
     }
-  }, [open, initialQuestion, summary, summaryLoading, tradeData]);
+  }, [open, initialQuestion, summary, summaryLoading, tradeData, t]);
 
-  // Reset initialQuestion tracking when panel closes
   useEffect(() => {
     if (!open) {
       initialQuestionSent.current = false;
     }
   }, [open]);
 
-  // Generate summary on open
   useEffect(() => {
     if (!open || !user?.id) return;
-    if (summary) return; // already loaded this session
+    if (summary) return;
 
     const generate = async () => {
       setSummaryLoading(true);
@@ -99,21 +96,19 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
         }
       } catch (e) {
         console.error('Debrief summary error:', e);
-        setSummary('Unable to generate session recap at this time.');
+        setSummary(t('copilotPage.unableToGenerate'));
       } finally {
         setSummaryLoading(false);
       }
     };
 
     generate();
-  }, [open, user?.id, summary]);
+  }, [open, user?.id, summary, t]);
 
-  // Scroll chat to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  // Reset state when panel closes
   const handleClose = useCallback(() => {
     setSummary(null);
     setTradeData(null);
@@ -122,20 +117,17 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
     onClose();
   }, [onClose]);
 
-  // Send a chat question
   const sendQuestion = useCallback(async (question: string) => {
     if (!question.trim() || chatLoading || !tradeData) return;
 
     const userMsg: ChatMsg = { role: 'user', content: question };
-
-    // Build conversation: trade context first, then history
     const contextMsg: ChatMsg = {
       role: 'user',
       content: `Here is my complete trade data for today: ${JSON.stringify(tradeData)}`,
     };
     const contextReply: ChatMsg = {
       role: 'assistant',
-      content: "Got it. What would you like to know about today's session?",
+      content: t('copilotPage.gotItSession'),
     };
 
     const fullHistory = [contextMsg, contextReply, ...chatHistory, userMsg];
@@ -152,26 +144,24 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
         },
       });
 
-      const reply = res.data?.reply || "I couldn't process that question.";
+      const reply = res.data?.reply || t('copilotPage.couldntProcess');
       setChatHistory((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (e) {
       console.error('Debrief chat error:', e);
       setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Something went wrong. Please try again.' },
+        { role: 'assistant', content: t('copilotPage.somethingWentWrong') },
       ]);
     } finally {
       setChatLoading(false);
     }
-  }, [chatLoading, tradeData, chatHistory]);
+  }, [chatLoading, tradeData, chatHistory, t]);
 
-  // Handle chip click — pre-fill AND auto-submit
   const handleChipClick = useCallback((q: string) => {
     setInput(q);
     sendQuestion(q);
   }, [sendQuestion]);
 
-  // Handle Enter key
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -183,9 +173,8 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 w-[480px] bg-card border-l border-border/40 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-        <span className="text-sm font-semibold text-foreground">Session recap</span>
+        <span className="text-sm font-semibold text-foreground">{t('copilotPage.sessionRecap')}</span>
         <button
           onClick={handleClose}
           className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
@@ -194,10 +183,8 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
         </button>
       </div>
 
-      {/* Body — Summary + Chat */}
       <ScrollArea className="flex-1">
         <div className="px-4 py-4 space-y-4">
-          {/* AI-generated summary */}
           {summaryLoading ? (
             <div className="space-y-3 animate-pulse">
               <div className="h-4 bg-secondary/50 rounded w-3/4" />
@@ -211,10 +198,9 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
               {summary}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No session data available yet.</p>
+            <p className="text-sm text-muted-foreground">{t('copilotPage.noSessionData')}</p>
           )}
 
-          {/* Chat thread */}
           {chatHistory.length > 0 && (
             <div className="border-t border-border/40 pt-3 space-y-3">
               {chatHistory.map((msg, i) => (
@@ -236,7 +222,7 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
               {chatLoading && (
                 <div className="flex justify-start">
                   <div className="rounded-lg px-3 py-2 bg-secondary/50 text-sm text-muted-foreground animate-pulse">
-                    Thinking…
+                    {t('copilotPage.thinking')}
                   </div>
                 </div>
               )}
@@ -246,7 +232,6 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
         </div>
       </ScrollArea>
 
-      {/* NL Input + Chips */}
       <div className="border-t border-border/40 px-4 py-3 space-y-2">
         <div className="relative">
           <input
@@ -254,7 +239,7 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Copilot about today…"
+            placeholder={t('copilotPage.askCopilotToday')}
             disabled={chatLoading || !tradeData}
             className="w-full rounded-md border border-border/40 bg-secondary/30 px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
           />

@@ -1,9 +1,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { type MandateRule, type MasterPlan, planToRules } from "@/hooks/useMasterPlan";
 import { useTradingCopilotContext } from "./TradingCopilotContext";
-import { ChevronDown, Plus, Lock, Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { Plus, Lock, Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -32,6 +31,7 @@ export function MandateCard({
   onNewPlan,
   canCreateMore = true,
 }: MandateCardProps) {
+  const { t } = useTranslation();
   const copilot = useTradingCopilotContext();
   const hasMandate = hasPlan !== undefined ? hasPlan : true;
 
@@ -41,7 +41,6 @@ export function MandateCard({
 
   const handleEditPlan = (planId: string) => {
     onSelectPlan?.(planId);
-    // Small delay to let selected plan propagate, then open builder
     setTimeout(() => copilot.openPlanBuilder(), 50);
   };
 
@@ -49,7 +48,7 @@ export function MandateCard({
     <Card className="rounded-lg border-border/60 bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Master Plans
+          {t('copilotPage.masterPlans')}
         </span>
         <div className="flex items-center gap-1.5">
           {canCreateMore ? (
@@ -58,16 +57,16 @@ export function MandateCard({
               className="inline-flex items-center gap-0.5 text-xs text-primary/70 hover:text-primary transition-colors"
             >
               <Plus className="h-3 w-3" />
-              New
+              {t('copilotPage.new')}
             </button>
           ) : (
             <button
               disabled
               className="inline-flex items-center gap-0.5 text-xs text-muted-foreground/50 cursor-not-allowed"
-              title="Upgrade for more plans"
+              title={t('copilotPage.upgradeForMore')}
             >
               <Lock className="h-3 w-3" />
-              New
+              {t('copilotPage.new')}
             </button>
           )}
         </div>
@@ -105,7 +104,7 @@ export function MandateCard({
                         )}
                       </span>
                       <span className="truncate font-medium text-foreground">
-                        {plan.name || "Untitled Plan"}
+                        {plan.name || t('copilotPage.untitledPlan')}
                       </span>
                       <span className="text-muted-foreground shrink-0">
                         ({planRules.length})
@@ -125,7 +124,7 @@ export function MandateCard({
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">No rules configured</span>
+                        <span className="text-xs text-muted-foreground italic">{t('copilotPage.noRulesConfigured')}</span>
                       )}
                     </div>
                     <button
@@ -133,7 +132,7 @@ export function MandateCard({
                       className="inline-flex items-center gap-1 text-xs text-primary/70 hover:text-primary transition-colors"
                     >
                       <Pencil className="h-3 w-3" />
-                      Edit plan
+                      {t('copilotPage.editPlan')}
                     </button>
                   </AccordionContent>
                 </AccordionItem>
@@ -145,7 +144,7 @@ export function MandateCard({
             onClick={() => copilot.openPlanBuilder()}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Set your trading plan to start →
+            {t('copilotPage.setPlanToStart')}
           </button>
         )}
       </CardContent>
