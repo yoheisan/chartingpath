@@ -13,7 +13,7 @@ import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
-import { PaperTradingPanel } from './PaperTradingPanel';
+
 import { MorningBriefingPanel } from './MorningBriefingPanel';
 import { ForwardPerformancePanel } from './ForwardPerformancePanel';
 
@@ -34,7 +34,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import { useMasterPlan } from '@/hooks/useMasterPlan';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { DashboardAuthNudge } from './DashboardAuthNudge';
-import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Wallet, Activity, Sunrise } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Eye, Bell, Globe, ChevronDown, ChevronUp, Activity, Sunrise } from 'lucide-react';
 import { DashboardCopilotBar, DashboardAIStrip } from './DashboardCopilotStrip';
 
 
@@ -531,7 +531,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   // Right panel tab state
   const [rightPanelTab, setRightPanelTab] = useState<string>(
-    settings.watchlistTab === 'alerts' ? 'alerts' : settings.watchlistTab === 'paper' ? 'paper' : 'watchlist'
+    settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
   );
 
   // Auto-collapse sidebar on smaller screens (< 1440px)
@@ -682,16 +682,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
               <button
                 className={cn(
                   "h-9 w-9 flex items-center justify-center rounded transition-colors",
-                  rightPanelTab === 'paper' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                )}
-                onClick={() => { setRightPanelTab('paper'); toggleSidebar(false); }}
-                title="Paper Trading"
-              >
-                <Wallet className="h-[18px] w-[18px]" />
-              </button>
-              <button
-                className={cn(
-                  "h-9 w-9 flex items-center justify-center rounded transition-colors",
                   rightPanelTab === 'forward' ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )}
                 onClick={() => { setRightPanelTab('forward'); toggleSidebar(false); }}
@@ -744,9 +734,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="alerts" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="paper" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
-                        Paper
-                      </TabsTrigger>
                       <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Forward
                       </TabsTrigger>
@@ -769,11 +756,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     <TabsContent value="alerts" className="flex-1 m-0 overflow-hidden">
                       {rightPanelTab === 'alerts' && (
                         <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} activePlan={activePlan} plans={masterPlans} />
-                      )}
-                    </TabsContent>
-                    <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
-                      {rightPanelTab === 'paper' && (
-                        <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
                       )}
                     </TabsContent>
                     <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
