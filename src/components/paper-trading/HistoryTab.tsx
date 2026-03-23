@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PaperTrade } from '@/hooks/usePaperTrading';
+import { useTranslation } from 'react-i18next';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -40,6 +41,7 @@ function extractTimeframe(notes: string | null): string {
 }
 
 export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
+  const { t } = useTranslation();
   const [outcomeFilter, setOutcomeFilter] = useState('all');
   const [page, setPage] = useState(0);
 
@@ -62,8 +64,8 @@ export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
           <History className="h-6 w-6 text-muted-foreground/60" />
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">No closed trades yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Trades close automatically when SL or TP is hit.</p>
+          <p className="text-sm font-medium text-foreground">{t('paperTrading.noClosedTrades')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('paperTrading.noClosedTradesDesc')}</p>
         </div>
       </div>
     );
@@ -71,37 +73,35 @@ export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select value={outcomeFilter} onValueChange={(v) => { setOutcomeFilter(v); setPage(0); }}>
           <SelectTrigger className="w-[130px] h-8 text-xs">
-            <SelectValue placeholder="Outcome" />
+            <SelectValue placeholder={t('paperTrading.outcome')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Outcomes</SelectItem>
-            <SelectItem value="win">Wins ✅</SelectItem>
-            <SelectItem value="loss">Losses ❌</SelectItem>
-            <SelectItem value="override">Overrides ⚡</SelectItem>
-            <SelectItem value="timeout">Timeouts ⏱️</SelectItem>
+            <SelectItem value="all">{t('paperTrading.allOutcomes')}</SelectItem>
+            <SelectItem value="win">{t('paperTrading.wins')}</SelectItem>
+            <SelectItem value="loss">{t('paperTrading.losses')}</SelectItem>
+            <SelectItem value="override">{t('paperTrading.overrides')}</SelectItem>
+            <SelectItem value="timeout">{t('paperTrading.timeouts')}</SelectItem>
           </SelectContent>
         </Select>
         <span className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} trade{filtered.length !== 1 ? 's' : ''}
+          {t('paperTrading.tradeCount', { count: filtered.length })}
         </span>
       </div>
 
-      {/* Table */}
       <div className="rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs h-9">Date</TableHead>
-              <TableHead className="text-xs h-9">Instrument</TableHead>
-              <TableHead className="text-xs h-9">Pattern</TableHead>
-              <TableHead className="text-xs h-9">Entry → Exit</TableHead>
-              <TableHead className="text-xs h-9 text-center">Outcome</TableHead>
-              <TableHead className="text-xs h-9 text-right">R Result</TableHead>
-              <TableHead className="text-xs h-9 text-right">P&L</TableHead>
+              <TableHead className="text-xs h-9">{t('paperTrading.date')}</TableHead>
+              <TableHead className="text-xs h-9">{t('paperTrading.instrument')}</TableHead>
+              <TableHead className="text-xs h-9">{t('paperTrading.pattern')}</TableHead>
+              <TableHead className="text-xs h-9">{t('paperTrading.entryExit')}</TableHead>
+              <TableHead className="text-xs h-9 text-center">{t('paperTrading.outcome')}</TableHead>
+              <TableHead className="text-xs h-9 text-right">{t('paperTrading.rResult')}</TableHead>
+              <TableHead className="text-xs h-9 text-right">{t('paperTrading.pnl')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -187,10 +187,9 @@ export function HistoryTab({ trades, onSymbolSelect }: HistoryTabProps) {
         </Table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Page {page + 1} of {totalPages}</span>
+          <span>{t('paperTrading.pageOf', { current: page + 1, total: totalPages })}</span>
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
               <ChevronLeft className="h-3.5 w-3.5" />

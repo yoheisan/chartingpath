@@ -10,8 +10,10 @@ import { PerformanceTab } from '@/components/paper-trading/PerformanceTab';
 import { OverrideDialog } from '@/components/paper-trading/OverrideDialog';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function PaperTradingPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, winRate } = usePaperTrading(user?.id);
   const [overrideTrade, setOverrideTrade] = useState<PaperTrade | null>(null);
@@ -30,11 +32,11 @@ export default function PaperTradingPage() {
         <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center">
           <Wallet className="h-8 w-8 text-muted-foreground/60" />
         </div>
-        <h1 className="text-xl font-bold">Paper Trading Dashboard</h1>
+        <h1 className="text-xl font-bold">{t('paperTrading.signInTitle')}</h1>
         <p className="text-sm text-muted-foreground max-w-md">
-          Sign in to track your paper trades, measure performance, and compare your results against backtested patterns.
+          {t('paperTrading.signInDesc')}
         </p>
-        <Link to="/auth" className="text-sm text-primary font-medium hover:underline">Sign In →</Link>
+        <Link to="/auth" className="text-sm text-primary font-medium hover:underline">{t('paperTrading.signIn')}</Link>
       </div>
     );
   }
@@ -55,49 +57,47 @@ export default function PaperTradingPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Wallet className="h-5 w-5 text-primary" />
-            Paper Trading
+            {t('paperTrading.pageTitle')}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Track simulated trades and measure your edge</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('paperTrading.pageSubtitle')}</p>
         </div>
         <div className="flex items-center gap-4 text-right">
           <div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Balance</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">{t('paperTrading.balance')}</div>
             <div className="text-lg font-bold tabular-nums">
               ${(portfolio?.current_balance ?? 100000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">P&L</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">{t('paperTrading.pnl')}</div>
             <div className={cn('text-lg font-bold tabular-nums', totalPnl > 0 ? 'text-emerald-500' : totalPnl < 0 ? 'text-red-500' : 'text-muted-foreground')}>
               {totalPnl >= 0 ? '+' : ''}${totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Win Rate</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">{t('paperTrading.winRate')}</div>
             <div className="text-lg font-bold tabular-nums">{closedTrades.length > 0 ? `${winRate.toFixed(0)}%` : '—'}</div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="positions">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="positions" className="gap-1.5 text-xs">
             <Activity className="h-3.5 w-3.5" />
-            Positions ({openTrades.length})
+            {t('paperTrading.positions')} ({openTrades.length})
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5 text-xs">
             <History className="h-3.5 w-3.5" />
-            History ({closedTrades.length})
+            {t('paperTrading.history')} ({closedTrades.length})
           </TabsTrigger>
           <TabsTrigger value="performance" className="gap-1.5 text-xs">
             <BarChart3 className="h-3.5 w-3.5" />
-            Performance
+            {t('paperTrading.performance')}
           </TabsTrigger>
         </TabsList>
 
