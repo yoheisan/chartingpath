@@ -5786,7 +5786,20 @@
     "paperTrackRecord": "Papierhandel-Bilanz",
     "goLive": "Live gehen",
     "copilotLiveTitle": "Copilot handelt jetzt live",
-    "copilotLiveDesc": "Aufträge werden über Alpaca geleitet."
+    "copilotLiveDesc": "Aufträge werden über Alpaca geleitet.",
+    "flattenAll": "Alle Glätten",
+    "flattenAllDesc": "Alle offenen Papierhandels-Positionen zum aktuellen Marktpreis schließen. Sind Sie sicher?",
+    "flattenAllTitle": "Alle Papierhandels-Positionen Glätten",
+    "flattening": "Schließe alle…",
+    "allFlattened": "Alle Papierhandels-Positionen geschlossen",
+    "flattenError": "Positionen konnten nicht geglättet werden",
+    "resetCapital": "Kapital Zurücksetzen",
+    "resetCapitalTitle": "Papier-Portfolio Zurücksetzen",
+    "resetCapitalDesc": "Dies schließt alle offenen Positionen, löscht den Handelsverlauf und setzt Ihr Guthaben auf 100.000 $ zurück. Dies kann nicht rückgängig gemacht werden.",
+    "resetting": "Zurücksetzen…",
+    "capitalReset": "Papier-Portfolio auf 100.000 $ zurückgesetzt",
+    "resetError": "Portfolio konnte nicht zurückgesetzt werden",
+    "resetDisabledLive": "Zurücksetzen nicht möglich während Live-Handel aktiv ist"
   },
   "grades": {
     "gradeA": "Grad A",

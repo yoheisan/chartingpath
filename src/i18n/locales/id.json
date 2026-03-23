@@ -5773,7 +5773,20 @@
     "paperTrackRecord": "Riwayat perdagangan simulasi",
     "goLive": "Mulai live",
     "copilotLiveTitle": "Copilot sekarang berdagang secara live",
-    "copilotLiveDesc": "Pesanan akan diarahkan melalui Alpaca."
+    "copilotLiveDesc": "Pesanan akan diarahkan melalui Alpaca.",
+    "flattenAll": "Ratakan Semua",
+    "flattenAllDesc": "Tutup semua posisi paper trading terbuka pada harga pasar saat ini. Apakah Anda yakin?",
+    "flattenAllTitle": "Ratakan Semua Posisi Paper",
+    "flattening": "Menutup semua…",
+    "allFlattened": "Semua posisi paper ditutup",
+    "flattenError": "Gagal meratakan posisi",
+    "resetCapital": "Reset Modal",
+    "resetCapitalTitle": "Reset Portofolio Paper",
+    "resetCapitalDesc": "Ini akan menutup semua posisi terbuka, menghapus riwayat perdagangan, dan mereset saldo Anda ke $100.000. Ini tidak dapat dibatalkan.",
+    "resetting": "Mereset…",
+    "capitalReset": "Portofolio paper direset ke $100.000",
+    "resetError": "Gagal mereset portofolio",
+    "resetDisabledLive": "Tidak dapat mereset saat trading live aktif"
   },
   "grades": {
     "gradeA": "Grade A",

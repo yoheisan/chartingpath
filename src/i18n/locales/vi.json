@@ -5738,7 +5738,20 @@
     "paperTrackRecord": "Lịch sử giao dịch giấy",
     "goLive": "Bắt đầu thực",
     "copilotLiveTitle": "Copilot đang giao dịch thực",
-    "copilotLiveDesc": "Lệnh sẽ được chuyển qua Alpaca."
+    "copilotLiveDesc": "Lệnh sẽ được chuyển qua Alpaca.",
+    "flattenAll": "Đóng Tất Cả",
+    "flattenAllDesc": "Đóng tất cả các vị thế giấy đang mở ở giá thị trường hiện tại. Bạn có chắc không?",
+    "flattenAllTitle": "Đóng Tất Cả Vị Thế Giấy",
+    "flattening": "Đang đóng tất cả…",
+    "allFlattened": "Tất cả vị thế giấy đã đóng",
+    "flattenError": "Không thể đóng các vị thế",
+    "resetCapital": "Đặt Lại Vốn",
+    "resetCapitalTitle": "Đặt Lại Danh Mục Giấy",
+    "resetCapitalDesc": "Điều này sẽ đóng tất cả các vị thế mở, xóa lịch sử giao dịch và đặt lại số dư về $100.000. Không thể hoàn tác.",
+    "resetting": "Đang đặt lại…",
+    "capitalReset": "Danh mục giấy đặt lại về $100.000",
+    "resetError": "Không thể đặt lại danh mục",
+    "resetDisabledLive": "Không thể đặt lại khi giao dịch trực tiếp đang hoạt động"
   },
   "grades": {
     "gradeA": "Hạng A",

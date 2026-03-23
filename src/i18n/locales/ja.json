@@ -6706,7 +6706,20 @@
     "paperTrackRecord": "ペーパー実績",
     "goLive": "ライブ開始",
     "copilotLiveTitle": "コパイロットがライブ取引を開始しました",
-    "copilotLiveDesc": "注文はAlpacaを通じてルーティングされます。"
+    "copilotLiveDesc": "注文はAlpacaを通じてルーティングされます。",
+    "flattenAll": "全てフラット化",
+    "flattenAllDesc": "すべてのペーパーポジションを現在の市場価格で決済します。よろしいですか？",
+    "flattenAllTitle": "全ペーパーポジションのフラット化",
+    "flattening": "全て決済中…",
+    "allFlattened": "全ペーパーポジションを決済しました",
+    "flattenError": "ポジションのフラット化に失敗",
+    "resetCapital": "資金リセット",
+    "resetCapitalTitle": "ペーパーポートフォリオのリセット",
+    "resetCapitalDesc": "これにより全ポジションが決済され、取引履歴が削除され、残高が$100,000にリセットされます。この操作は取り消せません。",
+    "resetting": "リセット中…",
+    "capitalReset": "ペーパーポートフォリオを$100,000にリセット",
+    "resetError": "ポートフォリオのリセットに失敗",
+    "resetDisabledLive": "ライブ取引中はリセットできません"
   },
   "grades": {
     "gradeA": "グレード A",
