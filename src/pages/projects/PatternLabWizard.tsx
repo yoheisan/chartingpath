@@ -1447,7 +1447,7 @@ const PatternLabWizard = () => {
                       <Alert variant="destructive" className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          {estimate.errors?.[0] || estimate.reason || 'Cannot run this configuration'}
+                          {estimate.errors?.[0] || estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
                         </AlertDescription>
                       </Alert>
                     )}
