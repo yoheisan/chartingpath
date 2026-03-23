@@ -531,7 +531,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
 
   // Right panel tab state
   const [rightPanelTab, setRightPanelTab] = useState<string>(
-    settings.watchlistTab === 'alerts' ? 'alerts' : settings.watchlistTab === 'paper' ? 'paper' : 'watchlist'
+    settings.watchlistTab === 'alerts' ? 'alerts' : 'watchlist'
   );
 
   // Auto-collapse sidebar on smaller screens (< 1440px)
