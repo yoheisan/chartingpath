@@ -53,20 +53,20 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                 }`}
               >
                 {isLong ? (
-                  <TrendingUp className="h-3 w-3 text-green-500 shrink-0" />
+                  <TrendingUp className="h-3.5 w-3.5 text-green-500 shrink-0" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-red-500 shrink-0" />
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
                 )}
 
-                <span className="text-xs font-mono font-bold text-foreground truncate">
+                <span className="text-sm font-mono font-bold text-foreground truncate">
                   {trade.symbol}
                 </span>
 
-                <span className="text-[10px] font-mono text-muted-foreground">
+                <span className="text-sm font-mono text-muted-foreground">
                   ${trade.entry_price?.toFixed(2)}
                 </span>
 
-                <span className={`ml-auto text-xs font-mono font-semibold shrink-0 ${
+                <span className={`ml-auto text-sm font-mono font-semibold shrink-0 ${
                   isPositive ? 'text-green-500' : 'text-red-500'
                 }`}>
                   {formatR(pnlR)}
