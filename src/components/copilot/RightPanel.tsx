@@ -12,6 +12,7 @@ import { SessionDebriefPanel } from './SessionDebriefPanel';
 import { DeployModal } from './DeployModal';
 import { LiveControls } from './LiveControls';
 import { DivergenceBanner } from './DivergenceBanner';
+import { PaperPortfolioBar } from './PaperPortfolioBar';
 import { useCopilotTrades, CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useLiveTrades, LiveTrade } from '@/hooks/useLiveTrades';
 import { useCopilotInsight } from '@/hooks/useCopilotInsight';
@@ -73,6 +74,9 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
         <span className="text-sm font-semibold text-foreground">Your Edge</span>
         <Link to="/copilot/report" className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer">Full report →</Link>
       </div>
+
+      {/* Paper Portfolio Summary + Kill Switches */}
+      <PaperPortfolioBar userId={user?.id} />
 
       {/* Paper / Live tab toggle */}
       {isLive && (
