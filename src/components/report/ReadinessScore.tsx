@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   calcReadinessScore,
-  calcWinRate,
-  calcAvgR,
   type PaperTrade,
   type SessionLog,
 } from '@/hooks/useTradeReport';
@@ -20,14 +19,8 @@ function scoreColor(score: number) {
   return 'hsl(var(--bearish))';
 }
 
-function ringGradient(score: number) {
-  if (score >= 80) return 'from-green-500 to-emerald-400';
-  if (score >= 60) return 'from-emerald-400 to-yellow-400';
-  if (score >= 40) return 'from-yellow-400 to-amber-500';
-  return 'from-red-500 to-red-400';
-}
-
 export function ReadinessScore({ trades, sessions }: Props) {
+  const { t } = useTranslation();
   const { total, components, meta } = useMemo(
     () => calcReadinessScore(trades, sessions),
     [trades, sessions]
@@ -36,16 +29,16 @@ export function ReadinessScore({ trades, sessions }: Props) {
   const verdictText = useMemo(() => {
     const { count, wr, avgR } = meta;
     if (total >= 80)
-      return `Your plan has a strong track record. ${count} trades, ${wr}% win rate, avg +${avgR.toFixed(1)}R per trade. The data suggests you're ready to go live. Consider starting with a small allocation.`;
+      return t('report.goLiveReady', { count, wr, avgR: avgR.toFixed(1) });
     if (total >= 60)
-      return `Your plan is showing promise but needs more data. Keep paper testing — aim for ${Math.max(0, 50 - count)} more trades before going live.`;
+      return t('report.goLivePromising', { remaining: Math.max(0, 50 - count) });
     if (total >= 40) {
       const weakest = components.reduce((a, b) => (a.score / a.max < b.score / b.max ? a : b));
-      return `Your plan needs adjustment before going live. ${weakest.label} is your weakest area. Review your pattern selection or risk settings.`;
+      return t('report.goLiveAdjust', { weakest: weakest.label });
     }
     const weakest = components.reduce((a, b) => (a.score / a.max < b.score / b.max ? a : b));
-    return `Your plan is not yet ready for live trading. ${weakest.label} needs improvement. Keep paper testing and consider updating your trading plan.`;
-  }, [total, components, meta]);
+    return t('report.goLiveNotReady', { weakest: weakest.label });
+  }, [total, components, meta, t]);
 
   const pct = Math.min(100, total);
   const circumference = 2 * Math.PI * 54;
@@ -74,7 +67,7 @@ export function ReadinessScore({ trades, sessions }: Props) {
             <span className="text-4xl font-bold text-foreground" style={{ color: scoreColor(total) }}>
               {total}
             </span>
-            <span className="text-[10px] text-muted-foreground font-medium">Go Live Readiness</span>
+            <span className="text-[10px] text-muted-foreground font-medium">{t('report.goLiveReadiness')}</span>
           </div>
         </div>
 
@@ -109,11 +102,11 @@ export function ReadinessScore({ trades, sessions }: Props) {
               to="/copilot"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
-              Go live with your plan →
+              {t('report.goLiveButton')}
             </Link>
           ) : (
-            <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-muted text-muted-foreground rounded-md cursor-not-allowed" title="Reach a readiness score of 60 to unlock">
-              Go live with your plan →
+            <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-muted text-muted-foreground rounded-md cursor-not-allowed" title={t('report.goLiveDisabledHint')}>
+              {t('report.goLiveButton')}
             </span>
           )}
         </div>

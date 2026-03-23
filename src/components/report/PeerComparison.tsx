@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { calcWinRate, calcAvgR, type PaperTrade, type SessionLog } from '@/hooks/useTradeReport';
 
@@ -15,12 +16,12 @@ interface PlatformAvgs {
 }
 
 export function PeerComparison({ trades, sessions }: Props) {
+  const { t } = useTranslation();
   const [platformAvgs, setPlatformAvgs] = useState<PlatformAvgs | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      // Get aggregated platform stats (no PII)
       const { data: allTrades, count } = await supabase
         .from('paper_trades')
         .select('outcome_r, user_id', { count: 'exact' })
@@ -30,14 +31,12 @@ export function PeerComparison({ trades, sessions }: Props) {
 
       if (!allTrades || !count) { setLoading(false); return; }
 
-      // Count unique users
-      const users = new Set(allTrades.map(t => t.user_id));
+      const users = new Set(allTrades.map(tr => tr.user_id));
       if (users.size < 100) { setLoading(false); return; }
 
-      const wins = allTrades.filter(t => (t.outcome_r ?? 0) > 0).length;
-      const avgR = allTrades.reduce((s, t) => s + (t.outcome_r ?? 0), 0) / allTrades.length;
+      const wins = allTrades.filter(tr => (tr.outcome_r ?? 0) > 0).length;
+      const avgR = allTrades.reduce((s, tr) => s + (tr.outcome_r ?? 0), 0) / allTrades.length;
 
-      // Get session consistency
       const { data: allSessions } = await supabase
         .from('session_logs')
         .select('ai_pnl_r, human_pnl_r')
@@ -66,23 +65,23 @@ export function PeerComparison({ trades, sessions }: Props) {
   }, [trades, sessions]);
 
   if (loading) return null;
-  if (!platformAvgs) return null; // fewer than 100 users — hide section entirely
+  if (!platformAvgs) return null;
 
   const comparisons = [
     {
-      label: 'Win rate',
+      label: t('report.winRate'),
       yours: `${myStats.wr}%`,
       platform: `${platformAvgs.winRate}%`,
       percentile: myStats.wr > platformAvgs.winRate ? Math.min(99, Math.round(50 + (myStats.wr - platformAvgs.winRate) * 2)) : Math.max(1, Math.round(50 - (platformAvgs.winRate - myStats.wr) * 2)),
     },
     {
-      label: 'Avg R per trade',
+      label: t('report.avgRPerTrade'),
       yours: `${myStats.avgR >= 0 ? '+' : ''}${myStats.avgR.toFixed(1)}R`,
       platform: `${platformAvgs.avgR >= 0 ? '+' : ''}${platformAvgs.avgR.toFixed(1)}R`,
       percentile: myStats.avgR > platformAvgs.avgR ? Math.min(99, Math.round(50 + (myStats.avgR - platformAvgs.avgR) * 20)) : Math.max(1, Math.round(50 - (platformAvgs.avgR - myStats.avgR) * 20)),
     },
     {
-      label: 'Plan consistency',
+      label: t('report.planConsistency'),
       yours: `${myStats.consistency}%`,
       platform: `${platformAvgs.consistency}%`,
       percentile: myStats.consistency > platformAvgs.consistency ? Math.min(99, Math.round(50 + (myStats.consistency - platformAvgs.consistency))) : Math.max(1, Math.round(50 - (platformAvgs.consistency - myStats.consistency))),
@@ -91,9 +90,9 @@ export function PeerComparison({ trades, sessions }: Props) {
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-1">How you compare</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-1">{t('report.howYouCompare')}</h2>
       <p className="text-xs text-muted-foreground mb-5">
-        Anonymous aggregate data from all ChartingPath paper traders.
+        {t('report.peerSubtitle')}
       </p>
 
       <div className="grid sm:grid-cols-3 gap-4">
@@ -102,17 +101,17 @@ export function PeerComparison({ trades, sessions }: Props) {
             <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-3">{c.label}</p>
             <div className="flex items-center justify-center gap-4 mb-3">
               <div>
-                <p className="text-xs text-muted-foreground">You</p>
+                <p className="text-xs text-muted-foreground">{t('report.you')}</p>
                 <p className="text-lg font-mono font-bold text-foreground">{c.yours}</p>
               </div>
-              <span className="text-muted-foreground/40">vs</span>
+              <span className="text-muted-foreground/40">{t('report.vs')}</span>
               <div>
-                <p className="text-xs text-muted-foreground">Platform</p>
+                <p className="text-xs text-muted-foreground">{t('report.platform')}</p>
                 <p className="text-lg font-mono font-bold text-muted-foreground">{c.platform}</p>
               </div>
             </div>
             <p className={`text-xs font-medium ${c.percentile >= 50 ? 'text-[hsl(var(--bullish))]' : 'text-muted-foreground'}`}>
-              Better than {c.percentile}% of traders
+              {t('report.betterThan', { percentile: c.percentile })}
             </p>
           </div>
         ))}

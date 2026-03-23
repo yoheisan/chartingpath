@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { calcWinRate, calcAvgR, calcTotalR, calcAvgHoldTime, calcBestStreak, type PaperTrade } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
 
 export function KeyMetricsRow({ trades }: Props) {
+  const { t } = useTranslation();
+
   const metrics = useMemo(() => {
     const wr = calcWinRate(trades);
     const avgR = calcAvgR(trades);
@@ -11,14 +14,14 @@ export function KeyMetricsRow({ trades }: Props) {
     const hold = calcAvgHoldTime(trades);
     const streak = calcBestStreak(trades);
     return [
-      { label: 'Total trades', value: `${trades.length}` },
-      { label: 'Win rate', value: `${wr}%` },
-      { label: 'Avg R per trade', value: `${avgR >= 0 ? '+' : ''}${avgR.toFixed(1)}R`, color: avgR >= 0 },
-      { label: 'Total P&L (R)', value: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, color: totalR >= 0 },
-      { label: 'Avg hold time', value: `${hold.hours}hrs ${hold.mins}min` },
-      { label: 'Best streak', value: `${streak} wins` },
+      { label: t('report.totalTrades'), value: `${trades.length}` },
+      { label: t('report.winRate'), value: `${wr}%` },
+      { label: t('report.avgRPerTrade'), value: `${avgR >= 0 ? '+' : ''}${avgR.toFixed(1)}R`, color: avgR >= 0 },
+      { label: t('report.totalPnlR'), value: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, color: totalR >= 0 },
+      { label: t('report.avgHoldTime'), value: t('report.holdTimeFormat', { hours: hold.hours, mins: hold.mins }) },
+      { label: t('report.bestStreak'), value: t('report.winsUnit', { count: streak }) },
     ];
-  }, [trades]);
+  }, [trades, t]);
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

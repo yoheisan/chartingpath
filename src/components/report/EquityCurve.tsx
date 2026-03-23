@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { format } from 'date-fns';
 import { splitByAttribution, calcTotalR, type PaperTrade } from '@/hooks/useTradeReport';
@@ -6,6 +7,7 @@ import { splitByAttribution, calcTotalR, type PaperTrade } from '@/hooks/useTrad
 interface Props { trades: PaperTrade[] }
 
 export function EquityCurve({ trades }: Props) {
+  const { t } = useTranslation();
   const [showAi, setShowAi] = useState(true);
   const [showOverrides, setShowOverrides] = useState(true);
   const { ai, human } = useMemo(() => splitByAttribution(trades), [trades]);
@@ -32,15 +34,15 @@ export function EquityCurve({ trades }: Props) {
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Equity Curve</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('report.equityCurve')}</h2>
         <div className="flex gap-3">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={showAi} onChange={() => setShowAi(!showAi)} className="rounded" />
-            <span className="w-2 h-2 rounded-full bg-blue-500" /> AI trades
+            <span className="w-2 h-2 rounded-full bg-blue-500" /> {t('report.aiTrades')}
           </label>
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={showOverrides} onChange={() => setShowOverrides(!showOverrides)} className="rounded" />
-            <span className="w-2 h-2 rounded-full bg-amber-500" /> My overrides
+            <span className="w-2 h-2 rounded-full bg-amber-500" /> {t('report.myOverrides')}
           </label>
         </div>
       </div>
@@ -75,7 +77,7 @@ export function EquityCurve({ trades }: Props) {
                 borderRadius: '8px',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [`${value >= 0 ? '+' : ''}${value}R`, 'Cumulative R']}
+              formatter={(value: number) => [`${value >= 0 ? '+' : ''}${value}R`, t('report.cumulativeR')]}
               labelFormatter={v => format(new Date(v), 'MMM d, yyyy')}
             />
             <Area
@@ -98,10 +100,10 @@ export function EquityCurve({ trades }: Props) {
       </div>
 
       <div className="flex gap-6 mt-3 text-xs text-muted-foreground">
-        <span>AI trades contributed: <span className={aiTotalR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
-          {aiTotalR >= 0 ? '+' : ''}{aiTotalR.toFixed(1)}R</span> total</span>
-        <span>Your overrides contributed: <span className={humanTotalR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
-          {humanTotalR >= 0 ? '+' : ''}{humanTotalR.toFixed(1)}R</span> total</span>
+        <span>{t('report.aiContributed')} <span className={aiTotalR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
+          {aiTotalR >= 0 ? '+' : ''}{aiTotalR.toFixed(1)}R</span> {t('report.total')}</span>
+        <span>{t('report.overridesContributed')} <span className={humanTotalR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
+          {humanTotalR >= 0 ? '+' : ''}{humanTotalR.toFixed(1)}R</span> {t('report.total')}</span>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { type PaperTrade } from '@/hooks/useTradeReport';
 
@@ -41,25 +42,27 @@ function TradeTable({ title, trades, colorPositive }: { title: string; trades: P
 }
 
 export function BestWorstTrades({ trades }: Props) {
+  const { t } = useTranslation();
+
   const { best, worst, worstOverrideCount } = useMemo(() => {
     const sorted = [...trades].sort((a, b) => (b.outcome_r ?? 0) - (a.outcome_r ?? 0));
     const best = sorted.slice(0, 5);
     const worst = sorted.slice(-5).reverse();
     const worstOverrideCount = worst.filter(
-      t => t.attribution === 'override' || t.user_action === 'override'
+      tr => tr.attribution === 'override' || tr.user_action === 'override'
     ).length;
     return { best, worst, worstOverrideCount };
   }, [trades]);
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Best & Worst Trades</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">{t('report.bestWorstTrades')}</h2>
       <div className="grid md:grid-cols-2 gap-4">
-        <TradeTable title="Best trades" trades={best} colorPositive={true} />
-        <TradeTable title="Worst trades" trades={worst} colorPositive={false} />
+        <TradeTable title={t('report.bestTradesTitle')} trades={best} colorPositive={true} />
+        <TradeTable title={t('report.worstTradesTitle')} trades={worst} colorPositive={false} />
       </div>
       <p className={`text-xs mt-3 ${worstOverrideCount >= 3 ? 'text-amber-400' : 'text-muted-foreground'}`}>
-        Of your 5 worst trades, {worstOverrideCount} were overrides.
+        {t('report.worstOverrides', { count: worstOverrideCount })}
       </p>
     </div>
   );

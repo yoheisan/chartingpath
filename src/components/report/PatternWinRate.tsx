@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type PaperTrade, calcAvgR } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
@@ -12,17 +13,19 @@ interface PatternStats {
 }
 
 export function PatternWinRate({ trades }: Props) {
+  const { t } = useTranslation();
+
   const patterns = useMemo(() => {
     const map = new Map<string, PaperTrade[]>();
-    for (const t of trades) {
-      const name = t.setup_type || t.pattern_id || 'Unknown';
+    for (const tr of trades) {
+      const name = tr.setup_type || tr.pattern_id || 'Unknown';
       if (!map.has(name)) map.set(name, []);
-      map.get(name)!.push(t);
+      map.get(name)!.push(tr);
     }
 
     const stats: PatternStats[] = [];
     map.forEach((pts, name) => {
-      const wins = pts.filter(t => (t.outcome_r ?? 0) > 0).length;
+      const wins = pts.filter(tr => (tr.outcome_r ?? 0) > 0).length;
       const winRate = Math.round((wins / pts.length) * 100);
       stats.push({ name, wins, total: pts.length, winRate, avgR: calcAvgR(pts) });
     });
@@ -35,14 +38,14 @@ export function PatternWinRate({ trades }: Props) {
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Win Rate by Pattern</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">{t('report.winRateByPattern')}</h2>
 
       <div className="space-y-2.5">
         {patterns.map(p => {
           if (p.total < 3) {
             return (
               <div key={p.name} className="text-xs text-muted-foreground/60">
-                {p.name} — {p.total} trades — not enough data
+                {p.name} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
               </div>
             );
           }
@@ -63,7 +66,7 @@ export function PatternWinRate({ trades }: Props) {
                 />
               </div>
               <span className="text-xs font-mono text-foreground w-40 text-right flex-shrink-0">
-                {p.winRate}% · ({p.total} trades) · Avg {p.avgR >= 0 ? '+' : ''}{p.avgR.toFixed(1)}R
+                {p.winRate}% · ({t('report.tradesUnit', { count: p.total })}) · Avg {p.avgR >= 0 ? '+' : ''}{p.avgR.toFixed(1)}R
               </span>
             </div>
           );
@@ -72,8 +75,8 @@ export function PatternWinRate({ trades }: Props) {
 
       {best && worst && best.name !== worst.name && (
         <p className="text-xs text-muted-foreground mt-4">
-          Your best performing pattern is <span className="text-foreground font-medium">{best.name}</span> at {best.winRate}% win rate.
-          Your worst is <span className="text-foreground font-medium">{worst.name}</span> at {worst.winRate}%.
+          {t('report.bestPattern')} <span className="text-foreground font-medium">{best.name}</span> {t('report.atWinRate', { rate: best.winRate })}{' '}
+          {t('report.worstPattern')} <span className="text-foreground font-medium">{worst.name}</span> {t('report.atWinRate', { rate: worst.winRate })}
         </p>
       )}
     </div>
