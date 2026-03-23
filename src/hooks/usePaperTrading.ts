@@ -150,6 +150,45 @@ export function usePaperTrading(userId?: string) {
     }
   }, [userId]);
 
+  const flattenAll = useCallback(async () => {
+    if (!userId || openTrades.length === 0) return;
+    try {
+      for (const trade of openTrades) {
+        await handleCloseTrade(trade.id, trade.symbol);
+      }
+    } catch (err) {
+      console.error('[PaperTrading] flatten error', err);
+      throw err;
+    }
+  }, [userId, openTrades, handleCloseTrade]);
+
+  const resetPortfolio = useCallback(async () => {
+    if (!userId) return;
+    try {
+      // Close all open trades first
+      for (const trade of openTrades) {
+        await supabase.from('paper_trades').update({
+          status: 'closed',
+          exit_price: trade.entry_price,
+          pnl: 0,
+          closed_at: new Date().toISOString(),
+          close_reason: 'Portfolio reset',
+        }).eq('id', trade.id);
+      }
+      // Delete all trade history
+      await supabase.from('paper_trades').delete().eq('user_id', userId);
+      // Reset portfolio balance
+      await supabase.from('paper_portfolios').update({
+        current_balance: 100000,
+        total_pnl: 0,
+      } as any).eq('user_id', userId);
+      await fetchData();
+    } catch (err) {
+      console.error('[PaperTrading] reset error', err);
+      throw err;
+    }
+  }, [userId, openTrades, fetchData]);
+
   const winCount = closedTrades.filter((t) => (t.pnl ?? 0) > 0).length;
   const winRate = closedTrades.length > 0 ? ((winCount / closedTrades.length) * 100) : 0;
 
@@ -160,6 +199,8 @@ export function usePaperTrading(userId?: string) {
     loading,
     closingTradeId,
     handleCloseTrade,
+    flattenAll,
+    resetPortfolio,
     winRate,
     winCount,
     refetch: fetchData,
