@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
-import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
+import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
@@ -14,7 +14,7 @@ import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
-  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
+  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
   const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
@@ -154,7 +154,7 @@ const Copilot = () => {
             conflictReason={conflictReason}
             onDismiss={dismissConflict}
           />
-          <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
+          <MyAlertsPanel activePlan={activePlan} />
           <ActiveTradesStrip
             trades={openTrades}
             selectedTradeId={selectedTradeId}
