@@ -2373,7 +2373,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "数据可用性",
+    "noData": "无数据",
+    "bars": "根K线",
+    "noHistoricalData": "未找到{{symbols}}在{{timeframe}}上的历史数据。不会消耗积分但回测将失败。请尝试其他时间框架。",
+    "cannotRunConfig": "无法运行此配置",
+    "foundZeroPass": "个检测到，0个通过",
+    "backtesting": "回测"
   },
   "patternNames": {
     "Bull Flag": "看涨旗形",

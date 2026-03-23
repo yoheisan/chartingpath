@@ -2372,7 +2372,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Disponibilité des données",
+    "noData": "Pas de données",
+    "bars": "barres",
+    "noHistoricalData": "Aucune donnée historique trouvée pour {{symbols}} sur {{timeframe}}. Les crédits ne seront pas facturés mais le backtest échouera. Essayez un autre timeframe.",
+    "cannotRunConfig": "Impossible d'exécuter cette configuration",
+    "foundZeroPass": "trouvés, 0 passent",
+    "backtesting": "backtesting"
   },
   "patternNames": {
     "Bull Flag": "Drapeau Haussier",

@@ -2373,7 +2373,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "توفر البيانات",
+    "noData": "لا توجد بيانات",
+    "bars": "شمعة",
+    "noHistoricalData": "لم يتم العثور على بيانات تاريخية لـ {{symbols}} على {{timeframe}}. لن يتم خصم الرصيد لكن الاختبار سيفشل. جرب إطاراً زمنياً مختلفاً.",
+    "cannotRunConfig": "لا يمكن تشغيل هذا التكوين",
+    "foundZeroPass": "موجود، 0 نجح",
+    "backtesting": "الاختبار الخلفي"
   },
   "patternNames": {
     "Bull Flag": "علم صاعد",

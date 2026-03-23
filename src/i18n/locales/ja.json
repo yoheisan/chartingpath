@@ -3210,7 +3210,14 @@
     "fewOccurrences": "パターン発生回数が少なく、統計的に有意でない可能性があります。",
     "checkingPatternOccurrences": "パターン発生を確認中…",
     "checkingDataAvailability": "データの利用可能性を確認中…",
-    "lowDataWarning": "データが少ないため、少数のトレードで信頼性の低い結果になる可能性があります。"
+    "lowDataWarning": "データが少ないため、少数のトレードで信頼性の低い結果になる可能性があります。",
+    "dataAvailability": "データ可用性",
+    "noData": "データなし",
+    "bars": "バー",
+    "noHistoricalData": "{{symbols}}の{{timeframe}}で過去データが見つかりません。クレジットは消費されませんがバックテストは失敗します。別のタイムフレームをお試しください。",
+    "cannotRunConfig": "この構成では実行できません",
+    "foundZeroPass": "件検出、0件合格",
+    "backtesting": "バックテスト"
   },
   "patternNames": {
     "Bull Flag": "ブルフラッグ",
