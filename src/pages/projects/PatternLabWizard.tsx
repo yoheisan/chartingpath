@@ -739,8 +739,8 @@ const PatternLabWizard = () => {
                     >
                       <div className="mb-1"><InstrumentLogo instrument={example.instrument} size="sm" /></div>
                       <p className="text-sm font-medium">{t(example.labelKey, example.labelFallback)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{t(example.subtitleKey, example.subtitleFallback)}</p>
-                      <div className="mt-2 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-sm text-muted-foreground mt-1">{t(example.subtitleKey, example.subtitleFallback)}</p>
+                      <div className="mt-2 flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                         {t('patternLabWizard.runBacktest', 'Run backtest')} <ArrowRight className="h-3 w-3" />
                       </div>
                     </button>
@@ -767,13 +767,13 @@ const PatternLabWizard = () => {
                     </p>
                     <div className="mt-3 space-y-1">
                       {[t('patternLabWizard.validateBullet1'), t('patternLabWizard.validateBullet2'), t('patternLabWizard.validateBullet3')].map(b => (
-                        <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <div key={b} className="flex items-center gap-1.5 text-sm text-muted-foreground">
                           <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
                           {b}
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
                       {t('patternLabWizard.startValidating')} <ArrowRight className="h-3 w-3" />
                     </div>
                   </div>
@@ -796,13 +796,13 @@ const PatternLabWizard = () => {
                     </p>
                     <div className="mt-3 space-y-1">
                       {[t('patternLabWizard.automateBullet1'), t('patternLabWizard.automateBullet2'), t('patternLabWizard.automateBullet3')].map(b => (
-                        <div key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <div key={b} className="flex items-center gap-1.5 text-sm text-muted-foreground">
                           <CheckCircle2 className="h-3 w-3 text-violet-500 shrink-0" />
                           {b}
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-violet-500">
+                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-violet-500">
                       {t('patternLabWizard.startBuilding')} <ArrowRight className="h-3 w-3" />
                     </div>
                   </div>
@@ -815,7 +815,7 @@ const PatternLabWizard = () => {
         {/* Mode indicator when selected */}
         {mode && (
           <div className="mb-6 flex items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border ${
               mode === 'validate'
                 ? 'bg-primary/10 text-primary border-primary/20'
                 : 'bg-violet-500/10 text-violet-500 border-violet-500/20'
@@ -825,7 +825,7 @@ const PatternLabWizard = () => {
             </div>
             <button
               onClick={() => setMode(null)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
             >
               {t('patternLabWizard.changeGoal')}
             </button>
@@ -839,7 +839,7 @@ const PatternLabWizard = () => {
               <div className="flex items-center gap-4">
                 <Zap className="h-8 w-8 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-1">{t('patternLabWizard.validatingSignal')}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t('patternLabWizard.validatingSignal')}</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-foreground">
                       {selectedInstruments[0]?.replace('=X', '').replace('=F', '').replace('-USD', '')}
@@ -906,7 +906,7 @@ const PatternLabWizard = () => {
                 {/* Selected Instruments */}
                 {selectedInstruments.length > 0 ? (
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-sm text-muted-foreground">
                       {t('patternLabWizard.selected')} ({selectedInstruments.length})
                     </Label>
                     <div className="flex flex-wrap gap-2">
@@ -1004,7 +1004,7 @@ const PatternLabWizard = () => {
                             })}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {t('patternLabWizard.dataCoverage', { info: getCoverageInfo(timeframe as Timeframe) })}
                         </p>
                       </div>
@@ -1020,7 +1020,7 @@ const PatternLabWizard = () => {
                               </TooltipTrigger>
                               <TooltipContent className="max-w-xs">
                                 <p className="text-sm font-semibold mb-1">{t('patternLabWizard.riskPerTrade')}</p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                   {t('patternLabWizard.riskTooltip')}
                                 </p>
                               </TooltipContent>
@@ -1078,7 +1078,7 @@ const PatternLabWizard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 text-xs"
+                          className="h-7 text-sm"
                           onClick={() => setSelectedPatterns(PATTERNS.map(p => p.id))}
                         >
                           {t('patternLabWizard.selectAll')}
@@ -1088,7 +1088,7 @@ const PatternLabWizard = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-xs"
+                          className="h-7 text-sm"
                           onClick={() => setSelectedPatterns([])}
                         >
                           {t('patternLabWizard.clearAll', { count: selectedPatterns.length })}
@@ -1183,7 +1183,7 @@ const PatternLabWizard = () => {
 
                 {/* Custom Grade Selection */}
                 <div className="pt-2 border-t border-border/50">
-                  <Label className="text-xs text-muted-foreground mb-2 block">
+                  <Label className="text-sm text-muted-foreground mb-2 block">
                     {t('patternLabWizard.customizeGrades')}
                   </Label>
                   <div className="flex gap-2 flex-wrap">
@@ -1214,7 +1214,7 @@ const PatternLabWizard = () => {
                     })}
                   </div>
                   {selectedGrades.length === 0 && (
-                    <p className="text-xs text-destructive mt-2">
+                    <p className="text-sm text-destructive mt-2">
                       {t('patternLabWizard.selectAtLeastOneGrade')}
                     </p>
                   )}
@@ -1254,7 +1254,7 @@ const PatternLabWizard = () => {
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">
+                          <Label className="text-sm text-muted-foreground">
                             {t('patternLabWizard.takeProfit', 'Take Profit %')}
                           </Label>
                           <div className="flex items-center gap-2">
@@ -1272,7 +1272,7 @@ const PatternLabWizard = () => {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">
+                          <Label className="text-sm text-muted-foreground">
                             {t('patternLabWizard.stopLoss', 'Stop Loss %')}
                           </Label>
                           <div className="flex items-center gap-2">
@@ -1290,7 +1290,7 @@ const PatternLabWizard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         R:R = {(targetGainPercent / stopLossPercent).toFixed(1)}:1
                       </div>
                     </div>
@@ -1302,7 +1302,7 @@ const PatternLabWizard = () => {
                         {t('patternLabWizard.positionManagement', 'Position Management')}
                       </h4>
                       <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">
+                        <Label className="text-sm text-muted-foreground">
                           {t('patternLabWizard.maxOpenPositions', 'Max Open Positions')}
                         </Label>
                         <Select value={String(maxOpenPositions)} onValueChange={v => setMaxOpenPositions(Number(v))}>
@@ -1317,7 +1317,7 @@ const PatternLabWizard = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">
+                        <Label className="text-sm text-muted-foreground">
                           {t('patternLabWizard.minRiskReward', 'Min Risk:Reward')}
                         </Label>
                         <Select value={String(minRiskReward)} onValueChange={v => setMinRiskReward(Number(v))}>
@@ -1437,7 +1437,7 @@ const PatternLabWizard = () => {
                     
                     {/* Cache indicator */}
                     {estimate.cacheHitRatio > 0 && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                         <Database className="h-3 w-3" />
                         <span>{t('patternLabWizard.dataCached', { percent: Math.round(estimate.cacheHitRatio * 100) })}</span>
                       </div>
@@ -1497,7 +1497,7 @@ const PatternLabWizard = () => {
                       </Alert>
                     )}
                     {!hasNoData && hasLowData && (
-                      <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
+                      <div className="flex items-start gap-1.5 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>{t('patternLabWizard.lowDataWarning')}</span>
                       </div>
@@ -1508,13 +1508,13 @@ const PatternLabWizard = () => {
                 {/* Pattern Occurrence Check */}
                 {patternCoverage.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
                       <FlaskConical className="h-3 w-3" />
                       {t('patternLabWizard.patternOccurrences')}
                     </p>
                     <div className="space-y-1.5">
                       {patternCoverage.map(p => (
-                        <div key={`${p.symbol}-${p.patternId}`} className="flex items-center justify-between text-xs">
+                        <div key={`${p.symbol}-${p.patternId}`} className="flex items-center justify-between text-sm">
                           <span className="font-medium text-foreground truncate max-w-[100px]">
                             {p.symbol.replace('=X', '').replace('=F', '').replace('-USD', '')}
                           </span>
@@ -1554,13 +1554,13 @@ const PatternLabWizard = () => {
                     {hasNoPatterns && (
                       <Alert variant="destructive" className="mt-2 py-2">
                         <AlertCircle className="h-3.5 w-3.5" />
-                        <AlertDescription className="text-xs">
+                        <AlertDescription className="text-sm">
                           {t('patternLabWizard.noOccurrencesFound')}
                         </AlertDescription>
                       </Alert>
                     )}
                     {!hasNoPatterns && zeroPatternCombos.length > 0 && (
-                      <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
+                      <div className="flex items-start gap-1.5 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>
                           {t('patternLabWizard.zeroOccurrenceCombos', { count: zeroPatternCombos.length })}
@@ -1568,7 +1568,7 @@ const PatternLabWizard = () => {
                       </div>
                     )}
                     {!hasNoPatterns && hasLowPatterns && !zeroPatternCombos.length && (
-                      <div className="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
+                      <div className="flex items-start gap-1.5 text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 rounded-md px-3 py-2">
                         <Info className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>{t('patternLabWizard.fewOccurrences')}</span>
                       </div>
@@ -1576,14 +1576,14 @@ const PatternLabWizard = () => {
                   </div>
                 )}
                 {isCheckingPatterns && patternCoverage.length === 0 && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     {t('patternLabWizard.checkingPatternOccurrences')}
                   </div>
                 )}
 
                 {isCheckingData && dataCoverage.length === 0 && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     {t('patternLabWizard.checkingDataAvailability')}
                   </div>
@@ -1638,14 +1638,14 @@ const PatternLabWizard = () => {
                 </Button>
 
                 
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   {t('patternLabWizard.estimatedRuntime')}
                 </p>
                 
                 {/* What you'll get - mode-aware */}
                 <div className="pt-4 border-t border-border/50">
-                  <p className="text-xs font-medium text-muted-foreground mb-3">{t('patternLabWizard.whatYoullGet')}</p>
-                  <div className="grid grid-cols-1 gap-1.5 text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">{t('patternLabWizard.whatYoullGet')}</p>
+                  <div className="grid grid-cols-1 gap-1.5 text-sm text-muted-foreground">
                     {(isValidate ? [
                       t('patternLabWizard.validateGet1'),
                       t('patternLabWizard.validateGet2'),
