@@ -13,7 +13,7 @@ import { CommandCenterChart } from './CommandCenterChart';
 import { PatternOverlayChart } from './PatternOverlayChart';
 import { WatchlistPanel, LivePattern } from './WatchlistPanel';
 import { AlertsHistoryPanel } from './AlertsHistoryPanel';
-import { PaperTradingPanel } from './PaperTradingPanel';
+
 import { MorningBriefingPanel } from './MorningBriefingPanel';
 import { ForwardPerformancePanel } from './ForwardPerformancePanel';
 
