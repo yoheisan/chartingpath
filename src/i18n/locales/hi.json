@@ -911,13 +911,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "मार्केट पल्स",
+      "subtitle": "सभी इंस्ट्रूमेंट्स में दैनिक रूप से पहचाने गए बुलिश vs बेयरिश पैटर्न — पिछले 30 दिन",
+      "long": "लॉन्ग (बुलिश)",
+      "short": "शॉर्ट (बेयरिश)",
+      "totalDetections": "कुल पहचान",
+      "last30Days": "पिछले 30 दिन",
+      "peakDay": "सबसे सक्रिय दिन"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

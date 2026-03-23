@@ -388,13 +388,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "Puls Rynku",
+      "subtitle": "Wzorce bycze vs niedźwiedzie wykrywane codziennie we wszystkich instrumentach — ostatnie 30 dni",
+      "long": "Long (Byczy)",
+      "short": "Short (Niedźwiedzi)",
+      "totalDetections": "Łączne Wykrycia",
+      "last30Days": "Ostatnie 30 dni",
+      "peakDay": "Najbardziej Aktywny Dzień"
     },
     "alertsBullet1": "Multi-pattern support",
     "alertsBullet2": "Email notifications",

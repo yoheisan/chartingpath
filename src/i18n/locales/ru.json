@@ -183,13 +183,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "Пульс Рынка",
+      "subtitle": "Бычьи и медвежьи паттерны, обнаруженные ежедневно по всем инструментам — последние 30 дней",
+      "long": "Лонг (Бычий)",
+      "short": "Шорт (Медвежий)",
+      "totalDetections": "Всего обнаружений",
+      "last30Days": "Последние 30 дней",
+      "peakDay": "Самый активный день"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

@@ -1154,13 +1154,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "نبض السوق",
+      "subtitle": "أنماط صاعدة مقابل هابطة يتم اكتشافها يومياً عبر جميع الأدوات — آخر 30 يوماً",
+      "long": "شراء (صاعد)",
+      "short": "بيع (هابط)",
+      "totalDetections": "إجمالي الاكتشافات",
+      "last30Days": "آخر 30 يوماً",
+      "peakDay": "اليوم الأكثر نشاطاً"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },

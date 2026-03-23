@@ -1081,13 +1081,13 @@
     "bestForDashboard": "Full workspace",
     "tools": "Tools",
     "marketPulse": {
-      "title": "Market Pulse",
-      "subtitle": "Bullish vs bearish patterns detected daily across all instruments — last 30 days",
-      "long": "Long (Bullish)",
-      "short": "Short (Bearish)",
-      "totalDetections": "Total Detections",
-      "last30Days": "Last 30 days",
-      "peakDay": "Most Active Day"
+      "title": "Piyasa Nabzı",
+      "subtitle": "Tüm enstrümanlarda günlük tespit edilen yükseliş vs düşüş formasyonları — son 30 gün",
+      "long": "Uzun (Yükseliş)",
+      "short": "Kısa (Düşüş)",
+      "totalDetections": "Toplam Tespit",
+      "last30Days": "Son 30 gün",
+      "peakDay": "En Aktif Gün"
     },
     "platformBadge": "Chart Pattern Backtesting Platform"
   },
