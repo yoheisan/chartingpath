@@ -758,11 +758,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                         <AlertsHistoryPanel userId={userId} onSymbolSelect={handleSymbolSelect} activePlan={activePlan} plans={masterPlans} />
                       )}
                     </TabsContent>
-                    <TabsContent value="paper" className="flex-1 m-0 overflow-hidden">
-                      {rightPanelTab === 'paper' && (
-                        <PaperTradingPanel userId={userId} onSymbolSelect={handleSymbolSelect} />
-                      )}
-                    </TabsContent>
                     <TabsContent value="forward" className="flex-1 m-0 overflow-hidden">
                       {rightPanelTab === 'forward' && (
                         <ForwardPerformancePanel userId={userId} />
