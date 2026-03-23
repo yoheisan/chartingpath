@@ -1491,8 +1491,8 @@ const PatternLabWizard = () => {
                     {hasNoData && (
                       <Alert variant="destructive" className="mt-2 py-2">
                         <AlertCircle className="h-3.5 w-3.5" />
-                        <AlertDescription className="text-xs">
-                          No historical data found for {dataCoverage.filter(d => d.bars === 0).map(d => d.symbol).join(', ')} on {timeframe}. Credits will not be charged but the backtest will fail. Try a different timeframe.
+                        <AlertDescription className="text-sm">
+                          {(t as any)('patternLabWizard.noHistoricalData', { symbols: dataCoverage.filter(d => d.bars === 0).map(d => d.symbol).join(', '), timeframe, defaultValue: 'No historical data found for {{symbols}} on {{timeframe}}. Credits will not be charged but the backtest will fail. Try a different timeframe.' })}
                         </AlertDescription>
                       </Alert>
                     )}
