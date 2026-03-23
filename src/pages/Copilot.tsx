@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
-import { AIGatedWatchlist } from "@/components/copilot/AIGatedWatchlist";
+import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
