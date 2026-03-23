@@ -105,7 +105,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
               key={row.symbol}
               className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer group"
             >
-              <span className="font-mono font-bold text-xs text-foreground w-10">
+              <span className="font-mono font-bold text-sm text-foreground w-12">
                 {row.symbol}
               </span>
               <Badge
