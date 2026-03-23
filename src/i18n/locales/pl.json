@@ -146,7 +146,32 @@
     "gate_aligned": "wyrównany",
     "gate_partial": "częściowy",
     "gate_conflict": "konflikt",
-    "addTickerAiGate": "Dodaj ticker → uruchamia AI Gate"
+    "addTickerAiGate": "Dodaj ticker → uruchamia AI Gate",
+    "panel": {
+      "yourDesk": "Twój trading desk",
+      "setupPlan": "Skonfiguruj plan tradingowy",
+      "seeAiTrading": "Zobacz trading z natywnym AI.",
+      "setFirstPlan": "Skonfiguruj pierwszy plan tradingowy i sprawdź wyniki",
+      "likeBacktesting": "Jak backtesting w MT4 lub Pine Script — ale na żywo, automatycznie, na papierze. Bez ryzyka. Najpierw wyniki.",
+      "planRunning": "Twój plan tradingowy działa",
+      "paperTesting": "Copilot testuje Twój plan na żywo na papierze.",
+      "tradesTakenToday": "transakcji wykonanych dzisiaj.",
+      "reviewBeforeLive": "Przejrzyj wyniki przed przejściem na żywo.",
+      "whatsYourPlan": "Jaki jest Twój plan tradingowy?",
+      "describeTrading": "Opisz swój styl tradingu — wzorce, ryzyko, timing. Copilot uruchomi to jako symulację papierową na żywo.",
+      "chipPatterns": "Jakie wzorce są teraz aktywne?",
+      "chipScore": "Oceń transakcję",
+      "chipGate": "Jak działa AI Gate?",
+      "activeSetups": "Copilot znalazł {{count}} aktywnych setupów — zarejestruj się za darmo, aby zobaczyć oceny.",
+      "createFirstPlan": "Stwórz pierwszy plan tradingowy →",
+      "freeToTry": "Za darmo · Bez prawdziwych pieniędzy · Ty decydujesz, kiedy przejść na żywo",
+      "reviewResults": "Przejrzyj dzisiejsze wyniki",
+      "updatePlan": "Zaktualizuj plan tradingowy",
+      "setPlan": "Skonfiguruj plan tradingowy →",
+      "placeholderWithPlan": "Zapytaj Copilot lub wydaj polecenie...",
+      "placeholderNoPlan": "np. Tylko wybicia, maks 3% ryzyka, tylko rano...",
+      "placeholderGuest": "Zapytaj Copilot — rejestracja nie wymagana"
+    }
   },
   "hero": {
     "headlinePrimary": "Sprawdź, czy formacja działa",

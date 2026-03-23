@@ -2108,7 +2108,32 @@
     "gate_aligned": "aligné",
     "gate_partial": "partiel",
     "gate_conflict": "conflit",
-    "addTickerAiGate": "Ajouter ticker → exécute AI Gate"
+    "addTickerAiGate": "Ajouter ticker → exécute AI Gate",
+    "panel": {
+      "yourDesk": "Votre bureau de trading",
+      "setupPlan": "Configurez votre plan de trading",
+      "seeAiTrading": "Découvrez le trading natif IA.",
+      "setFirstPlan": "Configurez votre premier plan de trading et observez ses performances",
+      "likeBacktesting": "Comme le backtesting sur MT4 ou Pine Script — mais en live, automatiquement, sur papier. Aucun risque. Voyez les résultats d'abord.",
+      "planRunning": "Votre plan de trading est actif",
+      "paperTesting": "Copilot teste votre plan en paper trading en direct.",
+      "tradesTakenToday": "trade(s) effectué(s) aujourd'hui.",
+      "reviewBeforeLive": "Examinez les résultats avant de passer en réel.",
+      "whatsYourPlan": "Quel est votre plan de trading ?",
+      "describeTrading": "Décrivez comment vous tradez — patterns, risque, timing. Copilot l'exécute en simulation papier live pour voir les performances avant de risquer de l'argent réel.",
+      "chipPatterns": "Quels patterns sont actifs maintenant ?",
+      "chipScore": "Évaluer un trade",
+      "chipGate": "Comment fonctionne l'AI Gate ?",
+      "activeSetups": "Copilot a trouvé {{count}} setups actifs — inscrivez-vous gratuitement pour les voir évalués selon votre mandat.",
+      "createFirstPlan": "Créez votre premier plan de trading →",
+      "freeToTry": "Gratuit · Pas d'argent réel · Vous décidez quand passer en réel",
+      "reviewResults": "Examiner les résultats du jour",
+      "updatePlan": "Mettre à jour le plan de trading",
+      "setPlan": "Configurer votre plan de trading →",
+      "placeholderWithPlan": "Demandez à Copilot ou donnez une commande...",
+      "placeholderNoPlan": "ex. Uniquement breakouts, max 3% risque, matins seulement...",
+      "placeholderGuest": "Demandez à Copilot — aucune inscription requise"
+    }
   },
   "copilotShowcase": {
     "exportPineScript": "Exporter Pine Script",

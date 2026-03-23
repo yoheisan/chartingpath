@@ -2171,7 +2171,32 @@
     "gate_aligned": "belyn",
     "gate_partial": "gedeeltelik",
     "gate_conflict": "konflik",
-    "addTickerAiGate": "Voeg tikker by → loop AI-hek"
+    "addTickerAiGate": "Voeg tikker by → loop AI-hek",
+    "panel": {
+      "yourDesk": "Jou handelsbank",
+      "setupPlan": "Stel jou handelsplan op",
+      "seeAiTrading": "Sien KI-inheemse handel.",
+      "setFirstPlan": "Stel jou eerste handelsplan op en sien die prestasie",
+      "likeBacktesting": "Soos terugtoetsing in MT4 of Pine Script — maar regstreeks, outomaties, op papier. Geen risiko. Sien eers resultate.",
+      "planRunning": "Jou handelsplan loop",
+      "paperTesting": "Copilot toets jou plan regstreeks op papier.",
+      "tradesTakenToday": "handelsaksie(s) vandag uitgevoer.",
+      "reviewBeforeLive": "Hersien resultate voor jy regstreeks gaan.",
+      "whatsYourPlan": "Wat is jou handelsplan?",
+      "describeTrading": "Beskryf hoe jy graag handel — patrone, risiko, tydsberekening. Copilot voer dit uit as 'n regstreekse papiersimulasie.",
+      "chipPatterns": "Watter patrone is nou aktief?",
+      "chipScore": "Beoordeel 'n handelsaksie",
+      "chipGate": "Hoe werk die AI Gate?",
+      "activeSetups": "Copilot het {{count}} aktiewe opstellings gevind — registreer gratis om tellings te sien.",
+      "createFirstPlan": "Skep jou eerste handelsplan →",
+      "freeToTry": "Gratis · Geen regte geld nie · Jy besluit wanneer om regstreeks te gaan",
+      "reviewResults": "Hersien vandag se papierresultate",
+      "updatePlan": "Dateer handelsplan op",
+      "setPlan": "Stel jou handelsplan op →",
+      "placeholderWithPlan": "Vra Copilot of gee 'n opdrag...",
+      "placeholderNoPlan": "bv. Slegs uitbrekings, maks 3% risiko, net oggende...",
+      "placeholderGuest": "Vra Copilot — geen registrasie nodig"
+    }
   },
   "copilotShowcase": {
     "title": "Hoekom Ons Medevlieënier Gebruik In Plaats Van ChatGPT?",

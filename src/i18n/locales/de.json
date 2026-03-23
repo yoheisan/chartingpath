@@ -240,7 +240,32 @@
     "gate_aligned": "ausgerichtet",
     "gate_partial": "teilweise",
     "gate_conflict": "Konflikt",
-    "addTickerAiGate": "Ticker hinzufügen → AI Gate ausführen"
+    "addTickerAiGate": "Ticker hinzufügen → AI Gate ausführen",
+    "panel": {
+      "yourDesk": "Ihr Trading-Desk",
+      "setupPlan": "Trading-Plan einrichten",
+      "seeAiTrading": "Erleben Sie KI-natives Trading.",
+      "setFirstPlan": "Richten Sie Ihren ersten Trading-Plan ein und sehen Sie die Performance",
+      "likeBacktesting": "Wie Backtesting in MT4 oder Pine Script — aber live, automatisch, auf Papier. Kein Risiko. Ergebnisse zuerst sehen.",
+      "planRunning": "Ihr Trading-Plan läuft",
+      "paperTesting": "Copilot testet Ihren Plan live im Paper-Trading.",
+      "tradesTakenToday": "Trade(s) heute ausgeführt.",
+      "reviewBeforeLive": "Ergebnisse prüfen, bevor Sie live gehen.",
+      "whatsYourPlan": "Was ist Ihr Trading-Plan?",
+      "describeTrading": "Beschreiben Sie Ihren Trading-Stil — Muster, Risiko, Timing. Copilot führt ihn als Live-Paper-Simulation aus.",
+      "chipPatterns": "Welche Muster sind gerade aktiv?",
+      "chipScore": "Einen Trade bewerten",
+      "chipGate": "Wie funktioniert das AI Gate?",
+      "activeSetups": "Copilot hat {{count}} aktive Setups gefunden — kostenlos registrieren, um sie gegen Ihr Mandat zu sehen.",
+      "createFirstPlan": "Ersten Trading-Plan erstellen →",
+      "freeToTry": "Kostenlos testen · Kein echtes Geld · Sie entscheiden, wann Sie live gehen",
+      "reviewResults": "Heutige Paper-Ergebnisse prüfen",
+      "updatePlan": "Trading-Plan aktualisieren",
+      "setPlan": "Trading-Plan einrichten →",
+      "placeholderWithPlan": "Fragen Sie Copilot oder geben Sie einen Befehl ein...",
+      "placeholderNoPlan": "z.B. Nur Breakouts, max 3% Risiko, nur morgens...",
+      "placeholderGuest": "Fragen Sie Copilot — keine Anmeldung nötig"
+    }
   },
   "copilotShowcase": {
     "actionBridgingCant": "Keine externe KI kann sich in die Tools von ChartingPath einklinken.",

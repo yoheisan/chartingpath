@@ -2040,7 +2040,32 @@
     "gate_aligned": "uyumlu",
     "gate_partial": "kısmi",
     "gate_conflict": "çakışma",
-    "addTickerAiGate": "Ticker ekle → AI Gate çalıştır"
+    "addTickerAiGate": "Ticker ekle → AI Gate çalıştır",
+    "panel": {
+      "yourDesk": "Trading masanız",
+      "setupPlan": "Trading planınızı kurun",
+      "seeAiTrading": "AI-native trading'i görün.",
+      "setFirstPlan": "İlk trading planınızı kurun ve performansını görün",
+      "likeBacktesting": "MT4 veya Pine Script'te backtesting gibi — ama canlı, otomatik, kağıt üzerinde. Risk yok. Önce sonuçları görün.",
+      "planRunning": "Trading planınız çalışıyor",
+      "paperTesting": "Copilot planınızı canlı kağıt üzerinde test ediyor.",
+      "tradesTakenToday": "işlem bugün gerçekleştirildi.",
+      "reviewBeforeLive": "Canlıya geçmeden önce sonuçları inceleyin.",
+      "whatsYourPlan": "Trading planınız nedir?",
+      "describeTrading": "Trading tarzınızı anlatın — kalıplar, risk, zamanlama. Copilot canlı kağıt simülasyonu olarak çalıştırır.",
+      "chipPatterns": "Şu anda aktif kalıplar neler?",
+      "chipScore": "Bir işlem puanla",
+      "chipGate": "AI Gate nasıl çalışır?",
+      "activeSetups": "Copilot {{count}} aktif kurulum buldu — ücretsiz kaydolarak puanlamayı görün.",
+      "createFirstPlan": "İlk trading planınızı oluşturun →",
+      "freeToTry": "Ücretsiz deneyin · Gerçek para yok · Canlıya siz karar verin",
+      "reviewResults": "Bugünkü kağıt sonuçlarını incele",
+      "updatePlan": "Trading planını güncelle",
+      "setPlan": "Trading planınızı kurun →",
+      "placeholderWithPlan": "Copilot'a sorun veya komut verin...",
+      "placeholderNoPlan": "örn. Sadece kırılımlar, maks %3 risk, sadece sabahları...",
+      "placeholderGuest": "Copilot'a sorun — kayıt gerekmez"
+    }
   },
   "copilotShowcase": {
     "liveMarketAccessCant": "ChatGPT şöyle derdi: \"Gerçek zamanlı piyasa verilerine erişimim yok.\"",

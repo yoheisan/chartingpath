@@ -2116,7 +2116,32 @@
     "gate_aligned": "정렬됨",
     "gate_partial": "부분적",
     "gate_conflict": "충돌",
-    "addTickerAiGate": "티커 추가 → AI 게이트 실행"
+    "addTickerAiGate": "티커 추가 → AI 게이트 실행",
+    "panel": {
+      "yourDesk": "트레이딩 데스크",
+      "setupPlan": "트레이딩 플랜 설정",
+      "seeAiTrading": "AI 네이티브 트레이딩을 확인하세요.",
+      "setFirstPlan": "첫 번째 트레이딩 플랜을 설정하고 성과를 확인하세요",
+      "likeBacktesting": "MT4나 Pine Script 백테스팅처럼 — 하지만 실시간, 자동으로, 페이퍼 트레이딩. 리스크 없음. 먼저 결과 확인.",
+      "planRunning": "트레이딩 플랜 실행 중",
+      "paperTesting": "Copilot이 플랜을 실시간 페이퍼 테스트 중입니다.",
+      "tradesTakenToday": "건의 트레이드가 오늘 실행됨.",
+      "reviewBeforeLive": "실전 전에 결과를 검토하세요.",
+      "whatsYourPlan": "트레이딩 플랜이 무엇인가요?",
+      "describeTrading": "트레이딩 방식을 설명하세요 — 패턴, 리스크, 타이밍. Copilot이 실시간 페이퍼 시뮬레이션으로 실행합니다.",
+      "chipPatterns": "현재 활성 패턴은?",
+      "chipScore": "트레이드 스코어링",
+      "chipGate": "AI Gate 작동 방식은?",
+      "activeSetups": "Copilot이 {{count}}개의 활성 셋업을 발견 — 무료 가입으로 매칭 스코어를 확인하세요.",
+      "createFirstPlan": "첫 트레이딩 플랜 생성 →",
+      "freeToTry": "무료 체험 · 실제 자금 없음 · 실전 전환은 본인 결정",
+      "reviewResults": "오늘의 페이퍼 결과 검토",
+      "updatePlan": "트레이딩 플랜 업데이트",
+      "setPlan": "트레이딩 플랜 설정 →",
+      "placeholderWithPlan": "Copilot에게 질문하거나 명령을 입력...",
+      "placeholderNoPlan": "예: 돌파만, 최대 3% 리스크, 오전만...",
+      "placeholderGuest": "Copilot에게 무엇이든 질문 — 가입 불필요"
+    }
   },
   "copilotShowcase": {
     "backtestedCant": "ChatGPT는 추측합니다: \"교과서에 따르면 일반적으로 60-70%입니다.\"",

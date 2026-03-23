@@ -5182,7 +5182,32 @@
     "gate_aligned": "phù hợp",
     "gate_partial": "một phần",
     "gate_conflict": "xung đột",
-    "addTickerAiGate": "Thêm mã → chạy AI Gate"
+    "addTickerAiGate": "Thêm mã → chạy AI Gate",
+    "panel": {
+      "yourDesk": "Bàn giao dịch của bạn",
+      "setupPlan": "Thiết lập kế hoạch giao dịch",
+      "seeAiTrading": "Xem giao dịch AI-native.",
+      "setFirstPlan": "Thiết lập kế hoạch giao dịch đầu tiên và xem hiệu suất",
+      "likeBacktesting": "Giống backtest trong MT4 hoặc Pine Script — nhưng chạy trực tiếp, tự động, trên giấy. Không rủi ro. Xem kết quả trước.",
+      "planRunning": "Kế hoạch giao dịch đang chạy",
+      "paperTesting": "Copilot đang thử nghiệm kế hoạch trên giấy trực tiếp.",
+      "tradesTakenToday": "giao dịch thực hiện hôm nay.",
+      "reviewBeforeLive": "Xem lại kết quả trước khi giao dịch thật.",
+      "whatsYourPlan": "Kế hoạch giao dịch của bạn là gì?",
+      "describeTrading": "Mô tả cách bạn giao dịch — mẫu hình, rủi ro, thời điểm. Copilot chạy mô phỏng giấy trực tiếp.",
+      "chipPatterns": "Mẫu hình nào đang hoạt động?",
+      "chipScore": "Chấm điểm giao dịch",
+      "chipGate": "AI Gate hoạt động thế nào?",
+      "activeSetups": "Copilot tìm thấy {{count}} thiết lập hoạt động — đăng ký miễn phí để xem điểm.",
+      "createFirstPlan": "Tạo kế hoạch giao dịch đầu tiên →",
+      "freeToTry": "Miễn phí · Không tiền thật · Bạn quyết định khi nào giao dịch thật",
+      "reviewResults": "Xem kết quả giấy hôm nay",
+      "updatePlan": "Cập nhật kế hoạch giao dịch",
+      "setPlan": "Thiết lập kế hoạch giao dịch →",
+      "placeholderWithPlan": "Hỏi Copilot hoặc nhập lệnh...",
+      "placeholderNoPlan": "vd. Chỉ breakout, tối đa 3% rủi ro, chỉ buổi sáng...",
+      "placeholderGuest": "Hỏi Copilot — không cần đăng ký"
+    }
   },
   "commandPalette": {
     "searchMobile": "Search or ask AI...",

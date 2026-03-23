@@ -2072,7 +2072,32 @@
     "gate_aligned": "alineado",
     "gate_partial": "parcial",
     "gate_conflict": "conflicto",
-    "addTickerAiGate": "Añadir ticker → ejecuta AI Gate"
+    "addTickerAiGate": "Añadir ticker → ejecuta AI Gate",
+    "panel": {
+      "yourDesk": "Tu mesa de trading",
+      "setupPlan": "Configura tu plan de trading",
+      "seeAiTrading": "Mira cómo es el trading con IA nativa.",
+      "setFirstPlan": "Configura tu primer plan de trading y observa su rendimiento",
+      "likeBacktesting": "Como backtesting en MT4 o Pine Script — pero ejecutándose en vivo, automáticamente, en papel. Sin riesgo. Ve los resultados primero.",
+      "planRunning": "Tu plan de trading está activo",
+      "paperTesting": "Copilot está probando tu plan en papel en vivo.",
+      "tradesTakenToday": "operación(es) realizadas hoy.",
+      "reviewBeforeLive": "Revisa los resultados antes de operar en vivo.",
+      "whatsYourPlan": "¿Cuál es tu plan de trading?",
+      "describeTrading": "Describe cómo te gusta operar — patrones, riesgo, timing. Copilot lo ejecuta como simulación en papel en vivo para que veas su rendimiento antes de arriesgar dinero real.",
+      "chipPatterns": "¿Qué patrones están activos ahora?",
+      "chipScore": "Puntúa una operación",
+      "chipGate": "¿Cómo funciona el AI Gate?",
+      "activeSetups": "Copilot encontró {{count}} setups activos ahora — regístrate gratis para verlos puntuados contra tu mandato.",
+      "createFirstPlan": "Crea tu primer plan de trading →",
+      "freeToTry": "Gratis · Sin dinero real · Tú decides cuándo operar en vivo",
+      "reviewResults": "Revisar resultados de hoy",
+      "updatePlan": "Actualizar plan de trading",
+      "setPlan": "Configura tu plan de trading →",
+      "placeholderWithPlan": "Pregunta a Copilot o da un comando...",
+      "placeholderNoPlan": "ej. Solo breakouts, máx 3% riesgo, solo mañanas...",
+      "placeholderGuest": "Pregunta a Copilot — sin registro necesario"
+    }
   },
   "copilotShowcase": {
     "liveMarketAccessDesc": "Escanea más de 8500 instrumentos en tiempo real para detectar configuraciones de patrones activos.",

@@ -3355,7 +3355,32 @@
     "gate_aligned": "整合",
     "gate_partial": "部分的",
     "gate_conflict": "矛盾",
-    "addTickerAiGate": "ティッカー追加 → AIゲート実行"
+    "addTickerAiGate": "ティッカー追加 → AIゲート実行",
+    "panel": {
+      "yourDesk": "トレーディングデスク",
+      "setupPlan": "トレーディングプランを設定",
+      "seeAiTrading": "AIネイティブトレーディングをご覧ください。",
+      "setFirstPlan": "最初のトレーディングプランを設定して、パフォーマンスを確認しましょう",
+      "likeBacktesting": "MT4やPine Scriptでのバックテストのように — ただし、リアルタイムで自動的にペーパートレードで実行。リスクなし。まず結果を確認。",
+      "planRunning": "トレーディングプランが稼働中",
+      "paperTesting": "Copilotがあなたのプランをライブでペーパーテスト中。",
+      "tradesTakenToday": "件のトレードを本日実行。",
+      "reviewBeforeLive": "ライブ前に結果を確認してください。",
+      "whatsYourPlan": "あなたのトレーディングプランは？",
+      "describeTrading": "トレードスタイルを説明してください — パターン、リスク、タイミング。Copilotがライブペーパーシミュレーションとして実行し、実資金をリスクにさらす前にパフォーマンスを確認できます。",
+      "chipPatterns": "今アクティブなパターンは？",
+      "chipScore": "トレードをスコアリング",
+      "chipGate": "AIゲートの仕組みは？",
+      "activeSetups": "Copilotが{{count}}件のアクティブなセットアップを検出 — 無料登録であなたのマンデートに対するスコアを確認。",
+      "createFirstPlan": "最初のトレーディングプランを作成 →",
+      "freeToTry": "無料でお試し · 実資金なし · ライブ開始はあなた次第",
+      "reviewResults": "本日のペーパー結果を確認",
+      "updatePlan": "トレーディングプランを更新",
+      "setPlan": "トレーディングプランを設定 →",
+      "placeholderWithPlan": "Copilotに何でも質問、またはコマンドを入力...",
+      "placeholderNoPlan": "例: ブレイクアウトのみ、最大リスク3%、午前中のみ...",
+      "placeholderGuest": "Copilotに何でも質問 — サインアップ不要でお試し"
+    }
   },
   "activation": {
     "title": "はじめに",
