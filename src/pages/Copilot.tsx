@@ -14,7 +14,7 @@ import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
-  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan } = useMasterPlan();
+  const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
   const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
