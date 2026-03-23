@@ -26,10 +26,10 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   return (
     <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-semibold text-foreground">
+        <span className="text-sm font-semibold text-foreground">
           Active Trades {isDemo && <span className="text-muted-foreground font-normal">(preview)</span>}
         </span>
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono">
+        <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
           {displayTrades.length}
         </Badge>
       </div>
