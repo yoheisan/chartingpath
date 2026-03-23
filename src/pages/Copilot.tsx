@@ -5,7 +5,7 @@ import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
-import ActiveTradesStrip from "@/components/copilot/ActiveTradesStrip";
+
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
@@ -155,14 +155,6 @@ const Copilot = () => {
             onDismiss={dismissConflict}
           />
           <MyAlertsPanel activePlan={activePlan} />
-          <ActiveTradesStrip
-            trades={openTrades}
-            selectedTradeId={selectedTradeId}
-            onSelectTrade={(id) => {
-              setSelectedClosedTrade(null);
-              setSelectedTradeId(id);
-            }}
-          />
         </aside>
 
         <main className="flex-1 border-r border-border/40 flex flex-col min-h-0">
