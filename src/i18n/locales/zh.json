@@ -2050,7 +2050,32 @@
     "gate_aligned": "一致",
     "gate_partial": "部分",
     "gate_conflict": "冲突",
-    "addTickerAiGate": "添加代码 → 运行AI门控"
+    "addTickerAiGate": "添加代码 → 运行AI门控",
+    "panel": {
+      "yourDesk": "您的交易桌面",
+      "setupPlan": "设置您的交易计划",
+      "seeAiTrading": "体验AI原生交易。",
+      "setFirstPlan": "设置您的第一个交易计划，查看其表现",
+      "likeBacktesting": "类似MT4或Pine Script的回测——但实时运行，自动执行，纸上交易。无风险。先看结果。",
+      "planRunning": "您的交易计划正在运行",
+      "paperTesting": "Copilot正在实时纸上测试您的计划。",
+      "tradesTakenToday": "笔今日交易。",
+      "reviewBeforeLive": "上线前请查看结果。",
+      "whatsYourPlan": "您的交易计划是什么？",
+      "describeTrading": "描述您的交易方式——模式、风险、时机。Copilot将其作为实时纸上模拟运行，让您在投入真金之前看到表现。",
+      "chipPatterns": "目前有哪些活跃模式？",
+      "chipScore": "为我评分一笔交易",
+      "chipGate": "AI Gate如何运作？",
+      "activeSetups": "Copilot发现了{{count}}个活跃设置——免费注册查看它们与您的策略的匹配评分。",
+      "createFirstPlan": "创建您的第一个交易计划 →",
+      "freeToTry": "免费试用 · 无真实资金 · 您决定何时上线",
+      "reviewResults": "查看今日纸上交易结果",
+      "updatePlan": "更新交易计划",
+      "setPlan": "设置您的交易计划 →",
+      "placeholderWithPlan": "向Copilot提问或输入命令...",
+      "placeholderNoPlan": "例如：只做突破，最大风险3%，仅早盘...",
+      "placeholderGuest": "向Copilot提问——无需注册即可试用"
+    }
   },
   "copilotShowcase": {
     "pressToTry": "或按 <kbd>⌘K</kbd> 立即尝试",

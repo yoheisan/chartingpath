@@ -146,7 +146,32 @@
     "gate_aligned": "uitgelijnd",
     "gate_partial": "gedeeltelijk",
     "gate_conflict": "conflict",
-    "addTickerAiGate": "Ticker toevoegen → AI Gate uitvoeren"
+    "addTickerAiGate": "Ticker toevoegen → AI Gate uitvoeren",
+    "panel": {
+      "yourDesk": "Uw trading desk",
+      "setupPlan": "Stel uw tradingplan in",
+      "seeAiTrading": "Bekijk AI-native trading.",
+      "setFirstPlan": "Stel uw eerste tradingplan in en bekijk de prestaties",
+      "likeBacktesting": "Zoals backtesting in MT4 of Pine Script — maar live, automatisch, op papier. Geen risico. Eerst resultaten zien.",
+      "planRunning": "Uw tradingplan draait",
+      "paperTesting": "Copilot test uw plan live op papier.",
+      "tradesTakenToday": "trade(s) vandaag uitgevoerd.",
+      "reviewBeforeLive": "Bekijk resultaten voordat u live gaat.",
+      "whatsYourPlan": "Wat is uw tradingplan?",
+      "describeTrading": "Beschrijf hoe u graag handelt — patronen, risico, timing. Copilot voert het uit als live papieren simulatie.",
+      "chipPatterns": "Welke patronen zijn nu actief?",
+      "chipScore": "Beoordeel een trade",
+      "chipGate": "Hoe werkt de AI Gate?",
+      "activeSetups": "Copilot vond {{count}} actieve setups — registreer gratis om de scores te zien.",
+      "createFirstPlan": "Maak uw eerste tradingplan →",
+      "freeToTry": "Gratis proberen · Geen echt geld · U bepaalt wanneer u live gaat",
+      "reviewResults": "Bekijk de resultaten van vandaag",
+      "updatePlan": "Tradingplan bijwerken",
+      "setPlan": "Stel uw tradingplan in →",
+      "placeholderWithPlan": "Vraag Copilot of geef een commando...",
+      "placeholderNoPlan": "bijv. Alleen breakouts, max 3% risico, alleen ochtend...",
+      "placeholderGuest": "Vraag Copilot — geen registratie nodig"
+    }
   },
   "hero": {
     "headlinePrimary": "Weet of een patroon werkt",

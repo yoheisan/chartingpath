@@ -5094,7 +5094,32 @@
     "gate_aligned": "aligned",
     "gate_partial": "partial",
     "gate_conflict": "conflict",
-    "addTickerAiGate": "Add ticker → runs AI Gate"
+    "addTickerAiGate": "Add ticker → runs AI Gate",
+    "panel": {
+      "yourDesk": "Your trading desk",
+      "setupPlan": "Set up your trading plan",
+      "seeAiTrading": "See what AI-native trading looks like.",
+      "setFirstPlan": "Set your first trading plan and see how it performs",
+      "likeBacktesting": "Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.",
+      "planRunning": "Your trading plan is running",
+      "paperTesting": "Copilot is paper-testing your plan live.",
+      "tradesTakenToday": "trade(s) taken today.",
+      "reviewBeforeLive": "Review results before going live.",
+      "whatsYourPlan": "What's your trading plan?",
+      "describeTrading": "Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.",
+      "chipPatterns": "What patterns are active right now?",
+      "chipScore": "Score a trade for me",
+      "chipGate": "How does the AI Gate work?",
+      "activeSetups": "Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.",
+      "createFirstPlan": "Create your first trading plan →",
+      "freeToTry": "Free to try · No real money · You decide when to go live",
+      "reviewResults": "Review today's paper results",
+      "updatePlan": "Update your trading plan",
+      "setPlan": "Set your trading plan →",
+      "placeholderWithPlan": "Ask Copilot anything, or give a command...",
+      "placeholderNoPlan": "e.g. Only take breakouts, max 3% risk, mornings only...",
+      "placeholderGuest": "Ask Copilot anything — no sign up needed to try"
+    }
   },
   "commandPalette": {
     "searchMobile": "Search or ask AI...",

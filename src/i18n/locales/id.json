@@ -1523,7 +1523,32 @@
     "gate_aligned": "selaras",
     "gate_partial": "sebagian",
     "gate_conflict": "konflik",
-    "addTickerAiGate": "Tambah ticker → jalankan AI Gate"
+    "addTickerAiGate": "Tambah ticker → jalankan AI Gate",
+    "panel": {
+      "yourDesk": "Meja trading Anda",
+      "setupPlan": "Siapkan rencana trading Anda",
+      "seeAiTrading": "Lihat trading berbasis AI.",
+      "setFirstPlan": "Siapkan rencana trading pertama Anda dan lihat performanya",
+      "likeBacktesting": "Seperti backtesting di MT4 atau Pine Script — tapi berjalan langsung, otomatis, di atas kertas. Tanpa risiko. Lihat hasilnya dulu.",
+      "planRunning": "Rencana trading Anda sedang berjalan",
+      "paperTesting": "Copilot sedang menguji rencana Anda secara langsung di atas kertas.",
+      "tradesTakenToday": "trade dilakukan hari ini.",
+      "reviewBeforeLive": "Tinjau hasil sebelum trading langsung.",
+      "whatsYourPlan": "Apa rencana trading Anda?",
+      "describeTrading": "Jelaskan cara trading Anda — pola, risiko, waktu. Copilot menjalankannya sebagai simulasi paper live.",
+      "chipPatterns": "Pola apa yang aktif sekarang?",
+      "chipScore": "Skor trading untuk saya",
+      "chipGate": "Bagaimana AI Gate bekerja?",
+      "activeSetups": "Copilot menemukan {{count}} setup aktif — daftar gratis untuk melihat skornya.",
+      "createFirstPlan": "Buat rencana trading pertama Anda →",
+      "freeToTry": "Gratis · Tanpa uang sungguhan · Anda yang memutuskan kapan live",
+      "reviewResults": "Tinjau hasil paper hari ini",
+      "updatePlan": "Perbarui rencana trading",
+      "setPlan": "Siapkan rencana trading Anda →",
+      "placeholderWithPlan": "Tanya Copilot atau beri perintah...",
+      "placeholderNoPlan": "mis. Hanya breakout, maks 3% risiko, pagi saja...",
+      "placeholderGuest": "Tanya Copilot — tanpa perlu mendaftar"
+    }
   },
   "copilotShowcase": {
     "pineScript": "Pine Script Sekali Klik",

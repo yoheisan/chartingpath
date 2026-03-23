@@ -2109,7 +2109,32 @@
     "gate_aligned": "متوافق",
     "gate_partial": "جزئي",
     "gate_conflict": "تعارض",
-    "addTickerAiGate": "إضافة رمز → تشغيل AI Gate"
+    "addTickerAiGate": "إضافة رمز → تشغيل AI Gate",
+    "panel": {
+      "yourDesk": "مكتب التداول الخاص بك",
+      "setupPlan": "إعداد خطة التداول",
+      "seeAiTrading": "شاهد التداول بالذكاء الاصطناعي.",
+      "setFirstPlan": "أنشئ أول خطة تداول وشاهد أداءها",
+      "likeBacktesting": "مثل الاختبار الخلفي في MT4 أو Pine Script — لكن يعمل مباشرة، تلقائياً، على الورق. بدون مخاطر. شاهد النتائج أولاً.",
+      "planRunning": "خطة التداول تعمل",
+      "paperTesting": "Copilot يختبر خطتك على الورق مباشرة.",
+      "tradesTakenToday": "صفقة(ات) تم تنفيذها اليوم.",
+      "reviewBeforeLive": "راجع النتائج قبل التداول الحقيقي.",
+      "whatsYourPlan": "ما هي خطة التداول الخاصة بك؟",
+      "describeTrading": "صف كيف تحب التداول — الأنماط، المخاطر، التوقيت. Copilot يشغلها كمحاكاة ورقية مباشرة.",
+      "chipPatterns": "ما الأنماط النشطة الآن؟",
+      "chipScore": "قيّم صفقة لي",
+      "chipGate": "كيف يعمل AI Gate؟",
+      "activeSetups": "Copilot وجد {{count}} إعداداً نشطاً — سجل مجاناً لرؤية تقييمها.",
+      "createFirstPlan": "أنشئ أول خطة تداول →",
+      "freeToTry": "مجاني · بدون أموال حقيقية · أنت تقرر متى تبدأ",
+      "reviewResults": "مراجعة نتائج اليوم",
+      "updatePlan": "تحديث خطة التداول",
+      "setPlan": "إعداد خطة التداول →",
+      "placeholderWithPlan": "اسأل Copilot أي شيء أو أعطِ أمراً...",
+      "placeholderNoPlan": "مثال: فقط اختراقات، حد أقصى 3% مخاطر...",
+      "placeholderGuest": "اسأل Copilot — لا حاجة للتسجيل"
+    }
   },
   "copilotShowcase": {
     "exportPineScript": "تصدير Pine Script",

@@ -794,8 +794,8 @@ export function TradingCopilot({
             <Sparkles className="h-5 w-5 text-white/90" />
             <div>
               <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
-              <p className="text-xs text-white/70">
-                {isAuthenticated && hasPlan ? "Your trading desk" : isAuthenticated ? "Set up your trading plan" : "See what AI-native trading looks like."}
+              <p className="text-sm text-white/70">
+                {isAuthenticated && hasPlan ? t('copilot.panel.yourDesk', 'Your trading desk') : isAuthenticated ? t('copilot.panel.setupPlan', 'Set up your trading plan') : t('copilot.panel.seeAiTrading', 'See what AI-native trading looks like.')}
               </p>
             </div>
           </div>
@@ -833,23 +833,23 @@ export function TradingCopilot({
                   </div>
                   {!isAuthenticated ? (
                     <>
-                      <h4 className="font-semibold mb-1">Set your first trading plan and see how it performs</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.setFirstPlan', 'Set your first trading plan and see how it performs')}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.
+                        {t('copilot.panel.likeBacktesting', 'Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.')}
                       </p>
                     </>
                   ) : hasPlan ? (
                     <>
-                      <h4 className="font-semibold mb-1">Your trading plan is running</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.planRunning', 'Your trading plan is running')}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Copilot is paper-testing your plan live. {todayTradeCount !== null ? `${todayTradeCount} trade${todayTradeCount !== 1 ? 's' : ''} taken today. Review results before going live.` : 'Review results before going live.'}
+                        {t('copilot.panel.paperTesting', 'Copilot is paper-testing your plan live.')} {todayTradeCount !== null ? `${todayTradeCount} ${t('copilot.panel.tradesTakenToday', 'trade(s) taken today.')} ${t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}` : t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}
                       </p>
                     </>
                   ) : (
                     <>
-                      <h4 className="font-semibold mb-1">What's your trading plan?</h4>
+                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.whatsYourPlan', "What's your trading plan?")}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.
+                        {t('copilot.panel.describeTrading', 'Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.')}
                       </p>
                     </>
                   )}
@@ -860,12 +860,12 @@ export function TradingCopilot({
                   {!isAuthenticated && (
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { label: "What patterns are active right now?", prompt: "What patterns are active right now?" },
-                        { label: "Score a trade for me", prompt: "Score a trade for me" },
-                        { label: "How does the AI Gate work?", prompt: "How does the AI Gate work?" },
+                        { label: t('copilot.panel.chipPatterns', 'What patterns are active right now?'), prompt: "What patterns are active right now?" },
+                        { label: t('copilot.panel.chipScore', 'Score a trade for me'), prompt: "Score a trade for me" },
+                        { label: t('copilot.panel.chipGate', 'How does the AI Gate work?'), prompt: "How does the AI Gate work?" },
                       ].map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-xs">{chip.label}</span>
+                          <span className="text-sm">{chip.label}</span>
                         </Button>
                       ))}
                     </div>
@@ -874,15 +874,15 @@ export function TradingCopilot({
                   {/* ── LOGGED-OUT: Active setups banner ── */}
                   {!isAuthenticated && (
                     <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
-                      <p className="text-xs text-foreground/80 mb-2">
-                        Copilot found <span className="font-semibold text-accent">{activePatternCount ?? '…'}</span> active setups right now — sign up free to see them scored against your mandate.
+                       <p className="text-sm text-foreground/80 mb-2">
+                        {(t as any)('copilot.panel.activeSetups', { count: String(activePatternCount ?? '…'), defaultValue: 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.' })}
                       </p>
-                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-sm">
                         <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-                          Create your first trading plan →
+                          {t('copilot.panel.createFirstPlan', 'Create your first trading plan →')}
                         </Link>
                       </Button>
-                      <p className="text-xs text-muted-foreground/60 text-center mt-1">Free to try · No real money · You decide when to go live</p>
+                      <p className="text-sm text-muted-foreground/60 text-center mt-1">{t('copilot.panel.freeToTry', 'Free to try · No real money · You decide when to go live')}</p>
                     </div>
                   )}
 
@@ -890,12 +890,12 @@ export function TradingCopilot({
                   {isAuthenticated && hasPlan && (
                     <div className="flex flex-wrap gap-2">
                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
-                       <span className="text-xs">Review today's paper results</span>
-                     </Button>
-                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
-                       <span className="text-xs">Update your trading plan</span>
-                     </Button>
-                    </div>
+                       <span className="text-sm">{t('copilot.panel.reviewResults', "Review today's paper results")}</span>
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
+                        <span className="text-sm">{t('copilot.panel.updatePlan', 'Update your trading plan')}</span>
+                      </Button>
+                     </div>
                   )}
 
                   {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
@@ -905,7 +905,7 @@ export function TradingCopilot({
                        onClick={() => setShowBuilder(true)}
                        disabled={isLoading}
                      >
-                       Set your trading plan →
+                       {t('copilot.panel.setPlan', 'Set your trading plan →')}
                      </Button>
                    )}
 
@@ -914,7 +914,7 @@ export function TradingCopilot({
                     <div className="flex flex-wrap gap-2">
                       {tier2Chips.map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-xs">{chip.label}</span>
+                          <span className="text-sm">{chip.label}</span>
                         </Button>
                       ))}
                     </div>
@@ -922,17 +922,17 @@ export function TradingCopilot({
 
                   {/* Tier 3 — Utility row (small text links) */}
                   <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>Generate script</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>Create alert</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>Learn patterns</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>Market breadth</button>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>{t('copilot.generateScript', 'Generate script')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>{t('copilot.createAlert', 'Create alert')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>{t('copilot.learnPatterns', 'Learn patterns')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
+                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>{t('copilot.marketBreadth', 'Market breadth')}</button>
+                    <span className="text-muted-foreground/40 text-sm">·</span>
                     <ContactSupportDialog
                       trigger={
-                        <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">Contact Support</button>
+                        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('copilot.contactSupport', 'Contact Support')}</button>
                       }
                       defaultCategory="other"
                       defaultSubject=""
@@ -1077,7 +1077,7 @@ export function TradingCopilot({
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? "Ask Copilot anything, or give a command..." : isAuthenticated ? "e.g. Only take breakouts, max 3% risk, mornings only..." : "Ask Copilot anything — no sign up needed to try"} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
+              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? t('copilot.panel.placeholderWithPlan', 'Ask Copilot anything, or give a command...') : isAuthenticated ? t('copilot.panel.placeholderNoPlan', 'e.g. Only take breakouts, max 3% risk, mornings only...') : t('copilot.panel.placeholderGuest', 'Ask Copilot anything — no sign up needed to try')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
               <div className="flex flex-col gap-1 items-center justify-end">
                 <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

@@ -2087,7 +2087,32 @@
     "gate_aligned": "alinhado",
     "gate_partial": "parcial",
     "gate_conflict": "conflito",
-    "addTickerAiGate": "Adicionar ticker → executa AI Gate"
+    "addTickerAiGate": "Adicionar ticker → executa AI Gate",
+    "panel": {
+      "yourDesk": "Sua mesa de trading",
+      "setupPlan": "Configure seu plano de trading",
+      "seeAiTrading": "Veja como funciona o trading com IA nativa.",
+      "setFirstPlan": "Configure seu primeiro plano de trading e veja o desempenho",
+      "likeBacktesting": "Como backtesting no MT4 ou Pine Script — mas rodando ao vivo, automaticamente, em papel. Sem risco. Veja os resultados primeiro.",
+      "planRunning": "Seu plano de trading está ativo",
+      "paperTesting": "Copilot está testando seu plano em papel ao vivo.",
+      "tradesTakenToday": "operação(ões) realizadas hoje.",
+      "reviewBeforeLive": "Revise os resultados antes de operar ao vivo.",
+      "whatsYourPlan": "Qual é seu plano de trading?",
+      "describeTrading": "Descreva como você gosta de operar — padrões, risco, timing. Copilot executa como simulação em papel ao vivo.",
+      "chipPatterns": "Quais padrões estão ativos agora?",
+      "chipScore": "Pontuar uma operação",
+      "chipGate": "Como funciona o AI Gate?",
+      "activeSetups": "Copilot encontrou {{count}} setups ativos — cadastre-se grátis para ver a pontuação.",
+      "createFirstPlan": "Crie seu primeiro plano de trading →",
+      "freeToTry": "Grátis · Sem dinheiro real · Você decide quando operar ao vivo",
+      "reviewResults": "Revisar resultados de hoje",
+      "updatePlan": "Atualizar plano de trading",
+      "setPlan": "Configure seu plano de trading →",
+      "placeholderWithPlan": "Pergunte ao Copilot ou dê um comando...",
+      "placeholderNoPlan": "ex. Só breakouts, máx 3% risco, só manhãs...",
+      "placeholderGuest": "Pergunte ao Copilot — sem cadastro necessário"
+    }
   },
   "copilotShowcase": {
     "demoQuestion": "Que configurações de bandeira de alta estão ativas em criptomoedas agora?",
