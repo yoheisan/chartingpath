@@ -15,6 +15,7 @@ import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
+  const { t } = useTranslation();
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
   const { subscriptionPlan } = useUserProfile();
