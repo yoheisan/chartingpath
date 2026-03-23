@@ -117,7 +117,7 @@ const Copilot = () => {
   }, [user?.id]);
 
   return (
-    <div className="container mx-auto flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Session end banner */}
       {sessionEndBanner && (
         <div className="w-full px-4 py-2 flex items-center justify-between bg-blue-500/10 border-b border-blue-500/20">
