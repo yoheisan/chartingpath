@@ -2373,7 +2373,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Доступность данных",
+    "noData": "Нет данных",
+    "bars": "баров",
+    "noHistoricalData": "Исторические данные для {{symbols}} на {{timeframe}} не найдены. Кредиты не будут списаны, но бэктест не выполнится. Попробуйте другой таймфрейм.",
+    "cannotRunConfig": "Невозможно запустить эту конфигурацию",
+    "foundZeroPass": "найдено, 0 прошли",
+    "backtesting": "бэктестинг"
   },
   "patternNames": {
     "Bull Flag": "Бычий флаг",

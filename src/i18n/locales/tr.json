@@ -2380,7 +2380,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Veri Erişilebilirliği",
+    "noData": "Veri yok",
+    "bars": "bar",
+    "noHistoricalData": "{{timeframe}} üzerinde {{symbols}} için geçmiş veri bulunamadı. Kredi düşülmeyecek ama backtest başarısız olacak. Farklı bir zaman dilimi deneyin.",
+    "cannotRunConfig": "Bu yapılandırma çalıştırılamaz",
+    "foundZeroPass": "bulundu, 0 geçti",
+    "backtesting": "backtesting"
   },
   "patternNames": {
     "Bull Flag": "Boğa Bayrağı",

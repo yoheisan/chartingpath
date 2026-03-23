@@ -348,7 +348,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Dostępność danych",
+    "noData": "Brak danych",
+    "bars": "świec",
+    "noHistoricalData": "Nie znaleziono danych historycznych dla {{symbols}} na {{timeframe}}. Kredyty nie zostaną pobrane ale backtest się nie powiedzie. Spróbuj innego timeframe'u.",
+    "cannotRunConfig": "Nie można uruchomić tej konfiguracji",
+    "foundZeroPass": "znaleziono, 0 przeszło",
+    "backtesting": "backtesting"
   },
   "capture": {
     "captureAndShare": "Przechwytuj i Udostępniaj",

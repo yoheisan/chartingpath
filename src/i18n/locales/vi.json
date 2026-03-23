@@ -186,7 +186,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Tình trạng dữ liệu",
+    "noData": "Không có dữ liệu",
+    "bars": "nến",
+    "noHistoricalData": "Không tìm thấy dữ liệu lịch sử cho {{symbols}} trên {{timeframe}}. Tín dụng sẽ không bị trừ nhưng backtest sẽ thất bại. Thử khung thời gian khác.",
+    "cannotRunConfig": "Không thể chạy cấu hình này",
+    "foundZeroPass": "tìm thấy, 0 đạt",
+    "backtesting": "backtesting"
   },
   "capture": {
     "captureAndShare": "Chụp & Chia sẻ",

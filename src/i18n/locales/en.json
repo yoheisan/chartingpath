@@ -3276,7 +3276,14 @@
     "fewOccurrences": "Few pattern occurrences found — results may not be statistically significant.",
     "checkingPatternOccurrences": "Checking pattern occurrences…",
     "checkingDataAvailability": "Checking data availability…",
-    "lowDataWarning": "Low data may produce unreliable results with few trades."
+    "lowDataWarning": "Low data may produce unreliable results with few trades.",
+    "dataAvailability": "Data Availability",
+    "noData": "No data",
+    "bars": "bars",
+    "noHistoricalData": "No historical data found for {{symbols}} on {{timeframe}}. Credits will not be charged but the backtest will fail. Try a different timeframe.",
+    "cannotRunConfig": "Cannot run this configuration",
+    "foundZeroPass": "found, 0 pass",
+    "backtesting": "backtesting"
   },
   "patternNames": {
     "Bull Flag": "Bull Flag",

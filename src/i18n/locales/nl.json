@@ -348,7 +348,14 @@
     "quickStartApple": "Double Bottom on AAPL",
     "quickStartBtc": "H&S on Bitcoin",
     "quickStartEurusd": "Falling Wedge on EUR/USD",
-    "quickStartDaily3y": "Daily • 3 year lookback"
+    "quickStartDaily3y": "Daily • 3 year lookback",
+    "dataAvailability": "Databeschikbaarheid",
+    "noData": "Geen data",
+    "bars": "bars",
+    "noHistoricalData": "Geen historische data gevonden voor {{symbols}} op {{timeframe}}. Credits worden niet afgeschreven maar de backtest zal falen. Probeer een ander tijdsframe.",
+    "cannotRunConfig": "Kan deze configuratie niet uitvoeren",
+    "foundZeroPass": "gevonden, 0 geslaagd",
+    "backtesting": "backtesting"
   },
   "capture": {
     "captureAndShare": "Vastleggen & Delen",
