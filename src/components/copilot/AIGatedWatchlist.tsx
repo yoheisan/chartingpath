@@ -105,7 +105,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
               key={row.symbol}
               className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer group"
             >
-              <span className="font-mono font-bold text-xs text-foreground w-10">
+              <span className="font-mono font-bold text-sm text-foreground w-12">
                 {row.symbol}
               </span>
               <Badge
@@ -140,8 +140,8 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
         <UniversalSymbolSearch
           onSelect={(symbol) => handleAddTicker(symbol)}
           trigger={
-            <button className="w-full flex items-center gap-2 bg-muted/30 border border-border/40 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:border-primary/40 hover:text-muted-foreground transition-colors">
-              <Plus className="h-3 w-3" />
+            <button className="w-full flex items-center gap-2 bg-muted/30 border border-border/40 rounded-md px-2.5 py-2 text-sm text-muted-foreground/50 hover:border-primary/40 hover:text-muted-foreground transition-colors">
+              <Plus className="h-3.5 w-3.5" />
               {t('copilot.addTickerAiGate', 'Add ticker → runs AI Gate')}
             </button>
           }

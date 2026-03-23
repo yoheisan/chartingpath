@@ -33,8 +33,8 @@ export function GuestSignupNudge() {
         <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground shrink-0" aria-label="Dismiss">
           <X className="h-4 w-4" />
         </button>
-        <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
-        <Link to="/patterns/live" className="text-primary hover:underline truncate font-medium text-xs">
+        <Lock className="h-4 w-4 text-primary shrink-0" />
+        <Link to="/patterns/live" className="text-primary hover:underline truncate font-medium text-sm">
           {t('guestNudge.actionMessage', 'Start here → See live pattern setups')}
         </Link>
       </div>
