@@ -1669,7 +1669,7 @@ const PatternLabWizard = () => {
           </div>
         </div>
       </div>
-      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel="backtesting" />
+      <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel={t('patternLabWizard.backtesting', 'backtesting')} />
       </div>
 
     </div>
