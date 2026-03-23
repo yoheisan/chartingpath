@@ -2003,7 +2003,8 @@
     "indexTitle": "Edge Atlas",
     "indexDescription": "Historical win-rate statistics for every chart pattern we track. Pick a pattern to explore instrument-level breakdowns, quality scores, and outcome data.",
     "bullish": "Bullish",
-    "bearish": "Bearish"
+    "bearish": "Bearish",
+    "getAlerted": "알림 받기"
   },
   "howItWorks": {
     "footerNote": "각 단계는 이전 단계를 기반으로 구축됩니다. 현재 필요에 따라 어디서든 시작하세요.",
