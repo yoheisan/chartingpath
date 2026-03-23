@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ interface LiveControlsProps {
 }
 
 export function LiveControls({ isPaused, onPause, onResume }: LiveControlsProps) {
+  const { t } = useTranslation();
   const [flattenModalOpen, setFlattenModalOpen] = useState(false);
   const [flattening, setFlattening] = useState(false);
   const { toast } = useToast();
@@ -27,16 +29,15 @@ export function LiveControls({ isPaused, onPause, onResume }: LiveControlsProps)
       });
       if (res.error) throw res.error;
       
-      // Set is_live = false
       await supabase
         .from('broker_connections')
         .update({ is_live: false, is_paused: false } as any)
         .eq('user_id', user.id);
 
-      toast({ title: 'All positions flattened', description: 'Copilot is now offline.' });
+      toast({ title: t('copilotPage.allFlattened'), description: t('copilotPage.copilotOffline') });
       setFlattenModalOpen(false);
     } catch (err) {
-      toast({ title: 'Error flattening positions', variant: 'destructive' });
+      toast({ title: t('copilotPage.errorFlattening'), variant: 'destructive' });
     } finally {
       setFlattening(false);
     }
@@ -52,7 +53,7 @@ export function LiveControls({ isPaused, onPause, onResume }: LiveControlsProps)
           onClick={isPaused ? onResume : onPause}
         >
           <Pause className="h-3.5 w-3.5 mr-1.5" />
-          {isPaused ? 'Resume entries' : 'Pause entries'}
+          {isPaused ? t('copilotPage.resumeEntries') : t('copilotPage.pauseEntries')}
         </Button>
         <Button
           variant="outline"
@@ -61,26 +62,26 @@ export function LiveControls({ isPaused, onPause, onResume }: LiveControlsProps)
           onClick={() => setFlattenModalOpen(true)}
         >
           <Square className="h-3.5 w-3.5 mr-1.5" />
-          Stop + flatten
+          {t('copilotPage.stopFlatten')}
         </Button>
       </div>
 
       <Dialog open={flattenModalOpen} onOpenChange={setFlattenModalOpen}>
         <DialogContent className="sm:max-w-sm bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Flatten all positions</DialogTitle>
+            <DialogTitle className="text-foreground">{t('copilotPage.flattenAllPositions')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This will close all open positions at market price. Are you sure?
+            {t('copilotPage.flattenConfirm')}
           </p>
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" onClick={() => setFlattenModalOpen(false)} className="flex-1">Cancel</Button>
+            <Button variant="outline" onClick={() => setFlattenModalOpen(false)} className="flex-1">{t('copilotPage.cancel')}</Button>
             <Button
               onClick={handleFlatten}
               disabled={flattening}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
             >
-              {flattening ? 'Closing…' : 'Flatten all'}
+              {flattening ? t('copilotPage.closing') : t('copilotPage.flattenAll')}
             </Button>
           </div>
         </DialogContent>

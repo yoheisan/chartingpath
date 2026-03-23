@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -31,6 +32,7 @@ interface RightPanelProps {
 }
 
 const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debriefQuestion }: RightPanelProps = {}) => {
+  const { t } = useTranslation();
   const [debriefOpen, setDebriefOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'paper' | 'live'>('paper');
@@ -44,7 +46,6 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
   const isLive = connection?.is_live ?? false;
   const isPaused = connection?.is_paused ?? false;
 
-  // Default to live tab when live trading is active
   useEffect(() => {
     if (isLive) setActiveTab('live');
   }, [isLive]);
@@ -60,7 +61,6 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
   const currentTrades = activeTab === 'live' ? liveTrades : todayTrades;
   const isLoading = activeTab === 'live' ? liveLoading : loading;
 
-  // Paper stats for deploy summary
   const deployPaperStats = {
     tradeCount: todayTrades.length,
     winRate: paperStats.aiWinRate,
@@ -71,14 +71,12 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
     <div className="flex flex-col h-full">
       {/* Section 1 — Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
-        <span className="text-sm font-semibold text-foreground">Your Edge</span>
-        <Link to="/copilot/report" className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer">Full report →</Link>
+        <span className="text-sm font-semibold text-foreground">{t('copilotPage.yourEdge')}</span>
+        <Link to="/copilot/report" className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer">{t('copilotPage.fullReport')}</Link>
       </div>
 
-      {/* Paper Portfolio Summary + Kill Switches */}
       <PaperPortfolioBar userId={user?.id} />
 
-      {/* Paper / Live tab toggle */}
       {isLive && (
         <div className="flex border-b border-border/40">
           {(['paper', 'live'] as const).map(tab => (
@@ -91,34 +89,33 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {tab === 'paper' ? 'Paper' : 'Live'}
+              {tab === 'paper' ? t('copilotPage.paper') : t('copilotPage.live')}
             </button>
           ))}
         </div>
       )}
 
-      {/* Divergence banner */}
       <DivergenceBanner userId={user?.id} isLive={isLive} />
 
       {/* Section 2 — AI vs Human Head-to-Head */}
       <div className="flex border-b border-border/40">
         <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Copilot</span>
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">{t('copilotPage.copilotLabel')}</span>
           <span className={`text-base font-bold font-mono ${stats.aiPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatR(stats.aiPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground truncate">
-            {stats.aiWinRate}% · {stats.aiTradeCount} trades
+            {stats.aiWinRate}% · {stats.aiTradeCount} {t('copilotPage.trades')}
           </span>
         </div>
         <div className="w-px bg-border/40 shrink-0" />
         <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5 min-w-0">
-          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">Overrides</span>
+          <span className="text-sm uppercase tracking-wider text-muted-foreground truncate">{t('copilotPage.overridesLabel')}</span>
           <span className={`text-base font-bold font-mono ${stats.humanPnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground truncate">
-            {stats.humanWinRate}% · {stats.humanTradeCount} trades
+            {stats.humanWinRate}% · {stats.humanTradeCount} {t('copilotPage.trades')}
           </span>
         </div>
       </div>
@@ -126,10 +123,10 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       {/* Section 3 — Metric Cards 2×2 */}
       <div className="grid grid-cols-2 gap-1 p-1.5 border-b border-border/40">
         {[
-          { label: 'AI avg R', value: formatR(activeTab === 'paper' ? paperStats.aiAvgR : (liveStats.aiTradeCount > 0 ? liveStats.aiPnlR / liveStats.aiTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.aiAvgR : liveStats.aiPnlR) >= 0 },
-          { label: 'Ovr avg R', value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: 'per trade', positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
-          { label: 'AI win rate', value: `${stats.aiWinRate}%`, sub: 'today', positive: stats.aiWinRate >= 50 },
-          { label: 'Ovr win rate', value: `${stats.humanWinRate}%`, sub: 'today', positive: stats.humanWinRate >= 50 },
+          { label: t('copilotPage.aiAvgR'), value: formatR(activeTab === 'paper' ? paperStats.aiAvgR : (liveStats.aiTradeCount > 0 ? liveStats.aiPnlR / liveStats.aiTradeCount : 0)), sub: t('copilotPage.perTrade'), positive: (activeTab === 'paper' ? paperStats.aiAvgR : liveStats.aiPnlR) >= 0 },
+          { label: t('copilotPage.ovrAvgR'), value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: t('copilotPage.perTrade'), positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
+          { label: t('copilotPage.aiWinRate'), value: `${stats.aiWinRate}%`, sub: t('copilotPage.today'), positive: stats.aiWinRate >= 50 },
+          { label: t('copilotPage.ovrWinRate'), value: `${stats.humanWinRate}%`, sub: t('copilotPage.today'), positive: stats.humanWinRate >= 50 },
         ].map((m) => (
           <div key={m.label} className="rounded-md bg-secondary/50 p-1.5 flex flex-col items-center gap-0.5 min-w-0">
             <span className="text-sm text-muted-foreground truncate w-full text-center">{m.label}</span>
@@ -145,8 +142,8 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       <div className={`mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2 transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
         <p className="text-sm leading-[1.6] text-muted-foreground">
           {insight || (currentTrades.length > 0
-            ? `Today: ${stats.aiTradeCount} AI trades (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
-            : 'No trades yet today. Copilot is scanning for setups matching your plan.')}
+            ? `${t('copilotPage.today')}: ${stats.aiTradeCount} AI ${t('copilotPage.trades')} (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
+            : t('copilotPage.noTradesDefault'))}
         </p>
       </div>
 
@@ -154,72 +151,72 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       <div className="flex-1 min-h-0 flex flex-col border-t border-border/40 overflow-hidden">
         <div className="flex items-center justify-between px-3 py-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            Today's trades {activeTab === 'live' && '(live)'}
+            {activeTab === 'live' ? t('copilotPage.todaysTradesLive') : t('copilotPage.todaysTrades')}
           </span>
           <button
             onClick={() => setDebriefOpen(true)}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
-            Review →
+            {t('copilotPage.review')}
           </button>
         </div>
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {isLoading ? (
-              <div className="text-sm text-muted-foreground/50 text-center py-4">Loading…</div>
+              <div className="text-sm text-muted-foreground/50 text-center py-4">{t('copilotPage.loading')}</div>
             ) : currentTrades.length === 0 ? (
-              <div className="text-sm text-muted-foreground/50 text-center py-4">No trades today</div>
+              <div className="text-sm text-muted-foreground/50 text-center py-4">{t('copilotPage.noTradesToday')}</div>
             ) : activeTab === 'paper' ? (
-              (currentTrades as CopilotTrade[]).map((t) => {
-                const isAi = t.attribution === 'ai_approved';
-                const pnlR = t.outcome_r ?? 0;
+              (currentTrades as CopilotTrade[]).map((tr) => {
+                const isAi = tr.attribution === 'ai_approved';
+                const pnlR = tr.outcome_r ?? 0;
                 const isPositive = pnlR >= 0;
-                const statusLabel = t.status === 'open' ? 'open' : t.close_reason?.toLowerCase().includes('stop') ? 'stopped' : 'closed';
+                const statusLabel = tr.status === 'open' ? t('copilotPage.open') : tr.close_reason?.toLowerCase().includes('stop') ? t('copilotPage.stopped') : t('copilotPage.closed', { time: '', pnlR: '' }).split(' ')[0].toLowerCase();
                 return (
-                  <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-pointer" onClick={() => {
-                    if (t.status === 'closed' && onTradeSelect) {
+                  <div key={tr.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-pointer" onClick={() => {
+                    if (tr.status === 'closed' && onTradeSelect) {
                       onTradeSelect({
-                        id: t.id,
-                        ticker: t.symbol,
-                        attribution: t.attribution ?? 'ai_approved',
-                        entry_price: t.entry_price,
-                        exit_price: t.exit_price,
-                        entry_time: t.created_at,
-                        exit_time: t.closed_at,
-                        pnl_r: t.outcome_r ?? 0,
-                        duration_mins: t.closed_at ? Math.round((new Date(t.closed_at).getTime() - new Date(t.created_at).getTime()) / 60000) : 0,
-                        gate_result: t.gate_result ?? 'aligned',
-                        gate_reason: t.close_reason ?? '',
-                        setup_type: t.setup_type ?? t.trade_type,
-                        copilot_reasoning: t.copilot_reasoning,
+                        id: tr.id,
+                        ticker: tr.symbol,
+                        attribution: tr.attribution ?? 'ai_approved',
+                        entry_price: tr.entry_price,
+                        exit_price: tr.exit_price,
+                        entry_time: tr.created_at,
+                        exit_time: tr.closed_at,
+                        pnl_r: tr.outcome_r ?? 0,
+                        duration_mins: tr.closed_at ? Math.round((new Date(tr.closed_at).getTime() - new Date(tr.created_at).getTime()) / 60000) : 0,
+                        gate_result: tr.gate_result ?? 'aligned',
+                        gate_reason: tr.close_reason ?? '',
+                        setup_type: tr.setup_type ?? tr.trade_type,
+                        copilot_reasoning: tr.copilot_reasoning,
                       });
                     }
                   }}>
                     <Badge className={`text-sm px-1.5 py-0 font-medium rounded ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
                       {isAi ? 'AI' : 'You'}
                     </Badge>
-                    <span className="text-xs font-mono font-bold text-foreground w-10">{t.symbol}</span>
-                    <span className="text-sm text-muted-foreground flex-1 truncate">{t.setup_type || t.trade_type} · {statusLabel}</span>
-                    <span className={`text-xs font-mono font-semibold ${t.status === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                      {t.status === 'open' ? 'open' : formatR(pnlR)}
+                    <span className="text-xs font-mono font-bold text-foreground w-10">{tr.symbol}</span>
+                    <span className="text-sm text-muted-foreground flex-1 truncate">{tr.setup_type || tr.trade_type} · {statusLabel}</span>
+                    <span className={`text-xs font-mono font-semibold ${tr.status === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      {tr.status === 'open' ? t('copilotPage.open') : formatR(pnlR)}
                     </span>
                   </div>
                 );
               })
             ) : (
-              (currentTrades as LiveTrade[]).map((t) => {
-                const isAi = t.attribution === 'ai_approved';
-                const pnlR = t.pnl_r ?? 0;
+              (currentTrades as LiveTrade[]).map((tr) => {
+                const isAi = tr.attribution === 'ai_approved';
+                const pnlR = tr.pnl_r ?? 0;
                 const isPositive = pnlR >= 0;
                 return (
-                  <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
+                  <div key={tr.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
                     <Badge className={`text-sm px-1.5 py-0 font-medium rounded ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
                       {isAi ? 'AI' : 'You'}
                     </Badge>
-                    <span className="text-xs font-mono font-bold text-foreground w-10">{t.ticker}</span>
-                    <span className="text-sm text-muted-foreground flex-1 truncate">{t.setup_type || 'Trade'} · {t.outcome}</span>
-                    <span className={`text-xs font-mono font-semibold ${t.outcome === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                      {t.outcome === 'open' ? 'open' : formatR(pnlR)}
+                    <span className="text-xs font-mono font-bold text-foreground w-10">{tr.ticker}</span>
+                    <span className="text-sm text-muted-foreground flex-1 truncate">{tr.setup_type || 'Trade'} · {tr.outcome}</span>
+                    <span className={`text-xs font-mono font-semibold ${tr.outcome === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      {tr.outcome === 'open' ? t('copilotPage.open') : formatR(pnlR)}
                     </span>
                   </div>
                 );
@@ -229,10 +226,6 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
         </ScrollArea>
       </div>
 
-
-
-
-      {/* Live Controls (pause/stop) — only when live */}
       {isLive && (
         <LiveControls
           isPaused={isPaused}
@@ -250,7 +243,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
               <span className={`relative inline-flex rounded-full h-2 w-2 ${isPaused ? 'bg-amber-500' : 'bg-blue-500'}`} />
             </span>
             <span className={`text-sm font-medium ${isPaused ? 'text-amber-400' : 'text-blue-400'}`}>
-              {isPaused ? 'Paused · Alpaca' : 'Live · Alpaca'}
+              {isPaused ? t('copilotPage.pausedAlpaca') : t('copilotPage.liveAlpaca')}
             </span>
           </div>
         ) : (
@@ -270,7 +263,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
                     <span className={`relative inline-flex rounded-full h-2 w-2 ${allPassed ? 'bg-green-500' : 'bg-muted-foreground/50'}`} />
                   </span>
                   <span className={`text-sm font-medium ${allPassed ? 'text-green-400' : 'text-muted-foreground'}`}>
-                    Go live with your plan · Alpaca
+                    {t('copilotPage.goLiveAlpaca')}
                   </span>
                 </button>
               </TooltipTrigger>
@@ -288,14 +281,13 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
         )}
         <span className="text-sm text-muted-foreground">
           {isLive
-            ? `${liveTrades.length} live trades today`
+            ? t('copilotPage.liveTradesToday', { count: liveTrades.length })
             : todayTrades.length > 0
-              ? `${todayTrades.length} trades today · ${formatR(paperStats.aiPnlR + paperStats.humanPnlR)} total`
-              : 'Paper running · scanning for setups'}
+              ? t('copilotPage.tradesTodaySummary', { count: todayTrades.length, totalR: formatR(paperStats.aiPnlR + paperStats.humanPnlR) })
+              : t('copilotPage.paperRunningScanning')}
         </span>
       </div>
 
-      {/* Modals */}
       <SessionDebriefPanel open={debriefOpen} onClose={() => setDebriefOpen(false)} initialQuestion={debriefQuestion} />
       <DeployModal
         open={deployOpen}

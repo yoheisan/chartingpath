@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 interface ConflictBannerProps {
@@ -8,23 +9,23 @@ interface ConflictBannerProps {
 }
 
 export function ConflictBanner({ onFocusNLBar, conflictTicker, conflictReason, onDismiss }: ConflictBannerProps) {
-  // Don't render if no conflict data
+  const { t } = useTranslation();
+
   if (!conflictTicker && !conflictReason) {
     return null;
   }
 
   const ticker = conflictTicker || "TSLA";
-  const reason = conflictReason || "Momentum setup — conflicts with your breakout mandate. Adding this goes against your stated edge.";
 
   return (
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 space-y-1.5">
-      <p className="text-sm font-semibold text-amber-300">⚠ Copilot flagged {ticker}</p>
+      <p className="text-sm font-semibold text-amber-300">{t('copilotPage.conflictFlagged', { ticker })}</p>
       <p className="text-sm text-amber-200/70 leading-relaxed">
-        {ticker} conflicts with your current mandate
+        {t('copilotPage.conflictDesc', { ticker })}
       </p>
       <div className="flex flex-wrap gap-1.5">
         <Button variant="outline" size="sm" className="h-6 text-sm px-2 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 whitespace-nowrap">
-          Add anyway
+          {t('copilotPage.addAnyway')}
         </Button>
         <Button
           variant="outline"
@@ -32,7 +33,7 @@ export function ConflictBanner({ onFocusNLBar, conflictTicker, conflictReason, o
           onClick={onDismiss}
           className="h-6 text-sm px-2 border-border/60 text-muted-foreground hover:bg-muted/40 whitespace-nowrap"
         >
-          Skip
+          {t('copilotPage.skip')}
         </Button>
         <Button
           variant="outline"
@@ -40,7 +41,7 @@ export function ConflictBanner({ onFocusNLBar, conflictTicker, conflictReason, o
           onClick={() => onFocusNLBar("Update plan")}
           className="h-6 text-sm px-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/20 whitespace-nowrap"
         >
-          Update plan
+          {t('copilotPage.updatePlanAction')}
         </Button>
       </div>
     </div>
