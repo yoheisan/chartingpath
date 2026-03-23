@@ -1467,22 +1467,22 @@ const PatternLabWizard = () => {
                     </p>
                     <div className="space-y-1.5">
                       {dataCoverage.map(d => (
-                        <div key={d.symbol} className="flex items-center justify-between text-xs">
+                        <div key={d.symbol} className="flex items-center justify-between text-sm">
                           <span className="font-medium text-foreground truncate max-w-[120px]">{d.symbol}</span>
                           {d.bars === 0 ? (
                             <span className="flex items-center gap-1 text-destructive font-medium">
-                              <AlertCircle className="h-3 w-3" />
-                              No data
+                              <AlertCircle className="h-3.5 w-3.5" />
+                              {t('patternLabWizard.noData', 'No data')}
                             </span>
                           ) : d.bars < 50 ? (
                             <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
-                              <AlertCircle className="h-3 w-3" />
-                              {d.bars} bars
+                              <AlertCircle className="h-3.5 w-3.5" />
+                              {d.bars} {t('patternLabWizard.bars', 'bars')}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" />
-                              {d.bars.toLocaleString()} bars
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {d.bars.toLocaleString()} {t('patternLabWizard.bars', 'bars')}
                             </span>
                           )}
                         </div>
