@@ -154,7 +154,7 @@ const Copilot = () => {
             conflictReason={conflictReason}
             onDismiss={dismissConflict}
           />
-          <AIGatedWatchlist onConflictDetected={handleConflictDetected} />
+          <MyAlertsPanel activePlan={activePlan} />
           <ActiveTradesStrip
             trades={openTrades}
             selectedTradeId={selectedTradeId}
