@@ -1461,9 +1461,9 @@ const PatternLabWizard = () => {
                 {/* Data Availability Check */}
                 {dataCoverage.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                      <Database className="h-3 w-3" />
-                      Data Availability
+                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Database className="h-3.5 w-3.5" />
+                      {t('patternLabWizard.dataAvailability', 'Data Availability')}
                     </p>
                     <div className="space-y-1.5">
                       {dataCoverage.map(d => (
