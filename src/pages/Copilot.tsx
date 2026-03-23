@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
