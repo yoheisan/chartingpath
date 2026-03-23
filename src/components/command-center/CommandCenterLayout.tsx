@@ -734,9 +734,6 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                       <TabsTrigger value="alerts" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="paper" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
-                        Paper
-                      </TabsTrigger>
                       <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Forward
                       </TabsTrigger>
