@@ -1528,7 +1528,7 @@ const PatternLabWizard = () => {
                             <span className="flex items-center gap-1">
                               {p.gradePassCount === 0 ? (
                                 <span className="text-destructive font-medium">
-                                  {p.count} found, 0 pass
+                                  {p.count} {t('patternLabWizard.foundZeroPass', 'found, 0 pass')}
                                 </span>
                               ) : p.gradePassCount < p.count ? (
                                 <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
