@@ -5735,7 +5735,20 @@
     "paperTrackRecord": "Paper track record",
     "goLive": "Go Live",
     "copilotLiveTitle": "Copilot is now trading live",
-    "copilotLiveDesc": "Orders will be routed through Alpaca."
+    "copilotLiveDesc": "Orders will be routed through Alpaca.",
+    "flattenAll": "Flatten All",
+    "flattenAllDesc": "Close all open paper positions at current market price. Are you sure?",
+    "flattenAllTitle": "Flatten All Paper Positions",
+    "flattening": "Closing all…",
+    "allFlattened": "All paper positions closed",
+    "flattenError": "Failed to flatten positions",
+    "resetCapital": "Reset Capital",
+    "resetCapitalTitle": "Reset Paper Portfolio",
+    "resetCapitalDesc": "This will close all open positions, clear trade history, and reset your balance to $100,000. This cannot be undone.",
+    "resetting": "Resetting…",
+    "capitalReset": "Paper portfolio reset to $100,000",
+    "resetError": "Failed to reset portfolio",
+    "resetDisabledLive": "Cannot reset while live trading is active"
   },
   "grades": {
     "gradeA": "Grade A",

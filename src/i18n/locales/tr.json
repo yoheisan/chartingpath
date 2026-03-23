@@ -5782,7 +5782,20 @@
     "paperTrackRecord": "Kağıt ticaret geçmişi",
     "goLive": "Canlıya geç",
     "copilotLiveTitle": "Copilot artık canlı ticaret yapıyor",
-    "copilotLiveDesc": "Emirler Alpaca üzerinden yönlendirilecektir."
+    "copilotLiveDesc": "Emirler Alpaca üzerinden yönlendirilecektir.",
+    "flattenAll": "Tümünü Kapat",
+    "flattenAllDesc": "Tüm açık kağıt pozisyonları mevcut piyasa fiyatından kapatın. Emin misiniz?",
+    "flattenAllTitle": "Tüm Kağıt Pozisyonları Kapat",
+    "flattening": "Kapatılıyor…",
+    "allFlattened": "Tüm kağıt pozisyonlar kapatıldı",
+    "flattenError": "Pozisyonlar kapatılamadı",
+    "resetCapital": "Sermayeyi Sıfırla",
+    "resetCapitalTitle": "Kağıt Portföyü Sıfırla",
+    "resetCapitalDesc": "Bu, tüm açık pozisyonları kapatacak, işlem geçmişini silecek ve bakiyenizi 100.000 $'a sıfırlayacaktır. Bu işlem geri alınamaz.",
+    "resetting": "Sıfırlanıyor…",
+    "capitalReset": "Kağıt portföy 100.000 $'a sıfırlandı",
+    "resetError": "Portföy sıfırlanamadı",
+    "resetDisabledLive": "Canlı işlem aktifken sıfırlanamaz"
   },
   "grades": {
     "gradeA": "Sınıf A",

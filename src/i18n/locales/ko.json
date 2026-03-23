@@ -5782,7 +5782,20 @@
     "paperTrackRecord": "모의 거래 실적",
     "goLive": "라이브 시작",
     "copilotLiveTitle": "Copilot이 실거래를 시작했습니다",
-    "copilotLiveDesc": "주문이 Alpaca를 통해 라우팅됩니다."
+    "copilotLiveDesc": "주문이 Alpaca를 통해 라우팅됩니다.",
+    "flattenAll": "전체 청산",
+    "flattenAllDesc": "모든 페이퍼 포지션을 현재 시장 가격으로 청산합니다. 확실합니까?",
+    "flattenAllTitle": "전체 페이퍼 포지션 청산",
+    "flattening": "전체 청산 중…",
+    "allFlattened": "모든 페이퍼 포지션 청산 완료",
+    "flattenError": "포지션 청산 실패",
+    "resetCapital": "자본 초기화",
+    "resetCapitalTitle": "페이퍼 포트폴리오 초기화",
+    "resetCapitalDesc": "모든 오픈 포지션이 청산되고, 거래 내역이 삭제되며, 잔고가 $100,000으로 초기화됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "resetting": "초기화 중…",
+    "capitalReset": "페이퍼 포트폴리오 $100,000으로 초기화",
+    "resetError": "포트폴리오 초기화 실패",
+    "resetDisabledLive": "라이브 트레이딩 활성화 시 초기화 불가"
   },
   "grades": {
     "gradeA": "등급 A",

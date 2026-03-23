@@ -5784,7 +5784,20 @@
     "paperTrackRecord": "Histórico simulado",
     "goLive": "Ir ao vivo",
     "copilotLiveTitle": "Copilot agora opera ao vivo",
-    "copilotLiveDesc": "Ordens serão roteadas via Alpaca."
+    "copilotLiveDesc": "Ordens serão roteadas via Alpaca.",
+    "flattenAll": "Encerrar Tudo",
+    "flattenAllDesc": "Fechar todas as posições de papel abertas ao preço de mercado atual. Tem certeza?",
+    "flattenAllTitle": "Encerrar Todas as Posições de Papel",
+    "flattening": "Fechando tudo…",
+    "allFlattened": "Todas as posições de papel fechadas",
+    "flattenError": "Falha ao encerrar posições",
+    "resetCapital": "Resetar Capital",
+    "resetCapitalTitle": "Resetar Portfólio de Papel",
+    "resetCapitalDesc": "Isso fechará todas as posições abertas, limpará o histórico de negociações e resetará seu saldo para $100.000. Isso não pode ser desfeito.",
+    "resetting": "Resetando…",
+    "capitalReset": "Portfólio de papel resetado para $100.000",
+    "resetError": "Falha ao resetar portfólio",
+    "resetDisabledLive": "Não é possível resetar durante negociação ao vivo"
   },
   "grades": {
     "gradeA": "Grau A",

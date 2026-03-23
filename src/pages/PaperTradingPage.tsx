@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wallet, Activity, History, BarChart3 } from 'lucide-react';
+import { Wallet, Activity, History, BarChart3, Square, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePaperTrading, PaperTrade } from '@/hooks/usePaperTrading';
+import { useBrokerConnection } from '@/hooks/useBrokerConnection';
 import { PositionsTab } from '@/components/paper-trading/PositionsTab';
 import { HistoryTab } from '@/components/paper-trading/HistoryTab';
 import { PerformanceTab } from '@/components/paper-trading/PerformanceTab';
 import { OverrideDialog } from '@/components/paper-trading/OverrideDialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,15 +18,45 @@ import { useTranslation } from 'react-i18next';
 export default function PaperTradingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, winRate } = usePaperTrading(user?.id);
+  const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
+  const { connection } = useBrokerConnection(user?.id);
+  const isLive = connection?.is_live === true;
   const [overrideTrade, setOverrideTrade] = useState<PaperTrade | null>(null);
   const [overrideSubmitting, setOverrideSubmitting] = useState(false);
+  const [flattenModalOpen, setFlattenModalOpen] = useState(false);
+  const [flattening, setFlattening] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const handleOverrideConfirm = async (trade: PaperTrade, reason: string, notes: string) => {
     setOverrideSubmitting(true);
     await handleCloseTrade(trade.id, trade.symbol, { reason, notes });
     setOverrideSubmitting(false);
     setOverrideTrade(null);
+  };
+
+  const handleFlattenAll = async () => {
+    setFlattening(true);
+    try {
+      await flattenAll();
+      setFlattenModalOpen(false);
+    } catch {
+      // error handled in hook
+    } finally {
+      setFlattening(false);
+    }
+  };
+
+  const handleResetPortfolio = async () => {
+    setResetting(true);
+    try {
+      await resetPortfolio();
+      setResetModalOpen(false);
+    } catch {
+      // error handled in hook
+    } finally {
+      setResetting(false);
+    }
   };
 
   if (!user) {
@@ -66,6 +99,29 @@ export default function PaperTradingPage() {
           <p className="text-xs text-muted-foreground mt-0.5">{t('paperTrading.pageSubtitle')}</p>
         </div>
         <div className="flex items-center gap-4 text-right">
+          <div className="flex items-center gap-2 mr-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-sm border-red-500/30 text-red-400 hover:bg-red-500/10"
+              disabled={openTrades.length === 0}
+              onClick={() => setFlattenModalOpen(true)}
+            >
+              <Square className="h-3.5 w-3.5 mr-1.5" />
+              {t('paperTrading.flattenAll')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-sm"
+              disabled={isLive}
+              title={isLive ? t('paperTrading.resetDisabledLive') : ''}
+              onClick={() => setResetModalOpen(true)}
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              {t('paperTrading.resetCapital')}
+            </Button>
+          </div>
           <div>
             <div className="text-sm text-muted-foreground uppercase tracking-wider">{t('paperTrading.balance')}</div>
             <div className="text-lg font-bold tabular-nums">
@@ -126,6 +182,38 @@ export default function PaperTradingPage() {
         onConfirm={handleOverrideConfirm}
         submitting={overrideSubmitting}
       />
+
+      {/* Flatten All Dialog */}
+      <Dialog open={flattenModalOpen} onOpenChange={setFlattenModalOpen}>
+        <DialogContent className="sm:max-w-sm bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">{t('paperTrading.flattenAllTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t('paperTrading.flattenAllDesc')}</p>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setFlattenModalOpen(false)} className="flex-1">{t('paperTrading.cancel')}</Button>
+            <Button onClick={handleFlattenAll} disabled={flattening} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              {flattening ? t('paperTrading.flattening') : t('paperTrading.flattenAll')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Capital Dialog */}
+      <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
+        <DialogContent className="sm:max-w-sm bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">{t('paperTrading.resetCapitalTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t('paperTrading.resetCapitalDesc')}</p>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setResetModalOpen(false)} className="flex-1">{t('paperTrading.cancel')}</Button>
+            <Button onClick={handleResetPortfolio} disabled={resetting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              {resetting ? t('paperTrading.resetting') : t('paperTrading.resetCapital')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

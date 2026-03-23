@@ -5738,7 +5738,20 @@
     "paperTrackRecord": "Papierhandel historie",
     "goLive": "Ga live",
     "copilotLiveTitle": "Copilot handelt nu live",
-    "copilotLiveDesc": "Orders worden gerouteerd via Alpaca."
+    "copilotLiveDesc": "Orders worden gerouteerd via Alpaca.",
+    "flattenAll": "Alles Sluiten",
+    "flattenAllDesc": "Sluit alle open papierposities tegen de huidige marktprijs. Weet u het zeker?",
+    "flattenAllTitle": "Alle Papierposities Sluiten",
+    "flattening": "Alles sluiten…",
+    "allFlattened": "Alle papierposities gesloten",
+    "flattenError": "Kan posities niet sluiten",
+    "resetCapital": "Kapitaal Resetten",
+    "resetCapitalTitle": "Papierportfolio Resetten",
+    "resetCapitalDesc": "Dit sluit alle open posities, wist de handelsgeschiedenis en reset uw saldo naar $100.000. Dit kan niet ongedaan worden gemaakt.",
+    "resetting": "Resetten…",
+    "capitalReset": "Papierportfolio gereset naar $100.000",
+    "resetError": "Kan portfolio niet resetten",
+    "resetDisabledLive": "Kan niet resetten terwijl live handelen actief is"
   },
   "grades": {
     "gradeA": "Graad A",

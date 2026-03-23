@@ -5738,7 +5738,20 @@
     "paperTrackRecord": "Historia papierowa",
     "goLive": "Przejdź na żywo",
     "copilotLiveTitle": "Copilot handluje teraz na żywo",
-    "copilotLiveDesc": "Zlecenia będą kierowane przez Alpaca."
+    "copilotLiveDesc": "Zlecenia będą kierowane przez Alpaca.",
+    "flattenAll": "Zamknij Wszystko",
+    "flattenAllDesc": "Zamknij wszystkie otwarte pozycje papierowe po aktualnej cenie rynkowej. Czy jesteś pewien?",
+    "flattenAllTitle": "Zamknij Wszystkie Pozycje Papierowe",
+    "flattening": "Zamykanie…",
+    "allFlattened": "Wszystkie pozycje papierowe zamknięte",
+    "flattenError": "Nie udało się zamknąć pozycji",
+    "resetCapital": "Resetuj Kapitał",
+    "resetCapitalTitle": "Resetuj Portfel Papierowy",
+    "resetCapitalDesc": "To zamknie wszystkie otwarte pozycje, wyczyści historię transakcji i zresetuje saldo do 100 000 $. Tej operacji nie można cofnąć.",
+    "resetting": "Resetowanie…",
+    "capitalReset": "Portfel papierowy zresetowany do 100 000 $",
+    "resetError": "Nie udało się zresetować portfela",
+    "resetDisabledLive": "Nie można resetować podczas aktywnego handlu na żywo"
   },
   "grades": {
     "gradeA": "Klasa A",

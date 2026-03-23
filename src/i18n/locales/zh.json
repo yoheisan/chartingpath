@@ -5785,7 +5785,20 @@
     "paperTrackRecord": "模拟交易记录",
     "goLive": "上线",
     "copilotLiveTitle": "Copilot已开始实盘交易",
-    "copilotLiveDesc": "订单将通过Alpaca路由。"
+    "copilotLiveDesc": "订单将通过Alpaca路由。",
+    "flattenAll": "全部平仓",
+    "flattenAllDesc": "以当前市场价格平掉所有模拟持仓。确定吗？",
+    "flattenAllTitle": "平掉所有模拟持仓",
+    "flattening": "正在平仓…",
+    "allFlattened": "所有模拟持仓已平仓",
+    "flattenError": "平仓失败",
+    "resetCapital": "重置资金",
+    "resetCapitalTitle": "重置模拟投资组合",
+    "resetCapitalDesc": "这将平掉所有持仓、清除交易记录，并将余额重置为$100,000。此操作不可撤销。",
+    "resetting": "重置中…",
+    "capitalReset": "模拟投资组合已重置为$100,000",
+    "resetError": "重置投资组合失败",
+    "resetDisabledLive": "实盘交易激活时无法重置"
   },
   "grades": {
     "gradeA": "等级 A",

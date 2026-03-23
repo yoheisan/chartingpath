@@ -5786,7 +5786,20 @@
     "paperTrackRecord": "Papierhandel geskiedenis",
     "goLive": "Gaan regstreeks",
     "copilotLiveTitle": "Copilot handel nou regstreeks",
-    "copilotLiveDesc": "Bestellings sal deur Alpaca gestuur word."
+    "copilotLiveDesc": "Bestellings sal deur Alpaca gestuur word.",
+    "flattenAll": "Maak Alles Plat",
+    "flattenAllDesc": "Sluit alle oop papierposisies teen huidige markprys. Is jy seker?",
+    "flattenAllTitle": "Maak Alle Papierposisies Plat",
+    "flattening": "Sluit alles…",
+    "allFlattened": "Alle papierposisies gesluit",
+    "flattenError": "Kon nie posisies plat maak nie",
+    "resetCapital": "Herstel Kapitaal",
+    "resetCapitalTitle": "Herstel Papierportefeulje",
+    "resetCapitalDesc": "Dit sal alle oop posisies sluit, handelsrekord uitvee, en jou balans na $100,000 herstel. Dit kan nie ongedaan gemaak word nie.",
+    "resetting": "Herstel…",
+    "capitalReset": "Papierportefeulje herstel na $100,000",
+    "resetError": "Kon nie portefeulje herstel nie",
+    "resetDisabledLive": "Kan nie herstel terwyl lewendige handel aktief is nie"
   },
   "grades": {
     "gradeA": "Graad A",
