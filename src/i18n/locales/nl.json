@@ -3260,7 +3260,8 @@
     "indexTitle": "Edge Atlas",
     "indexDescription": "Historical win-rate statistics for every chart pattern we track. Pick a pattern to explore instrument-level breakdowns, quality scores, and outcome data.",
     "bullish": "Bullish",
-    "bearish": "Bearish"
+    "bearish": "Bearish",
+    "getAlerted": "Melding ontvangen"
   },
   "patternScreenerTeaser": {
     "live": "Live",
