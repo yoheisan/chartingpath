@@ -181,7 +181,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           timeframe: d.timeframe || "",
           direction: d.direction,
           score,
-          qualityGrade: d.quality_score || null,
+          qualityGrade,
           verdict,
           gate,
           reason,
