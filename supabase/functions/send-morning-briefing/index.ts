@@ -328,6 +328,8 @@ serve(async (req) => {
           timezone: tz,
         });
 
+        const hasMasterPlan = (masterPlansRes.data?.length ?? 0) > 0;
+
         // Build final email HTML
         const html = buildFinalEmail({
           greeting,
@@ -339,6 +341,7 @@ serve(async (req) => {
           topVerdicts,
           timezone: tz,
           language,
+          hasMasterPlan,
         });
 
         await resend.emails.send({
