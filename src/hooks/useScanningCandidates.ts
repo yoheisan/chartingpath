@@ -14,6 +14,7 @@ export interface ScanningCandidate {
   gate: string; // aligned | partial | conflict
   reason: string;
   detectedAt: string;
+  currentPrice: number | null; // live price from detection
 }
 
 export function useScanningCandidates(plan: MasterPlan | null) {
@@ -186,6 +187,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           gate,
           reason,
           detectedAt: d.first_detected_at,
+          currentPrice: d.current_price ?? null,
         };
       });
 
