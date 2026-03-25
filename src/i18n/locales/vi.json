@@ -5779,5 +5779,9 @@
     "signIn": "Đăng nhập",
     "createFreeAccount": "Tạo tài khoản miễn phí",
     "noCreditCard": "Không cần thẻ tín dụng · Gói miễn phí mãi mãi"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Chạy thật với kế hoạch của bạn · Alpaca",
+    "paperRunningScanning": "Chạy thử · đang quét thiết lập"
   }
 }

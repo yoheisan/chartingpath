@@ -5826,5 +5826,9 @@
     "signIn": "登录",
     "createFreeAccount": "创建免费账户",
     "noCreditCard": "无需信用卡 · 永久免费计划"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "使用您的计划上线 · Alpaca",
+    "paperRunningScanning": "模拟运行中 · 扫描设置"
   }
 }

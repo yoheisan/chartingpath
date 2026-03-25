@@ -5825,5 +5825,9 @@
     "signIn": "Entrar",
     "createFreeAccount": "Criar conta gratuita",
     "noCreditCard": "Sem cartão de crédito · Plano gratuito para sempre"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Entre em live com seu plano · Alpaca",
+    "paperRunningScanning": "Simulação em execução · à procura de configurações"
   }
 }

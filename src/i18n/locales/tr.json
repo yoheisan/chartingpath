@@ -5823,5 +5823,9 @@
     "signIn": "Giriş Yap",
     "createFreeAccount": "Ücretsiz Hesap Oluştur",
     "noCreditCard": "Kredi kartı gerekmez · Sonsuza kadar ücretsiz"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Planınızla live'a geçin · Alpaca",
+    "paperRunningScanning": "Kağıt işlem çalışıyor · kurulumlar taranıyor"
   }
 }

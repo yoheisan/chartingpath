@@ -5827,5 +5827,9 @@
     "signIn": "साइन इन",
     "createFreeAccount": "मुफ्त खाता बनाएं",
     "noCreditCard": "क्रेडिट कार्ड आवश्यक नहीं · हमेशा मुफ्त प्लान"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "अपनी योजना के साथ लाइव हों · Alpaca",
+    "paperRunningScanning": "पेपर चल रहा है · सेटअप के लिए स्कैन कर रहा है"
   }
 }

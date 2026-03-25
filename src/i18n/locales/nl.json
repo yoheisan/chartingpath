@@ -5779,5 +5779,9 @@
     "signIn": "Inloggen",
     "createFreeAccount": "Gratis account aanmaken",
     "noCreditCard": "Geen creditcard nodig · Voor altijd gratis"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Ga live met je plan · Alpaca",
+    "paperRunningScanning": "Paper running · scant naar setups"
   }
 }

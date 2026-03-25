@@ -6747,5 +6747,9 @@
     "signIn": "サインイン",
     "createFreeAccount": "無料アカウント作成",
     "noCreditCard": "クレジットカード不要 · 永久無料プランあり"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "プランをライブで実行 · Alpaca",
+    "paperRunningScanning": "ペーパー取引実行中 · セットアップをスキャン中"
   }
 }
