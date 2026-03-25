@@ -14,6 +14,7 @@ export const PricingTeaser = () => {
       tagline: t('pricingTeaser.freeTagline'),
       features: [
         t('pricingTeaser.creditsPerMonth', { count: 50 }),
+        t('pricingTeaser.tradingPlans', { count: 1 }),
         t('pricingTeaser.activeAlerts', { count: 3 }),
         t('pricingTeaser.basicPatterns'),
       ],
@@ -23,6 +24,7 @@ export const PricingTeaser = () => {
       tagline: t('pricingTeaser.liteTagline'),
       features: [
         t('pricingTeaser.creditsPerMonth', { count: 100 }),
+        t('pricingTeaser.tradingPlans', { count: 2 }),
         t('pricingTeaser.activeAlerts', { count: 5 }),
         t('pricingTeaser.timeframe4h'),
       ],
@@ -34,6 +36,7 @@ export const PricingTeaser = () => {
       tagline: t('pricingTeaser.proTagline'),
       features: [
         t('pricingTeaser.creditsPerMonth', { count: 900 }),
+        t('pricingTeaser.tradingPlans', { count: 10 }),
         t('pricingTeaser.activeAlerts', { count: 100 }),
         t('pricingTeaser.allTimeframes'),
       ],
