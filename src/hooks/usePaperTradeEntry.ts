@@ -9,6 +9,8 @@ interface TradeEntryParams {
   timeframe?: string;
   direction?: string;
   entry_price?: number;
+  stop_price?: number;
+  target_price?: number;
   gate_result?: "aligned" | "partial" | "conflict";
   gate_reason?: string;
   gate_evaluation_id?: string;
@@ -46,10 +48,10 @@ export function usePaperTradeEntry() {
         }
 
         const positionPct = (plan as any)?.max_position_pct ?? 2;
-        const entryPrice = params.entry_price ?? 100; // Simulated mid price
+        const entryPrice = params.entry_price ?? 100;
         const rUnit = entryPrice * (positionPct / 100);
-        const stopPrice = entryPrice - 2 * rUnit;
-        const targetPrice = entryPrice + 3 * rUnit;
+        const stopPrice = params.stop_price ?? (entryPrice - 2 * rUnit);
+        const targetPrice = params.target_price ?? (entryPrice + 3 * rUnit);
 
         const { error } = await supabase.from("paper_trades" as any).insert({
           user_id: user.id,

@@ -92,22 +92,38 @@ function getHoldReasons(c: ScanningCandidate, tf: (key: string, fallback: string
 }
 
 /* ─── Exit Plan Dialog ─── */
-const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting }: {
+const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting, positionPct }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   candidate: ScanningCandidate | null;
-  onConfirm: (c: ScanningCandidate) => void;
+  onConfirm: (c: ScanningCandidate, sl: number, tp: number) => void;
   isSubmitting: boolean;
+  positionPct: number;
 }) => {
   const { t } = useTranslation();
-  const entryPrice = 100; // simulated mid price
-  const rUnit = entryPrice * 0.02;
-  const [sl, setSl] = useState((entryPrice - 2 * rUnit).toFixed(2));
-  const [tp, setTp] = useState((entryPrice + 3 * rUnit).toFixed(2));
+  const entryPrice = candidate?.currentPrice ?? 0;
+  const rUnit = entryPrice * (positionPct / 100);
+  const isShort = candidate?.direction?.toLowerCase() === 'short' || candidate?.direction?.toLowerCase() === 'bearish';
+  const defaultSl = isShort ? entryPrice + 2 * rUnit : entryPrice - 2 * rUnit;
+  const defaultTp = isShort ? entryPrice - 3 * rUnit : entryPrice + 3 * rUnit;
+  const [sl, setSl] = useState(defaultSl.toFixed(2));
+  const [tp, setTp] = useState(defaultTp.toFixed(2));
+
+  // Reset when candidate changes
+  useEffect(() => {
+    if (candidate?.currentPrice) {
+      const ep = candidate.currentPrice;
+      const r = ep * (positionPct / 100);
+      const short = candidate.direction?.toLowerCase() === 'short' || candidate.direction?.toLowerCase() === 'bearish';
+      setSl((short ? ep + 2 * r : ep - 2 * r).toFixed(2));
+      setTp((short ? ep - 3 * r : ep + 3 * r).toFixed(2));
+    }
+  }, [candidate?.id, candidate?.currentPrice, positionPct]);
 
   if (!candidate) return null;
 
   const isAutoEligible = candidate.gate === 'aligned' && candidate.verdict === 'TAKE';
+  const hasPrice = entryPrice > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,8 +135,11 @@ const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting
         <div className="space-y-3">
           <div className="rounded-md bg-muted/30 p-3 text-sm flex justify-between">
             <span className="text-muted-foreground">{t('copilotPage.entryPrice', 'Entry')}</span>
-            <span className="font-mono font-medium">{entryPrice.toFixed(2)}</span>
+            <span className="font-mono font-medium">{hasPrice ? entryPrice.toFixed(2) : '—'}</span>
           </div>
+          {!hasPrice && (
+            <p className="text-xs text-amber-400">{t('copilotPage.noPriceWarning', 'No live price available. Trade will use market price at execution.')}</p>
+          )}
           <div className="space-y-1.5">
             <Label className="text-sm flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5 text-red-400" />
@@ -139,8 +158,8 @@ const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('copilotPage.close', 'Close')}</Button>
           <Button
-            disabled={isSubmitting}
-            onClick={() => onConfirm(candidate)}
+            disabled={isSubmitting || !hasPrice}
+            onClick={() => onConfirm(candidate, parseFloat(sl), parseFloat(tp))}
             className="gap-1"
           >
             <Play className="h-3.5 w-3.5" />
@@ -180,13 +199,17 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const shortlisted = candidates.filter(c => c.gate === "aligned").length;
   const topTicker = candidates[0]?.ticker ?? "—";
 
-  const handleConfirmTrade = useCallback((c: ScanningCandidate) => {
+  const positionPct = plan?.max_position_pct ?? 2;
+
+  const handleConfirmTrade = useCallback((c: ScanningCandidate, sl: number, tp: number) => {
     tradeWithGateCheck({
       ticker: c.ticker,
       setup_type: c.pattern,
       timeframe: c.timeframe,
       direction: c.direction ?? undefined,
-      entry_price: undefined,
+      entry_price: c.currentPrice ?? undefined,
+      stop_price: sl,
+      target_price: tp,
       gate_result: c.gate as "aligned" | "partial" | "conflict",
       gate_reason: c.reason,
       agent_score: c.score ?? undefined,
@@ -350,6 +373,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
         candidate={exitCandidate}
         onConfirm={handleConfirmTrade}
         isSubmitting={isSubmitting}
+        positionPct={positionPct}
       />
     </div>
   );
