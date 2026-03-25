@@ -1181,7 +1181,8 @@
     "stockMarket": "Stock Market",
     "tools": "Tools",
     "tradingStrategies": "Trading Strategies",
-    "agentScoring": "Agent Scoring"
+    "agentScoring": "Agent Scoring",
+    "seeLiveSignals": "See Live Signals Free →"
   },
   "metrics": {
     "instruments": "Instruments",
