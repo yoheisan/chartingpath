@@ -38,8 +38,6 @@ const DIRECTION_OPTIONS = [
 const EXCLUSION_OPTIONS = [
   "No overnight holds",
   "No earnings plays",
-  "No crypto",
-  "No forex",
   "No small caps under $2",
 ] as const;
 
