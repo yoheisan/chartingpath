@@ -154,7 +154,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                         SKIP: 'bg-red-500/20 text-red-400 border-red-500/30',
                       };
                       return (
-                        <Badge className={`${verdictStyles[c.verdict] || ''} text-[10px] px-1.5 py-0 rounded font-semibold`}>
+                        <Badge className={`${verdictStyles[c.verdict] || ''} text-xs px-2 py-0.5 rounded font-semibold`}>
                           {t(`agentScoring.${c.verdict.toLowerCase()}`, c.verdict)}
                         </Badge>
                       );
@@ -169,7 +169,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                         F: 'bg-red-500/15 text-red-400/80 border-red-500/20',
                       };
                       return (
-                        <Badge variant="outline" className={`${gradeColors[c.qualityGrade] || ''} text-[10px] px-1.5 py-0 rounded font-mono`}>
+                        <Badge variant="outline" className={`${gradeColors[c.qualityGrade] || ''} text-xs px-2 py-0.5 rounded font-mono`}>
                           {c.qualityGrade}
                         </Badge>
                       );
