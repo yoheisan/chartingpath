@@ -382,8 +382,9 @@ function buildFinalEmail(params: {
   topVerdicts: any[];
   timezone: string;
   language: string;
+  hasMasterPlan: boolean;
 }): string {
-  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language } = params;
+  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language, hasMasterPlan } = params;
 
   const totalPnl = portfolio?.total_pnl ?? 0;
   const balance = portfolio?.current_balance ?? 100000;
