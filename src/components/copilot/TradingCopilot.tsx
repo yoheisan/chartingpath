@@ -917,7 +917,7 @@ export function TradingCopilot({
                     <div className="flex flex-wrap gap-2">
                       {tier2Chips.map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-sm">{chip.label}</span>
+                          <span className="text-sm">{chip.labelKey ? t(chip.labelKey, chip.label) : chip.label}</span>
                         </Button>
                       ))}
                     </div>
