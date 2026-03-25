@@ -211,7 +211,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
           )}
 
           {candidates.map((c) => {
-            const holdReasons = getHoldReasons(c, t);
+            const holdReasons = getHoldReasons(c, (k, fb) => t(k, fb));
             const isAutoEligible = c.gate === 'aligned' && c.verdict === 'TAKE';
 
             return (
