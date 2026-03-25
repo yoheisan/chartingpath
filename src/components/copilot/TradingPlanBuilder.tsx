@@ -155,6 +155,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Legacy fallback (used when no asset classes selected)
   const [windowStart, setWindowStart] = useState("09:30");
   const [windowEnd, setWindowEnd] = useState("16:00");
+  const [is24hTrading, setIs24hTrading] = useState(false);
   // Instrument universe
   const [assetClasses, setAssetClasses] = useState<string[]>([]);
   const [stockExchanges, setStockExchanges] = useState<string[]>([]);
