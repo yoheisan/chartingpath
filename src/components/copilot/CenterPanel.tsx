@@ -145,21 +145,36 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
                     )}
                   </div>
-                  {c.score != null && (() => {
-                    const s = Math.round(c.score);
-                    const grade = s >= 70 ? 'A' : s >= 50 ? 'B' : s >= 30 ? 'C' : 'D';
-                    const gradeColors: Record<string, string> = {
-                      A: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-                      B: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                      C: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                      D: 'bg-red-500/20 text-red-400 border-red-500/30',
-                    };
-                    return (
-                      <Badge className={`${gradeColors[grade]} text-sm px-1.5 py-0 rounded font-medium`}>
-                        {grade}
-                      </Badge>
-                    );
-                  })()}
+                  <div className="flex items-center gap-1.5">
+                    {/* Agent Verdict: TAKE / WATCH / SKIP */}
+                    {c.verdict && (() => {
+                      const verdictStyles: Record<string, string> = {
+                        TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                        WATCH: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                        SKIP: 'bg-red-500/20 text-red-400 border-red-500/30',
+                      };
+                      return (
+                        <Badge className={`${verdictStyles[c.verdict] || ''} text-[10px] px-1.5 py-0 rounded font-semibold`}>
+                          {t(`agentScoring.${c.verdict.toLowerCase()}`, c.verdict)}
+                        </Badge>
+                      );
+                    })()}
+                    {/* Pattern Quality Grade: A / B / C / D */}
+                    {c.qualityGrade && (() => {
+                      const gradeColors: Record<string, string> = {
+                        A: 'bg-emerald-500/15 text-emerald-400/80 border-emerald-500/20',
+                        B: 'bg-blue-500/15 text-blue-400/80 border-blue-500/20',
+                        C: 'bg-orange-500/15 text-orange-400/80 border-orange-500/20',
+                        D: 'bg-red-500/15 text-red-400/80 border-red-500/20',
+                        F: 'bg-red-500/15 text-red-400/80 border-red-500/20',
+                      };
+                      return (
+                        <Badge variant="outline" className={`${gradeColors[c.qualityGrade] || ''} text-[10px] px-1.5 py-0 rounded font-mono`}>
+                          {c.qualityGrade}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <GateBadge result={c.gate} />
