@@ -76,15 +76,15 @@ const CopilotAvatar = () => (
 );
 
 /* ─── Hold reason logic ─── */
-function getHoldReasons(c: ScanningCandidate, t: (key: string, fallback?: string) => string): string[] {
+function getHoldReasons(c: ScanningCandidate, tf: (key: string, fallback: string) => string): string[] {
   const reasons: string[] = [];
-  if (c.gate === 'conflict') reasons.push(t('copilotPage.holdGateConflict', 'Gate: conflicts with plan'));
-  else if (c.gate === 'partial') reasons.push(t('copilotPage.holdGatePartial', 'Gate: partial match only'));
-  if (c.verdict === 'SKIP') reasons.push(t('copilotPage.holdVerdictSkip', 'Agent verdict: SKIP'));
-  else if (c.verdict === 'WATCH') reasons.push(t('copilotPage.holdVerdictWatch', 'Agent verdict: WATCH — monitoring'));
-  else if (!c.verdict) reasons.push(t('copilotPage.holdNoScore', 'No agent score yet'));
-  if (c.qualityGrade && ['C', 'D', 'F'].includes(c.qualityGrade)) reasons.push(t('copilotPage.holdLowGrade', 'Pattern quality below threshold ({{grade}})').replace('{{grade}}', c.qualityGrade));
-  if (reasons.length === 0 && c.gate === 'aligned' && c.verdict === 'TAKE') reasons.push(t('copilotPage.holdPendingExecution', 'Queued — pending next execution cycle'));
+  if (c.gate === 'conflict') reasons.push(tf('copilotPage.holdGateConflict', 'Gate: conflicts with plan'));
+  else if (c.gate === 'partial') reasons.push(tf('copilotPage.holdGatePartial', 'Gate: partial match only'));
+  if (c.verdict === 'SKIP') reasons.push(tf('copilotPage.holdVerdictSkip', 'Agent verdict: SKIP'));
+  else if (c.verdict === 'WATCH') reasons.push(tf('copilotPage.holdVerdictWatch', 'Agent verdict: WATCH — monitoring'));
+  else if (!c.verdict) reasons.push(tf('copilotPage.holdNoScore', 'No agent score yet'));
+  if (c.qualityGrade && ['C', 'D', 'F'].includes(c.qualityGrade)) reasons.push(tf('copilotPage.holdLowGrade', `Pattern quality below threshold (${c.qualityGrade})`));
+  if (reasons.length === 0 && c.gate === 'aligned' && c.verdict === 'TAKE') reasons.push(tf('copilotPage.holdPendingExecution', 'Queued — pending next execution cycle'));
   return reasons;
 }
 
