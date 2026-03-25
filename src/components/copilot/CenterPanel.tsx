@@ -161,7 +161,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const goToSymbol = useNavigateToDashboard();
   const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
   const { tradeWithGateCheck, isSubmitting } = usePaperTradeEntry();
-  const [exitPlan, setExitPlan] = useState<{ ticker: string; price: number } | null>(null);
+  const [exitCandidate, setExitCandidate] = useState<ScanningCandidate | null>(null);
 
   // Countdown to next scan (polls every 60s)
   const [countdown, setCountdown] = useState("1:00");
@@ -180,19 +180,18 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const shortlisted = candidates.filter(c => c.gate === "aligned").length;
   const topTicker = candidates[0]?.ticker ?? "—";
 
-  const handleTakeTrade = useCallback((c: ScanningCandidate) => {
+  const handleConfirmTrade = useCallback((c: ScanningCandidate) => {
     tradeWithGateCheck({
       ticker: c.ticker,
       setup_type: c.pattern,
       timeframe: c.timeframe,
       direction: c.direction ?? undefined,
-      entry_price: undefined, // uses simulated mid price
+      entry_price: undefined,
       gate_result: c.gate as "aligned" | "partial" | "conflict",
       gate_reason: c.reason,
       agent_score: c.score ?? undefined,
     });
-    // Show exit plan dialog after trade is submitted
-    setExitPlan({ ticker: c.ticker, price: 100 }); // placeholder price
+    setExitCandidate(null);
   }, [tradeWithGateCheck]);
 
   return (
