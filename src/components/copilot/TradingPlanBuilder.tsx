@@ -155,6 +155,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Legacy fallback (used when no asset classes selected)
   const [windowStart, setWindowStart] = useState("09:30");
   const [windowEnd, setWindowEnd] = useState("16:00");
+  const [is24hTrading, setIs24hTrading] = useState(false);
   // Instrument universe
   const [assetClasses, setAssetClasses] = useState<string[]>([]);
   const [stockExchanges, setStockExchanges] = useState<string[]>([]);
@@ -186,6 +187,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     setTimezone(existingPlan.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
     setWindowStart(existingPlan.trading_window_start ?? "");
     setWindowEnd(existingPlan.trading_window_end ?? "");
+    setIs24hTrading(existingPlan.trading_window_start === "00:00" && existingPlan.trading_window_end === "23:59");
     setTradingSchedules(
       existingPlan.trading_schedules && Object.keys(existingPlan.trading_schedules).length > 0
         ? existingPlan.trading_schedules
@@ -342,8 +344,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         raw_nl_input: rawNl,
         max_position_pct: riskPct,
         max_open_positions: maxPositions,
-        trading_window_start: hasSchedules ? null : windowStart,
-        trading_window_end: hasSchedules ? null : windowEnd,
+        trading_window_start: hasSchedules ? null : (is24hTrading ? "00:00" : windowStart),
+        trading_window_end: hasSchedules ? null : (is24hTrading ? "23:59" : windowEnd),
         timezone,
         stop_loss_rule: "2R",
         excluded_conditions: exclusions,
@@ -767,14 +769,31 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             /* Legacy global window when no asset classes selected */
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Copilot only enters trades during this window. All open trades close at the end.</p>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={is24hTrading}
+                  onChange={e => {
+                    setIs24hTrading(e.target.checked);
+                    if (e.target.checked) {
+                      setWindowStart("00:00");
+                      setWindowEnd("23:59");
+                    }
+                  }}
+                  className="rounded border-input"
+                />
+                <span className="text-sm font-medium">24h trading window</span>
+                <span className="text-xs text-muted-foreground">(trade all day)</span>
+              </label>
+              <div className={`grid grid-cols-2 gap-2 ${is24hTrading ? 'opacity-40 pointer-events-none' : ''}`}>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
                   <input
                     type="time"
                     value={windowStart}
                     onChange={e => setWindowStart(e.target.value)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    disabled={is24hTrading}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -783,13 +802,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     type="time"
                     value={windowEnd}
                     onChange={e => setWindowEnd(e.target.value)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    disabled={is24hTrading}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground/70">
-                Trades opened during this window are automatically closed at {windowEnd} if still open
-              </p>
+              {!is24hTrading && (
+                <p className="text-xs text-muted-foreground/70">
+                  Trades opened during this window are automatically closed at {windowEnd} if still open
+                </p>
+              )}
             </div>
           )}
         </section>
