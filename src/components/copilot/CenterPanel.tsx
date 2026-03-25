@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useScanningCandidates } from '@/hooks/useScanningCandidates';
+import type { MasterPlan } from '@/hooks/useMasterPlan';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
