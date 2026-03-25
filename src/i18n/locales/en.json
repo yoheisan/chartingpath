@@ -6005,5 +6005,14 @@
     "todaySummaryInsight": "Today: {{aiCount}} AI trades ({{aiR}}), {{humanCount}} overrides ({{humanR}}).",
     "sessionCompleteTitle": "Session Complete",
     "sessionCompleteBody": "Your session is complete. Copilot has your recap ready."
+  },
+  "copilotMobile": {
+    "trades": "Trades",
+    "alerts": "Alerts",
+    "plan": "Plan",
+    "chat": "Chat",
+    "noTrades": "No active trades yet",
+    "noTradesHint": "Set up a trading plan to start receiving signals",
+    "activeTrades": "Active Trades"
   }
 }
