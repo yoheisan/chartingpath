@@ -5988,6 +5988,21 @@
     "updatePlanAction": "Update plan",
     "sessionEnded": "Session ended · {{time}}",
     "reviewToday": "Review today →",
-    "targetZone": "Target zone"
+    "targetZone": "Target zone",
+    "patternDonchianBreakoutLong": "Donchian Breakout Long",
+    "patternAscendingTriangle": "Ascending Triangle",
+    "patternBullFlag": "Bull Flag",
+    "reasonWaitingBreakout": "Waiting for breakout confirmation",
+    "reasonVolumeBelowThreshold": "Volume below threshold — monitoring",
+    "reasonOutsideTradingWindow": "Outside trading window in 18 min",
+    "gateAligned": "aligned",
+    "gatePartial": "partial",
+    "gateConflict": "conflict",
+    "ai": "AI",
+    "you": "You",
+    "tradeLabel": "Trade",
+    "todaySummaryInsight": "Today: {{aiCount}} AI trades ({{aiR}}), {{humanCount}} overrides ({{humanR}}).",
+    "sessionCompleteTitle": "Session Complete",
+    "sessionCompleteBody": "Your session is complete. Copilot has your recap ready."
   }
 }
