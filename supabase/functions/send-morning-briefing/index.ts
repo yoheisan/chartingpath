@@ -368,6 +368,7 @@ serve(async (req) => {
           timezone: tz,
           language,
           hasMasterPlan,
+          labels,
         });
 
         await resend.emails.send({
