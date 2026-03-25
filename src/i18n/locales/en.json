@@ -3109,6 +3109,7 @@
     "proTagline": "Serious Trading",
     "seeFullPricing": "See Full Pricing",
     "creditsPerMonth": "{{count}} credits/month",
+    "tradingPlans": "{{count}} trading plans",
     "activeAlerts": "{{count}} active alerts",
     "basicPatterns": "Basic patterns",
     "timeframe4h": "4H timeframe",
