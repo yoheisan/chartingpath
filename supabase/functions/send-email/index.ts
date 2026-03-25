@@ -28,6 +28,10 @@ const EN_EMAILS: Record<string, Record<string, string>> = {
     footer: "You're receiving this because you signed up at chartingpath.com",
     dashboard: "Dashboard",
     screener: "Screener",
+    briefingTitle: "☀️ Get Your Morning Briefing",
+    briefingDesc: "Start each day with a personalized market summary — AI-generated market breadth, your portfolio status, watchlist signals, and top-rated setups delivered to your inbox.",
+    briefingCta: "Subscribe to Morning Briefing →",
+    briefingNote: "You're automatically subscribed! Manage your preferences anytime from Settings.",
   },
   gettingStarted: {
     subject: "Your first backtest takes 60 seconds ⚡",
@@ -39,6 +43,10 @@ const EN_EMAILS: Record<string, Record<string, string>> = {
     step4: "Hit Run — results in under 30 seconds",
     cta: "Run My First Backtest →",
     dashboard: "Dashboard",
+    briefingTitle: "📬 Your Morning Briefing is Ready",
+    briefingDesc: "Every morning, get a personalized market briefing with breadth analysis, paper trading performance, and AI-scored setups. Set up a Trading Plan to track your strategy's performance automatically.",
+    briefingCtaPlan: "Create Your Trading Plan →",
+    briefingCtaDashboard: "See Your Briefing →",
   },
 };
 
