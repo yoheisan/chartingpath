@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { useNavigateToDashboard } from "@/hooks/useNavigateToDashboard";
 
 interface ConflictBannerProps {
   onFocusNLBar: (prefill?: string) => void;
@@ -10,6 +11,7 @@ interface ConflictBannerProps {
 
 export function ConflictBanner({ onFocusNLBar, conflictTicker, conflictReason, onDismiss }: ConflictBannerProps) {
   const { t } = useTranslation();
+  const goToSymbol = useNavigateToDashboard();
 
   if (!conflictTicker && !conflictReason) {
     return null;
@@ -19,7 +21,15 @@ export function ConflictBanner({ onFocusNLBar, conflictTicker, conflictReason, o
 
   return (
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 space-y-1.5">
-      <p className="text-sm font-semibold text-amber-300">{t('copilotPage.conflictFlagged', { ticker })}</p>
+      <p className="text-sm font-semibold text-amber-300">
+        <span
+          className="hover:underline cursor-pointer"
+          onClick={(e) => goToSymbol(ticker, e)}
+          title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
+        >
+          {t('copilotPage.conflictFlagged', { ticker })}
+        </span>
+      </p>
       <p className="text-sm text-amber-200/70 leading-relaxed">
         {t('copilotPage.conflictDesc', { ticker })}
       </p>

@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useNavigateToDashboard } from '@/hooks/useNavigateToDashboard';
 
 interface TradeBlotterProps {
   trades: CopilotTrade[];
@@ -22,6 +23,7 @@ const formatDuration = (createdAt: string) => {
 const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterProps) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
+  const goToSymbol = useNavigateToDashboard();
 
   const totalR = trades.reduce((s, tr) => s + (tr.outcome_r ?? 0), 0);
 
@@ -85,7 +87,13 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                       ) : (
                         <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
                       )}
-                      <span className="text-sm font-mono font-bold text-foreground">{trade.symbol}</span>
+                      <span
+                        className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); goToSymbol(trade.symbol, e); }}
+                        title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
+                      >
+                        {trade.symbol}
+                      </span>
                       <span className="text-sm text-muted-foreground">{formatDuration(trade.created_at)}</span>
                     </div>
                     <span className={`text-sm font-mono ${isLong ? 'text-green-500' : 'text-red-500'}`}>

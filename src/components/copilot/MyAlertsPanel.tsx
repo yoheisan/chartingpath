@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { MasterPlan } from "@/hooks/useMasterPlan";
+import { useNavigateToDashboard } from "@/hooks/useNavigateToDashboard";
 
 interface AlertRow {
   id: string;
@@ -28,6 +29,7 @@ const DEFAULT_TIMEFRAME = "1d";
 export function MyAlertsPanel({ activePlan }: MyAlertsPanelProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const goToSymbol = useNavigateToDashboard();
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -164,7 +166,11 @@ export function MyAlertsPanel({ activePlan }: MyAlertsPanelProps) {
                 key={symbol}
                 className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/30 transition-colors group"
               >
-                <span className="font-mono font-bold text-sm text-foreground w-14 truncate">
+                <span
+                  className="font-mono font-bold text-sm text-foreground w-14 truncate hover:text-primary hover:underline cursor-pointer"
+                  onClick={(e) => goToSymbol(symbol, e)}
+                  title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
+                >
                   {symbol}
                 </span>
                 <div className="flex flex-wrap gap-1 flex-1 min-w-0">
