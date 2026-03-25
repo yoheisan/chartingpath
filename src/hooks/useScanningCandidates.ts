@@ -95,7 +95,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
 
       // 5. Get latest gate evaluations for these instruments + plan
       let gateMap: Record<string, { result: string; reason: string }> = {};
-      if (instruments.length > 0) {
+      if (instruments.length > 0 && plan?.id) {
         const { data: gates } = await supabase
           .from("gate_evaluations" as any)
           .select("ticker, gate_result, gate_reason")
@@ -112,7 +112,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
       }
 
       // 6. Compute gate inline for instruments without a gate evaluation
-      const preferred = plan.preferred_patterns ?? [];
+      const preferred = plan?.preferred_patterns ?? [];
 
       const result: ScanningCandidate[] = filtered.slice(0, 10).map((d: any) => {
         const score = scoreMap[d.instrument] ?? null;
