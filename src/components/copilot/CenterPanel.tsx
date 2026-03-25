@@ -216,24 +216,36 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
           {candidates.map((c) => {
             const holdReasons = getHoldReasons(c, (k, fb) => t(k, fb));
             const isAutoEligible = c.gate === 'aligned' && c.verdict === 'TAKE';
+            const dirLower = c.direction?.toLowerCase();
+            const isLong = dirLower === 'long' || dirLower === 'bullish';
+            const isShort = dirLower === 'short' || dirLower === 'bearish';
 
             return (
               <Card key={c.id} className="bg-card/60 border-border/40">
-                <CardContent className="p-3 flex flex-col gap-2">
+                <CardContent className="p-3 flex flex-col gap-0">
+                  {/* Header row — always visible */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      {/* Direction icon */}
+                      {isLong && <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />}
+                      {isShort && <TrendingDown className="h-3.5 w-3.5 text-red-400" />}
                       <span
                         className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer transition-colors"
                         onClick={(e) => goToSymbol(c.ticker, e)}
                         title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
                       >{c.ticker}</span>
+                      {/* Direction label */}
+                      {(isLong || isShort) && (
+                        <Badge variant="outline" className={`text-xs px-1.5 py-0 rounded font-medium ${isLong ? 'text-emerald-400 border-emerald-500/30' : 'text-red-400 border-red-500/30'}`}>
+                          {isLong ? t('copilotPage.long', 'Long') : t('copilotPage.short', 'Short')}
+                        </Badge>
+                      )}
                       <span className="text-sm text-muted-foreground">{translatePatternName(c.pattern)}</span>
                       {c.timeframe && (
                         <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {/* Agent Verdict: TAKE / WATCH / SKIP */}
                       {c.verdict && (() => {
                         const verdictStyles: Record<string, string> = {
                           TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -246,7 +258,6 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           </Badge>
                         );
                       })()}
-                      {/* Pattern Quality Grade: A / B / C / D */}
                       {c.qualityGrade && (() => {
                         const gradeColors: Record<string, string> = {
                           A: 'bg-emerald-500/15 text-emerald-400/80 border-emerald-500/20',
@@ -263,40 +274,46 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       })()}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <GateBadge result={c.gate} />
-                    <span className="text-sm text-muted-foreground">{c.reason}</span>
-                  </div>
 
-                  {/* Hold reasons — why this isn't auto-executed */}
-                  {!isAutoEligible && holdReasons.length > 0 && (
-                    <div className="flex items-start gap-1.5 mt-0.5 px-2 py-1.5 rounded bg-amber-500/5 border border-amber-500/10">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-medium text-amber-400">{t('copilotPage.onHold', 'On hold')}</span>
-                        {holdReasons.map((r, i) => (
-                          <span key={i} className="text-xs text-muted-foreground">{r}</span>
-                        ))}
+                  {/* Collapsible detail section */}
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group w-full">
+                      <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                      <GateBadge result={c.gate} />
+                      <span className="truncate">{c.reason}</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2 flex flex-col gap-2">
+                      {/* Hold reasons */}
+                      {!isAutoEligible && holdReasons.length > 0 && (
+                        <div className="flex items-start gap-1.5 px-2 py-1.5 rounded bg-amber-500/5 border border-amber-500/10">
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs font-medium text-amber-400">{t('copilotPage.onHold', 'On hold')}</span>
+                            {holdReasons.map((r, i) => (
+                              <span key={i} className="text-xs text-muted-foreground">{r}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Take Trade override button */}
+                      <div className="flex justify-end">
+                        <Button
+                          size="sm"
+                          variant={isAutoEligible ? "default" : "outline"}
+                          className="h-7 text-xs gap-1"
+                          disabled={isSubmitting}
+                          onClick={() => handleTakeTrade(c)}
+                        >
+                          <Play className="h-3 w-3" />
+                          {isAutoEligible
+                            ? t('copilotPage.takeTrade', 'Take Trade')
+                            : t('copilotPage.overrideTrade', 'Override & Trade')
+                          }
+                        </Button>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Take Trade override button */}
-                  <div className="flex justify-end mt-1">
-                    <Button
-                      size="sm"
-                      variant={isAutoEligible ? "default" : "outline"}
-                      className="h-7 text-xs gap-1"
-                      disabled={isSubmitting}
-                      onClick={() => handleTakeTrade(c)}
-                    >
-                      <Play className="h-3 w-3" />
-                      {isAutoEligible
-                        ? t('copilotPage.takeTrade', 'Take Trade')
-                        : t('copilotPage.overrideTrade', 'Override & Trade')
-                      }
-                    </Button>
-                  </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </CardContent>
               </Card>
             );
