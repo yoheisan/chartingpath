@@ -410,8 +410,9 @@ function buildFinalEmail(params: {
   timezone: string;
   language: string;
   hasMasterPlan: boolean;
+  labels: Record<string, string>;
 }): string {
-  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language, hasMasterPlan } = params;
+  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language, hasMasterPlan, labels } = params;
 
   const totalPnl = portfolio?.total_pnl ?? 0;
   const balance = portfolio?.current_balance ?? 100000;
