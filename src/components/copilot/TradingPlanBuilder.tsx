@@ -174,74 +174,42 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
 
-  // Pre-fill from existing plan
+  // Pre-fill from existing plan (reset all fields first to avoid stale state when switching plans)
   useEffect(() => {
     if (!existingPlan) return;
-    if ((existingPlan as any).name) {
-      setPlanName((existingPlan as any).name);
-    }
-    if (existingPlan.preferred_patterns?.length) {
-      setSelectedPatterns(existingPlan.preferred_patterns);
-    }
-    if (existingPlan.trend_direction) {
-      setDirection(existingPlan.trend_direction);
-    }
-    if (existingPlan.max_position_pct != null) {
-      setRiskPct(existingPlan.max_position_pct);
-    }
-    if (existingPlan.max_open_positions != null) {
-      setMaxPositions(existingPlan.max_open_positions);
-    }
-    if (existingPlan.timezone) {
-      setTimezone(existingPlan.timezone);
-    }
-    if (existingPlan.trading_window_start) {
-      setWindowStart(existingPlan.trading_window_start);
-    }
-    if (existingPlan.trading_window_end) {
-      setWindowEnd(existingPlan.trading_window_end);
-    }
-    if (existingPlan.trading_schedules && Object.keys(existingPlan.trading_schedules).length > 0) {
-      setTradingSchedules(existingPlan.trading_schedules);
-    }
-    if (existingPlan.excluded_conditions?.length) {
-      setExclusions(existingPlan.excluded_conditions);
-    }
+    // Reset all fields to defaults, then apply existing plan values
+    setPlanName((existingPlan as any).name ?? "My Trading Plan");
+    setSelectedPatterns(existingPlan.preferred_patterns ?? []);
+    setDirection(existingPlan.trend_direction ?? "both");
+    setRiskPct(existingPlan.max_position_pct ?? 1);
+    setMaxPositions(existingPlan.max_open_positions ?? 3);
+    setTimezone(existingPlan.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+    setWindowStart(existingPlan.trading_window_start ?? "");
+    setWindowEnd(existingPlan.trading_window_end ?? "");
+    setTradingSchedules(
+      existingPlan.trading_schedules && Object.keys(existingPlan.trading_schedules).length > 0
+        ? existingPlan.trading_schedules
+        : {}
+    );
+    setExclusions(existingPlan.excluded_conditions ?? []);
     // Advanced settings
-    if (existingPlan.mtf_required_timeframes?.length) {
-      setMtfTimeframes(existingPlan.mtf_required_timeframes);
-      setShowAdvanced(true);
-    }
-    if (existingPlan.mtf_min_aligned != null) {
-      setMtfMinAligned(existingPlan.mtf_min_aligned);
-    }
-    if (existingPlan.min_agent_score != null) {
-      setMinAgentScore(existingPlan.min_agent_score);
-      setAgentScoreEnabled(true);
-      setShowAdvanced(true);
-    }
-    if (existingPlan.trend_context_filter && existingPlan.trend_context_filter !== "any") {
-      setTrendContext(existingPlan.trend_context_filter);
-      setShowAdvanced(true);
-    }
-    if (existingPlan.min_confluence_score != null) {
-      setMinConfluence(existingPlan.min_confluence_score);
-      setConfluenceEnabled(true);
-      setShowAdvanced(true);
-    }
+    const hasMtf = (existingPlan.mtf_required_timeframes?.length ?? 0) > 0;
+    const hasAgent = existingPlan.min_agent_score != null;
+    const hasTrend = existingPlan.trend_context_filter != null && existingPlan.trend_context_filter !== "any";
+    const hasConfl = existingPlan.min_confluence_score != null;
+    setMtfTimeframes(existingPlan.mtf_required_timeframes ?? []);
+    setMtfMinAligned(existingPlan.mtf_min_aligned ?? 2);
+    setMinAgentScore(existingPlan.min_agent_score ?? 65);
+    setAgentScoreEnabled(hasAgent);
+    setTrendContext(existingPlan.trend_context_filter ?? "any");
+    setMinConfluence(existingPlan.min_confluence_score ?? 60);
+    setConfluenceEnabled(hasConfl);
+    setShowAdvanced(hasMtf || hasAgent || hasTrend || hasConfl);
     // Instrument universe
-    if (existingPlan.asset_classes?.length) {
-      setAssetClasses(existingPlan.asset_classes);
-    }
-    if (existingPlan.stock_exchanges?.length) {
-      setStockExchanges(existingPlan.stock_exchanges);
-    }
-    if (existingPlan.fx_categories?.length) {
-      setFxCategories(existingPlan.fx_categories);
-    }
-    if (existingPlan.crypto_categories?.length) {
-      setCryptoCategories(existingPlan.crypto_categories);
-    }
+    setAssetClasses(existingPlan.asset_classes ?? []);
+    setStockExchanges(existingPlan.stock_exchanges ?? []);
+    setFxCategories(existingPlan.fx_categories ?? []);
+    setCryptoCategories(existingPlan.crypto_categories ?? []);
   }, [existingPlan]);
 
   const togglePattern = (p: string) => {
