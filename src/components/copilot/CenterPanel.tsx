@@ -319,7 +319,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           variant={isAutoEligible ? "default" : "outline"}
                           className="h-7 text-xs gap-1"
                           disabled={isSubmitting}
-                          onClick={() => handleTakeTrade(c)}
+                          onClick={() => setExitCandidate(c)}
                         >
                           <Play className="h-3 w-3" />
                           {isAutoEligible
@@ -343,15 +343,14 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
         </div>
       </ScrollArea>
 
-      {/* Exit Plan dialog after override */}
-      {exitPlan && (
-        <ExitPlanDialog
-          open={!!exitPlan}
-          onOpenChange={(o) => !o && setExitPlan(null)}
-          ticker={exitPlan.ticker}
-          entryPrice={exitPlan.price}
-        />
-      )}
+      {/* Exit Plan dialog with trade confirmation */}
+      <ExitPlanDialog
+        open={!!exitCandidate}
+        onOpenChange={(o) => !o && setExitCandidate(null)}
+        candidate={exitCandidate}
+        onConfirm={handleConfirmTrade}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };
