@@ -6,10 +6,12 @@ import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
+import { MobileCopilotLayout } from "@/components/copilot/MobileCopilotLayout";
 
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -18,6 +20,7 @@ const Copilot = () => {
   const { t } = useTranslation();
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
 
@@ -117,6 +120,30 @@ const Copilot = () => {
 
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
+
+  if (isMobile) {
+    return (
+      <MobileCopilotLayout
+        rules={rules}
+        hasPlan={hasPlan}
+        plans={plans}
+        selectedPlanId={selectedPlanId}
+        onSelectPlan={selectPlan}
+        canCreateMore={canCreateMore}
+        activePlan={activePlan}
+        openTrades={openTrades}
+        selectedTradeId={selectedTradeId}
+        onSelectTrade={(id) => {
+          setSelectedClosedTrade(null);
+          setSelectedTradeId(id);
+        }}
+        conflictTicker={conflictTicker}
+        conflictReason={conflictReason}
+        onDismissConflict={dismissConflict}
+        onFocusNLBar={focusNLBar}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
