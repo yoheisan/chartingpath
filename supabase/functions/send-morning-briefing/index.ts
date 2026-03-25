@@ -338,8 +338,10 @@ serve(async (req) => {
             .slice(0, 3);
         }
 
+        const hasMasterPlan = (masterPlansRes.data?.length ?? 0) > 0;
+
         // Generate translated briefing with market breadth via Gemini
-        const { subject, greeting, briefingHtml } = await generateTranslatedBriefing({
+        const { subject, greeting, briefingHtml, labels } = await generateTranslatedBriefing({
           language,
           region,
           userName: name,
@@ -351,9 +353,8 @@ serve(async (req) => {
           closedTrades: closedTradesRes.data || [],
           topVerdicts,
           timezone: tz,
+          hasMasterPlan,
         });
-
-        const hasMasterPlan = (masterPlansRes.data?.length ?? 0) > 0;
 
         // Build final email HTML
         const html = buildFinalEmail({
