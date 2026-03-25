@@ -26,9 +26,9 @@ export function useScanningCandidates(plan: MasterPlan | null) {
       // 1. Fetch active live detections
       let query = supabase
         .from("live_pattern_detections" as any)
-        .select("id, instrument, pattern_name, timeframe, direction, current_price, asset_type, detected_at, status")
+        .select("id, instrument, pattern_name, timeframe, direction, current_price, asset_type, first_detected_at, status")
         .eq("status", "active")
-        .order("detected_at", { ascending: false })
+        .order("first_detected_at", { ascending: false })
         .limit(50);
 
       const { data: detections, error: detErr } = await query;
