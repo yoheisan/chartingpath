@@ -21,6 +21,7 @@ import { useDeployGuardrails } from '@/hooks/useDeployGuardrails';
 import { useBrokerConnection } from '@/hooks/useBrokerConnection';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SelectedClosedTrade } from './CenterPanel';
+import { isNoDataCopilotInsight } from '@/utils/copilotInsight';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
@@ -66,6 +67,19 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
     winRate: paperStats.aiWinRate,
     totalR: paperStats.aiPnlR + paperStats.humanPnlR,
   };
+
+  const noTradesInsight = t('copilotPage.noTradesDefault');
+  const resolvedInsight =
+    stats.aiTradeCount + stats.humanTradeCount === 0 || isNoDataCopilotInsight(insight)
+      ? noTradesInsight
+      : insight || (currentTrades.length > 0
+          ? t('copilotPage.todaySummaryInsight', {
+              aiCount: stats.aiTradeCount,
+              aiR: formatR(stats.aiPnlR),
+              humanCount: stats.humanTradeCount,
+              humanR: formatR(stats.humanPnlR),
+            })
+          : noTradesInsight);
 
   return (
     <div className="flex flex-col h-full">
@@ -141,9 +155,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       {/* Section 4 — Insight Card */}
       <div className={`mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2 transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
         <p className="text-sm leading-[1.6] text-muted-foreground">
-          {insight || (currentTrades.length > 0
-            ? t('copilotPage.todaySummaryInsight', { aiCount: stats.aiTradeCount, aiR: formatR(stats.aiPnlR), humanCount: stats.humanTradeCount, humanR: formatR(stats.humanPnlR) })
-            : t('copilotPage.noTradesDefault'))}
+          {resolvedInsight}
         </p>
       </div>
 

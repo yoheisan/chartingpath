@@ -2,6 +2,7 @@ import { useCopilotTrades } from '@/hooks/useCopilotTrades';
 import { useCopilotInsight } from '@/hooks/useCopilotInsight';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { isNoDataCopilotInsight } from '@/utils/copilotInsight';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
@@ -33,6 +34,9 @@ export function DashboardAIStrip() {
   const { stats } = useCopilotTrades(user?.id);
   const { insight, loading: insightLoading } = useCopilotInsight(user?.id);
 
+  const noTradesFallback = t('commandCenter.noTradesYet', 'No trades yet today — Copilot is scanning');
+  const normalizedInsight = isNoDataCopilotInsight(insight) ? noTradesFallback : insight;
+
   return (
     <div className="w-full bg-card border-b border-border/40">
       <div className="flex items-center">
@@ -58,9 +62,9 @@ export function DashboardAIStrip() {
       </div>
       <div className="px-4 pb-1.5 -mt-1">
         <p className={`text-sm text-muted-foreground/70 text-center transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
-          {insight || (stats.aiTradeCount + stats.humanTradeCount > 0
+          {normalizedInsight || (stats.aiTradeCount + stats.humanTradeCount > 0
             ? `AI: ${formatR(stats.aiPnlR)} vs ${t('commandCenter.overrides', 'Overrides')}: ${formatR(stats.humanPnlR)}`
-            : t('commandCenter.noTradesYet', 'No trades yet today — Copilot is scanning'))}
+            : noTradesFallback)}
         </p>
       </div>
     </div>
