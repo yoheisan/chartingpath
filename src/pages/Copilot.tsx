@@ -20,6 +20,7 @@ const Copilot = () => {
   const { t } = useTranslation();
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { subscriptionPlan } = useUserProfile();
   const { openTrades } = useCopilotTrades(user?.id);
 
