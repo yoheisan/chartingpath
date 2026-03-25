@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useScanningCandidates } from '@/hooks/useScanningCandidates';
+import type { MasterPlan } from '@/hooks/useMasterPlan';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
@@ -38,6 +40,7 @@ interface CenterPanelProps {
   openTrades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (id: string) => void;
+  activePlan: MasterPlan | null;
 }
 
 /* ─── helpers ─── */
@@ -69,21 +72,43 @@ const CopilotAvatar = () => (
 );
 
 /* ═══ STATE 1 — SCANNING ═══ */
-const ScanningState = () => {
+const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const { t } = useTranslation();
   const goToSymbol = useNavigateToDashboard();
-  const candidates = [
-    { ticker: 'NVDA', pattern: t('copilotPage.patternDonchianBreakoutLong', 'Donchian Breakout Long'), score: 76, gate: 'aligned', reason: t('copilotPage.reasonWaitingBreakout', 'Waiting for breakout confirmation') },
-    { ticker: 'MSFT', pattern: t('copilotPage.patternAscendingTriangle', 'Ascending Triangle'), score: 72, gate: 'aligned', reason: t('copilotPage.reasonVolumeBelowThreshold', 'Volume below threshold — monitoring') },
-    { ticker: 'EURUSD', pattern: t('copilotPage.patternBullFlag', 'Bull Flag'), score: 68, gate: 'partial', reason: t('copilotPage.reasonOutsideTradingWindow', 'Outside trading window in 18 min') },
-  ];
+  const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
+
+  // Countdown to next scan (polls every 60s)
+  const [countdown, setCountdown] = useState("1:00");
+  useEffect(() => {
+    if (!lastScanAt) return;
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - lastScanAt.getTime()) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      setCountdown(`${mins}:${String(secs).padStart(2, "0")}`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastScanAt]);
+
+  const shortlisted = candidates.filter(c => c.gate === "aligned").length;
+  const topTicker = candidates[0]?.ticker ?? "—";
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
         <CopilotAvatar />
         <p className="text-sm text-muted-foreground">
-          {t('copilotPage.runningPlan', { candidates: 94, shortlisted: 3, ticker: 'NVDA' })}
+          {loading ? (
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t('copilotPage.scanningMarkets', 'Scanning markets...')}
+            </span>
+          ) : candidates.length > 0 ? (
+            t('copilotPage.runningPlan', { candidates: totalScanned, shortlisted, ticker: topTicker })
+          ) : (
+            t('copilotPage.noActiveDetections', 'No active pattern detections matching your plan.')
+          )}
         </p>
       </div>
 
@@ -91,11 +116,21 @@ const ScanningState = () => {
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">{t('copilotPage.copilotWatching')}</span>
-            <span className="text-sm font-mono text-muted-foreground">{t('copilotPage.nextScan', { time: '4:32' })}</span>
+            <span className="text-sm font-mono text-muted-foreground">{t('copilotPage.nextScan', { time: countdown })}</span>
           </div>
 
+          {candidates.length === 0 && !loading && (
+            <Card className="bg-card/60 border-border/40">
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {t('copilotPage.noCandidatesYet', 'No candidates yet — Copilot will surface matches as patterns are detected.')}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {candidates.map((c) => (
-            <Card key={c.ticker} className="bg-card/60 border-border/40">
+            <Card key={c.id} className="bg-card/60 border-border/40">
               <CardContent className="p-3 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -105,10 +140,15 @@ const ScanningState = () => {
                       title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
                     >{c.ticker}</span>
                     <span className="text-sm text-muted-foreground">{c.pattern}</span>
+                    {c.timeframe && (
+                      <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
+                    )}
                   </div>
-                  <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-sm px-1.5 py-0 rounded font-medium">
-                    {t('copilotPage.score', { score: c.score })}
-                  </Badge>
+                  {c.score != null && (
+                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-sm px-1.5 py-0 rounded font-medium">
+                      {t('copilotPage.score', { score: Math.round(c.score) })}
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <GateBadge result={c.gate} />
@@ -331,7 +371,7 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
 };
 
 /* ═══ MAIN CENTER PANEL ═══ */
-const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade }: CenterPanelProps) => {
+const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade, activePlan }: CenterPanelProps) => {
   const state: CenterPanelState = useMemo(() => {
     if (selectedClosedTrade) return 'review';
     if (activeTrade) return 'active';
@@ -345,7 +385,7 @@ const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, o
     if (state === 'active' && activeTrade) {
       return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
     }
-    return <ScanningState />;
+    return <ScanningState plan={activePlan} />;
   })();
 
   return (
