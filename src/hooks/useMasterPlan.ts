@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface AssetTradingSchedule {
+  is_247: boolean;
+  days: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+  start: string | null; // "HH:MM"
+  end: string | null;   // "HH:MM"
+}
+
+export type TradingSchedules = Record<string, AssetTradingSchedule>;
+
 export interface MasterPlan {
   id: string;
   name: string;
@@ -17,6 +26,7 @@ export interface MasterPlan {
   min_market_cap: string | null;
   is_active: boolean;
   plan_order: number;
+  timezone: string;
   // Advanced settings
   mtf_required_timeframes: string[];
   mtf_min_aligned: number | null;
@@ -28,6 +38,8 @@ export interface MasterPlan {
   fx_categories: string[];
   crypto_categories: string[];
   stock_exchanges: string[];
+  // Per-asset-class trading schedules
+  trading_schedules: TradingSchedules;
 }
 
 export interface MandateRule {
