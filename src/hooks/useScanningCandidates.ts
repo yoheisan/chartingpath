@@ -139,10 +139,10 @@ export function useScanningCandidates(plan: MasterPlan | null) {
             }
           }
 
-          // Score-based verdict
+          // Score-based gate (scores are 0–1 scale)
           if (score != null) {
-            if (score >= 70) gate = "aligned";
-            else if (score >= 40) gate = "partial";
+            if (score >= 0.70) gate = "aligned";
+            else if (score >= 0.40) gate = "partial";
             else gate = "conflict";
           }
 
@@ -156,10 +156,23 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           }
         }
 
-        // Derive verdict from composite score
-        const verdict = score != null
-          ? (score >= 0.70 ? 'TAKE' : score >= 0.50 ? 'WATCH' : 'SKIP')
-          : null;
+        // Derive verdict from composite score (0–1 scale)
+        // Quality grade acts as a cap: C/D/F grades cannot be TAKE
+        const qualityGrade = d.quality_score || null;
+        let verdict: string | null = null;
+        if (score != null) {
+          if (score >= 0.70) verdict = 'TAKE';
+          else if (score >= 0.50) verdict = 'WATCH';
+          else verdict = 'SKIP';
+        }
+        // Cap verdict if pattern quality is poor
+        if (verdict === 'TAKE' && qualityGrade && ['C', 'D', 'F'].includes(qualityGrade)) {
+          verdict = 'WATCH';
+        }
+        // Cap verdict if gate is conflict
+        if (verdict === 'TAKE' && gate === 'conflict') {
+          verdict = 'WATCH';
+        }
 
         return {
           id: d.id,
