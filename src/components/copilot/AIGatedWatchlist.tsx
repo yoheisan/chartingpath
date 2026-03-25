@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { UniversalSymbolSearch } from "@/components/charts/UniversalSymbolSearch";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigateToDashboard } from "@/hooks/useNavigateToDashboard";
 
 interface WatchlistRow {
   symbol: string;
@@ -32,6 +33,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
   const { t } = useTranslation();
   const [watchlist, setWatchlist] = useState<WatchlistRow[]>(INITIAL_WATCHLIST);
   const { evaluate, getEvaluation, isLoading } = useGateEvaluation();
+  const goToSymbol = useNavigateToDashboard();
 
   // Evaluate initial watchlist on mount
   useEffect(() => {
@@ -103,6 +105,7 @@ export function AIGatedWatchlist({ onConflictDetected }: AIGatedWatchlistProps) 
           {watchlist.map((row) => (
             <div
               key={row.symbol}
+              onClick={(e) => goToSymbol(row.symbol, e)}
               className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer group"
             >
               <span className="font-mono font-bold text-sm text-foreground w-12">
