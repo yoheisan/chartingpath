@@ -81,7 +81,7 @@ function incrementGuestMsgCount(): number {
 interface PageContext {
   pageName: string;
   greeting: string;
-  chips: { label: string; prompt: string }[];
+  chips: { label: string; prompt: string; labelKey?: string }[];
 }
 
 const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
