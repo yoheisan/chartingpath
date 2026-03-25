@@ -73,23 +73,32 @@ export function ReadinessScore({ trades, sessions }: Props) {
 
         {/* Breakdown */}
         <div className="flex-1 w-full space-y-3">
-          {components.map(c => (
-            <div key={c.label} className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-28 flex-shrink-0">{c.label}</span>
-              <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${(c.score / c.max) * 100}%`,
-                    backgroundColor: scoreColor((c.score / c.max) * 100),
-                  }}
-                />
+          {components.map(c => {
+            const labelMap: Record<string, string> = {
+              'Sample size': t('report.sampleSize'),
+              'Plan profitability': t('report.planProfitability'),
+              'Win rate': t('report.winRateLabel'),
+              'Consistency': t('report.consistency'),
+              'Plan discipline': t('report.planDiscipline'),
+            };
+            return (
+              <div key={c.label} className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-28 flex-shrink-0">{labelMap[c.label] ?? c.label}</span>
+                <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${(c.score / c.max) * 100}%`,
+                      backgroundColor: scoreColor((c.score / c.max) * 100),
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-mono text-muted-foreground w-12 text-right">
+                  {c.score}/{c.max}
+                </span>
               </div>
-              <span className="text-xs font-mono text-muted-foreground w-12 text-right">
-                {c.score}/{c.max}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

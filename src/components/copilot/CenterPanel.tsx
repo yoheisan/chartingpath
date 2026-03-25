@@ -43,14 +43,20 @@ interface CenterPanelProps {
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
 const GateBadge = ({ result }: { result: string }) => {
+  const { t } = useTranslation();
   const colors: Record<string, string> = {
     aligned: 'bg-green-500/20 text-green-400 border-green-500/30',
     partial: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     conflict: 'bg-red-500/20 text-red-400 border-red-500/30',
   };
+  const labelMap: Record<string, string> = {
+    aligned: t('copilotPage.gateAligned', 'aligned'),
+    partial: t('copilotPage.gatePartial', 'partial'),
+    conflict: t('copilotPage.gateConflict', 'conflict'),
+  };
   return (
     <Badge className={`text-sm px-1.5 py-0 rounded font-medium ${colors[result] ?? colors.aligned}`}>
-      {result}
+      {labelMap[result] ?? result}
     </Badge>
   );
 };
@@ -65,9 +71,9 @@ const CopilotAvatar = () => (
 const ScanningState = () => {
   const { t } = useTranslation();
   const candidates = [
-    { ticker: 'NVDA', pattern: 'Donchian Breakout Long', score: 76, gate: 'aligned', reason: 'Waiting for breakout confirmation' },
-    { ticker: 'MSFT', pattern: 'Ascending Triangle', score: 72, gate: 'aligned', reason: 'Volume below threshold — monitoring' },
-    { ticker: 'EURUSD', pattern: 'Bull Flag', score: 68, gate: 'partial', reason: 'Outside trading window in 18 min' },
+    { ticker: 'NVDA', pattern: t('copilotPage.patternDonchianBreakoutLong', 'Donchian Breakout Long'), score: 76, gate: 'aligned', reason: t('copilotPage.reasonWaitingBreakout', 'Waiting for breakout confirmation') },
+    { ticker: 'MSFT', pattern: t('copilotPage.patternAscendingTriangle', 'Ascending Triangle'), score: 72, gate: 'aligned', reason: t('copilotPage.reasonVolumeBelowThreshold', 'Volume below threshold — monitoring') },
+    { ticker: 'EURUSD', pattern: t('copilotPage.patternBullFlag', 'Bull Flag'), score: 68, gate: 'partial', reason: t('copilotPage.reasonOutsideTradingWindow', 'Outside trading window in 18 min') },
   ];
 
   return (

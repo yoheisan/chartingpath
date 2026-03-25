@@ -142,7 +142,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
       <div className={`mx-2 my-2 rounded-md bg-secondary/50 border-l-2 border-blue-500 px-2.5 py-2 transition-opacity ${insightLoading ? 'animate-pulse opacity-60' : ''}`}>
         <p className="text-sm leading-[1.6] text-muted-foreground">
           {insight || (currentTrades.length > 0
-            ? `${t('copilotPage.today')}: ${stats.aiTradeCount} AI ${t('copilotPage.trades')} (${formatR(stats.aiPnlR)}), ${stats.humanTradeCount} overrides (${formatR(stats.humanPnlR)}).`
+            ? t('copilotPage.todaySummaryInsight', { aiCount: stats.aiTradeCount, aiR: formatR(stats.aiPnlR), humanCount: stats.humanTradeCount, humanR: formatR(stats.humanPnlR) })
             : t('copilotPage.noTradesDefault'))}
         </p>
       </div>
@@ -193,7 +193,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
                     }
                   }}>
                     <Badge className={`text-sm px-1.5 py-0 font-medium rounded ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
-                      {isAi ? 'AI' : 'You'}
+                      {isAi ? t('copilotPage.ai', 'AI') : t('copilotPage.you', 'You')}
                     </Badge>
                     <span className="text-xs font-mono font-bold text-foreground w-10">{tr.symbol}</span>
                     <span className="text-sm text-muted-foreground flex-1 truncate">{tr.setup_type || tr.trade_type} · {statusLabel}</span>
@@ -211,10 +211,10 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
                 return (
                   <div key={tr.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-secondary/50 cursor-default">
                     <Badge className={`text-sm px-1.5 py-0 font-medium rounded ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
-                      {isAi ? 'AI' : 'You'}
+                      {isAi ? t('copilotPage.ai', 'AI') : t('copilotPage.you', 'You')}
                     </Badge>
                     <span className="text-xs font-mono font-bold text-foreground w-10">{tr.ticker}</span>
-                    <span className="text-sm text-muted-foreground flex-1 truncate">{tr.setup_type || 'Trade'} · {tr.outcome}</span>
+                    <span className="text-sm text-muted-foreground flex-1 truncate">{tr.setup_type || t('copilotPage.tradeLabel', 'Trade')} · {tr.outcome}</span>
                     <span className={`text-xs font-mono font-semibold ${tr.outcome === 'open' ? 'text-muted-foreground' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
                       {tr.outcome === 'open' ? t('copilotPage.open') : formatR(pnlR)}
                     </span>

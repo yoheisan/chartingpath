@@ -105,8 +105,8 @@ const Copilot = () => {
             setSessionEndBanner({ time });
 
             if (Notification.permission === 'granted') {
-              new Notification('Session Complete', {
-                body: 'Your session is complete. Copilot has your recap ready.',
+              new Notification(t('copilotPage.sessionCompleteTitle', 'Session Complete'), {
+                body: t('copilotPage.sessionCompleteBody', 'Your session is complete. Copilot has your recap ready.'),
                 icon: '/favicon.ico',
               });
             }
