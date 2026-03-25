@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { CommandCenterLayout } from "@/components/command-center";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
@@ -30,7 +30,10 @@ const MemberDashboard = () => {
   const { user, isAuthLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const routeState = location.state as PlaybackPatternState | null;
+  const querySymbol = searchParams.get('symbol');
+  const initialSymbol = routeState?.initialSymbol || querySymbol || undefined;
 
   // Show skeleton only while auth state is resolving
   if (isAuthLoading) {
@@ -66,7 +69,7 @@ const MemberDashboard = () => {
       <CommandCenterLayout 
         userId={user?.id} 
         initialPlaybackPattern={routeState?.playbackPattern}
-        initialSymbol={routeState?.initialSymbol}
+        initialSymbol={initialSymbol}
       />
     </>
   );
