@@ -32,6 +32,9 @@ export function useScanningCandidates(plan: MasterPlan | null) {
         .limit(50);
 
       const { data: detections, error: detErr } = await query;
+      if (detErr) {
+        console.error("[useScanningCandidates] query error:", detErr);
+      }
       if (detErr || !detections) {
         setCandidates([]);
         setLoading(false);
