@@ -17,7 +17,7 @@ const EmailPreview = () => {
           .content { background: #f9fafb; padding: 30px; }
           .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
           .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px; }
+          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 14px; border-radius: 0 0 10px 10px; }
         </style>
       </head>
       <body>
@@ -40,7 +40,7 @@ const EmailPreview = () => {
             <a href="https://chartingpath.com" class="cta-button">View Full Dashboard</a>
           </div>
           <div class="section" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0; font-size: 12px;"><strong>⚠️ Disclaimer:</strong> This report is for informational purposes only and does not constitute financial advice.</p>
+            <p style="margin: 0; font-size: 14px;"><strong>⚠️ Disclaimer:</strong> This report is for informational purposes only and does not constitute financial advice.</p>
           </div>
         </div>
         <div class="footer">
@@ -62,7 +62,7 @@ const EmailPreview = () => {
           .alert-badge { display: inline-block; background: #dc2626; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin: 10px 0; }
           .content { background: #f9fafb; padding: 30px; }
           .pattern-details { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #f59e0b; }
-          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px; }
+          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 14px; border-radius: 0 0 10px 10px; }
         </style>
       </head>
       <body>
@@ -84,7 +84,7 @@ const EmailPreview = () => {
             <p><strong>Suggested Action:</strong> Consider taking a short position with appropriate risk management.</p>
           </div>
           <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0; font-size: 12px;"><strong>⚠️ Risk Warning:</strong> Trading involves substantial risk. Always use proper risk management and never trade with money you cannot afford to lose.</p>
+            <p style="margin: 0; font-size: 14px;"><strong>⚠️ Risk Warning:</strong> Trading involves substantial risk. Always use proper risk management and never trade with money you cannot afford to lose.</p>
           </div>
         </div>
         <div class="footer">
@@ -106,7 +106,7 @@ const EmailPreview = () => {
           .content { background: #f9fafb; padding: 30px; }
           .script-box { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #10b981; }
           .cta-button { display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px; }
+          .footer { background: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 14px; border-radius: 0 0 10px 10px; }
         </style>
       </head>
       <body>
