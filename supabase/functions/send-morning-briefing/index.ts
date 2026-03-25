@@ -510,6 +510,17 @@ function buildFinalEmail(params: {
         </table>
       </div>
 
+      ${!hasMasterPlan ? `
+      <!-- Master Plan Nudge -->
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">⚠️ ${language === "en" ? "You haven't set up a Trading Plan yet" : "Trading Plan"}</p>
+        <p style="margin:0 0 12px;font-size:13px;color:#78350f;line-height:1.5;">${language === "en" ? "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing." : "Set up your Trading Plan →"}</p>
+        <a href="${APP_URL}/members/copilot?action=new-plan" style="display:inline-block;background:#f97316;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
+          ${language === "en" ? "Create Trading Plan →" : "Trading Plan →"}
+        </a>
+      </div>
+      ` : ""}
+
       <!-- CTA -->
       <div style="text-align:center;margin-top:28px;">
         <a href="${APP_URL}/members/dashboard" style="display:inline-block;background:#f97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
