@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
-import { useScanningCandidates } from '@/hooks/useScanningCandidates';
+import { useScanningCandidates, ScanningCandidate } from '@/hooks/useScanningCandidates';
+import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 import type { MasterPlan } from '@/hooks/useMasterPlan';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
@@ -72,11 +75,73 @@ const CopilotAvatar = () => (
   </Avatar>
 );
 
+/* ─── Hold reason logic ─── */
+function getHoldReasons(c: ScanningCandidate, tf: (key: string, fallback: string) => string): string[] {
+  const reasons: string[] = [];
+  if (c.gate === 'conflict') reasons.push(tf('copilotPage.holdGateConflict', 'Gate: conflicts with plan'));
+  else if (c.gate === 'partial') reasons.push(tf('copilotPage.holdGatePartial', 'Gate: partial match only'));
+  if (c.verdict === 'SKIP') reasons.push(tf('copilotPage.holdVerdictSkip', 'Agent verdict: SKIP'));
+  else if (c.verdict === 'WATCH') reasons.push(tf('copilotPage.holdVerdictWatch', 'Agent verdict: WATCH — monitoring'));
+  else if (!c.verdict) reasons.push(tf('copilotPage.holdNoScore', 'No agent score yet'));
+  if (c.qualityGrade && ['C', 'D', 'F'].includes(c.qualityGrade)) reasons.push(tf('copilotPage.holdLowGrade', `Pattern quality below threshold (${c.qualityGrade})`));
+  if (reasons.length === 0 && c.gate === 'aligned' && c.verdict === 'TAKE') reasons.push(tf('copilotPage.holdPendingExecution', 'Queued — pending next execution cycle'));
+  return reasons;
+}
+
+/* ─── Exit Plan Dialog ─── */
+const ExitPlanDialog = ({ open, onOpenChange, ticker, entryPrice }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  ticker: string;
+  entryPrice: number;
+}) => {
+  const { t } = useTranslation();
+  const rUnit = entryPrice * 0.02;
+  const [sl, setSl] = useState((entryPrice - 2 * rUnit).toFixed(2));
+  const [tp, setTp] = useState((entryPrice + 3 * rUnit).toFixed(2));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t('copilotPage.exitPlanTitle', 'Exit Plan — {{ticker}}').replace('{{ticker}}', ticker)}</DialogTitle>
+          <DialogDescription>{t('copilotPage.exitPlanDesc', 'Set your stop loss and take profit levels for this override trade.')}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-md bg-muted/30 p-3 text-sm flex justify-between">
+            <span className="text-muted-foreground">{t('copilotPage.entryPrice', 'Entry')}</span>
+            <span className="font-mono font-medium">{entryPrice.toFixed(2)}</span>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-red-400" />
+              {t('copilotPage.stopLoss', 'Stop Loss')}
+            </Label>
+            <Input type="number" step="0.01" value={sl} onChange={e => setSl(e.target.value)} className="font-mono" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5 text-emerald-400" />
+              {t('copilotPage.takeProfit', 'Take Profit')}
+            </Label>
+            <Input type="number" step="0.01" value={tp} onChange={e => setTp(e.target.value)} className="font-mono" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('copilotPage.close', 'Close')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 /* ═══ STATE 1 — SCANNING ═══ */
 const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const { t } = useTranslation();
   const goToSymbol = useNavigateToDashboard();
   const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
+  const { tradeWithGateCheck, isSubmitting } = usePaperTradeEntry();
+  const [exitPlan, setExitPlan] = useState<{ ticker: string; price: number } | null>(null);
 
   // Countdown to next scan (polls every 60s)
   const [countdown, setCountdown] = useState("1:00");
@@ -94,6 +159,21 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
 
   const shortlisted = candidates.filter(c => c.gate === "aligned").length;
   const topTicker = candidates[0]?.ticker ?? "—";
+
+  const handleTakeTrade = useCallback((c: ScanningCandidate) => {
+    tradeWithGateCheck({
+      ticker: c.ticker,
+      setup_type: c.pattern,
+      timeframe: c.timeframe,
+      direction: c.direction ?? undefined,
+      entry_price: undefined, // uses simulated mid price
+      gate_result: c.gate as "aligned" | "partial" | "conflict",
+      gate_reason: c.reason,
+      agent_score: c.score ?? undefined,
+    });
+    // Show exit plan dialog after trade is submitted
+    setExitPlan({ ticker: c.ticker, price: 100 }); // placeholder price
+  }, [tradeWithGateCheck]);
 
   return (
     <div className="flex flex-col h-full">
@@ -130,59 +210,94 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
             </Card>
           )}
 
-          {candidates.map((c) => (
-            <Card key={c.id} className="bg-card/60 border-border/40">
-              <CardContent className="p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
+          {candidates.map((c) => {
+            const holdReasons = getHoldReasons(c, (k, fb) => t(k, fb));
+            const isAutoEligible = c.gate === 'aligned' && c.verdict === 'TAKE';
+
+            return (
+              <Card key={c.id} className="bg-card/60 border-border/40">
+                <CardContent className="p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer transition-colors"
+                        onClick={(e) => goToSymbol(c.ticker, e)}
+                        title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
+                      >{c.ticker}</span>
+                      <span className="text-sm text-muted-foreground">{translatePatternName(c.pattern)}</span>
+                      {c.timeframe && (
+                        <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {/* Agent Verdict: TAKE / WATCH / SKIP */}
+                      {c.verdict && (() => {
+                        const verdictStyles: Record<string, string> = {
+                          TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                          WATCH: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                          SKIP: 'bg-red-500/20 text-red-400 border-red-500/30',
+                        };
+                        return (
+                          <Badge className={`${verdictStyles[c.verdict] || ''} text-xs px-2 py-0.5 rounded font-semibold`}>
+                            {t(`agentScoring.${c.verdict.toLowerCase()}`, c.verdict)}
+                          </Badge>
+                        );
+                      })()}
+                      {/* Pattern Quality Grade: A / B / C / D */}
+                      {c.qualityGrade && (() => {
+                        const gradeColors: Record<string, string> = {
+                          A: 'bg-emerald-500/15 text-emerald-400/80 border-emerald-500/20',
+                          B: 'bg-blue-500/15 text-blue-400/80 border-blue-500/20',
+                          C: 'bg-orange-500/15 text-orange-400/80 border-orange-500/20',
+                          D: 'bg-red-500/15 text-red-400/80 border-red-500/20',
+                          F: 'bg-red-500/15 text-red-400/80 border-red-500/20',
+                        };
+                        return (
+                          <Badge variant="outline" className={`${gradeColors[c.qualityGrade] || ''} text-xs px-2 py-0.5 rounded font-mono`}>
+                            {c.qualityGrade}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <span
-                      className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer transition-colors"
-                      onClick={(e) => goToSymbol(c.ticker, e)}
-                      title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
-                    >{c.ticker}</span>
-                    <span className="text-sm text-muted-foreground">{translatePatternName(c.pattern)}</span>
-                    {c.timeframe && (
-                      <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
-                    )}
+                    <GateBadge result={c.gate} />
+                    <span className="text-sm text-muted-foreground">{c.reason}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {/* Agent Verdict: TAKE / WATCH / SKIP */}
-                    {c.verdict && (() => {
-                      const verdictStyles: Record<string, string> = {
-                        TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-                        WATCH: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-                        SKIP: 'bg-red-500/20 text-red-400 border-red-500/30',
-                      };
-                      return (
-                        <Badge className={`${verdictStyles[c.verdict] || ''} text-xs px-2 py-0.5 rounded font-semibold`}>
-                          {t(`agentScoring.${c.verdict.toLowerCase()}`, c.verdict)}
-                        </Badge>
-                      );
-                    })()}
-                    {/* Pattern Quality Grade: A / B / C / D */}
-                    {c.qualityGrade && (() => {
-                      const gradeColors: Record<string, string> = {
-                        A: 'bg-emerald-500/15 text-emerald-400/80 border-emerald-500/20',
-                        B: 'bg-blue-500/15 text-blue-400/80 border-blue-500/20',
-                        C: 'bg-orange-500/15 text-orange-400/80 border-orange-500/20',
-                        D: 'bg-red-500/15 text-red-400/80 border-red-500/20',
-                        F: 'bg-red-500/15 text-red-400/80 border-red-500/20',
-                      };
-                      return (
-                        <Badge variant="outline" className={`${gradeColors[c.qualityGrade] || ''} text-xs px-2 py-0.5 rounded font-mono`}>
-                          {c.qualityGrade}
-                        </Badge>
-                      );
-                    })()}
+
+                  {/* Hold reasons — why this isn't auto-executed */}
+                  {!isAutoEligible && holdReasons.length > 0 && (
+                    <div className="flex items-start gap-1.5 mt-0.5 px-2 py-1.5 rounded bg-amber-500/5 border border-amber-500/10">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs font-medium text-amber-400">{t('copilotPage.onHold', 'On hold')}</span>
+                        {holdReasons.map((r, i) => (
+                          <span key={i} className="text-xs text-muted-foreground">{r}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Take Trade override button */}
+                  <div className="flex justify-end mt-1">
+                    <Button
+                      size="sm"
+                      variant={isAutoEligible ? "default" : "outline"}
+                      className="h-7 text-xs gap-1"
+                      disabled={isSubmitting}
+                      onClick={() => handleTakeTrade(c)}
+                    >
+                      <Play className="h-3 w-3" />
+                      {isAutoEligible
+                        ? t('copilotPage.takeTrade', 'Take Trade')
+                        : t('copilotPage.overrideTrade', 'Override & Trade')
+                      }
+                    </Button>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <GateBadge result={c.gate} />
-                  <span className="text-sm text-muted-foreground">{c.reason}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
 
           <div className="border-t border-border/40 pt-3 mt-1">
             <p className="text-sm text-muted-foreground text-center">
@@ -191,6 +306,16 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
           </div>
         </div>
       </ScrollArea>
+
+      {/* Exit Plan dialog after override */}
+      {exitPlan && (
+        <ExitPlanDialog
+          open={!!exitPlan}
+          onOpenChange={(o) => !o && setExitPlan(null)}
+          ticker={exitPlan.ticker}
+          entryPrice={exitPlan.price}
+        />
+      )}
     </div>
   );
 };
