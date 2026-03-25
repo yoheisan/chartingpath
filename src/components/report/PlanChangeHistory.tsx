@@ -85,7 +85,7 @@ export function PlanChangeHistory({ trades, plans }: Props) {
                   {format(new Date(entry.plan.created_at), 'MMM d, yyyy')}
                 </span>
                 {!entry.isFirst && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                  <span className={`text-sm px-1.5 py-0.5 rounded font-medium ${
                     entry.verdict === 'improved' ? 'bg-[hsl(var(--bullish))]/20 text-[hsl(var(--bullish))]' :
                     entry.verdict === 'declined' ? 'bg-[hsl(var(--bearish))]/20 text-[hsl(var(--bearish))]' :
                     'bg-muted text-muted-foreground'

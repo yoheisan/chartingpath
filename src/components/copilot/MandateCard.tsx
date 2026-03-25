@@ -117,7 +117,7 @@ export function MandateCard({
                         planRules.map((rule) => (
                           <span
                             key={rule.label}
-                            className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[11px] leading-tight"
+                            className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-sm leading-tight"
                           >
                             <span className="font-mono font-bold text-primary">[{rule.label}]</span>
                             <span className="text-muted-foreground truncate max-w-[100px]">{rule.detail}</span>

@@ -67,7 +67,7 @@ export function ReadinessScore({ trades, sessions }: Props) {
             <span className="text-4xl font-bold text-foreground" style={{ color: scoreColor(total) }}>
               {total}
             </span>
-            <span className="text-[10px] text-muted-foreground font-medium">{t('report.goLiveReadiness')}</span>
+            <span className="text-sm text-muted-foreground font-medium">{t('report.goLiveReadiness')}</span>
           </div>
         </div>
 

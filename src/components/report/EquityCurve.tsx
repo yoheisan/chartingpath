@@ -75,7 +75,7 @@ export function EquityCurve({ trades }: Props) {
                 background: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
-                fontSize: '12px',
+                fontSize: '14px',
               }}
               formatter={(value: number) => [`${value >= 0 ? '+' : ''}${value}R`, t('report.cumulativeR')]}
               labelFormatter={v => format(new Date(v), 'MMM d, yyyy')}

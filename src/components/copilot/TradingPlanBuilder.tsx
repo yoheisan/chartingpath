@@ -446,7 +446,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Stocks */}
           {assetClasses.includes("stocks") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-[11px] text-muted-foreground font-medium">Stock exchanges</p>
+              <p className="text-sm text-muted-foreground font-medium">Stock exchanges</p>
               <div className="flex flex-wrap gap-1.5">
                 {STOCK_EXCHANGE_OPTIONS.map(ex => {
                   const selected = stockExchanges.includes(ex);
@@ -455,7 +455,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       key={ex}
                       onClick={() => toggleStockExchange(ex)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        "px-2 py-1 rounded-md text-sm font-medium transition-all border",
                         selected
                           ? "bg-primary/10 border-primary/30 text-primary"
                           : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
@@ -473,7 +473,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Forex */}
           {assetClasses.includes("forex") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-[11px] text-muted-foreground font-medium">FX pair categories</p>
+              <p className="text-sm text-muted-foreground font-medium">FX pair categories</p>
               <div className="flex flex-wrap gap-1.5">
                 {FX_CATEGORY_OPTIONS.map(cat => {
                   const selected = fxCategories.includes(cat.value);
@@ -482,7 +482,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       key={cat.value}
                       onClick={() => toggleFxCategory(cat.value)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        "px-2 py-1 rounded-md text-sm font-medium transition-all border",
                         selected
                           ? "bg-primary/10 border-primary/30 text-primary"
                           : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
@@ -500,7 +500,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Crypto */}
           {assetClasses.includes("crypto") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-[11px] text-muted-foreground font-medium">Crypto categories</p>
+              <p className="text-sm text-muted-foreground font-medium">Crypto categories</p>
               <div className="flex flex-wrap gap-1.5">
                 {CRYPTO_CATEGORY_OPTIONS.map(cat => {
                   const selected = cryptoCategories.includes(cat.value);
@@ -509,7 +509,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       key={cat.value}
                       onClick={() => toggleCryptoCategory(cat.value)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[11px] font-medium transition-all border",
+                        "px-2 py-1 rounded-md text-sm font-medium transition-all border",
                         selected
                           ? "bg-primary/10 border-primary/30 text-primary"
                           : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
@@ -689,7 +689,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                             ...(schedule.is_247 ? { days: [1, 2, 3, 4, 5], start: "00:00", end: "23:59" } : { days: [0, 1, 2, 3, 4, 5, 6], start: null, end: null }),
                           })}
                           className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                            "px-2 py-0.5 rounded-full text-sm font-semibold transition-all border",
                             schedule.is_247
                               ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                               : "bg-muted/40 border-border/50 text-muted-foreground"
@@ -702,7 +702,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
                     {/* Day of week selector */}
                     <div className="space-y-1">
-                      <span className="text-[11px] text-muted-foreground">Trading days</span>
+                      <span className="text-sm text-muted-foreground">Trading days</span>
                       <div className="flex gap-1">
                         {DAYS_OF_WEEK.map(day => {
                           const active = schedule.days.includes(day.value);
@@ -711,7 +711,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                               key={day.value}
                               onClick={() => toggleScheduleDay(ac, day.value)}
                               className={cn(
-                                "h-7 w-7 rounded-md text-[10px] font-semibold transition-all border",
+                                "h-7 w-7 rounded-md text-sm font-semibold transition-all border",
                                 active
                                   ? "bg-primary/15 border-primary/40 text-primary"
                                   : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
@@ -729,7 +729,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                             const isAll = schedule.days.length === 7;
                             updateSchedule(ac, { days: isAll ? weekdays : allDays });
                           }}
-                          className="ml-1 px-1.5 h-7 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
+                          className="ml-1 px-1.5 h-7 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                         >
                           {schedule.days.length === 7 ? "Weekdays" : "All"}
                         </button>
@@ -740,7 +740,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     {!schedule.is_247 && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[11px] text-muted-foreground mb-1 block">Start</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">Start</label>
                           <input
                             type="time"
                             value={schedule.start || "09:30"}
@@ -749,7 +749,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] text-muted-foreground mb-1 block">End</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">End</label>
                           <input
                             type="time"
                             value={schedule.end || "16:00"}
@@ -847,7 +847,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               Advanced settings
               {hasAdvancedSettings && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
                   Active
                 </span>
               )}
@@ -859,7 +859,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             {/* ── 7a: Multi-Timeframe Alignment ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <h5 className="text-xs font-semibold text-foreground">Multi-Timeframe Alignment</h5>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Require trend agreement across multiple timeframes before entering a trade.
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -904,7 +904,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </div>
               )}
               {mtfTimeframes.length === 1 && (
-                <p className="text-[11px] text-muted-foreground/70">Select at least 2 timeframes for alignment checks</p>
+                <p className="text-sm text-muted-foreground/70">Select at least 2 timeframes for alignment checks</p>
               )}
             </div>
 
@@ -915,7 +915,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 <button
                   onClick={() => setAgentScoreEnabled(!agentScoreEnabled)}
                   className={cn(
-                    "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                    "px-2 py-0.5 rounded-full text-sm font-semibold transition-all border",
                     agentScoreEnabled
                       ? "bg-primary/15 border-primary/40 text-primary"
                       : "bg-muted/40 border-border/50 text-muted-foreground"
@@ -924,7 +924,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   {agentScoreEnabled ? "ON" : "OFF"}
                 </button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Only paper-trade setups that pass the 4-agent scoring system with a minimum composite score.
               </p>
               {agentScoreEnabled && (
@@ -942,7 +942,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     <span className="font-semibold text-foreground">{minAgentScore}</span>
                     <span>95 (Elite)</span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground/70">
+                  <p className="text-sm text-muted-foreground/70">
                     {minAgentScore >= 70 ? "TAKE signals only — highest conviction" : minAgentScore >= 50 ? "TAKE + WATCH signals" : "Most signals will pass"}
                   </p>
                 </div>
@@ -952,7 +952,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             {/* ── 7c: Trend Context Filter ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <h5 className="text-xs font-semibold text-foreground">Trend Context</h5>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Filter setups by their alignment with the prevailing trend direction.
               </p>
               <div className="flex gap-1.5">
@@ -968,7 +968,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     )}
                   >
                     <div>{opt.label}</div>
-                    <div className="text-[10px] opacity-60 mt-0.5">{opt.desc}</div>
+                    <div className="text-sm opacity-60 mt-0.5">{opt.desc}</div>
                   </button>
                 ))}
               </div>
@@ -981,7 +981,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 <button
                   onClick={() => setConfluenceEnabled(!confluenceEnabled)}
                   className={cn(
-                    "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                    "px-2 py-0.5 rounded-full text-sm font-semibold transition-all border",
                     confluenceEnabled
                       ? "bg-primary/15 border-primary/40 text-primary"
                       : "bg-muted/40 border-border/50 text-muted-foreground"
@@ -990,7 +990,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   {confluenceEnabled ? "ON" : "OFF"}
                 </button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Require minimum confluence from support/resistance, divergence, and volume confirmation.
               </p>
               {confluenceEnabled && (

@@ -27,7 +27,7 @@ function TradeTable({ title, trades, colorPositive }: { title: string; trades: P
                 }`}>
                   {(t.outcome_r ?? 0) >= 0 ? '+' : ''}{(t.outcome_r ?? 0).toFixed(1)}R
                 </span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                <span className={`px-1.5 py-0.5 rounded text-sm font-medium ${
                   isOverride ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
                 }`}>
                   {isOverride ? 'You' : 'AI'}

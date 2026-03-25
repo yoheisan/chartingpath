@@ -52,7 +52,7 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
                 <div className={`w-8 h-8 rounded-lg ${tool.bgColor} flex items-center justify-center mb-2`}>
                   <tool.icon className={`h-4 w-4 ${tool.color}`} />
                 </div>
-                <h4 className="text-[13px] font-medium mb-0.5 group-hover:text-primary transition-colors">
+                <h4 className="text-sm font-medium mb-0.5 group-hover:text-primary transition-colors">
                   {tool.title}
                 </h4>
                 <p className="text-xs text-muted-foreground leading-tight">
@@ -67,7 +67,7 @@ export function QuickResearchPanel({ onSymbolSelect }: QuickResearchPanelProps) 
         <div className="mt-3 pt-3 border-t border-border">
           <h4 className="text-xs font-medium mb-2 text-muted-foreground">{t('commandCenter.quickActions')}</h4>
           <div className="space-y-1">
-            <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-[13px]" asChild>
+            <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-sm" asChild>
               <Link to="/members/scripts">
                 <Search className="h-3.5 w-3.5 mr-2" />
                 {t('commandCenter.browseScripts')}

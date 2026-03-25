@@ -132,7 +132,7 @@ export function MobileCopilotLayout({
                 )}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium leading-none">
+                <span className="text-sm font-medium leading-none">
                   {t(labelKey, key.charAt(0).toUpperCase() + key.slice(1))}
                 </span>
                 {key === "trades" && openTrades.length > 0 && (

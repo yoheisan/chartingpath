@@ -291,19 +291,19 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
-          <TabsTrigger value="indices" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="indices" className="text-sm h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.indices')}
           </TabsTrigger>
-          <TabsTrigger value="breadth" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="breadth" className="text-sm h-6 px-2">
             <BarChart3 className="h-3 w-3 mr-1" />
             {t('commandCenter.breadth')}
           </TabsTrigger>
-          <TabsTrigger value="movers" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="movers" className="text-sm h-6 px-2">
             <TrendingUp className="h-3 w-3 mr-1" />
             {t('commandCenter.movers')}
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="calendar" className="text-sm h-6 px-2">
             <Calendar className="h-3 w-3 mr-1" />
             {t('commandCenter.calendar')}
           </TabsTrigger>
@@ -321,13 +321,13 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                 >
                   <InstrumentLogo instrument={index.symbol} size="sm" showName={false} />
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-[13px] font-medium">{index.name}</div>
+                    <div className="text-sm font-medium">{index.name}</div>
                     <div className="text-xs text-muted-foreground">{index.symbol}</div>
                   </div>
                   <div className="text-right">
                     {indicesData[index.symbol] ? (
                       <>
-                        <div className="text-[13px] font-medium">
+                        <div className="text-sm font-medium">
                           {formatPrice(indicesData[index.symbol].price)}
                         </div>
                         <div
@@ -364,7 +364,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                 <>
                   {/* Sentiment Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t('commandCenter.nyseMarketBreadth')}</span>
                     <Badge 
                       className={cn(
                         'text-xs border-0',
@@ -384,7 +384,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                   {/* A/D Ratio Display */}
                   <div className="rounded-lg border border-border p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-medium">{t('commandCenter.advanceDeclineRatio')}</span>
+                      <span className="text-sm font-medium">{t('commandCenter.advanceDeclineRatio')}</span>
                       <span className={cn(
                         'text-lg font-bold',
                         breadthData.advanceDeclineRatio >= 1 ? 'text-bullish' : 'text-bearish'
@@ -506,7 +506,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
-                        <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
+                        <span className="text-sm font-medium flex-1 text-left">{mover.symbol}</span>
                         <Badge className="bg-bullish/10 text-bullish border-0 text-sm">
                           +{mover.changePercent.toFixed(2)}%
                         </Badge>
@@ -533,7 +533,7 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
                       >
                         <InstrumentLogo instrument={mover.symbol} size="sm" showName={false} />
-                        <span className="text-[13px] font-medium flex-1 text-left">{mover.symbol}</span>
+                        <span className="text-sm font-medium flex-1 text-left">{mover.symbol}</span>
                         <Badge className="bg-bearish/10 text-bearish border-0 text-sm">
                           {mover.changePercent.toFixed(2)}%
                         </Badge>

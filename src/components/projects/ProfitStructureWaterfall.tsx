@@ -126,7 +126,7 @@ export const ProfitStructureWaterfall = ({ trades, initialCapital = 10000, embed
                 backdropFilter: 'blur(12px)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                 padding: '8px 12px',
-                fontSize: '13px',
+                fontSize: '14px',
               }}
               labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 2 }}
               itemStyle={{ color: 'hsl(var(--muted-foreground))' }}

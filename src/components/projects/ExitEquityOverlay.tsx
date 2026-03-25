@@ -246,7 +246,7 @@ export const ExitEquityOverlay = ({
                                 <span className="text-sm text-muted-foreground truncate">{s?.strategyName || entry.dataKey}</span>
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <span className="text-[12px] font-semibold text-foreground">${val.toFixed(0)}</span>
+                                <span className="text-sm font-semibold text-foreground">${val.toFixed(0)}</span>
                                 <span className={`text-sm font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
                                 </span>

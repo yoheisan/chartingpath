@@ -26,7 +26,7 @@ const chartTooltipStyle = {
     backgroundColor: 'hsl(224 44% 7%)',
     border: '1px solid hsl(215 25% 15%)',
     borderRadius: '8px',
-    fontSize: '12px',
+    fontSize: '14px',
     color: 'hsl(210 40% 98%)',
   },
 };
