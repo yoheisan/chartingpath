@@ -121,6 +121,30 @@ const Copilot = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
+  if (isMobile) {
+    return (
+      <MobileCopilotLayout
+        rules={rules}
+        hasPlan={hasPlan}
+        plans={plans}
+        selectedPlanId={selectedPlanId}
+        onSelectPlan={selectPlan}
+        canCreateMore={canCreateMore}
+        activePlan={activePlan}
+        openTrades={openTrades}
+        selectedTradeId={selectedTradeId}
+        onSelectTrade={(id) => {
+          setSelectedClosedTrade(null);
+          setSelectedTradeId(id);
+        }}
+        conflictTicker={conflictTicker}
+        conflictReason={conflictReason}
+        onDismissConflict={dismissConflict}
+        onFocusNLBar={focusNLBar}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Session end banner */}
