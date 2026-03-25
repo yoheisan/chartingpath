@@ -269,12 +269,13 @@ serve(async (req) => {
         const { region } = getRelevantMarkets(tz);
 
         // Fetch user-specific data in parallel
-        const [watchlistRes, portfolioRes, openTradesRes, closedTradesRes, topScoresRes] = await Promise.all([
+        const [watchlistRes, portfolioRes, openTradesRes, closedTradesRes, topScoresRes, masterPlansRes] = await Promise.all([
           supabase.from("user_watchlist").select("symbol").eq("user_id", user_id),
           supabase.from("paper_portfolios").select("current_balance, total_pnl").eq("user_id", user_id).maybeSingle(),
           supabase.from("paper_trades").select("symbol, pnl, status").eq("user_id", user_id).eq("status", "open"),
           supabase.from("paper_trades").select("symbol, pnl, close_reason, outcome_r").eq("user_id", user_id).eq("status", "closed").gte("closed_at", new Date(Date.now() - 86400000).toISOString()).limit(5),
           supabase.from("agent_scores").select("instrument, detection_id, analyst_raw, risk_raw, timing_raw, portfolio_raw, is_proven, win_rate, expectancy_r").eq("is_proven", true).order("scored_at", { ascending: false }).limit(10),
+          supabase.from("master_plans").select("id").eq("user_id", user_id).eq("is_active", true).limit(1),
         ]);
 
         const watchlistSymbols = (watchlistRes.data || []).map((w: any) => w.symbol);
