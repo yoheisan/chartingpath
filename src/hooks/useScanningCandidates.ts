@@ -41,15 +41,15 @@ export function useScanningCandidates(plan: MasterPlan | null) {
       const allDetections = detections as any[];
       setTotalScanned(allDetections.length);
 
-      // 2. Filter by plan's instrument universe
-      const planAssetClasses = plan.asset_classes ?? [];
+      // 2. Filter by plan's instrument universe (only if plan exists)
+      const planAssetClasses = plan?.asset_classes ?? [];
       const assetTypeMap: Record<string, string> = {
         stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
         crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
       };
 
       let filtered = allDetections;
-      if (planAssetClasses.length > 0) {
+      if (plan && planAssetClasses.length > 0) {
         filtered = allDetections.filter((d: any) => {
           if (!d.asset_type) return true;
           const mapped = assetTypeMap[d.asset_type.toLowerCase()] || d.asset_type.toLowerCase();
@@ -57,8 +57,8 @@ export function useScanningCandidates(plan: MasterPlan | null) {
         });
       }
 
-      // 3. Filter by direction
-      if (plan.trend_direction && plan.trend_direction !== "both") {
+      // 3. Filter by direction (only if plan exists)
+      if (plan?.trend_direction && plan.trend_direction !== "both") {
         filtered = filtered.filter((d: any) => {
           if (!d.direction) return true;
           const dir = d.direction.toLowerCase();
