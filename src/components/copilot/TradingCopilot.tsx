@@ -951,6 +951,8 @@ export function TradingCopilot({
               <TradingPlanBuilder
                 existingPlan={builderIsNewPlan ? null : plan}
                 isNewPlan={builderIsNewPlan}
+                plans={plans}
+                onSelectPlan={selectPlan}
                 onSaved={() => {
                   setShowBuilder(false);
                   setBuilderIsNewPlan(false);
