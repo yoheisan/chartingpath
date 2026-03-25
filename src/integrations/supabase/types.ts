@@ -2904,6 +2904,7 @@ export type Database = {
           sector_filters: Json | null
           stock_exchanges: string[] | null
           stop_loss_rule: string | null
+          timezone: string
           trading_window_end: string | null
           trading_window_start: string | null
           trend_context_filter: string | null
@@ -2933,6 +2934,7 @@ export type Database = {
           sector_filters?: Json | null
           stock_exchanges?: string[] | null
           stop_loss_rule?: string | null
+          timezone?: string
           trading_window_end?: string | null
           trading_window_start?: string | null
           trend_context_filter?: string | null
@@ -2962,6 +2964,7 @@ export type Database = {
           sector_filters?: Json | null
           stock_exchanges?: string[] | null
           stop_loss_rule?: string | null
+          timezone?: string
           trading_window_end?: string | null
           trading_window_start?: string | null
           trend_context_filter?: string | null
