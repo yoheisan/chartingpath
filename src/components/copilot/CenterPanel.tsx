@@ -371,7 +371,7 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
 };
 
 /* ═══ MAIN CENTER PANEL ═══ */
-const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade }: CenterPanelProps) => {
+const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade, activePlan }: CenterPanelProps) => {
   const state: CenterPanelState = useMemo(() => {
     if (selectedClosedTrade) return 'review';
     if (activeTrade) return 'active';
