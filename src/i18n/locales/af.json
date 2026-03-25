@@ -5827,5 +5827,9 @@
     "signIn": "Meld aan",
     "createFreeAccount": "Skep gratis rekening",
     "noCreditCard": "Geen kredietkaart nodig · Vir altyd gratis"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Gaan live met jou plan · Alpaca",
+    "paperRunningScanning": "Papier loop · besig om te skandeer vir opstellings"
   }
 }

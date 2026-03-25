@@ -5826,5 +5826,9 @@
     "signIn": "تسجيل الدخول",
     "createFreeAccount": "إنشاء حساب مجاني",
     "noCreditCard": "لا حاجة لبطاقة ائتمان · خطة مجانية للأبد"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "ابدأ التداول الحي بخطتك · Alpaca",
+    "paperRunningScanning": "تشغيل تجريبي · جارٍ البحث عن إعدادات"
   }
 }

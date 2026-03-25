@@ -5814,5 +5814,9 @@
     "signIn": "Masuk",
     "createFreeAccount": "Buat Akun Gratis",
     "noCreditCard": "Tanpa kartu kredit · Paket gratis selamanya"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Go live dengan rencana Anda · Alpaca",
+    "paperRunningScanning": "Paper berjalan · memindai pengaturan"
   }
 }

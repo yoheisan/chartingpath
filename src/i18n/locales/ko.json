@@ -5823,5 +5823,9 @@
     "signIn": "로그인",
     "createFreeAccount": "무료 계정 생성",
     "noCreditCard": "신용카드 불필요 · 영구 무료 플랜"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Alpaca로 계획을 라이브로 실행하세요.",
+    "paperRunningScanning": "페이퍼 실행 중 · 설정 검색 중"
   }
 }

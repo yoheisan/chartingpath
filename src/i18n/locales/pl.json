@@ -5779,5 +5779,9 @@
     "signIn": "Zaloguj się",
     "createFreeAccount": "Utwórz darmowe konto",
     "noCreditCard": "Bez karty kredytowej · Darmowy plan na zawsze"
+  },
+  "copilotPage": {
+    "goLiveAlpaca": "Uruchom plan na żywo · Alpaca",
+    "paperRunningScanning": "Konto demo aktywne · skanowanie w poszukiwaniu okazji"
   }
 }
