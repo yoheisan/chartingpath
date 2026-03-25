@@ -21,12 +21,6 @@ export function useScanningCandidates(plan: MasterPlan | null) {
   const [lastScanAt, setLastScanAt] = useState<Date | null>(null);
 
   const fetchCandidates = useCallback(async () => {
-    if (!plan) {
-      setCandidates([]);
-      setTotalScanned(0);
-      return;
-    }
-
     setLoading(true);
     try {
       // 1. Fetch active live detections
