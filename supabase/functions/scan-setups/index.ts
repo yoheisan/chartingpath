@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // 1. Get all users with active master plans
     const { data: plans, error: planErr } = await supabase
       .from("master_plans")
-      .select("*")
+      .select("*, timezone")
       .eq("is_active", true);
 
     if (planErr || !plans?.length) {
