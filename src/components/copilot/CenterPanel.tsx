@@ -84,7 +84,9 @@ function getHoldReasons(c: ScanningCandidate, tf: (key: string, fallback: string
   if (c.verdict === 'SKIP') reasons.push(tf('copilotPage.holdVerdictSkip', 'Agent verdict: SKIP'));
   else if (c.verdict === 'WATCH') reasons.push(tf('copilotPage.holdVerdictWatch', 'Agent verdict: WATCH — monitoring'));
   else if (!c.verdict) reasons.push(tf('copilotPage.holdNoScore', 'No agent score yet'));
-  if (c.qualityGrade && ['C', 'D', 'F'].includes(c.qualityGrade)) reasons.push(tf('copilotPage.holdLowGrade', `Pattern quality below threshold (${c.qualityGrade})`));
+  if (c.qualityGrade && ['C', 'D', 'F'].includes(c.qualityGrade)) {
+    reasons.push(tf('copilotPage.holdLowGradeDetail', `Quality ${c.qualityGrade} — needs A or B for auto-trade`));
+  }
   if (reasons.length === 0 && c.gate === 'aligned' && c.verdict === 'TAKE') reasons.push(tf('copilotPage.holdPendingExecution', 'Queued — pending next execution cycle'));
   return reasons;
 }
