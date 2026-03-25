@@ -81,7 +81,7 @@ function incrementGuestMsgCount(): number {
 interface PageContext {
   pageName: string;
   greeting: string;
-  chips: { label: string; prompt: string }[];
+  chips: { label: string; prompt: string; labelKey?: string }[];
 }
 
 const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
@@ -158,9 +158,9 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     pageName: 'Copilot ACS',
     greeting: "Your Copilot desk. Set your mandate, review trades, or ask anything.",
     chips: [
-      { label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
-      { label: "Show today's paper trades", prompt: "Show today's paper trades" },
-      { label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
+      { labelKey: "copilot.panel.chipWhyFlag", label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
+      { labelKey: "copilot.panel.chipShowPaperTrades", label: "Show today's paper trades", prompt: "Show today's paper trades" },
+      { labelKey: "copilot.panel.chipWhatWatching", label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
     ],
   },
   '/edge-atlas': {
@@ -917,7 +917,7 @@ export function TradingCopilot({
                     <div className="flex flex-wrap gap-2">
                       {tier2Chips.map((chip) => (
                         <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-sm">{chip.label}</span>
+                          <span className="text-sm">{chip.labelKey ? t(chip.labelKey, chip.label) : chip.label}</span>
                         </Button>
                       ))}
                     </div>
