@@ -5908,6 +5908,7 @@
     "holdVerdictWatch": "Agent verdict: WATCH — monitoring",
     "holdNoScore": "No agent score yet",
     "holdLowGrade": "Pattern quality below threshold",
+    "holdLowGradeDetail": "Quality grade too low — needs A or B for auto-trade",
     "holdPendingExecution": "Queued — pending next execution cycle",
     "takeTrade": "Take Trade",
     "overrideTrade": "Override & Trade",
