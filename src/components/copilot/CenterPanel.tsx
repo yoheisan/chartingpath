@@ -92,22 +92,28 @@ function getHoldReasons(c: ScanningCandidate, tf: (key: string, fallback: string
 }
 
 /* ─── Exit Plan Dialog ─── */
-const ExitPlanDialog = ({ open, onOpenChange, ticker, entryPrice }: {
+const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  ticker: string;
-  entryPrice: number;
+  candidate: ScanningCandidate | null;
+  onConfirm: (c: ScanningCandidate) => void;
+  isSubmitting: boolean;
 }) => {
   const { t } = useTranslation();
+  const entryPrice = 100; // simulated mid price
   const rUnit = entryPrice * 0.02;
   const [sl, setSl] = useState((entryPrice - 2 * rUnit).toFixed(2));
   const [tp, setTp] = useState((entryPrice + 3 * rUnit).toFixed(2));
+
+  if (!candidate) return null;
+
+  const isAutoEligible = candidate.gate === 'aligned' && candidate.verdict === 'TAKE';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{t('copilotPage.exitPlanTitle', 'Exit Plan — {{ticker}}').replace('{{ticker}}', ticker)}</DialogTitle>
+          <DialogTitle>{t('copilotPage.exitPlanTitle', 'Exit Plan — {{ticker}}').replace('{{ticker}}', candidate.ticker)}</DialogTitle>
           <DialogDescription>{t('copilotPage.exitPlanDesc', 'Set your stop loss and take profit levels for this override trade.')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -130,8 +136,19 @@ const ExitPlanDialog = ({ open, onOpenChange, ticker, entryPrice }: {
             <Input type="number" step="0.01" value={tp} onChange={e => setTp(e.target.value)} className="font-mono" />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('copilotPage.close', 'Close')}</Button>
+          <Button
+            disabled={isSubmitting}
+            onClick={() => onConfirm(candidate)}
+            className="gap-1"
+          >
+            <Play className="h-3.5 w-3.5" />
+            {isAutoEligible
+              ? t('copilotPage.takeTrade', 'Take Trade')
+              : t('copilotPage.overrideTrade', 'Override & Trade')
+            }
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -144,7 +161,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const goToSymbol = useNavigateToDashboard();
   const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
   const { tradeWithGateCheck, isSubmitting } = usePaperTradeEntry();
-  const [exitPlan, setExitPlan] = useState<{ ticker: string; price: number } | null>(null);
+  const [exitCandidate, setExitCandidate] = useState<ScanningCandidate | null>(null);
 
   // Countdown to next scan (polls every 60s)
   const [countdown, setCountdown] = useState("1:00");
@@ -163,19 +180,18 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const shortlisted = candidates.filter(c => c.gate === "aligned").length;
   const topTicker = candidates[0]?.ticker ?? "—";
 
-  const handleTakeTrade = useCallback((c: ScanningCandidate) => {
+  const handleConfirmTrade = useCallback((c: ScanningCandidate) => {
     tradeWithGateCheck({
       ticker: c.ticker,
       setup_type: c.pattern,
       timeframe: c.timeframe,
       direction: c.direction ?? undefined,
-      entry_price: undefined, // uses simulated mid price
+      entry_price: undefined,
       gate_result: c.gate as "aligned" | "partial" | "conflict",
       gate_reason: c.reason,
       agent_score: c.score ?? undefined,
     });
-    // Show exit plan dialog after trade is submitted
-    setExitPlan({ ticker: c.ticker, price: 100 }); // placeholder price
+    setExitCandidate(null);
   }, [tradeWithGateCheck]);
 
   return (
@@ -303,7 +319,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           variant={isAutoEligible ? "default" : "outline"}
                           className="h-7 text-xs gap-1"
                           disabled={isSubmitting}
-                          onClick={() => handleTakeTrade(c)}
+                          onClick={() => setExitCandidate(c)}
                         >
                           <Play className="h-3 w-3" />
                           {isAutoEligible
@@ -327,15 +343,14 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
         </div>
       </ScrollArea>
 
-      {/* Exit Plan dialog after override */}
-      {exitPlan && (
-        <ExitPlanDialog
-          open={!!exitPlan}
-          onOpenChange={(o) => !o && setExitPlan(null)}
-          ticker={exitPlan.ticker}
-          entryPrice={exitPlan.price}
-        />
-      )}
+      {/* Exit Plan dialog with trade confirmation */}
+      <ExitPlanDialog
+        open={!!exitCandidate}
+        onOpenChange={(o) => !o && setExitCandidate(null)}
+        candidate={exitCandidate}
+        onConfirm={handleConfirmTrade}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };
