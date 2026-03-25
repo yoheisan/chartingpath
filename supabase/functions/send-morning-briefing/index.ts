@@ -168,12 +168,21 @@ Generate a JSON response with:
 
 Keep total content under 250 words (excluding labels). Be factual and reference exact data provided. Professional but approachable tone.`;
 
+  const defaultLabels: Record<string, string> = {
+    market_breadth: "Market Breadth", key_levels_label: "Key Levels", outlook_label: "Outlook",
+    portfolio: "Portfolio", paper_trades: "Paper Trades", watchlist_signals: "Watchlist Signals",
+    ai_verdicts: "AI Verdicts", open_dashboard: "Open Dashboard",
+    no_plan_title: "You haven't set up a Trading Plan yet",
+    no_plan_desc: "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing.",
+    create_plan: "Create Trading Plan",
+  };
+
   if (!GEMINI_API_KEY) {
-    // Fallback without AI
     return {
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
       briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`,
+      labels: defaultLabels,
     };
   }
 
@@ -183,7 +192,7 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 600, responseMimeType: "application/json" },
+        generationConfig: { maxOutputTokens: 800, responseMimeType: "application/json" },
       }),
     });
 
@@ -192,10 +201,11 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     const aiData = await aiRes.json();
     const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const parsed = JSON.parse(text);
+    const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
     const briefingHtml = `
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${language === "en" ? "Market Breadth" : "Market Breadth"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
             <span style="font-size:13px;color:#16a34a;font-weight:600;">▲ ${breadth.advances}</span>
@@ -207,11 +217,11 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
         </div>
       </div>
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${language === "en" ? "Key Levels" : "Key Levels"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${labels.key_levels_label}</p>
         <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.key_levels || ""}</p>
       </div>
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">🔮 ${language === "en" ? "Outlook" : "Outlook"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">🔮 ${labels.outlook_label}</p>
         <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.outlook || ""}</p>
       </div>`;
 
@@ -219,6 +229,7 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
       subject: parsed.subject || `☀️ Morning Briefing`,
       greeting: parsed.greeting || `Good morning, ${userName}`,
       briefingHtml,
+      labels,
     };
   } catch (err) {
     console.error("[morning-briefing] Gemini error:", err);
@@ -226,6 +237,7 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
       briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}).</p>`,
+      labels: defaultLabels,
     };
   }
 }
