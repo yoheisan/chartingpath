@@ -199,13 +199,17 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const shortlisted = candidates.filter(c => c.gate === "aligned").length;
   const topTicker = candidates[0]?.ticker ?? "—";
 
-  const handleConfirmTrade = useCallback((c: ScanningCandidate) => {
+  const positionPct = plan?.max_position_pct ?? 2;
+
+  const handleConfirmTrade = useCallback((c: ScanningCandidate, sl: number, tp: number) => {
     tradeWithGateCheck({
       ticker: c.ticker,
       setup_type: c.pattern,
       timeframe: c.timeframe,
       direction: c.direction ?? undefined,
-      entry_price: undefined,
+      entry_price: c.currentPrice ?? undefined,
+      stop_price: sl,
+      target_price: tp,
       gate_result: c.gate as "aligned" | "partial" | "conflict",
       gate_reason: c.reason,
       agent_score: c.score ?? undefined,
@@ -369,6 +373,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
         candidate={exitCandidate}
         onConfirm={handleConfirmTrade}
         isSubmitting={isSubmitting}
+        positionPct={positionPct}
       />
     </div>
   );
