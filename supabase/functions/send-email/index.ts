@@ -28,6 +28,10 @@ const EN_EMAILS: Record<string, Record<string, string>> = {
     footer: "You're receiving this because you signed up at chartingpath.com",
     dashboard: "Dashboard",
     screener: "Screener",
+    briefingTitle: "☀️ Get Your Morning Briefing",
+    briefingDesc: "Start each day with a personalized market summary — AI-generated market breadth, your portfolio status, watchlist signals, and top-rated setups delivered to your inbox.",
+    briefingCta: "Subscribe to Morning Briefing →",
+    briefingNote: "You're automatically subscribed! Manage your preferences anytime from Settings.",
   },
   gettingStarted: {
     subject: "Your first backtest takes 60 seconds ⚡",
@@ -39,6 +43,10 @@ const EN_EMAILS: Record<string, Record<string, string>> = {
     step4: "Hit Run — results in under 30 seconds",
     cta: "Run My First Backtest →",
     dashboard: "Dashboard",
+    briefingTitle: "📬 Your Morning Briefing is Ready",
+    briefingDesc: "Every morning, get a personalized market briefing with breadth analysis, paper trading performance, and AI-scored setups. Set up a Trading Plan to track your strategy's performance automatically.",
+    briefingCtaPlan: "Create Your Trading Plan →",
+    briefingCtaDashboard: "See Your Briefing →",
   },
 };
 
@@ -283,6 +291,15 @@ function buildWelcomeEmail(s: Record<string, string>, vars: Record<string, strin
             </td></tr>
           </table>
         </td></tr>
+        <!-- Morning Briefing CTA -->
+        <tr><td style="background-color:#fffbeb;padding:24px 32px;border:1px solid #fde68a;border-top:none;">
+          <h3 style="color:#0f172a;font-size:16px;margin:0 0 10px 0;">${i("briefingTitle")}</h3>
+          <p style="color:#475569;font-size:14px;line-height:1.5;margin:0 0 14px 0;">${i("briefingDesc")}</p>
+          <p style="color:#78716c;font-size:12px;font-style:italic;margin:0 0 12px 0;">${i("briefingNote")}</p>
+          <a href="https://chartingpath.com/members/dashboard" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+            ${i("briefingCta")}
+          </a>
+        </td></tr>
         <tr><td style="background-color:#f8fafc;padding:24px 32px;border-radius:0 0 12px 12px;text-align:center;">
           <p style="color:#94a3b8;font-size:13px;margin:0 0 8px 0;">${i("footer")}</p>
           <p style="margin:0;">
@@ -325,6 +342,19 @@ function buildGettingStartedEmail(s: Record<string, string>, vars: Record<string
           <a href="https://chartingpath.com/members/pattern-lab" style="display:inline-block;background-color:#f97316;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
             ${i("cta")}
           </a>
+        </td></tr>
+        <!-- Morning Briefing + Trading Plan CTA -->
+        <tr><td style="background-color:#eff6ff;padding:24px 32px;border:1px solid #bfdbfe;border-top:none;">
+          <h3 style="color:#0f172a;font-size:16px;margin:0 0 10px 0;">${i("briefingTitle")}</h3>
+          <p style="color:#475569;font-size:14px;line-height:1.5;margin:0 0 16px 0;">${i("briefingDesc")}</p>
+          <div>
+            <a href="https://chartingpath.com/members/copilot?action=new-plan" style="display:inline-block;background-color:#f97316;color:#ffffff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-right:10px;">
+              ${i("briefingCtaPlan")}
+            </a>
+            <a href="https://chartingpath.com/members/dashboard" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+              ${i("briefingCtaDashboard")}
+            </a>
+          </div>
         </td></tr>
         <tr><td style="background-color:#f8fafc;padding:20px 32px;border-radius:0 0 12px 12px;text-align:center;">
           <p style="color:#94a3b8;font-size:13px;margin:0;">

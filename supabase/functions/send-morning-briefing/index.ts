@@ -110,8 +110,9 @@ async function generateTranslatedBriefing(params: {
   closedTrades: any[];
   topVerdicts: any[];
   timezone: string;
-}): Promise<{ subject: string; greeting: string; briefingHtml: string }> {
-  const { language, region, userName, breadth, prices, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone } = params;
+  hasMasterPlan: boolean;
+}): Promise<{ subject: string; greeting: string; briefingHtml: string; labels: Record<string, string> }> {
+  const { language, region, userName, breadth, prices, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, hasMasterPlan } = params;
   const langName = languageName(language);
   const userTime = new Date().toLocaleString("en-US", { timeZone: timezone, dateStyle: "full", timeStyle: "short" });
 
@@ -152,15 +153,36 @@ Generate a JSON response with:
 3. "market_breadth_summary" - 2-3 sentences analyzing market breadth and sentiment for the ${region} reader. Reference actual numbers.
 4. "key_levels" - 2-3 sentences on key market levels/movers relevant to ${region}
 5. "outlook" - 1-2 sentences on what to watch in the upcoming session
+6. "labels" - An object with translated UI labels:
+   - "market_breadth": translation of "Market Breadth"
+   - "key_levels_label": translation of "Key Levels"
+   - "outlook_label": translation of "Outlook"
+   - "portfolio": translation of "Portfolio"
+   - "paper_trades": translation of "Paper Trades"
+   - "watchlist_signals": translation of "Watchlist Signals"
+   - "ai_verdicts": translation of "AI Verdicts"
+   - "open_dashboard": translation of "Open Dashboard"
+   ${!hasMasterPlan ? `- "no_plan_title": translation of "You haven't set up a Trading Plan yet"
+   - "no_plan_desc": translation of "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing."
+   - "create_plan": translation of "Create Trading Plan"` : ""}
 
-Keep total content under 250 words. Be factual and reference exact data provided. Professional but approachable tone.`;
+Keep total content under 250 words (excluding labels). Be factual and reference exact data provided. Professional but approachable tone.`;
+
+  const defaultLabels: Record<string, string> = {
+    market_breadth: "Market Breadth", key_levels_label: "Key Levels", outlook_label: "Outlook",
+    portfolio: "Portfolio", paper_trades: "Paper Trades", watchlist_signals: "Watchlist Signals",
+    ai_verdicts: "AI Verdicts", open_dashboard: "Open Dashboard",
+    no_plan_title: "You haven't set up a Trading Plan yet",
+    no_plan_desc: "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing.",
+    create_plan: "Create Trading Plan",
+  };
 
   if (!GEMINI_API_KEY) {
-    // Fallback without AI
     return {
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
       briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`,
+      labels: defaultLabels,
     };
   }
 
@@ -170,7 +192,7 @@ Keep total content under 250 words. Be factual and reference exact data provided
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 600, responseMimeType: "application/json" },
+        generationConfig: { maxOutputTokens: 800, responseMimeType: "application/json" },
       }),
     });
 
@@ -179,10 +201,11 @@ Keep total content under 250 words. Be factual and reference exact data provided
     const aiData = await aiRes.json();
     const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const parsed = JSON.parse(text);
+    const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
     const briefingHtml = `
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${language === "en" ? "Market Breadth" : "Market Breadth"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
             <span style="font-size:13px;color:#16a34a;font-weight:600;">▲ ${breadth.advances}</span>
@@ -194,11 +217,11 @@ Keep total content under 250 words. Be factual and reference exact data provided
         </div>
       </div>
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${language === "en" ? "Key Levels" : "Key Levels"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${labels.key_levels_label}</p>
         <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.key_levels || ""}</p>
       </div>
       <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">🔮 ${language === "en" ? "Outlook" : "Outlook"}</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">🔮 ${labels.outlook_label}</p>
         <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.outlook || ""}</p>
       </div>`;
 
@@ -206,6 +229,7 @@ Keep total content under 250 words. Be factual and reference exact data provided
       subject: parsed.subject || `☀️ Morning Briefing`,
       greeting: parsed.greeting || `Good morning, ${userName}`,
       briefingHtml,
+      labels,
     };
   } catch (err) {
     console.error("[morning-briefing] Gemini error:", err);
@@ -213,6 +237,7 @@ Keep total content under 250 words. Be factual and reference exact data provided
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
       briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}).</p>`,
+      labels: defaultLabels,
     };
   }
 }
@@ -269,12 +294,13 @@ serve(async (req) => {
         const { region } = getRelevantMarkets(tz);
 
         // Fetch user-specific data in parallel
-        const [watchlistRes, portfolioRes, openTradesRes, closedTradesRes, topScoresRes] = await Promise.all([
+        const [watchlistRes, portfolioRes, openTradesRes, closedTradesRes, topScoresRes, masterPlansRes] = await Promise.all([
           supabase.from("user_watchlist").select("symbol").eq("user_id", user_id),
           supabase.from("paper_portfolios").select("current_balance, total_pnl").eq("user_id", user_id).maybeSingle(),
           supabase.from("paper_trades").select("symbol, pnl, status").eq("user_id", user_id).eq("status", "open"),
           supabase.from("paper_trades").select("symbol, pnl, close_reason, outcome_r").eq("user_id", user_id).eq("status", "closed").gte("closed_at", new Date(Date.now() - 86400000).toISOString()).limit(5),
           supabase.from("agent_scores").select("instrument, detection_id, analyst_raw, risk_raw, timing_raw, portfolio_raw, is_proven, win_rate, expectancy_r").eq("is_proven", true).order("scored_at", { ascending: false }).limit(10),
+          supabase.from("master_plans").select("id").eq("user_id", user_id).eq("is_active", true).limit(1),
         ]);
 
         const watchlistSymbols = (watchlistRes.data || []).map((w: any) => w.symbol);
@@ -312,8 +338,10 @@ serve(async (req) => {
             .slice(0, 3);
         }
 
+        const hasMasterPlan = (masterPlansRes.data?.length ?? 0) > 0;
+
         // Generate translated briefing with market breadth via Gemini
-        const { subject, greeting, briefingHtml } = await generateTranslatedBriefing({
+        const { subject, greeting, briefingHtml, labels } = await generateTranslatedBriefing({
           language,
           region,
           userName: name,
@@ -325,6 +353,7 @@ serve(async (req) => {
           closedTrades: closedTradesRes.data || [],
           topVerdicts,
           timezone: tz,
+          hasMasterPlan,
         });
 
         // Build final email HTML
@@ -338,6 +367,8 @@ serve(async (req) => {
           topVerdicts,
           timezone: tz,
           language,
+          hasMasterPlan,
+          labels,
         });
 
         await resend.emails.send({
@@ -378,8 +409,10 @@ function buildFinalEmail(params: {
   topVerdicts: any[];
   timezone: string;
   language: string;
+  hasMasterPlan: boolean;
+  labels: Record<string, string>;
 }): string {
-  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language } = params;
+  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language, hasMasterPlan, labels } = params;
 
   const totalPnl = portfolio?.total_pnl ?? 0;
   const balance = portfolio?.current_balance ?? 100000;
@@ -451,7 +484,7 @@ function buildFinalEmail(params: {
 
       <!-- Portfolio Snapshot -->
       <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">💼 Portfolio</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">💼 ${labels.portfolio}</p>
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
           <div>
             <p style="margin:0;font-size:12px;color:#64748b;">Balance</p>
@@ -466,14 +499,14 @@ function buildFinalEmail(params: {
 
       <!-- Paper Trades -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 Paper Trades</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.paper_trades}</p>
         ${openTradesHtml}
         ${closedTradesHtml}
       </div>
 
       <!-- Watchlist Signals -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">👁️ Watchlist Signals</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">👁️ ${labels.watchlist_signals}</p>
         <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;">
           <thead>
             <tr style="background:#f8fafc;">
@@ -490,7 +523,7 @@ function buildFinalEmail(params: {
 
       <!-- Top AI Verdicts -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ AI Verdicts</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ ${labels.ai_verdicts}</p>
         <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;">
           <thead>
             <tr style="background:#f8fafc;">
@@ -505,10 +538,21 @@ function buildFinalEmail(params: {
         </table>
       </div>
 
+      ${!hasMasterPlan ? `
+      <!-- Master Plan Nudge -->
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">⚠️ ${labels.no_plan_title}</p>
+        <p style="margin:0 0 12px;font-size:13px;color:#78350f;line-height:1.5;">${labels.no_plan_desc}</p>
+        <a href="${APP_URL}/members/copilot?action=new-plan" style="display:inline-block;background:#f97316;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
+          ${labels.create_plan} →
+        </a>
+      </div>
+      ` : ""}
+
       <!-- CTA -->
       <div style="text-align:center;margin-top:28px;">
         <a href="${APP_URL}/members/dashboard" style="display:inline-block;background:#f97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
-          Open Dashboard →
+          ${labels.open_dashboard} →
         </a>
       </div>
     </div>
