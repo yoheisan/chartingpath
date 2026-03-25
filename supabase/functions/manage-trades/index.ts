@@ -160,14 +160,38 @@ Deno.serve(async (req) => {
       if (trade.master_plan_id) {
         const { data: plan } = await supabase
           .from("master_plans")
-          .select("trading_window_end")
+          .select("trading_window_end, trading_schedules, timezone, asset_classes")
           .eq("id", trade.master_plan_id)
           .maybeSingle();
 
-        if (plan?.trading_window_end) {
-          const now = new Date();
-          const hhmm = `${String(now.getUTCHours()).padStart(2, "0")}:${String(now.getUTCMinutes()).padStart(2, "0")}`;
-          if (hhmm > plan.trading_window_end) {
+        if (plan) {
+          const tz = plan.timezone || "America/New_York";
+          const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
+          const localDate = new Date(nowInTz);
+          const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
+          const dayOfWeek = localDate.getDay();
+          const schedules = (plan.trading_schedules as Record<string, any>) || {};
+          
+          // Map trade asset type to schedule key
+          const assetTypeMap: Record<string, string> = {
+            stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
+            crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
+          };
+          const tradeAssetType = (trade as any).asset_type;
+          const mapped = tradeAssetType ? (assetTypeMap[tradeAssetType.toLowerCase()] || tradeAssetType.toLowerCase()) : null;
+          const sched = mapped ? schedules[mapped] : null;
+
+          let shouldClose = false;
+          if (sched) {
+            if (!sched.is_247) {
+              if (sched.days && !sched.days.includes(dayOfWeek)) shouldClose = true;
+              else if (sched.end && hhmm > sched.end) shouldClose = true;
+            }
+          } else if (plan.trading_window_end && hhmm > plan.trading_window_end) {
+            shouldClose = true;
+          }
+
+          if (shouldClose) {
             await supabase
               .from("paper_trades")
               .update({
