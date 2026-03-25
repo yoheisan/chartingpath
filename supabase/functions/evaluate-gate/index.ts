@@ -169,18 +169,40 @@ serve(async (req) => {
         // This would require instrument metadata lookup
       }
 
-      // Trading window check
-      if (planData.trading_window_start && planData.trading_window_end) {
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      // Trading window check (per-asset schedule or legacy)
+      const schedules = (planData.trading_schedules as Record<string, any>) || {};
+      const tz = (planData.timezone as string) || "America/New_York";
+      const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
+      const localDate = new Date(nowInTz);
+      const currentTime = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
+      const dayOfWeek = localDate.getDay();
+
+      // Try to find asset-specific schedule
+      const assetTypeMap: Record<string, string> = {
+        stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
+        crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
+      };
+      const detectedAsset = (planData as any).asset_type_hint;
+      const mapped = detectedAsset ? (assetTypeMap[detectedAsset.toLowerCase()] || detectedAsset.toLowerCase()) : null;
+      const sched = mapped ? schedules[mapped] : null;
+
+      let outsideWindow = false;
+      if (sched) {
+        if (!sched.is_247) {
+          if (sched.days && !sched.days.includes(dayOfWeek)) outsideWindow = true;
+          else if (sched.start && sched.end && (currentTime < sched.start || currentTime > sched.end)) outsideWindow = true;
+        }
+      } else if (planData.trading_window_start && planData.trading_window_end) {
         const start = planData.trading_window_start as string;
         const end = planData.trading_window_end as string;
-        if (currentTime < start || currentTime > end) {
+        if (currentTime < start || currentTime > end) outsideWindow = true;
+      }
+
+      if (outsideWindow) {
           gateResult = stricterGate(gateResult, "partial");
           reasons.push(
-            `Current time is outside your trading window (${start}–${end})`
+            `Trading outside defined window`
           );
-        }
       }
     }
 
