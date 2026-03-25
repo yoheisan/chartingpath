@@ -158,9 +158,9 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     pageName: 'Copilot ACS',
     greeting: "Your Copilot desk. Set your mandate, review trades, or ask anything.",
     chips: [
-      { label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
-      { label: "Show today's paper trades", prompt: "Show today's paper trades" },
-      { label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
+      { labelKey: "copilot.panel.chipWhyFlag", label: "Why did Copilot flag that?", prompt: "Why did Copilot flag that?" },
+      { labelKey: "copilot.panel.chipShowPaperTrades", label: "Show today's paper trades", prompt: "Show today's paper trades" },
+      { labelKey: "copilot.panel.chipWhatWatching", label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
     ],
   },
   '/edge-atlas': {
