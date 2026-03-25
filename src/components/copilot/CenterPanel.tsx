@@ -70,6 +70,7 @@ const CopilotAvatar = () => (
 /* ═══ STATE 1 — SCANNING ═══ */
 const ScanningState = () => {
   const { t } = useTranslation();
+  const goToSymbol = useNavigateToDashboard();
   const candidates = [
     { ticker: 'NVDA', pattern: t('copilotPage.patternDonchianBreakoutLong', 'Donchian Breakout Long'), score: 76, gate: 'aligned', reason: t('copilotPage.reasonWaitingBreakout', 'Waiting for breakout confirmation') },
     { ticker: 'MSFT', pattern: t('copilotPage.patternAscendingTriangle', 'Ascending Triangle'), score: 72, gate: 'aligned', reason: t('copilotPage.reasonVolumeBelowThreshold', 'Volume below threshold — monitoring') },
@@ -97,7 +98,11 @@ const ScanningState = () => {
               <CardContent className="p-3 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono font-bold text-foreground">{c.ticker}</span>
+                    <span
+                      className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer transition-colors"
+                      onClick={(e) => goToSymbol(c.ticker, e)}
+                      title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
+                    >{c.ticker}</span>
                     <span className="text-sm text-muted-foreground">{c.pattern}</span>
                   </div>
                   <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-sm px-1.5 py-0 rounded font-medium">
