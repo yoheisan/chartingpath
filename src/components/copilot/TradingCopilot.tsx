@@ -894,7 +894,10 @@ export function TradingCopilot({
                       </Button>
                       <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
                         <span className="text-sm">{t('copilot.panel.updatePlan', 'Update your trading plan')}</span>
-                      </Button>
+                       </Button>
+                       <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => { setBuilderIsNewPlan(true); setShowBuilder(true); }} disabled={isLoading}>
+                        <span className="text-sm">{t('copilot.panel.addNewPlan', 'Add new trading plan')}</span>
+                       </Button>
                      </div>
                   )}
 
