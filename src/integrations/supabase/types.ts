@@ -5372,6 +5372,8 @@ export type Database = {
           milestone_20_seen: boolean | null
           milestone_5_seen: boolean | null
           milestone_50_seen: boolean | null
+          morning_briefing_enabled: boolean | null
+          timezone: string | null
           unsubscribed: boolean | null
           updated_at: string | null
           user_id: string
@@ -5387,6 +5389,8 @@ export type Database = {
           milestone_20_seen?: boolean | null
           milestone_5_seen?: boolean | null
           milestone_50_seen?: boolean | null
+          morning_briefing_enabled?: boolean | null
+          timezone?: string | null
           unsubscribed?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -5402,6 +5406,8 @@ export type Database = {
           milestone_20_seen?: boolean | null
           milestone_5_seen?: boolean | null
           milestone_50_seen?: boolean | null
+          morning_briefing_enabled?: boolean | null
+          timezone?: string | null
           unsubscribed?: boolean | null
           updated_at?: string | null
           user_id?: string

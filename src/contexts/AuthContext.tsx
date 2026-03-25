@@ -97,6 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     await supabase.from('user_email_preferences').upsert({
                       user_id: user.id,
                       welcome_sent: true,
+                      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     });
 
                     (window as any).gtag?.('event', 'sign_up', {
