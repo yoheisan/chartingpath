@@ -163,7 +163,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           score,
           gate,
           reason,
-          detectedAt: d.detected_at,
+          detectedAt: d.first_detected_at,
         };
       });
 
