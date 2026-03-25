@@ -484,7 +484,7 @@ function buildFinalEmail(params: {
 
       <!-- Portfolio Snapshot -->
       <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">💼 Portfolio</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">💼 ${labels.portfolio}</p>
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
           <div>
             <p style="margin:0;font-size:12px;color:#64748b;">Balance</p>
@@ -499,14 +499,14 @@ function buildFinalEmail(params: {
 
       <!-- Paper Trades -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 Paper Trades</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.paper_trades}</p>
         ${openTradesHtml}
         ${closedTradesHtml}
       </div>
 
       <!-- Watchlist Signals -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">👁️ Watchlist Signals</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">👁️ ${labels.watchlist_signals}</p>
         <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;">
           <thead>
             <tr style="background:#f8fafc;">
@@ -523,7 +523,7 @@ function buildFinalEmail(params: {
 
       <!-- Top AI Verdicts -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ AI Verdicts</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ ${labels.ai_verdicts}</p>
         <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;">
           <thead>
             <tr style="background:#f8fafc;">
@@ -541,10 +541,10 @@ function buildFinalEmail(params: {
       ${!hasMasterPlan ? `
       <!-- Master Plan Nudge -->
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">⚠️ ${language === "en" ? "You haven't set up a Trading Plan yet" : "Trading Plan"}</p>
-        <p style="margin:0 0 12px;font-size:13px;color:#78350f;line-height:1.5;">${language === "en" ? "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing." : "Set up your Trading Plan →"}</p>
+        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">⚠️ ${labels.no_plan_title}</p>
+        <p style="margin:0 0 12px;font-size:13px;color:#78350f;line-height:1.5;">${labels.no_plan_desc}</p>
         <a href="${APP_URL}/members/copilot?action=new-plan" style="display:inline-block;background:#f97316;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
-          ${language === "en" ? "Create Trading Plan →" : "Trading Plan →"}
+          ${labels.create_plan} →
         </a>
       </div>
       ` : ""}
@@ -552,7 +552,7 @@ function buildFinalEmail(params: {
       <!-- CTA -->
       <div style="text-align:center;margin-top:28px;">
         <a href="${APP_URL}/members/dashboard" style="display:inline-block;background:#f97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
-          Open Dashboard →
+          ${labels.open_dashboard} →
         </a>
       </div>
     </div>
