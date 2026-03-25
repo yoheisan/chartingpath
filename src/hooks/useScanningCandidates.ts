@@ -9,6 +9,8 @@ export interface ScanningCandidate {
   timeframe: string;
   direction: string | null;
   score: number | null;
+  qualityGrade: string | null; // A/B/C/D/F from pattern quality
+  verdict: string | null; // TAKE/WATCH/SKIP from agent scoring
   gate: string; // aligned | partial | conflict
   reason: string;
   detectedAt: string;
@@ -26,7 +28,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
       // 1. Fetch active live detections
       let query = supabase
         .from("live_pattern_detections" as any)
-        .select("id, instrument, pattern_name, timeframe, direction, current_price, asset_type, first_detected_at, status")
+        .select("id, instrument, pattern_name, timeframe, direction, current_price, asset_type, first_detected_at, status, quality_score")
         .eq("status", "active")
         .order("first_detected_at", { ascending: false })
         .limit(50);
@@ -154,6 +156,11 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           }
         }
 
+        // Derive verdict from composite score
+        const verdict = score != null
+          ? (score >= 0.70 ? 'TAKE' : score >= 0.50 ? 'WATCH' : 'SKIP')
+          : null;
+
         return {
           id: d.id,
           ticker: d.instrument,
@@ -161,6 +168,8 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           timeframe: d.timeframe || "",
           direction: d.direction,
           score,
+          qualityGrade: d.quality_score || null,
+          verdict,
           gate,
           reason,
           detectedAt: d.first_detected_at,
