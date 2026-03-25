@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
-import { useScanningCandidates } from '@/hooks/useScanningCandidates';
+import { useScanningCandidates, ScanningCandidate } from '@/hooks/useScanningCandidates';
+import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 import type { MasterPlan } from '@/hooks/useMasterPlan';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
