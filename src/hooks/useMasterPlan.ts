@@ -55,10 +55,22 @@ export function planToRules(plan: MasterPlan): MandateRule[] {
   if (plan.max_open_positions != null) {
     rules.push({ label: `${plan.max_open_positions}`, detail: "max open positions" });
   }
-  if (plan.trading_window_start && plan.trading_window_end) {
+  if (plan.trading_schedules && Object.keys(plan.trading_schedules).length > 0) {
+    const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    Object.entries(plan.trading_schedules).forEach(([asset, sched]) => {
+      const s = sched as AssetTradingSchedule;
+      if (s.is_247) {
+        rules.push({ label: `${asset} 24/7`, detail: "always trading" });
+      } else {
+        const dayNames = s.days.map(d => DAYS_SHORT[d]).join(", ");
+        const window = s.start && s.end ? `${s.start}–${s.end}` : "all day";
+        rules.push({ label: `${asset}: ${window}`, detail: dayNames });
+      }
+    });
+  } else if (plan.trading_window_start && plan.trading_window_end) {
     rules.push({
       label: `${plan.trading_window_start}–${plan.trading_window_end}`,
-      detail: "trading window",
+      detail: `trading window (${plan.timezone || "America/New_York"})`,
     });
   }
   if (plan.stop_loss_rule) {
