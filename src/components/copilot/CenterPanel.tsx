@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { useTranslation } from 'react-i18next';
 import TradeBlotter from './TradeBlotter';
 import { useNavigateToDashboard } from '@/hooks/useNavigateToDashboard';
@@ -139,16 +140,26 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       onClick={(e) => goToSymbol(c.ticker, e)}
                       title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
                     >{c.ticker}</span>
-                    <span className="text-sm text-muted-foreground">{c.pattern}</span>
+                    <span className="text-sm text-muted-foreground">{translatePatternName(c.pattern)}</span>
                     {c.timeframe && (
                       <span className="text-xs text-muted-foreground/60 font-mono">{c.timeframe}</span>
                     )}
                   </div>
-                  {c.score != null && (
-                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-sm px-1.5 py-0 rounded font-medium">
-                      {t('copilotPage.score', { score: Math.round(c.score) })}
-                    </Badge>
-                  )}
+                  {c.score != null && (() => {
+                    const s = Math.round(c.score);
+                    const grade = s >= 70 ? 'A' : s >= 50 ? 'B' : s >= 30 ? 'C' : 'D';
+                    const gradeColors: Record<string, string> = {
+                      A: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                      B: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                      C: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                      D: 'bg-red-500/20 text-red-400 border-red-500/30',
+                    };
+                    return (
+                      <Badge className={`${gradeColors[grade]} text-sm px-1.5 py-0 rounded font-medium`}>
+                        {grade}
+                      </Badge>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2">
                   <GateBadge result={c.gate} />
