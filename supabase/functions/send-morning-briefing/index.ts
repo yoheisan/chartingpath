@@ -3,8 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
 const FROM_EMAIL = "ChartingPath <hello@chartingpath.com>";
 const APP_URL = "https://chartingpath.lovable.app";
 
@@ -12,6 +14,208 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Map timezone to relevant markets
+function getRelevantMarkets(tz: string): { region: string; markets: string[]; description: string } {
+  if (tz.includes("Asia") || tz.includes("Tokyo") || tz.includes("Hong_Kong") || tz.includes("Singapore") || tz.includes("Shanghai") || tz.includes("Seoul")) {
+    return { region: "Asia-Pacific", markets: ["crypto", "asia"], description: "Asian session with US market recap" };
+  }
+  if (tz.includes("Europe") || tz.includes("London") || tz.includes("Paris") || tz.includes("Berlin") || tz.includes("Amsterdam")) {
+    return { region: "Europe", markets: ["forex", "europe", "stocks"], description: "European session with US market preview" };
+  }
+  if (tz.includes("Australia") || tz.includes("Sydney") || tz.includes("Melbourne")) {
+    return { region: "Oceania", markets: ["crypto", "asia", "commodities"], description: "Oceania session with global market recap" };
+  }
+  return { region: "Americas", markets: ["stocks", "forex", "crypto"], description: "US session with market outlook" };
+}
+
+// Map language codes to full names for Gemini
+function languageName(code: string): string {
+  const map: Record<string, string> = {
+    en: "English", es: "Spanish", fr: "French", de: "German", pt: "Portuguese",
+    it: "Italian", nl: "Dutch", ja: "Japanese", ko: "Korean", zh: "Chinese",
+    ar: "Arabic", hi: "Hindi", ru: "Russian", tr: "Turkish", pl: "Polish",
+    sv: "Swedish", th: "Thai",
+  };
+  return map[code] || "English";
+}
+
+async function fetchYahooQuote(symbol: string): Promise<number | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    return result?.meta?.regularMarketPrice || result?.meta?.previousClose || null;
+  } catch { return null; }
+}
+
+async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string }> {
+  const [adv, dec, vix] = await Promise.all([
+    fetchYahooQuote("^ADV"),
+    fetchYahooQuote("^DECL"),
+    fetchYahooQuote("^VIX"),
+  ]);
+
+  const advances = adv || 1650;
+  const declines = dec || 1350;
+  const ratio = declines > 0 ? advances / declines : 1;
+
+  let sentiment = "neutral";
+  if (ratio >= 1.5) sentiment = "bullish";
+  else if (ratio >= 1.0) sentiment = "neutral-bullish";
+  else if (ratio >= 0.67) sentiment = "neutral-bearish";
+  else sentiment = "bearish";
+
+  return { advances, declines, vix, sentiment };
+}
+
+async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
+  const symbols = [
+    { key: "SPY", sym: "SPY" },
+    { key: "QQQ", sym: "QQQ" },
+    { key: "BTC", sym: "BTC-USD" },
+    { key: "ETH", sym: "ETH-USD" },
+    { key: "EUR/USD", sym: "EURUSD=X" },
+    { key: "Gold", sym: "GC=F" },
+  ];
+
+  const results: Record<string, { price: number; change: string }> = {};
+  await Promise.all(symbols.map(async ({ key, sym }) => {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
+      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+      if (!res.ok) return;
+      const data = await res.json();
+      const meta = data?.chart?.result?.[0]?.meta;
+      const current = meta?.regularMarketPrice || 0;
+      const prev = meta?.previousClose || meta?.chartPreviousClose || current;
+      const pct = prev > 0 ? ((current - prev) / prev * 100).toFixed(2) : "0.00";
+      results[key] = { price: current, change: `${Number(pct) >= 0 ? "+" : ""}${pct}%` };
+    } catch { /* skip */ }
+  }));
+  return results;
+}
+
+async function generateTranslatedBriefing(params: {
+  language: string;
+  region: string;
+  userName: string;
+  breadth: { advances: number; declines: number; vix: number | null; sentiment: string };
+  prices: Record<string, { price: number; change: string }>;
+  watchlistSignals: any[];
+  portfolio: any;
+  openTrades: any[];
+  closedTrades: any[];
+  topVerdicts: any[];
+  timezone: string;
+}): Promise<{ subject: string; greeting: string; briefingHtml: string }> {
+  const { language, region, userName, breadth, prices, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone } = params;
+  const langName = languageName(language);
+  const userTime = new Date().toLocaleString("en-US", { timeZone: timezone, dateStyle: "full", timeStyle: "short" });
+
+  const pricesSummary = Object.entries(prices).map(([k, v]) => `${k}: $${v.price} (${v.change})`).join("\n");
+
+  const prompt = `You are a professional financial market analyst writing a morning briefing email.
+
+WRITE ENTIRELY IN ${langName.toUpperCase()}. Every word must be in ${langName}.
+
+Context:
+- Reader: ${userName}, located in ${region} (${timezone})
+- Local time: ${userTime}
+
+MARKET BREADTH DATA:
+- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
+- Advance/Decline Ratio: ${(breadth.advances / Math.max(breadth.declines, 1)).toFixed(2)}
+- VIX: ${breadth.vix ?? "N/A"}
+- Overall Sentiment: ${breadth.sentiment}
+
+MARKET PRICES:
+${pricesSummary}
+
+WATCHLIST SIGNALS (${watchlistSignals.length}):
+${watchlistSignals.length > 0 ? watchlistSignals.map(s => `${s.instrument} - ${s.pattern_name} (${s.direction}, ${s.timeframe})`).join("\n") : "None active"}
+
+PORTFOLIO:
+- Balance: $${(portfolio?.current_balance ?? 100000).toLocaleString()}
+- P&L: $${(portfolio?.total_pnl ?? 0).toFixed(2)}
+- Open trades: ${openTrades.length}
+- Recently closed: ${closedTrades.length}
+
+TOP AI VERDICTS:
+${topVerdicts.length > 0 ? topVerdicts.map((v: any) => `${v.instrument} (${v.patternName}) - Score: ${v.composite}, Win: ${v.winRate || "N/A"}%`).join("\n") : "None"}
+
+Generate a JSON response with:
+1. "subject" - Email subject line (include ☀️ emoji, date in reader's locale)
+2. "greeting" - Personal greeting for ${userName}
+3. "market_breadth_summary" - 2-3 sentences analyzing market breadth and sentiment for the ${region} reader. Reference actual numbers.
+4. "key_levels" - 2-3 sentences on key market levels/movers relevant to ${region}
+5. "outlook" - 1-2 sentences on what to watch in the upcoming session
+
+Keep total content under 250 words. Be factual and reference exact data provided. Professional but approachable tone.`;
+
+  if (!GEMINI_API_KEY) {
+    // Fallback without AI
+    return {
+      subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
+      greeting: `Good morning, ${userName}`,
+      briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`,
+    };
+  }
+
+  try {
+    const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 600, responseMimeType: "application/json" },
+      }),
+    });
+
+    if (!aiRes.ok) throw new Error(`Gemini error: ${aiRes.status}`);
+
+    const aiData = await aiRes.json();
+    const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const parsed = JSON.parse(text);
+
+    const briefingHtml = `
+      <div style="margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${language === "en" ? "Market Breadth" : "Market Breadth"}</p>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:#16a34a;font-weight:600;">▲ ${breadth.advances}</span>
+            <span style="font-size:13px;color:#dc2626;font-weight:600;">▼ ${breadth.declines}</span>
+            <span style="font-size:13px;color:#6b7280;">VIX: ${breadth.vix?.toFixed(1) ?? "N/A"}</span>
+            <span style="font-size:13px;font-weight:700;color:${breadth.sentiment.includes("bull") ? "#16a34a" : breadth.sentiment.includes("bear") ? "#dc2626" : "#6b7280"};">${breadth.sentiment.toUpperCase()}</span>
+          </div>
+          <p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary || ""}</p>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${language === "en" ? "Key Levels" : "Key Levels"}</p>
+        <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.key_levels || ""}</p>
+      </div>
+      <div style="margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">🔮 ${language === "en" ? "Outlook" : "Outlook"}</p>
+        <p style="font-size:13px;color:#374151;line-height:1.5;margin:0;">${parsed.outlook || ""}</p>
+      </div>`;
+
+    return {
+      subject: parsed.subject || `☀️ Morning Briefing`,
+      greeting: parsed.greeting || `Good morning, ${userName}`,
+      briefingHtml,
+    };
+  } catch (err) {
+    console.error("[morning-briefing] Gemini error:", err);
+    return {
+      subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
+      greeting: `Good morning, ${userName}`,
+      briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}).</p>`,
+    };
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,33 +226,58 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Get users who have opted into morning briefing emails
-    // For now, send to all users with email preferences who haven't unsubscribed
     const { data: users, error: usersErr } = await supabase
       .from("user_email_preferences")
-      .select("user_id")
-      .eq("unsubscribed", false);
+      .select("user_id, timezone, morning_briefing_enabled")
+      .eq("unsubscribed", false)
+      .eq("morning_briefing_enabled", true);
 
     if (usersErr) throw usersErr;
+    if (!users || users.length === 0) {
+      return new Response(JSON.stringify({ success: true, sent: 0, message: "No subscribers" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fetch market data once for all users
+    const [breadth, prices] = await Promise.all([
+      fetchMarketBreadth(),
+      fetchMarketPrices(),
+    ]);
+
+    console.log(`[morning-briefing] Processing ${users.length} subscribers. Breadth: ${breadth.sentiment}`);
 
     let sentCount = 0;
     let errorCount = 0;
 
-    for (const { user_id } of users || []) {
+    for (const { user_id, timezone: userTz } of users) {
       try {
-        // Get user email
-        const { data: authUser } = await supabase.auth.admin.getUserById(user_id);
+        const tz = userTz || "America/New_York";
+
+        // Get user email + language in parallel
+        const [authUserRes, langRes] = await Promise.all([
+          supabase.auth.admin.getUserById(user_id),
+          supabase.from("user_language_preferences").select("language_code").eq("user_id", user_id).maybeSingle(),
+        ]);
+
+        const authUser = authUserRes.data;
         if (!authUser?.user?.email) continue;
 
         const email = authUser.user.email;
         const name = authUser.user.user_metadata?.full_name || "Trader";
+        const language = langRes.data?.language_code || "en";
+        const { region } = getRelevantMarkets(tz);
 
-        // Fetch user's watchlist
-        const { data: watchlist } = await supabase
-          .from("user_watchlist")
-          .select("symbol")
-          .eq("user_id", user_id);
+        // Fetch user-specific data in parallel
+        const [watchlistRes, portfolioRes, openTradesRes, closedTradesRes, topScoresRes] = await Promise.all([
+          supabase.from("user_watchlist").select("symbol").eq("user_id", user_id),
+          supabase.from("paper_portfolios").select("current_balance, total_pnl").eq("user_id", user_id).maybeSingle(),
+          supabase.from("paper_trades").select("symbol, pnl, status").eq("user_id", user_id).eq("status", "open"),
+          supabase.from("paper_trades").select("symbol, pnl, close_reason, outcome_r").eq("user_id", user_id).eq("status", "closed").gte("closed_at", new Date(Date.now() - 86400000).toISOString()).limit(5),
+          supabase.from("agent_scores").select("instrument, detection_id, analyst_raw, risk_raw, timing_raw, portfolio_raw, is_proven, win_rate, expectancy_r").eq("is_proven", true).order("scored_at", { ascending: false }).limit(10),
+        ]);
 
-        const watchlistSymbols = (watchlist || []).map((w: any) => w.symbol);
+        const watchlistSymbols = (watchlistRes.data || []).map((w: any) => w.symbol);
 
         // Fetch watchlist signals
         let watchlistSignals: any[] = [];
@@ -62,49 +291,14 @@ serve(async (req) => {
           watchlistSignals = patterns || [];
         }
 
-        // Fetch paper trading portfolio
-        const { data: portfolio } = await supabase
-          .from("paper_portfolios")
-          .select("current_balance, total_pnl")
-          .eq("user_id", user_id)
-          .maybeSingle();
-
-        // Fetch open trades
-        const { data: openTrades } = await supabase
-          .from("paper_trades")
-          .select("symbol, pnl, status")
-          .eq("user_id", user_id)
-          .eq("status", "open");
-
-        // Fetch recently closed trades (last 24h)
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { data: closedTrades } = await supabase
-          .from("paper_trades")
-          .select("symbol, pnl, close_reason, outcome_r")
-          .eq("user_id", user_id)
-          .eq("status", "closed")
-          .gte("closed_at", yesterday)
-          .limit(5);
-
-        // Fetch top AI verdicts
-        const { data: topScores } = await supabase
-          .from("agent_scores")
-          .select("instrument, detection_id, analyst_raw, risk_raw, timing_raw, portfolio_raw, is_proven, win_rate, expectancy_r")
-          .eq("is_proven", true)
-          .order("scored_at", { ascending: false })
-          .limit(10);
-
+        // Build top verdicts
         let topVerdicts: any[] = [];
+        const topScores = topScoresRes.data;
         if (topScores && topScores.length > 0) {
           const ids = topScores.map((s: any) => s.detection_id);
           const { data: dets } = await supabase
-            .from("live_pattern_detections")
-            .select("id, pattern_name")
-            .in("id", ids)
-            .eq("status", "active");
-
+            .from("live_pattern_detections").select("id, pattern_name").in("id", ids).eq("status", "active");
           const detMap = new Map((dets || []).map((d: any) => [d.id, d.pattern_name]));
-
           topVerdicts = topScores
             .filter((s: any) => detMap.has(s.detection_id))
             .map((s: any) => ({
@@ -118,25 +312,44 @@ serve(async (req) => {
             .slice(0, 3);
         }
 
-        // Build email HTML
-        const html = buildBriefingEmail({
-          name,
+        // Generate translated briefing with market breadth via Gemini
+        const { subject, greeting, briefingHtml } = await generateTranslatedBriefing({
+          language,
+          region,
+          userName: name,
+          breadth,
+          prices,
           watchlistSignals,
-          portfolio,
-          openTrades: openTrades || [],
-          closedTrades: closedTrades || [],
+          portfolio: portfolioRes.data,
+          openTrades: openTradesRes.data || [],
+          closedTrades: closedTradesRes.data || [],
           topVerdicts,
+          timezone: tz,
+        });
+
+        // Build final email HTML
+        const html = buildFinalEmail({
+          greeting,
+          briefingHtml,
+          watchlistSignals,
+          portfolio: portfolioRes.data,
+          openTrades: openTradesRes.data || [],
+          closedTrades: closedTradesRes.data || [],
+          topVerdicts,
+          timezone: tz,
+          language,
         });
 
         await resend.emails.send({
           from: FROM_EMAIL,
           to: [email],
-          subject: `☀️ Your Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
+          subject,
           html,
         });
 
         sentCount++;
-      } catch (userErr) {
+        console.log(`[morning-briefing] ✓ Sent to ${email} (${language}, ${region})`);
+      } catch (userErr: any) {
         console.error(`[morning-briefing] Error for user ${user_id}:`, userErr);
         errorCount++;
       }
@@ -146,7 +359,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, sent: sentCount, errors: errorCount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("[morning-briefing] Fatal error:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
@@ -155,34 +368,43 @@ serve(async (req) => {
   }
 });
 
-interface BriefingData {
-  name: string;
+function buildFinalEmail(params: {
+  greeting: string;
+  briefingHtml: string;
   watchlistSignals: any[];
   portfolio: any;
   openTrades: any[];
   closedTrades: any[];
   topVerdicts: any[];
-}
-
-function buildBriefingEmail(data: BriefingData): string {
-  const { name, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts } = data;
+  timezone: string;
+  language: string;
+}): string {
+  const { greeting, briefingHtml, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, language } = params;
 
   const totalPnl = portfolio?.total_pnl ?? 0;
   const balance = portfolio?.current_balance ?? 100000;
   const pnlColor = totalPnl >= 0 ? "#10b981" : "#ef4444";
   const pnlSign = totalPnl >= 0 ? "+" : "";
 
+  const dateStr = new Date().toLocaleDateString(language === "en" ? "en-US" : language, {
+    timeZone: timezone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
   const signalsHtml = watchlistSignals.length > 0
     ? watchlistSignals.map((s: any) => `
         <tr>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${s.instrument}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${s.pattern_name}</td>
-          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;color:${s.direction === 'long' ? '#10b981' : '#ef4444'};">${s.direction === 'long' ? '▲ Long' : '▼ Short'}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;color:${s.direction === "long" ? "#10b981" : "#ef4444"};">${s.direction === "long" ? "▲ Long" : "▼ Short"}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${s.timeframe}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${(s.risk_reward_ratio || 0).toFixed(1)}</td>
         </tr>
       `).join("")
-    : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">No active signals on your watchlist today</td></tr>`;
+    : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">—</td></tr>`;
 
   const verdictsHtml = topVerdicts.length > 0
     ? topVerdicts.map((v: any) => `
@@ -190,23 +412,22 @@ function buildBriefingEmail(data: BriefingData): string {
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:600;">${v.instrument}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.patternName}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;color:#f97316;">${v.composite}</td>
-          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.winRate ? v.winRate + '%' : '—'}</td>
-          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.expectancyR ? v.expectancyR + 'R' : '—'}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.winRate ? v.winRate + "%" : "—"}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.expectancyR ? v.expectancyR + "R" : "—"}</td>
         </tr>
       `).join("")
-    : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">No proven signals today</td></tr>`;
+    : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">—</td></tr>`;
 
   const openTradesHtml = openTrades.length > 0
-    ? `<p style="font-size:13px;color:#555;">You have <strong>${openTrades.length}</strong> open position(s) being monitored.</p>`
-    : `<p style="font-size:13px;color:#888;">No open positions.</p>`;
+    ? `<p style="font-size:13px;color:#555;"><strong>${openTrades.length}</strong> open position(s)</p>`
+    : `<p style="font-size:13px;color:#888;">—</p>`;
 
   const closedTradesHtml = closedTrades.length > 0
-    ? `<p style="font-size:13px;color:#555;"><strong>${closedTrades.length}</strong> trade(s) closed in the last 24 hours:</p>
-       <ul style="padding-left:20px;margin:4px 0 0;">
+    ? `<ul style="padding-left:20px;margin:4px 0 0;">
          ${closedTrades.map((t: any) => {
            const pnl = t.pnl || 0;
-           const rMultiple = t.outcome_r ? ` (${t.outcome_r >= 0 ? '+' : ''}${t.outcome_r.toFixed(1)}R)` : '';
-           return `<li style="font-size:13px;color:${pnl >= 0 ? '#10b981' : '#ef4444'};margin-bottom:2px;">${t.symbol}: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}${rMultiple}</li>`;
+           const rMultiple = t.outcome_r ? ` (${t.outcome_r >= 0 ? "+" : ""}${t.outcome_r.toFixed(1)}R)` : "";
+           return `<li style="font-size:13px;color:${pnl >= 0 ? "#10b981" : "#ef4444"};margin-bottom:2px;">${t.symbol}: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}${rMultiple}</li>`;
          }).join("")}
        </ul>`
     : "";
@@ -220,11 +441,14 @@ function buildBriefingEmail(data: BriefingData): string {
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px 12px 0 0;padding:24px 28px;color:white;">
       <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">☀️ Morning Briefing</p>
-      <h1 style="margin:0;font-size:22px;font-weight:700;">Good morning, ${name}</h1>
-      <p style="margin:6px 0 0;font-size:13px;opacity:0.8;">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
+      <h1 style="margin:0;font-size:22px;font-weight:700;">${greeting}</h1>
+      <p style="margin:6px 0 0;font-size:13px;opacity:0.8;">${dateStr}</p>
     </div>
 
     <div style="background:white;padding:24px 28px;border-radius:0 0 12px 12px;">
+      <!-- AI-Generated Market Breadth + Outlook (translated) -->
+      ${briefingHtml}
+
       <!-- Portfolio Snapshot -->
       <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0;">
         <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">💼 Portfolio</p>
@@ -234,7 +458,7 @@ function buildBriefingEmail(data: BriefingData): string {
             <p style="margin:2px 0 0;font-size:18px;font-weight:700;">$${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
           </div>
           <div style="text-align:right;">
-            <p style="margin:0;font-size:12px;color:#64748b;">Total P&L</p>
+            <p style="margin:0;font-size:12px;color:#64748b;">P&L</p>
             <p style="margin:2px 0 0;font-size:18px;font-weight:700;color:${pnlColor};">${pnlSign}$${totalPnl.toFixed(2)}</p>
           </div>
         </div>
@@ -266,7 +490,7 @@ function buildBriefingEmail(data: BriefingData): string {
 
       <!-- Top AI Verdicts -->
       <div style="margin-bottom:24px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ Top AI Verdicts</p>
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">⚡ AI Verdicts</p>
         <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;">
           <thead>
             <tr style="background:#f8fafc;">
@@ -291,8 +515,7 @@ function buildBriefingEmail(data: BriefingData): string {
 
     <!-- Footer -->
     <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:16px;">
-      You're receiving this because you signed up at chartingpath.com.<br/>
-      <a href="${APP_URL}/settings" style="color:#94a3b8;">Manage email preferences</a>
+      ChartingPath · <a href="${APP_URL}/settings" style="color:#94a3b8;">Manage preferences</a>
     </p>
   </div>
 </body>
