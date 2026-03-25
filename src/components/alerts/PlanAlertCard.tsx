@@ -77,10 +77,10 @@ export function PlanAlertCard({ plans, selectedPlanId, onSelectPlan, planAlertCo
                 {t('planAlerts.lockedDescription')}
               </p>
               <div className="flex flex-wrap gap-2 items-center">
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-sm">
                   {t('planAlerts.tierStatus', { tier: tierName })}
                 </Badge>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {t('planAlerts.tierComparison')}
                 </span>
               </div>
@@ -177,22 +177,22 @@ export function PlanAlertCard({ plans, selectedPlanId, onSelectPlan, planAlertCo
             {(universeItems.length > 0 || patternItems.length > 0) && (
               <div className="flex flex-wrap gap-1">
                 {universeItems.slice(0, 4).map(item => (
-                  <Badge key={item} variant="secondary" className="text-[10px] px-1.5 py-0">
+                  <Badge key={item} variant="secondary" className="text-sm px-1.5 py-0">
                     {item}
                   </Badge>
                 ))}
                 {universeItems.length > 4 && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  <Badge variant="secondary" className="text-sm px-1.5 py-0">
                     +{universeItems.length - 4} {t('planAlerts.more')}
                   </Badge>
                 )}
                 {patternItems.map(p => (
-                  <Badge key={p} variant="outline" className="text-[10px] px-1.5 py-0">
+                  <Badge key={p} variant="outline" className="text-sm px-1.5 py-0">
                     {p}
                   </Badge>
                 ))}
                 {(selectedPlan.preferred_patterns?.length ?? 0) > 3 && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  <Badge variant="outline" className="text-sm px-1.5 py-0">
                     +{(selectedPlan.preferred_patterns?.length ?? 0) - 3}
                   </Badge>
                 )}

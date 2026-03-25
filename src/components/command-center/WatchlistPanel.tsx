@@ -279,11 +279,11 @@ export function WatchlistPanel({
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b px-2 h-8">
-          <TabsTrigger value="watchlist" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="watchlist" className="text-sm h-6 px-2">
             <Star className="h-3 w-3 mr-1" />
             {isPaidUser ? t('commandCenter.myList') : t('commandCenter.universe')}
           </TabsTrigger>
-          <TabsTrigger value="patterns" className="text-[13px] h-6 px-2">
+          <TabsTrigger value="patterns" className="text-sm h-6 px-2">
             <Activity className="h-3 w-3 mr-1" />
             {t('commandCenter.active')}
             {activePatterns.length > 0 && (
@@ -326,7 +326,7 @@ export function WatchlistPanel({
                       <InstrumentLogo instrument={item.symbol} size="sm" showName={false} />
                       <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                          <span className="text-[13px] font-medium truncate">{item.symbol}</span>
+                          <span className="text-sm font-medium truncate">{item.symbol}</span>
                           {isOutside && (
                             <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
                           )}
@@ -399,7 +399,7 @@ export function WatchlistPanel({
                     >
                       <div className="flex items-center gap-2">
                         <InstrumentLogo instrument={pattern.instrument} size="sm" showName={false} />
-                        <span className="text-[13px] font-medium">{pattern.instrument}</span>
+                        <span className="text-sm font-medium">{pattern.instrument}</span>
                         <Badge
                           variant="outline"
                           className={cn(

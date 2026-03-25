@@ -134,7 +134,7 @@ function ActivePatternsSection({
       <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 border-b border-border hover:bg-muted/30 transition-colors">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[13px] font-semibold">{t('commandCenter.activePatterns', { count: patterns.length })}</span>
+          <span className="text-sm font-semibold">{t('commandCenter.activePatterns', { count: patterns.length })}</span>
         </div>
         <ChevronDown className={cn(
           "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
@@ -187,7 +187,7 @@ function PatternRow({
           <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
         )}
         <div className="min-w-0">
-          <div className="font-medium text-[13px] truncate">
+          <div className="font-medium text-sm truncate">
             {PATTERN_DISPLAY_NAMES[p.pattern_name] || p.pattern_name}
           </div>
           <div className="text-muted-foreground flex items-center gap-1">

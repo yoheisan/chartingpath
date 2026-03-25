@@ -98,7 +98,7 @@ export function PeerComparison({ trades, sessions }: Props) {
       <div className="grid sm:grid-cols-3 gap-4">
         {comparisons.map(c => (
           <div key={c.label} className="border border-border/30 rounded-lg p-4 text-center">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-3">{c.label}</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wide mb-3">{c.label}</p>
             <div className="flex items-center justify-center gap-4 mb-3">
               <div>
                 <p className="text-xs text-muted-foreground">{t('report.you')}</p>

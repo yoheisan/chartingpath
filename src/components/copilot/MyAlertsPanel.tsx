@@ -172,14 +172,14 @@ export function MyAlertsPanel({ activePlan }: MyAlertsPanelProps) {
                     <Badge
                       key={a.id}
                       variant="outline"
-                      className="text-[11px] px-1.5 py-0 h-5 font-medium border border-primary/20 text-primary/80 truncate max-w-[80px]"
+                      className="text-sm px-1.5 py-0 h-5 font-medium border border-primary/20 text-primary/80 truncate max-w-[80px]"
                       title={`${a.pattern} · ${a.timeframe}`}
                     >
                       {a.pattern.replace(/_/g, ' ').slice(0, 10)}
                     </Badge>
                   ))}
                   {symbolAlerts.length > 2 && (
-                    <Badge variant="outline" className="text-[11px] px-1 py-0 h-5">
+                    <Badge variant="outline" className="text-sm px-1 py-0 h-5">
                       +{symbolAlerts.length - 2}
                     </Badge>
                   )}

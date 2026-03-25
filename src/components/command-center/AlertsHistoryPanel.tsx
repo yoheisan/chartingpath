@@ -203,7 +203,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect, activePlan, plans }
                     {getOutcomeIcon(outcome?.outcome_type)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium">{alert?.symbol}</span>
+                        <span className="text-sm font-medium">{alert?.symbol}</span>
                         <Badge variant="outline" className="text-xs px-1 py-0">
                           {alert?.timeframe}
                         </Badge>
@@ -221,7 +221,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect, activePlan, plans }
                       {outcome?.pnl_percentage !== null && outcome?.pnl_percentage !== undefined ? (
                         <span
                           className={cn(
-                            'text-[13px] font-medium',
+                            'text-sm font-medium',
                             outcome.pnl_percentage >= 0 ? 'text-emerald-500' : 'text-red-500'
                           )}
                         >
@@ -266,7 +266,7 @@ export function AlertsHistoryPanel({ userId, onSymbolSelect, activePlan, plans }
                       <Bell className="h-3 w-3 text-primary/60" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[13px] font-medium">{a.symbol}</span>
+                          <span className="text-sm font-medium">{a.symbol}</span>
                           <Badge variant="outline" className="text-xs px-1 py-0">
                             {a.timeframe}
                           </Badge>

@@ -728,16 +728,16 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                     updateSettings({ watchlistTab: tab });
                   }} className="h-full flex flex-col">
                     <TabsList className="w-full justify-start rounded-none border-b border-border/60 bg-transparent h-8 px-1.5 overflow-x-auto overflow-y-hidden scrollbar-none flex-nowrap">
-                      <TabsTrigger value="watchlist" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="watchlist" className="text-sm font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.watchlist')}
                       </TabsTrigger>
-                      <TabsTrigger value="alerts" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="alerts" className="text-sm font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('commandCenter.alerts')}
                       </TabsTrigger>
-                      <TabsTrigger value="forward" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="forward" className="text-sm font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         Forward
                       </TabsTrigger>
-                      <TabsTrigger value="briefing" className="text-[13px] font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
+                      <TabsTrigger value="briefing" className="text-sm font-semibold px-2 h-6 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none text-muted-foreground data-[state=active]:text-foreground">
                         {t('morningBriefing.tabLabel', 'Briefing')}
                       </TabsTrigger>
                     </TabsList>

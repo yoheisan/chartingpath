@@ -75,7 +75,7 @@ export function TimeOfDayHeatmap({ trades }: Props) {
               </span>
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                <div className="bg-popover border border-border rounded-md px-2 py-1.5 text-[10px] whitespace-nowrap shadow-lg">
+                <div className="bg-popover border border-border rounded-md px-2 py-1.5 text-sm whitespace-nowrap shadow-lg">
                   <p className="font-medium">{String(b.hour).padStart(2, '0')}:00</p>
                   <p>{t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}</p>
                 </div>

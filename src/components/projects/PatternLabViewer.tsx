@@ -802,7 +802,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                           <div className="flex items-center justify-between gap-4 mb-1">
                             <span className="text-sm text-muted-foreground">Equity</span>
                             <div className="text-right">
-                              <span className="text-[13px] font-semibold text-foreground">${equityVal.toFixed(2)}</span>
+                              <span className="text-sm font-semibold text-foreground">${equityVal.toFixed(2)}</span>
                               {roi != null && (
                                 <span className={`ml-1.5 text-sm font-medium ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                   {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
@@ -814,7 +814,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                         {ddVal != null && ddVal > 0 && (
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-sm text-muted-foreground">Drawdown</span>
-                            <span className="text-[13px] font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
+                            <span className="text-sm font-semibold text-red-400">-{(ddVal * 100).toFixed(2)}%</span>
                           </div>
                         )}
                       </div>
@@ -904,7 +904,7 @@ const PatternLabViewer = ({ artifact, runId, previousMetrics }: PatternLabViewer
                                     <p className="text-sm text-muted-foreground mb-1">
                                       {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </p>
-                                    <span className="text-[13px] font-semibold text-destructive">-{(ddVal * 100).toFixed(2)}%</span>
+                                    <span className="text-sm font-semibold text-destructive">-{(ddVal * 100).toFixed(2)}%</span>
                                   </div>
                                 ) : null;
                               }} />
