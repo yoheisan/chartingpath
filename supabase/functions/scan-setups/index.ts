@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // 1. Get all users with active master plans
     const { data: plans, error: planErr } = await supabase
       .from("master_plans")
-      .select("*")
+      .select("*, timezone")
       .eq("is_active", true);
 
     if (planErr || !plans?.length) {
@@ -35,10 +35,12 @@ Deno.serve(async (req) => {
     for (const plan of plans) {
       const userId = plan.user_id;
 
-      // 2. Check trading window
+      // 2. Check trading window (using plan's timezone, default America/New_York)
       if (plan.trading_window_start && plan.trading_window_end) {
-        const now = new Date();
-        const hhmm = `${String(now.getUTCHours()).padStart(2, "0")}:${String(now.getUTCMinutes()).padStart(2, "0")}`;
+        const tz = plan.timezone || "America/New_York";
+        const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
+        const localDate = new Date(nowInTz);
+        const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
         if (hhmm < plan.trading_window_start || hhmm > plan.trading_window_end) {
           continue;
         }
