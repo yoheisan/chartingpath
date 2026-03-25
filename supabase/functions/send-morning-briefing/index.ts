@@ -153,8 +153,20 @@ Generate a JSON response with:
 3. "market_breadth_summary" - 2-3 sentences analyzing market breadth and sentiment for the ${region} reader. Reference actual numbers.
 4. "key_levels" - 2-3 sentences on key market levels/movers relevant to ${region}
 5. "outlook" - 1-2 sentences on what to watch in the upcoming session
+6. "labels" - An object with translated UI labels:
+   - "market_breadth": translation of "Market Breadth"
+   - "key_levels_label": translation of "Key Levels"
+   - "outlook_label": translation of "Outlook"
+   - "portfolio": translation of "Portfolio"
+   - "paper_trades": translation of "Paper Trades"
+   - "watchlist_signals": translation of "Watchlist Signals"
+   - "ai_verdicts": translation of "AI Verdicts"
+   - "open_dashboard": translation of "Open Dashboard"
+   ${!hasMasterPlan ? `- "no_plan_title": translation of "You haven't set up a Trading Plan yet"
+   - "no_plan_desc": translation of "Create a Trading Plan to unlock automated paper trading, performance tracking, and personalized AI-scored signals in your daily briefing."
+   - "create_plan": translation of "Create Trading Plan"` : ""}
 
-Keep total content under 250 words. Be factual and reference exact data provided. Professional but approachable tone.`;
+Keep total content under 250 words (excluding labels). Be factual and reference exact data provided. Professional but approachable tone.`;
 
   if (!GEMINI_API_KEY) {
     // Fallback without AI
