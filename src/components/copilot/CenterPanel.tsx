@@ -155,7 +155,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       };
                       return (
                         <Badge className={`${verdictStyles[c.verdict] || ''} text-[10px] px-1.5 py-0 rounded font-semibold`}>
-                          {t(`agentScoring.verdict.${c.verdict.toLowerCase()}`, c.verdict)}
+                          {t(`agentScoring.${c.verdict.toLowerCase()}`, c.verdict)}
                         </Badge>
                       );
                     })()}
