@@ -110,8 +110,9 @@ async function generateTranslatedBriefing(params: {
   closedTrades: any[];
   topVerdicts: any[];
   timezone: string;
-}): Promise<{ subject: string; greeting: string; briefingHtml: string }> {
-  const { language, region, userName, breadth, prices, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone } = params;
+  hasMasterPlan: boolean;
+}): Promise<{ subject: string; greeting: string; briefingHtml: string; labels: Record<string, string> }> {
+  const { language, region, userName, breadth, prices, watchlistSignals, portfolio, openTrades, closedTrades, topVerdicts, timezone, hasMasterPlan } = params;
   const langName = languageName(language);
   const userTime = new Date().toLocaleString("en-US", { timeZone: timezone, dateStyle: "full", timeStyle: "short" });
 
