@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       user_id: user.id,
                       welcome_sent: true,
                       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                      morning_briefing_enabled: true,
                     });
 
                     (window as any).gtag?.('event', 'sign_up', {
