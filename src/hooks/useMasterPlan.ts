@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface AssetTradingSchedule {
+  is_247: boolean;
+  days: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+  start: string | null; // "HH:MM"
+  end: string | null;   // "HH:MM"
+}
+
+export type TradingSchedules = Record<string, AssetTradingSchedule>;
+
 export interface MasterPlan {
   id: string;
   name: string;
@@ -17,6 +26,7 @@ export interface MasterPlan {
   min_market_cap: string | null;
   is_active: boolean;
   plan_order: number;
+  timezone: string;
   // Advanced settings
   mtf_required_timeframes: string[];
   mtf_min_aligned: number | null;
@@ -28,6 +38,8 @@ export interface MasterPlan {
   fx_categories: string[];
   crypto_categories: string[];
   stock_exchanges: string[];
+  // Per-asset-class trading schedules
+  trading_schedules: TradingSchedules;
 }
 
 export interface MandateRule {
@@ -43,10 +55,22 @@ export function planToRules(plan: MasterPlan): MandateRule[] {
   if (plan.max_open_positions != null) {
     rules.push({ label: `${plan.max_open_positions}`, detail: "max open positions" });
   }
-  if (plan.trading_window_start && plan.trading_window_end) {
+  if (plan.trading_schedules && Object.keys(plan.trading_schedules).length > 0) {
+    const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    Object.entries(plan.trading_schedules).forEach(([asset, sched]) => {
+      const s = sched as AssetTradingSchedule;
+      if (s.is_247) {
+        rules.push({ label: `${asset} 24/7`, detail: "always trading" });
+      } else {
+        const dayNames = s.days.map(d => DAYS_SHORT[d]).join(", ");
+        const window = s.start && s.end ? `${s.start}–${s.end}` : "all day";
+        rules.push({ label: `${asset}: ${window}`, detail: dayNames });
+      }
+    });
+  } else if (plan.trading_window_start && plan.trading_window_end) {
     rules.push({
       label: `${plan.trading_window_start}–${plan.trading_window_end}`,
-      detail: "trading window",
+      detail: `trading window (${plan.timezone || "America/New_York"})`,
     });
   }
   if (plan.stop_loss_rule) {

@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2 } from "lucide-react";
+import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { MasterPlan } from "@/hooks/useMasterPlan";
+import type { MasterPlan, AssetTradingSchedule, TradingSchedules } from "@/hooks/useMasterPlan";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ── All 15 patterns ChartingPath detects ──
 const ALL_PATTERNS = [
@@ -32,11 +33,6 @@ const DIRECTION_OPTIONS = [
   { value: "long_only", label: "Long only" },
   { value: "short_only", label: "Short only" },
   { value: "both", label: "Both" },
-] as const;
-
-const WINDOW_PRESETS = [
-  { label: "Morning session 09:30–12:00", start: "09:30", end: "12:00" },
-  { label: "Full day 09:30–16:00", start: "09:30", end: "16:00" },
 ] as const;
 
 const EXCLUSION_OPTIONS = [
@@ -85,6 +81,53 @@ const TREND_CONTEXT_OPTIONS = [
   { value: "counter_trend", label: "Allow counter", desc: "More setups" },
 ] as const;
 
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Sun", short: "S" },
+  { value: 1, label: "Mon", short: "M" },
+  { value: 2, label: "Tue", short: "T" },
+  { value: 3, label: "Wed", short: "W" },
+  { value: 4, label: "Thu", short: "T" },
+  { value: 5, label: "Fri", short: "F" },
+  { value: 6, label: "Sat", short: "S" },
+] as const;
+
+const TIMEZONE_OPTIONS = [
+  { value: "America/New_York", label: "Eastern (ET)" },
+  { value: "America/Chicago", label: "Central (CT)" },
+  { value: "America/Denver", label: "Mountain (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific (PT)" },
+  { value: "Europe/London", label: "London (GMT/BST)" },
+  { value: "Europe/Paris", label: "Central Europe (CET)" },
+  { value: "Europe/Berlin", label: "Berlin (CET)" },
+  { value: "Europe/Zurich", label: "Zurich (CET)" },
+  { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+  { value: "Asia/Hong_Kong", label: "Hong Kong (HKT)" },
+  { value: "Asia/Singapore", label: "Singapore (SGT)" },
+  { value: "Asia/Shanghai", label: "Shanghai (CST)" },
+  { value: "Asia/Dubai", label: "Dubai (GST)" },
+  { value: "Asia/Kolkata", label: "India (IST)" },
+  { value: "Australia/Sydney", label: "Sydney (AEST)" },
+  { value: "Pacific/Auckland", label: "Auckland (NZST)" },
+  { value: "UTC", label: "UTC" },
+] as const;
+
+// Assets that naturally trade 24/7 or near 24/7
+const ALWAYS_AVAILABLE_ASSETS = new Set(["crypto", "forex"]);
+
+const DEFAULT_SCHEDULE: AssetTradingSchedule = {
+  is_247: false,
+  days: [1, 2, 3, 4, 5], // Mon-Fri
+  start: "09:30",
+  end: "16:00",
+};
+
+const DEFAULT_247_SCHEDULE: AssetTradingSchedule = {
+  is_247: true,
+  days: [0, 1, 2, 3, 4, 5, 6],
+  start: null,
+  end: null,
+};
+
 interface TradingPlanBuilderProps {
   existingPlan?: MasterPlan | null;
   onSaved: () => void;
@@ -105,9 +148,11 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Section 4 — Position limits
   const [maxPositions, setMaxPositions] = useState(3);
   // Section 5 — Trading window
+  const [timezone, setTimezone] = useState("America/New_York");
+  const [tradingSchedules, setTradingSchedules] = useState<TradingSchedules>({});
+  // Legacy fallback (used when no asset classes selected)
   const [windowStart, setWindowStart] = useState("09:30");
   const [windowEnd, setWindowEnd] = useState("16:00");
-  const [activePreset, setActivePreset] = useState<string | null>("Full day 09:30–16:00");
   // Instrument universe
   const [assetClasses, setAssetClasses] = useState<string[]>([]);
   const [stockExchanges, setStockExchanges] = useState<string[]>([]);
@@ -145,11 +190,17 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     if (existingPlan.max_open_positions != null) {
       setMaxPositions(existingPlan.max_open_positions);
     }
+    if (existingPlan.timezone) {
+      setTimezone(existingPlan.timezone);
+    }
     if (existingPlan.trading_window_start) {
       setWindowStart(existingPlan.trading_window_start);
     }
     if (existingPlan.trading_window_end) {
       setWindowEnd(existingPlan.trading_window_end);
+    }
+    if (existingPlan.trading_schedules && Object.keys(existingPlan.trading_schedules).length > 0) {
+      setTradingSchedules(existingPlan.trading_schedules);
     }
     if (existingPlan.excluded_conditions?.length) {
       setExclusions(existingPlan.excluded_conditions);
@@ -189,11 +240,6 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     if (existingPlan.crypto_categories?.length) {
       setCryptoCategories(existingPlan.crypto_categories);
     }
-    // Check if window matches a preset
-    const matchedPreset = WINDOW_PRESETS.find(
-      p => p.start === existingPlan.trading_window_start && p.end === existingPlan.trading_window_end
-    );
-    setActivePreset(matchedPreset?.label ?? "Custom");
   }, [existingPlan]);
 
   const togglePattern = (p: string) => {
@@ -215,6 +261,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       if (!next.includes("stocks")) setStockExchanges([]);
       if (!next.includes("forex")) setFxCategories([]);
       if (!next.includes("crypto")) setCryptoCategories([]);
+      // Auto-create schedule for newly added asset class
+      if (!prev.includes(ac) && next.includes(ac)) {
+        setTradingSchedules(s => ({
+          ...s,
+          [ac]: ALWAYS_AVAILABLE_ASSETS.has(ac) ? { ...DEFAULT_247_SCHEDULE } : { ...DEFAULT_SCHEDULE },
+        }));
+      }
+      // Remove schedule when asset class removed
+      if (prev.includes(ac) && !next.includes(ac)) {
+        setTradingSchedules(s => {
+          const copy = { ...s };
+          delete copy[ac];
+          return copy;
+        });
+      }
       return next;
     });
   };
@@ -229,6 +290,23 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
   const toggleCryptoCategory = (cat: string) => {
     setCryptoCategories(prev => prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]);
+  };
+
+  const updateSchedule = (asset: string, updates: Partial<AssetTradingSchedule>) => {
+    setTradingSchedules(prev => ({
+      ...prev,
+      [asset]: { ...(prev[asset] || DEFAULT_SCHEDULE), ...updates },
+    }));
+  };
+
+  const toggleScheduleDay = (asset: string, day: number) => {
+    setTradingSchedules(prev => {
+      const current = prev[asset] || DEFAULT_SCHEDULE;
+      const days = current.days.includes(day)
+        ? current.days.filter(d => d !== day)
+        : [...current.days, day].sort();
+      return { ...prev, [asset]: { ...current, days } };
+    });
   };
 
   const exampleRisk = useMemo(() => {
@@ -266,8 +344,12 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       if (fxCategories.length) universe += ` FX: ${fxCategories.join(", ")}.`;
       if (cryptoCategories.length) universe += ` Crypto: ${cryptoCategories.join(", ")}.`;
     }
-    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time, between ${windowStart} and ${windowEnd}.${excl}${adv}${universe}`;
-  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories]);
+    const tzLabel = TIMEZONE_OPTIONS.find(t => t.value === timezone)?.label || timezone;
+    const windowInfo = assetClasses.length > 0
+      ? ` Per-asset schedules in ${tzLabel}.`
+      : ` Trading ${windowStart}–${windowEnd} ${tzLabel}.`;
+    return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time.${windowInfo}${excl}${adv}${universe}`;
+  }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories, timezone]);
 
   const canSave = selectedPatterns.length > 0;
 
@@ -278,8 +360,10 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Build the raw NL summary for the record
-      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Window: ${windowStart}–${windowEnd}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}${assetClasses.length ? ` Universe: ${assetClasses.join(", ")}.` : ""}`;
+      const rawNl = `Patterns: ${selectedPatterns.join(", ")}. Direction: ${direction}. Risk: ${riskPct}%. Max positions: ${maxPositions}. Timezone: ${timezone}.${exclusions.length ? ` Exclude: ${exclusions.join(", ")}.` : ""}${mtfTimeframes.length ? ` MTF: ${mtfMinAligned}/${mtfTimeframes.length} aligned.` : ""}${agentScoreEnabled ? ` Agent≥${minAgentScore}.` : ""}${trendContext !== "any" ? ` ${trendContext}.` : ""}${confluenceEnabled ? ` Confluence≥${minConfluence}%.` : ""}${assetClasses.length ? ` Universe: ${assetClasses.join(", ")}.` : ""}`;
+
+      // Determine effective window from schedules or fallback
+      const hasSchedules = assetClasses.length > 0 && Object.keys(tradingSchedules).length > 0;
 
       const planData = {
         user_id: user.id,
@@ -288,8 +372,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         raw_nl_input: rawNl,
         max_position_pct: riskPct,
         max_open_positions: maxPositions,
-        trading_window_start: windowStart,
-        trading_window_end: windowEnd,
+        trading_window_start: hasSchedules ? null : windowStart,
+        trading_window_end: hasSchedules ? null : windowEnd,
+        timezone,
         stop_loss_rule: "2R",
         excluded_conditions: exclusions,
         preferred_patterns: selectedPatterns,
@@ -305,17 +390,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         fx_categories: fxCategories,
         crypto_categories: cryptoCategories,
         stock_exchanges: stockExchanges,
+        trading_schedules: hasSchedules ? tradingSchedules : {},
       } as any;
 
       let error;
       if (existingPlan && !isNewPlan) {
-        // Update existing plan
         ({ error } = await supabase
           .from("master_plans" as any)
           .update(planData)
           .eq("id", existingPlan.id));
       } else {
-        // Insert new plan
         ({ error } = await supabase
           .from("master_plans" as any)
           .insert(planData));
@@ -579,64 +663,151 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </p>
         </section>
 
-        {/* ── Section 5: Trading window ── */}
-        <section className="space-y-2">
+        {/* ── Section 5: Trading Window & Timezone ── */}
+        <section className="space-y-3">
           <h4 className="text-sm font-semibold text-foreground">When should Copilot scan for trades?</h4>
-          <p className="text-xs text-muted-foreground">Copilot only enters trades during this window. All open trades close at the end.</p>
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {WINDOW_PRESETS.map(preset => (
-              <button
-                key={preset.label}
-                onClick={() => {
-                  setWindowStart(preset.start);
-                  setWindowEnd(preset.end);
-                  setActivePreset(preset.label);
-                }}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border",
-                  activePreset === preset.label
-                    ? "bg-primary/15 border-primary/40 text-primary"
-                    : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
-                )}
-              >
-                {preset.label}
-              </button>
-            ))}
-            <button
-              onClick={() => setActivePreset("Custom")}
-              className={cn(
-                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border",
-                activePreset === "Custom"
-                  ? "bg-primary/15 border-primary/40 text-primary"
-                  : "bg-muted/40 border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
-              )}
-            >
-              Custom
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
-              <input
-                type="time"
-                value={windowStart}
-                onChange={e => { setWindowStart(e.target.value); setActivePreset("Custom"); }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
+          
+          {/* Timezone selector */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Timezone</span>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">End time</label>
-              <input
-                type="time"
-                value={windowEnd}
-                onChange={e => { setWindowEnd(e.target.value); setActivePreset("Custom"); }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONE_OPTIONS.map(tz => (
+                  <SelectItem key={tz.value} value={tz.value} className="text-xs">
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <p className="text-xs text-muted-foreground/70">
-            Trades opened during this window are automatically closed at {windowEnd} if still open
-          </p>
+
+          {/* Per-asset-class schedules (when asset classes are selected) */}
+          {assetClasses.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Configure trading hours per asset class. Crypto and FX can trade 24/7.</p>
+              {assetClasses.map(ac => {
+                const schedule = tradingSchedules[ac] || (ALWAYS_AVAILABLE_ASSETS.has(ac) ? DEFAULT_247_SCHEDULE : DEFAULT_SCHEDULE);
+                const acLabel = ASSET_CLASS_OPTIONS.find(o => o.value === ac)?.label || ac;
+                return (
+                  <div key={ac} className="rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-xs font-semibold text-foreground">{acLabel}</h5>
+                      {ALWAYS_AVAILABLE_ASSETS.has(ac) && (
+                        <button
+                          onClick={() => updateSchedule(ac, {
+                            is_247: !schedule.is_247,
+                            ...(schedule.is_247 ? { days: [1, 2, 3, 4, 5], start: "00:00", end: "23:59" } : { days: [0, 1, 2, 3, 4, 5, 6], start: null, end: null }),
+                          })}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all border",
+                            schedule.is_247
+                              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                              : "bg-muted/40 border-border/50 text-muted-foreground"
+                          )}
+                        >
+                          {schedule.is_247 ? "24/7 ON" : "24/7 OFF"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Day of week selector */}
+                    <div className="space-y-1">
+                      <span className="text-[11px] text-muted-foreground">Trading days</span>
+                      <div className="flex gap-1">
+                        {DAYS_OF_WEEK.map(day => {
+                          const active = schedule.days.includes(day.value);
+                          return (
+                            <button
+                              key={day.value}
+                              onClick={() => toggleScheduleDay(ac, day.value)}
+                              className={cn(
+                                "h-7 w-7 rounded-md text-[10px] font-semibold transition-all border",
+                                active
+                                  ? "bg-primary/15 border-primary/40 text-primary"
+                                  : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
+                              )}
+                              title={day.label}
+                            >
+                              {day.label.charAt(0)}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => {
+                            const allDays = [0, 1, 2, 3, 4, 5, 6];
+                            const weekdays = [1, 2, 3, 4, 5];
+                            const isAll = schedule.days.length === 7;
+                            updateSchedule(ac, { days: isAll ? weekdays : allDays });
+                          }}
+                          className="ml-1 px-1.5 h-7 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
+                        >
+                          {schedule.days.length === 7 ? "Weekdays" : "All"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Time window (hidden when 24/7) */}
+                    {!schedule.is_247 && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground mb-1 block">Start</label>
+                          <input
+                            type="time"
+                            value={schedule.start || "09:30"}
+                            onChange={e => updateSchedule(ac, { start: e.target.value })}
+                            className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-muted-foreground mb-1 block">End</label>
+                          <input
+                            type="time"
+                            value={schedule.end || "16:00"}
+                            onChange={e => updateSchedule(ac, { end: e.target.value })}
+                            className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Legacy global window when no asset classes selected */
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Copilot only enters trades during this window. All open trades close at the end.</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
+                  <input
+                    type="time"
+                    value={windowStart}
+                    onChange={e => setWindowStart(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">End time</label>
+                  <input
+                    type="time"
+                    value={windowEnd}
+                    onChange={e => setWindowEnd(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground/70">
+                Trades opened during this window are automatically closed at {windowEnd} if still open
+              </p>
+            </div>
+          )}
         </section>
 
         {/* ── Section 6: Exclusions ── */}

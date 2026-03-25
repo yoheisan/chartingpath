@@ -34,13 +34,43 @@ Deno.serve(async (req) => {
 
     for (const plan of plans) {
       const userId = plan.user_id;
+      const tz = plan.timezone || "America/New_York";
+      const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
+      const localDate = new Date(nowInTz);
+      const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
+      const dayOfWeek = localDate.getDay(); // 0=Sun, 6=Sat
 
-      // 2. Check trading window (using plan's timezone, default America/New_York)
-      if (plan.trading_window_start && plan.trading_window_end) {
-        const tz = plan.timezone || "America/New_York";
-        const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
-        const localDate = new Date(nowInTz);
-        const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
+      // Helper: check if trading is allowed for a given asset type
+      const schedules = (plan.trading_schedules as Record<string, any>) || {};
+      const isAssetTradable = (assetType: string | null): boolean => {
+        if (!assetType) {
+          // Fallback to legacy window
+          if (plan.trading_window_start && plan.trading_window_end) {
+            return hhmm >= plan.trading_window_start && hhmm <= plan.trading_window_end;
+          }
+          return true;
+        }
+        const assetTypeMap: Record<string, string> = {
+          stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
+          crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
+        };
+        const mapped = assetTypeMap[assetType.toLowerCase()] || assetType.toLowerCase();
+        const sched = schedules[mapped];
+        if (sched) {
+          if (sched.is_247) return true;
+          if (sched.days && !sched.days.includes(dayOfWeek)) return false;
+          if (sched.start && sched.end) return hhmm >= sched.start && hhmm <= sched.end;
+          return true;
+        }
+        // No per-asset schedule — use legacy window
+        if (plan.trading_window_start && plan.trading_window_end) {
+          return hhmm >= plan.trading_window_start && hhmm <= plan.trading_window_end;
+        }
+        return true;
+      };
+
+      // If no schedules and legacy window is set, check it globally
+      if (Object.keys(schedules).length === 0 && plan.trading_window_start && plan.trading_window_end) {
         if (hhmm < plan.trading_window_start || hhmm > plan.trading_window_end) {
           continue;
         }
@@ -77,6 +107,11 @@ Deno.serve(async (req) => {
 
       for (const det of detections) {
         totalScanned++;
+
+        // Check if this asset is tradable right now based on schedule
+        if (!isAssetTradable(det.asset_type)) {
+          continue;
+        }
 
         // Check if already have open trade on this symbol
         const { data: existing } = await supabase
