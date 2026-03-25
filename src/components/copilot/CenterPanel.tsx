@@ -385,7 +385,7 @@ const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, o
     if (state === 'active' && activeTrade) {
       return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
     }
-    return <ScanningState />;
+    return <ScanningState plan={activePlan} />;
   })();
 
   return (

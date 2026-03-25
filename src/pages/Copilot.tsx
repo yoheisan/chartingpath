@@ -194,6 +194,7 @@ const Copilot = () => {
             onFocusNLBar={focusNLBar}
             openTrades={openTrades}
             selectedTradeId={selectedTradeId}
+            activePlan={activePlan}
             onSelectTrade={(id) => {
               setSelectedClosedTrade(null);
               setSelectedTradeId(id);
