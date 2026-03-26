@@ -87,14 +87,22 @@ Deno.serve(async (req) => {
       if ((openCount ?? 0) >= maxOpen) continue;
 
       // 4. Get candidate setups from live detections
-      const { data: detections } = await supabase
+      const { data: detections, error: detErr } = await supabase
         .from("live_pattern_detections")
         .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
         .eq("status", "active")
-        .order("detected_at", { ascending: false })
+        .order("first_detected_at", { ascending: false })
         .limit(20);
 
-      if (!detections?.length) continue;
+      if (detErr) {
+        console.error(`[scan-setups] Detection query error for user ${userId}:`, detErr);
+        continue;
+      }
+      if (!detections?.length) {
+        console.log(`[scan-setups] No active detections found for user ${userId}`);
+        continue;
+      }
+      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name}`);
 
       // 5. Get user's portfolio
       const { data: portfolio } = await supabase
