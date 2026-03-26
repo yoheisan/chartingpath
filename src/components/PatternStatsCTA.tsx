@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Zap, FlaskConical, Bell } from 'lucide-react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 
 interface PatternStatsCTAProps {
   patternId: string;
@@ -56,9 +57,7 @@ export function PatternStatsCTA({ patternId, patternName, instrument }: PatternS
   }
 
   // Authenticated user — drive product usage
-  const backtestUrl = instrument
-    ? `/projects/pattern-lab/new?pattern=${patternId}&instrument=${instrument}`
-    : `/projects/pattern-lab/new?pattern=${patternId}`;
+  const backtestUrl = buildPatternLabUrl({ pattern: patternId, instrument });
 
   return (
     <section className="rounded-2xl border border-border/40 bg-gradient-to-br from-accent/30 via-card/60 to-transparent p-6 sm:p-8 mb-10">

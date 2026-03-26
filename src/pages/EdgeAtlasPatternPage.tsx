@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -150,7 +151,7 @@ export default function EdgeAtlasPatternPage() {
   };
 
   const handleValidate = (symbol: string) => {
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&instrument=${encodeURIComponent(symbol)}`, {
+    navigate(buildPatternLabUrl({ pattern: patternId!, timeframe, mode: 'validate', instrument: symbol }), {
       state: { backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
     });
   };
