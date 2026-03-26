@@ -9,7 +9,50 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info, Bot } from 'lucide-react';
 import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
 import { buildPatternLabUrl } from '@/utils/patternLabUrl';
-...
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import InstrumentLogo from '@/components/charts/InstrumentLogo';
+import { GradeBadge } from '@/components/ui/GradeBadge';
+import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+
+interface LiveSetup {
+  instrument: string;
+  patternId: string;
+  patternName: string;
+  direction: string;
+  quality: string;
+  signalTs: string;
+  historicalPerformance?: {
+    winRate?: number;
+    sampleSize?: number;
+    avgRMultiple?: number;
+    avgDurationBars?: number;
+  };
+}
+
+function formatSignalAgeSimple(ts: string): string {
+  const diff = Date.now() - new Date(ts).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return '<1h';
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+interface TeaserSignalsTableProps {
+  patterns: LiveSetup[];
+  onOpenChart?: (setup: LiveSetup) => void;
+}
+
+export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTableProps) {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const handleScreen = (e: React.MouseEvent, setup: LiveSetup) => {
+    e.stopPropagation();
+    navigate(`/patterns/live?search=${encodeURIComponent(setup.instrument)}`);
+  };
+
   const handleValidate = (e: React.MouseEvent, setup: LiveSetup) => {
     e.stopPropagation();
     navigate(buildPatternLabUrl({ pattern: setup.patternId, instrument: setup.instrument, mode: 'validate' }));
