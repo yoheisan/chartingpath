@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3, Bell, FileText, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
@@ -58,15 +59,14 @@ export function MobileCopilotLayout({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<MobileTab>("trades");
 
+  const copilot = useTradingCopilotContext();
+
   const handleChatTab = useCallback(() => {
-    // Open the floating command palette instead of rendering inline
-    const event = new KeyboardEvent("keydown", {
-      key: "k",
-      metaKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-  }, []);
+    // Open the floating Copilot chat panel
+    if (!copilot.isOpen) {
+      copilot.toggle();
+    }
+  }, [copilot]);
 
   const handleTabChange = useCallback(
     (tab: MobileTab) => {
