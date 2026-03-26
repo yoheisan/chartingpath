@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Camera, Video, Square, Mic, MicOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +18,13 @@ import { Switch } from '@/components/ui/switch';
 import { useMediaCapture, CaptureResult } from '@/hooks/useMediaCapture';
 import { CaptureShareDialog } from './CaptureShareDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const CaptureButton = () => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
+  const location = useLocation();
   const {
     isCapturing,
     isRecording,
@@ -73,6 +77,9 @@ export const CaptureButton = () => {
 
   // Don't show for unauthenticated users
   if (!isAuthenticated) return null;
+
+  // Don't show on mobile copilot page (overlaps bottom tab bar)
+  if (isMobile && location.pathname.startsWith('/copilot')) return null;
 
 
   // Recording mode UI
