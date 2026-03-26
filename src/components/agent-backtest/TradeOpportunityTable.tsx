@@ -97,7 +97,15 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
     ? Math.min(5, Math.log2(sampleSize / MIN_SAMPLE + 1) * 2)
     : Math.min(5, Math.log2(sampleSize / MIN_SAMPLE + 1) * 2) * 0.5;
   // Normalise to 0–1 (max possible = 25)
-  const analystRaw = Math.min(1, (winRateScore + expectancyScore + confidenceScore) / 25);
+  let analystRaw = Math.min(1, (winRateScore + expectancyScore + confidenceScore) / 25);
+
+  // Discount fallback sources so data-poor instruments rank lower
+  // (matches server-side score-agent-detections discount)
+  if (sampleSize < 5) {
+    analystRaw *= 0.40; // bayesian prior equivalent
+  } else if (sampleSize < 15) {
+    analystRaw *= 0.65; // pattern aggregate equivalent
+  }
 
   // Risk: 3-component score matching RiskAgent engine logic
   const MIN_RR = 1.5;
