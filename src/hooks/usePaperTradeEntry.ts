@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-interface TradeEntryParams {
+export interface TradeEntryParams {
   ticker: string;
   setup_type?: string;
   timeframe?: string;
@@ -15,6 +15,12 @@ interface TradeEntryParams {
   gate_reason?: string;
   gate_evaluation_id?: string;
   agent_score?: number;
+}
+
+export interface PendingConflictTrade {
+  params: TradeEntryParams;
+  label: string;
+  reason: string;
 }
 
 export function usePaperTradeEntry() {
