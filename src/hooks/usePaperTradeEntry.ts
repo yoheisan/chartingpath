@@ -26,6 +26,7 @@ export interface PendingConflictTrade {
 export function usePaperTradeEntry() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingConflict, setPendingConflict] = useState<PendingConflictTrade | null>(null);
 
   const enterTrade = useCallback(
     async (params: TradeEntryParams, attribution: "ai_approved" | "human_overwrite") => {
