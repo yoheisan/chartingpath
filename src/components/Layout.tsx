@@ -16,7 +16,7 @@ interface LayoutProps {
 }
 
 // Routes that use full-screen mode (no footer, no scroll)
-const FULLSCREEN_ROUTES = ['/members/dashboard'];
+const FULLSCREEN_ROUTES = ['/members/dashboard', '/copilot'];
 
 // Routes where copilot should not appear
 const COPILOT_EXCLUDED_ROUTES = ['/auth', '/admin'];
