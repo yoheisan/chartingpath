@@ -35,12 +35,19 @@ function scoreAnalyst(hp: any, source: string = "per_symbol"): { raw: number; de
     5,
     Math.log2(sampleSize / MIN_SAMPLE + 1) * 2 * (sampleSize >= MIN_SAMPLE ? 1 : 0.5)
   );
-  const raw = Math.min(1, (winRateScore + expectancyScore + confidenceScore) / 25);
+  let raw = Math.min(1, (winRateScore + expectancyScore + confidenceScore) / 25);
+
+  // Discount fallback sources so they rank below per-symbol proven data
+  const sourceDiscount = source === "per_symbol" ? 1.0
+    : source === "pattern_aggregate" ? 0.65
+    : 0.40; // bayesian_prior
+  raw = raw * sourceDiscount;
 
   return {
     raw,
     details: {
       winRate, expectancyR, sampleSize, source,
+      sourceDiscount,
       winRateScore: Math.round(winRateScore * 100) / 100,
       expectancyScore: Math.round(expectancyScore * 100) / 100,
       confidenceScore: Math.round(confidenceScore * 100) / 100,
