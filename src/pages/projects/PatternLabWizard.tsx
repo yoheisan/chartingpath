@@ -252,11 +252,17 @@ const PatternLabWizard = () => {
     return map[tf] ?? tf.toLowerCase();
   };
   const urlTimeframe = normalizeTimeframe(rawUrlTimeframe);
+
+  // Normalize symbols to canonical DB format (historical_pattern_occurrences symbol filter is case-sensitive)
+  const normalizeSymbol = (symbol: string): string => symbol.trim().toUpperCase();
+  const normalizeSymbols = (symbols: string[] = []): string[] => [...new Set(symbols.map(normalizeSymbol))];
   
   // Form state - prefer URL params > location state > defaults
   const [assetClass, setAssetClass] = useState('fx');
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>(
-    urlInstrument ? [urlInstrument] : (prefilledState?.instruments ?? ['EURUSD=X'])
+    urlInstrument
+      ? [normalizeSymbol(urlInstrument)]
+      : normalizeSymbols(prefilledState?.instruments ?? ['EURUSD=X'])
   );
   const [timeframe, setTimeframe] = useState(
     urlTimeframe ?? prefilledState?.timeframe ?? '1d'
@@ -531,10 +537,11 @@ const PatternLabWizard = () => {
   const zeroPatternCombos = patternCoverage.filter(p => p.gradePassCount === 0);
 
   const handleInstrumentToggle = (symbol: string) => {
+    const normalizedSymbol = normalizeSymbol(symbol);
     setSelectedInstruments(prev => 
-      prev.includes(symbol)
-        ? prev.filter(s => s !== symbol)
-        : [...prev, symbol]
+      prev.includes(normalizedSymbol)
+        ? prev.filter(s => s !== normalizedSymbol)
+        : [...prev, normalizedSymbol]
     );
   };
   
@@ -728,7 +735,7 @@ const PatternLabWizard = () => {
                       key={example.labelKey}
                       onClick={() => {
                         trackEvent('pattern_lab.quick_start', { instrument: example.instrument, pattern: example.pattern });
-                        setSelectedInstruments([example.instrument]);
+                        setSelectedInstruments([normalizeSymbol(example.instrument)]);
                         setSelectedPatterns([example.pattern]);
                         setTimeframe(example.timeframe);
                         setMode('validate');
@@ -879,8 +886,9 @@ const PatternLabWizard = () => {
                 {!isValidate && (
                   <UniversalSymbolSearch
                     onSelect={(symbol, name, category) => {
-                      if (!selectedInstruments.includes(symbol)) {
-                        setSelectedInstruments(prev => [...prev, symbol]);
+                      const normalizedSymbol = normalizeSymbol(symbol);
+                      if (!selectedInstruments.includes(normalizedSymbol)) {
+                        setSelectedInstruments(prev => [...prev, normalizedSymbol]);
                         const categoryMap: Record<string, string> = {
                           'stocks': 'stocks',
                           'crypto': 'crypto',
