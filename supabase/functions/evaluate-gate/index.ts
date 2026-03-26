@@ -96,7 +96,7 @@ serve(async (req) => {
         (scoreData.risk_raw || 0) * 0.25 +
         (scoreData.timing_raw || 0) * 0.2 +
         (scoreData.portfolio_raw || 0) * 0.2;
-      agentScore = Math.round(composite * 100) / 100;
+      agentScore = Math.round(composite * 10000) / 100;
 
       // Fetch user's scoring settings for cutoffs
       const { data: settings } = await supabaseUser
