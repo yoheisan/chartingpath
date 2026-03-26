@@ -112,13 +112,17 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (!portfolio) continue;
+      if (!portfolio) {
+        console.log(`[scan-setups] No portfolio for user ${userId}, skipping`);
+        continue;
+      }
 
       for (const det of detections) {
         totalScanned++;
 
         // Check if this asset is tradable right now based on schedule
         if (!isAssetTradable(det.asset_type)) {
+          console.log(`[scan-setups] ${det.instrument} (${det.asset_type}) outside trading window, skipping`);
           continue;
         }
 
