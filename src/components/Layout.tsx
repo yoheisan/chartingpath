@@ -10,6 +10,7 @@ import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
 import { ActivationChecklist } from "./onboarding/ActivationChecklist";
 import { CaptureButton } from "./capture";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,8 +19,10 @@ interface LayoutProps {
 // Routes that use full-screen mode (no footer, no scroll)
 const FULLSCREEN_ROUTES = ['/members/dashboard', '/copilot'];
 
-// Routes where copilot should not appear (includes /copilot itself since it IS the copilot)
-const COPILOT_EXCLUDED_ROUTES = ['/auth', '/admin', '/copilot'];
+// Routes where copilot floating button should not appear
+// On mobile /copilot, we still need it so the Chat tab can open it
+const COPILOT_EXCLUDED_ROUTES_DESKTOP = ['/auth', '/admin', '/copilot'];
+const COPILOT_EXCLUDED_ROUTES_MOBILE = ['/auth', '/admin'];
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
