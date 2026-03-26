@@ -88,40 +88,52 @@ Deno.serve(async (req) => {
       if ((openCount ?? 0) >= maxOpen) continue;
 
       // 4. Get candidate setups from live detections
-      // Filter by the plan's asset classes to avoid fetching irrelevant detections
+      // Query per tradable asset class to ensure balanced coverage
       const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
       const reverseAssetMap: Record<string, string> = {
         stocks: "stocks", forex: "fx", crypto: "crypto",
         commodities: "commodities", indices: "indices", etfs: "etfs",
       };
-      // Map plan classes to detection asset_type values
-      const detectionAssetTypes = planAssetClasses
-        .map(c => reverseAssetMap[c] || c)
-        .filter(Boolean);
 
-      let detQuery = supabase
-        .from("live_pattern_detections")
-        .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
-        .eq("status", "active")
-        .order("first_detected_at", { ascending: false })
-        .limit(30);
+      // Only query asset classes that are currently tradable
+      const tradableAssetTypes = planAssetClasses
+        .filter(c => {
+          const detType = reverseAssetMap[c] || c;
+          return isAssetTradable(detType);
+        })
+        .map(c => reverseAssetMap[c] || c);
 
-      // Only filter by asset type if the plan specifies classes
-      if (detectionAssetTypes.length > 0) {
-        detQuery = detQuery.in("asset_type", detectionAssetTypes);
-      }
-
-      const { data: detections, error: detErr } = await detQuery;
-
-      if (detErr) {
-        console.error(`[scan-setups] Detection query error for user ${userId}:`, detErr);
+      if (tradableAssetTypes.length === 0) {
+        console.log(`[scan-setups] No tradable asset classes right now for plan ${plan.name} (local=${hhmm})`);
         continue;
       }
-      if (!detections?.length) {
-        console.log(`[scan-setups] No active detections found for plan ${plan.name} (asset types: ${detectionAssetTypes.join(",")})`);
+
+      // Fetch 10 detections per tradable asset class for balanced coverage
+      const allDetections: any[] = [];
+      for (const assetType of tradableAssetTypes) {
+        const { data: dets, error: detErr } = await supabase
+          .from("live_pattern_detections")
+          .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
+          .eq("status", "active")
+          .eq("asset_type", assetType)
+          .order("first_detected_at", { ascending: false })
+          .limit(10);
+
+        if (detErr) {
+          console.error(`[scan-setups] Detection query error for ${assetType}:`, detErr);
+          continue;
+        }
+        if (dets?.length) {
+          allDetections.push(...dets);
+        }
+      }
+
+      const detections = allDetections;
+      if (!detections.length) {
+        console.log(`[scan-setups] No active detections for plan ${plan.name} (tradable: ${tradableAssetTypes.join(",")})`);
         continue;
       }
-      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} (filtered: ${detectionAssetTypes.join(",")})`);
+      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} across ${tradableAssetTypes.join(",")}`);
 
       // 5. Get user's portfolio
       const { data: portfolio } = await supabase
