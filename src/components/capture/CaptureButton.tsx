@@ -23,6 +23,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 export const CaptureButton = () => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
+  const location = useLocation();
   const {
     isCapturing,
     isRecording,
