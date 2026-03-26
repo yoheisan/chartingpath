@@ -189,6 +189,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           reason,
           detectedAt: d.first_detected_at,
           currentPrice: d.current_price ?? null,
+          assetType: d.asset_type ?? null,
         };
       });
 
