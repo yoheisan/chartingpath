@@ -86,7 +86,7 @@ export const CaptureButton = () => {
   if (isRecording) {
     return (
       <>
-        <div className="fixed bottom-4 right-4 z-[99998] flex items-center gap-2 bg-destructive text-destructive-foreground rounded-full px-4 py-2 shadow-lg animate-pulse print:hidden">
+        <div className="fixed bottom-4 right-4 max-md:bottom-20 z-[99998] flex items-center gap-2 bg-destructive text-destructive-foreground rounded-full px-4 py-2 shadow-lg animate-pulse print:hidden">
           <div className="h-2 w-2 rounded-full bg-destructive-foreground animate-pulse" />
           <span className="text-sm font-mono">{formatTime(recordingTime)} / {formatTime(maxVideoDuration)}</span>
           <Button
@@ -113,7 +113,7 @@ export const CaptureButton = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="fixed bottom-4 right-14 z-[99998] bg-background/80 backdrop-blur-sm border-primary/20 hover:border-primary/50 shadow-lg print:hidden"
+                  className="fixed bottom-4 right-14 md:right-14 z-[99998] bg-background/80 backdrop-blur-sm border-primary/20 hover:border-primary/50 shadow-lg print:hidden max-md:bottom-20 max-md:right-4"
                   disabled={isCapturing}
                 >
                   {isCapturing ? (
