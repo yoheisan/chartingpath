@@ -136,7 +136,56 @@ function scorePortfolio(d: any): number {
   return gradeMap[d.quality_score || "C"] ?? 0.55;
 }
 
-// ── Pattern-Level Aggregate Fetcher ──────────────────────────────────────
+// ── Per-Symbol History Fetcher ────────────────────────────────────────────
+// Queries historical_pattern_occurrences for the EXACT symbol+pattern combo
+async function fetchPerSymbolStats(
+  supabase: any,
+  detections: Array<{ instrument: string; pattern_id: string }>
+): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
+  const map = new Map();
+  if (!detections.length) return map;
+
+  // Build unique symbol+pattern_id combos
+  const combos = [...new Set(detections.map((d) => `${d.instrument}||${d.pattern_id}`))];
+
+  // Batch fetch — we need symbol-level data so query with both filters
+  for (const combo of combos) {
+    const [symbol, patternId] = combo.split("||");
+    try {
+      const { data, error } = await supabase
+        .from("historical_pattern_occurrences")
+        .select("outcome, outcome_pnl_percent")
+        .eq("symbol", symbol)
+        .eq("pattern_id", patternId)
+        .in("outcome", ["hit_tp", "hit_sl"])
+        .limit(2000);
+
+      if (error || !data?.length) continue;
+
+      let wins = 0, total = 0, pnlSum = 0;
+      for (const row of data) {
+        total++;
+        if (row.outcome === "hit_tp") wins++;
+        pnlSum += row.outcome_pnl_percent ?? 0;
+      }
+
+      if (total >= 5) {
+        map.set(combo, {
+          winRate: Math.round((wins / total) * 1000) / 10,
+          avgRMultiple: Math.round((pnlSum / total / 100) * 100) / 100,
+          sampleSize: total,
+        });
+      }
+    } catch (err: any) {
+      console.warn(`[score-agent-detections] Per-symbol fetch error for ${symbol}/${patternId}:`, err.message);
+    }
+  }
+
+  console.log(`[score-agent-detections] Per-symbol stats found for ${map.size}/${combos.length} combos`);
+  return map;
+}
+
+// ── Pattern-Level Aggregate Fetcher (cross-symbol fallback) ──────────────
 async function fetchPatternAggregates(
   supabase: any,
   patternIds: string[]
