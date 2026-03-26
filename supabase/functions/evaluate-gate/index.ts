@@ -59,7 +59,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    const { ticker, setup_type, timeframe, direction, source } = await req.json();
+    const { ticker, setup_type, timeframe, direction, source, asset_type } = await req.json();
     if (!ticker) {
       return new Response(JSON.stringify({ error: "ticker is required" }), {
         status: 400,
@@ -182,7 +182,8 @@ serve(async (req) => {
         stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
         crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
       };
-      const detectedAsset = (planData as any).asset_type_hint;
+      // Use asset_type from the request (from detection data), not the plan
+      const detectedAsset = asset_type || null;
       const mapped = detectedAsset ? (assetTypeMap[detectedAsset.toLowerCase()] || detectedAsset.toLowerCase()) : null;
       const sched = mapped ? schedules[mapped] : null;
 

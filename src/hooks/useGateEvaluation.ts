@@ -22,7 +22,8 @@ export function useGateEvaluation() {
       setup_type?: string,
       timeframe?: string,
       direction?: string,
-      source?: string
+      source?: string,
+      asset_type?: string
     ): Promise<GateEvaluation | null> => {
       const cacheKey = `${ticker}-${setup_type}-${timeframe}-${direction}`;
 
@@ -38,7 +39,6 @@ export function useGateEvaluation() {
           data: { session },
         } = await supabase.auth.getSession();
         if (!session) {
-          // Not logged in — return null, UI will use fallback
           return null;
         }
 
@@ -49,7 +49,7 @@ export function useGateEvaluation() {
             Authorization: `Bearer ${session.access_token}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ ticker, setup_type, timeframe, direction, source }),
+          body: JSON.stringify({ ticker, setup_type, timeframe, direction, source, asset_type }),
         });
 
         if (!resp.ok) {
@@ -78,15 +78,15 @@ export function useGateEvaluation() {
         setup_type?: string;
         timeframe?: string;
         direction?: string;
+        asset_type?: string;
       }>
     ) => {
-      // Evaluate all in parallel, max 10 concurrent
       const batchSize = 10;
       for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
         await Promise.allSettled(
           batch.map((item) =>
-            evaluate(item.ticker, item.setup_type, item.timeframe, item.direction)
+            evaluate(item.ticker, item.setup_type, item.timeframe, item.direction, undefined, item.asset_type)
           )
         );
       }
