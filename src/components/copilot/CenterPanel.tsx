@@ -179,7 +179,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const { t } = useTranslation();
   const goToSymbol = useNavigateToDashboard();
   const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
-  const { tradeWithGateCheck, isSubmitting } = usePaperTradeEntry();
+  const { tradeWithGateCheck, isSubmitting, pendingConflict, confirmConflictTrade, dismissConflict } = usePaperTradeEntry();
   const [exitCandidate, setExitCandidate] = useState<ScanningCandidate | null>(null);
 
   // Countdown to next scan (polls every 60s)
