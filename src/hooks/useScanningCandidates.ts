@@ -9,12 +9,13 @@ export interface ScanningCandidate {
   timeframe: string;
   direction: string | null;
   score: number | null;
-  qualityGrade: string | null; // A/B/C/D/F from pattern quality
-  verdict: string | null; // TAKE/WATCH/SKIP from agent scoring
-  gate: string; // aligned | partial | conflict
+  qualityGrade: string | null;
+  verdict: string | null;
+  gate: string;
   reason: string;
   detectedAt: string;
-  currentPrice: number | null; // live price from detection
+  currentPrice: number | null;
+  assetType: string | null;
 }
 
 export function useScanningCandidates(plan: MasterPlan | null) {

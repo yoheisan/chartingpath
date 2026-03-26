@@ -78,15 +78,15 @@ export function useGateEvaluation() {
         setup_type?: string;
         timeframe?: string;
         direction?: string;
+        asset_type?: string;
       }>
     ) => {
-      // Evaluate all in parallel, max 10 concurrent
       const batchSize = 10;
       for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
         await Promise.allSettled(
           batch.map((item) =>
-            evaluate(item.ticker, item.setup_type, item.timeframe, item.direction)
+            evaluate(item.ticker, item.setup_type, item.timeframe, item.direction, undefined, item.asset_type)
           )
         );
       }
