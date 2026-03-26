@@ -92,6 +92,12 @@ const Navigation = () => {
         {t('navigation.dashboard', 'Dashboard')}
       </Link>
       
+      {/* 0b. Copilot - Auto Trading */}
+      <Link to="/copilot" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
+        <Bot className="h-5 w-5 text-blue-400" />
+        Copilot ✦
+      </Link>
+      
       {/* 1. Screener - Discover signals */}
       <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2 border-t pt-4 mt-2">
         <Activity className="h-5 w-5 text-amber-500" />
