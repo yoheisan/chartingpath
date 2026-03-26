@@ -59,15 +59,14 @@ export function MobileCopilotLayout({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<MobileTab>("trades");
 
+  const copilot = useTradingCopilotContext();
+
   const handleChatTab = useCallback(() => {
-    // Open the floating command palette instead of rendering inline
-    const event = new KeyboardEvent("keydown", {
-      key: "k",
-      metaKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-  }, []);
+    // Open the floating Copilot chat panel
+    if (!copilot.isOpen) {
+      copilot.toggle();
+    }
+  }, [copilot]);
 
   const handleTabChange = useCallback(
     (tab: MobileTab) => {
