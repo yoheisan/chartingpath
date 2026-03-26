@@ -256,6 +256,10 @@ const PatternLabWizard = () => {
   // Normalize symbols to canonical DB format (historical_pattern_occurrences symbol filter is case-sensitive)
   const normalizeSymbol = (symbol: string): string => symbol.trim().toUpperCase();
   const normalizeSymbols = (symbols: string[] = []): string[] => [...new Set(symbols.map(normalizeSymbol))];
+
+  // Normalize pattern ids from URLs/legacy payloads (e.g. donchian_breakout_short -> donchian-breakout-short)
+  const normalizePatternId = (patternId: string): string => patternId.trim().toLowerCase().replace(/_/g, '-');
+  const normalizePatternIds = (patternIds: string[] = []): string[] => [...new Set(patternIds.map(normalizePatternId))];
   
   // Form state - prefer URL params > location state > defaults
   const [assetClass, setAssetClass] = useState('fx');
@@ -271,7 +275,9 @@ const PatternLabWizard = () => {
   // Professional risk per trade tiers: 0.5% (conservative), 1% (standard), 2% (aggressive)
   const [riskPerTrade, setRiskPerTrade] = useState(prefilledState?.riskPerTrade ?? 1);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>(
-    urlPattern ? [urlPattern] : (prefilledState?.patterns ?? ['double-bottom'])
+    urlPattern
+      ? [normalizePatternId(urlPattern)]
+      : normalizePatternIds(prefilledState?.patterns ?? ['double-bottom'])
   );
   
   // Grade filter state - derive preset from gradeFilter if available
