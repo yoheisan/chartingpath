@@ -88,22 +88,40 @@ Deno.serve(async (req) => {
       if ((openCount ?? 0) >= maxOpen) continue;
 
       // 4. Get candidate setups from live detections
-      const { data: detections, error: detErr } = await supabase
+      // Filter by the plan's asset classes to avoid fetching irrelevant detections
+      const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
+      const reverseAssetMap: Record<string, string> = {
+        stocks: "stocks", forex: "fx", crypto: "crypto",
+        commodities: "commodities", indices: "indices", etfs: "etfs",
+      };
+      // Map plan classes to detection asset_type values
+      const detectionAssetTypes = planAssetClasses
+        .map(c => reverseAssetMap[c] || c)
+        .filter(Boolean);
+
+      let detQuery = supabase
         .from("live_pattern_detections")
         .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
         .eq("status", "active")
         .order("first_detected_at", { ascending: false })
-        .limit(20);
+        .limit(30);
+
+      // Only filter by asset type if the plan specifies classes
+      if (detectionAssetTypes.length > 0) {
+        detQuery = detQuery.in("asset_type", detectionAssetTypes);
+      }
+
+      const { data: detections, error: detErr } = await detQuery;
 
       if (detErr) {
         console.error(`[scan-setups] Detection query error for user ${userId}:`, detErr);
         continue;
       }
       if (!detections?.length) {
-        console.log(`[scan-setups] No active detections found for user ${userId}`);
+        console.log(`[scan-setups] No active detections found for plan ${plan.name} (asset types: ${detectionAssetTypes.join(",")})`);
         continue;
       }
-      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name}`);
+      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} (filtered: ${detectionAssetTypes.join(",")})`);
 
       // 5. Get user's portfolio
       const { data: portfolio } = await supabase
