@@ -15,21 +15,8 @@ import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-
-interface LiveSetup {
-  instrument: string;
-  patternId: string;
-  patternName: string;
-  direction: string;
-  quality: string;
-  signalTs: string;
-  historicalPerformance?: {
-    winRate?: number;
-    sampleSize?: number;
-    avgRMultiple?: number;
-    avgDurationBars?: number;
-  };
-}
+import type { LiveSetup } from '@/types/screener';
+import { getPatternGrade } from '@/types/screener';
 
 function formatSignalAgeSimple(ts: string): string {
   const diff = Date.now() - new Date(ts).getTime();
@@ -111,7 +98,7 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                 {t(`patternNames.${setup.patternName}`, setup.patternName)}
               </TableCell>
               <TableCell className="text-center">
-                <GradeBadge quality={setup.quality} />
+                <GradeBadge quality={getPatternGrade(setup.quality)} />
               </TableCell>
               <TableCell>
                 <Badge
