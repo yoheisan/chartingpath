@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
       const localDate = new Date(nowInTz);
       const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
       const dayOfWeek = localDate.getDay(); // 0=Sun, 6=Sat
+      console.log(`[scan-setups] Processing plan "${plan.name}" for user ${userId} | local=${hhmm} ${tz} day=${dayOfWeek}`);
 
       // Helper: check if trading is allowed for a given asset type
       const schedules = (plan.trading_schedules as Record<string, any>) || {};
