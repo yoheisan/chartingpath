@@ -98,7 +98,7 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
                 {t(`patternNames.${setup.patternName}`, setup.patternName)}
               </TableCell>
               <TableCell className="text-center">
-                <GradeBadge quality={getPatternGrade(setup.quality)} />
+                <GradeBadge quality={typeof setup.quality === 'string' ? { score: setup.quality } : setup.quality} />
               </TableCell>
               <TableCell>
                 <Badge
