@@ -326,11 +326,10 @@ Deno.serve(async (req) => {
             totalTradesOpened++;
             console.log(`[scan-setups] Opened paper trade: ${det.instrument} ${det.direction}`);
           }
-        } else if (gateResult === "conflict") {
-          // Just logged in gate_evaluations — do not trade
+        } else {
+          // conflict = logged in gate_evaluations — do not trade
           console.log(`[scan-setups] Conflict skipped: ${det.instrument} — ${gateReason}`);
         }
-        // partial = logged but no auto-trade, user reviews
       }
     }
 
