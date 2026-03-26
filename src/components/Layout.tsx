@@ -28,6 +28,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const copilot = useTradingCopilotContext();
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
   
   // Prefetch member route chunks once authenticated
   usePrefetchRoutes(isAuthenticated);
@@ -36,7 +37,8 @@ const Layout = ({ children }: LayoutProps) => {
   usePageTracking();
   
   const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
-  const showCopilot = !COPILOT_EXCLUDED_ROUTES.some(route => location.pathname.startsWith(route));
+  const excludedRoutes = isMobile ? COPILOT_EXCLUDED_ROUTES_MOBILE : COPILOT_EXCLUDED_ROUTES_DESKTOP;
+  const showCopilot = !excludedRoutes.some(route => location.pathname.startsWith(route));
 
   if (isFullscreen) {
     return (
