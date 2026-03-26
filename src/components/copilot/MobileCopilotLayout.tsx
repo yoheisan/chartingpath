@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3, Bell, FileText, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
