@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';

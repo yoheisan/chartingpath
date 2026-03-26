@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PageMeta } from '@/components/PageMeta';

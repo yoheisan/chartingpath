@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {

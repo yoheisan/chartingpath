@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
