@@ -136,7 +136,56 @@ function scorePortfolio(d: any): number {
   return gradeMap[d.quality_score || "C"] ?? 0.55;
 }
 
-// ── Pattern-Level Aggregate Fetcher ──────────────────────────────────────
+// ── Per-Symbol History Fetcher ────────────────────────────────────────────
+// Queries historical_pattern_occurrences for the EXACT symbol+pattern combo
+async function fetchPerSymbolStats(
+  supabase: any,
+  detections: Array<{ instrument: string; pattern_id: string }>
+): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
+  const map = new Map();
+  if (!detections.length) return map;
+
+  // Build unique symbol+pattern_id combos
+  const combos = [...new Set(detections.map((d) => `${d.instrument}||${d.pattern_id}`))];
+
+  // Batch fetch — we need symbol-level data so query with both filters
+  for (const combo of combos) {
+    const [symbol, patternId] = combo.split("||");
+    try {
+      const { data, error } = await supabase
+        .from("historical_pattern_occurrences")
+        .select("outcome, outcome_pnl_percent")
+        .eq("symbol", symbol)
+        .eq("pattern_id", patternId)
+        .in("outcome", ["hit_tp", "hit_sl"])
+        .limit(2000);
+
+      if (error || !data?.length) continue;
+
+      let wins = 0, total = 0, pnlSum = 0;
+      for (const row of data) {
+        total++;
+        if (row.outcome === "hit_tp") wins++;
+        pnlSum += row.outcome_pnl_percent ?? 0;
+      }
+
+      if (total >= 5) {
+        map.set(combo, {
+          winRate: Math.round((wins / total) * 1000) / 10,
+          avgRMultiple: Math.round((pnlSum / total / 100) * 100) / 100,
+          sampleSize: total,
+        });
+      }
+    } catch (err: any) {
+      console.warn(`[score-agent-detections] Per-symbol fetch error for ${symbol}/${patternId}:`, err.message);
+    }
+  }
+
+  console.log(`[score-agent-detections] Per-symbol stats found for ${map.size}/${combos.length} combos`);
+  return map;
+}
+
+// ── Pattern-Level Aggregate Fetcher (cross-symbol fallback) ──────────────
 async function fetchPatternAggregates(
   supabase: any,
   patternIds: string[]
@@ -211,24 +260,36 @@ serve(async (req) => {
       .gte("scheduled_time", now.toISOString())
       .lte("scheduled_time", in48h.toISOString());
 
-    // 3. Identify detections needing pattern-aggregate fallback
+    // 3. Identify detections needing data lookup and fetch per-symbol stats FIRST
     const dataPoorDetections = detections.filter((d: any) => {
       const hp = d.historical_performance;
       const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
       return sampleSize < 5;
     });
 
+    // 3a. Try per-symbol historical lookup (exact symbol+pattern match)
+    let perSymbolStats = new Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>();
     let patternAggregates = new Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>();
+
     if (dataPoorDetections.length > 0) {
-      const patternIds = [...new Set(dataPoorDetections.map((d: any) => d.pattern_id))];
-      console.log(`[score-agent-detections] ${dataPoorDetections.length} detections need fallback, fetching aggregates for ${patternIds.length} patterns`);
-      patternAggregates = await fetchPatternAggregates(supabase, patternIds);
+      console.log(`[score-agent-detections] ${dataPoorDetections.length} detections have sparse live data, checking historical DB...`);
+      
+      // First: per-symbol lookup (highest fidelity)
+      perSymbolStats = await fetchPerSymbolStats(supabase, dataPoorDetections);
+
+      // Second: pattern-aggregate fallback for anything still unresolved
+      const stillPoor = dataPoorDetections.filter((d: any) => !perSymbolStats.has(`${d.instrument}||${d.pattern_id}`));
+      if (stillPoor.length > 0) {
+        const patternIds = [...new Set(stillPoor.map((d: any) => d.pattern_id))];
+        console.log(`[score-agent-detections] ${stillPoor.length} still need fallback, fetching aggregates for ${patternIds.length} patterns`);
+        patternAggregates = await fetchPatternAggregates(supabase, patternIds);
+      }
     }
 
     // 4. Score in batches and upsert
     let scored = 0;
     let skipped = 0;
-    let fallbackUsed = { pattern_aggregate: 0, bayesian_prior: 0 };
+    let fallbackUsed = { per_symbol_db: 0, pattern_aggregate: 0, bayesian_prior: 0 };
 
     for (let i = 0; i < detections.length; i += BATCH_SIZE) {
       const batch = detections.slice(i, i + BATCH_SIZE);
@@ -240,17 +301,25 @@ serve(async (req) => {
 
         // Fallback chain for data-poor detections
         if (originalSampleSize < 5) {
-          const agg = patternAggregates.get(d.pattern_id);
-          if (agg && agg.sampleSize >= 5) {
-            // Use pattern-level aggregate
-            hp = { winRate: agg.winRate, avgRMultiple: agg.avgRMultiple, sampleSize: agg.sampleSize };
-            analystSource = "pattern_aggregate";
-            fallbackUsed.pattern_aggregate++;
+          // Priority 1: per-symbol DB lookup
+          const perSymbol = perSymbolStats.get(`${d.instrument}||${d.pattern_id}`);
+          if (perSymbol && perSymbol.sampleSize >= 5) {
+            hp = { winRate: perSymbol.winRate, avgRMultiple: perSymbol.avgRMultiple, sampleSize: perSymbol.sampleSize };
+            analystSource = "per_symbol";  // Real per-symbol data, no discount
+            fallbackUsed.per_symbol_db++;
           } else {
-            // Use Bayesian prior — neutral score instead of 0
-            hp = { winRate: BAYESIAN_PRIOR_WIN_RATE, avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY, sampleSize: BAYESIAN_VIRTUAL_SAMPLE };
-            analystSource = "bayesian_prior";
-            fallbackUsed.bayesian_prior++;
+            // Priority 2: pattern aggregate (cross-symbol)
+            const agg = patternAggregates.get(d.pattern_id);
+            if (agg && agg.sampleSize >= 5) {
+              hp = { winRate: agg.winRate, avgRMultiple: agg.avgRMultiple, sampleSize: agg.sampleSize };
+              analystSource = "pattern_aggregate";
+              fallbackUsed.pattern_aggregate++;
+            } else {
+              // Priority 3: Bayesian prior
+              hp = { winRate: BAYESIAN_PRIOR_WIN_RATE, avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY, sampleSize: BAYESIAN_VIRTUAL_SAMPLE };
+              analystSource = "bayesian_prior";
+              fallbackUsed.bayesian_prior++;
+            }
           }
         }
 
