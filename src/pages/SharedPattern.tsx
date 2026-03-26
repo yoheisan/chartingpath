@@ -293,7 +293,7 @@ export default function SharedPattern() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to={`/projects/pattern-lab/new?instrument=${pattern.instrument}&pattern=${pattern.pattern_id}&timeframe=${pattern.timeframe}`}>
+                <Link to={buildPatternLabUrl({ instrument: pattern.instrument, pattern: pattern.pattern_id, timeframe: pattern.timeframe })}>
                   <FlaskConical className="h-4 w-4 mr-2" />
                   {t('sharedPattern.runBacktest')}
                 </Link>

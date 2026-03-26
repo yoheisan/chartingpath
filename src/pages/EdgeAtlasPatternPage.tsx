@@ -150,7 +150,7 @@ export default function EdgeAtlasPatternPage() {
   };
 
   const handleValidate = (symbol: string) => {
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(patternId!)}&timeframe=${timeframe}&mode=validate&instrument=${encodeURIComponent(symbol)}`, {
+    navigate(buildPatternLabUrl({ pattern: patternId!, timeframe, mode: 'validate', instrument: symbol }), {
       state: { backUrl: edgeAtlasBackUrl, backLabel: `${patternName} · Edge Atlas` }
     });
   };

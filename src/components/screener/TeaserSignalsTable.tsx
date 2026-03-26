@@ -8,44 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, ExternalLink, Search, FlaskConical, Info, Bot } from 'lucide-react';
 import { getTradingViewAffiliateUrl } from '@/utils/tradingViewLinks';
-import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
-import { useTranslation } from 'react-i18next';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { InstrumentLogo } from '@/components/charts/InstrumentLogo';
-import { GradeBadge } from '@/components/ui/GradeBadge';
-import { cn } from '@/lib/utils';
-import type { LiveSetup } from '@/types/screener';
-
-interface TeaserSignalsTableProps {
-  patterns: LiveSetup[];
-  onOpenChart?: (setup: LiveSetup) => void;
-}
-
-export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTableProps) {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-
-  const handleScreen = (e: React.MouseEvent, setup: LiveSetup) => {
-    e.stopPropagation();
-    navigate(`/patterns/live?highlight=${encodeURIComponent(setup.instrument)}&pattern=${encodeURIComponent(setup.patternId)}`);
-  };
-
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
+...
   const handleValidate = (e: React.MouseEvent, setup: LiveSetup) => {
     e.stopPropagation();
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(setup.patternId)}&instrument=${encodeURIComponent(setup.instrument)}&mode=validate`);
+    navigate(buildPatternLabUrl({ pattern: setup.patternId, instrument: setup.instrument, mode: 'validate' }));
   };
 
   const handleAgentScore = (e: React.MouseEvent, setup: LiveSetup) => {

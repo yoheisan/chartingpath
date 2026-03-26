@@ -317,7 +317,7 @@ export default function PatternStatisticsPage() {
                       size="sm"
                       variant="outline"
                       className="text-xs h-7 gap-1"
-                      onClick={() => navigate(`/projects/pattern-lab/new?pattern=${patternId}&timeframe=${b.timeframe}`)}
+                      onClick={() => navigate(buildPatternLabUrl({ pattern: patternId, timeframe: b.timeframe }))}
                     >
                       <FlaskConical className="h-3 w-3" /> {t('patternStats.lab', 'Lab')}
                     </Button>

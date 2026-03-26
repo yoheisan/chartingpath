@@ -268,7 +268,7 @@ const SharedBacktest = () => {
                 className="gap-2 flex-1 max-w-xs"
               >
                 <Link 
-                  to={`/projects/pattern-lab/new?symbol=${encodeURIComponent(backtest.instrument)}&pattern=${encodeURIComponent(backtest.strategy_name)}&timeframe=${encodeURIComponent(backtest.timeframe)}`}
+                  to={buildPatternLabUrl({ instrument: backtest.instrument, pattern: backtest.strategy_name, timeframe: backtest.timeframe })}
                   onClick={() => track('shared_backtest_run_clicked', { share_token: token, instrument: backtest.instrument, timeframe: backtest.timeframe })}
                 >
                   <BarChart3 className="h-4 w-4" />
@@ -366,7 +366,7 @@ const SharedBacktest = () => {
                 variant="outline"
                 onClick={() => track('shared_backtest_run_clicked', { share_token: token, context: 'sticky_bar', instrument: backtest.instrument })}
               >
-                <Link to={`/projects/pattern-lab/new?symbol=${encodeURIComponent(backtest.instrument)}&pattern=${encodeURIComponent(backtest.strategy_name)}&timeframe=${encodeURIComponent(backtest.timeframe)}`}>
+                <Link to={buildPatternLabUrl({ instrument: backtest.instrument, pattern: backtest.strategy_name, timeframe: backtest.timeframe })}>
                   Try Free Backtest
                 </Link>
               </Button>

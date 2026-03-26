@@ -314,7 +314,7 @@ export default function InstrumentPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="gap-2">
-            <Link to={`/projects/pattern-lab/new?instrument=${displaySymbol}`}>
+            <Link to={buildPatternLabUrl({ instrument: displaySymbol })}>
               <FlaskConical className="h-4 w-4" /> Backtest {displaySymbol}
             </Link>
           </Button>

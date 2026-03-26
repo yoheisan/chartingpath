@@ -1499,8 +1499,8 @@ export default function FullChartViewer({
                 variant="outline"
                 className="flex-1"
                 onClick={() => requireAuth(() => {
-                  const gradeParam = qualityGrade ? `&grade=${qualityGrade}` : '';
-                  window.location.href = `/projects/pattern-lab/new?instrument=${setup.instrument}&pattern=${setup.patternId}&timeframe=${(setup as any).timeframe || '1D'}&mode=validate${gradeParam}`;
+                  const gradeParam = qualityGrade || undefined;
+                  window.location.href = buildPatternLabUrl({ instrument: setup.instrument, pattern: setup.patternId, timeframe: (setup as any).timeframe || '1D', mode: 'validate', grade: gradeParam });
                 })}
               >
                 <Play className="h-4 w-4 mr-2" />
@@ -1663,7 +1663,7 @@ export default function FullChartViewer({
               <CardContent className="space-y-2">
                 {/* Research History */}
                 <a 
-                  href={`/projects/pattern-lab/new?pattern=${setup.patternId}&instrument=${encodeURIComponent(instrument)}${qualityGrade ? `&grade=${qualityGrade}` : ''}`}
+                  href={buildPatternLabUrl({ pattern: setup.patternId, instrument, grade: qualityGrade || undefined })}
                   className="block"
                 >
                   <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors cursor-pointer group">

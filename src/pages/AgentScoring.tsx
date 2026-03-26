@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PageMeta } from '@/components/PageMeta';
 import { setViewContext } from '@/lib/copilotEvents';
+import { buildPatternLabUrl } from '@/utils/patternLabUrl';
 
 const AgentScoring = () => {
   const { t } = useTranslation();
@@ -20,13 +21,12 @@ const AgentScoring = () => {
   }, []);
 
   const handleSendToBacktest = (setup: TradeSetup) => {
-    const params = new URLSearchParams({
+    navigate(buildPatternLabUrl({
       instrument: setup.symbol,
       pattern: setup.patternId,
       timeframe: setup.timeframe,
       mode: 'validate',
-    });
-    navigate(`/projects/pattern-lab/new?${params.toString()}`);
+    }));
     toast.success(t('agentScoring.loadedIntoPatternLab', { symbol: setup.symbol, pattern: setup.pattern }));
   };
 

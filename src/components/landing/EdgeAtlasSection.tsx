@@ -275,7 +275,7 @@ export function EdgeAtlasSection() {
 
   const handleBacktest = (r: EdgeRanking) => {
     trackEvent('landing.cta_click', { button: 'edge_atlas_validate', pattern: r.pattern_name, timeframe: r.timeframe });
-    navigate(`/projects/pattern-lab/new?pattern=${encodeURIComponent(r.pattern_id)}&timeframe=${r.timeframe}&mode=validate`);
+    navigate(buildPatternLabUrl({ pattern: r.pattern_id, timeframe: r.timeframe, mode: 'validate' }));
   };
 
   const assetTabLabels: Record<AssetTab, string> = {
