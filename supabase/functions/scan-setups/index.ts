@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
       const localDate = new Date(nowInTz);
       const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
       const dayOfWeek = localDate.getDay(); // 0=Sun, 6=Sat
+      console.log(`[scan-setups] Processing plan "${plan.name}" for user ${userId} | local=${hhmm} ${tz} day=${dayOfWeek}`);
 
       // Helper: check if trading is allowed for a given asset type
       const schedules = (plan.trading_schedules as Record<string, any>) || {};
@@ -87,14 +88,52 @@ Deno.serve(async (req) => {
       if ((openCount ?? 0) >= maxOpen) continue;
 
       // 4. Get candidate setups from live detections
-      const { data: detections } = await supabase
-        .from("live_pattern_detections")
-        .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
-        .eq("status", "active")
-        .order("detected_at", { ascending: false })
-        .limit(20);
+      // Query per tradable asset class to ensure balanced coverage
+      const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
+      const reverseAssetMap: Record<string, string> = {
+        stocks: "stocks", forex: "fx", crypto: "crypto",
+        commodities: "commodities", indices: "indices", etfs: "etfs",
+      };
 
-      if (!detections?.length) continue;
+      // Only query asset classes that are currently tradable
+      const tradableAssetTypes = planAssetClasses
+        .filter(c => {
+          const detType = reverseAssetMap[c] || c;
+          return isAssetTradable(detType);
+        })
+        .map(c => reverseAssetMap[c] || c);
+
+      if (tradableAssetTypes.length === 0) {
+        console.log(`[scan-setups] No tradable asset classes right now for plan ${plan.name} (local=${hhmm})`);
+        continue;
+      }
+
+      // Fetch 10 detections per tradable asset class for balanced coverage
+      const allDetections: any[] = [];
+      for (const assetType of tradableAssetTypes) {
+        const { data: dets, error: detErr } = await supabase
+          .from("live_pattern_detections")
+          .select("id, instrument, pattern_id, pattern_name, timeframe, direction, current_price, asset_type")
+          .eq("status", "active")
+          .eq("asset_type", assetType)
+          .order("first_detected_at", { ascending: false })
+          .limit(10);
+
+        if (detErr) {
+          console.error(`[scan-setups] Detection query error for ${assetType}:`, detErr);
+          continue;
+        }
+        if (dets?.length) {
+          allDetections.push(...dets);
+        }
+      }
+
+      const detections = allDetections;
+      if (!detections.length) {
+        console.log(`[scan-setups] No active detections for plan ${plan.name} (tradable: ${tradableAssetTypes.join(",")})`);
+        continue;
+      }
+      console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} across ${tradableAssetTypes.join(",")}`);
 
       // 5. Get user's portfolio
       const { data: portfolio } = await supabase
@@ -103,13 +142,17 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (!portfolio) continue;
+      if (!portfolio) {
+        console.log(`[scan-setups] No portfolio for user ${userId}, skipping`);
+        continue;
+      }
 
       for (const det of detections) {
         totalScanned++;
 
         // Check if this asset is tradable right now based on schedule
         if (!isAssetTradable(det.asset_type)) {
+          console.log(`[scan-setups] ${det.instrument} (${det.asset_type}) outside trading window, skipping`);
           continue;
         }
 
