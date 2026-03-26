@@ -75,8 +75,8 @@ export const CaptureButton = () => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Don't show for unauthenticated users
-  if (!isAuthenticated) return null;
+  // Don't show on mobile copilot page (overlaps bottom tab bar)
+  if (isMobile && location.pathname.startsWith('/copilot')) return null;
 
 
   // Recording mode UI
