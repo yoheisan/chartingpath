@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-interface TradeEntryParams {
+export interface TradeEntryParams {
   ticker: string;
   setup_type?: string;
   timeframe?: string;
@@ -17,9 +17,16 @@ interface TradeEntryParams {
   agent_score?: number;
 }
 
+export interface PendingConflictTrade {
+  params: TradeEntryParams;
+  label: string;
+  reason: string;
+}
+
 export function usePaperTradeEntry() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingConflict, setPendingConflict] = useState<PendingConflictTrade | null>(null);
 
   const enterTrade = useCallback(
     async (params: TradeEntryParams, attribution: "ai_approved" | "human_overwrite") => {
@@ -93,7 +100,7 @@ export function usePaperTradeEntry() {
 
   /**
    * Smart entry — checks gate result and either enters directly (aligned)
-   * or shows a conflict toast with override option.
+   * or surfaces a pendingConflict for the UI to render as a guarded modal.
    */
   const tradeWithGateCheck = useCallback(
     (params: TradeEntryParams) => {
@@ -104,22 +111,21 @@ export function usePaperTradeEntry() {
       } else {
         const label = gate === "conflict" ? "Conflicts with your plan" : "Partial match with your plan";
         const reason = params.gate_reason || `${params.ticker} is a ${gate} setup.`;
-        toast(reason, {
-          description: label,
-          duration: 10000,
-          action: {
-            label: "Trade anyway",
-            onClick: () => enterTrade(params, "human_overwrite"),
-          },
-          cancel: {
-            label: "Skip",
-            onClick: () => {},
-          },
-        });
+        setPendingConflict({ params, label, reason });
       }
     },
     [enterTrade]
   );
 
-  return { enterTrade, tradeWithGateCheck, isSubmitting };
+  const confirmConflictTrade = useCallback(() => {
+    if (!pendingConflict) return;
+    enterTrade(pendingConflict.params, "human_overwrite");
+    setPendingConflict(null);
+  }, [pendingConflict, enterTrade]);
+
+  const dismissConflict = useCallback(() => {
+    setPendingConflict(null);
+  }, []);
+
+  return { enterTrade, tradeWithGateCheck, isSubmitting, pendingConflict, confirmConflictTrade, dismissConflict };
 }

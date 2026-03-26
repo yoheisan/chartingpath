@@ -5918,6 +5918,8 @@
     "stopLoss": "Stop Loss",
     "takeProfit": "Take Profit",
     "close": "Close",
+    "tradeAnyway": "Trade Anyway",
+    "conflictGuardDesc": "This trade does not fully align with your active trading plan. Proceeding will be logged as a manual override.",
     "back": "Back",
     "aiApproved": "AI-Approved",
     "humanOverwrite": "Human-Overwrite",
