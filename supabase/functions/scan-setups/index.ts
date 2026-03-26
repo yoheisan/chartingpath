@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
             (scoreData.risk_raw || 0) * 0.25 +
             (scoreData.timing_raw || 0) * 0.2 +
             (scoreData.portfolio_raw || 0) * 0.2;
-          agentScore = Math.round(composite * 100) / 100;
+          agentScore = Math.round(composite * 10000) / 100;
 
           const { data: settings } = await supabase
             .from("agent_scoring_settings")
@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
           .single();
 
         // 5. TAKE action based on gate result
-        if (gateResult === "aligned") {
+        if (gateResult === "aligned" || gateResult === "partial") {
           const entryPrice = Number(det.current_price) || 100;
           const positionPct = plan.max_position_pct ?? 3;
           const rUnit = entryPrice * (positionPct / 100);
@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
               gate_result: gateResult,
               gate_reason: gateReason,
               user_action: "auto",
-              attribution: "ai_approved",
+              attribution: gateResult === "aligned" ? "ai_approved" : "ai_partial",
               outcome: "open",
               notes: `[auto-scan] ${det.pattern_name || "pattern"} on ${det.timeframe || "unknown"}`,
             });
@@ -326,11 +326,10 @@ Deno.serve(async (req) => {
             totalTradesOpened++;
             console.log(`[scan-setups] Opened paper trade: ${det.instrument} ${det.direction}`);
           }
-        } else if (gateResult === "conflict") {
-          // Just logged in gate_evaluations — do not trade
+        } else {
+          // conflict = logged in gate_evaluations — do not trade
           console.log(`[scan-setups] Conflict skipped: ${det.instrument} — ${gateReason}`);
         }
-        // partial = logged but no auto-trade, user reviews
       }
     }
 
