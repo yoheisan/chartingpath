@@ -930,7 +930,8 @@ const StudyChart = memo(({
       }
 
       // === PIVOT-BASED STRUCTURAL MARKERS (matching FullChartViewer / Study Chart) ===
-      // Collect canvas triangle markers for Entry and Breakout Level
+      // Collect canvas triangle markers for structural events only (breakout/breakdown).
+      // Entry uses a native series marker so it remains perfectly synced after refresh/rescale.
       const canvasTriangleMarkers: Array<{
         time: number;
         price: number;
@@ -938,13 +939,20 @@ const StudyChart = memo(({
         color: string;
         label?: string;
       }> = [];
+      let currentPatternEntryMarker: {
+        time: Time;
+        position: 'aboveBar' | 'belowBar';
+        color: string;
+        shape: SeriesMarkerShape;
+        text: string;
+      } | null = null;
 
       // Parse current pattern's pivots for structural markers
       if (currentPattern && currentPattern.pivots && currentPattern.pivots.length > 0 && patternToggles.showLabels) {
         const patternBars = currentPattern.bars && currentPattern.bars.length > 0 ? currentPattern.bars : bars;
 
         currentPattern.pivots.forEach((pivot) => {
-          // Skip "Entry" pivot — we render it separately as a canvas triangle below
+          // Skip "Entry" pivot — entry is rendered as a native marker below
           if ((pivot.label || '').toLowerCase().includes('entry')) return;
 
           const isBreakout = (pivot.label || '').toLowerCase().includes('breakout') || (pivot.label || '').toLowerCase().includes('breakdown');
@@ -984,7 +992,7 @@ const StudyChart = memo(({
         });
       }
 
-      // Entry Point → canvas triangle at the FIRST candle that actually touches entry
+      // Entry Point → native marker at the FIRST candle that actually touches entry
       if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const entryPrice = Number(currentPattern.entryPrice);
@@ -1014,27 +1022,25 @@ const StudyChart = memo(({
           if (entryHitTs != null) {
             // Snap to nearest actual chart candle time for stable x-position
             const anchorTime = findNearestCandleTime(safeChartData, entryHitTs);
-
-            canvasTriangleMarkers.push({
-              time: anchorTime,
-              price: entryPrice,
-              direction: isLong ? 'up' : 'down',
+            currentPatternEntryMarker = {
+              time: anchorTime as Time,
+              position: isLong ? 'belowBar' : 'aboveBar',
               color: '#3b82f6',
-              label: '',
-            });
+              shape: isLong ? 'arrowUp' : 'arrowDown',
+              text: '',
+            };
           }
         }
       }
 
       // Render pattern markers for OTHER patterns only.
-      // The current pattern uses canvas overlays (entry/structure) as the single source of truth
-      // to avoid a detached native marker fallback after refresh/polling.
+      // Current pattern entry marker is injected separately as native marker for stable refresh sync.
       const patternsForMarkers = currentPattern
         ? historicalPatterns.filter(p => p.id !== currentPattern.id)
         : historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
 
-      // Merge native markers (no directionMarkers — Entry is now a canvas triangle)
+      // Merge native markers
       const allMarkers = [
         ...(chartMarkers || []).filter(m => m.time).map(m => ({
           time: (typeof m.time === 'string' ? m.time.split('T')[0] : String(m.time)) as Time,
@@ -1043,6 +1049,7 @@ const StudyChart = memo(({
           shape: m.shape as SeriesMarkerShape,
           text: m.text,
         })),
+        ...(currentPatternEntryMarker ? [currentPatternEntryMarker] : []),
         ...patternMarkerData,
       ].sort((a, b) => {
         const ta = typeof a.time === 'string' ? a.time : String(a.time);
