@@ -697,34 +697,55 @@ export const CommandCenterChart = memo(function CommandCenterChart({
   }, [bars]);
 
   // Build list of all eligible overlay patterns (active + recent unresolved)
+  // Re-derives outcomes reactively when bars change to prevent stale trade levels
+  // from rendering on patterns whose SL/TP has already been breached.
   const eligibleOverlayPatterns = useMemo(() => {
     if (sortedPatterns.length === 0) return [];
 
     const isResolved = (o?: string | null) => ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(o || '').toLowerCase());
 
-    return sortedPatterns.filter((p) => {
-      if (isResolved(p.outcome) && !p._derivedOutcome) return false;
+    return sortedPatterns
+      .map((p) => {
+        // Re-derive outcome using current bars to catch breaches missed at fetch time
+        if (!isResolved(p.outcome) && bars.length > 0) {
+          const liveOutcome = deriveLiveOutcomeUtil({
+            direction: p.direction,
+            entryPrice: Number(p.entry_price),
+            stopLossPrice: Number(p.stop_loss_price),
+            takeProfitPrice: Number(p.take_profit_price),
+            detectedAt: getDetectedAt(p),
+            bars,
+            status: p.status,
+          });
+          if (liveOutcome) {
+            return { ...p, outcome: liveOutcome, _derivedOutcome: liveOutcome };
+          }
+        }
+        return p;
+      })
+      .filter((p) => {
+        if (isResolved(p.outcome) && !p._derivedOutcome) return false;
 
-      const entry = Number(p.entry_price);
-      const sl = Number(p.stop_loss_price);
-      const tp = Number(p.take_profit_price);
+        const entry = Number(p.entry_price);
+        const sl = Number(p.stop_loss_price);
+        const tp = Number(p.take_profit_price);
 
-      if (!Number.isFinite(entry) || entry <= 0) return false;
+        if (!Number.isFinite(entry) || entry <= 0) return false;
 
-      if (chartPriceRange) {
-        const margin = chartPriceRange.span;
-        const extendedMin = chartPriceRange.min - margin;
-        const extendedMax = chartPriceRange.max + margin;
+        if (chartPriceRange) {
+          const margin = chartPriceRange.span;
+          const extendedMin = chartPriceRange.min - margin;
+          const extendedMax = chartPriceRange.max + margin;
 
-        if (entry < extendedMin || entry > extendedMax) return false;
+          if (entry < extendedMin || entry > extendedMax) return false;
 
-        const levels = [entry, sl, tp].filter(v => Number.isFinite(v) && v > 0);
-        if (levels.length > 0 && levels.every(l => l < chartPriceRange.min || l > chartPriceRange.max)) return false;
-      }
+          const levels = [entry, sl, tp].filter(v => Number.isFinite(v) && v > 0);
+          if (levels.length > 0 && levels.every(l => l < chartPriceRange.min || l > chartPriceRange.max)) return false;
+        }
 
-      return true;
-    });
-  }, [sortedPatterns, chartPriceRange, symbol]);
+        return true;
+      });
+  }, [sortedPatterns, chartPriceRange, symbol, bars]);
 
   // Clamp selected index when eligible list changes
   useEffect(() => {
