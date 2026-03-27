@@ -858,17 +858,23 @@ const StudyChart = memo(({
         const slOk = pctDist(sl) <= 25;
         const tpOk = pctDist(tp) <= 25;
 
-        // Zone sync guard: suppress shaded zones when ALL trade levels sit on one side
-        // of price and entry hasn't been reached (causes visual disconnect from candles).
-        // For LONG: entry > currentPrice means trade hasn't triggered → zones misleading
-        // For SHORT: entry < currentPrice means trade hasn't triggered → zones misleading
+        // Zone/marker sync guard: suppress overlays when entry hasn't been reached.
+        // For LONG: entry > currentPrice means trade hasn't triggered yet.
+        // For SHORT: entry < currentPrice means trade hasn't triggered yet.
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const entryReached = isLong ? latestClose >= entry * 0.998 : latestClose <= entry * 1.002;
-        // Also suppress if entry is more than 3% from current price (clearly not triggered)
+        // Also suppress if entry is clearly too far from current price
         const entryTooFar = pctDist(entry) > 3;
         const zonesOk = entryOk && slOk && tpOk && (entryReached || !entryTooFar);
 
-        return { entry: entryOk, sl: slOk, tp: tpOk, any: entryOk || slOk || tpOk, zonesOk };
+        return {
+          entry: entryOk,
+          sl: slOk,
+          tp: tpOk,
+          any: entryOk || slOk || tpOk,
+          zonesOk,
+          entryTriggered: entryReached,
+        };
       })();
       const hasRenderableTradeLevels = levelDistances.any;
       
@@ -971,7 +977,7 @@ const StudyChart = memo(({
       }
 
       // Entry Point → canvas triangle at the pattern's detection/signal bar (not the last bar)
-      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
+      if (currentPattern && hasRenderableTradeLevels && levelDistances.entryTriggered && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
 
         // Determine target timestamp for the entry marker
