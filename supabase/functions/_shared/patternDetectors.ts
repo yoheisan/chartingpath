@@ -139,27 +139,51 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const highestHigh = Math.max(...highs);
       const lowestLow = Math.min(...lows);
       const range = highestHigh - lowestLow;
-      const tolerance = range * 0.03;
+      if (range === 0) return { detected: false, pivots: [] };
+      const tolerance = range * 0.025;
       
       // Intraday timeframes require stricter parameters
       const isIntraday = timeframe && ['1h', '4h', '2h', '30m', '15m'].includes(timeframe.toLowerCase());
       const minSeparation = isIntraday ? 7 : 5;
       
-      // Peak prominence threshold: peaks must be within 5% of the window high
-      const prominenceThreshold = highestHigh - range * 0.05;
+      // Pivot detection: require 3+ bars on each side for structural significance
+      const pivotWindow = isIntraday ? 4 : 3;
       
-      let firstTop = -1, secondTop = -1;
-      for (let i = 2; i < window.length - 3; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          if (highs[i] < prominenceThreshold) continue;
-          
-          if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= minSeparation && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
-            secondTop = i;
+      // Peak prominence: tops must be in the upper 15% of the price range
+      const prominenceThreshold = highestHigh - range * 0.15;
+      
+      const tops: number[] = [];
+      for (let i = pivotWindow; i < window.length - pivotWindow; i++) {
+        let isPivotHigh = true;
+        for (let j = 1; j <= pivotWindow; j++) {
+          if (highs[i] <= highs[i - j] || highs[i] <= highs[i + j]) {
+            isPivotHigh = false;
             break;
           }
         }
+        if (!isPivotHigh) continue;
+        if (highs[i] < prominenceThreshold) continue;
+        tops.push(i);
+      }
+      
+      let firstTop = -1, secondTop = -1;
+      for (let a = 0; a < tops.length - 1; a++) {
+        for (let b = a + 1; b < tops.length; b++) {
+          if (tops[b] - tops[a] >= minSeparation && 
+              Math.abs(highs[tops[b]] - highs[tops[a]]) <= tolerance) {
+            // Verify meaningful dip between the two tops
+            const midLow = Math.min(...lows.slice(tops[a], tops[b] + 1));
+            const avgTop = (highs[tops[a]] + highs[tops[b]]) / 2;
+            const dipRatio = (avgTop - midLow) / avgTop;
+            const minDip = isIntraday ? 0.015 : 0.01;
+            if (dipRatio >= minDip) {
+              firstTop = tops[a];
+              secondTop = tops[b];
+              break;
+            }
+          }
+        }
+        if (secondTop !== -1) break;
       }
       
       if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
