@@ -178,28 +178,28 @@ const Copilot = () => {
         {!leftPaneOpen ? (
           <aside className="shrink-0 w-[52px] border-r border-border/50 flex flex-col items-center py-3 gap-2 bg-card">
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('dashboard')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
-              title="Open sidebar"
+              title="Overview"
             >
               <LayoutDashboard className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('alerts')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Alerts"
             >
               <Bell className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('plans')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Plans"
             >
               <FileText className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('trades')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Trades"
             >
