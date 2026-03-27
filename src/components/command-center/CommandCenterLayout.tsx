@@ -642,6 +642,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 onPatternSelect={handleOccurrenceSelect}
                 selectedPatternId={selectedOccurrence?.id}
                 active={!studyPanelCollapsed}
+                initialDetectionId={initialDetectionId}
               />
             </div>
           </div>
