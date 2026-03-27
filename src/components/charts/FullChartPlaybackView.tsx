@@ -482,7 +482,23 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
         }> = [];
 
         // Add pattern pivot markers (skip "Entry" — redundant with blue entry marker)
+        // Uses nearest-candle snapping to guarantee markers render even if pivot
+        // timestamps don't exactly match chart candle times (root cause of missing
+        // "Bottom 1 / Bottom 2" markers on Double Bottom patterns).
         if (visualSpec?.pivots && visualSpec.pivots.length > 0) {
+          const sortedTimes = chartData.map(d => d.time as number).sort((a, b) => a - b);
+          const snapToNearest = (ts: number): number => {
+            if (timeSet.has(ts)) return ts;
+            let best = sortedTimes[0];
+            let bestDist = Math.abs(ts - best);
+            for (const ct of sortedTimes) {
+              const d = Math.abs(ts - ct);
+              if (d < bestDist) { bestDist = d; best = ct; }
+              if (ct > ts && d > bestDist) break;
+            }
+            return best;
+          };
+
           visualSpec.pivots.forEach((pivot) => {
             // Skip "Entry" pivots — entry is already shown by the blue triangle marker
             if ((pivot.label || '').toLowerCase().includes('entry')) return;
@@ -490,30 +506,31 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             const isHigh = pivot.type === 'high';
             const isBreakout = (pivot.label || '').toLowerCase().includes('breakout');
             
-            let pivotTime = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
-            
-            if (!timeSet.has(pivotTime) && Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < playback.visibleBars.length) {
+            // Resolve pivot time: prefer index-based lookup, then timestamp, always snap
+            let pivotTime: number;
+            if (Number.isInteger(pivot.index) && pivot.index >= 0 && pivot.index < playback.visibleBars.length) {
               pivotTime = Math.floor(new Date(playback.visibleBars[pivot.index].t).getTime() / 1000);
+            } else {
+              pivotTime = Math.floor(new Date(pivot.timestamp).getTime() / 1000);
             }
+            pivotTime = snapToNearest(pivotTime);
             
-            if (timeSet.has(pivotTime)) {
-              if (isBreakout) {
-                allMarkers.push({
-                  time: pivotTime as Time,
-                  position: direction === 'long' ? 'belowBar' : 'aboveBar',
-                  color: '#3b82f6',
-                  shape: direction === 'long' ? 'arrowUp' : 'arrowDown',
-                  text: pivot.label || 'Breakout Level',
-                });
-              } else {
-                allMarkers.push({
-                  time: pivotTime as Time,
-                  position: isHigh ? 'aboveBar' : 'belowBar',
-                  color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
-                  shape: isHigh ? 'arrowDown' : 'arrowUp',
-                  text: pivot.label || '',
-                });
-              }
+            if (isBreakout) {
+              allMarkers.push({
+                time: pivotTime as Time,
+                position: direction === 'long' ? 'belowBar' : 'aboveBar',
+                color: '#3b82f6',
+                shape: direction === 'long' ? 'arrowUp' : 'arrowDown',
+                text: pivot.label || 'Breakout Level',
+              });
+            } else {
+              allMarkers.push({
+                time: pivotTime as Time,
+                position: isHigh ? 'aboveBar' : 'belowBar',
+                color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
+                shape: isHigh ? 'arrowDown' : 'arrowUp',
+                text: pivot.label || '',
+              });
             }
           });
         }

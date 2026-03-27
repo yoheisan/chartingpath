@@ -940,6 +940,13 @@ const StudyChart = memo(({
         color: string;
         label?: string;
       }> = [];
+      const structuralPivotMarkers: Array<{
+        time: Time;
+        position: 'aboveBar' | 'belowBar';
+        color: string;
+        shape: SeriesMarkerShape;
+        text: string;
+      }> = [];
 
       // Parse current pattern's pivots for structural markers
       if (currentPattern && currentPattern.pivots && currentPattern.pivots.length > 0 && patternToggles.showLabels) {
@@ -959,18 +966,18 @@ const StudyChart = memo(({
             t = altT || t;
           }
 
+          // Snap to nearest chart candle for reliable rendering
+          const snappedTime = findNearestCandleTime(safeChartData, t);
+
           if (isBreakout) {
             const pointUp = !isBreakdown;
             // Anchor breakout/breakdown marker to the nearest actual chart candle
-            let anchorTime = t;
             const targetTs = currentPattern.detectedAt
               ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000)
               : (currentPattern.bars && currentPattern.bars.length > 0)
                 ? Math.floor(new Date(currentPattern.bars[currentPattern.bars.length - 1].t).getTime() / 1000)
                 : t;
-            // Find nearest candle in chart data
-            anchorTime = findNearestCandleTime(safeChartData, targetTs);
-            // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
+            const anchorTime = findNearestCandleTime(safeChartData, targetTs);
             const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime);
             const snappedPrice = anchorBar
               ? (pointUp ? anchorBar.h : anchorBar.l)
@@ -981,6 +988,17 @@ const StudyChart = memo(({
               direction: pointUp ? 'up' : 'down',
               color: '#f97316',
               label: pivot.label || (isBreakdown ? 'Breakdown Level' : 'Breakout Level'),
+            });
+          } else {
+            // Structural pivots (Bottom 1, Bottom 2, Top 1, Top 2, Neckline, etc.)
+            // Render as native series markers so they survive refresh/resize
+            const isHigh = pivot.type === 'high';
+            structuralPivotMarkers.push({
+              time: snappedTime as Time,
+              position: isHigh ? 'aboveBar' : 'belowBar',
+              color: isHigh ? '#f97316' : '#8b5cf6',
+              shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
+              text: pivot.label || '',
             });
           }
         });
@@ -1003,6 +1021,7 @@ const StudyChart = memo(({
           text: m.text,
         })),
         ...patternMarkerData,
+        ...structuralPivotMarkers,
       ].sort((a, b) => {
         const ta = typeof a.time === 'string' ? a.time : String(a.time);
         const tb = typeof b.time === 'string' ? b.time : String(b.time);
