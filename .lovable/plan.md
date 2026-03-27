@@ -1,64 +1,66 @@
 
 
-## Diagnosis: Why Zero Trades Are Being Executed
+# Stable Chart Pattern Marker Layering — Root Cause Fix
 
-### The Root Cause — Scale Mismatch in Both `scan-setups` AND `evaluate-gate`
+## Problem Diagnosed
 
-The agent scoring system produces **raw scores on a 0–1 scale** (e.g., `analyst_raw = 0.72`). The composite is a weighted average of these, so the composite is also **0–1** (e.g., `0.58`).
+After extensive investigation of `StudyChart.tsx` (2135 lines), `CommandCenterChart.tsx`, `PatternOverlayRenderer.ts`, and `chartConstants.ts`, the root cause is clear:
 
-However, the **cutoff thresholds** (`take_cutoff`, `watch_cutoff`) default to **70 and 40 on a 0–100 scale**:
+**The entry arrow uses canvas overlay coordinate mapping (`priceToCoordinate` / `timeToCoordinate`) which is inherently unstable across refresh/zoom/scale changes.** This is why every previous fix was temporary — canvas coordinates are recalculated each frame and depend on the chart's current viewport state, which changes non-deterministically after refresh.
+
+Specific issues:
+1. Canvas triangle rendering fires via `setTimeout(250) + requestAnimationFrame` — timing-dependent
+2. `normalizeBarsForConsistentColoring` inflates `h`/`l` values (line 268: `h: Math.max(bar.h, normalizedOpen, bar.c)`), creating a mismatch between raw bars used for entry-hit detection and chart bars used for coordinate rendering
+3. Entry-hit scan uses raw `bars` but `findNearestCandleTime` maps to `safeChartData` (normalized) — timestamp mismatches cause wrong candle anchoring
+4. Canvas overlays are redrawn on every `visibleLogicalRangeChange` subscription, competing with autoscale adjustments after data loads
+
+## Solution: Remove Canvas Entry Arrow, Use Native APIs Only
+
+Per user preference: anchor the entry arrow to the **detection candle** (not entry-hit candle).
+
+### Architecture Change
 
 ```text
-Score:     0.58  (0–1 scale)
-Cutoff:   70     (0–100 scale)
+BEFORE (unstable):
+  ENTRY/SL/TP lines  →  createPriceLine (stable ✓)
+  Entry arrow        →  Canvas triangle via priceToCoordinate (UNSTABLE ✗)
+  Formation zones    →  Canvas overlay (acceptable — full-width, no x precision needed)
 
-0.58 >= 70?  → NO  → verdict = "WATCH" or "SKIP"
+AFTER (stable):
+  ENTRY/SL/TP lines  →  createPriceLine (stable ✓)
+  Entry arrow        →  Native series marker via createSeriesMarkers (stable ✓)
+  Formation zones    →  Canvas overlay (unchanged)
 ```
 
-**No score on a 0–1 scale will EVER reach 70.** Therefore `agentVerdict` is always `"WATCH"` or `"SKIP"`, which maps to `gateResult = "partial"` or `"conflict"`. The auto-trade engine (`scan-setups`) only opens trades when `gateResult === "aligned"` — so **zero trades are ever opened**.
+### File Changes
 
-This bug exists in **two places**:
+**`src/components/charts/StudyChart.tsx`** — Main changes:
 
-| File | Line | Problem |
-|------|------|---------|
-| `supabase/functions/scan-setups/index.ts` | 167–172 | Compares 0–1 composite against 70/40 cutoffs |
-| `supabase/functions/evaluate-gate/index.ts` | 109–118 | Same comparison |
+1. **Remove canvas triangle for current pattern entry** (lines ~989-1025): Delete the entire `entryHitTs` scan block that finds "first post-detection candle touching entry". Replace with a native series marker anchored to the detection date.
 
-The client-side `useScanningCandidates.ts` was already fixed (lines 146–148 use 0.70/0.40), but the **server-side functions that actually execute trades were not**.
+2. **Add current pattern to native markers** (lines ~1028-1033): Instead of filtering out the current pattern from `patternsForMarkers`, include it. The marker will use `detectedAt` (which is the pattern's confirmation date), not entry-hit time.
 
-### Additional Issue: `partial` Never Trades
+3. **Keep canvas triangles only for structural pivots** (Breakout/Breakdown labels from pivots) — these are less problematic since they snap to candle extremes and are less price-sensitive.
 
-Even if scores were correct, only `"aligned"` triggers a trade. A broad plan with no rule violations but a score of, say, 65 (which is objectively good) would be `"partial"` and never trade. This is overly conservative for a paper trading system.
+4. **Remove the entry-specific canvas triangle push** but keep breakout/breakdown pivot markers in `canvasTriangleMarkers`.
 
----
+5. **Simplify `shouldDrawTriangles`** condition — only true when structural (non-entry) canvas markers exist.
 
-## Plan
+**`src/components/charts/PatternOverlayRenderer.ts`** — Minor:
 
-### 1. Fix scale mismatch in `scan-setups/index.ts`
-- Convert the composite score to 0–100 **before** comparing to cutoffs: `agentScore = composite * 100`
-- OR convert cutoffs to 0–1: `takeCutoff / 100`
-- **Recommendation**: multiply composite by 100 to align with the settings UI which shows 0–100
+6. **Update `generatePatternMarkers`** to use `detectedAt` with proper intraday timestamp matching (currently uses date-only `split('T')[0]` which loses intraday precision for 1H/4H charts). Use `findNearestCandleTime` for robust time-snapping instead of date string matching.
 
-### 2. Fix scale mismatch in `evaluate-gate/index.ts`
-- Same fix: scale composite to 0–100 before comparing to `takeCutoff` / `watchCutoff`
+### Why This Is Stable
 
-### 3. Allow `partial` gate results to auto-trade (with attribution)
-- Currently only `"aligned"` opens trades. For a paper trading system, `"partial"` should also trade but with `attribution: "ai_partial"` so the user can compare performance
-- This makes the system commercially viable — users with broad plans will see activity
+- `createPriceLine` is **price-anchored** — immune to viewport/scale changes
+- `createSeriesMarkers` snaps markers to **actual data points** in the series — the library handles coordinate mapping internally, survives resize/autoscale/refresh
+- Removing canvas-based entry triangle **eliminates the coordinate desync** that caused every previous fix to be temporary
+- Detection candle anchoring avoids the fragile entry-hit scan entirely
 
-### 4. Deploy both edge functions
+### Scope
 
-### Technical detail
-
-In both `scan-setups/index.ts` and `evaluate-gate/index.ts`, the fix is a single line change:
-
-```ts
-// BEFORE (broken):
-agentScore = Math.round(composite * 100) / 100;  // e.g. 0.58
-
-// AFTER (fixed):
-agentScore = Math.round(composite * 10000) / 100; // e.g. 58.00
-```
-
-This scales the 0–1 composite to 0–100, matching the cutoff thresholds (70/40).
+- 2 files modified
+- ~50 lines changed total
+- No new dependencies
+- No breaking changes to props/interfaces
 
