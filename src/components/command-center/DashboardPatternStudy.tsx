@@ -86,6 +86,8 @@ interface DashboardPatternStudyProps {
   selectedPatternId?: string | null;
   /** When false, skip data fetching (panel is hidden) */
   active?: boolean;
+  /** Force-fetch a specific detection by ID (from Copilot trade context) */
+  initialDetectionId?: string;
 }
 
 export function DashboardPatternStudy({
@@ -94,6 +96,7 @@ export function DashboardPatternStudy({
   onPatternSelect,
   selectedPatternId,
   active = true,
+  initialDetectionId,
 }: DashboardPatternStudyProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
