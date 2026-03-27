@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ResponsiveContainer, ComposedChart, Area, Bar, XAxis, YAxis,
-  Tooltip, ReferenceLine, CartesianGrid, Cell,
+  ResponsiveContainer, ComposedChart, Area, XAxis, YAxis,
+  Tooltip, ReferenceLine, CartesianGrid,
 } from 'recharts';
 import { format } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { splitByAttribution, calcTotalR, type PaperTrade } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
 
 export function EquityCurve({ trades }: Props) {
   const { t } = useTranslation();
-  const [showBars, setShowBars] = useState(true);
   const { ai, human } = useMemo(() => splitByAttribution(trades), [trades]);
 
   const data = useMemo(() => {
@@ -29,11 +29,10 @@ export function EquityCurve({ trades }: Props) {
         cumR: parseFloat(cumR.toFixed(2)),
         r: parseFloat(r.toFixed(2)),
         dd: parseFloat(dd.toFixed(2)),
-        isAi: !isOverride,
         isOverride,
         symbol: tr.symbol,
         setup: tr.setup_type || '—',
-        outcome: r > 0 ? 'win' : r < 0 ? 'loss' : 'breakeven',
+        tradeType: tr.trade_type,
       };
     });
   }, [trades]);
@@ -60,18 +59,26 @@ export function EquityCurve({ trades }: Props) {
             <span className="text-[hsl(var(--bearish))]">{maxDD.toFixed(1)}R</span>
           </p>
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
-          <input type="checkbox" checked={showBars} onChange={() => setShowBars(!showBars)} className="rounded" />
-          Show per-trade bars
-        </label>
+        <div className="flex gap-4 text-xs text-muted-foreground">
+          <span>🤖 AI{' '}
+            <span className={aiTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
+              {aiTotalR >= 0 ? '+' : ''}{aiTotalR.toFixed(1)}R
+            </span>
+          </span>
+          <span>🧑 Override{' '}
+            <span className={humanTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
+              {humanTotalR >= 0 ? '+' : ''}{humanTotalR.toFixed(1)}R
+            </span>
+          </span>
+        </div>
       </div>
 
-      {/* Equity + per-trade bars */}
-      <div className="h-72">
+      {/* Equity Curve Chart */}
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <defs>
-              <linearGradient id="eqFillUp" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--bullish))" stopOpacity={0.25} />
                 <stop offset="95%" stopColor="hsl(var(--bullish))" stopOpacity={0} />
               </linearGradient>
@@ -85,30 +92,18 @@ export function EquityCurve({ trades }: Props) {
               tickLine={false}
             />
             <YAxis
-              yAxisId="cumR"
               tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={v => `${v}R`}
             />
-            {showBars && (
-              <YAxis
-                yAxisId="bar"
-                orientation="right"
-                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={v => `${v}R`}
-              />
-            )}
-            <ReferenceLine yAxisId="cumR" y={0} stroke="hsl(var(--border))" strokeDasharray="4 4" />
+            <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="4 4" />
             <Tooltip
               contentStyle={{
                 background: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
                 fontSize: '13px',
-                padding: '8px 12px',
               }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
@@ -119,107 +114,65 @@ export function EquityCurve({ trades }: Props) {
                     <p className="font-medium text-foreground">{d.symbol} · #{d.idx}</p>
                     <p className="text-muted-foreground">{format(new Date(d.date), 'MMM d, yyyy HH:mm')}</p>
                     <div className="flex gap-3 pt-1">
-                      <span>
-                        Trade:{' '}
-                        <span className={d.r >= 0 ? 'text-[hsl(var(--bullish))] font-semibold' : 'text-[hsl(var(--bearish))] font-semibold'}>
-                          {d.r >= 0 ? '+' : ''}{d.r}R
-                        </span>
-                      </span>
-                      <span>
-                        Cum:{' '}
-                        <span className={d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
-                          {d.cumR >= 0 ? '+' : ''}{d.cumR}R
-                        </span>
-                      </span>
+                      <span>Trade: <span className={d.r >= 0 ? 'text-[hsl(var(--bullish))] font-semibold' : 'text-[hsl(var(--bearish))] font-semibold'}>{d.r >= 0 ? '+' : ''}{d.r}R</span></span>
+                      <span>Cum: <span className={d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>{d.cumR >= 0 ? '+' : ''}{d.cumR}R</span></span>
                     </div>
-                    <p className="text-muted-foreground">
-                      {d.isOverride ? '🧑 Override' : '🤖 AI'} · {d.setup}
-                    </p>
-                    {d.dd < 0 && (
-                      <p className="text-[hsl(var(--bearish))]">DD: {d.dd}R</p>
-                    )}
+                    <p className="text-muted-foreground">{d.isOverride ? '🧑 Override' : '🤖 AI'} · {d.setup}</p>
                   </div>
                 );
               }}
             />
-            {showBars && (
-              <Bar yAxisId="bar" dataKey="r" barSize={6} radius={[2, 2, 0, 0]} opacity={0.7}>
-                {data.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill={d.r >= 0 ? 'hsl(var(--bullish))' : 'hsl(var(--bearish))'}
-                  />
-                ))}
-              </Bar>
-            )}
             <Area
-              yAxisId="cumR"
               type="monotone"
               dataKey="cumR"
               stroke="hsl(var(--bullish))"
-              fill="url(#eqFillUp)"
+              fill="url(#eqFill)"
               strokeWidth={2}
               dot={(props: any) => {
                 const { cx, cy, payload } = props;
-                const color = payload.isOverride ? '#f59e0b' : '#3b82f6';
-                return (
-                  <circle
-                    key={props.index}
-                    cx={cx}
-                    cy={cy}
-                    r={payload.r >= 0 ? 3.5 : 3}
-                    fill={payload.r >= 0 ? color : 'hsl(var(--bearish))'}
-                    stroke={payload.r >= 0 ? 'none' : 'hsl(var(--bearish))'}
-                    strokeWidth={1}
-                    opacity={0.9}
-                  />
-                );
+                const color = payload.r >= 0 ? 'hsl(var(--bullish))' : 'hsl(var(--bearish))';
+                return <circle key={props.index} cx={cx} cy={cy} r={3} fill={color} stroke="none" />;
               }}
             />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Drawdown mini chart */}
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-1">Underwater (Drawdown)</p>
-        <div className="h-20">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
-              <XAxis dataKey="date" hide />
-              <YAxis
-                tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={v => `${v}R`}
-                domain={['dataMin', 0]}
-              />
-              <Area
-                type="monotone"
-                dataKey="dd"
-                stroke="hsl(var(--bearish))"
-                fill="hsl(var(--bearish))"
-                fillOpacity={0.15}
-                strokeWidth={1.5}
-              />
-              <ReferenceLine y={0} stroke="hsl(var(--border))" />
-            </ComposedChart>
-          </ResponsiveContainer>
+      {/* Trade List */}
+      <div className="border-t border-border/30 pt-4">
+        <h3 className="text-sm font-semibold text-foreground mb-2">Trade Log</h3>
+        <div className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_4.5rem] gap-x-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider pb-1.5 border-b border-border/30 px-2">
+          <span>#</span>
+          <span>Date</span>
+          <span>Symbol</span>
+          <span>Type</span>
+          <span>Setup</span>
+          <span>Result</span>
+          <span className="text-right">Cum R</span>
         </div>
-      </div>
-
-      {/* Attribution summary */}
-      <div className="flex gap-6 text-xs text-muted-foreground border-t border-border/30 pt-3">
-        <span>🤖 AI contributed{' '}
-          <span className={aiTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
-            {aiTotalR >= 0 ? '+' : ''}{aiTotalR.toFixed(1)}R
-          </span> ({ai.length} trades)
-        </span>
-        <span>🧑 Overrides contributed{' '}
-          <span className={humanTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
-            {humanTotalR >= 0 ? '+' : ''}{humanTotalR.toFixed(1)}R
-          </span> ({human.length} trades)
-        </span>
+        <ScrollArea className="max-h-60">
+          <div className="divide-y divide-border/20">
+            {data.map(d => (
+              <div
+                key={d.idx}
+                className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_4.5rem] gap-x-2 items-center py-1.5 px-2 text-xs hover:bg-muted/30 transition-colors"
+              >
+                <span className="text-muted-foreground">{d.idx}</span>
+                <span className="text-muted-foreground">{format(new Date(d.date), 'MM/dd')}</span>
+                <span className="font-medium text-foreground">{d.symbol}</span>
+                <span className="text-muted-foreground capitalize">{d.tradeType}</span>
+                <span className="text-muted-foreground truncate" title={d.setup}>{d.setup}</span>
+                <span className={`font-semibold ${d.r > 0 ? 'text-[hsl(var(--bullish))]' : d.r < 0 ? 'text-[hsl(var(--bearish))]' : 'text-muted-foreground'}`}>
+                  {d.r > 0 ? '+' : ''}{d.r}R
+                  {d.r > 0 ? ' ✅' : d.r < 0 ? ' ❌' : ''}
+                </span>
+                <span className={`text-right font-medium ${d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}`}>
+                  {d.cumR >= 0 ? '+' : ''}{d.cumR}R
+                </span>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
