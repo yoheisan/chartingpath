@@ -139,27 +139,51 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const highestHigh = Math.max(...highs);
       const lowestLow = Math.min(...lows);
       const range = highestHigh - lowestLow;
-      const tolerance = range * 0.03;
+      if (range === 0) return { detected: false, pivots: [] };
+      const tolerance = range * 0.025;
       
       // Intraday timeframes require stricter parameters
       const isIntraday = timeframe && ['1h', '4h', '2h', '30m', '15m'].includes(timeframe.toLowerCase());
       const minSeparation = isIntraday ? 7 : 5;
       
-      // Peak prominence threshold: peaks must be within 5% of the window high
-      const prominenceThreshold = highestHigh - range * 0.05;
+      // Pivot detection: require 3+ bars on each side for structural significance
+      const pivotWindow = isIntraday ? 4 : 3;
       
-      let firstTop = -1, secondTop = -1;
-      for (let i = 2; i < window.length - 3; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          if (highs[i] < prominenceThreshold) continue;
-          
-          if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= minSeparation && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
-            secondTop = i;
+      // Peak prominence: tops must be in the upper 15% of the price range
+      const prominenceThreshold = highestHigh - range * 0.15;
+      
+      const tops: number[] = [];
+      for (let i = pivotWindow; i < window.length - pivotWindow; i++) {
+        let isPivotHigh = true;
+        for (let j = 1; j <= pivotWindow; j++) {
+          if (highs[i] <= highs[i - j] || highs[i] <= highs[i + j]) {
+            isPivotHigh = false;
             break;
           }
         }
+        if (!isPivotHigh) continue;
+        if (highs[i] < prominenceThreshold) continue;
+        tops.push(i);
+      }
+      
+      let firstTop = -1, secondTop = -1;
+      for (let a = 0; a < tops.length - 1; a++) {
+        for (let b = a + 1; b < tops.length; b++) {
+          if (tops[b] - tops[a] >= minSeparation && 
+              Math.abs(highs[tops[b]] - highs[tops[a]]) <= tolerance) {
+            // Verify meaningful dip between the two tops
+            const midLow = Math.min(...lows.slice(tops[a], tops[b] + 1));
+            const avgTop = (highs[tops[a]] + highs[tops[b]]) / 2;
+            const dipRatio = (avgTop - midLow) / avgTop;
+            const minDip = isIntraday ? 0.015 : 0.01;
+            if (dipRatio >= minDip) {
+              firstTop = tops[a];
+              secondTop = tops[b];
+              break;
+            }
+          }
+        }
+        if (secondTop !== -1) break;
       }
       
       if (firstTop === -1 || secondTop === -1) return { detected: false, pivots: [] };
@@ -220,27 +244,53 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const highestHigh = Math.max(...highs);
       const lowestLow = Math.min(...lows);
       const range = highestHigh - lowestLow;
-      const tolerance = range * 0.03;
+      if (range === 0) return { detected: false, pivots: [] };
+      const tolerance = range * 0.025; // Tighter tolerance for similar bottoms
       
       // Intraday timeframes require stricter parameters
       const isIntraday = timeframe && ['1h', '4h', '2h', '30m', '15m'].includes(timeframe.toLowerCase());
       const minSeparation = isIntraday ? 7 : 5;
       
-      // Trough prominence threshold: troughs must be within 5% of the window low
-      const prominenceThreshold = lowestLow + range * 0.05;
+      // Pivot detection: require 3 bars on each side for structural significance
+      // A real "bottom" must be lower than 3 neighbors on each side
+      const pivotWindow = isIntraday ? 4 : 3;
       
-      let firstBottom = -1, secondBottom = -1;
-      for (let i = 2; i < window.length - 3; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
-          if (lows[i] > prominenceThreshold) continue;
-          
-          if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= minSeparation && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
-            secondBottom = i;
+      // Trough prominence: bottoms must be in the lower 15% of the price range
+      const prominenceThreshold = lowestLow + range * 0.15;
+      
+      const bottoms: number[] = [];
+      for (let i = pivotWindow; i < window.length - pivotWindow; i++) {
+        let isPivotLow = true;
+        for (let j = 1; j <= pivotWindow; j++) {
+          if (lows[i] >= lows[i - j] || lows[i] >= lows[i + j]) {
+            isPivotLow = false;
             break;
           }
         }
+        if (!isPivotLow) continue;
+        if (lows[i] > prominenceThreshold) continue;
+        bottoms.push(i);
+      }
+      
+      // Need at least 2 qualifying bottoms
+      let firstBottom = -1, secondBottom = -1;
+      for (let a = 0; a < bottoms.length - 1; a++) {
+        for (let b = a + 1; b < bottoms.length; b++) {
+          if (bottoms[b] - bottoms[a] >= minSeparation && 
+              Math.abs(lows[bottoms[b]] - lows[bottoms[a]]) <= tolerance) {
+            // Verify there's a meaningful bounce between the two bottoms
+            const midHigh = Math.max(...highs.slice(bottoms[a], bottoms[b] + 1));
+            const avgBottom = (lows[bottoms[a]] + lows[bottoms[b]]) / 2;
+            const bounceRatio = (midHigh - avgBottom) / avgBottom;
+            const minBounce = isIntraday ? 0.015 : 0.01;
+            if (bounceRatio >= minBounce) {
+              firstBottom = bottoms[a];
+              secondBottom = bottoms[b];
+              break;
+            }
+          }
+        }
+        if (secondBottom !== -1) break;
       }
       
       if (firstBottom === -1 || secondBottom === -1) return { detected: false, pivots: [] };
