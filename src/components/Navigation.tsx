@@ -373,6 +373,7 @@ const Navigation = () => {
 
             {/* Mobile menu */}
             <div className="md:hidden flex items-center gap-2">
+              <AuthButton />
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className={dashboardMobileCompact ? 'h-8 w-8' : ''}>
@@ -382,9 +383,6 @@ const Navigation = () => {
                 <SheetContent side="right" className="w-72 flex flex-col p-0">
                   <ScrollArea className="flex-1 px-6">
                     <MobileNavContent />
-                    <div className="mt-6 pb-6">
-                      <AuthButton />
-                    </div>
                   </ScrollArea>
                 </SheetContent>
               </Sheet>
