@@ -479,6 +479,17 @@ const StudyChart = memo(({
       }
     }
 
+    // Original (un-normalized) bar map for marker price snapping.
+    // normalizeBarsForConsistentColoring inflates h/l via Math.max(bar.h, prevClose, bar.c),
+    // which causes markers to float above/below visible candle extremes.
+    const originalBarByTime = new Map<number, (typeof bars)[number]>();
+    for (const bar of bars) {
+      const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+      if (Number.isFinite(ts)) {
+        originalBarByTime.set(ts, bar);
+      }
+    }
+
     // Add volume histogram if volume data is available
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
@@ -944,7 +955,7 @@ const StudyChart = memo(({
             // Find nearest candle in chart data
             anchorTime = findNearestCandleTime(safeChartData, targetTs);
             // Snap price to the candle's extreme (high for up, low for down) so the marker touches the candle
-            const anchorBar = normalizedBarByTime.get(anchorTime);
+            const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime);
             const snappedPrice = anchorBar
               ? (pointUp ? anchorBar.h : anchorBar.l)
               : pivot.price;
@@ -973,8 +984,8 @@ const StudyChart = memo(({
         // Snap to nearest actual chart candle (prevents floating markers)
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
         
-        // Find the bar data at the snapped time for price snapping
-        const anchorBar = normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
+        // Find the bar data at the snapped time for price snapping (use original bars to avoid inflated h/l)
+        const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
 
         canvasTriangleMarkers.push({
           time: anchorTime,
