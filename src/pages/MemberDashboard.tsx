@@ -78,6 +78,8 @@ const MemberDashboard = () => {
         userId={user?.id} 
         initialPlaybackPattern={routeState?.playbackPattern}
         initialSymbol={initialSymbol}
+        initialTimeframe={initialTimeframe}
+        initialDetectionId={initialDetectionId}
       />
     </>
   );
