@@ -17,6 +17,7 @@ import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 import type { MasterPlan } from '@/hooks/useMasterPlan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
@@ -670,14 +671,21 @@ const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, o
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {mainContent}
-      </div>
-      <TradeBlotter
-        trades={openTrades}
-        selectedTradeId={selectedTradeId}
-        onSelectTrade={onSelectTrade}
-      />
+      <ResizablePanelGroup direction="vertical" className="flex-1 min-h-0">
+        <ResizablePanel defaultSize={60} minSize={15}>
+          <div className="h-full overflow-hidden">
+            {mainContent}
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={40} minSize={10} maxSize={85}>
+          <TradeBlotter
+            trades={openTrades}
+            selectedTradeId={selectedTradeId}
+            onSelectTrade={onSelectTrade}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
