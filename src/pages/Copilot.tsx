@@ -170,51 +170,51 @@ const Copilot = () => {
       <div className="flex flex-1 min-h-0">
         {/* TradingView-style sidebar: icon strip when collapsed, full panel when open */}
         {!leftPaneOpen ? (
-          <aside className="shrink-0 w-10 border-r border-border/40 flex flex-col items-center py-2 gap-1 bg-card">
+          <aside className="shrink-0 w-[52px] border-r border-border/50 flex flex-col items-center py-3 gap-2 bg-card">
             <button
               onClick={() => setLeftPaneOpen(true)}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Open sidebar"
             >
-              <LayoutDashboard className="h-4 w-4" />
+              <LayoutDashboard className="h-5 w-5" />
             </button>
             <button
               onClick={() => setLeftPaneOpen(true)}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Alerts"
             >
-              <Bell className="h-4 w-4" />
+              <Bell className="h-5 w-5" />
             </button>
             <button
               onClick={() => setLeftPaneOpen(true)}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Plans"
             >
-              <FileText className="h-4 w-4" />
+              <FileText className="h-5 w-5" />
             </button>
             <button
               onClick={() => setLeftPaneOpen(true)}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Trades"
             >
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-5 w-5" />
             </button>
           </aside>
         ) : (
-          <aside className="shrink-0 w-[270px] border-r border-border/40 flex flex-col bg-card">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/30">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <aside className="shrink-0 w-[280px] border-r border-border/50 flex flex-col bg-card">
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
+              <span className="text-sm font-bold uppercase tracking-wide text-foreground">
                 {t('copilotPage.masterPlans')}
               </span>
               <button
                 onClick={() => setLeftPaneOpen(false)}
-                className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
                 title="Collapse sidebar"
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex flex-col gap-2 p-2 overflow-y-auto overflow-x-hidden flex-1">
+            <div className="flex flex-col gap-2.5 p-3 overflow-y-auto overflow-x-hidden flex-1">
               <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
               <MandateCard
                 onFocusNLBar={focusNLBar}
