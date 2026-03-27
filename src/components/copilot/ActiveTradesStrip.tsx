@@ -23,6 +23,10 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
         <span className="text-sm font-semibold text-foreground">
           Active Trades
         </span>
+      {isEmpty ? (
+        <p className="text-xs text-muted-foreground px-1 py-2">No active trades. Copilot is scanning for setups…</p>
+      ) : (
+        <>
         <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
           {displayTrades.length}
         </Badge>
