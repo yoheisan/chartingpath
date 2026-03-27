@@ -989,13 +989,16 @@ const StudyChart = memo(({
 
         // Snap to nearest actual chart candle (prevents floating markers)
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
-        
-        // Find the bar data at the snapped time for price snapping (use original bars to avoid inflated h/l)
+
+        // Keep entry marker vertically synced with ENTRY line (not candle extremum)
         const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
+        const entryMarkerPrice = Number(currentPattern.entryPrice);
+        const fallbackPrice = isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice);
+        const markerPrice = Number.isFinite(entryMarkerPrice) && entryMarkerPrice > 0 ? entryMarkerPrice : fallbackPrice;
 
         canvasTriangleMarkers.push({
           time: anchorTime,
-          price: isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice),
+          price: markerPrice,
           direction: isLong ? 'up' : 'down',
           color: '#3b82f6',
           label: '',
