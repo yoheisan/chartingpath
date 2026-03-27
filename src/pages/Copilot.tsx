@@ -42,6 +42,12 @@ const Copilot = () => {
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [leftPaneOpen, setLeftPaneOpen] = useState(true);
+  const [leftPaneSection, setLeftPaneSection] = useState<'all' | 'dashboard' | 'alerts' | 'plans' | 'trades'>('all');
+
+  const openSection = useCallback((section: 'dashboard' | 'alerts' | 'plans' | 'trades') => {
+    setLeftPaneSection(section);
+    setLeftPaneOpen(true);
+  }, []);
 
   // Listen for question routing from NL Command Bar
   useEffect(() => {
