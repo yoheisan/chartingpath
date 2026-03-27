@@ -40,6 +40,7 @@ const Copilot = () => {
   const [debriefQuestion, setDebriefQuestion] = useState<string | null>(null);
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [leftPaneOpen, setLeftPaneOpen] = useState(true);
 
   // Listen for question routing from NL Command Bar
   useEffect(() => {
