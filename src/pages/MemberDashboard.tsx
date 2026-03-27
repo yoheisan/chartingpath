@@ -20,6 +20,10 @@ interface PlaybackPatternState {
   };
   /** Symbol to pre-select on the dashboard chart (from /study/:symbol redirect) */
   initialSymbol?: string;
+  /** Timeframe to set on the chart (from Copilot trade context) */
+  initialTimeframe?: string;
+  /** Detection ID to highlight on the chart (from Copilot trade context) */
+  initialDetectionId?: string;
   /** URL to navigate back to (e.g. Edge Atlas) */
   backUrl?: string;
   /** Label for the back button */
@@ -33,7 +37,11 @@ const MemberDashboard = () => {
   const [searchParams] = useSearchParams();
   const routeState = location.state as PlaybackPatternState | null;
   const querySymbol = searchParams.get('symbol');
+  const queryTimeframe = searchParams.get('timeframe');
+  const queryDetectionId = searchParams.get('detectionId');
   const initialSymbol = routeState?.initialSymbol || querySymbol || undefined;
+  const initialTimeframe = routeState?.initialTimeframe || queryTimeframe || undefined;
+  const initialDetectionId = routeState?.initialDetectionId || queryDetectionId || undefined;
 
   // Show skeleton only while auth state is resolving
   if (isAuthLoading) {

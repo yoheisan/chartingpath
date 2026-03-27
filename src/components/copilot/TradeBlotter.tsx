@@ -89,7 +89,13 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                       )}
                       <span
                         className="text-sm font-mono font-bold text-foreground hover:text-primary hover:underline cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); goToSymbol(trade.symbol, e); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goToSymbol(trade.symbol, e, {
+                            timeframe: trade.timeframe || undefined,
+                            detectionId: trade.detection_id || undefined,
+                          });
+                        }}
                         title={t('copilotPage.viewOnDashboard', 'View on Dashboard')}
                       >
                         {trade.symbol}
