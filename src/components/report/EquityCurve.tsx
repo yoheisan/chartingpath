@@ -16,19 +16,22 @@ export function EquityCurve({ trades }: Props) {
 
   const data = useMemo(() => {
     let cumR = 0;
-    let peak = 0;
+    let cumPct = 0;
     return trades.map((tr, i) => {
       const r = tr.outcome_r ?? 0;
+      const pct = tr.entry_price && tr.exit_price
+        ? ((tr.exit_price - tr.entry_price) / tr.entry_price) * 100 * (tr.trade_type === 'short' ? -1 : 1)
+        : 0;
       cumR += r;
-      peak = Math.max(peak, cumR);
-      const dd = cumR - peak;
+      cumPct += pct;
       const isOverride = tr.attribution === 'override' || tr.user_action === 'override';
       return {
         idx: i + 1,
         date: tr.closed_at || tr.created_at,
         cumR: parseFloat(cumR.toFixed(2)),
         r: parseFloat(r.toFixed(2)),
-        dd: parseFloat(dd.toFixed(2)),
+        pct: parseFloat(pct.toFixed(2)),
+        cumPct: parseFloat(cumPct.toFixed(2)),
         isOverride,
         symbol: tr.symbol,
         setup: tr.setup_type || '—',
@@ -42,7 +45,8 @@ export function EquityCurve({ trades }: Props) {
   const totalR = calcTotalR(trades);
   const wins = trades.filter(t => (t.outcome_r ?? 0) > 0).length;
   const losses = trades.filter(t => (t.outcome_r ?? 0) < 0).length;
-  const maxDD = data.length > 0 ? Math.min(...data.map(d => d.dd)) : 0;
+  const maxDD = data.length > 0 ? Math.min(...data.map(d => d.cumR)) : 0;
+  const totalPct = data.length > 0 ? data[data.length - 1].cumPct : 0;
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6 space-y-4">
@@ -54,6 +58,10 @@ export function EquityCurve({ trades }: Props) {
             {trades.length} trades · {wins}W / {losses}L · Net{' '}
             <span className={totalR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
               {totalR >= 0 ? '+' : ''}{totalR.toFixed(1)}R
+            </span>
+            {' '}
+            <span className={totalPct >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
+              ({totalPct >= 0 ? '+' : ''}{totalPct.toFixed(1)}%)
             </span>
             {' '}· Max DD{' '}
             <span className="text-[hsl(var(--bearish))]">{maxDD.toFixed(1)}R</span>
@@ -99,12 +107,6 @@ export function EquityCurve({ trades }: Props) {
             />
             <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="4 4" />
             <Tooltip
-              contentStyle={{
-                background: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                fontSize: '13px',
-              }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload;
@@ -114,8 +116,26 @@ export function EquityCurve({ trades }: Props) {
                     <p className="font-medium text-foreground">{d.symbol} · #{d.idx}</p>
                     <p className="text-muted-foreground">{format(new Date(d.date), 'MMM d, yyyy HH:mm')}</p>
                     <div className="flex gap-3 pt-1">
-                      <span>Trade: <span className={d.r >= 0 ? 'text-[hsl(var(--bullish))] font-semibold' : 'text-[hsl(var(--bearish))] font-semibold'}>{d.r >= 0 ? '+' : ''}{d.r}R</span></span>
-                      <span>Cum: <span className={d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>{d.cumR >= 0 ? '+' : ''}{d.cumR}R</span></span>
+                      <span>
+                        Trade:{' '}
+                        <span className={d.r >= 0 ? 'text-[hsl(var(--bullish))] font-semibold' : 'text-[hsl(var(--bearish))] font-semibold'}>
+                          {d.r >= 0 ? '+' : ''}{d.r}R
+                        </span>
+                        <span className="text-muted-foreground ml-1">
+                          ({d.pct >= 0 ? '+' : ''}{d.pct}%)
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex gap-3">
+                      <span>
+                        Cum:{' '}
+                        <span className={d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
+                          {d.cumR >= 0 ? '+' : ''}{d.cumR}R
+                        </span>
+                        <span className="text-muted-foreground ml-1">
+                          ({d.cumPct >= 0 ? '+' : ''}{d.cumPct}%)
+                        </span>
+                      </span>
                     </div>
                     <p className="text-muted-foreground">{d.isOverride ? '🧑 Override' : '🤖 AI'} · {d.setup}</p>
                   </div>
@@ -141,13 +161,14 @@ export function EquityCurve({ trades }: Props) {
       {/* Trade List */}
       <div className="border-t border-border/30 pt-4">
         <h3 className="text-sm font-semibold text-foreground mb-2">Trade Log</h3>
-        <div className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_4.5rem] gap-x-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider pb-1.5 border-b border-border/30 px-2">
+        <div className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_3.5rem_4.5rem] gap-x-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider pb-1.5 border-b border-border/30 px-2">
           <span>#</span>
           <span>Date</span>
           <span>Symbol</span>
           <span>Type</span>
           <span>Setup</span>
           <span>Result</span>
+          <span>%</span>
           <span className="text-right">Cum R</span>
         </div>
         <ScrollArea className="max-h-60">
@@ -155,7 +176,7 @@ export function EquityCurve({ trades }: Props) {
             {data.map(d => (
               <div
                 key={d.idx}
-                className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_4.5rem] gap-x-2 items-center py-1.5 px-2 text-xs hover:bg-muted/30 transition-colors"
+                className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_3.5rem_4.5rem] gap-x-2 items-center py-1.5 px-2 text-xs hover:bg-muted/30 transition-colors"
               >
                 <span className="text-muted-foreground">{d.idx}</span>
                 <span className="text-muted-foreground">{format(new Date(d.date), 'MM/dd')}</span>
@@ -165,6 +186,9 @@ export function EquityCurve({ trades }: Props) {
                 <span className={`font-semibold ${d.r > 0 ? 'text-[hsl(var(--bullish))]' : d.r < 0 ? 'text-[hsl(var(--bearish))]' : 'text-muted-foreground'}`}>
                   {d.r > 0 ? '+' : ''}{d.r}R
                   {d.r > 0 ? ' ✅' : d.r < 0 ? ' ❌' : ''}
+                </span>
+                <span className={`text-[11px] ${d.pct > 0 ? 'text-[hsl(var(--bullish))]' : d.pct < 0 ? 'text-[hsl(var(--bearish))]' : 'text-muted-foreground'}`}>
+                  {d.pct > 0 ? '+' : ''}{d.pct}%
                 </span>
                 <span className={`text-right font-medium ${d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}`}>
                   {d.cumR >= 0 ? '+' : ''}{d.cumR}R
