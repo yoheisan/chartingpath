@@ -836,7 +836,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       patternName: PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name,
       patternId: overlayPattern.pattern_id,
       direction: (overlayPattern.direction === 'bullish' ? 'long' : overlayPattern.direction === 'bearish' ? 'short' : overlayPattern.direction) as 'long' | 'short',
-      detectedAt: getDetectedAt(overlayPattern),
+      detectedAt: overlayPattern.first_detected_at || overlayPattern.detected_at || getDetectedAt(overlayPattern),
       entryPrice: overlayPattern.entry_price,
       stopLossPrice: overlayPattern.stop_loss_price,
       takeProfitPrice: overlayPattern.take_profit_price,
