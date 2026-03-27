@@ -940,6 +940,13 @@ const StudyChart = memo(({
         color: string;
         label?: string;
       }> = [];
+      const structuralPivotMarkers: Array<{
+        time: Time;
+        position: 'aboveBar' | 'belowBar';
+        color: string;
+        shape: SeriesMarkerShape;
+        text: string;
+      }> = [];
 
       // Parse current pattern's pivots for structural markers
       if (currentPattern && currentPattern.pivots && currentPattern.pivots.length > 0 && patternToggles.showLabels) {
