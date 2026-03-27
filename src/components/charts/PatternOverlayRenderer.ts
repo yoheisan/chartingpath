@@ -194,23 +194,32 @@ export function generatePatternMarkers(
     text: string;
   }> = [];
 
-  // Build a time-set from chart bars for matching
-  const chartTimeSet = new Set(
-    chartBars.map(b => {
-      const dateOnly = b.t.split('T')[0];
-      return dateOnly;
-    })
-  );
+  // Build a sorted timestamp array from chart bars for nearest-candle snapping
+  const chartBarTimes = chartBars.map(b => ({
+    ts: Math.floor(new Date(b.t).getTime() / 1000),
+    t: b.t,
+  })).filter(x => Number.isFinite(x.ts)).sort((a, b) => a.ts - b.ts);
 
   for (const p of patterns) {
     if (!p.detectedAt) continue;
-    const dateOnly = p.detectedAt.split('T')[0];
+    const detectedTs = Math.floor(new Date(p.detectedAt).getTime() / 1000);
+    if (!Number.isFinite(detectedTs)) continue;
     
-    // Find closest chart bar to the pattern's detection date
-    const matchBar = chartBars.find(b => b.t.split('T')[0] === dateOnly);
-    if (!matchBar) continue;
+    // Find nearest chart bar by timestamp (handles intraday timeframes correctly)
+    let bestMatch = chartBarTimes[0];
+    let bestDist = Math.abs(detectedTs - bestMatch.ts);
+    for (const entry of chartBarTimes) {
+      const dist = Math.abs(detectedTs - entry.ts);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestMatch = entry;
+      }
+      // Early exit if we've passed the target (sorted array)
+      if (entry.ts > detectedTs && dist > bestDist) break;
+    }
+    if (!bestMatch) continue;
 
-    const time = dateToTime(matchBar.t);
+    const time = dateToTime(bestMatch.t);
     if (!time) continue;
 
     const isLong = p.direction === 'long' || p.direction === 'bullish';

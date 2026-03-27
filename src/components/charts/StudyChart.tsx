@@ -986,50 +986,11 @@ const StudyChart = memo(({
         });
       }
 
-      // Entry Point → canvas triangle at FIRST candle that touches entry, snapped to exact entry price
-      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
-        const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
-        const entryPrice = Number(currentPattern.entryPrice);
-        if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
-          // invalid entry; skip marker
-        } else {
-          const detectedTs = currentPattern.detectedAt
-            ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000)
-            : null;
+      // Entry arrow for current pattern is now rendered via native series markers (stable across refresh).
+      // No canvas triangle for entry — canvas is only used for structural pivot markers (Breakout/Breakdown).
 
-          // Find first post-detection candle that actually trades through entry level
-          let entryHitTs: number | null = null;
-          for (const bar of bars) {
-            const ts = Math.floor(new Date(bar.t).getTime() / 1000);
-            if (!Number.isFinite(ts)) continue;
-            if (detectedTs && ts <= detectedTs) continue;
-
-            // True touch check (works for both long/short and avoids false positives)
-            const touchedEntry = bar.l <= entryPrice && bar.h >= entryPrice;
-            if (touchedEntry) {
-              entryHitTs = ts;
-              break;
-            }
-          }
-
-          // If entry was never hit, don't render an entry marker
-          if (entryHitTs != null && patternToggles.showEntry) {
-            const anchorTime = findNearestCandleTime(safeChartData, entryHitTs);
-            canvasTriangleMarkers.push({
-              time: anchorTime,
-              price: entryPrice,
-              direction: isLong ? 'up' : 'down',
-              color: PATTERN_OVERLAY_COLORS.entry,
-            });
-          }
-        }
-      }
-
-      // Render pattern markers for OTHER patterns only.
-      // Current pattern entry marker is handled via canvas triangle for exact price anchoring.
-      const patternsForMarkers = currentPattern
-        ? historicalPatterns.filter(p => p.id !== currentPattern.id)
-        : historicalPatterns;
+      // Include ALL patterns (including current) in native markers — anchored to detectedAt candle.
+      const patternsForMarkers = historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
 
       // Merge native markers
