@@ -36,6 +36,7 @@ export function MandateCard({
   const { t } = useTranslation();
   const copilot = useTradingCopilotContext();
   const hasMandate = hasPlan !== undefined ? hasPlan : true;
+  const [isOpen, setIsOpen] = useState(true);
 
   const handleNewPlan = () => {
     copilot.openNewPlanBuilder();
