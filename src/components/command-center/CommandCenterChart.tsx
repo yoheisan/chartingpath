@@ -492,7 +492,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
           entryPrice: Number(p.entry_price),
           stopLossPrice: Number(p.stop_loss_price),
           takeProfitPrice: Number(p.take_profit_price),
-          detectedAt: p.last_confirmed_at || p.first_detected_at || '',
+          detectedAt: p.first_detected_at || p.detected_at || p.last_confirmed_at || '',
           bars: currentBars,
           status: p.status,
         });
