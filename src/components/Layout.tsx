@@ -36,7 +36,7 @@ const Layout = ({ children }: LayoutProps) => {
   // Track page views & time-on-page
   usePageTracking();
   
-  const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route));
+  const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route)) && !location.pathname.startsWith('/copilot/report');
   const excludedRoutes = isMobile ? COPILOT_EXCLUDED_ROUTES_MOBILE : COPILOT_EXCLUDED_ROUTES_DESKTOP;
   const showCopilot = !excludedRoutes.some(route => location.pathname.startsWith(route));
 
