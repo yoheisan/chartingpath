@@ -81,6 +81,9 @@ export function useCopilotTrades(userId?: string) {
     fetchTrades();
     if (!userId) return;
 
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchTrades, 60_000);
+
     const channel = supabase
       .channel('copilot-trades-realtime')
       .on('postgres_changes', {
@@ -91,7 +94,10 @@ export function useCopilotTrades(userId?: string) {
       }, () => fetchTrades())
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [userId, fetchTrades]);
 
   const stats = useMemo((): CopilotStats => {
