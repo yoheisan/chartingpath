@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Bell, FileText, MessageCircle } from "lucide-react";
+import { BarChart3, Bell, FileText, MessageCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { MandateCard } from "@/components/copilot/MandateCard";
@@ -8,7 +8,7 @@ import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import type { MandateRule, MasterPlan } from "@/hooks/useMasterPlan";
-import type { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
+import type { CopilotTrade } from "@/hooks/useCopilotTrades";
 
 type MobileTab = "trades" | "alerts" | "plan" | "chat";
 
@@ -151,73 +151,84 @@ export function MobileCopilotLayout({
 
 /* ---------- Trades Tab ---------- */
 
+const DEMO_TRADES: CopilotTrade[] = [
+  { id: 'demo-1', symbol: 'AAPL', trade_type: 'long', entry_price: 198.45, exit_price: null, quantity: 10, pnl: null, outcome_r: 0.8, status: 'open', stop_loss: 195.00, take_profit: 205.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'ai_approved', source: 'screener', gate_result: 'pass', setup_type: 'breakout', copilot_reasoning: null, outcome: null, user_action: null },
+  { id: 'demo-2', symbol: 'MSFT', trade_type: 'short', entry_price: 420.10, exit_price: null, quantity: 5, pnl: null, outcome_r: -0.3, status: 'open', stop_loss: 425.00, take_profit: 410.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'human_overwrite', source: 'manual', gate_result: 'override', setup_type: 'reversal', copilot_reasoning: null, outcome: null, user_action: null },
+  { id: 'demo-3', symbol: 'TSLA', trade_type: 'long', entry_price: 245.30, exit_price: null, quantity: 8, pnl: null, outcome_r: 1.2, status: 'open', stop_loss: 240.00, take_profit: 260.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'ai_approved', source: 'screener', gate_result: 'pass', setup_type: 'breakout', copilot_reasoning: null, outcome: null, user_action: null },
+];
+
+const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
+
 function TradesTab({
   openTrades,
   selectedTradeId,
   onSelectTrade,
 }: {
-  openTrades: any[];
+  openTrades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (id: string) => void;
 }) {
   const { t } = useTranslation();
-
-  if (openTrades.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-center space-y-2">
-        <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          {t("copilotMobile.noTrades", "No active trades yet")}
-        </p>
-        <p className="text-xs text-muted-foreground/70">
-          {t("copilotMobile.noTradesHint", "Set up a trading plan to start receiving signals")}
-        </p>
-      </div>
-    );
-  }
+  const displayTrades = openTrades.length > 0 ? openTrades : DEMO_TRADES;
+  const isDemo = openTrades.length === 0;
 
   return (
     <div className="space-y-2">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
-        {t("copilotMobile.activeTrades", "Active Trades")} ({openTrades.length})
+        {t("copilotMobile.activeTrades", "Active Trades")} ({displayTrades.length})
+        {isDemo && <span className="text-muted-foreground/60 font-normal ml-1">(preview)</span>}
       </h2>
-      {openTrades.map((trade) => (
-        <button
-          key={trade.id}
-          onClick={() => onSelectTrade(trade.id)}
-          className={cn(
-            "w-full text-left rounded-lg border p-3 transition-colors",
-            selectedTradeId === trade.id
-              ? "border-primary bg-primary/5"
-              : "border-border bg-card hover:border-primary/30"
-          )}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-semibold text-sm">{trade.instrument}</span>
-            <span
-              className={cn(
-                "text-xs font-medium px-1.5 py-0.5 rounded",
-                trade.direction === "long"
-                  ? "bg-green-500/10 text-green-500"
-                  : "bg-red-500/10 text-red-500"
-              )}
-            >
-              {trade.direction?.toUpperCase()}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{trade.pattern_id?.replace(/-/g, " ")}</span>
-            <span>{trade.timeframe}</span>
-          </div>
-          {trade.entry_price && (
-            <div className="flex items-center gap-3 mt-1.5 text-xs">
-              <span className="text-blue-400">E: {trade.entry_price}</span>
-              {trade.stop_loss && <span className="text-red-400">SL: {trade.stop_loss}</span>}
-              {trade.take_profit && <span className="text-green-400">TP: {trade.take_profit}</span>}
+      {displayTrades.map((trade) => {
+        const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
+        const pnlR = trade.outcome_r ?? 0;
+        const isPositive = pnlR >= 0;
+
+        return (
+          <button
+            key={trade.id}
+            onClick={() => onSelectTrade(trade.id)}
+            className={cn(
+              "w-full text-left rounded-lg border p-3 transition-colors",
+              selectedTradeId === trade.id
+                ? "border-primary bg-primary/5"
+                : "border-border bg-card hover:border-primary/30"
+            )}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                {isLong ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                )}
+                <span className="font-semibold text-sm font-mono">{trade.symbol}</span>
+              </div>
+              <span className={cn(
+                "text-sm font-mono font-semibold",
+                isPositive ? "text-green-500" : "text-red-500"
+              )}>
+                {formatR(pnlR)}
+              </span>
             </div>
-          )}
-        </button>
-      ))}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {trade.setup_type && <span>{trade.setup_type.replace(/-/g, " ")}</span>}
+              <span className={cn(
+                "text-xs font-medium px-1.5 py-0.5 rounded",
+                isLong ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+              )}>
+                {trade.trade_type?.toUpperCase()}
+              </span>
+            </div>
+            {trade.entry_price && (
+              <div className="flex items-center gap-3 mt-1.5 text-xs">
+                <span className="text-blue-400">E: ${trade.entry_price.toFixed(2)}</span>
+                {trade.stop_loss && <span className="text-red-400">SL: ${trade.stop_loss.toFixed(2)}</span>}
+                {trade.take_profit && <span className="text-green-400">TP: ${trade.take_profit.toFixed(2)}</span>}
+              </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
