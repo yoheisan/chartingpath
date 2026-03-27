@@ -995,14 +995,15 @@ const StudyChart = memo(({
             ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000)
             : null;
 
-          // Find first post-detection candle that reaches entry
+          // Find first post-detection candle that actually trades through entry level
           let entryHitTs: number | null = null;
-          for (const bar of normalizedBars) {
+          for (const bar of bars) {
             const ts = Math.floor(new Date(bar.t).getTime() / 1000);
             if (!Number.isFinite(ts)) continue;
             if (detectedTs && ts <= detectedTs) continue;
 
-            const touchedEntry = isLong ? bar.l <= entryPrice : bar.h >= entryPrice;
+            // True touch check (works for both long/short and avoids false positives)
+            const touchedEntry = bar.l <= entryPrice && bar.h >= entryPrice;
             if (touchedEntry) {
               entryHitTs = ts;
               break;
