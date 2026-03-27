@@ -401,6 +401,10 @@ const StudyChart = memo(({
 
     chartRef.current = chart;
 
+    // Track overlay draw timers/subscriptions to prevent stale marker repaint after refresh/poll
+    const overlayTimers: number[] = [];
+    const overlayRangeUnsubscribers: Array<() => void> = [];
+
     // Use unified candlestick colors with dynamic price precision
     const candleSeries = chart.addSeries(CandlestickSeries, {
       ...CANDLE_COLORS,
@@ -805,10 +809,14 @@ const StudyChart = memo(({
             };
 
             // Draw with delay to ensure chart coordinates are ready
-            setTimeout(() => {
+            const zoneTimer = window.setTimeout(() => {
               requestAnimationFrame(drawAll);
             }, 200);
+            overlayTimers.push(zoneTimer);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawAll);
+            overlayRangeUnsubscribers.push(() => {
+              try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawAll); } catch {}
+            });
           }
         }
       }
@@ -976,33 +984,45 @@ const StudyChart = memo(({
         });
       }
 
-      // Entry Point → canvas triangle at the pattern's detection/signal bar (not the last bar)
-      if (currentPattern && hasRenderableTradeLevels && levelDistances.entryTriggered && !currentPatternResolved && safeChartData.length > 0) {
+      // Entry Point → canvas triangle at the FIRST candle that actually touches entry
+      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const entryPrice = Number(currentPattern.entryPrice);
+        if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+          // invalid entry; skip marker
+        } else {
+          const detectedTs = currentPattern.detectedAt
+            ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000)
+            : null;
 
-        // Determine target timestamp for the entry marker
-        const detectedTs = currentPattern.detectedAt ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000) : null;
-        const lastPatternBarTs = (currentPattern.bars && currentPattern.bars.length > 0)
-          ? Math.floor(new Date(currentPattern.bars[currentPattern.bars.length - 1].t).getTime() / 1000)
-          : null;
-        const targetTs = detectedTs || lastPatternBarTs || (safeChartData[safeChartData.length - 1].time as number);
+          // Find first post-detection candle that reaches entry
+          let entryHitTs: number | null = null;
+          for (const bar of normalizedBars) {
+            const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+            if (!Number.isFinite(ts)) continue;
+            if (detectedTs && ts <= detectedTs) continue;
 
-        // Snap to nearest actual chart candle (prevents floating markers)
-        const anchorTime = findNearestCandleTime(safeChartData, targetTs);
+            const touchedEntry = isLong ? bar.l <= entryPrice : bar.h >= entryPrice;
+            if (touchedEntry) {
+              entryHitTs = ts;
+              break;
+            }
+          }
 
-        // Keep entry marker vertically synced with ENTRY line (not candle extremum)
-        const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
-        const entryMarkerPrice = Number(currentPattern.entryPrice);
-        const fallbackPrice = isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice);
-        const markerPrice = Number.isFinite(entryMarkerPrice) && entryMarkerPrice > 0 ? entryMarkerPrice : fallbackPrice;
+          // If entry was never hit, don't render an entry marker
+          if (entryHitTs != null) {
+            // Snap to nearest actual chart candle time for stable x-position
+            const anchorTime = findNearestCandleTime(safeChartData, entryHitTs);
 
-        canvasTriangleMarkers.push({
-          time: anchorTime,
-          price: markerPrice,
-          direction: isLong ? 'up' : 'down',
-          color: '#3b82f6',
-          label: '',
-        });
+            canvasTriangleMarkers.push({
+              time: anchorTime,
+              price: entryPrice,
+              direction: isLong ? 'up' : 'down',
+              color: '#3b82f6',
+              label: '',
+            });
+          }
+        }
       }
 
       // Render pattern markers for OTHER patterns only.
@@ -1186,8 +1206,21 @@ const StudyChart = memo(({
           }
         };
 
-        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
+        const historicalOverlayTimer = window.setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
+        overlayTimers.push(historicalOverlayTimer);
         chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
+        overlayRangeUnsubscribers.push(() => {
+          try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay); } catch {}
+        });
+      } else {
+        // Ensure stale markers/zones are removed when overlay conditions are no longer met
+        const canvas = canvasOverlayRef.current;
+        const chartEl = containerRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (canvas && chartEl && ctx) {
+          const rect = chartEl.getBoundingClientRect();
+          ctx.clearRect(0, 0, rect.width, rect.height);
+        }
       }
     }
 
@@ -1333,8 +1366,12 @@ const StudyChart = memo(({
         ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
       };
 
-      setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      const standaloneZonesTimer = window.setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      overlayTimers.push(standaloneZonesTimer);
       chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+      overlayRangeUnsubscribers.push(() => {
+        try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones); } catch {}
+      });
     }
 
     allCharts.forEach((src) => {
@@ -1626,6 +1663,10 @@ const StudyChart = memo(({
       clearTimeout(initialSyncTimer);
       clearTimeout(initialSyncTimer2);
       clearTimeout(initialSyncTimer3);
+      overlayTimers.forEach((timer) => clearTimeout(timer));
+      overlayRangeUnsubscribers.forEach((unsubscribe) => {
+        try { unsubscribe(); } catch {}
+      });
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
