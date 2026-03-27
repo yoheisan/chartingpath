@@ -1005,10 +1005,10 @@ const StudyChart = memo(({
         });
       }
 
-      // Render pattern markers for OTHER patterns (not the current one — it uses canvas triangles)
-      // UNLESS the current pattern has no canvas triangles, in which case include it as a native marker fallback
-      const hasCanvasTrianglesForCurrent = canvasTriangleMarkers.length > 0;
-      const patternsForMarkers = currentPattern && hasCanvasTrianglesForCurrent
+      // Render pattern markers for OTHER patterns only.
+      // The current pattern uses canvas overlays (entry/structure) as the single source of truth
+      // to avoid a detached native marker fallback after refresh/polling.
+      const patternsForMarkers = currentPattern
         ? historicalPatterns.filter(p => p.id !== currentPattern.id)
         : historicalPatterns;
       const patternMarkerData = generatePatternMarkers(patternsForMarkers, bars, patternToggles);
