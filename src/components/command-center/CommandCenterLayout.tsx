@@ -61,6 +61,10 @@ interface CommandCenterLayoutProps {
   initialPlaybackPattern?: PlaybackPatternContext;
   /** Initial symbol to display (from /study/:symbol redirect) */
   initialSymbol?: string;
+  /** Initial timeframe to set (from Copilot trade context) */
+  initialTimeframe?: string;
+  /** Initial detection ID to highlight (from Copilot trade context) */
+  initialDetectionId?: string;
 }
 
 // Response shape from edge functions (live and historical)
@@ -94,7 +98,7 @@ interface PatternDetailsResponse {
   error?: string;
 }
 
-export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSymbol }: CommandCenterLayoutProps) {
+export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSymbol, initialTimeframe, initialDetectionId }: CommandCenterLayoutProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
@@ -117,7 +121,7 @@ export function CommandCenterLayout({ userId, initialPlaybackPattern, initialSym
     initialPlaybackPattern?.symbol || initialSymbol || settings.selectedSymbol
   );
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>(
-    initialPlaybackPattern?.timeframe || settings.selectedTimeframe
+    initialPlaybackPattern?.timeframe || initialTimeframe || settings.selectedTimeframe
   );
   
   // Persist symbol/timeframe changes
@@ -638,6 +642,7 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
                 onPatternSelect={handleOccurrenceSelect}
                 selectedPatternId={selectedOccurrence?.id}
                 active={!studyPanelCollapsed}
+                initialDetectionId={initialDetectionId}
               />
             </div>
           </div>

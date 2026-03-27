@@ -86,6 +86,8 @@ interface DashboardPatternStudyProps {
   selectedPatternId?: string | null;
   /** When false, skip data fetching (panel is hidden) */
   active?: boolean;
+  /** Force-fetch a specific detection by ID (from Copilot trade context) */
+  initialDetectionId?: string;
 }
 
 export function DashboardPatternStudy({
@@ -94,6 +96,7 @@ export function DashboardPatternStudy({
   onPatternSelect,
   selectedPatternId,
   active = true,
+  initialDetectionId,
 }: DashboardPatternStudyProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -163,34 +166,43 @@ export function DashboardPatternStudy({
           historicalError: historicalRes.error?.message,
         });
 
+        const mapBars = (p: any) => ({
+          ...p,
+          bars: (p.bars || []).map((b: any) => ({
+            t: b.t || b.date,
+            o: b.o ?? b.open,
+            h: b.h ?? b.high,
+            l: b.l ?? b.low,
+            c: b.c ?? b.close,
+            v: b.v ?? b.volume ?? 0,
+          })),
+          visual_spec: p.visual_spec as VisualSpec,
+        });
+
+        let mappedActive: ActivePattern[] = [];
         if (activeRes.data) {
-          setActivePatterns(activeRes.data.map((p: any) => ({
-            ...p,
-            bars: (p.bars || []).map((b: any) => ({
-              t: b.t || b.date,
-              o: b.o ?? b.open,
-              h: b.h ?? b.high,
-              l: b.l ?? b.low,
-              c: b.c ?? b.close,
-              v: b.v ?? b.volume ?? 0,
-            })),
-            visual_spec: p.visual_spec as VisualSpec,
-          })));
+          mappedActive = activeRes.data.map(mapBars);
+        }
+
+        // If a specific detection was requested (from Copilot trade context)
+        // and it's not already in the active results, fetch it directly
+        if (initialDetectionId && !mappedActive.some(p => p.id === initialDetectionId)) {
+          const { data: detData } = await supabase
+            .from('live_pattern_detections')
+            .select('id, pattern_id, pattern_name, direction, first_detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, visual_spec, bars')
+            .eq('id', initialDetectionId)
+            .single();
+          if (detData && !cancelled) {
+            mappedActive = [mapBars(detData), ...mappedActive];
+          }
+        }
+
+        if (!cancelled) {
+          setActivePatterns(mappedActive);
         }
 
         if (historicalRes.data) {
-          setHistoricalPatterns(historicalRes.data.map((p: any) => ({
-            ...p,
-            bars: (p.bars || []).map((b: any) => ({
-              t: b.t || b.date,
-              o: b.o ?? b.open,
-              h: b.h ?? b.high,
-              l: b.l ?? b.low,
-              c: b.c ?? b.close,
-              v: b.v ?? b.volume ?? 0,
-            })),
-            visual_spec: p.visual_spec as VisualSpec,
-          })));
+          setHistoricalPatterns(historicalRes.data.map(mapBars));
         }
 
         if (!cancelled) {
@@ -208,7 +220,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey]);
+  }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey, initialDetectionId]);
 
   // Unique pattern names for filter
   const uniquePatternNames = useMemo(() => {

@@ -23,6 +23,8 @@ export interface CopilotTrade {
   copilot_reasoning: string | null;
   outcome: string | null;
   user_action: string | null;
+  timeframe: string | null;
+  detection_id: string | null;
 }
 
 export interface CopilotStats {
