@@ -44,18 +44,32 @@ export function useCopilotTrades(userId?: string) {
     if (!userId) { setLoading(false); return; }
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('paper_trades')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('created_at', `${today}T00:00:00`)
-        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[CopilotTrades] fetch error:', error);
-        return;
-      }
-      setTodayTrades((data as any[]) || []);
+      // Fetch all open trades (regardless of date) + today's closed trades
+      const [openRes, closedRes] = await Promise.all([
+        supabase
+          .from('paper_trades')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('paper_trades')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'closed')
+          .gte('closed_at', `${today}T00:00:00`)
+          .order('created_at', { ascending: false }),
+      ]);
+
+      if (openRes.error) console.error('[CopilotTrades] open fetch error:', openRes.error);
+      if (closedRes.error) console.error('[CopilotTrades] closed fetch error:', closedRes.error);
+
+      const allTrades = [
+        ...((openRes.data as any[]) || []),
+        ...((closedRes.data as any[]) || []),
+      ];
+      setTodayTrades(allTrades);
     } catch (err) {
       console.error('[CopilotTrades] error:', err);
     } finally {
