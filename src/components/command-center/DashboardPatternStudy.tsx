@@ -220,7 +220,7 @@ export function DashboardPatternStudy({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey]);
+  }, [symbol, timeframe, user, active, currentFetchKey, lastFetchedKey, initialDetectionId]);
 
   // Unique pattern names for filter
   const uniquePatternNames = useMemo(() => {
