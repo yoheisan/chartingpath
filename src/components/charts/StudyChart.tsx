@@ -984,8 +984,8 @@ const StudyChart = memo(({
         // Snap to nearest actual chart candle (prevents floating markers)
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
         
-        // Find the bar data at the snapped time for price snapping
-        const anchorBar = normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
+        // Find the bar data at the snapped time for price snapping (use original bars to avoid inflated h/l)
+        const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
 
         canvasTriangleMarkers.push({
           time: anchorTime,
