@@ -989,8 +989,9 @@ const StudyChart = memo(({
 
         // Snap to nearest actual chart candle (prevents floating markers)
         const anchorTime = findNearestCandleTime(safeChartData, targetTs);
-        
+
         // Keep entry marker vertically synced with ENTRY line (not candle extremum)
+        const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
         const entryMarkerPrice = Number(currentPattern.entryPrice);
         const fallbackPrice = isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice);
         const markerPrice = Number.isFinite(entryMarkerPrice) && entryMarkerPrice > 0 ? entryMarkerPrice : fallbackPrice;
