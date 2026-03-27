@@ -621,13 +621,43 @@ async function fetchDataBatchWithDbFallback(
   for (let i = 0; i < symbolsNeedingYahoo.length; i += concurrency) {
     const batch = symbolsNeedingYahoo.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map(s => fetchYahooDataSingle(s, startDate, endDate, interval)));
+    const barsToUpsert: Array<{ symbol: string; date: string; open: number; high: number; low: number; close: number; volume: number; timeframe: string; instrument_type: string }> = [];
     batchResults.forEach((r, idx) => {
       const symbol = batch[idx];
       if (r.status === 'fulfilled' && r.value.length > 0) {
         results.set(symbol, r.value);
         symbolDataCache.set(`${symbol}:${interval}`, { bars: r.value, timestamp: now });
+        // Collect bars for DB persistence so future chart loads get fresh data
+        const dbSym = getDbSymbol(symbol);
+        const instrType = symbol.endsWith('=X') ? 'forex' : symbol.endsWith('-USD') || symbol.endsWith('USDT') ? 'crypto' : symbol.startsWith('^') ? 'index' : 'stock';
+        for (const bar of r.value) {
+          barsToUpsert.push({
+            symbol: dbSym,
+            date: bar.date,
+            open: bar.open,
+            high: bar.high,
+            low: bar.low,
+            close: bar.close,
+            volume: bar.volume || 0,
+            timeframe: interval,
+            instrument_type: instrType,
+          });
+        }
       }
     });
+    // Persist Yahoo-fetched bars to historical_prices so DB stays fresh
+    if (barsToUpsert.length > 0) {
+      try {
+        // Batch upsert in chunks of 500
+        for (let j = 0; j < barsToUpsert.length; j += 500) {
+          const chunk = barsToUpsert.slice(j, j + 500);
+          await supabase.from('historical_prices').upsert(chunk, { onConflict: 'symbol,timeframe,date', ignoreDuplicates: false });
+        }
+        console.info(`[scan-live-patterns] Persisted ${barsToUpsert.length} Yahoo bars to historical_prices for ${batch.length} symbols at ${interval}`);
+      } catch (err: any) {
+        console.warn(`[scan-live-patterns] Failed to persist Yahoo bars: ${err.message}`);
+      }
+    }
   }
   return results;
 }

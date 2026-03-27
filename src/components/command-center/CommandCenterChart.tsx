@@ -335,9 +335,32 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         console.log(`[CommandCenterChart] Aggregated ${data.length} 1h bars → ${aggregated.length} ${timeframe} bars from DB`);
       }
 
-      // Only use DB data if we have enough bars
-      const hasEnoughData = processedData && processedData.length >= minBarsRequired;
-      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars (${dbTimeframe}), processed=${processedData?.length || 0} (${timeframe}), hasEnoughData=${hasEnoughData}`);
+      // Freshness validation: reject DB data if latest bar is too old
+      // This is the ROOT FIX for the recurring SL/ENTRY/TP desync —
+      // stale DB bars + fresh pattern levels = visual mismatch
+      const barFreshnessMaxAgeMs: Record<string, number> = {
+        '15m': 4 * 60 * 60 * 1000,       // 4 hours
+        '1h':  12 * 60 * 60 * 1000,       // 12 hours
+        '4h':  36 * 60 * 60 * 1000,       // 36 hours
+        '8h':  72 * 60 * 60 * 1000,       // 72 hours
+        '1d':  5 * 24 * 60 * 60 * 1000,   // 5 days
+        '1wk': 21 * 24 * 60 * 60 * 1000,  // 21 days
+      };
+      const maxAgeMs = barFreshnessMaxAgeMs[timeframe] ?? 24 * 60 * 60 * 1000;
+
+      let dbBarsAreFresh = true;
+      if (processedData && processedData.length > 0) {
+        const latestBarDate = new Date(processedData[processedData.length - 1].date).getTime();
+        const ageMs = Date.now() - latestBarDate;
+        dbBarsAreFresh = ageMs <= maxAgeMs;
+        if (!dbBarsAreFresh) {
+          console.warn(`[CommandCenterChart] DB bars STALE for ${symbol} ${timeframe}: latest bar ${processedData[processedData.length - 1].date} is ${(ageMs / 3600000).toFixed(1)}h old (max ${(maxAgeMs / 3600000).toFixed(1)}h)`);
+        }
+      }
+
+      // Only use DB data if we have enough bars AND they are fresh
+      const hasEnoughData = processedData && processedData.length >= minBarsRequired && dbBarsAreFresh;
+      console.log(`[CommandCenterChart] DB returned ${data?.length || 0} bars (${dbTimeframe}), processed=${processedData?.length || 0} (${timeframe}), hasEnoughData=${hasEnoughData}, fresh=${dbBarsAreFresh}`);
 
       if (!hasEnoughData) {
         // EODHD-first, Yahoo-fallback
@@ -583,19 +606,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     setPatternOverlayVisible(true);
   }, [symbol, timeframe]);
 
-  // Unified fetch: chart data + auto-patterns in parallel, then start polling
+  // Unified fetch: chart data FIRST, then patterns (sequential to ensure coherence)
+  // Patterns must be evaluated against fresh bars, not stale ones
   useEffect(() => {
     let intervalId: number | undefined;
 
-    // Fire both in parallel
-    Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
-      // Start 60s polling AFTER initial fetch settles
-      // Poll BOTH chart data (merge) and patterns
-      intervalId = window.setInterval(() => {
-        pollChartData();
-        fetchAutoPatterns();
-      }, 60_000);
-    });
+    // Fetch bars first, then patterns — ensures coherence gate has fresh data
+    fetchChartData()
+      .then(() => fetchAutoPatterns())
+      .then(() => {
+        // Start 60s polling AFTER initial fetch settles
+        intervalId = window.setInterval(() => {
+          pollChartData();
+          fetchAutoPatterns();
+        }, 60_000);
+      });
 
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId);
@@ -704,12 +729,23 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
     const isResolved = (o?: string | null) => ['hit_tp', 'hit_sl', 'timeout', 'win', 'loss'].includes(String(o || '').toLowerCase());
 
+    // COHERENCE GATE: Only show patterns whose detectedAt falls within the loaded chart window
+    // This is the key fix preventing stale patterns from rendering on fresh bars or vice versa
+    const chartTimeRange = bars.length >= 2
+      ? { start: new Date(bars[0].t).getTime(), end: new Date(bars[bars.length - 1].t).getTime() }
+      : null;
+
+    // One interval margin in ms (for patterns detected right at chart edge)
+    const intervalMs: Record<string, number> = {
+      '15m': 15 * 60_000, '1h': 3600_000, '4h': 4 * 3600_000,
+      '8h': 8 * 3600_000, '1d': 86400_000, '1wk': 7 * 86400_000,
+    };
+    const oneInterval = intervalMs[timeframe] ?? 4 * 3600_000;
+
     return sortedPatterns
       .map((p) => {
         // Re-derive outcome using current bars to catch breaches missed at fetch time
         if (!isResolved(p.outcome) && bars.length > 0) {
-          // Use first_detected_at for outcome check — last_confirmed_at is too recent
-          // and would skip all bars, missing SL/TP breaches that occurred after initial detection
           const outcomeDetectedAt = p.first_detected_at || p.detected_at || getDetectedAt(p);
           const liveOutcome = deriveLiveOutcomeUtil({
             direction: p.direction,
@@ -730,11 +766,22 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         if (isResolved(p.outcome) && !p._derivedOutcome) return false;
 
         const entry = Number(p.entry_price);
-        const sl = Number(p.stop_loss_price);
-        const tp = Number(p.take_profit_price);
-
         if (!Number.isFinite(entry) || entry <= 0) return false;
 
+        // COHERENCE: pattern detectedAt must be within chart time window (+ 1 interval margin)
+        if (chartTimeRange) {
+          const patternTs = new Date(getDetectedAt(p)).getTime();
+          if (Number.isFinite(patternTs)) {
+            if (patternTs < chartTimeRange.start - oneInterval || patternTs > chartTimeRange.end + oneInterval) {
+              console.warn(`[CommandCenterChart] Coherence REJECT: pattern ${p.pattern_name} detectedAt=${new Date(patternTs).toISOString()} outside chart window ${new Date(chartTimeRange.start).toISOString()}–${new Date(chartTimeRange.end).toISOString()}`);
+              return false;
+            }
+          }
+        }
+
+        // Price range guard
+        const sl = Number(p.stop_loss_price);
+        const tp = Number(p.take_profit_price);
         if (chartPriceRange) {
           const margin = chartPriceRange.span;
           const extendedMin = chartPriceRange.min - margin;
@@ -748,7 +795,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
         return true;
       });
-  }, [sortedPatterns, chartPriceRange, symbol, bars]);
+  }, [sortedPatterns, chartPriceRange, symbol, bars, timeframe]);
 
   // Clamp selected index when eligible list changes
   useEffect(() => {
