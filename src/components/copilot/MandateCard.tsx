@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { type MandateRule, type MasterPlan, planToRules } from "@/hooks/useMasterPlan";
 import { useTradingCopilotContext } from "./TradingCopilotContext";
-import { Plus, Lock, Pencil } from "lucide-react";
+import { Plus, Lock, Pencil, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Accordion,
@@ -9,6 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface MandateCardProps {
   onFocusNLBar?: (prefill?: string) => void;
