@@ -984,33 +984,45 @@ const StudyChart = memo(({
         });
       }
 
-      // Entry Point → canvas triangle at the pattern's detection/signal bar (not the last bar)
-      if (currentPattern && hasRenderableTradeLevels && levelDistances.entryTriggered && !currentPatternResolved && safeChartData.length > 0) {
+      // Entry Point → canvas triangle at the FIRST candle that actually touches entry
+      if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved && safeChartData.length > 0) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
+        const entryPrice = Number(currentPattern.entryPrice);
+        if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+          // invalid entry; skip marker
+        } else {
+          const detectedTs = currentPattern.detectedAt
+            ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000)
+            : null;
 
-        // Determine target timestamp for the entry marker
-        const detectedTs = currentPattern.detectedAt ? Math.floor(new Date(currentPattern.detectedAt).getTime() / 1000) : null;
-        const lastPatternBarTs = (currentPattern.bars && currentPattern.bars.length > 0)
-          ? Math.floor(new Date(currentPattern.bars[currentPattern.bars.length - 1].t).getTime() / 1000)
-          : null;
-        const targetTs = detectedTs || lastPatternBarTs || (safeChartData[safeChartData.length - 1].time as number);
+          // Find first post-detection candle that reaches entry
+          let entryHitTs: number | null = null;
+          for (const bar of normalizedBars) {
+            const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+            if (!Number.isFinite(ts)) continue;
+            if (detectedTs && ts <= detectedTs) continue;
 
-        // Snap to nearest actual chart candle (prevents floating markers)
-        const anchorTime = findNearestCandleTime(safeChartData, targetTs);
+            const touchedEntry = isLong ? bar.l <= entryPrice : bar.h >= entryPrice;
+            if (touchedEntry) {
+              entryHitTs = ts;
+              break;
+            }
+          }
 
-        // Keep entry marker vertically synced with ENTRY line (not candle extremum)
-        const anchorBar = originalBarByTime.get(anchorTime) ?? normalizedBarByTime.get(anchorTime) ?? normalizedBars[normalizedBars.length - 1];
-        const entryMarkerPrice = Number(currentPattern.entryPrice);
-        const fallbackPrice = isLong ? (anchorBar?.l ?? currentPattern.entryPrice) : (anchorBar?.h ?? currentPattern.entryPrice);
-        const markerPrice = Number.isFinite(entryMarkerPrice) && entryMarkerPrice > 0 ? entryMarkerPrice : fallbackPrice;
+          // If entry was never hit, don't render an entry marker
+          if (entryHitTs != null) {
+            // Snap to nearest actual chart candle time for stable x-position
+            const anchorTime = findNearestCandleTime(safeChartData, entryHitTs);
 
-        canvasTriangleMarkers.push({
-          time: anchorTime,
-          price: markerPrice,
-          direction: isLong ? 'up' : 'down',
-          color: '#3b82f6',
-          label: '',
-        });
+            canvasTriangleMarkers.push({
+              time: anchorTime,
+              price: entryPrice,
+              direction: isLong ? 'up' : 'down',
+              color: '#3b82f6',
+              label: '',
+            });
+          }
+        }
       }
 
       // Render pattern markers for OTHER patterns only.
