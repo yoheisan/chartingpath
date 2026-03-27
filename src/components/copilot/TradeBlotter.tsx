@@ -28,7 +28,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
   const totalR = trades.reduce((s, tr) => s + (tr.outcome_r ?? 0), 0);
 
   return (
-    <div className="border-t border-border/40 flex flex-col bg-card/30">
+    <div className="border-t border-border/40 flex flex-col bg-card/30 h-full min-h-0">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between px-4 py-1.5 hover:bg-secondary/40 transition-colors shrink-0"
@@ -50,7 +50,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
       </button>
 
       {expanded && (
-        <div className="flex flex-col min-h-0">
+        <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
           <div className="grid grid-cols-[1fr_80px_100px_90px_80px_80px_80px] gap-2 px-4 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
             <span>{t('copilotPage.symbol')}</span>
             <span>{t('copilotPage.side')}</span>
@@ -66,7 +66,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
               {t('copilotPage.noActiveTrades')}
             </div>
           ) : (
-            <ScrollArea className="max-h-[160px]">
+            <ScrollArea className="flex-1 min-h-0">
               {trades.map((trade) => {
                 const isSelected = trade.id === selectedTradeId;
                 const pnlR = trade.outcome_r ?? 0;
