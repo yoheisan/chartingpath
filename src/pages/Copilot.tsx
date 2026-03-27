@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
@@ -40,6 +41,7 @@ const Copilot = () => {
   const [debriefQuestion, setDebriefQuestion] = useState<string | null>(null);
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [leftPaneOpen, setLeftPaneOpen] = useState(true);
 
   // Listen for question routing from NL Command Bar
   useEffect(() => {
@@ -166,25 +168,38 @@ const Copilot = () => {
       )}
 
       <div className="flex flex-1 min-h-0">
-        <aside className="w-[270px] shrink-0 border-r border-border/40 flex flex-col gap-2 p-2 overflow-y-auto overflow-x-hidden">
-          <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
-          <MandateCard
-            onFocusNLBar={focusNLBar}
-            rules={rules}
-            hasPlan={hasPlan}
-            plans={plans}
-            selectedPlanId={selectedPlanId}
-            onSelectPlan={selectPlan}
-            canCreateMore={canCreateMore}
-          />
-          <ConflictBanner
-            onFocusNLBar={focusNLBar}
-            conflictTicker={conflictTicker}
-            conflictReason={conflictReason}
-            onDismiss={dismissConflict}
-          />
-          <MyAlertsPanel activePlan={activePlan} />
+        <aside
+          className={`shrink-0 border-r border-border/40 flex flex-col transition-all duration-200 ease-in-out overflow-hidden ${
+            leftPaneOpen ? 'w-[270px]' : 'w-0'
+          }`}
+        >
+          <div className="w-[270px] flex flex-col gap-2 p-2 overflow-y-auto overflow-x-hidden h-full">
+            <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
+            <MandateCard
+              onFocusNLBar={focusNLBar}
+              rules={rules}
+              hasPlan={hasPlan}
+              plans={plans}
+              selectedPlanId={selectedPlanId}
+              onSelectPlan={selectPlan}
+              canCreateMore={canCreateMore}
+            />
+            <ConflictBanner
+              onFocusNLBar={focusNLBar}
+              conflictTicker={conflictTicker}
+              conflictReason={conflictReason}
+              onDismiss={dismissConflict}
+            />
+            <MyAlertsPanel activePlan={activePlan} />
+          </div>
         </aside>
+        <button
+          onClick={() => setLeftPaneOpen(prev => !prev)}
+          className="shrink-0 flex items-center justify-center w-5 hover:bg-muted/50 transition-colors border-r border-border/40 text-muted-foreground hover:text-foreground"
+          title={leftPaneOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {leftPaneOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
+        </button>
 
         <main className="flex-1 border-r border-border/40 flex flex-col min-h-0">
           <CenterPanel
