@@ -437,9 +437,6 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 shrink-0">
-        <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="h-3.5 w-3.5" /> {t('copilotPage.back')}
-        </button>
         <span className="text-sm font-mono font-bold text-foreground">{trade.symbol}</span>
         <span className="text-sm font-mono text-foreground">${trade.entry_price?.toFixed(2)}</span>
         <span className={`text-sm font-mono ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -565,9 +562,6 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 shrink-0">
-        <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="h-3.5 w-3.5" /> {t('copilotPage.back')}
-        </button>
         <span className="text-sm font-mono font-bold text-foreground">{trade.ticker}</span>
         <Badge className={`text-sm px-1.5 py-0 rounded font-medium ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
           {isAi ? t('copilotPage.aiApproved') : t('copilotPage.humanOverwrite')}
