@@ -1021,6 +1021,7 @@ const StudyChart = memo(({
           text: m.text,
         })),
         ...patternMarkerData,
+        ...structuralPivotMarkers,
       ].sort((a, b) => {
         const ta = typeof a.time === 'string' ? a.time : String(a.time);
         const tb = typeof b.time === 'string' ? b.time : String(b.time);
