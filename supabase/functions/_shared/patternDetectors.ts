@@ -13,7 +13,7 @@ interface PatternDetectionResult {
   pivots: PatternPivot[];
 }
 
-type PatternDetector = (window: any[]) => PatternDetectionResult;
+type PatternDetector = (window: any[], timeframe?: string) => PatternDetectionResult;
 
 interface PatternConfig {
   direction: 'long' | 'short';
@@ -130,7 +130,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   },
   'double-top': {
     direction: 'short',
-    detector: (window) => {
+    detector: (window, timeframe?) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -141,6 +141,10 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Intraday timeframes require stricter parameters
+      const isIntraday = timeframe && ['1h', '4h', '2h', '30m', '15m'].includes(timeframe.toLowerCase());
+      const minSeparation = isIntraday ? 7 : 5;
+      
       // Peak prominence threshold: peaks must be within 5% of the window high
       const prominenceThreshold = highestHigh - range * 0.05;
       
@@ -148,11 +152,10 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       for (let i = 2; i < window.length - 3; i++) {
         if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && 
             highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          // Skip peaks that aren't prominent (lower highs in downtrend)
           if (highs[i] < prominenceThreshold) continue;
           
           if (firstTop === -1) firstTop = i;
-          else if (i - firstTop >= 5 && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
+          else if (i - firstTop >= minSeparation && Math.abs(highs[i] - highs[firstTop]) <= tolerance) {
             secondTop = i;
             break;
           }
@@ -164,7 +167,8 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       // Prior uptrend check: price before first top should be lower
       const preTopPrice = Math.min(...lows.slice(0, Math.max(1, firstTop)));
       const priorRise = (highs[firstTop] - preTopPrice) / preTopPrice;
-      if (priorRise < 0.02) return { detected: false, pivots: [] };
+      const minPriorTrend = isIntraday ? 0.03 : 0.02;
+      if (priorRise < minPriorTrend) return { detected: false, pivots: [] };
       
       let necklineIdx = firstTop;
       let neckline = lows[firstTop];
@@ -175,8 +179,24 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
         }
       }
       
+      // Minimum retracement depth: the neckline must be meaningfully below the peaks
+      const retracementDepth = (highestHigh - neckline) / highestHigh;
+      const minRetracement = isIntraday ? 0.015 : 0.01;
+      if (retracementDepth < minRetracement) return { detected: false, pivots: [] };
+      
+      // Neckline break confirmation: intraday needs stronger break
+      const breakThreshold = isIntraday ? 0.003 : 0.002;
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose < neckline * 0.998;
+      const detected = lastClose < neckline * (1 - breakThreshold);
+      
+      // Trend context gating: for bearish reversal (Double Top), suppress if already in strong downtrend
+      // (Double Top is a reversal — it should appear after an uptrend, not mid-downtrend)
+      if (detected && closes.length >= 10) {
+        const sma10 = closes.slice(-10).reduce((a, b) => a + b, 0) / 10;
+        const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((a, b) => a + b, 0) / 20 : sma10;
+        // If price is well below SMA20, the "uptrend → reversal" thesis is weak
+        if (lastClose < sma20 * 0.97) return { detected: false, pivots: [] };
+      }
       
       return {
         detected,
@@ -191,7 +211,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   },
   'double-bottom': {
     direction: 'long',
-    detector: (window) => {
+    detector: (window, timeframe?) => {
       if (window.length < 15) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
@@ -202,6 +222,10 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const range = highestHigh - lowestLow;
       const tolerance = range * 0.03;
       
+      // Intraday timeframes require stricter parameters
+      const isIntraday = timeframe && ['1h', '4h', '2h', '30m', '15m'].includes(timeframe.toLowerCase());
+      const minSeparation = isIntraday ? 7 : 5;
+      
       // Trough prominence threshold: troughs must be within 5% of the window low
       const prominenceThreshold = lowestLow + range * 0.05;
       
@@ -209,11 +233,10 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       for (let i = 2; i < window.length - 3; i++) {
         if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && 
             lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
-          // Skip troughs that aren't prominent (higher lows in uptrend)
           if (lows[i] > prominenceThreshold) continue;
           
           if (firstBottom === -1) firstBottom = i;
-          else if (i - firstBottom >= 5 && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
+          else if (i - firstBottom >= minSeparation && Math.abs(lows[i] - lows[firstBottom]) <= tolerance) {
             secondBottom = i;
             break;
           }
@@ -225,7 +248,8 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       // Prior downtrend check: price before first bottom should be higher
       const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, firstBottom)));
       const priorDrop = (preBottomPrice - lows[firstBottom]) / preBottomPrice;
-      if (priorDrop < 0.02) return { detected: false, pivots: [] };
+      const minPriorTrend = isIntraday ? 0.03 : 0.02;
+      if (priorDrop < minPriorTrend) return { detected: false, pivots: [] };
       
       let necklineIdx = firstBottom;
       let neckline = highs[firstBottom];
@@ -236,8 +260,26 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
         }
       }
       
+      // Minimum retracement depth: the bounce between bottoms must be meaningful
+      // This prevents shallow noise from being classified as a pattern
+      const retracementDepth = (neckline - lowestLow) / lowestLow;
+      const minRetracement = isIntraday ? 0.015 : 0.01;
+      if (retracementDepth < minRetracement) return { detected: false, pivots: [] };
+      
+      // Neckline break confirmation: intraday needs stronger break
+      const breakThreshold = isIntraday ? 0.003 : 0.002;
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose > neckline * 1.002;
+      const detected = lastClose > neckline * (1 + breakThreshold);
+      
+      // Trend context gating: for bullish reversal (Double Bottom), suppress if price
+      // is still deep in downtrend (below SMA20 by >3%). A valid Double Bottom should
+      // show price recovering toward or above the mean, not still falling.
+      if (detected && closes.length >= 10) {
+        const sma10 = closes.slice(-10).reduce((a, b) => a + b, 0) / 10;
+        const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((a, b) => a + b, 0) / 20 : sma10;
+        // If price is well below SMA20, the reversal thesis is weak
+        if (lastClose < sma20 * 0.97) return { detected: false, pivots: [] };
+      }
       
       return {
         detected,

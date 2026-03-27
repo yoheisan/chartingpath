@@ -1178,7 +1178,7 @@ serve(async (req) => {
       for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
         if (!pattern) continue;
-        const detectionResult = pattern.detector(bars.slice(-20));
+        const detectionResult = pattern.detector(bars.slice(-20), timeframe);
         if (!detectionResult.detected) continue;
         
         const lastBar = bars[bars.length - 1];
