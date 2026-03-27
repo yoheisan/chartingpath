@@ -1,66 +1,75 @@
 
+Stable fix plan for recurring SL/ENTRY/TP desync (dashboard chart)
 
-# Stable Chart Pattern Marker Layering — Root Cause Fix
+Do I know what the issue is? Yes.
 
-## Problem Diagnosed
+What is actually happening
+- The chart candles and the pattern trade levels are coming from different freshness states.
+- Candles in `historical_prices` for `MXNJPY=X` `1h` are stale (latest around 2026-03-02), while `live_pattern_detections` has much newer pattern levels (2026-03-26).
+- Result: ENTRY/SL/TP lines are numerically correct for the detected pattern, but visually “out of sync” with the displayed bars.
 
-After extensive investigation of `StudyChart.tsx` (2135 lines), `CommandCenterChart.tsx`, `PatternOverlayRenderer.ts`, and `chartConstants.ts`, the root cause is clear:
+Why previous fixes kept failing
+- Previous fixes focused on rendering/marker alignment (canvas vs native markers, snapping).
+- This bug is primarily a data-coherence problem, not a coordinate-rendering problem.
+- The frontend currently treats “enough bars” as valid even if those bars are old, so refresh reintroduces stale candles.
+- Pattern and candle fetches run independently with no strict “same as-of time” gate.
 
-**The entry arrow uses canvas overlay coordinate mapping (`priceToCoordinate` / `timeToCoordinate`) which is inherently unstable across refresh/zoom/scale changes.** This is why every previous fix was temporary — canvas coordinates are recalculated each frame and depend on the chart's current viewport state, which changes non-deterministically after refresh.
+Implementation plan (fundamental fix)
+1) Add freshness validation for chart bars before accepting DB data
+- File: `src/components/command-center/CommandCenterChart.tsx`
+- Add timeframe-based max age thresholds (e.g., 1h: 8–12h, 4h: 24h, 8h: 48h, 1d: 5d, 1wk: 21d).
+- In `fetchChartData`, after DB read, reject DB data as stale if latest bar is older than threshold, even if bar count is high.
+- If stale, force provider fetch (`fetchMarketBars`) and replace cache with fresh bars.
 
-Specific issues:
-1. Canvas triangle rendering fires via `setTimeout(250) + requestAnimationFrame` — timing-dependent
-2. `normalizeBarsForConsistentColoring` inflates `h`/`l` values (line 268: `h: Math.max(bar.h, normalizedOpen, bar.c)`), creating a mismatch between raw bars used for entry-hit detection and chart bars used for coordinate rendering
-3. Entry-hit scan uses raw `bars` but `findNearestCandleTime` maps to `safeChartData` (normalized) — timestamp mismatches cause wrong candle anchoring
-4. Canvas overlays are redrawn on every `visibleLogicalRangeChange` subscription, competing with autoscale adjustments after data loads
+2) Add overlay coherence gate (pattern must match loaded chart window)
+- File: `src/components/command-center/CommandCenterChart.tsx`
+- Before building `overlayPattern`/`tradePlan`/`historicalPatternOverlays`, require:
+  - pattern `detectedAt` <= latest chart bar time + 1 interval
+  - pattern `detectedAt` >= earliest visible chart window (or within allowed lookback)
+  - entry/SL/TP within extended chart price range guard (already partly present; tighten)
+- If not coherent, do not render pattern trade levels (fail-safe: no misleading lines).
 
-## Solution: Remove Canvas Entry Arrow, Use Native APIs Only
+3) Enforce stable source-of-truth synchronization on refresh
+- File: `src/components/command-center/CommandCenterChart.tsx`
+- Sequence fetch so pattern eligibility is computed only after bars are known fresh.
+- Recompute eligible overlays when bars update to avoid stale overlay state surviving refresh.
 
-Per user preference: anchor the entry arrow to the **detection candle** (not entry-hit candle).
+4) Durable backend fix so stale DB does not reappear
+- File: `supabase/functions/scan-live-patterns/index.ts`
+- When Yahoo fallback provides newer bars, upsert those bars into `historical_prices` (`onConflict: symbol,timeframe,date`).
+- This keeps the chart’s DB source aligned with detector data over time (not just current session).
 
-### Architecture Change
+5) Normalize timeframe/symbol consistency safeguards
+- Files:
+  - `src/components/command-center/CommandCenterChart.tsx`
+  - `supabase/functions/scan-live-patterns/index.ts`
+- Standardize timeframe casing (`1h`, `4h`, etc.) and ensure reads/writes are consistent.
+- Prevent silent drift caused by mixed-case timeframe records.
 
-```text
-BEFORE (unstable):
-  ENTRY/SL/TP lines  →  createPriceLine (stable ✓)
-  Entry arrow        →  Canvas triangle via priceToCoordinate (UNSTABLE ✗)
-  Formation zones    →  Canvas overlay (acceptable — full-width, no x precision needed)
+6) Add diagnostics for future regressions
+- Files:
+  - `src/components/command-center/CommandCenterChart.tsx`
+  - `supabase/functions/scan-live-patterns/index.ts`
+- Log:
+  - chart latest bar timestamp
+  - pattern detected timestamp
+  - freshness decision (db accepted/rejected)
+  - coherence decision (overlay shown/hidden)
+- This makes root-cause verification immediate if issue reappears.
 
-AFTER (stable):
-  ENTRY/SL/TP lines  →  createPriceLine (stable ✓)
-  Entry arrow        →  Native series marker via createSeriesMarkers (stable ✓)
-  Formation zones    →  Canvas overlay (unchanged)
-```
+Validation plan
+- Reproduce current failing case on `/members/dashboard` with `MXNJPY=X` 1H.
+- Hard refresh multiple times; confirm:
+  - bars latest timestamp is fresh
+  - rendered ENTRY/SL/TP belong to same time context as candles
+  - no re-desync after reload
+- Switch timeframes (1H ↔ 4H ↔ 1D) and symbols to confirm guards are stable.
+- Verify no overlay is shown when coherence checks fail (safe fail behavior).
 
-### File Changes
-
-**`src/components/charts/StudyChart.tsx`** — Main changes:
-
-1. **Remove canvas triangle for current pattern entry** (lines ~989-1025): Delete the entire `entryHitTs` scan block that finds "first post-detection candle touching entry". Replace with a native series marker anchored to the detection date.
-
-2. **Add current pattern to native markers** (lines ~1028-1033): Instead of filtering out the current pattern from `patternsForMarkers`, include it. The marker will use `detectedAt` (which is the pattern's confirmation date), not entry-hit time.
-
-3. **Keep canvas triangles only for structural pivots** (Breakout/Breakdown labels from pivots) — these are less problematic since they snap to candle extremes and are less price-sensitive.
-
-4. **Remove the entry-specific canvas triangle push** but keep breakout/breakdown pivot markers in `canvasTriangleMarkers`.
-
-5. **Simplify `shouldDrawTriangles`** condition — only true when structural (non-entry) canvas markers exist.
-
-**`src/components/charts/PatternOverlayRenderer.ts`** — Minor:
-
-6. **Update `generatePatternMarkers`** to use `detectedAt` with proper intraday timestamp matching (currently uses date-only `split('T')[0]` which loses intraday precision for 1H/4H charts). Use `findNearestCandleTime` for robust time-snapping instead of date string matching.
-
-### Why This Is Stable
-
-- `createPriceLine` is **price-anchored** — immune to viewport/scale changes
-- `createSeriesMarkers` snaps markers to **actual data points** in the series — the library handles coordinate mapping internally, survives resize/autoscale/refresh
-- Removing canvas-based entry triangle **eliminates the coordinate desync** that caused every previous fix to be temporary
-- Detection candle anchoring avoids the fragile entry-hit scan entirely
-
-### Scope
-
-- 2 files modified
-- ~50 lines changed total
-- No new dependencies
-- No breaking changes to props/interfaces
-
+Technical details (for implementation)
+- Primary files to modify:
+  - `src/components/command-center/CommandCenterChart.tsx`
+  - `supabase/functions/scan-live-patterns/index.ts`
+- Optional supporting update:
+  - shared helper for timeframe freshness thresholds (if extracted)
+- No UI redesign required; this is a data synchronization and gating correction.
