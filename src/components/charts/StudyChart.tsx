@@ -479,6 +479,17 @@ const StudyChart = memo(({
       }
     }
 
+    // Original (un-normalized) bar map for marker price snapping.
+    // normalizeBarsForConsistentColoring inflates h/l via Math.max(bar.h, prevClose, bar.c),
+    // which causes markers to float above/below visible candle extremes.
+    const originalBarByTime = new Map<number, (typeof bars)[number]>();
+    for (const bar of bars) {
+      const ts = Math.floor(new Date(bar.t).getTime() / 1000);
+      if (Number.isFinite(ts)) {
+        originalBarByTime.set(ts, bar);
+      }
+    }
+
     // Add volume histogram if volume data is available
     const hasVolume = bars.some(bar => bar.v && bar.v > 0);
     if (hasVolume) {
