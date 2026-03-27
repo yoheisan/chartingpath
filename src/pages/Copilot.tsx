@@ -210,10 +210,13 @@ const Copilot = () => {
           <aside className="shrink-0 w-[280px] border-r border-border/50 flex flex-col bg-card">
             <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
               <span className="text-sm font-bold uppercase tracking-wide text-foreground">
-                {t('copilotPage.masterPlans')}
+                {leftPaneSection === 'alerts' ? t('copilotPage.alerts', 'Alerts') :
+                 leftPaneSection === 'plans' ? t('copilotPage.masterPlans') :
+                 leftPaneSection === 'trades' ? t('copilotPage.trades', 'Trades') :
+                 t('copilotPage.masterPlans')}
               </span>
               <button
-                onClick={() => setLeftPaneOpen(false)}
+                onClick={() => { setLeftPaneOpen(false); setLeftPaneSection('all'); }}
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
                 title="Collapse sidebar"
               >
@@ -221,23 +224,49 @@ const Copilot = () => {
               </button>
             </div>
             <div className="flex flex-col gap-2.5 p-3 overflow-y-auto overflow-x-hidden flex-1">
-              <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
-              <MandateCard
-                onFocusNLBar={focusNLBar}
-                rules={rules}
-                hasPlan={hasPlan}
-                plans={plans}
-                selectedPlanId={selectedPlanId}
-                onSelectPlan={selectPlan}
-                canCreateMore={canCreateMore}
-              />
-              <ConflictBanner
-                onFocusNLBar={focusNLBar}
-                conflictTicker={conflictTicker}
-                conflictReason={conflictReason}
-                onDismiss={dismissConflict}
-              />
-              <MyAlertsPanel activePlan={activePlan} />
+              {(leftPaneSection === 'all' || leftPaneSection === 'dashboard') && (
+                <>
+                  <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
+                  <MandateCard
+                    onFocusNLBar={focusNLBar}
+                    rules={rules}
+                    hasPlan={hasPlan}
+                    plans={plans}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlan={selectPlan}
+                    canCreateMore={canCreateMore}
+                  />
+                  <ConflictBanner
+                    onFocusNLBar={focusNLBar}
+                    conflictTicker={conflictTicker}
+                    conflictReason={conflictReason}
+                    onDismiss={dismissConflict}
+                  />
+                  <MyAlertsPanel activePlan={activePlan} />
+                </>
+              )}
+              {leftPaneSection === 'alerts' && (
+                <MyAlertsPanel activePlan={activePlan} />
+              )}
+              {leftPaneSection === 'plans' && (
+                <MandateCard
+                  onFocusNLBar={focusNLBar}
+                  rules={rules}
+                  hasPlan={hasPlan}
+                  plans={plans}
+                  selectedPlanId={selectedPlanId}
+                  onSelectPlan={selectPlan}
+                  canCreateMore={canCreateMore}
+                />
+              )}
+              {leftPaneSection === 'trades' && (
+                <ConflictBanner
+                  onFocusNLBar={focusNLBar}
+                  conflictTicker={conflictTicker}
+                  conflictReason={conflictReason}
+                  onDismiss={dismissConflict}
+                />
+              )}
             </div>
           </aside>
         )}
