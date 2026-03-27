@@ -42,6 +42,12 @@ const Copilot = () => {
   const [selectedClosedTrade, setSelectedClosedTrade] = useState<SelectedClosedTrade | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [leftPaneOpen, setLeftPaneOpen] = useState(true);
+  const [leftPaneSection, setLeftPaneSection] = useState<'all' | 'dashboard' | 'alerts' | 'plans' | 'trades'>('all');
+
+  const openSection = useCallback((section: 'dashboard' | 'alerts' | 'plans' | 'trades') => {
+    setLeftPaneSection(section);
+    setLeftPaneOpen(true);
+  }, []);
 
   // Listen for question routing from NL Command Bar
   useEffect(() => {
@@ -172,28 +178,28 @@ const Copilot = () => {
         {!leftPaneOpen ? (
           <aside className="shrink-0 w-[52px] border-r border-border/50 flex flex-col items-center py-3 gap-2 bg-card">
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('dashboard')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
-              title="Open sidebar"
+              title="Overview"
             >
               <LayoutDashboard className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('alerts')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Alerts"
             >
               <Bell className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('plans')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Plans"
             >
               <FileText className="h-5 w-5" />
             </button>
             <button
-              onClick={() => setLeftPaneOpen(true)}
+              onClick={() => openSection('trades')}
               className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Trades"
             >
@@ -204,10 +210,13 @@ const Copilot = () => {
           <aside className="shrink-0 w-[280px] border-r border-border/50 flex flex-col bg-card">
             <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
               <span className="text-sm font-bold uppercase tracking-wide text-foreground">
-                {t('copilotPage.masterPlans')}
+                {leftPaneSection === 'alerts' ? t('copilotPage.alerts', 'Alerts') :
+                 leftPaneSection === 'plans' ? t('copilotPage.masterPlans') :
+                 leftPaneSection === 'trades' ? t('copilotPage.trades', 'Trades') :
+                 t('copilotPage.masterPlans')}
               </span>
               <button
-                onClick={() => setLeftPaneOpen(false)}
+                onClick={() => { setLeftPaneOpen(false); setLeftPaneSection('all'); }}
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
                 title="Collapse sidebar"
               >
@@ -215,23 +224,49 @@ const Copilot = () => {
               </button>
             </div>
             <div className="flex flex-col gap-2.5 p-3 overflow-y-auto overflow-x-hidden flex-1">
-              <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
-              <MandateCard
-                onFocusNLBar={focusNLBar}
-                rules={rules}
-                hasPlan={hasPlan}
-                plans={plans}
-                selectedPlanId={selectedPlanId}
-                onSelectPlan={selectPlan}
-                canCreateMore={canCreateMore}
-              />
-              <ConflictBanner
-                onFocusNLBar={focusNLBar}
-                conflictTicker={conflictTicker}
-                conflictReason={conflictReason}
-                onDismiss={dismissConflict}
-              />
-              <MyAlertsPanel activePlan={activePlan} />
+              {(leftPaneSection === 'all' || leftPaneSection === 'dashboard') && (
+                <>
+                  <FeedbackLoopBanner onFocusNLBar={focusNLBar} />
+                  <MandateCard
+                    onFocusNLBar={focusNLBar}
+                    rules={rules}
+                    hasPlan={hasPlan}
+                    plans={plans}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlan={selectPlan}
+                    canCreateMore={canCreateMore}
+                  />
+                  <ConflictBanner
+                    onFocusNLBar={focusNLBar}
+                    conflictTicker={conflictTicker}
+                    conflictReason={conflictReason}
+                    onDismiss={dismissConflict}
+                  />
+                  <MyAlertsPanel activePlan={activePlan} />
+                </>
+              )}
+              {leftPaneSection === 'alerts' && (
+                <MyAlertsPanel activePlan={activePlan} />
+              )}
+              {leftPaneSection === 'plans' && (
+                <MandateCard
+                  onFocusNLBar={focusNLBar}
+                  rules={rules}
+                  hasPlan={hasPlan}
+                  plans={plans}
+                  selectedPlanId={selectedPlanId}
+                  onSelectPlan={selectPlan}
+                  canCreateMore={canCreateMore}
+                />
+              )}
+              {leftPaneSection === 'trades' && (
+                <ConflictBanner
+                  onFocusNLBar={focusNLBar}
+                  conflictTicker={conflictTicker}
+                  conflictReason={conflictReason}
+                  onDismiss={dismissConflict}
+                />
+              )}
             </div>
           </aside>
         )}
