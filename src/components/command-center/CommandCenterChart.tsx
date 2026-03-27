@@ -606,19 +606,21 @@ export const CommandCenterChart = memo(function CommandCenterChart({
     setPatternOverlayVisible(true);
   }, [symbol, timeframe]);
 
-  // Unified fetch: chart data + auto-patterns in parallel, then start polling
+  // Unified fetch: chart data FIRST, then patterns (sequential to ensure coherence)
+  // Patterns must be evaluated against fresh bars, not stale ones
   useEffect(() => {
     let intervalId: number | undefined;
 
-    // Fire both in parallel
-    Promise.allSettled([fetchChartData(), fetchAutoPatterns()]).then(() => {
-      // Start 60s polling AFTER initial fetch settles
-      // Poll BOTH chart data (merge) and patterns
-      intervalId = window.setInterval(() => {
-        pollChartData();
-        fetchAutoPatterns();
-      }, 60_000);
-    });
+    // Fetch bars first, then patterns — ensures coherence gate has fresh data
+    fetchChartData()
+      .then(() => fetchAutoPatterns())
+      .then(() => {
+        // Start 60s polling AFTER initial fetch settles
+        intervalId = window.setInterval(() => {
+          pollChartData();
+          fetchAutoPatterns();
+        }, 60_000);
+      });
 
     return () => {
       if (intervalId !== undefined) window.clearInterval(intervalId);
