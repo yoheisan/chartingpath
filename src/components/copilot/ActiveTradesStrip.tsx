@@ -13,22 +13,24 @@ interface ActiveTradesStripProps {
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
-const DEMO_TRADES: CopilotTrade[] = [
-  { id: 'demo-1', symbol: 'AAPL', trade_type: 'long', entry_price: 198.45, exit_price: null, quantity: 10, pnl: null, outcome_r: 0.8, status: 'open', stop_loss: 195.00, take_profit: 205.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'ai_approved', source: 'screener', gate_result: 'pass', setup_type: 'breakout', copilot_reasoning: null, outcome: null, user_action: null },
-  { id: 'demo-2', symbol: 'MSFT', trade_type: 'short', entry_price: 420.10, exit_price: null, quantity: 5, pnl: null, outcome_r: -0.3, status: 'open', stop_loss: 425.00, take_profit: 410.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'human_overwrite', source: 'manual', gate_result: 'override', setup_type: 'reversal', copilot_reasoning: null, outcome: null, user_action: null },
-  { id: 'demo-3', symbol: 'TSLA', trade_type: 'long', entry_price: 245.30, exit_price: null, quantity: 8, pnl: null, outcome_r: 1.2, status: 'open', stop_loss: 240.00, take_profit: 260.00, created_at: new Date().toISOString(), closed_at: null, close_reason: null, attribution: 'ai_approved', source: 'screener', gate_result: 'pass', setup_type: 'breakout', copilot_reasoning: null, outcome: null, user_action: null },
-];
-
 const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrade }: ActiveTradesStripProps) => {
-  const displayTrades = trades.length > 0 ? trades : DEMO_TRADES;
-  const isDemo = trades.length === 0;
+  const displayTrades = trades;
+  const isEmpty = trades.length === 0;
+
+
+  if (isEmpty) {
+    return (
+      <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
+        <span className="text-sm font-semibold text-foreground px-1">Active Trades</span>
+        <p className="text-xs text-muted-foreground px-1 py-2">No active trades. Copilot is scanning for setups…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-semibold text-foreground">
-          Active Trades {isDemo && <span className="text-muted-foreground font-normal">(preview)</span>}
-        </span>
+        <span className="text-sm font-semibold text-foreground">Active Trades</span>
         <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
           {displayTrades.length}
         </Badge>
@@ -57,27 +59,14 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                 ) : (
                   <TrendingDown className="h-3.5 w-3.5 text-red-500 shrink-0" />
                 )}
-
-                <span className="text-sm font-mono font-bold text-foreground truncate">
-                  {trade.symbol}
-                </span>
-
-                <span className="text-sm font-mono text-muted-foreground">
-                  ${trade.entry_price?.toFixed(2)}
-                </span>
-
-                <span className={`ml-auto text-sm font-mono font-semibold shrink-0 ${
-                  isPositive ? 'text-green-500' : 'text-red-500'
-                }`}>
+                <span className="text-sm font-mono font-bold text-foreground truncate">{trade.symbol}</span>
+                <span className="text-sm font-mono text-muted-foreground">${trade.entry_price?.toFixed(2)}</span>
+                <span className={`ml-auto text-sm font-mono font-semibold shrink-0 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                   {formatR(pnlR)}
                 </span>
-
                 {onCloseTrade && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCloseTrade(trade.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); onCloseTrade(trade.id); }}
                     className="p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors shrink-0"
                     title="Close trade"
                   >
