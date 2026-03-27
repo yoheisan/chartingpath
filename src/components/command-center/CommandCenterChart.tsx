@@ -708,12 +708,15 @@ export const CommandCenterChart = memo(function CommandCenterChart({
       .map((p) => {
         // Re-derive outcome using current bars to catch breaches missed at fetch time
         if (!isResolved(p.outcome) && bars.length > 0) {
+          // Use first_detected_at for outcome check — last_confirmed_at is too recent
+          // and would skip all bars, missing SL/TP breaches that occurred after initial detection
+          const outcomeDetectedAt = p.first_detected_at || p.detected_at || getDetectedAt(p);
           const liveOutcome = deriveLiveOutcomeUtil({
             direction: p.direction,
             entryPrice: Number(p.entry_price),
             stopLossPrice: Number(p.stop_loss_price),
             takeProfitPrice: Number(p.take_profit_price),
-            detectedAt: getDetectedAt(p),
+            detectedAt: outcomeDetectedAt,
             bars,
             status: p.status,
           });
