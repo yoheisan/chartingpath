@@ -809,10 +809,14 @@ const StudyChart = memo(({
             };
 
             // Draw with delay to ensure chart coordinates are ready
-            setTimeout(() => {
+            const zoneTimer = window.setTimeout(() => {
               requestAnimationFrame(drawAll);
             }, 200);
+            overlayTimers.push(zoneTimer);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawAll);
+            overlayRangeUnsubscribers.push(() => {
+              try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawAll); } catch {}
+            });
           }
         }
       }
@@ -1190,8 +1194,21 @@ const StudyChart = memo(({
           }
         };
 
-        setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
+        const historicalOverlayTimer = window.setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
+        overlayTimers.push(historicalOverlayTimer);
         chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
+        overlayRangeUnsubscribers.push(() => {
+          try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay); } catch {}
+        });
+      } else {
+        // Ensure stale markers/zones are removed when overlay conditions are no longer met
+        const canvas = canvasOverlayRef.current;
+        const chartEl = containerRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (canvas && chartEl && ctx) {
+          const rect = chartEl.getBoundingClientRect();
+          ctx.clearRect(0, 0, rect.width, rect.height);
+        }
       }
     }
 
@@ -1337,8 +1354,12 @@ const StudyChart = memo(({
         ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
       };
 
-      setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      const standaloneZonesTimer = window.setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      overlayTimers.push(standaloneZonesTimer);
       chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
+      overlayRangeUnsubscribers.push(() => {
+        try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones); } catch {}
+      });
     }
 
     allCharts.forEach((src) => {
@@ -1630,6 +1651,10 @@ const StudyChart = memo(({
       clearTimeout(initialSyncTimer);
       clearTimeout(initialSyncTimer2);
       clearTimeout(initialSyncTimer3);
+      overlayTimers.forEach((timer) => clearTimeout(timer));
+      overlayRangeUnsubscribers.forEach((unsubscribe) => {
+        try { unsubscribe(); } catch {}
+      });
       resizeObserver.disconnect();
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
