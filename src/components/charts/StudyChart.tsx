@@ -401,6 +401,10 @@ const StudyChart = memo(({
 
     chartRef.current = chart;
 
+    // Track overlay draw timers/subscriptions to prevent stale marker repaint after refresh/poll
+    const overlayTimers: number[] = [];
+    const overlayRangeUnsubscribers: Array<() => void> = [];
+
     // Use unified candlestick colors with dynamic price precision
     const candleSeries = chart.addSeries(CandlestickSeries, {
       ...CANDLE_COLORS,
