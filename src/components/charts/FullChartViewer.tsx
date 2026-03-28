@@ -274,6 +274,10 @@ export default function FullChartViewer({
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;
     let rafId: number | null = null;
+    let overlayTimerId1: ReturnType<typeof setTimeout> | undefined;
+    let overlayTimerId2: ReturnType<typeof setTimeout> | undefined;
+    let overlayRafId1: number = 0;
+    let overlayRafId2: number = 0;
     let attempts = 0;
 
     const initChart = () => {
@@ -895,7 +899,9 @@ export default function FullChartViewer({
             drawCanvasTriangles(ctx);
           };
 
-          setTimeout(() => requestAnimationFrame(drawAllCanvasOverlays), 200);
+          const overlayTimerId1 = setTimeout(() => {
+            overlayRafId1 = requestAnimationFrame(drawAllCanvasOverlays);
+          }, 200);
           chart.timeScale().subscribeVisibleLogicalRangeChange(drawAllCanvasOverlays);
         }
 
@@ -937,7 +943,9 @@ export default function FullChartViewer({
               drawCanvasTriangles(ctx);
             };
 
-            setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+            const overlayTimerId2 = setTimeout(() => {
+              overlayRafId2 = requestAnimationFrame(drawStandaloneTradePlanZones);
+            }, 200);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
           }
         }
@@ -980,6 +988,10 @@ export default function FullChartViewer({
     return () => {
       cleanedUp = true;
       if (rafId) window.cancelAnimationFrame(rafId);
+      if (overlayTimerId1) clearTimeout(overlayTimerId1);
+      if (overlayTimerId2) clearTimeout(overlayTimerId2);
+      if (overlayRafId1) cancelAnimationFrame(overlayRafId1);
+      if (overlayRafId2) cancelAnimationFrame(overlayRafId2);
       if (resizeObserver) resizeObserver.disconnect();
       if (chartRef.current) {
         chartRef.current.remove();
