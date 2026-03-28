@@ -45,6 +45,8 @@ export interface PatternQualityResult {
   tradeable: boolean;
   warnings: string[];
   volumeDataAvailable: boolean;
+  mtfConfirmed: boolean;
+  mtfTimeframe?: string;
 }
 
 export interface TrendIndicatorsInput {
@@ -678,6 +680,9 @@ interface PatternQualityScorerInput {
   repeatabilityProof?: RepeatabilityProof;
   // Cup & Handle handle depth (ratio 0-1 of cup depth)
   handleDepth?: number;
+  // MTF confirmation — true if same pattern exists on next higher timeframe
+  mtfConfirmed?: boolean;
+  mtfTimeframe?: string;
 }
 
 export function calculatePatternQualityScore(
@@ -696,7 +701,9 @@ export function calculatePatternQualityScore(
     trendIndicators,
     historicalPerformance,
     repeatabilityProof,
-    handleDepth
+    handleDepth,
+    mtfConfirmed,
+    mtfTimeframe
   } = input;
   
   const factors: QualityFactor[] = [];
@@ -820,6 +827,10 @@ export function calculatePatternQualityScore(
   const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
   weightedScore += handleBonus;
   
+  // MTF Confirmation bonus — additive, does not affect factor weights
+  const MTF_BONUS = mtfConfirmed ? 0.8 : 0;
+  weightedScore += MTF_BONUS;
+  
   const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Grade — recalibrated thresholds so A-grade is rare but achievable (~5-10%)
@@ -907,7 +918,9 @@ export function calculatePatternQualityScore(
     summary,
     tradeable,
     warnings,
-    volumeDataAvailable
+    volumeDataAvailable,
+    mtfConfirmed: !!mtfConfirmed,
+    mtfTimeframe: mtfConfirmed ? mtfTimeframe : undefined
   };
 }
 
