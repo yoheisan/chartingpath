@@ -203,6 +203,8 @@ export default function FullChartViewer({
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const indicatorsRef = useRef<IndicatorSettings>(indicators);
   const [chartVersion, setChartVersion] = useState(0);
+  const [tradeLevelsSuppressed, setTradeLevelsSuppressed] = useState<{ suppressed: boolean; entryPrice?: number }>({ suppressed: false });
+  const [forceShowLevels, setForceShowLevels] = useState(false);
   
   // Determine if playback is available (historical pattern with outcome data)
   // Compute entryBarIndex if not provided - default to 30 bars before end
