@@ -908,40 +908,58 @@ const StudyChart = memo(({
       if (currentPattern && hasRenderableTradeLevels && !currentPatternResolved) {
         const isLong = currentPattern.direction === 'long' || currentPattern.direction === 'bullish';
         const dirLabel = isLong ? '▲ LONG' : '▼ SHORT';
-        
-        // Render Entry line only if within range
-        if (patternToggles.showEntry && levelDistances.entry) {
-          candleSeries.createPriceLine({
-            price: currentPattern.entryPrice,
-            color: '#3b82f6',
-            lineWidth: 2,
-            lineStyle: 0,
-            axisLabelVisible: true,
-            title: `ENTRY ${dirLabel}`,
-          });
-        }
-        // Render SL/TP lines individually based on proximity
-        if (patternToggles.showStopLoss && levelDistances.sl) {
-          const slLine = candleSeries.createPriceLine({
-            price: currentPattern.stopLossPrice,
-            color: PATTERN_OVERLAY_COLORS.stopLoss,
-            lineWidth: 1,
-            lineStyle: 2,
-            axisLabelVisible: true,
-            title: 'SL',
-          });
-          patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(slLine); } catch {} });
-        }
-        if (patternToggles.showTakeProfit && levelDistances.tp) {
-          const tpLine = candleSeries.createPriceLine({
-            price: currentPattern.takeProfitPrice,
-            color: PATTERN_OVERLAY_COLORS.takeProfit,
-            lineWidth: 1,
-            lineStyle: 2,
-            axisLabelVisible: true,
-            title: 'TP',
-          });
-          patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(tpLine); } catch {} });
+
+        // Candle-close guard: if detection bar hasn't closed, show muted entry only
+        const barClosed = currentPattern.detectionBarClosed !== false; // treat missing as closed
+
+        if (!barClosed) {
+          // Muted "Awaiting confirmation" line
+          if (patternToggles.showEntry && levelDistances.entry) {
+            const awaitLine = candleSeries.createPriceLine({
+              price: currentPattern.entryPrice,
+              color: '#6b7280',
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: 'Awaiting confirmation',
+            });
+            patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(awaitLine); } catch {} });
+          }
+        } else {
+          // Render Entry line only if within range
+          if (patternToggles.showEntry && levelDistances.entry) {
+            candleSeries.createPriceLine({
+              price: currentPattern.entryPrice,
+              color: '#3b82f6',
+              lineWidth: 2,
+              lineStyle: 0,
+              axisLabelVisible: true,
+              title: `ENTRY ${dirLabel}`,
+            });
+          }
+          // Render SL/TP lines individually based on proximity
+          if (patternToggles.showStopLoss && levelDistances.sl) {
+            const slLine = candleSeries.createPriceLine({
+              price: currentPattern.stopLossPrice,
+              color: PATTERN_OVERLAY_COLORS.stopLoss,
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: 'SL',
+            });
+            patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(slLine); } catch {} });
+          }
+          if (patternToggles.showTakeProfit && levelDistances.tp) {
+            const tpLine = candleSeries.createPriceLine({
+              price: currentPattern.takeProfitPrice,
+              color: PATTERN_OVERLAY_COLORS.takeProfit,
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: 'TP',
+            });
+            patternLinesCleanupsRef.current.push(() => { try { candleSeries.removePriceLine(tpLine); } catch {} });
+          }
         }
       }
 
