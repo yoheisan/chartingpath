@@ -357,6 +357,13 @@ function analyzePatternSymmetry(
     descriptions.push(touchBonus > 0 ? `${touchCount} touches — strong confirmation` : 'Few touches — weak confirmation');
   }
 
+  // Cup & Handle handle depth bonus/penalty
+  const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
+  if (handleBonus !== 0) {
+    score += handleBonus;
+    descriptions.push(handleBonus > 0 ? `Shallow handle (${((handleDepth ?? 0) * 100).toFixed(0)}%) — strong` : `Deep handle (${((handleDepth ?? 0) * 100).toFixed(0)}%) — weak`);
+  }
+
   score = Math.max(0, Math.min(10, score));
   
   return {
