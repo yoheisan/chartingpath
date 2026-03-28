@@ -291,6 +291,15 @@ export function analyzePatternSymmetry(
   rightShoulderPrice?: number,
   headPrice?: number
 ): { score: number; description: string } {
+  // H&S-specific: use dedicated shoulder symmetry scoring if available
+  const hsScore = getHSSymmetryScore(patternType, leftShoulderPrice, rightShoulderPrice, headPrice);
+  if (hsScore !== null) {
+    const ratioDesc = leftShoulderPrice != null && rightShoulderPrice != null && headPrice != null
+      ? `Shoulder symmetry ratio ${(Math.abs(leftShoulderPrice - rightShoulderPrice) / (patternType === 'head-and-shoulders' ? headPrice - Math.min(leftShoulderPrice, rightShoulderPrice) : Math.max(leftShoulderPrice, rightShoulderPrice) - headPrice) * 100).toFixed(1)}%`
+      : 'H&S symmetry scored';
+    return { score: hsScore, description: ratioDesc };
+  }
+
   if (pivots.length < 3) {
     return { score: 5, description: 'Insufficient pivots for symmetry analysis' };
   }
