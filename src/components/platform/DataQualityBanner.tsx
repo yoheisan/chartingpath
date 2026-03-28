@@ -149,6 +149,11 @@ export function DataQualityBanner() {
                 these improvements — this is the data becoming more accurate,
                 not less reliable.
               </p>
+              {progress.currentBatch?.includes('Triple') && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
+                  <strong>Triple Top/Bottom:</strong> These patterns are being recalculated with a stricter detection filter. You may see fewer Triple Top/Bottom signals going forward — this is intentional. The remaining signals are higher quality.
+                </p>
+              )}
             </div>
 
             <div>
