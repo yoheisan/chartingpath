@@ -2830,6 +2830,39 @@ export type Database = {
         }
         Relationships: []
       }
+      market_breadth_cache: {
+        Row: {
+          advance_decline_line: number
+          advance_decline_ratio: number
+          advancing: number
+          created_at: string
+          declining: number
+          exchange: string
+          id: string
+          unchanged: number
+        }
+        Insert: {
+          advance_decline_line: number
+          advance_decline_ratio: number
+          advancing: number
+          created_at?: string
+          declining: number
+          exchange?: string
+          id?: string
+          unchanged: number
+        }
+        Update: {
+          advance_decline_line?: number
+          advance_decline_ratio?: number
+          advancing?: number
+          created_at?: string
+          declining?: number
+          exchange?: string
+          id?: string
+          unchanged?: number
+        }
+        Relationships: []
+      }
       market_report_subscriptions: {
         Row: {
           created_at: string
