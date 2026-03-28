@@ -306,7 +306,7 @@ serve(async (req) => {
 
     // 2. Fetch upcoming economic events for timing agent
     const now = new Date();
-    const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const { data: economicEvents } = await supabase
       .from("economic_events")
       .select("*")
