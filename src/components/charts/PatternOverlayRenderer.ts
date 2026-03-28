@@ -303,3 +303,245 @@ export function drawPatternZones(
     }
   }
 }
+
+// === NECKLINE RENDERING ===
+
+/** Pattern families that support neckline rendering */
+const NECKLINE_PATTERN_IDS = new Set([
+  'double-bottom', 'double_bottom', 'doublebottom',
+  'double-top', 'double_top', 'doubletop',
+  'triple-bottom', 'triple_bottom', 'triplebottom',
+  'triple-top', 'triple_top', 'tripletop',
+  'head-and-shoulders', 'head_and_shoulders', 'headandshoulders', 'hs',
+  'inverse-head-and-shoulders', 'inverse_head_and_shoulders', 'inverseheadandshoulders', 'ihs',
+]);
+
+function normalizePatternId(id: string): string {
+  return id.toLowerCase().replace(/[\s_-]+/g, '');
+}
+
+function isNecklinePattern(patternId: string): boolean {
+  const norm = normalizePatternId(patternId);
+  for (const candidate of NECKLINE_PATTERN_IDS) {
+    if (norm === normalizePatternId(candidate)) return true;
+  }
+  return false;
+}
+
+function isBottomPattern(patternId: string): boolean {
+  const n = normalizePatternId(patternId);
+  return n.includes('bottom') || n === 'ihs' || n.includes('inversehead');
+}
+
+function isAngledNecklinePattern(patternId: string): boolean {
+  const n = normalizePatternId(patternId);
+  return n.includes('head') && n.includes('shoulder');
+}
+
+/**
+ * Compute neckline data from pivots for reversal patterns.
+ * Returns either a single price (horizontal neckline) or two {time, price} points (angled).
+ */
+export function computeNeckline(
+  pivots: ZigZagPivot[],
+  patternId: string,
+  chartBars: CompressedBar[],
+): { type: 'horizontal'; price: number } | { type: 'angled'; points: Array<{ time: Time; price: number }> } | null {
+  if (!pivots || pivots.length < 2 || !isNecklinePattern(patternId)) return null;
+
+  const isBottom = isBottomPattern(patternId);
+  const isAngled = isAngledNecklinePattern(patternId);
+
+  // Build sorted timestamp lookup for snapping
+  const chartBarTimes = chartBars.map(b => ({
+    ts: Math.floor(new Date(b.t).getTime() / 1000),
+    t: b.t,
+  })).filter(x => Number.isFinite(x.ts)).sort((a, b) => a.ts - b.ts);
+
+  const snapToChart = (pivotTs: string): Time | null => {
+    const ts = Math.floor(new Date(pivotTs).getTime() / 1000);
+    if (!Number.isFinite(ts) || chartBarTimes.length === 0) return null;
+    let best = chartBarTimes[0];
+    let bestDist = Math.abs(ts - best.ts);
+    for (const entry of chartBarTimes) {
+      const dist = Math.abs(ts - entry.ts);
+      if (dist < bestDist) { bestDist = dist; best = entry; }
+      if (entry.ts > ts && dist > bestDist) break;
+    }
+    return dateToTime(best.t);
+  };
+
+  if (isAngled) {
+    // H&S / IH&S: neckline connects the troughs (or peaks) between the shoulders
+    // For H&S (top pattern): connect lows between LS-H and H-RS
+    // For IH&S (bottom pattern): connect highs between LS-H and H-RS
+    const neckPivotType = isBottom ? 'high' : 'low';
+    
+    // Try role-based detection first
+    const rolePivots = pivots.filter(p => {
+      const role = (p.role || '').toUpperCase();
+      return role === 'LS' || role === 'H' || role === 'RS';
+    });
+    
+    let necklinePoints: Array<{ time: Time; price: number }> = [];
+    
+    if (rolePivots.length >= 3) {
+      // Find intermediate pivots of opposite type between shoulders
+      const lsIdx = pivots.findIndex(p => (p.role || '').toUpperCase() === 'LS');
+      const hIdx = pivots.findIndex(p => (p.role || '').toUpperCase() === 'H');
+      const rsIdx = pivots.findIndex(p => (p.role || '').toUpperCase() === 'RS');
+      
+      if (lsIdx >= 0 && hIdx >= 0 && rsIdx >= 0) {
+        // Neckline point 1: between LS and H
+        const between1 = pivots.slice(Math.min(lsIdx, hIdx) + 1, Math.max(lsIdx, hIdx))
+          .filter(p => p.type === neckPivotType);
+        // Neckline point 2: between H and RS
+        const between2 = pivots.slice(Math.min(hIdx, rsIdx) + 1, Math.max(hIdx, rsIdx))
+          .filter(p => p.type === neckPivotType);
+        
+        const np1 = between1[0];
+        const np2 = between2[0];
+        
+        if (np1 && np2) {
+          const t1 = snapToChart(np1.timestamp);
+          const t2 = snapToChart(np2.timestamp);
+          if (t1 && t2) {
+            necklinePoints = [
+              { time: t1, price: np1.price },
+              { time: t2, price: np2.price },
+            ];
+          }
+        }
+      }
+    }
+    
+    // Fallback: find the two intermediate pivots of the neckline type
+    if (necklinePoints.length < 2) {
+      const neckCandidates = pivots.filter(p => p.type === neckPivotType);
+      if (neckCandidates.length >= 2) {
+        // Use the two that are most likely between the structural peaks/troughs
+        const sorted = [...neckCandidates].sort((a, b) => 
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        // Skip first and last if they're likely the shoulders themselves
+        const candidates = sorted.length > 2 ? sorted.slice(0, 2) : sorted;
+        const t1 = snapToChart(candidates[0].timestamp);
+        const t2 = snapToChart(candidates[1].timestamp);
+        if (t1 && t2) {
+          necklinePoints = [
+            { time: t1, price: candidates[0].price },
+            { time: t2, price: candidates[1].price },
+          ];
+        }
+      }
+    }
+    
+    if (necklinePoints.length >= 2) {
+      return { type: 'angled', points: necklinePoints };
+    }
+    return null;
+  }
+
+  // Horizontal neckline for Double/Triple Bottom/Top
+  if (isBottom) {
+    // Neckline = highest high between the lows
+    const lowPivots = pivots.filter(p => p.type === 'low');
+    if (lowPivots.length < 2) return null;
+    const highPivots = pivots.filter(p => p.type === 'high');
+    if (highPivots.length === 0) {
+      // Fallback: use max price among all pivots that aren't lows
+      return null;
+    }
+    // Find the intermediate highs (between the lows chronologically)
+    const firstLowTs = new Date(lowPivots[0].timestamp).getTime();
+    const lastLowTs = new Date(lowPivots[lowPivots.length - 1].timestamp).getTime();
+    const intermHighs = highPivots.filter(p => {
+      const t = new Date(p.timestamp).getTime();
+      return t >= firstLowTs && t <= lastLowTs;
+    });
+    const candidates = intermHighs.length > 0 ? intermHighs : highPivots;
+    const maxPrice = Math.max(...candidates.map(p => p.price));
+    return { type: 'horizontal', price: maxPrice };
+  } else {
+    // Top patterns: neckline = lowest low between the highs
+    const highPivots = pivots.filter(p => p.type === 'high');
+    if (highPivots.length < 2) return null;
+    const lowPivots = pivots.filter(p => p.type === 'low');
+    if (lowPivots.length === 0) return null;
+    const firstHighTs = new Date(highPivots[0].timestamp).getTime();
+    const lastHighTs = new Date(highPivots[highPivots.length - 1].timestamp).getTime();
+    const intermLows = lowPivots.filter(p => {
+      const t = new Date(p.timestamp).getTime();
+      return t >= firstHighTs && t <= lastHighTs;
+    });
+    const candidates = intermLows.length > 0 ? intermLows : lowPivots;
+    const minPrice = Math.min(...candidates.map(p => p.price));
+    return { type: 'horizontal', price: minPrice };
+  }
+}
+
+/**
+ * Render a neckline on the chart for reversal patterns.
+ * For horizontal necklines, uses a price line on the candle series.
+ * For angled necklines (H&S), uses a LineSeries segment.
+ * Returns a cleanup function.
+ */
+export function renderNeckline(
+  chart: IChartApi,
+  candleSeries: ReturnType<IChartApi['addSeries']>,
+  pivots: ZigZagPivot[] | undefined,
+  patternId: string | undefined,
+  chartBars: CompressedBar[],
+): (() => void) {
+  if (!pivots || !patternId || pivots.length < 2) return () => {};
+  
+  const neckline = computeNeckline(pivots, patternId, chartBars);
+  if (!neckline) return () => {};
+
+  if (neckline.type === 'horizontal') {
+    const line = candleSeries.createPriceLine({
+      price: neckline.price,
+      color: PATTERN_OVERLAY_COLORS.neckline,
+      lineWidth: 1,
+      lineStyle: 0, // solid
+      axisLabelVisible: true,
+      title: 'Neckline',
+    });
+    return () => {
+      try { candleSeries.removePriceLine(line); } catch {}
+    };
+  }
+
+  // Angled neckline via LineSeries
+  const necklineSeries = chart.addSeries(LineSeries, {
+    color: PATTERN_OVERLAY_COLORS.neckline,
+    lineWidth: 1,
+    lineStyle: 0,
+    priceLineVisible: false,
+    lastValueVisible: false,
+    crosshairMarkerVisible: false,
+    autoscaleInfoProvider: () => null,
+  });
+
+  const sortedPoints = [...neckline.points].sort(
+    (a, b) => (a.time as number) - (b.time as number)
+  );
+  necklineSeries.setData(sortedPoints.map(p => ({ time: p.time, value: p.price })));
+
+  // Add a label marker at the midpoint
+  if (sortedPoints.length >= 2) {
+    try {
+      createSeriesMarkers(necklineSeries, [{
+        time: sortedPoints[0].time,
+        position: 'aboveBar' as const,
+        color: PATTERN_OVERLAY_COLORS.neckline,
+        shape: 'circle' as SeriesMarkerShape,
+        text: 'Neckline',
+      }]);
+    } catch {}
+  }
+
+  return () => {
+    try { chart.removeSeries(necklineSeries); } catch {}
+  };
+}
