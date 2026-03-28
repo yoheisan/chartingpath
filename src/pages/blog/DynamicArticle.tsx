@@ -844,7 +844,6 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
                 }));
               }
             }
-            }
           } else {
             newBarsData[symbol] = data.map(d => ({
               t: d.date,
