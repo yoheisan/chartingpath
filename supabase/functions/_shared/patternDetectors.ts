@@ -799,7 +799,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       if (handleLows.length === 0) return { detected: false, pivots: [] };
       const handleLow = Math.min(...handleLows);
       const handleDepth = (rightRim - handleLow) / (rightRim - cupBottom);
-      if (handleDepth < 0.03 || handleDepth > 0.60) return { detected: false, pivots: [] };
+      if (handleDepth < 0.03 || handleDepth > 0.40) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
       const detected = lastClose > rightRim * 1.001;
@@ -811,6 +811,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       
       return {
         detected,
+        handleDepth,
         pivots: detected ? [
           { index: leftRimIdx, price: leftRim, type: 'high', label: 'Left Rim' },
           { index: cupBottomIdx, price: cupBottom, type: 'low', label: 'Cup Bottom' },
@@ -1030,7 +1031,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       if (handleHighs.length === 0) return { detected: false, pivots: [] };
       const handleHigh = Math.max(...handleHighs);
       const handleRetracement = (handleHigh - rightRim) / (cupTop - rightRim);
-      if (handleRetracement < 0.03 || handleRetracement > 0.60) return { detected: false, pivots: [] };
+      if (handleRetracement < 0.03 || handleRetracement > 0.40) return { detected: false, pivots: [] };
 
       // Breakdown: Last close breaks below right rim
       const lastClose = closes[closes.length - 1];
@@ -1043,6 +1044,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
 
       return {
         detected,
+        handleDepth: handleRetracement,
         pivots: detected ? [
           { index: leftRimIdx, price: leftRim, type: 'low', label: 'Left Rim' },
           { index: cupTopIdx, price: cupTop, type: 'high', label: 'Cup Top' },
