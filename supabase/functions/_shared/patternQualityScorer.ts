@@ -821,7 +821,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (10% - reduced from 15%)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice, handleDepth);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,
