@@ -169,6 +169,11 @@ export function DataQualityBanner() {
                   <strong>Score Recalculation:</strong> Pattern quality grades are being recalculated with improved scoring factors including multi-timeframe confirmation, more accurate volume handling for Forex, and better symmetry assessment. Some patterns may shift by one grade in either direction.
                 </p>
               )}
+              {progress.currentBatch?.includes('4H/8H') && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
+                  <strong>4H/8H OHLC Reseed:</strong> 4H and 8H pattern data is being fully recalculated following the detection of an OHLC data accuracy issue. This process takes several hours. 1H and 1D data is completely unaffected.
+                </p>
+              )}
             </div>
 
             <div>
