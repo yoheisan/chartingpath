@@ -391,13 +391,38 @@ async function fetchHTFBars(
     }));
   }
 
-  // Fallback: fetch from Yahoo via edge function
+  // Fallback: fetch from EODHD first, Yahoo as last resort
   try {
     const daysBack = htfTimeframe === "1wk" ? 365 * 3 : htfTimeframe === "1d" ? 365 * 2 : 180;
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - daysBack);
 
+    // Try EODHD first (primary source)
+    const { data: eodhData, error: eodhError } = await supabase.functions.invoke("fetch-eodhd", {
+      body: {
+        symbol,
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+        interval: htfTimeframe,
+        includeOhlc: true,
+      },
+    });
+
+    if (!eodhError && eodhData?.bars?.length > 0) {
+      return eodhData.bars.map((b: any) => ({
+        t: b.date || b.t,
+        o: b.open || b.o,
+        h: b.high || b.h,
+        l: b.low || b.l,
+        c: b.close || b.c,
+        v: b.volume || b.v || 0,
+      }));
+    }
+
+    console.warn(`[mtf-confluence] EODHD returned no data for ${symbol}/${htfTimeframe}, trying Yahoo fallback`);
+
+    // Yahoo last-resort fallback
     const { data: fnData, error: fnError } = await supabase.functions.invoke("fetch-yahoo-finance", {
       body: {
         symbol,
@@ -409,7 +434,7 @@ async function fetchHTFBars(
     });
 
     if (fnError || !fnData?.bars?.length) {
-      console.warn(`[mtf-confluence] Yahoo fallback failed for ${symbol}/${htfTimeframe}`);
+      console.warn(`[mtf-confluence] Yahoo fallback also failed for ${symbol}/${htfTimeframe}`);
       return [];
     }
 
