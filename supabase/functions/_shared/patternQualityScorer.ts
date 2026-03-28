@@ -661,7 +661,7 @@ function getCupHandleHandleBonus(patternType: string, handleDepth?: number): num
   return -0.5;                            // deep handle — slight penalty
 }
 
-
+interface PatternQualityScorerInput {
   bars: OHLCBar[];
   patternType: string;
   patternStartIndex: number;
