@@ -62,6 +62,8 @@ export interface HistoricalPatternOverlay {
   pivots?: ZigZagPivot[];
   /** Pattern's own bars for pivot-to-time resolution */
   bars?: CompressedBar[];
+  /** Timestamps of pattern-significant volume bars */
+  significantVolumeBars?: string[];
 }
 
 /** Toggle state for pattern overlay visibility */
