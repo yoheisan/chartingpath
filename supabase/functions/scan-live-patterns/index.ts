@@ -651,6 +651,8 @@ function aggregateBarsTo4h(bars: any[]): any[] {
   }
   const result: any[] = [];
   for (const [k, wBars] of grouped) {
+    // Skip partial bars — only emit complete 4H periods
+    if (wBars.length < 4) continue;
     wBars.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
       date: k, open: wBars[0].open,

@@ -56,6 +56,8 @@ function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   
   for (const [windowKey, windowBars] of groupedBars) {
     if (windowBars.length === 0) continue;
+    // Skip partial bars — only emit complete periods
+    if (windowBars.length < hoursPerBar) continue;
     
     // Sort bars by time to ensure correct OHLC
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());

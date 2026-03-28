@@ -114,6 +114,8 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
   
   for (const [windowKey, windowBars] of groupedBars) {
     if (windowBars.length === 0) continue;
+    // Skip partial bars — only emit complete 4H periods
+    if (windowBars.length < 4) continue;
     
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     
