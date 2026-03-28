@@ -119,21 +119,49 @@ serve(async (req) => {
       throw new Error("NEWS_API_KEY is not configured");
     }
 
-    // Helper: fetch Yahoo Finance with retry and rate limit handling
+    // Helper: fetch EODHD real-time quote (primary source)
+    const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+    
+    function toEODHDSymbol(symbol: string): string {
+      if (symbol.includes('=X')) return `${symbol.replace('=X', '')}.FOREX`;
+      if (symbol.includes('=F')) return `${symbol.replace('=F', '')}.COMM`;
+      if (symbol.startsWith('^')) return `${symbol.replace('^', '')}.INDX`;
+      if (symbol.endsWith('.SS')) return `${symbol.replace('.SS', '')}.SHG`;
+      if (symbol.endsWith('.SZ')) return `${symbol.replace('.SZ', '')}.SHE`;
+      if (symbol.endsWith('.HK')) return symbol;
+      if (symbol.endsWith('.SI')) return `${symbol.replace('.SI', '')}.SG`;
+      return `${symbol}.US`;
+    }
+
+    const fetchEODHDQuote = async (symbol: string): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
+      if (!EODHD_API_KEY) return { symbol, c: 0, pc: 0, error: true };
+      try {
+        const eodhSymbol = toEODHDSymbol(symbol);
+        const url = `https://eodhd.com/api/real-time/${eodhSymbol}?api_token=${EODHD_API_KEY}&fmt=json`;
+        const response = await fetch(url);
+        if (!response.ok) return { symbol, c: 0, pc: 0, error: true };
+        const data = await response.json();
+        const current = data.close || data.previousClose || 0;
+        const previous = data.previousClose || current;
+        if (!current || current === 0) return { symbol, c: 0, pc: 0, error: true };
+        return { symbol, c: current, pc: previous, error: false };
+      } catch {
+        return { symbol, c: 0, pc: 0, error: true };
+      }
+    };
+
+    // Helper: Yahoo fallback quote (last resort only)
     const fetchYahooQuote = async (symbol: string, retries = 3): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
           const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
           if (response.status === 429) {
-            console.warn(`Yahoo 429 for ${symbol}, attempt ${attempt + 1}/${retries + 1}, waiting ${1500 * (attempt + 1)}ms...`);
-            // Consume body to avoid leaks
             await response.text();
             await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
             continue;
           }
           if (!response.ok) {
-            console.error(`Yahoo ${response.status} for ${symbol}`);
-            await response.text(); // consume body
+            await response.text();
             return { symbol, c: 0, pc: 0, error: true };
           }
           const data = await response.json();
@@ -141,28 +169,30 @@ serve(async (req) => {
           const meta = quote?.meta;
           const current = meta?.regularMarketPrice || 0;
           const previous = meta?.previousClose || meta?.chartPreviousClose || current;
-          if (!current || current === 0) {
-            console.warn(`Yahoo returned zero price for ${symbol}`);
-            return { symbol, c: 0, pc: 0, error: true };
-          }
+          if (!current || current === 0) return { symbol, c: 0, pc: 0, error: true };
           return { symbol, c: current, pc: previous, error: false };
-        } catch (error) {
-          console.error(`Error fetching Yahoo data for ${symbol} (attempt ${attempt + 1}):`, error);
+        } catch {
           if (attempt < retries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
         }
       }
-      console.error(`All ${retries + 1} attempts failed for ${symbol}`);
       return { symbol, c: 0, pc: 0, error: true };
     };
 
-    // Helper: sequential Yahoo fetches with delay to avoid 429
-    const fetchYahooSequential = async (symbols: string[]): Promise<any[]> => {
+    // Helper: EODHD-first quote with Yahoo fallback
+    const fetchQuote = async (symbol: string): Promise<{ symbol: string; c: number; pc: number; error: boolean }> => {
+      const eodhResult = await fetchEODHDQuote(symbol);
+      if (!eodhResult.error) return eodhResult;
+      return fetchYahooQuote(symbol);
+    };
+
+    // Helper: sequential fetches with delay
+    const fetchSequential = async (symbols: string[]): Promise<any[]> => {
       const results: any[] = [];
       for (let i = 0; i < symbols.length; i++) {
-        const result = await fetchYahooQuote(symbols[i]);
+        const result = await fetchQuote(symbols[i]);
         results.push(result);
         if (i < symbols.length - 1) {
-          await new Promise(r => setTimeout(r, 700)); // 700ms between requests
+          await new Promise(r => setTimeout(r, 300));
         }
       }
       return results;
@@ -193,7 +223,7 @@ serve(async (req) => {
       const stockSymbols = getStockSymbols(timezone);
       
       // Fetch Yahoo symbols sequentially to avoid rate limiting
-      const yahooResults = await fetchYahooSequential(stockSymbols.yahooSymbols);
+      const yahooResults = await fetchSequential(stockSymbols.yahooSymbols);
       
       // Fetch Finnhub symbols in parallel (different API, no Yahoo rate limit)
       const finnhubPromises = stockSymbols.finnhubSymbols.map(async symbol => {
@@ -278,11 +308,11 @@ serve(async (req) => {
       }
     }
 
-    // Fetch forex data (sequential to avoid Yahoo 429)
+    // Fetch forex data (EODHD-first with Yahoo fallback)
     if (markets.includes("forex")) {
       const forexSymbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"];
       const forexNames = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD"];
-      const forexResults = await fetchYahooSequential(forexSymbols);
+      const forexResults = await fetchSequential(forexSymbols);
       marketData.forex = forexResults.map((r, i) => ({ ...r, symbol: forexNames[i] }));
     }
 
@@ -302,11 +332,11 @@ serve(async (req) => {
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
-    // Fetch commodities data (sequential to avoid Yahoo 429)
+    // Fetch commodities data (EODHD-first with Yahoo fallback)
     if (markets.includes("commodities")) {
       const comSymbols = ["GC=F", "SI=F", "CL=F", "BZ=F"];
       const comNames = ["Gold (XAU/USD)", "Silver (XAG/USD)", "WTI Crude", "Brent Crude"];
-      const comResults = await fetchYahooSequential(comSymbols);
+      const comResults = await fetchSequential(comSymbols);
       marketData.commodities = comResults.map((r, i) => ({ ...r, symbol: comNames[i] }));
     }
 

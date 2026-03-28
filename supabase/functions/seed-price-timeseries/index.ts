@@ -17,8 +17,8 @@ const corsHeaders = {
  * 
  * Provider routing:
  * - Crypto: Binance (free, 1000 candles/request, 730+ days for 1h+)
- * - FX: Yahoo Finance (729 days for 1h, 60 days for 15m, 7 days for 1m/5m)
- * - Stocks/ETFs/Indices: EODHD (120 days intraday) → Yahoo fallback
+ * - FX: EODHD (primary) → Yahoo fallback (last resort)
+ * - Stocks/ETFs/Indices: EODHD (primary) → Yahoo fallback (last resort)
  */
 
 interface SeedRequest {
@@ -216,9 +216,9 @@ async function fetchBarsForSymbol(symbol: string, timeframe: string): Promise<OH
   }
 
   if (isFX) {
-    // Yahoo first for FX (longer intraday history than EODHD)
-    let bars = await fetchYahooBars(symbol, timeframe, limits.yahooDays);
-    if (bars.length === 0) bars = await fetchEODHDBars(symbol, timeframe, limits.eodhdDays);
+    // EODHD first for FX (primary source), Yahoo as last-resort fallback
+    let bars = await fetchEODHDBars(symbol, timeframe, limits.eodhdDays);
+    if (bars.length === 0) bars = await fetchYahooBars(symbol, timeframe, limits.yahooDays);
     return bars;
   }
 

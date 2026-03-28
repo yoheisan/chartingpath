@@ -793,12 +793,13 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
             .limit(1260); // ~5 years of trading days
           
           if (error || !data || data.length < 50) {
-            // Fallback to Yahoo Finance for real data
+            // Fallback: try EODHD first, then Yahoo as last resort
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(endDate.getDate() - 1825); // 5 years
             
-            const { data: yfData, error: yfError } = await supabase.functions.invoke('fetch-yahoo-finance', {
+            // EODHD first (primary source for non-crypto)
+            const { data: eodhData, error: eodhError } = await supabase.functions.invoke('fetch-eodhd', {
               body: {
                 symbol,
                 startDate: startDate.toISOString().split('T')[0],
@@ -808,12 +809,8 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
               }
             });
             
-            if (yfError || !yfData?.bars || yfData.bars.length < 50) {
-              // Only use demo data as last resort
-              console.info(`Using demo data for ${symbol} (Yahoo fallback failed)`);
-              newBarsData[symbol] = generateDemoBars(200);
-            } else {
-              newBarsData[symbol] = yfData.bars.map((b: any) => ({
+            if (!eodhError && eodhData?.bars && eodhData.bars.length >= 50) {
+              newBarsData[symbol] = eodhData.bars.map((b: any) => ({
                 t: b.t || b.date,
                 o: b.o || b.open,
                 h: b.h || b.high,
@@ -821,6 +818,31 @@ function IndicatorChartVisualization({ slug }: { slug: string }) {
                 c: b.c || b.close,
                 v: b.v || b.volume || 0,
               }));
+            } else {
+              // Yahoo last-resort fallback
+              const { data: yfData, error: yfError } = await supabase.functions.invoke('fetch-yahoo-finance', {
+                body: {
+                  symbol,
+                  startDate: startDate.toISOString().split('T')[0],
+                  endDate: endDate.toISOString().split('T')[0],
+                  interval: '1d',
+                  includeOhlc: true,
+                }
+              });
+              
+              if (yfError || !yfData?.bars || yfData.bars.length < 50) {
+                console.info(`Using demo data for ${symbol} (EODHD + Yahoo fallback failed)`);
+                newBarsData[symbol] = generateDemoBars(200);
+              } else {
+                newBarsData[symbol] = yfData.bars.map((b: any) => ({
+                  t: b.t || b.date,
+                  o: b.o || b.open,
+                  h: b.h || b.high,
+                  l: b.l || b.low,
+                  c: b.c || b.close,
+                  v: b.v || b.volume || 0,
+                }));
+              }
             }
           } else {
             newBarsData[symbol] = data.map(d => ({

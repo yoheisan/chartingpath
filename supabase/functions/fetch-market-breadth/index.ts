@@ -24,6 +24,7 @@ interface SentimentData {
   fearGreedScore: number;
 }
 
+// Yahoo is kept ONLY for breadth symbols (^ADV, ^DECL, ^UNCH) that EODHD does not cover
 async function fetchYahooQuote(symbol: string): Promise<number | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
@@ -34,6 +35,21 @@ async function fetchYahooQuote(symbol: string): Promise<number | null> {
     const data = await response.json();
     const result = data?.chart?.result?.[0];
     return result?.meta?.regularMarketPrice || result?.meta?.previousClose || null;
+  } catch {
+    return null;
+  }
+}
+
+// EODHD quote fetcher (primary source for VIX and standard indices)
+async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
+  try {
+    const url = `https://eodhd.com/api/real-time/${eodhSymbol}?api_token=${EODHD_API_KEY}&fmt=json`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.close || data.previousClose || null;
   } catch {
     return null;
   }
@@ -111,13 +127,19 @@ serve(async (req) => {
   try {
     console.log("[fetch-market-breadth] Starting breadth + sentiment data fetch...");
 
-    // Fetch A/D data, VIX, and CBOE Put/Call ratio in parallel
+    // Fetch A/D data (Yahoo — EODHD doesn't cover ^ADV/^DECL/^UNCH breadth indicators)
+    // Fetch VIX from EODHD (primary), Put/Call from Yahoo (only source)
     const [advResult, declResult, unchResult, vixValue, pcRatioValue] = await Promise.all([
-      fetchYahooQuote("^ADV"),
-      fetchYahooQuote("^DECL"),
-      fetchYahooQuote("^UNCH"),
-      fetchYahooQuote("^VIX"),
-      // Try multiple Put/Call symbols - Yahoo availability varies
+      fetchYahooQuote("^ADV"),   // NYSE breadth — Yahoo only source
+      fetchYahooQuote("^DECL"),  // NYSE breadth — Yahoo only source
+      fetchYahooQuote("^UNCH"), // NYSE breadth — Yahoo only source
+      // VIX: try EODHD first, fallback to Yahoo
+      (async () => {
+        const eodhVix = await fetchEODHDQuote("VIX.INDX");
+        if (eodhVix !== null) return eodhVix;
+        return fetchYahooQuote("^VIX");
+      })(),
+      // Put/Call ratio — Yahoo only source
       (async () => {
         for (const sym of ["^CPCE", "^CPC", "^PCSP"]) {
           const val = await fetchYahooQuote(sym);

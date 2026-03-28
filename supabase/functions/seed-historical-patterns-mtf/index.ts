@@ -1509,13 +1509,12 @@ async function fetchMarketData(
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
   } else if (isFX && isIntraday) {
-    // FX Intraday: Yahoo FIRST (729 days) > EODHD (only 120 days)
-    // This maximizes historical pattern depth for FX pairs
-    bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    // FX Intraday: EODHD first (primary source), Yahoo as last-resort fallback
+    bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
     
     if (bars.length === 0) {
-      console.log(`[Provider] Yahoo failed for FX ${symbol}, trying EODHD fallback`);
-      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+      console.log(`[Provider] EODHD returned no data for FX ${symbol}, trying Yahoo fallback`);
+      bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
   } else {
     // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
