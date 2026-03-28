@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,7 +57,6 @@ async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
 }
 
 function computeSentiment(vix: number | null, putCallRatio: number | null, adRatio: number): SentimentData {
-  // VIX interpretation
   let vixLevel = 'unknown';
   if (vix !== null) {
     if (vix >= 30) vixLevel = 'extreme-fear';
@@ -65,7 +65,6 @@ function computeSentiment(vix: number | null, putCallRatio: number | null, adRat
     else vixLevel = 'greed';
   }
 
-  // Put/Call ratio interpretation
   let putCallSignal = 'unknown';
   if (putCallRatio !== null) {
     if (putCallRatio >= 1.2) putCallSignal = 'extreme-fear';
@@ -74,8 +73,7 @@ function computeSentiment(vix: number | null, putCallRatio: number | null, adRat
     else putCallSignal = 'greed';
   }
 
-  // Composite Fear & Greed estimate (simplified CNN-style)
-  let score = 50; // neutral baseline
+  let score = 50;
   let signals = 0;
 
   if (vix !== null) {
@@ -119,6 +117,74 @@ function computeSentiment(vix: number | null, putCallRatio: number | null, adRat
   };
 }
 
+function getSupabaseServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return createClient(url, serviceKey);
+}
+
+/** Try to load cached breadth from Supabase (within last 24h) */
+async function loadCachedBreadth(): Promise<{
+  advances: number;
+  declines: number;
+  unchanged: number;
+  advanceDeclineRatio: number;
+  advanceDeclineLine: number;
+  exchange: string;
+  created_at: string;
+} | null> {
+  try {
+    const sb = getSupabaseServiceClient();
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await sb
+      .from("market_breadth_cache")
+      .select("*")
+      .gte("created_at", cutoff)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (error || !data) return null;
+    return {
+      advances: Number(data.advancing),
+      declines: Number(data.declining),
+      unchanged: Number(data.unchanged),
+      advanceDeclineRatio: Number(data.advance_decline_ratio),
+      advanceDeclineLine: Number(data.advance_decline_line),
+      exchange: data.exchange || "NYSE",
+      created_at: data.created_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Cache successful breadth fetch */
+async function cacheBreadth(b: BreadthData) {
+  try {
+    const sb = getSupabaseServiceClient();
+    // Delete old cache rows (keep last 10)
+    const { data: old } = await sb
+      .from("market_breadth_cache")
+      .select("id")
+      .order("created_at", { ascending: false })
+      .range(10, 1000);
+    if (old && old.length > 0) {
+      await sb.from("market_breadth_cache").delete().in("id", old.map((r: { id: string }) => r.id));
+    }
+    // Insert new
+    await sb.from("market_breadth_cache").insert({
+      advancing: b.advances,
+      declining: b.declines,
+      unchanged: b.unchanged,
+      advance_decline_ratio: b.advanceDeclineRatio,
+      advance_decline_line: b.advanceDeclineLine,
+      exchange: b.exchange,
+    });
+  } catch (err) {
+    console.error("[fetch-market-breadth] Cache write error:", err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -130,16 +196,14 @@ serve(async (req) => {
     // Fetch A/D data (Yahoo — EODHD doesn't cover ^ADV/^DECL/^UNCH breadth indicators)
     // Fetch VIX from EODHD (primary), Put/Call from Yahoo (only source)
     const [advResult, declResult, unchResult, vixValue, pcRatioValue] = await Promise.all([
-      fetchYahooQuote("^ADV"),   // NYSE breadth — Yahoo only source
-      fetchYahooQuote("^DECL"),  // NYSE breadth — Yahoo only source
-      fetchYahooQuote("^UNCH"), // NYSE breadth — Yahoo only source
-      // VIX: try EODHD first, fallback to Yahoo
+      fetchYahooQuote("^ADV"),
+      fetchYahooQuote("^DECL"),
+      fetchYahooQuote("^UNCH"),
       (async () => {
         const eodhVix = await fetchEODHDQuote("VIX.INDX");
         if (eodhVix !== null) return eodhVix;
         return fetchYahooQuote("^VIX");
       })(),
-      // Put/Call ratio — Yahoo only source
       (async () => {
         for (const sym of ["^CPCE", "^CPC", "^PCSP"]) {
           const val = await fetchYahooQuote(sym);
@@ -152,11 +216,18 @@ serve(async (req) => {
     let advances = advResult || 0;
     let declines = declResult || 0;
     let unchanged = unchResult || 0;
+    let dataSource: 'yahoo' | 'finnhub' | 'fallback' | 'unavailable' = 'yahoo';
+    let dataAvailable = true;
+    let breadthError: string | undefined;
 
-    // Finnhub fallback for A/D data
-    if (advances === 0 && declines === 0) {
-      console.log("[fetch-market-breadth] Yahoo A/D data unavailable, using Finnhub fallback...");
+    // Check if Yahoo returned valid data
+    const yahooFailed = advances === 0 && declines === 0;
+
+    if (yahooFailed) {
+      console.log("[fetch-market-breadth] Yahoo A/D data unavailable, trying Finnhub fallback...");
       const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
+      let finnhubWorked = false;
+
       if (FINNHUB_API_KEY) {
         try {
           const response = await fetch(
@@ -168,14 +239,37 @@ serve(async (req) => {
           } else {
             advances = 1650; declines = 1350; unchanged = 100;
           }
+          dataSource = 'finnhub';
+          finnhubWorked = true;
         } catch (err) {
           console.error("[fetch-market-breadth] Finnhub fallback error:", err);
+        }
+      }
+
+      // If Finnhub also failed, try Supabase cache
+      if (!finnhubWorked) {
+        console.log("[fetch-market-breadth] Finnhub unavailable, trying cached breadth...");
+        const cached = await loadCachedBreadth();
+        if (cached) {
+          advances = cached.advances;
+          declines = cached.declines;
+          unchanged = cached.unchanged;
+          dataSource = 'fallback';
+          dataAvailable = true;
+          breadthError = 'Live data unavailable — showing cached data';
+          console.log(`[fetch-market-breadth] Using cached breadth from ${cached.created_at}`);
+        } else {
+          // No cache — return neutral defaults
+          dataSource = 'unavailable';
+          dataAvailable = false;
+          breadthError = 'Market breadth data temporarily unavailable';
+          console.log("[fetch-market-breadth] No cached breadth available, returning unavailable");
         }
       }
     }
 
     const total = advances + declines + unchanged;
-    const advanceDeclineRatio = declines > 0 ? advances / declines : 0;
+    const advanceDeclineRatio = declines > 0 ? advances / declines : (dataAvailable ? 1 : 1);
     const advanceDeclineLine = advances - declines;
 
     const breadthData: BreadthData = {
@@ -188,12 +282,17 @@ serve(async (req) => {
       exchange: "NYSE",
     };
 
+    // Cache successful live fetches (yahoo or finnhub)
+    if (dataSource === 'yahoo' || dataSource === 'finnhub') {
+      cacheBreadth(breadthData); // fire-and-forget
+    }
+
     const sentimentData = computeSentiment(vixValue, pcRatioValue, advanceDeclineRatio);
 
-    console.log("[fetch-market-breadth] Breadth:", breadthData);
+    console.log("[fetch-market-breadth] Breadth:", breadthData, "source:", dataSource);
     console.log("[fetch-market-breadth] Sentiment:", sentimentData);
 
-    const baseSentiment = advanceDeclineRatio >= 1.5 ? "bullish" : 
+    const baseSentiment = advanceDeclineRatio >= 1.5 ? "bullish" :
                           advanceDeclineRatio >= 1.0 ? "neutral-bullish" :
                           advanceDeclineRatio >= 0.67 ? "neutral-bearish" : "bearish";
 
@@ -208,6 +307,9 @@ serve(async (req) => {
           declinePercent: total > 0 ? Math.round((declines / total) * 100) : 0,
           sentiment: baseSentiment,
         },
+        dataAvailable,
+        dataSource,
+        ...(breadthError ? { breadthError } : {}),
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -215,10 +317,49 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("[fetch-market-breadth] Error:", error);
+
+    // Last-resort: try cache even on unhandled errors
+    let fallbackResponse = null;
+    try {
+      const cached = await loadCachedBreadth();
+      if (cached) {
+        const ratio = cached.advanceDeclineRatio;
+        const baseSentiment = ratio >= 1.5 ? "bullish" :
+                              ratio >= 1.0 ? "neutral-bullish" :
+                              ratio >= 0.67 ? "neutral-bearish" : "bearish";
+        const total = cached.advances + cached.declines + cached.unchanged;
+        fallbackResponse = {
+          success: true,
+          data: {
+            ...cached,
+            timestamp: new Date().toISOString(),
+          },
+          sentiment: computeSentiment(null, null, ratio),
+          meta: {
+            total,
+            advancePercent: total > 0 ? Math.round((cached.advances / total) * 100) : 0,
+            declinePercent: total > 0 ? Math.round((cached.declines / total) * 100) : 0,
+            sentiment: baseSentiment,
+          },
+          dataAvailable: true,
+          dataSource: 'fallback' as const,
+          breadthError: 'Live data unavailable — showing cached data',
+        };
+      }
+    } catch { /* ignore cache errors in catch */ }
+
+    if (fallbackResponse) {
+      return new Response(JSON.stringify(fallbackResponse), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message || "Failed to fetch market breadth data",
+        dataAvailable: false,
+        dataSource: 'unavailable',
       }),
       {
         status: 500,

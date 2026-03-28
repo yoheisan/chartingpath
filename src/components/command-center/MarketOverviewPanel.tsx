@@ -41,6 +41,9 @@ interface BreadthMeta {
 interface BreadthResponse {
   data: BreadthData;
   meta: BreadthMeta;
+  dataAvailable?: boolean;
+  dataSource?: 'yahoo' | 'finnhub' | 'fallback' | 'unavailable';
+  breadthError?: string;
 }
 
 interface MarketOverviewPanelProps {
