@@ -724,19 +724,19 @@ async function fetchDataBatchWithDbFallback(
   
   const daysRequested = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)));
   const dbResults = await loadFromDbCache(supabase, symbolsAfterMemCache, interval, daysRequested, minBarsRequired);
-  const symbolsNeedingYahoo: string[] = [];
+  const symbolsNeedingExternal: string[] = [];
   
   for (const symbol of symbolsAfterMemCache) {
     const dbBars = dbResults.get(symbol);
     if (dbBars && dbBars.length >= minBarsRequired) {
       results.set(symbol, dbBars);
       symbolDataCache.set(`${symbol}:${interval}`, { bars: dbBars, timestamp: now });
-    } else symbolsNeedingYahoo.push(symbol);
+    } else symbolsNeedingExternal.push(symbol);
   }
   
-  for (let i = 0; i < symbolsNeedingYahoo.length; i += concurrency) {
-    const batch = symbolsNeedingYahoo.slice(i, i + concurrency);
-    const batchResults = await Promise.allSettled(batch.map(s => fetchYahooDataSingle(s, startDate, endDate, interval)));
+  for (let i = 0; i < symbolsNeedingExternal.length; i += concurrency) {
+    const batch = symbolsNeedingExternal.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(batch.map(s => fetchExternalDataSingle(s, startDate, endDate, interval)));
     const barsToUpsert: Array<{ symbol: string; date: string; open: number; high: number; low: number; close: number; volume: number; timeframe: string; instrument_type: string }> = [];
     batchResults.forEach((r, idx) => {
       const symbol = batch[idx];
@@ -769,9 +769,9 @@ async function fetchDataBatchWithDbFallback(
           const chunk = barsToUpsert.slice(j, j + 500);
           await supabase.from('historical_prices').upsert(chunk, { onConflict: 'symbol,timeframe,date', ignoreDuplicates: false });
         }
-        console.info(`[scan-live-patterns] Persisted ${barsToUpsert.length} Yahoo bars to historical_prices for ${batch.length} symbols at ${interval}`);
+        console.info(`[scan-live-patterns] Persisted ${barsToUpsert.length} EODHD/external bars to historical_prices for ${batch.length} symbols at ${interval}`);
       } catch (err: any) {
-        console.warn(`[scan-live-patterns] Failed to persist Yahoo bars: ${err.message}`);
+        console.warn(`[scan-live-patterns] Failed to persist external bars: ${err.message}`);
       }
     }
   }
