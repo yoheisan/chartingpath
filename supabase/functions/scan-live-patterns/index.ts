@@ -1327,9 +1327,12 @@ serve(async (req) => {
         const detectionResult = pattern.detector(bars.slice(-20), timeframe);
         if (!detectionResult.detected) continue;
         
+        // Use detector-returned direction for neutral patterns (e.g. symmetrical triangle), otherwise use config direction
+        const effectiveDirection: 'long' | 'short' = detectionResult.detectedDirection || pattern.direction;
+        
         const lastBar = bars[bars.length - 1];
         const atr = calculateATR(bars, 14);
-        const bracketLevels = computeBracketLevels({ direction: pattern.direction, entryPrice: lastBar.close, stopPercent: (atr / lastBar.close) * 100 * 2, targetPercent: (atr / lastBar.close) * 100 * 4, atr, atrMultiplier: 2.0, stopLossMethod: 'atr', takeProfitMethod: 'ratio' });
+        const bracketLevels = computeBracketLevels({ direction: effectiveDirection, entryPrice: lastBar.close, stopPercent: (atr / lastBar.close) * 100 * 2, targetPercent: (atr / lastBar.close) * 100 * 4, atr, atrMultiplier: 2.0, stopLossMethod: 'atr', takeProfitMethod: 'ratio' });
         
         const visualBars = bars.slice(-60);
         const compressedBars = visualBars.map(b => ({ t: b.date, o: +b.open.toFixed(6), h: +b.high.toFixed(6), l: +b.low.toFixed(6), c: +b.close.toFixed(6), v: b.volume || 0 }));

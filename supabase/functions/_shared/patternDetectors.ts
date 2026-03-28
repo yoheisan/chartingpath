@@ -11,6 +11,7 @@ interface PatternPivot {
 interface PatternDetectionResult {
   detected: boolean;
   pivots: PatternPivot[];
+  detectedDirection?: 'long' | 'short'; // Override config direction (for neutral patterns like symmetrical triangle)
 }
 
 type PatternDetector = (window: any[], timeframe?: string) => PatternDetectionResult;
@@ -918,7 +919,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
     displayName: 'Triple Bottom'
   },
   'symmetrical-triangle': {
-    direction: 'long', // Neutral pattern, defaults to long (breakout direction determines actual trade)
+    direction: 'long', // Default fallback; actual direction determined by breakout detection
     detector: (window) => {
       if (window.length < 20) return { detected: false, pivots: [] };
       const highs = window.map(d => d.high);
@@ -959,21 +960,39 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const patternRange = (lastPeaks[0].value - lastTroughs[0].value) / lastTroughs[0].value;
       if (patternRange < 0.03) return { detected: false, pivots: [] };
 
-      // Breakout: close above the descending resistance line (projected)
+      // Project both trendlines to current bar
       const projectedResistance = lastPeaks[1].value + highSlope * (window.length - 1 - lastPeaks[1].index);
+      const projectedSupport = lastTroughs[1].value + lowSlope * (window.length - 1 - lastTroughs[1].index);
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose > projectedResistance * 1.002;
 
-      return {
-        detected,
-        pivots: detected ? [
-          { index: lastPeaks[0].index, price: lastPeaks[0].value, type: 'high', label: 'R1' },
-          { index: lastPeaks[1].index, price: lastPeaks[1].value, type: 'high', label: 'R2' },
-          { index: lastTroughs[0].index, price: lastTroughs[0].value, type: 'low', label: 'S1' },
-          { index: lastTroughs[1].index, price: lastTroughs[1].value, type: 'low', label: 'S2' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
-        ] : []
-      };
+      // Detect BOTH upside and downside breakouts
+      const upsideBreakout = lastClose > projectedResistance * 1.002;
+      const downsideBreakout = lastClose < projectedSupport * 0.998;
+
+      const pivots = [
+        { index: lastPeaks[0].index, price: lastPeaks[0].value, type: 'high' as const, label: 'R1' },
+        { index: lastPeaks[1].index, price: lastPeaks[1].value, type: 'high' as const, label: 'R2' },
+        { index: lastTroughs[0].index, price: lastTroughs[0].value, type: 'low' as const, label: 'S1' },
+        { index: lastTroughs[1].index, price: lastTroughs[1].value, type: 'low' as const, label: 'S2' },
+      ];
+
+      if (upsideBreakout) {
+        return {
+          detected: true,
+          detectedDirection: 'long',
+          pivots: [...pivots, { index: window.length - 1, price: lastClose, type: 'high' as const, label: 'Breakout ▲' }]
+        };
+      }
+
+      if (downsideBreakout) {
+        return {
+          detected: true,
+          detectedDirection: 'short',
+          pivots: [...pivots, { index: window.length - 1, price: lastClose, type: 'low' as const, label: 'Breakout ▼' }]
+        };
+      }
+
+      return { detected: false, pivots: [] };
     },
     displayName: 'Symmetrical Triangle'
   },
