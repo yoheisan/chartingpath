@@ -466,9 +466,10 @@ export interface PatternQualityScorerInput {
   stopLoss: number;
   takeProfit: number;
   atr: number;
-  handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
-  mtfConfirmed?: boolean; // true if same pattern exists on next higher timeframe
-  mtfTimeframe?: string;  // the higher timeframe where confirmation was found
+  handleDepth?: number;
+  mtfConfirmed?: boolean;
+  mtfTimeframe?: string;
+  touchCount?: number; // Triangle patterns: number of touches on flat resistance/support
 }
 
 /**
@@ -519,7 +520,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (weight: 0.15)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, input.touchCount);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,
