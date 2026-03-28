@@ -209,11 +209,7 @@ export function renderPatternPriceLines(
     }));
   }
 
-  return () => {
-    lines.forEach(line => {
-      try { candleSeries.removePriceLine(line); } catch {}
-    });
-  };
+  return { cleanup: mkCleanup(), tradeLevelsSuppressed: false, detectedEntryPrice: pattern.entryPrice };
 }
 
 /**
