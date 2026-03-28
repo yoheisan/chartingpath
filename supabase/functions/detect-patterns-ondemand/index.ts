@@ -55,6 +55,7 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
   const intervalMap: Record<string, string> = {
     '1h': '1h',
     '4h': '1h', // We'll aggregate 1h to 4h
+    '8h': '1h', // We'll aggregate 1h to 8h
     '1d': '1d',
     '1wk': '1wk',
   };
@@ -123,9 +124,12 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
       })
       .filter((b): b is CompressedBar => b !== null);
 
-    // Aggregate to 4H if needed
+    // Aggregate to 4H or 8H if needed
     if (timeframe === '4h' && bars.length > 0) {
-      return aggregateTo4H(bars);
+      return aggregateHourlyBars(bars, 4);
+    }
+    if (timeframe === '8h' && bars.length > 0) {
+      return aggregateHourlyBars(bars, 8);
     }
 
     return bars;
@@ -134,13 +138,27 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
   // All variants failed
 }
 
-// Aggregate 1H bars to 4H (UTC-anchored, skip partial bars)
-function aggregateTo4H(hourlyBars: CompressedBar[]): CompressedBar[] {
+// Aggregate 1H bars to 4H or 8H (UTC-anchored, skip partial bars)
+// 4H boundaries: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+// 8H boundaries: 00:00, 08:00, 16:00 UTC
+//
+// OHLCV rules: O=first open, H=max highs, L=min lows, C=last close, V=sum
+// Partial bars at period end are skipped entirely.
+//
+// Expected aggregation test case (4H):
+//   Input 1H bars:
+//     Bar1: O=1.0800 H=1.0850 L=1.0780 C=1.0820 V=1000
+//     Bar2: O=1.0820 H=1.0900 L=1.0810 C=1.0880 V=1200
+//     Bar3: O=1.0880 H=1.0920 L=1.0860 C=1.0870 V=800
+//     Bar4: O=1.0870 H=1.0890 L=1.0830 C=1.0840 V=1100
+//   Expected 4H bar:
+//     O=1.0800, H=1.0920, L=1.0780, C=1.0840, V=4100
+function aggregateHourlyBars(hourlyBars: CompressedBar[], period: 4 | 8): CompressedBar[] {
   const grouped = new Map<string, CompressedBar[]>();
   
   for (const bar of hourlyBars) {
     const d = new Date(bar.t);
-    const periodStart = Math.floor(d.getUTCHours() / 4) * 4;
+    const periodStart = Math.floor(d.getUTCHours() / period) * period;
     const boundary = new Date(d);
     boundary.setUTCHours(periodStart, 0, 0, 0);
     const key = boundary.toISOString();
@@ -150,7 +168,7 @@ function aggregateTo4H(hourlyBars: CompressedBar[]): CompressedBar[] {
   
   const aggregated: CompressedBar[] = [];
   for (const [key, wBars] of grouped) {
-    if (wBars.length < 4) continue; // skip partial bars
+    if (wBars.length < period) continue; // skip partial bars
     wBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     aggregated.push({
       t: key,
