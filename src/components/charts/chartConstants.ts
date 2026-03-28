@@ -40,6 +40,8 @@ export const CANDLE_COLORS = {
 export const VOLUME_COLORS = {
   up: 'rgba(34, 197, 94, 0.4)',
   down: 'rgba(239, 68, 68, 0.4)',
+  upHighlight: 'rgba(34, 197, 94, 1.0)',
+  downHighlight: 'rgba(239, 68, 68, 1.0)',
   default: '#6b7280',
 } as const;
 
@@ -211,7 +213,8 @@ export function getThemeColors() {
 /**
  * Get volume bar color based on candle direction
  */
-export function getVolumeColor(isUp: boolean): string {
+export function getVolumeColor(isUp: boolean, highlighted?: boolean): string {
+  if (highlighted) return isUp ? VOLUME_COLORS.upHighlight : VOLUME_COLORS.downHighlight;
   return isUp ? VOLUME_COLORS.up : VOLUME_COLORS.down;
 }
 
