@@ -808,6 +808,59 @@ async function fetchDataBatchWithDbFallback(
   return results;
 }
 
+/**
+ * Assign structural role labels to pivots based on the pattern type.
+ * Only the 8 pattern families listed get roles; all others pass through unchanged.
+ */
+function assignPivotRoles(pivots: any[], patternId: string): any[] {
+  if (!pivots || pivots.length === 0) return pivots;
+
+  switch (patternId) {
+    case 'double-bottom': {
+      const lows = pivots.filter(p => p.type === 'low');
+      if (lows.length >= 2) { lows[0].role = 'B1'; lows[1].role = 'B2'; }
+      return pivots;
+    }
+    case 'double-top': {
+      const highs = pivots.filter(p => p.type === 'high');
+      if (highs.length >= 2) { highs[0].role = 'T1'; highs[1].role = 'T2'; }
+      return pivots;
+    }
+    case 'head-and-shoulders': {
+      const highs = pivots.filter(p => p.type === 'high');
+      if (highs.length >= 3) { highs[0].role = 'LS'; highs[1].role = 'H'; highs[2].role = 'RS'; }
+      return pivots;
+    }
+    case 'inverse-head-and-shoulders': {
+      const lows = pivots.filter(p => p.type === 'low');
+      if (lows.length >= 3) { lows[0].role = 'LS'; lows[1].role = 'H'; lows[2].role = 'RS'; }
+      return pivots;
+    }
+    case 'cup-and-handle': {
+      // Expected pivot order: left rim (high), cup bottom (low), right rim (high), handle low (low)
+      const highs = pivots.filter(p => p.type === 'high');
+      const lows = pivots.filter(p => p.type === 'low');
+      if (highs.length >= 1) highs[0].role = 'Rim';
+      if (lows.length >= 1) lows[0].role = 'Cup';
+      if (highs.length >= 2) highs[1].role = 'Rim';
+      if (lows.length >= 2) lows[1].role = 'Handle';
+      return pivots;
+    }
+    case 'triple-top': {
+      const highs = pivots.filter(p => p.type === 'high');
+      highs.forEach((h, i) => { if (i < 3) h.role = String(i + 1); });
+      return pivots;
+    }
+    case 'triple-bottom': {
+      const lows = pivots.filter(p => p.type === 'low');
+      lows.forEach((l, i) => { if (i < 3) l.role = String(i + 1); });
+      return pivots;
+    }
+    default:
+      return pivots;
+  }
+}
+
 function safeComputeTrend(bars: any[], direction: 'long' | 'short'): { trendAlignment: string | null; trendIndicators: any | null } {
   if (!bars || bars.length < 200) return { trendAlignment: null, trendIndicators: null };
   try {
