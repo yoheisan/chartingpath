@@ -11,9 +11,10 @@ interface PatternPivot {
 interface PatternDetectionResult {
   detected: boolean;
   pivots: PatternPivot[];
-  detectedDirection?: 'long' | 'short'; // Override config direction (for neutral patterns like symmetrical triangle)
-  handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
-  regressionQuality?: number; // Wedge patterns: min(r² high trendline, r² low trendline), 0-1
+  detectedDirection?: 'long' | 'short';
+  handleDepth?: number;
+  regressionQuality?: number;
+  touchCount?: number; // Triangle patterns: number of touches on flat resistance/support
 }
 
 // --- Linear regression & pivot extraction utilities for wedge detection ---
@@ -432,6 +433,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       
       return {
         detected,
+        touchCount: detected ? resistanceTests : undefined,
         pivots: detected ? [
           { index: resistanceIdx, price: resistanceZone, type: 'high', label: 'Resistance' },
           { index: lowestRecentLowIdx, price: Math.min(...recentLows), type: 'low', label: 'Rising Support' },
@@ -478,6 +480,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       
       return {
         detected,
+        touchCount: detected ? supportTests : undefined,
         pivots: detected ? [
           { index: supportIdx, price: supportZone, type: 'low', label: 'Support' },
           { index: highestRecentHighIdx, price: Math.max(...recentHighs), type: 'high', label: 'Falling Resistance' },
