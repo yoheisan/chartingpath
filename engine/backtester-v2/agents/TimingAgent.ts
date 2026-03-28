@@ -53,7 +53,36 @@ export class TimingAgent {
       highCount * this.config.highImpactPenalty +
       mediumCount * this.config.mediumImpactPenalty;
 
-    const score = Math.max(0, 25 - penalty);
+    const baseAfterPenalty = Math.max(0, 25 - penalty);
+
+    // Extended clean window bonus (7-day lookahead)
+    const EXTENDED_LOOKAHEAD_DAYS = 7;
+    const extendedMs = EXTENDED_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000;
+    const eventsIn7Days = economicEvents.filter((ev) => {
+      const evTime = new Date(ev.date).getTime();
+      return evTime >= current && evTime <= current + extendedMs;
+    });
+    const highIn7Days = eventsIn7Days.filter((e) => e.impactLevel === "high").length;
+
+    let extendedBonus = 0;
+    if (highIn7Days === 0 && eventsIn7Days.length === 0) {
+      extendedBonus = 3; // completely clear 7-day window
+    } else if (highIn7Days === 0) {
+      extendedBonus = 2; // no high-impact in 7 days
+    }
+
+    const score = Math.min(25, baseAfterPenalty + extendedBonus);
+
+    // Find days until next high-impact event within 7 days
+    const nextHighEvent = economicEvents
+      .filter((ev) => {
+        const evTime = new Date(ev.date).getTime();
+        return evTime >= current && evTime <= current + extendedMs && ev.impactLevel === "high";
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    const daysUntilNextHighImpact = nextHighEvent
+      ? Math.round(((new Date(nextHighEvent.date).getTime() - current) / (1000 * 60 * 60 * 24)) * 10) / 10
+      : null;
 
     return {
       score: Math.round(score * 100) / 100,
@@ -62,7 +91,13 @@ export class TimingAgent {
         upcomingHighImpact: highCount,
         upcomingMediumImpact: mediumCount,
         totalPenalty: penalty,
+        extendedBonus,
         eventNames: upcomingEvents.slice(0, 3).map((e) => e.eventName),
+        timingWindow: {
+          daysUntilNextHighImpact,
+          isExtendedClean: highIn7Days === 0,
+          bonus: extendedBonus,
+        },
       },
     };
   }
