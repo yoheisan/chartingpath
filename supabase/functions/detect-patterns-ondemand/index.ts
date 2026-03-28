@@ -134,24 +134,35 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
   // All variants failed
 }
 
-// Aggregate 1H bars to 4H
+// Aggregate 1H bars to 4H (UTC-anchored, skip partial bars)
 function aggregateTo4H(hourlyBars: CompressedBar[]): CompressedBar[] {
-  const aggregated: CompressedBar[] = [];
+  const grouped = new Map<string, CompressedBar[]>();
   
-  for (let i = 0; i < hourlyBars.length; i += 4) {
-    const chunk = hourlyBars.slice(i, i + 4);
-    if (chunk.length === 0) continue;
-    
+  for (const bar of hourlyBars) {
+    const d = new Date(bar.t);
+    const periodStart = Math.floor(d.getUTCHours() / 4) * 4;
+    const boundary = new Date(d);
+    boundary.setUTCHours(periodStart, 0, 0, 0);
+    const key = boundary.toISOString();
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(bar);
+  }
+  
+  const aggregated: CompressedBar[] = [];
+  for (const [key, wBars] of grouped) {
+    if (wBars.length < 4) continue; // skip partial bars
+    wBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     aggregated.push({
-      t: chunk[0].t,
-      o: chunk[0].o,
-      h: Math.max(...chunk.map(b => b.h)),
-      l: Math.min(...chunk.map(b => b.l)),
-      c: chunk[chunk.length - 1].c,
-      v: chunk.reduce((sum, b) => sum + b.v, 0),
+      t: key,
+      o: wBars[0].o,
+      h: Math.max(...wBars.map(b => b.h)),
+      l: Math.min(...wBars.map(b => b.l)),
+      c: wBars[wBars.length - 1].c,
+      v: wBars.reduce((sum, b) => sum + b.v, 0),
     });
   }
   
+  aggregated.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
   return aggregated;
 }
 

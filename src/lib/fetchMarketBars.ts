@@ -33,24 +33,67 @@ export function getProviderInterval(interval: string): string {
   return interval;
 }
 
-/** Aggregate 1h bars into N-hour bars (4h or 8h) */
+/** 
+ * Aggregate 1h bars into N-hour bars (4h or 8h) with UTC-anchored boundaries.
+ * 
+ * For 24-hour markets (crypto, FX), bars are anchored to fixed UTC periods:
+ *   4H: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+ *   8H: 00:00, 08:00, 16:00 UTC
+ * 
+ * Partial bars (incomplete periods) are dropped to prevent distorted OHLC.
+ *
+ * Expected aggregation test case:
+ *   Input 1H bars:
+ *     Bar1: O=1.0800 H=1.0850 L=1.0780 C=1.0820 V=1000
+ *     Bar2: O=1.0820 H=1.0900 L=1.0810 C=1.0880 V=1200
+ *     Bar3: O=1.0880 H=1.0920 L=1.0860 C=1.0870 V=800
+ *     Bar4: O=1.0870 H=1.0890 L=1.0830 C=1.0840 V=1100
+ *   Expected 4H bar:
+ *     O=1.0800 (bar1 open)
+ *     H=1.0920 (max of all highs)
+ *     L=1.0780 (min of all lows)
+ *     C=1.0840 (bar4 close)
+ *     V=4100   (sum of volumes)
+ */
 export function aggregateHourlyBars(bars: OHLCBar[], hours: number): OHLCBar[] {
   if (bars.length === 0 || hours <= 1) return bars;
   
+  // Group bars by UTC-anchored period boundaries
+  const grouped = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const d = new Date(bar.t);
+    const utcHour = d.getUTCHours();
+    const periodStart = Math.floor(utcHour / hours) * hours;
+    
+    const boundary = new Date(d);
+    boundary.setUTCHours(periodStart, 0, 0, 0);
+    const key = boundary.toISOString();
+    
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(bar);
+  }
+  
   const result: OHLCBar[] = [];
-  for (let i = 0; i < bars.length; i += hours) {
-    const chunk = bars.slice(i, i + hours);
-    if (chunk.length === 0) break;
+  
+  for (const [key, windowBars] of grouped) {
+    // Skip partial bars — only emit complete periods
+    if (windowBars.length < hours) continue;
+    
+    // Sort by time to ensure correct OHLC ordering
+    windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     
     result.push({
-      t: chunk[0].t,
-      o: chunk[0].o,
-      h: Math.max(...chunk.map(b => b.h)),
-      l: Math.min(...chunk.map(b => b.l)),
-      c: chunk[chunk.length - 1].c,
-      v: chunk.reduce((sum, b) => sum + b.v, 0),
+      t: key, // Period start timestamp
+      o: windowBars[0].o, // Open = first bar's open
+      h: Math.max(...windowBars.map(b => b.h)), // High = max of all highs
+      l: Math.min(...windowBars.map(b => b.l)), // Low = min of all lows
+      c: windowBars[windowBars.length - 1].c, // Close = last bar's close
+      v: windowBars.reduce((sum, b) => sum + b.v, 0), // Volume = sum
     });
   }
+  
+  result.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
   return result;
 }
 

@@ -133,19 +133,34 @@ async function fetchYahooBars(symbol: string, timeframe: string, lookbackDays: n
 }
 
 function aggregate(bars: OHLCBar[], factor: number): OHLCBar[] {
+  const grouped = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const d = new Date(bar.date);
+    const utcHour = d.getUTCHours();
+    const periodStart = Math.floor(utcHour / factor) * factor;
+    const boundary = new Date(d);
+    boundary.setUTCHours(periodStart, 0, 0, 0);
+    const key = boundary.toISOString();
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(bar);
+  }
+  
   const result: OHLCBar[] = [];
-  for (let i = 0; i < bars.length; i += factor) {
-    const chunk = bars.slice(i, Math.min(i + factor, bars.length));
-    if (!chunk.length) continue;
+  for (const [key, wBars] of grouped) {
+    if (wBars.length < factor) continue; // skip partial bars
+    wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
-      date: chunk[0].date,
-      open: chunk[0].open,
-      high: Math.max(...chunk.map(b => b.high)),
-      low: Math.min(...chunk.map(b => b.low)),
-      close: chunk[chunk.length - 1].close,
-      volume: chunk.reduce((s, b) => s + b.volume, 0),
+      date: key,
+      open: wBars[0].open,
+      high: Math.max(...wBars.map(b => b.high)),
+      low: Math.min(...wBars.map(b => b.low)),
+      close: wBars[wBars.length - 1].close,
+      volume: wBars.reduce((s, b) => s + b.volume, 0),
     });
   }
+  
+  result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   return result;
 }
 
