@@ -438,6 +438,95 @@ async function fetchPatternSymbolStats(
   }
 }
 
+/**
+ * Compute timestamps of pattern-significant volume bars.
+ * These bars get highlighted with full-opacity color in the chart volume histogram.
+ */
+function computeSignificantVolumeBars(
+  patternId: string,
+  pivots: any[],
+  visualBars: any[],
+  lastBar: any,
+): string[] {
+  const norm = patternId.toLowerCase().replace(/[\s_-]+/g, '');
+  const result: string[] = [];
+
+  // Helper: find the highest-volume bar in a range of indices
+  const highestVolBar = (startIdx: number, endIdx: number): string | null => {
+    let maxVol = -1, maxDate: string | null = null;
+    for (let i = Math.max(0, startIdx); i <= Math.min(endIdx, visualBars.length - 1); i++) {
+      if ((visualBars[i].volume || 0) > maxVol) {
+        maxVol = visualBars[i].volume || 0;
+        maxDate = visualBars[i].date;
+      }
+    }
+    return maxDate;
+  };
+
+  // Helper: get bar timestamp from pivot
+  const pivotDate = (p: any): string | null => p?.timestamp || null;
+
+  try {
+    // Breakout patterns: the breakout bar (last bar / detection bar)
+    if (norm.includes('breakout') || norm.includes('triangle') || norm.includes('wedge') || norm.includes('donchian') || norm.includes('pennant')) {
+      result.push(lastBar.date);
+    }
+
+    // Double Bottom: B1 and B2 lows
+    if (norm.includes('doublebottom')) {
+      const b1 = pivots.find(p => (p.role || '').toUpperCase() === 'B1');
+      const b2 = pivots.find(p => (p.role || '').toUpperCase() === 'B2');
+      if (b1) { const d = pivotDate(b1); if (d) result.push(d); }
+      if (b2) { const d = pivotDate(b2); if (d) result.push(d); }
+    }
+
+    // Double Top: T1 and T2 highs
+    if (norm.includes('doubletop')) {
+      const t1 = pivots.find(p => (p.role || '').toUpperCase() === 'T1');
+      const t2 = pivots.find(p => (p.role || '').toUpperCase() === 'T2');
+      if (t1) { const d = pivotDate(t1); if (d) result.push(d); }
+      if (t2) { const d = pivotDate(t2); if (d) result.push(d); }
+    }
+
+    // Triple Bottom / Triple Top: all structural pivots
+    if (norm.includes('triplebottom') || norm.includes('tripletop')) {
+      for (const p of pivots) {
+        if (p.role === '1' || p.role === '2' || p.role === '3') {
+          const d = pivotDate(p); if (d) result.push(d);
+        }
+      }
+    }
+
+    // Cup & Handle: breakout bar + handle low
+    if (norm.includes('cup') && norm.includes('handle')) {
+      result.push(lastBar.date); // breakout bar
+      const handlePivot = pivots.find(p => (p.role || '').toUpperCase() === 'HANDLE');
+      if (handlePivot) { const d = pivotDate(handlePivot); if (d) result.push(d); }
+    }
+
+    // Flag patterns: the pole's highest-volume bar
+    if (norm.includes('flag') && !norm.includes('pennant')) {
+      // Pole is from pivot[0] to pivot[1]; find highest volume bar in that range
+      if (pivots.length >= 2) {
+        const idx0 = pivots[0].index ?? 0;
+        const idx1 = pivots[1].index ?? idx0;
+        const hv = highestVolBar(Math.min(idx0, idx1), Math.max(idx0, idx1));
+        if (hv) result.push(hv);
+      }
+    }
+
+    // Head & Shoulders / Inverse: head pivot bar
+    if (norm.includes('head') && norm.includes('shoulder')) {
+      const head = pivots.find(p => (p.role || '').toUpperCase() === 'H');
+      if (head) { const d = pivotDate(head); if (d) result.push(d); }
+      result.push(lastBar.date); // breakout bar
+    }
+  } catch {
+    // Never break detection for volume highlighting
+  }
+
+  return result.filter(Boolean);
+}
 
 // Timeframe proximity order for cross-timeframe fallback.
 // When exact timeframe has no data, try the closest alternative.
