@@ -121,16 +121,33 @@ export function getOutcomeColor(outcome?: string | null): string {
   return PATTERN_OVERLAY_COLORS.pendingOutcome;
 }
 
+/** Result from rendering price lines, includes suppression info */
+export interface PriceLinesResult {
+  cleanup: () => void;
+  tradeLevelsSuppressed: boolean;
+  detectedEntryPrice?: number;
+}
+
 /**
  * Render price lines (Entry/SL/TP) for a pattern on a candle series.
- * Returns cleanup function to remove lines.
+ * Returns cleanup function and suppression info.
+ * @param currentPrice - latest close price for proximity guard (optional)
+ * @param forceShow - bypass proximity guard (e.g. user clicked "Show anyway")
  */
 export function renderPatternPriceLines(
   candleSeries: ReturnType<IChartApi['addSeries']>,
   pattern: HistoricalPatternOverlay,
-  toggles: PatternOverlayToggles
-): (() => void) {
+  toggles: PatternOverlayToggles,
+  currentPrice?: number,
+  forceShow?: boolean,
+): PriceLinesResult {
   const lines: any[] = [];
+
+  const mkCleanup = () => () => {
+    lines.forEach(line => {
+      try { candleSeries.removePriceLine(line); } catch {}
+    });
+  };
 
   // Candle-close guard: if detection bar hasn't closed, show muted "Awaiting confirmation" only
   if (!pattern.detectionBarClosed) {
@@ -144,11 +161,15 @@ export function renderPatternPriceLines(
         title: 'Awaiting confirmation',
       }));
     }
-    return () => {
-      lines.forEach(line => {
-        try { candleSeries.removePriceLine(line); } catch {}
-      });
-    };
+    return { cleanup: mkCleanup(), tradeLevelsSuppressed: false, detectedEntryPrice: pattern.entryPrice };
+  }
+
+  // Proximity guard: if entry > 20% from current price, suppress trade levels
+  if (!forceShow && currentPrice != null && Number.isFinite(currentPrice) && currentPrice > 0) {
+    const dist = Math.abs((pattern.entryPrice - currentPrice) / currentPrice) * 100;
+    if (dist > 20) {
+      return { cleanup: mkCleanup(), tradeLevelsSuppressed: true, detectedEntryPrice: pattern.entryPrice };
+    }
   }
 
   const shortName = pattern.patternName.length > 20 
@@ -188,11 +209,7 @@ export function renderPatternPriceLines(
     }));
   }
 
-  return () => {
-    lines.forEach(line => {
-      try { candleSeries.removePriceLine(line); } catch {}
-    });
-  };
+  return { cleanup: mkCleanup(), tradeLevelsSuppressed: false, detectedEntryPrice: pattern.entryPrice };
 }
 
 /**

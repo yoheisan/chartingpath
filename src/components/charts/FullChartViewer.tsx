@@ -203,6 +203,8 @@ export default function FullChartViewer({
   const [indicators, setIndicators] = useState<IndicatorSettings>(loadIndicatorSettings);
   const indicatorsRef = useRef<IndicatorSettings>(indicators);
   const [chartVersion, setChartVersion] = useState(0);
+  const [tradeLevelsSuppressed, setTradeLevelsSuppressed] = useState<{ suppressed: boolean; entryPrice?: number }>({ suppressed: false });
+  const [forceShowLevels, setForceShowLevels] = useState(false);
   
   // Determine if playback is available (historical pattern with outcome data)
   // Compute entryBarIndex if not provided - default to 30 bars before end
@@ -221,6 +223,10 @@ export default function FullChartViewer({
   useEffect(() => {
     if (open && canPlayback) {
       setPlaybackEnabled(true);
+    }
+    if (!open) {
+      setForceShowLevels(false);
+      setTradeLevelsSuppressed({ suppressed: false });
     }
   }, [open, canPlayback]);
   
@@ -612,7 +618,7 @@ export default function FullChartViewer({
                 // Distance guard: suppress lines too far from current price
                 const dist = pctDist(overlay.price);
                 const maxDist = isEntry ? 20 : 25;
-                if (dist > maxDist) return;
+                if (dist > maxDist && !forceShowLevels) return;
 
                 candleSeries.createPriceLine({
                   price: overlay.price,
@@ -629,10 +635,14 @@ export default function FullChartViewer({
 
         // Suppress overlay prices entirely when entry is too far from current price
         // This prevents zones, triangles, and other derived visuals from rendering out of sync
-        if (pctDist(overlayEntryPrice) > 20) {
+        const entryTooFar = pctDist(overlayEntryPrice) > 20;
+        if (entryTooFar && !forceShowLevels) {
+          setTradeLevelsSuppressed({ suppressed: true, entryPrice: overlayEntryPrice });
           overlayEntryPrice = undefined;
           overlaySlPrice = undefined;
           overlayTpPrice = undefined;
+        } else {
+          setTradeLevelsSuppressed({ suppressed: false });
         }
 
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
@@ -998,7 +1008,7 @@ export default function FullChartViewer({
         chartRef.current = null;
       }
     };
-  }, [setup, open, containerEl, loading, chartVersion]);
+  }, [setup, open, containerEl, loading, chartVersion, forceShowLevels]);
 
   // Reset chart to auto-scale and fit all content
   const handleResetChart = () => {
@@ -1265,6 +1275,20 @@ export default function FullChartViewer({
                   height={420}
                 />
               ) : (
+                <>
+                {tradeLevelsSuppressed.suppressed && tradeLevelsSuppressed.entryPrice != null && (
+                  <div className="flex items-center justify-between px-3 py-1 text-xs text-muted-foreground bg-muted/50 rounded-t">
+                    <span>Trade levels outside view — detected entry at {tradeLevelsSuppressed.entryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</span>
+                    <button
+                      className="ml-3 text-xs text-primary hover:underline font-medium"
+                      onClick={() => {
+                        setForceShowLevels(true);
+                      }}
+                    >
+                      Show anyway
+                    </button>
+                  </div>
+                )}
                 <div 
                   className="relative"
                   onMouseDown={handleChartMouseDown}
@@ -1455,6 +1479,7 @@ export default function FullChartViewer({
                     </div>
                   )}
                 </div>
+                </>
               )}
             
             {/* Trade Levels */}
