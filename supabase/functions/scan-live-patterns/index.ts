@@ -1387,6 +1387,7 @@ serve(async (req) => {
       
       for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
+        // assignPivotRoles is defined below the detection loop
         if (!pattern) continue;
         const detectionResult = pattern.detector(bars.slice(-20), timeframe);
         if (!detectionResult.detected) continue;
