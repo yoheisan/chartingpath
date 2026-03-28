@@ -12,6 +12,7 @@ interface PatternDetectionResult {
   detected: boolean;
   pivots: PatternPivot[];
   detectedDirection?: 'long' | 'short'; // Override config direction (for neutral patterns like symmetrical triangle)
+  handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
 }
 
 type PatternDetector = (window: any[], timeframe?: string) => PatternDetectionResult;

@@ -661,6 +661,8 @@ export interface PatternQualityScorerInput {
   historicalPerformance?: HistoricalPerformanceInput;
   // Repeatability gate (from Edge Atlas)
   repeatabilityProof?: RepeatabilityProof;
+  // Cup & Handle handle depth (ratio 0-1 of cup depth)
+  handleDepth?: number;
 }
 
 export function calculatePatternQualityScore(
