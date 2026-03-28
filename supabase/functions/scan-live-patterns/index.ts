@@ -817,6 +817,19 @@ function safeComputeTrend(bars: any[], direction: 'long' | 'short'): { trendAlig
   } catch { return { trendAlignment: null, trendIndicators: null }; }
 }
 
+// Return the close-time of a candle given its open timestamp and the timeframe
+function getCandleCloseTime(openTs: string, tf: string): number {
+  const intervalMs: Record<string, number> = {
+    '1h': 60 * 60 * 1000,
+    '4h': 4 * 60 * 60 * 1000,
+    '8h': 8 * 60 * 60 * 1000,
+    '1d': 24 * 60 * 60 * 1000,
+    '1wk': 7 * 24 * 60 * 60 * 1000,
+    '1w': 7 * 24 * 60 * 60 * 1000,
+  };
+  return new Date(openTs).getTime() + (intervalMs[tf] || 24 * 60 * 60 * 1000);
+}
+
 async function persistPatterns(supabase: any, detectedPatterns: any[], assetType: string, timeframe: string): Promise<Map<string, Date>> {
   const patternKeys = new Map<string, Date>();
   if (!detectedPatterns.length) return patternKeys;
@@ -836,18 +849,39 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
   const now = new Date().toISOString();
   const toUpdate: any[] = [], toInsert: any[] = [];
   
+  const nowMs = Date.now();
+
   for (const p of detectedPatterns) {
     const key = `${p.instrument}|${p.patternId}|${timeframe}`;
     const existing = existingMap.get(key);
+
+    // Determine detection bar's open timestamp from bars or visualSpec
+    const detectionBarTs = p.bars?.length
+      ? (p.bars[p.bars.length - 1].date || p.bars[p.bars.length - 1].t)
+      : p.visualSpec?.signalTs;
+    const candleCloseMs = detectionBarTs ? getCandleCloseTime(detectionBarTs, timeframe) : 0;
+    const barClosed = candleCloseMs > 0 && candleCloseMs <= nowMs;
+
+    // Candle-close guard: skip NEW inserts when the detection bar hasn't closed yet
+    if (!existing && !barClosed) {
+      console.info(`[scan-live-patterns] Skipping unclosed-candle detection: ${key} (closeTime=${new Date(candleCloseMs).toISOString()})`);
+      continue;
+    }
+
+    // Stamp detectionBarClosed into visual_spec
+    const visualSpecWithFlag = p.visualSpec
+      ? { ...p.visualSpec, detectionBarClosed: barClosed }
+      : p.visualSpec;
+
     if (existing) {
-      toUpdate.push({ id: existing.id, pattern: p, key });
+      toUpdate.push({ id: existing.id, pattern: { ...p, visualSpec: visualSpecWithFlag }, key });
       patternKeys.set(key, new Date(existing.first_detected_at));
     } else {
       toInsert.push({
         instrument: p.instrument, pattern_id: p.patternId, pattern_name: p.patternName, direction: p.direction,
         timeframe, asset_type: assetType, first_detected_at: now, last_confirmed_at: now, status: 'active',
         entry_price: p.tradePlan.entry, stop_loss_price: p.tradePlan.stopLoss, take_profit_price: p.tradePlan.takeProfit,
-        risk_reward_ratio: p.tradePlan.rr, visual_spec: p.visualSpec, bars: p.bars,
+        risk_reward_ratio: p.tradePlan.rr, visual_spec: visualSpecWithFlag, bars: p.bars,
         current_price: p.currentPrice, prev_close: p.prevClose, change_percent: p.changePercent,
         quality_score: p.quality?.score || 'B', quality_reasons: p.quality?.reasons || [],
         trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {},

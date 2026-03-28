@@ -78,6 +78,7 @@ export interface VisualSpec {
   };
   overlays: Overlay[];
   pivots?: ZigZagPivot[]; // ZigZag pivots for pattern explainability
+  detectionBarClosed?: boolean; // true only when the detection bar's candle has fully closed
   // Trade lifecycle info (for historical occurrences)
   entryBarIndex?: number;
   entryPrice?: number;
