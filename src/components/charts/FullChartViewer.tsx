@@ -224,6 +224,10 @@ export default function FullChartViewer({
     if (open && canPlayback) {
       setPlaybackEnabled(true);
     }
+    if (!open) {
+      setForceShowLevels(false);
+      setTradeLevelsSuppressed({ suppressed: false });
+    }
   }, [open, canPlayback]);
   
   // Vertical panning state
