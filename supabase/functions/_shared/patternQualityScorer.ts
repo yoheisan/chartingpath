@@ -259,10 +259,38 @@ function getTriangleTouchBonus(patternType: string, touchCount: number): number 
   return -1.0;
 }
 
+function getHSSymmetryScore(
+  patternType: string,
+  leftShoulderPrice?: number,
+  rightShoulderPrice?: number,
+  headPrice?: number
+): number | null {
+  if (!['head-and-shoulders', 'inverse-head-and-shoulders'].includes(patternType)) return null;
+  if (leftShoulderPrice == null || rightShoulderPrice == null || headPrice == null) return null;
+
+  const headRange = patternType === 'head-and-shoulders'
+    ? headPrice - Math.min(leftShoulderPrice, rightShoulderPrice)
+    : Math.max(leftShoulderPrice, rightShoulderPrice) - headPrice;
+  if (headRange <= 0) return null;
+
+  const shoulderDiff = Math.abs(leftShoulderPrice - rightShoulderPrice);
+  const symmetryRatio = shoulderDiff / headRange;
+
+  if (symmetryRatio < 0.05) return 10;
+  if (symmetryRatio < 0.10) return 8;
+  if (symmetryRatio < 0.15) return 6;
+  if (symmetryRatio < 0.20) return 4;
+  if (symmetryRatio < 0.25) return 2;
+  return 0;
+}
+
 function analyzePatternSymmetry(
   pivots: ZigZagPivot[],
   patternType: string,
-  touchCount?: number
+  touchCount?: number,
+  leftShoulderPrice?: number,
+  rightShoulderPrice?: number,
+  headPrice?: number
 ): { score: number; description: string } {
   if (pivots.length < 3) {
     return { score: 5, description: 'Insufficient pivots' };
