@@ -544,49 +544,72 @@ export default function FullChartViewer({
         };
 
         if (!tradeResolved && visualSpec?.overlays && Array.isArray(visualSpec.overlays)) {
-          visualSpec.overlays.forEach((overlay) => {
-            if (overlay.type === 'hline') {
-              const isEntry = overlay.id === 'entry' || (overlay.label || '').toLowerCase().includes('entry');
-              const isSL = overlay.id === 'sl' || (overlay.label || '').toLowerCase().includes('stop') || (overlay.label || '').toLowerCase() === 'sl';
-              const isTP = overlay.id === 'tp' || (overlay.label || '').toLowerCase().includes('target') || (overlay.label || '').toLowerCase() === 'tp';
+          // Candle-close guard: if detection bar hasn't closed, show muted entry only
+          const barClosed = visualSpec.detectionBarClosed !== false; // treat missing as closed (historical data)
 
-              let color = getOverlayColor(overlay.style);
-              let lineStyle = 2; // dashed by default
-              let title = overlay.label || '';
-
-              if (isEntry) {
-                color = '#3b82f6';
-                lineStyle = 0; // solid
-                title = 'ENTRY';
-                overlayEntryPrice = overlay.price;
-              } else if (isSL) {
-                color = '#ef4444';
-                lineStyle = 2;
-                title = 'SL';
-                overlaySlPrice = overlay.price;
-              } else if (isTP) {
-                color = '#22c55e';
-                lineStyle = 2;
-                title = 'TP';
-                overlayTpPrice = overlay.price;
+          if (!barClosed) {
+            // Render a single muted "Awaiting confirmation" line at entry price
+            const entryOverlay = visualSpec.overlays.find((o: any) =>
+              o.type === 'hline' && (o.id === 'entry' || (o.label || '').toLowerCase().includes('entry'))
+            );
+            if (entryOverlay && entryOverlay.type === 'hline') {
+              const dist = pctDist(entryOverlay.price);
+              if (dist <= 20) {
+                candleSeries.createPriceLine({
+                  price: entryOverlay.price,
+                  color: '#6b7280',
+                  lineWidth: 1,
+                  lineStyle: 2,
+                  axisLabelVisible: true,
+                  title: 'Awaiting confirmation',
+                });
+                overlayEntryPrice = entryOverlay.price;
               }
-
-              // Distance guard: suppress lines too far from current price
-              // Entry ≤ 20%, SL/TP ≤ 25% (matches StudyChart thresholds)
-              const dist = pctDist(overlay.price);
-              const maxDist = isEntry ? 20 : 25;
-              if (dist > maxDist) return;
-
-              candleSeries.createPriceLine({
-                price: overlay.price,
-                color,
-                lineWidth: 2,
-                lineStyle,
-                axisLabelVisible: true,
-                title,
-              });
             }
-          });
+          } else {
+            visualSpec.overlays.forEach((overlay) => {
+              if (overlay.type === 'hline') {
+                const isEntry = overlay.id === 'entry' || (overlay.label || '').toLowerCase().includes('entry');
+                const isSL = overlay.id === 'sl' || (overlay.label || '').toLowerCase().includes('stop') || (overlay.label || '').toLowerCase() === 'sl';
+                const isTP = overlay.id === 'tp' || (overlay.label || '').toLowerCase().includes('target') || (overlay.label || '').toLowerCase() === 'tp';
+
+                let color = getOverlayColor(overlay.style);
+                let lineStyle = 2; // dashed by default
+                let title = overlay.label || '';
+
+                if (isEntry) {
+                  color = '#3b82f6';
+                  lineStyle = 0; // solid
+                  title = 'ENTRY';
+                  overlayEntryPrice = overlay.price;
+                } else if (isSL) {
+                  color = '#ef4444';
+                  lineStyle = 2;
+                  title = 'SL';
+                  overlaySlPrice = overlay.price;
+                } else if (isTP) {
+                  color = '#22c55e';
+                  lineStyle = 2;
+                  title = 'TP';
+                  overlayTpPrice = overlay.price;
+                }
+
+                // Distance guard: suppress lines too far from current price
+                const dist = pctDist(overlay.price);
+                const maxDist = isEntry ? 20 : 25;
+                if (dist > maxDist) return;
+
+                candleSeries.createPriceLine({
+                  price: overlay.price,
+                  color,
+                  lineWidth: 2,
+                  lineStyle,
+                  axisLabelVisible: true,
+                  title,
+                });
+              }
+            });
+          }
         }
 
         // Suppress overlay prices entirely when entry is too far from current price
