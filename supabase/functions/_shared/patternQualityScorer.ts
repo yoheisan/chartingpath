@@ -44,6 +44,7 @@ export interface PatternQualityResult {
   summary: string;
   tradeable: boolean;
   warnings: string[];
+  volumeDataAvailable: boolean;
 }
 
 export interface TrendIndicatorsInput {
@@ -802,32 +803,18 @@ export function calculatePatternQualityScore(
   });
   
   // ============= CALCULATE FINAL SCORE =============
-  // Dynamic weight redistribution: when data is unavailable (score stuck at 5
-  // with a telltale "unavailable"/"No historical"/"Insufficient" description),
-  // redistribute that factor's weight proportionally to factors with real data.
+  // No weight redistribution — unavailable factors keep their neutral 5.0 score
+  // and original weights. This prevents FX patterns from being artificially
+  // inflated when volume data is missing.
   
-  const DATA_UNAVAILABLE_KEYWORDS = ['unavailable', 'No historical', 'Insufficient', 'No volume history', 'Invalid ATR'];
+  // Detect whether volume data was available
+  const VOLUME_FACTOR_NAMES = ['Volume Confirmation', 'Relative Volume'];
+  const VOLUME_UNAVAILABLE_KEYWORDS = ['unavailable', 'No volume history'];
+  const volumeDataAvailable = !factors
+    .filter(f => VOLUME_FACTOR_NAMES.includes(f.name))
+    .some(f => VOLUME_UNAVAILABLE_KEYWORDS.some(kw => f.description.includes(kw)));
   
-  const hasRealData = (f: QualityFactor): boolean =>
-    !DATA_UNAVAILABLE_KEYWORDS.some(kw => f.description.includes(kw));
-  
-  const realFactors = factors.filter(hasRealData);
-  const missingFactors = factors.filter(f => !hasRealData(f));
-  
-  let weightedScore: number;
-  
-  if (missingFactors.length > 0 && realFactors.length > 0) {
-    // Redistribute missing weight proportionally to real factors
-    const missingWeight = missingFactors.reduce((sum, f) => sum + f.weight, 0);
-    const realWeight = realFactors.reduce((sum, f) => sum + f.weight, 0);
-    const redistributionMultiplier = (realWeight + missingWeight) / realWeight;
-    
-    weightedScore = realFactors.reduce(
-      (sum, f) => sum + f.score * f.weight * redistributionMultiplier, 0
-    );
-  } else {
-    weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
-  }
+  let weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
   
   // Cup & Handle handle depth bonus/penalty
   const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
@@ -907,6 +894,10 @@ export function calculatePatternQualityScore(
       ? `Pattern detected with ${passedNames.slice(0, 3).join(', ')}`
       : `Pattern detected with ${passedFactors}/${factors.length} quality factors`;
   
+  if (!volumeDataAvailable) {
+    warnings.push('Volume data unavailable — score based on non-volume factors only');
+  }
+
   return {
     score: finalScore,
     grade,
@@ -915,7 +906,8 @@ export function calculatePatternQualityScore(
     pivots,
     summary,
     tradeable,
-    warnings
+    warnings,
+    volumeDataAvailable
   };
 }
 
