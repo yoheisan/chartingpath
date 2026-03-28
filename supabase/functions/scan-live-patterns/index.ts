@@ -1354,7 +1354,7 @@ serve(async (req) => {
         
         let trendAlignment: string | null = null, trendIndicators: any = null;
         if (bars.length >= 200) {
-          const computed = safeComputeTrend(bars, pattern.direction);
+          const computed = safeComputeTrend(bars, effectiveDirection);
           trendAlignment = computed.trendAlignment;
           trendIndicators = computed.trendIndicators;
         }
@@ -1372,7 +1372,7 @@ serve(async (req) => {
           patternType: patternId,
           patternStartIndex: Math.max(0, bars.length - 20),
           patternEndIndex: bars.length - 1,
-          direction: pattern.direction,
+          direction: effectiveDirection,
           entryPrice: lastBar.close,
           stopLoss: bracketLevels.stopLossPrice,
           takeProfit: bracketLevels.takeProfitPrice,
@@ -1387,7 +1387,7 @@ serve(async (req) => {
           instrument, 
           patternId, 
           patternName: pattern.displayName, 
-          direction: pattern.direction, 
+          direction: effectiveDirection, 
           quality: { 
             score: qualityResult.grade, 
             numericScore: qualityResult.score,
