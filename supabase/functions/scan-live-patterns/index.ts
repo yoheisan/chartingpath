@@ -592,8 +592,8 @@ async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: 
   
   try {
     const eodhSymbol = toEODHDSymbol(symbol);
-    const isIntraday = ['1m', '5m', '15m', '1h', '4h'].includes(interval);
-    const eodhInterval = interval === '4h' ? '1h' : interval === '15m' ? '5m' : interval;
+    const isIntraday = ['1m', '5m', '15m', '1h', '4h', '8h'].includes(interval);
+    const eodhInterval = (interval === '4h' || interval === '8h') ? '1h' : interval === '15m' ? '5m' : interval;
     
     let url: string;
     if (isIntraday && ['1m', '5m', '1h'].includes(eodhInterval)) {
@@ -630,32 +630,60 @@ async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: 
         }));
     }
     
-    // Aggregate 4h from 1h if needed
+    // Aggregate 4h/8h from 1h if needed
     if (interval === '4h' && bars.length > 0) {
-      bars = aggregateBarsTo4h(bars);
+      bars = aggregateHourlyBars(bars, 4);
+    } else if (interval === '8h' && bars.length > 0) {
+      bars = aggregateHourlyBars(bars, 8);
     }
     
     return bars;
   } catch { return []; }
 }
 
-function aggregateBarsTo4h(bars: any[]): any[] {
+// Aggregate 1H bars to 4H or 8H (UTC-anchored, skip partial bars)
+// 4H boundaries: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+// 8H boundaries: 00:00, 08:00, 16:00 UTC
+//
+// OHLCV aggregation rules:
+//   Open   = first bar's open
+//   High   = max of all highs
+//   Low    = min of all lows
+//   Close  = last bar's close
+//   Volume = sum of all volumes
+//   Partial bars at period end are skipped entirely
+//
+// Expected aggregation test case (4H):
+//   Input 1H bars:
+//     Bar1: O=1.0800 H=1.0850 L=1.0780 C=1.0820 V=1000
+//     Bar2: O=1.0820 H=1.0900 L=1.0810 C=1.0880 V=1200
+//     Bar3: O=1.0880 H=1.0920 L=1.0860 C=1.0870 V=800
+//     Bar4: O=1.0870 H=1.0890 L=1.0830 C=1.0840 V=1100
+//   Expected 4H bar:
+//     O=1.0800 (bar1 open)
+//     H=1.0920 (max of all highs)
+//     L=1.0780 (min of all lows)
+//     C=1.0840 (bar4 close)
+//     V=4100   (sum of volumes)
+function aggregateHourlyBars(bars: any[], period: 4 | 8): any[] {
   const grouped = new Map<string, any[]>();
   for (const bar of bars) {
     const d = new Date(bar.date);
-    const h = Math.floor(d.getUTCHours() / 4) * 4;
-    const wd = new Date(d); wd.setUTCHours(h, 0, 0, 0);
-    const key = wd.toISOString();
+    const periodStart = Math.floor(d.getUTCHours() / period) * period;
+    const boundary = new Date(d);
+    boundary.setUTCHours(periodStart, 0, 0, 0);
+    const key = boundary.toISOString();
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(bar);
   }
   const result: any[] = [];
   for (const [k, wBars] of grouped) {
-    // Skip partial bars — only emit complete 4H periods
-    if (wBars.length < 4) continue;
+    // Skip partial bars — only emit complete periods
+    if (wBars.length < period) continue;
     wBars.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
-      date: k, open: wBars[0].open,
+      date: k,
+      open: wBars[0].open,
       high: Math.max(...wBars.map((b: any) => b.high)),
       low: Math.min(...wBars.map((b: any) => b.low)),
       close: wBars[wBars.length - 1].close,
