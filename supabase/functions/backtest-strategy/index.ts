@@ -2232,6 +2232,7 @@ function simulateTradesWithDiscipline(
       entryPrice,
       stopPercent,
       targetPercent,
+      instrument,
       // Future: could pass ATR and use atrMultiplier for ATR-based stops
       stopLossMethod: 'percent',
       takeProfitMethod: 'percent'
