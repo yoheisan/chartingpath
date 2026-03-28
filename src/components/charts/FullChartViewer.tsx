@@ -274,6 +274,10 @@ export default function FullChartViewer({
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;
     let rafId: number | null = null;
+    let overlayTimerId1: ReturnType<typeof setTimeout> | undefined;
+    let overlayTimerId2: ReturnType<typeof setTimeout> | undefined;
+    let overlayRafId1: number = 0;
+    let overlayRafId2: number = 0;
     let attempts = 0;
 
     const initChart = () => {
