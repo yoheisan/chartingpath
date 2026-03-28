@@ -250,9 +250,18 @@ export function analyzeTrendAlignment(
  * Analyzes the geometric symmetry of the pattern.
  * Well-formed patterns have balanced structure.
  */
+function getTriangleTouchBonus(patternType: string, touchCount: number): number {
+  if (!['ascending-triangle', 'descending-triangle'].includes(patternType)) return 0;
+  if (touchCount >= 5) return 1.5;
+  if (touchCount >= 4) return 1.0;
+  if (touchCount >= 3) return 0;
+  return -1.0;
+}
+
 export function analyzePatternSymmetry(
   pivots: ZigZagPivot[],
-  patternType: string
+  patternType: string,
+  touchCount?: number
 ): { score: number; description: string } {
   if (pivots.length < 3) {
     return { score: 5, description: 'Insufficient pivots for symmetry analysis' };
@@ -306,6 +315,13 @@ export function analyzePatternSymmetry(
     }
   }
   
+  // Triangle touch count bonus/penalty
+  const touchBonus = getTriangleTouchBonus(patternType, touchCount ?? 3);
+  if (touchBonus !== 0) {
+    score += touchBonus;
+    descriptions.push(touchBonus > 0 ? `${touchCount} touches — strong confirmation` : 'Few touches — weak confirmation');
+  }
+
   score = Math.max(0, Math.min(10, score));
   
   return {
