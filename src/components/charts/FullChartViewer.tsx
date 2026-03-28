@@ -988,6 +988,10 @@ export default function FullChartViewer({
     return () => {
       cleanedUp = true;
       if (rafId) window.cancelAnimationFrame(rafId);
+      if (overlayTimerId1) clearTimeout(overlayTimerId1);
+      if (overlayTimerId2) clearTimeout(overlayTimerId2);
+      if (overlayRafId1) cancelAnimationFrame(overlayRafId1);
+      if (overlayRafId2) cancelAnimationFrame(overlayRafId2);
       if (resizeObserver) resizeObserver.disconnect();
       if (chartRef.current) {
         chartRef.current.remove();
