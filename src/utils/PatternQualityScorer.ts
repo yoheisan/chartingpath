@@ -42,6 +42,8 @@ export interface PatternQualityResult {
   tradeable: boolean;
   warnings: string[];
   volumeDataAvailable: boolean;
+  mtfConfirmed: boolean;
+  mtfTimeframe?: string;
 }
 
 // ============= ZIGZAG PIVOT DETECTION =============
@@ -449,6 +451,8 @@ export interface PatternQualityScorerInput {
   takeProfit: number;
   atr: number;
   handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
+  mtfConfirmed?: boolean; // true if same pattern exists on next higher timeframe
+  mtfTimeframe?: string;  // the higher timeframe where confirmation was found
 }
 
 /**
@@ -540,6 +544,10 @@ export function calculatePatternQualityScore(
   const handleBonus = getCupHandleHandleBonus(input.patternType, input.handleDepth);
   weightedScore += handleBonus;
   
+  // MTF Confirmation bonus — additive, does not affect factor weights
+  const MTF_BONUS = input.mtfConfirmed ? 0.8 : 0;
+  weightedScore += MTF_BONUS;
+  
   const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Determine grade
@@ -576,7 +584,9 @@ export function calculatePatternQualityScore(
     summary,
     tradeable,
     warnings,
-    volumeDataAvailable
+    volumeDataAvailable,
+    mtfConfirmed: !!input.mtfConfirmed,
+    mtfTimeframe: input.mtfConfirmed ? input.mtfTimeframe : undefined
   };
 }
 
