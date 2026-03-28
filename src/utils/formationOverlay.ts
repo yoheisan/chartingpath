@@ -14,6 +14,14 @@ export interface FormationLineData {
   value: number;
 }
 
+/** Segment-split zigzag for per-segment styling (opacity/lineWidth) */
+export interface ZigZagSegmentSplit {
+  /** Emphasized segments (e.g. pole for flags, head-touching for H&S) — higher opacity/width */
+  emphasized: FormationLineData[];
+  /** Normal segments — lower opacity/width */
+  normal: FormationLineData[];
+}
+
 export interface FormationOverlayData {
   /** ZigZag polyline connecting all pivots in chronological order */
   zigzag: FormationLineData[];
@@ -23,6 +31,8 @@ export interface FormationOverlayData {
   lowerTrend: FormationLineData[];
   /** Whether formation zone can be drawn (needs both upper + lower with 2+ pts) */
   hasZone: boolean;
+  /** Optional segment split for differentiated styling (flags, H&S) */
+  segmentSplit?: ZigZagSegmentSplit;
 }
 
 /**
