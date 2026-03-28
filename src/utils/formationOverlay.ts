@@ -90,12 +90,81 @@ export function deriveFormationOverlay(
     hasZone = upperTrend.length >= 2 && lowerTrend.length >= 2;
   }
 
+  // Compute segment split for pattern-specific styling
+  const segmentSplit = computeSegmentSplit(sorted, zigzag, patternId);
+
   return {
     zigzag,
     upperTrend: finalUpper,
     lowerTrend: finalLower,
     hasZone,
+    segmentSplit,
   };
+}
+
+/**
+ * Split zigzag into emphasized vs normal segments based on pattern type.
+ * Returns undefined for patterns that don't need differentiated styling.
+ */
+function computeSegmentSplit(
+  sortedPivots: ZigZagPivot[],
+  zigzag: FormationLineData[],
+  patternId?: string,
+): ZigZagSegmentSplit | undefined {
+  if (!patternId || zigzag.length < 2) return undefined;
+
+  const norm = patternId.toLowerCase().replace(/[\s_-]+/g, '');
+
+  // Bull Flag / Bear Flag: pole = first segment, flag body = rest
+  if (norm.includes('flag') && !norm.includes('pennant')) {
+    // Pole: zigzag[0] → zigzag[1] (the sharp impulse move)
+    // Flag body: zigzag[1] → end (consolidation)
+    const emphasized: FormationLineData[] = zigzag.length >= 2
+      ? [zigzag[0], zigzag[1]]
+      : [...zigzag];
+    const normal: FormationLineData[] = zigzag.length >= 2
+      ? zigzag.slice(1) // starts from zigzag[1] to connect visually
+      : [];
+    return { emphasized, normal };
+  }
+
+  // Head & Shoulders / Inverse H&S: segments touching head pivot get emphasis
+  if (norm.includes('head') && norm.includes('shoulder')) {
+    // Find head pivot index in sorted pivots
+    const headIdx = sortedPivots.findIndex(p => (p.role || '').toUpperCase() === 'H');
+    if (headIdx < 0 || zigzag.length < 3) return undefined;
+
+    // The head pivot corresponds to zigzag[headIdx] (same ordering)
+    // Emphasized: segment before head + segment after head
+    // Normal: all other segments
+    const emphasized: FormationLineData[] = [];
+    const normal: FormationLineData[] = [];
+
+    for (let i = 0; i < zigzag.length - 1; i++) {
+      const segStart = zigzag[i];
+      const segEnd = zigzag[i + 1];
+      if (i === headIdx - 1 || i === headIdx) {
+        // This segment touches the head
+        // Add connecting point from normal if needed
+        if (emphasized.length === 0 || emphasized[emphasized.length - 1].time !== segStart.time) {
+          emphasized.push(segStart);
+        }
+        emphasized.push(segEnd);
+      } else {
+        if (normal.length === 0 || normal[normal.length - 1].time !== segStart.time) {
+          normal.push(segStart);
+        }
+        normal.push(segEnd);
+      }
+    }
+
+    if (emphasized.length >= 2) {
+      return { emphasized, normal };
+    }
+    return undefined;
+  }
+
+  return undefined;
 }
 
 /**
