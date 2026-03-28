@@ -562,33 +562,88 @@ function getAssetType(symbol: string): string {
   return 'stocks';
 }
 
-async function fetchYahooData(symbol: string, startDate: string, endDate: string): Promise<OHLCBar[]> {
-  const period1 = Math.floor(new Date(startDate).getTime() / 1000);
-  const period2 = Math.floor(new Date(endDate).getTime() / 1000);
+/**
+ * Convert Yahoo-format symbol to EODHD format
+ */
+function toEODHDSymbol(symbol: string): string {
+  if (symbol.includes('-USD') && !symbol.startsWith('^') && !symbol.includes('=')) {
+    return `${symbol.replace('-USD', '')}-USD.CC`;
+  }
+  if (symbol.includes('=X')) return `${symbol.replace('=X', '')}.FOREX`;
+  if (symbol.includes('=F')) return `${symbol.replace('=F', '')}.COMM`;
+  if (symbol.startsWith('^')) return `${symbol.replace('^', '')}.INDX`;
+  if (symbol.endsWith('.HK')) return symbol;
+  if (symbol.endsWith('.SI')) return `${symbol.replace('.SI', '')}.SG`;
+  if (symbol.endsWith('.BK')) return symbol;
+  if (symbol.endsWith('.SS')) return `${symbol.replace('.SS', '')}.SHG`;
+  if (symbol.endsWith('.SZ')) return `${symbol.replace('.SZ', '')}.SHE`;
+  return `${symbol}.US`;
+}
+
+/**
+ * EODHD-first data fetcher with Yahoo as last-resort fallback
+ */
+async function fetchMarketData(symbol: string, startDate: string, endDate: string): Promise<OHLCBar[]> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
   
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+  // Try EODHD first (primary source for all non-crypto)
+  if (EODHD_API_KEY) {
+    try {
+      const eodhSymbol = toEODHDSymbol(symbol);
+      const start = startDate.split('T')[0];
+      const end = endDate.split('T')[0];
+      const url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${start}&to=${end}&period=d&fmt=json`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const bars = data
+            .filter((bar: any) => bar.close && Number.isFinite(bar.close))
+            .map((bar: any) => ({
+              date: new Date(bar.date).toISOString(),
+              open: Number(bar.open),
+              high: Number(bar.high),
+              low: Number(bar.low),
+              close: Number(bar.adjusted_close || bar.close),
+              volume: Number(bar.volume) || 0,
+            }));
+          if (bars.length > 0) {
+            console.log(`[seed-historical] EODHD returned ${bars.length} bars for ${symbol}`);
+            return bars;
+          }
+        }
+      }
+      console.log(`[seed-historical] EODHD returned no data for ${symbol}, trying Yahoo fallback`);
+    } catch (err) {
+      console.warn(`[seed-historical] EODHD error for ${symbol}: ${err}`);
+    }
+  }
   
-  const response = await fetch(yahooUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  });
-  
-  if (!response.ok) return [];
-  
-  const data = await response.json();
-  if (!data.chart?.result?.[0]) return [];
-  
-  const result = data.chart.result[0];
-  const timestamps = result.timestamp || [];
-  const quotes = result.indicators?.quote?.[0] || {};
-  
-  return timestamps.map((ts: number, idx: number) => ({
-    date: new Date(ts * 1000).toISOString(),
-    open: quotes.open?.[idx] || 0,
-    high: quotes.high?.[idx] || 0,
-    low: quotes.low?.[idx] || 0,
-    close: quotes.close?.[idx] || 0,
-    volume: quotes.volume?.[idx] || 0,
-  })).filter((b: OHLCBar) => b.close > 0);
+  // Yahoo last-resort fallback
+  try {
+    const period1 = Math.floor(new Date(startDate).getTime() / 1000);
+    const period2 = Math.floor(new Date(endDate).getTime() / 1000);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+    const response = await fetch(yahooUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    if (!data.chart?.result?.[0]) return [];
+    const result = data.chart.result[0];
+    const timestamps = result.timestamp || [];
+    const quotes = result.indicators?.quote?.[0] || {};
+    return timestamps.map((ts: number, idx: number) => ({
+      date: new Date(ts * 1000).toISOString(),
+      open: quotes.open?.[idx] || 0,
+      high: quotes.high?.[idx] || 0,
+      low: quotes.low?.[idx] || 0,
+      close: quotes.close?.[idx] || 0,
+      volume: quotes.volume?.[idx] || 0,
+    })).filter((b: OHLCBar) => b.close > 0);
+  } catch {
+    return [];
+  }
 }
 
 // ============= BACKTEST WITH OUTCOME TRACKING =============
@@ -850,7 +905,7 @@ serve(async (req) => {
     for (const { symbol } of instrumentsToProcess) {
       try {
         console.log(`Fetching ${symbol}...`);
-        const bars = await fetchYahooData(symbol, startDate.toISOString(), endDate.toISOString());
+        const bars = await fetchMarketData(symbol, startDate.toISOString(), endDate.toISOString());
         
         if (bars.length < 100) {
           console.log(`Skipping ${symbol}: insufficient data (${bars.length} bars)`);
