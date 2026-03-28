@@ -267,6 +267,9 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
   const topLosers = marketData?.topLosers || [];
   const breadthData = breadthResponse?.data || null;
   const breadthMeta = breadthResponse?.meta || null;
+  const breadthDataSource = breadthResponse?.dataSource ?? 'yahoo';
+  const breadthDataAvailable = breadthResponse?.dataAvailable ?? true;
+  const breadthErrorMsg = breadthResponse?.breadthError;
   const loading = marketLoading;
 
   const formatPrice = (price: number) => {
