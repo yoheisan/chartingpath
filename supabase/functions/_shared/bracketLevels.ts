@@ -22,6 +22,29 @@
  * - References: Wilder (1978) ATR, Turtle Trading rules, Bulkowski pattern methodology
  */
 
+/**
+ * Asset-class specific minimum stop loss floors (% of entry price).
+ * Prevents micro-stops that are inappropriate for each asset class's volatility profile.
+ */
+export const MIN_STOP_PERCENT: Record<string, number> = {
+  forex:       0.5,   // ~50 pips on major pairs — appropriate for intraday
+  crypto:      1.0,   // crypto volatility warrants wider floor
+  stocks:      0.5,   // gaps make 0.3% too tight
+  indices:     0.3,   // indices rarely gap — original value appropriate
+  commodities: 0.6,   // commodity volatility varies widely
+};
+
+/**
+ * Derives asset class from instrument symbol for bracket level computation.
+ */
+export function deriveAssetClass(instrument: string): string {
+  if (/USDT?$|BTC|ETH|SOL|BNB|XRP/i.test(instrument)) return 'crypto';
+  if (/=X$|USD|EUR|GBP|JPY|AUD|CAD|NZD|CHF/i.test(instrument)) return 'forex';
+  if (/\^/.test(instrument)) return 'indices';
+  if (/=F$/.test(instrument)) return 'commodities';
+  return 'stocks';
+}
+
 export interface BracketLevelsInput {
   direction: 'long' | 'short';
   entryPrice: number;
@@ -35,8 +58,10 @@ export interface BracketLevelsInput {
   minAtrMultiplier?: number;
   /** Minimum R:R ratio — TP is scaled up if bracket falls below this (default: 1.5) */
   minRiskRewardRatio?: number;
-  /** Minimum SL distance as % of entry price (default: 0.3%) */
+  /** Minimum SL distance as % of entry price. If omitted, derived from instrument's asset class. */
   minStopPercent?: number;
+  /** Instrument symbol — used to derive asset class for min stop floor when minStopPercent is not explicitly set. */
+  instrument?: string;
 }
 
 export interface BracketLevelsOutput {
