@@ -120,7 +120,12 @@ export function computeBracketLevels(input: BracketLevelsInput): BracketLevelsOu
     takeProfitMethod = 'percent',
     minAtrMultiplier = 1.0,
     minRiskRewardRatio = 1.5,
-    minStopPercent = 0.3,
+    instrument,
+  } = input;
+
+  // Derive asset-class aware minimum stop percent
+  const assetClass = instrument ? deriveAssetClass(instrument) : 'stocks';
+  const minStopPercent = input.minStopPercent ?? MIN_STOP_PERCENT[assetClass] ?? 0.3;
   } = input;
 
   // Validate critical inputs
