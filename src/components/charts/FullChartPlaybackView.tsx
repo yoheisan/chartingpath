@@ -86,6 +86,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
   const playback = useTradePlayback({
     bars,
     entryBarIndex,
+    entryBarTimestamp: visualSpec?.entryBarTimestamp,
     barsToOutcome,
     playbackSpeed: 350, // Slightly faster for smoother animation
     autoPlay,

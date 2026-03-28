@@ -14,6 +14,8 @@ export interface TradePlaybackState {
 export interface UseTradePlaybackOptions {
   bars: CompressedBar[];
   entryBarIndex: number;
+  /** Unix timestamp (seconds) of the entry bar. When provided, isAfterEntry uses timestamp comparison instead of index. */
+  entryBarTimestamp?: number;
   barsToOutcome?: number | null;
   playbackSpeed?: number; // ms per bar
   autoPlay?: boolean;
@@ -22,6 +24,7 @@ export interface UseTradePlaybackOptions {
 export function useTradePlayback({
   bars,
   entryBarIndex,
+  entryBarTimestamp,
   barsToOutcome,
   playbackSpeed = 500,
   autoPlay = false,
@@ -138,7 +141,10 @@ export function useTradePlayback({
     isAtStart: currentBarIndex <= startIndex,
     isAtEnd: currentBarIndex >= endIndex - 1,
     isBeforeEntry: currentBarIndex < entryBarIndex,
-    isAfterEntry: currentBarIndex >= entryBarIndex,
+    // Timestamp-based isAfterEntry when entryBarTimestamp is provided
+    isAfterEntry: entryBarTimestamp != null && bars[currentBarIndex]
+      ? Math.floor(new Date(bars[currentBarIndex].t).getTime() / 1000) >= entryBarTimestamp
+      : currentBarIndex >= entryBarIndex,
     isAtExit: exitBarIndex != null && currentBarIndex >= exitBarIndex,
   };
 }
