@@ -9,6 +9,7 @@ import {
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
   ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
 } from 'lucide-react';
+import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
 import { cn } from '@/lib/utils';
 import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1092,6 +1093,7 @@ export default function LivePatternsPage() {
               {t('screener.updatedAt', { time: new Date(lastScanned).toLocaleTimeString() })}
             </span>
           )}
+          <DataVersionBadge />
         </div>
         <div className="flex items-center gap-3 mb-2">
           <Activity className="h-8 w-8 text-amber-500" />
