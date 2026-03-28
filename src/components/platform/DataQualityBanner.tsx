@@ -154,6 +154,11 @@ export function DataQualityBanner() {
                   <strong>Triple Top/Bottom:</strong> These patterns are being recalculated with a stricter detection filter. You may see fewer Triple Top/Bottom signals going forward — this is intentional. The remaining signals are higher quality.
                 </p>
               )}
+              {progress.currentBatch?.includes('Forex') && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
+                  <strong>Forex Brackets:</strong> Forex pattern stop levels are being recalculated with more appropriate minimum distances. This may cause Forex win rates to increase slightly — the previous data slightly underestimated performance due to stops that were too tight for normal market conditions.
+                </p>
+              )}
             </div>
 
             <div>
