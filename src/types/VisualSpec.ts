@@ -82,6 +82,7 @@ export interface VisualSpec {
   pivots?: ZigZagPivot[]; // ZigZag pivots for pattern explainability
   detectionBarClosed?: boolean; // true only when the detection bar's candle has fully closed
   entryBarTimestamp?: number; // Unix timestamp (seconds) of the entry bar's close
+  significantVolumeBars?: string[]; // ISO timestamps of pattern-significant volume bars
   // Trade lifecycle info (for historical occurrences)
   entryBarIndex?: number;
   entryPrice?: number;

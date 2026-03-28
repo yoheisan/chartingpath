@@ -511,13 +511,27 @@ const StudyChart = memo(({
         borderVisible: false,
       });
 
+      // Build set of significant volume bar timestamps from historical patterns
+      const sigVolSet = new Set<number>();
+      if (historicalPatterns) {
+        for (const p of historicalPatterns) {
+          if (p.significantVolumeBars) {
+            for (const ts of p.significantVolumeBars) {
+              const sec = Math.floor(new Date(ts).getTime() / 1000);
+              if (Number.isFinite(sec)) sigVolSet.add(sec);
+            }
+          }
+        }
+      }
+
       const volumeData = safeChartData.map((d) => {
         const bar = bars.find(b => Math.floor(new Date(b.t).getTime() / 1000) === (d.time as number));
         const isUp = bar ? bar.c >= bar.o : true;
+        const highlighted = sigVolSet.has(d.time as number);
         return {
           time: d.time,
           value: bar?.v || 0,
-          color: getVolumeColor(isUp),
+          color: getVolumeColor(isUp, highlighted),
         };
       });
 
