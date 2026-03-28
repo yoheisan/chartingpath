@@ -1004,7 +1004,7 @@ export default function FullChartViewer({
         chartRef.current = null;
       }
     };
-  }, [setup, open, containerEl, loading, chartVersion]);
+  }, [setup, open, containerEl, loading, chartVersion, forceShowLevels]);
 
   // Reset chart to auto-scale and fit all content
   const handleResetChart = () => {
