@@ -433,6 +433,7 @@ export interface PatternQualityScorerInput {
   stopLoss: number;
   takeProfit: number;
   atr: number;
+  handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
 }
 
 /**
