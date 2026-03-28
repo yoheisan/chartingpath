@@ -1403,6 +1403,9 @@ serve(async (req) => {
           mtfConfirmed,
           mtfTimeframe: mtfConfirmed && higherTF ? higherTF : undefined,
           touchCount: detectionResult.touchCount,
+          leftShoulderPrice: detectionResult.leftShoulderPrice,
+          rightShoulderPrice: detectionResult.rightShoulderPrice,
+          headPrice: detectionResult.headPrice,
           // historicalPerformance will be added after stats enrichment
         };
         
