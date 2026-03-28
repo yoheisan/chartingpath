@@ -31,12 +31,40 @@ export class AnalystAgent {
   ): AgentScore {
     const stat = patternStats[symbol];
 
-    if (!stat || stat.sampleSize < this.config.minSampleSize) {
-      // No reliable data — neutral score
+    if (!stat || stat.sampleSize < 15) {
+      // Truly insufficient data — flat neutral score
       return {
         score: 12,
         maxScore: 25,
         details: { reason: "insufficient_data", sampleSize: stat?.sampleSize ?? 0 },
+      };
+    }
+
+    if (stat.sampleSize < this.config.minSampleSize) {
+      // n=15-29: confidence-discounted actual score
+      const confidenceDiscount = 0.6 + ((stat.sampleSize - 15) / 15) * 0.4;
+
+      const winRateScore = Math.min(10, stat.winRate * 10);
+      const expectancyScore = Math.min(10, Math.max(0, stat.expectancyR) * 10);
+      const confidenceScore = Math.min(5, Math.log2(stat.sampleSize / this.config.minSampleSize + 1) * 2);
+
+      const rawScore = winRateScore + expectancyScore + confidenceScore;
+      const neutralScore = 12;
+      const discountedScore = Math.round((neutralScore + (rawScore - neutralScore) * confidenceDiscount) * 100) / 100;
+
+      return {
+        score: Math.min(25, discountedScore),
+        maxScore: 25,
+        details: {
+          reason: "confidence_discounted",
+          winRate: stat.winRate,
+          expectancyR: stat.expectancyR,
+          sampleSize: stat.sampleSize,
+          confidenceDiscount: Math.round(confidenceDiscount * 100) / 100,
+          winRateScore: Math.round(winRateScore * 100) / 100,
+          expectancyScore: Math.round(expectancyScore * 100) / 100,
+          confidenceScore: Math.round(confidenceScore * 100) / 100,
+        },
       };
     }
 
