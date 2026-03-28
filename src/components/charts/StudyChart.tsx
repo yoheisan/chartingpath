@@ -158,6 +158,8 @@ interface TradePlanOverlay {
   stopLoss: number;
   takeProfit: number;
   direction?: 'long' | 'short';
+  /** Whether the detection bar's candle had fully closed when detected */
+  detectionBarClosed?: boolean;
 }
 /** External marker to render on the chart */
 export interface ChartMarker {
