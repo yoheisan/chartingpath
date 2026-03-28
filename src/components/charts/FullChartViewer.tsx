@@ -1475,6 +1475,7 @@ export default function FullChartViewer({
                     </div>
                   )}
                 </div>
+                </>
               )}
             
             {/* Trade Levels */}
