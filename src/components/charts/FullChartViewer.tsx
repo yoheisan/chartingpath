@@ -1271,6 +1271,20 @@ export default function FullChartViewer({
                   height={420}
                 />
               ) : (
+                <>
+                {tradeLevelsSuppressed.suppressed && tradeLevelsSuppressed.entryPrice != null && (
+                  <div className="flex items-center justify-between px-3 py-1 text-xs text-muted-foreground bg-muted/50 rounded-t">
+                    <span>Trade levels outside view — detected entry at {tradeLevelsSuppressed.entryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</span>
+                    <button
+                      className="ml-3 text-xs text-primary hover:underline font-medium"
+                      onClick={() => {
+                        setForceShowLevels(true);
+                      }}
+                    >
+                      Show anyway
+                    </button>
+                  </div>
+                )}
                 <div 
                   className="relative"
                   onMouseDown={handleChartMouseDown}
