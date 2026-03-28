@@ -259,6 +259,20 @@ function getTriangleTouchBonus(patternType: string, touchCount: number): number 
   return -1.0;
 }
 
+/**
+ * Cup & Handle handle depth bonus/penalty.
+ * Rewards shallow handles (Bulkowski: shallower handles have higher breakout success).
+ */
+function getCupHandleHandleBonus(patternType: string, handleDepth?: number): number {
+  if (!['cup-and-handle', 'inverse-cup-and-handle'].includes(patternType)) return 0;
+  if (handleDepth === undefined || handleDepth === null) return 0;
+  
+  if (handleDepth <= 0.15) return 1.0;   // very shallow — strong signal
+  if (handleDepth <= 0.25) return 0.5;   // shallow — good signal
+  if (handleDepth <= 0.33) return 0;     // normal — no bonus
+  return -0.5;                            // deep handle — slight penalty
+}
+
 function getHSSymmetryScore(
   patternType: string,
   leftShoulderPrice?: number,
@@ -290,7 +304,8 @@ function analyzePatternSymmetry(
   touchCount?: number,
   leftShoulderPrice?: number,
   rightShoulderPrice?: number,
-  headPrice?: number
+  headPrice?: number,
+  handleDepth?: number
 ): { score: number; description: string } {
   // H&S-specific: use dedicated shoulder symmetry scoring if available
   const hsScore = getHSSymmetryScore(patternType, leftShoulderPrice, rightShoulderPrice, headPrice);
@@ -355,6 +370,13 @@ function analyzePatternSymmetry(
   if (touchBonus !== 0) {
     score += touchBonus;
     descriptions.push(touchBonus > 0 ? `${touchCount} touches — strong confirmation` : 'Few touches — weak confirmation');
+  }
+
+  // Cup & Handle handle depth bonus/penalty
+  const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
+  if (handleBonus !== 0) {
+    score += handleBonus;
+    descriptions.push(handleBonus > 0 ? `Shallow handle (${((handleDepth ?? 0) * 100).toFixed(0)}%) — strong` : `Deep handle (${((handleDepth ?? 0) * 100).toFixed(0)}%) — weak`);
   }
 
   score = Math.max(0, Math.min(10, score));
@@ -799,7 +821,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (10% - reduced from 15%)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice, handleDepth);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,

@@ -1163,7 +1163,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const cupHeight = (cupTop - Math.max(leftRim, rightRim)) / Math.max(leftRim, rightRim);
       if (rimDiff > 0.08 || cupHeight < 0.07 || cupHeight > 0.40) return { detected: false, pivots: [] };
 
-      // Handle: Small rally after right rim (3-60% of cup height retracement)
+      // Handle: Small rally after right rim (3-40% of cup height retracement, Bulkowski standard)
       const handleHighs = highs.slice(handleStart, window.length - 1);
       if (handleHighs.length === 0) return { detected: false, pivots: [] };
       const handleHigh = Math.max(...handleHighs);
