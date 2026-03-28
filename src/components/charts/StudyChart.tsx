@@ -619,35 +619,49 @@ const StudyChart = memo(({
     const shouldRenderStandaloneTradePlan = !!tradePlan && !(historicalPatterns && historicalPatterns.length > 0 && patternToggles.showPatterns);
 
     if (shouldRenderStandaloneTradePlan) {
-      // Entry line — solid blue (matches X post SVG style)
-      candleSeries.createPriceLine({
-        price: tradePlan.entry,
-        color: '#3b82f6',
-        lineWidth: 2,
-        lineStyle: 0, // Solid
-        axisLabelVisible: true,
-        title: 'ENTRY',
-      });
+      // Candle-close guard: if detection bar hasn't closed, show muted entry only
+      const barClosed = tradePlan.detectionBarClosed !== false; // treat missing as closed (historical)
 
-      // Stop Loss line — dashed red
-      candleSeries.createPriceLine({
-        price: tradePlan.stopLoss,
-        color: '#ef4444',
-        lineWidth: 2,
-        lineStyle: 2, // Dashed
-        axisLabelVisible: true,
-        title: 'SL',
-      });
+      if (!barClosed) {
+        candleSeries.createPriceLine({
+          price: tradePlan.entry,
+          color: '#6b7280',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'Awaiting confirmation',
+        });
+      } else {
+        // Entry line — solid blue (matches X post SVG style)
+        candleSeries.createPriceLine({
+          price: tradePlan.entry,
+          color: '#3b82f6',
+          lineWidth: 2,
+          lineStyle: 0, // Solid
+          axisLabelVisible: true,
+          title: 'ENTRY',
+        });
 
-      // Take Profit line — dashed green
-      candleSeries.createPriceLine({
-        price: tradePlan.takeProfit,
-        color: '#22c55e',
-        lineWidth: 2,
-        lineStyle: 2, // Dashed
-        axisLabelVisible: true,
-        title: 'TP',
-      });
+        // Stop Loss line — dashed red
+        candleSeries.createPriceLine({
+          price: tradePlan.stopLoss,
+          color: '#ef4444',
+          lineWidth: 2,
+          lineStyle: 2, // Dashed
+          axisLabelVisible: true,
+          title: 'SL',
+        });
+
+        // Take Profit line — dashed green
+        candleSeries.createPriceLine({
+          price: tradePlan.takeProfit,
+          color: '#22c55e',
+          lineWidth: 2,
+          lineStyle: 2, // Dashed
+          axisLabelVisible: true,
+          title: 'TP',
+        });
+      }
 
       // Standalone entry marker — skip if historical patterns will render their own
       // (historical patterns path draws canvas triangles at the correct entry price)
