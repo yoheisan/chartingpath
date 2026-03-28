@@ -862,12 +862,19 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      // Adaptive pivot radius matching Double Top/Bottom standard
+      const pivotRadius = Math.max(3, Math.min(4, Math.floor(window.length / 8)));
+      
       const peaks: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] &&
-            highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
-          peaks.push({ index: i, value: highs[i] });
+      for (let i = pivotRadius; i < window.length - pivotRadius; i++) {
+        let isPeak = true;
+        for (let j = 1; j <= pivotRadius; j++) {
+          if (highs[i] <= highs[i - j] || highs[i] <= highs[i + j]) {
+            isPeak = false;
+            break;
+          }
         }
+        if (isPeak) peaks.push({ index: i, value: highs[i] });
       }
       if (peaks.length < 3) return { detected: false, pivots: [] };
       
@@ -875,7 +882,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const peakValues = lastThreePeaks.map(p => p.value);
       const maxPeak = Math.max(...peakValues);
       const minPeak = Math.min(...peakValues);
-      if ((maxPeak - minPeak) / minPeak >= 0.03) return { detected: false, pivots: [] };
+      if ((maxPeak - minPeak) / minPeak >= 0.025) return { detected: false, pivots: [] };
       
       // PRIOR UPTREND CHECK: ≥2%
       const preTopPrice = Math.min(...lows.slice(0, Math.max(1, lastThreePeaks[0].index)));
@@ -910,12 +917,19 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const lows = window.map(d => d.low);
       const closes = window.map(d => d.close);
       
+      // Adaptive pivot radius matching Double Top/Bottom standard
+      const pivotRadius = Math.max(3, Math.min(4, Math.floor(window.length / 8)));
+      
       const troughs: { index: number; value: number }[] = [];
-      for (let i = 2; i < window.length - 2; i++) {
-        if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] &&
-            lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
-          troughs.push({ index: i, value: lows[i] });
+      for (let i = pivotRadius; i < window.length - pivotRadius; i++) {
+        let isTrough = true;
+        for (let j = 1; j <= pivotRadius; j++) {
+          if (lows[i] >= lows[i - j] || lows[i] >= lows[i + j]) {
+            isTrough = false;
+            break;
+          }
         }
+        if (isTrough) troughs.push({ index: i, value: lows[i] });
       }
       if (troughs.length < 3) return { detected: false, pivots: [] };
       
@@ -923,7 +937,7 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const troughValues = lastThreeTroughs.map(t => t.value);
       const maxTrough = Math.max(...troughValues);
       const minTrough = Math.min(...troughValues);
-      if ((maxTrough - minTrough) / minTrough >= 0.03) return { detected: false, pivots: [] };
+      if ((maxTrough - minTrough) / minTrough >= 0.025) return { detected: false, pivots: [] };
       
       // PRIOR DOWNTREND CHECK: ≥2%
       const preBottomPrice = Math.max(...highs.slice(0, Math.max(1, lastThreeTroughs[0].index)));
