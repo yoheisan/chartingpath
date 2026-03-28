@@ -464,6 +464,18 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                     </p>
                   </div>
 
+                  {/* Data Source Indicator */}
+                  {(breadthDataSource === 'fallback' || !breadthDataAvailable) && (
+                    <div className="rounded-md bg-muted/80 border border-border px-2.5 py-1.5 flex items-center gap-1.5">
+                      <Activity className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {breadthDataSource === 'fallback'
+                          ? 'Using cached data'
+                          : 'Breadth data unavailable'}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Last Updated */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Exchange: {breadthData.exchange}</span>
