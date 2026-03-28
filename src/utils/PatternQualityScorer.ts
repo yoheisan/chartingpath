@@ -506,7 +506,10 @@ export interface PatternQualityScorerInput {
   handleDepth?: number;
   mtfConfirmed?: boolean;
   mtfTimeframe?: string;
-  touchCount?: number; // Triangle patterns: number of touches on flat resistance/support
+  touchCount?: number;
+  leftShoulderPrice?: number;
+  rightShoulderPrice?: number;
+  headPrice?: number;
 }
 
 /**
@@ -557,7 +560,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (weight: 0.15)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, input.touchCount);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, input.touchCount, input.leftShoulderPrice, input.rightShoulderPrice, input.headPrice);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,
