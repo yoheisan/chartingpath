@@ -13,6 +13,7 @@ import {
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
 import { FormationOverlayData, buildZonePoints, snapFormationToChartTimes, findNearestCandleTime } from '@/utils/formationOverlay';
+import { renderNeckline } from './PatternOverlayRenderer';
 import {
   calculateEMA,
   calculateSMA,
@@ -1096,6 +1097,14 @@ const StudyChart = memo(({
             });
             zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
           }
+        }
+
+        // Render necklines for reversal patterns
+        for (const pattern of historicalPatterns) {
+          if (!pattern.pivots || pattern.pivots.length < 2) continue;
+          const patternBars = pattern.bars && pattern.bars.length > 0 ? pattern.bars : bars;
+          const necklineCleanup = renderNeckline(chart, candleSeries, pattern.pivots, pattern.patternId, patternBars);
+          patternLinesCleanupsRef.current.push(necklineCleanup);
         }
       }
 
