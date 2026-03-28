@@ -55,6 +55,8 @@ export interface HistoricalPatternOverlay {
   outcomePnlPercent?: number | null;
   isActive?: boolean;
   status?: string | null;
+  /** Whether the detection bar's candle had fully closed when detected */
+  detectionBarClosed?: boolean;
   /** Pivots from visual_spec for zigzag rendering */
   pivots?: ZigZagPivot[];
   /** Pattern's own bars for pivot-to-time resolution */
@@ -126,6 +128,26 @@ export function renderPatternPriceLines(
   toggles: PatternOverlayToggles
 ): (() => void) {
   const lines: any[] = [];
+
+  // Candle-close guard: if detection bar hasn't closed, show muted "Awaiting confirmation" only
+  if (!pattern.detectionBarClosed) {
+    if (toggles.showEntry) {
+      lines.push(candleSeries.createPriceLine({
+        price: pattern.entryPrice,
+        color: '#6b7280', // gray
+        lineWidth: 1,
+        lineStyle: 2, // dashed
+        axisLabelVisible: true,
+        title: 'Awaiting confirmation',
+      }));
+    }
+    return () => {
+      lines.forEach(line => {
+        try { candleSeries.removePriceLine(line); } catch {}
+      });
+    };
+  }
+
   const shortName = pattern.patternName.length > 20 
     ? pattern.patternName.substring(0, 18) + '…'
     : pattern.patternName;
