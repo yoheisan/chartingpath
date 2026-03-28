@@ -59,17 +59,27 @@ export class SupabaseDBFirstAdapter implements DataProvider {
         console.log(`[DBFirst] DB hit: ${symbol} → ${dbFrame.index.length} bars`);
         frames.push(dbFrame);
       } else {
-        console.log(`[DBFirst] DB miss: ${symbol} (${dbFrame?.index.length ?? 0} bars), will try Yahoo`);
+    console.log(`[DBFirst] DB miss: ${symbol} (${dbFrame?.index.length ?? 0} bars), will try EODHD`);
         missingSymbols.push(symbol);
       }
     }
 
-    // Fetch missing symbols from Yahoo
+    // Fetch missing symbols from EODHD first, then Yahoo as last resort
     for (const symbol of missingSymbols) {
+      try {
+        const apiFrame = await this.fetchFromEODHD(symbol, start, end, '1d');
+        if (apiFrame && apiFrame.index.length >= MIN_BARS_THRESHOLD) {
+          frames.push(apiFrame);
+          console.log(`[DBFirst] EODHD fallback: ${symbol} → ${apiFrame.index.length} bars`);
+          continue;
+        }
+      } catch (err) {
+        console.warn(`[DBFirst] EODHD fallback failed for ${symbol}:`, err);
+      }
       try {
         const apiFrame = await this.fetchFromYahoo(symbol, start, end, '1d');
         frames.push(apiFrame);
-        console.log(`[DBFirst] Yahoo fallback: ${symbol} → ${apiFrame.index.length} bars`);
+        console.log(`[DBFirst] Yahoo last-resort: ${symbol} → ${apiFrame.index.length} bars`);
       } catch (err) {
         console.warn(`[DBFirst] Yahoo fallback failed for ${symbol}:`, err);
         // Push empty frame so merge doesn't break
@@ -98,7 +108,16 @@ export class SupabaseDBFirstAdapter implements DataProvider {
       return dbFrame;
     }
 
-    console.log(`[DBFirst] DB miss (intraday): ${symbol}, falling back to Yahoo`);
+    console.log(`[DBFirst] DB miss (intraday): ${symbol}, falling back to EODHD`);
+    try {
+      const eodhdFrame = await this.fetchFromEODHD(symbol, start, end, interval);
+      if (eodhdFrame && eodhdFrame.index.length >= MIN_BARS_THRESHOLD) {
+        return eodhdFrame;
+      }
+    } catch (err) {
+      console.warn(`[DBFirst] EODHD intraday fallback failed for ${symbol}:`, err);
+    }
+    console.log(`[DBFirst] EODHD miss (intraday): ${symbol}, last-resort Yahoo`);
     return this.fetchFromYahoo(symbol, start, end, interval);
   }
 
@@ -116,7 +135,16 @@ export class SupabaseDBFirstAdapter implements DataProvider {
       return dbBars;
     }
 
-    console.log(`[DBFirst] DB bars miss: ${symbol}, falling back to Yahoo`);
+    console.log(`[DBFirst] DB bars miss: ${symbol}, falling back to EODHD`);
+    try {
+      const eodhdBars = await this.fetchBarsFromEODHD(symbol, start, end, interval);
+      if (eodhdBars.length >= MIN_BARS_THRESHOLD) {
+        return eodhdBars;
+      }
+    } catch (err) {
+      console.warn(`[DBFirst] EODHD bars fallback failed for ${symbol}:`, err);
+    }
+    console.log(`[DBFirst] EODHD bars miss: ${symbol}, last-resort Yahoo`);
     return this.fetchBarsFromYahoo(symbol, start, end, interval);
   }
 
@@ -132,7 +160,15 @@ export class SupabaseDBFirstAdapter implements DataProvider {
       return dbFrame;
     }
 
-    // Fallback: Yahoo with =X suffix
+    // Fallback: EODHD first, then Yahoo as last resort
+    try {
+      const eodhdFrame = await this.fetchFromEODHD(pair, start, end, interval);
+      if (eodhdFrame && eodhdFrame.index.length >= MIN_BARS_THRESHOLD) {
+        return eodhdFrame;
+      }
+    } catch (err) {
+      console.warn(`[DBFirst] EODHD FX fallback failed for ${pair}:`, err);
+    }
     const yahooSymbol = pair.includes('=X') ? pair : `${pair}=X`;
     return this.fetchFromYahoo(yahooSymbol, start, end, interval);
   }
@@ -239,7 +275,72 @@ export class SupabaseDBFirstAdapter implements DataProvider {
     }
   }
 
-  // ─── Private: Yahoo fallback ─────────────────────────────────────────
+  // ─── Private: EODHD fallback (preferred) ─────────────────────────────
+
+  private async fetchFromEODHD(
+    symbol: string,
+    start: string,
+    end: string,
+    interval: string
+  ): Promise<PriceFrame> {
+    const resp = await fetch(
+      `${this.supabaseUrl}/functions/v1/fetch-eodhd`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.supabaseKey}`,
+        },
+        body: JSON.stringify({ symbol, startDate: start, endDate: end, interval, includeOhlc: true })
+      }
+    );
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: resp.statusText }));
+      throw new Error(`EODHD error: ${err.error || resp.statusText}`);
+    }
+
+    const data = await resp.json();
+    // Convert bars format to PriceFrame if needed
+    if (data.bars && Array.isArray(data.bars)) {
+      const bars = data.bars as Array<{ t: string; o: number; h: number; l: number; c: number; v: number }>;
+      return {
+        index: bars.map(b => b.t),
+        columns: [symbol],
+        data: bars.map(b => [b.c]),
+        meta: { provider: 'eodhd' }
+      };
+    }
+    return data;
+  }
+
+  private async fetchBarsFromEODHD(
+    symbol: string,
+    start: string,
+    end: string,
+    interval: string
+  ): Promise<Bar[]> {
+    const resp = await fetch(
+      `${this.supabaseUrl}/functions/v1/fetch-eodhd`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.supabaseKey}`,
+        },
+        body: JSON.stringify({ symbol, startDate: start, endDate: end, interval, includeOhlc: true })
+      }
+    );
+
+    if (!resp.ok) {
+      throw new Error(`EODHD error for bars: ${resp.statusText}`);
+    }
+
+    const data = await resp.json();
+    return data.bars || [];
+  }
+
+  // ─── Private: Yahoo fallback (last resort) ──────────────────────────
 
   private async fetchFromYahoo(
     symbol: string,

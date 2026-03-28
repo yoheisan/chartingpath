@@ -494,6 +494,52 @@ export default function TickerStudy() {
           const startStr = startDate.toISOString().slice(0, 10);
           const endStr = endDate.toISOString().slice(0, 10);
 
+          // Try EODHD first for non-crypto
+          const isCrypto = /^[A-Z0-9]+-USD$/i.test(decodedSymbol) || decodedSymbol.toUpperCase().endsWith('USDT');
+          
+          if (!isCrypto) {
+            const { data: eodhdData, error: eodhdError } = await supabase.functions.invoke(
+              'fetch-eodhd',
+              {
+                body: {
+                  symbol: decodedSymbol,
+                  startDate: startStr,
+                  endDate: endStr,
+                  interval: getYahooInterval(selectedTimeframe),
+                  includeOhlc: true,
+                },
+              }
+            );
+
+            if (!eodhdError) {
+              const bars = (eodhdData as any)?.bars as CompressedBar[] | undefined;
+              if (Array.isArray(bars) && bars.length > 0) {
+                if (isHourlyAggregated) {
+                  const hours = selectedTimeframe === '8h' ? 8 : 4;
+                  const aggregated: CompressedBar[] = [];
+                  for (let i = 0; i < bars.length; i += hours) {
+                    const chunk = bars.slice(i, i + hours);
+                    if (chunk.length === 0) break;
+                    aggregated.push({
+                      t: chunk[0].t,
+                      o: chunk[0].o,
+                      h: Math.max(...chunk.map(b => b.h)),
+                      l: Math.min(...chunk.map(b => b.l)),
+                      c: chunk[chunk.length - 1].c,
+                      v: chunk.reduce((sum, b) => sum + b.v, 0),
+                    });
+                  }
+                  setPriceData(aggregated.slice(-barLimit));
+                } else {
+                  setPriceData(bars.slice(-barLimit));
+                }
+                // EODHD succeeded, skip Yahoo
+                return;
+              }
+            }
+          }
+
+          // Yahoo as last-resort fallback
           const yahooCandidates = Array.from(
             new Set([
               decodedSymbol,

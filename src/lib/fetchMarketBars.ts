@@ -159,19 +159,7 @@ async function fetchMarketBarsRaw(opts: FetchBarsOptions): Promise<OHLCBar[]> {
     return bars;
   }
 
-  // --- Non-crypto intraday: skip EODHD entirely, go straight to Yahoo ---
-  if (isIntradayInterval(interval)) {
-    console.log(`[fetchMarketBars] Intraday ${interval} for ${symbol} — using Yahoo directly (skip EODHD)`);
-    const { data, error } = await supabase.functions.invoke('fetch-yahoo-finance', {
-      body: { symbol, startDate, endDate, interval, includeOhlc },
-    });
-    if (error) throw new Error(error.message || `Failed to fetch bars for ${symbol}`);
-    const bars = normaliseBars(data?.bars ?? []);
-    console.log(`[fetchMarketBars] Yahoo returned ${bars.length} bars for ${symbol}`);
-    return bars;
-  }
-
-  // --- Non-crypto daily/weekly: EODHD → Yahoo ---
+  // --- Non-crypto (all timeframes): EODHD → Yahoo fallback ---
   if (isProviderHealthy('eodhd')) {
     try {
       const { data, error } = await supabase.functions.invoke('fetch-eodhd', {
