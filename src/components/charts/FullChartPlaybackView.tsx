@@ -35,6 +35,7 @@ import {
 import { IndicatorSettings } from './FullChartViewer';
 import { VisualSpec } from '@/types/VisualSpec';
 import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
+import { renderNeckline } from './PatternOverlayRenderer';
 
 interface FullChartPlaybackViewProps {
   bars: CompressedBar[];
@@ -373,6 +374,9 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
             });
             lowerSeries.setData(dedupeLineData(formation.lowerTrend));
           }
+
+          // Neckline for reversal patterns
+          renderNeckline(chart, candleSeries, visualSpec?.pivots, visualSpec?.patternId, playback.visibleBars);
 
           // Shaded formation zone (canvas overlay)
           if (formation.hasZone) {

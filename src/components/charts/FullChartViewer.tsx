@@ -75,6 +75,7 @@ import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
 import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints, findNearestCandleTime } from '@/utils/formationOverlay';
+import { renderNeckline } from './PatternOverlayRenderer';
 import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
@@ -816,6 +817,9 @@ export default function FullChartViewer({
             });
             lowerSeries.setData(dedupeLineData(formation.lowerTrend));
           }
+
+          // Neckline for reversal patterns
+          renderNeckline(chart, candleSeries, visualSpec?.pivots, visualSpec?.patternId, bars);
 
           // Combined canvas overlay: formation zone + TP/SL shaded zones
           const formationZonePoints = formation.hasZone ? buildZonePoints(formation.upperTrend, formation.lowerTrend) : [];
