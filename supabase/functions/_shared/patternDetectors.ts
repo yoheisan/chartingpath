@@ -688,28 +688,43 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   },
   'bull-flag': {
     direction: 'long',
-    detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+    detector: (window, timeframe) => {
+      // Timeframe-adaptive pole/flag lengths
+      const POLE_CONFIG: Record<string, { poleBars: number; flagBars: number }> = {
+        '1h':  { poleBars: 8,  flagBars: 10 },
+        '4h':  { poleBars: 10, flagBars: 12 },
+        '8h':  { poleBars: 12, flagBars: 14 },
+        '1d':  { poleBars: 15, flagBars: 18 },
+        '1w':  { poleBars: 20, flagBars: 24 },
+      };
+      const config = POLE_CONFIG[timeframe ?? '1h'] ?? { poleBars: 8, flagBars: 10 };
+      const minBars = config.poleBars + config.flagBars;
+
+      if (window.length < minBars) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
-      // Flagpole: Strong uptrend in first 8 bars (at least 5% gain)
-      const poleGain = (closes[7] - closes[0]) / closes[0];
+      // Flagpole: Strong uptrend in pole zone (at least 5% gain)
+      const poleEndIdx = config.poleBars - 1;
+      const poleGain = (closes[poleEndIdx] - closes[0]) / closes[0];
       if (poleGain < 0.05) return { detected: false, pivots: [] };
       
-      // Flag: Consolidation in bars 8-18 (range < 4%, slight downward or flat drift)
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
+      // Flag: Consolidation in flag zone (range < 4%, slight downward or flat drift)
+      const flagStartIdx = config.poleBars;
+      const flagEndIdx = config.poleBars + config.flagBars;
+      const flagHighs = highs.slice(flagStartIdx, flagEndIdx);
+      const flagLows = lows.slice(flagStartIdx, flagEndIdx);
       if (flagHighs.length === 0) return { detected: false, pivots: [] };
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
+      const flagLastIdx = Math.min(flagEndIdx - 1, closes.length - 1);
+      const flagDrift = (closes[flagLastIdx] - closes[flagStartIdx]) / closes[flagStartIdx];
       
       // Retracement must be < 50% of pole
-      const poleHeight = closes[7] - closes[0];
-      const retracement = (closes[7] - flagLow) / poleHeight;
+      const poleHeight = closes[poleEndIdx] - closes[0];
+      const retracement = (closes[poleEndIdx] - flagLow) / poleHeight;
       if (flagRange > 0.04 || flagDrift > 0.02 || retracement > 0.50) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
@@ -719,8 +734,8 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
         detected,
         pivots: detected ? [
           { index: 0, price: closes[0], type: 'low', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'high', label: 'Pole End' },
-          { index: 8, price: flagHigh, type: 'high', label: 'Flag High' },
+          { index: poleEndIdx, price: closes[poleEndIdx], type: 'high', label: 'Pole End' },
+          { index: flagStartIdx, price: flagHigh, type: 'high', label: 'Flag High' },
           { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
         ] : []
       };
@@ -729,28 +744,43 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
   },
   'bear-flag': {
     direction: 'short',
-    detector: (window) => {
-      if (window.length < 20) return { detected: false, pivots: [] };
+    detector: (window, timeframe) => {
+      // Timeframe-adaptive pole/flag lengths
+      const POLE_CONFIG: Record<string, { poleBars: number; flagBars: number }> = {
+        '1h':  { poleBars: 8,  flagBars: 10 },
+        '4h':  { poleBars: 10, flagBars: 12 },
+        '8h':  { poleBars: 12, flagBars: 14 },
+        '1d':  { poleBars: 15, flagBars: 18 },
+        '1w':  { poleBars: 20, flagBars: 24 },
+      };
+      const config = POLE_CONFIG[timeframe ?? '1h'] ?? { poleBars: 8, flagBars: 10 };
+      const minBars = config.poleBars + config.flagBars;
+
+      if (window.length < minBars) return { detected: false, pivots: [] };
       const closes = window.map(d => d.close);
       const highs = window.map(d => d.high);
       const lows = window.map(d => d.low);
       
-      // Flagpole: Strong downtrend in first 8 bars (at least 5% drop)
-      const poleDrop = (closes[0] - closes[7]) / closes[0];
+      // Flagpole: Strong downtrend in pole zone (at least 5% drop)
+      const poleEndIdx = config.poleBars - 1;
+      const poleDrop = (closes[0] - closes[poleEndIdx]) / closes[0];
       if (poleDrop < 0.05) return { detected: false, pivots: [] };
       
-      // Flag: Consolidation in bars 8-18
-      const flagHighs = highs.slice(8, 18);
-      const flagLows = lows.slice(8, 18);
+      // Flag: Consolidation in flag zone
+      const flagStartIdx = config.poleBars;
+      const flagEndIdx = config.poleBars + config.flagBars;
+      const flagHighs = highs.slice(flagStartIdx, flagEndIdx);
+      const flagLows = lows.slice(flagStartIdx, flagEndIdx);
       if (flagLows.length === 0) return { detected: false, pivots: [] };
       const flagHigh = Math.max(...flagHighs);
       const flagLow = Math.min(...flagLows);
       const flagRange = (flagHigh - flagLow) / flagLow;
-      const flagDrift = (closes[Math.min(17, closes.length - 1)] - closes[8]) / closes[8];
+      const flagLastIdx = Math.min(flagEndIdx - 1, closes.length - 1);
+      const flagDrift = (closes[flagLastIdx] - closes[flagStartIdx]) / closes[flagStartIdx];
       
       // Retracement must be < 50% of pole
-      const poleHeight = closes[0] - closes[7];
-      const retracement = (flagHigh - closes[7]) / poleHeight;
+      const poleHeight = closes[0] - closes[poleEndIdx];
+      const retracement = (flagHigh - closes[poleEndIdx]) / poleHeight;
       if (flagRange > 0.04 || flagDrift < -0.02 || retracement > 0.50) return { detected: false, pivots: [] };
       
       const lastClose = closes[closes.length - 1];
@@ -760,8 +790,8 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
         detected,
         pivots: detected ? [
           { index: 0, price: closes[0], type: 'high', label: 'Pole Start' },
-          { index: 7, price: closes[7], type: 'low', label: 'Pole End' },
-          { index: 8, price: flagLow, type: 'low', label: 'Flag Low' },
+          { index: poleEndIdx, price: closes[poleEndIdx], type: 'low', label: 'Pole End' },
+          { index: flagStartIdx, price: flagLow, type: 'low', label: 'Flag Low' },
           { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
         ] : []
       };
