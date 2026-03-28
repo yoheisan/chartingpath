@@ -895,7 +895,9 @@ export default function FullChartViewer({
             drawCanvasTriangles(ctx);
           };
 
-          setTimeout(() => requestAnimationFrame(drawAllCanvasOverlays), 200);
+          const overlayTimerId1 = setTimeout(() => {
+            overlayRafId1 = requestAnimationFrame(drawAllCanvasOverlays);
+          }, 200);
           chart.timeScale().subscribeVisibleLogicalRangeChange(drawAllCanvasOverlays);
         }
 
@@ -937,7 +939,9 @@ export default function FullChartViewer({
               drawCanvasTriangles(ctx);
             };
 
-            setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+            const overlayTimerId2 = setTimeout(() => {
+              overlayRafId2 = requestAnimationFrame(drawStandaloneTradePlanZones);
+            }, 200);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
           }
         }
