@@ -406,6 +406,7 @@ const StudyChart = memo(({
 
     // Track overlay draw timers/subscriptions to prevent stale marker repaint after refresh/poll
     const overlayTimers: number[] = [];
+    const overlayRafIds: number[] = [];
     const overlayRangeUnsubscribers: Array<() => void> = [];
 
     // Use unified candlestick colors with dynamic price precision
@@ -841,7 +842,8 @@ const StudyChart = memo(({
 
             // Draw with delay to ensure chart coordinates are ready
             const zoneTimer = window.setTimeout(() => {
-              requestAnimationFrame(drawAll);
+              const rid = requestAnimationFrame(drawAll);
+              overlayRafIds.push(rid);
             }, 200);
             overlayTimers.push(zoneTimer);
             chart.timeScale().subscribeVisibleLogicalRangeChange(drawAll);
@@ -1233,7 +1235,10 @@ const StudyChart = memo(({
           }
         };
 
-        const historicalOverlayTimer = window.setTimeout(() => requestAnimationFrame(drawHistoricalPatternOverlay), 250);
+        const historicalOverlayTimer = window.setTimeout(() => {
+          const rid = requestAnimationFrame(drawHistoricalPatternOverlay);
+          overlayRafIds.push(rid);
+        }, 250);
         overlayTimers.push(historicalOverlayTimer);
         chart.timeScale().subscribeVisibleLogicalRangeChange(drawHistoricalPatternOverlay);
         overlayRangeUnsubscribers.push(() => {
@@ -1393,7 +1398,10 @@ const StudyChart = memo(({
         ctx.fillRect(0, Math.min(entryY, slY), rect.width, Math.abs(slY - entryY));
       };
 
-      const standaloneZonesTimer = window.setTimeout(() => requestAnimationFrame(drawStandaloneTradePlanZones), 200);
+      const standaloneZonesTimer = window.setTimeout(() => {
+        const rid = requestAnimationFrame(drawStandaloneTradePlanZones);
+        overlayRafIds.push(rid);
+      }, 200);
       overlayTimers.push(standaloneZonesTimer);
       chart.timeScale().subscribeVisibleLogicalRangeChange(drawStandaloneTradePlanZones);
       overlayRangeUnsubscribers.push(() => {
@@ -1691,6 +1699,7 @@ const StudyChart = memo(({
       clearTimeout(initialSyncTimer2);
       clearTimeout(initialSyncTimer3);
       overlayTimers.forEach((timer) => clearTimeout(timer));
+      overlayRafIds.forEach((rid) => cancelAnimationFrame(rid));
       overlayRangeUnsubscribers.forEach((unsubscribe) => {
         try { unsubscribe(); } catch {}
       });
