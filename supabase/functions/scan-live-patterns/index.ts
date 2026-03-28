@@ -1402,6 +1402,7 @@ serve(async (req) => {
           trendIndicators: trendIndicators || undefined,
           mtfConfirmed,
           mtfTimeframe: mtfConfirmed && higherTF ? higherTF : undefined,
+          touchCount: detectionResult.touchCount,
           // historicalPerformance will be added after stats enrichment
         };
         
