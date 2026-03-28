@@ -41,6 +41,7 @@ export interface PatternQualityResult {
   summary: string;
   tradeable: boolean;
   warnings: string[];
+  volumeDataAvailable: boolean;
 }
 
 // ============= ZIGZAG PIVOT DETECTION =============
@@ -527,7 +528,12 @@ export function calculatePatternQualityScore(
     passed: targetAnalysis.score >= 6
   });
   
-  // Calculate weighted score
+  // Detect whether volume data was available
+  const volumeDataAvailable = !factors
+    .filter(f => f.name === 'Volume Confirmation')
+    .some(f => f.description.includes('unavailable'));
+
+  // Calculate weighted score — no redistribution for missing volume
   let weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
   
   // Cup & Handle handle depth bonus/penalty
@@ -557,6 +563,10 @@ export function calculatePatternQualityScore(
     ? `Strong pattern with ${passedNames.slice(0, 3).join(', ')}`
     : `Pattern detected with ${passedNames.length}/${factors.length} quality factors`;
   
+  if (!volumeDataAvailable) {
+    warnings.push('Volume data unavailable — score based on non-volume factors only');
+  }
+
   return {
     score: finalScore,
     grade,
@@ -565,7 +575,8 @@ export function calculatePatternQualityScore(
     pivots,
     summary,
     tradeable,
-    warnings
+    warnings,
+    volumeDataAvailable
   };
 }
 
