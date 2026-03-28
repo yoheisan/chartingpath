@@ -13,6 +13,57 @@ interface PatternDetectionResult {
   pivots: PatternPivot[];
   detectedDirection?: 'long' | 'short'; // Override config direction (for neutral patterns like symmetrical triangle)
   handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
+  regressionQuality?: number; // Wedge patterns: min(r² high trendline, r² low trendline), 0-1
+}
+
+// --- Linear regression & pivot extraction utilities for wedge detection ---
+
+function linearRegression(yValues: number[]): { slope: number; intercept: number; r2: number } {
+  const n = yValues.length;
+  if (n < 2) return { slope: 0, intercept: yValues[0] ?? 0, r2: 0 };
+  const xValues = Array.from({ length: n }, (_, i) => i);
+
+  const sumX = xValues.reduce((a, b) => a + b, 0);
+  const sumY = yValues.reduce((a, b) => a + b, 0);
+  const sumXY = xValues.reduce((acc, x, i) => acc + x * yValues[i], 0);
+  const sumX2 = xValues.reduce((acc, x) => acc + x * x, 0);
+
+  const denom = n * sumX2 - sumX * sumX;
+  if (denom === 0) return { slope: 0, intercept: sumY / n, r2: 0 };
+
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+
+  const yMean = sumY / n;
+  const ssTot = yValues.reduce((acc, y) => acc + (y - yMean) ** 2, 0);
+  const ssRes = yValues.reduce((acc, y, i) => acc + (y - (slope * i + intercept)) ** 2, 0);
+  const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+
+  return { slope, intercept, r2 };
+}
+
+function extractPivotHighs(bars: { high: number }[], radius: number = 2): number[] {
+  const pivots: number[] = [];
+  for (let i = radius; i < bars.length - radius; i++) {
+    let isHigh = true;
+    for (let j = i - radius; j <= i + radius; j++) {
+      if (bars[j].high > bars[i].high) { isHigh = false; break; }
+    }
+    if (isHigh) pivots.push(bars[i].high);
+  }
+  return pivots;
+}
+
+function extractPivotLows(bars: { low: number }[], radius: number = 2): number[] {
+  const pivots: number[] = [];
+  for (let i = radius; i < bars.length - radius; i++) {
+    let isLow = true;
+    for (let j = i - radius; j <= i + radius; j++) {
+      if (bars[j].low < bars[i].low) { isLow = false; break; }
+    }
+    if (isLow) pivots.push(bars[i].low);
+  }
+  return pivots;
 }
 
 type PatternDetector = (window: any[], timeframe?: string) => PatternDetectionResult;
@@ -606,39 +657,53 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
     direction: 'short',
     detector: (window) => {
       if (window.length < 15) return { detected: false, pivots: [] };
-      const closes = window.map(d => d.close);
-      
+
       // Prior uptrend required: wedge must form after a rise of ≥2%
-      const earlyLow = Math.min(...window.slice(0, 5).map(d => d.low));
-      const wedgeHigh = Math.max(...window.map(d => d.high));
+      const earlyLow = Math.min(...window.slice(0, 5).map((d: any) => d.low));
+      const wedgeHigh = Math.max(...window.map((d: any) => d.high));
       const priorRise = (wedgeHigh - earlyLow) / earlyLow;
       if (priorRise < 0.02) return { detected: false, pivots: [] };
-      
-      const firstHalf = window.slice(0, Math.floor(window.length / 2));
-      const secondHalf = window.slice(Math.floor(window.length / 2));
-      
-      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
-      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
-      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
-      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
-      
-      const upperRising = avgSecondHigh > avgFirstHigh;
-      const lowerRising = avgSecondLow > avgFirstLow;
-      
-      const firstRange = avgFirstHigh - avgFirstLow;
-      const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = upperRising && lowerRising && converging && lastClose < avgSecondLow * 0.998;
-      
+
+      const pivotHighs = extractPivotHighs(window);
+      const pivotLows = extractPivotLows(window);
+
+      if (pivotHighs.length < 2 || pivotLows.length < 2) {
+        return { detected: false, pivots: [] };
+      }
+
+      const highReg = linearRegression(pivotHighs);
+      const lowReg = linearRegression(pivotLows);
+
+      // Both trendlines rising
+      const bothRising = highReg.slope > 0 && lowReg.slope > 0;
+
+      // Converging: lower trendline rising faster (range narrowing)
+      const converging = lowReg.slope > highReg.slope;
+
+      // Range must have narrowed by at least 15%
+      const firstRange = pivotHighs[0] - pivotLows[0];
+      const lastRange = pivotHighs[pivotHighs.length - 1] - pivotLows[pivotLows.length - 1];
+      const rangeShrinking = firstRange > 0 && lastRange < firstRange * 0.85;
+
+      // Minimum fit quality (r² > 0.6 for both trendlines)
+      const goodFit = highReg.r2 > 0.6 && lowReg.r2 > 0.6;
+
+      // Breakdown: close < lowest pivot low × 0.998
+      const lowestLow = Math.min(...pivotLows);
+      const lastClose = window[window.length - 1].close;
+      const breakdown = lastClose < lowestLow * 0.998;
+
+      const detected = bothRising && converging && rangeShrinking && goodFit && breakdown;
+      const regressionQuality = Math.min(highReg.r2, lowReg.r2);
+
       return {
         detected,
+        regressionQuality: detected ? regressionQuality : undefined,
         pivots: detected ? [
-          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: avgSecondHigh, type: 'high', label: 'Upper Trend End' },
-          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
-          { index: window.length - 1, price: lastClose, type: 'low', label: 'Breakdown' }
+          { index: 0, price: pivotHighs[0], type: 'high' as const, label: 'Upper Trend Start' },
+          { index: window.length - 1, price: pivotHighs[pivotHighs.length - 1], type: 'high' as const, label: 'Upper Trend End' },
+          { index: 0, price: pivotLows[0], type: 'low' as const, label: 'Lower Trend Start' },
+          { index: window.length - 1, price: lastClose, type: 'low' as const, label: 'Breakdown' }
         ] : []
       };
     },
@@ -648,39 +713,53 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
     direction: 'long',
     detector: (window) => {
       if (window.length < 15) return { detected: false, pivots: [] };
-      const closes = window.map(d => d.close);
-      
+
       // Prior downtrend required: wedge must form after a drop of ≥2%
-      const earlyHigh = Math.max(...window.slice(0, 5).map(d => d.high));
-      const wedgeLow = Math.min(...window.map(d => d.low));
+      const earlyHigh = Math.max(...window.slice(0, 5).map((d: any) => d.high));
+      const wedgeLow = Math.min(...window.map((d: any) => d.low));
       const priorDrop = (earlyHigh - wedgeLow) / earlyHigh;
       if (priorDrop < 0.02) return { detected: false, pivots: [] };
-      
-      const firstHalf = window.slice(0, Math.floor(window.length / 2));
-      const secondHalf = window.slice(Math.floor(window.length / 2));
-      
-      const avgFirstHigh = firstHalf.reduce((s, d) => s + d.high, 0) / firstHalf.length;
-      const avgSecondHigh = secondHalf.reduce((s, d) => s + d.high, 0) / secondHalf.length;
-      const avgFirstLow = firstHalf.reduce((s, d) => s + d.low, 0) / firstHalf.length;
-      const avgSecondLow = secondHalf.reduce((s, d) => s + d.low, 0) / secondHalf.length;
-      
-      const upperFalling = avgSecondHigh < avgFirstHigh;
-      const lowerFalling = avgSecondLow < avgFirstLow;
-      
-      const firstRange = avgFirstHigh - avgFirstLow;
-      const secondRange = avgSecondHigh - avgSecondLow;
-      const converging = firstRange > 0 && secondRange < firstRange * 0.85;
-      
-      const lastClose = closes[closes.length - 1];
-      const detected = upperFalling && lowerFalling && converging && lastClose > avgSecondHigh * 1.002;
-      
+
+      const pivotHighs = extractPivotHighs(window);
+      const pivotLows = extractPivotLows(window);
+
+      if (pivotHighs.length < 2 || pivotLows.length < 2) {
+        return { detected: false, pivots: [] };
+      }
+
+      const highReg = linearRegression(pivotHighs);
+      const lowReg = linearRegression(pivotLows);
+
+      // Both trendlines falling
+      const bothFalling = highReg.slope < 0 && lowReg.slope < 0;
+
+      // Converging: upper trendline falling faster (range narrowing)
+      const converging = highReg.slope < lowReg.slope;
+
+      // Range must have narrowed by at least 15%
+      const firstRange = pivotHighs[0] - pivotLows[0];
+      const lastRange = pivotHighs[pivotHighs.length - 1] - pivotLows[pivotLows.length - 1];
+      const rangeShrinking = firstRange > 0 && lastRange < firstRange * 0.85;
+
+      // Minimum fit quality (r² > 0.6 for both trendlines)
+      const goodFit = highReg.r2 > 0.6 && lowReg.r2 > 0.6;
+
+      // Breakout: close > highest pivot high × 1.002
+      const highestHigh = Math.max(...pivotHighs);
+      const lastClose = window[window.length - 1].close;
+      const breakout = lastClose > highestHigh * 1.002;
+
+      const detected = bothFalling && converging && rangeShrinking && goodFit && breakout;
+      const regressionQuality = Math.min(highReg.r2, lowReg.r2);
+
       return {
         detected,
+        regressionQuality: detected ? regressionQuality : undefined,
         pivots: detected ? [
-          { index: 0, price: avgFirstHigh, type: 'high', label: 'Upper Trend Start' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' },
-          { index: 0, price: avgFirstLow, type: 'low', label: 'Lower Trend Start' },
-          { index: window.length - 1, price: avgSecondLow, type: 'low', label: 'Lower Trend End' }
+          { index: 0, price: pivotHighs[0], type: 'high' as const, label: 'Upper Trend Start' },
+          { index: window.length - 1, price: lastClose, type: 'high' as const, label: 'Breakout' },
+          { index: 0, price: pivotLows[0], type: 'low' as const, label: 'Lower Trend Start' },
+          { index: window.length - 1, price: pivotLows[pivotLows.length - 1], type: 'low' as const, label: 'Lower Trend End' }
         ] : []
       };
     },
