@@ -35,7 +35,7 @@ import {
 import { IndicatorSettings } from './FullChartViewer';
 import { VisualSpec } from '@/types/VisualSpec';
 import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
-import { renderNeckline } from './PatternOverlayRenderer';
+import { renderNeckline, renderZigZagSeries } from './PatternOverlayRenderer';
 
 interface FullChartPlaybackViewProps {
   bars: CompressedBar[];

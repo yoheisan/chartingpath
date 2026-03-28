@@ -75,7 +75,7 @@ import { PatternQualityBadge } from '@/components/charts/PatternQualityBadge';
 import { FullChartPlaybackView } from './FullChartPlaybackView';
 import { useSharePattern } from '@/hooks/useSharePattern';
 import { deriveFormationOverlay, snapFormationToChartTimes, buildZonePoints, findNearestCandleTime } from '@/utils/formationOverlay';
-import { renderNeckline } from './PatternOverlayRenderer';
+import { renderNeckline, renderZigZagSeries } from './PatternOverlayRenderer';
 import { isResolvedOutcome } from '@/utils/deriveLiveOutcome';
 import { translateQualityReason } from '@/utils/translateQualityReason';
 import { 
