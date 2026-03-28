@@ -96,36 +96,89 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
     : d.trend_alignment === "counter_trend" ? 0.3 : 0.55;
 
   if (!economicEvents || economicEvents.length === 0) {
-    return { raw: trendScore, details: { trendScore, eventCount: 0 } };
+    // No events at all in 7 days — maximum extended bonus (+3/25 = +0.12)
+    const raw = Math.min(1, trendScore * 0.5 + 1.0 * 0.5 + 0.12);
+    return {
+      raw,
+      details: {
+        trendScore,
+        eventScore: 1.0,
+        eventCount: 0,
+        highCount: 0,
+        mediumCount: 0,
+        timingWindow: {
+          daysUntilNextHighImpact: null,
+          isExtendedClean: true,
+          bonus: 3,
+        },
+      },
+    };
   }
 
   const instrument = (d.instrument || "").toUpperCase();
+  const now = Date.now();
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
   const relevantEvents = economicEvents.filter((e: any) => {
     const currency = (e.currency || e.country_code || "").toUpperCase();
     return instrument.includes(currency) || currency.includes(instrument.slice(0, 3));
   });
 
-  let eventScore = 1.0;
-  let highCount = 0;
-  let mediumCount = 0;
+  // Split into 3-day (standard penalties) and full window (bonus eval)
+  const eventsIn3Days = relevantEvents.filter((e: any) => {
+    const eventTime = new Date(e.scheduled_time || e.date).getTime();
+    return eventTime >= now && eventTime <= now + THREE_DAYS_MS;
+  });
 
-  for (const event of relevantEvents) {
+  let eventScore = 1.0;
+  let highCount3d = 0;
+  let mediumCount3d = 0;
+
+  for (const event of eventsIn3Days) {
     const impact = (event.impact || event.impact_level || "").toLowerCase();
-    if (impact === "high") { eventScore -= 0.15; highCount++; }
-    else if (impact === "medium") { eventScore -= 0.06; mediumCount++; }
+    if (impact === "high") { eventScore -= 0.15; highCount3d++; }
+    else if (impact === "medium") { eventScore -= 0.06; mediumCount3d++; }
   }
   eventScore = Math.max(0, Math.min(1, eventScore));
 
-  const raw = trendScore * 0.5 + eventScore * 0.5;
+  // Extended clean window bonus (all relevant events in 7 days)
+  const highImpactAll = relevantEvents.filter((e: any) => {
+    const impact = (e.impact || e.impact_level || "").toLowerCase();
+    return impact === "high";
+  });
+
+  let daysUntilNextHighImpact: number | null = null;
+  if (highImpactAll.length > 0) {
+    const sorted = [...highImpactAll].sort(
+      (a, b) => new Date(a.scheduled_time || a.date).getTime() - new Date(b.scheduled_time || b.date).getTime()
+    );
+    daysUntilNextHighImpact = Math.round(
+      (new Date(sorted[0].scheduled_time || sorted[0].date).getTime() - now) / (1000 * 60 * 60 * 24) * 10
+    ) / 10;
+  }
+
+  let extendedBonus = 0;
+  if (relevantEvents.length === 0) {
+    extendedBonus = 0.12; // +3/25
+  } else if (highImpactAll.length === 0) {
+    extendedBonus = 0.08; // +2/25
+  }
+
+  const raw = Math.min(1, trendScore * 0.5 + eventScore * 0.5 + extendedBonus);
 
   return {
     raw,
     details: {
       trendScore,
       eventScore: Math.round(eventScore * 100) / 100,
-      eventCount: relevantEvents.length,
-      highCount,
-      mediumCount,
+      eventCount: eventsIn3Days.length,
+      highCount: highCount3d,
+      mediumCount: mediumCount3d,
+      timingWindow: {
+        daysUntilNextHighImpact,
+        isExtendedClean: highImpactAll.length === 0,
+        bonus: extendedBonus === 0.12 ? 3 : extendedBonus === 0.08 ? 2 : 0,
+      },
     },
   };
 }
@@ -253,12 +306,12 @@ serve(async (req) => {
 
     // 2. Fetch upcoming economic events for timing agent
     const now = new Date();
-    const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const { data: economicEvents } = await supabase
       .from("economic_events")
       .select("*")
       .gte("scheduled_time", now.toISOString())
-      .lte("scheduled_time", in48h.toISOString());
+      .lte("scheduled_time", in7d.toISOString());
 
     // 3. Identify detections needing data lookup and fetch per-symbol stats FIRST
     const dataPoorDetections = detections.filter((d: any) => {

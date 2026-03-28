@@ -17,7 +17,8 @@ export function useUpcomingEconomicEvents() {
     queryKey: ['upcoming-economic-events'],
     queryFn: async () => {
       const now = new Date();
-      const lookahead = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      // Fetch 7 days for extended clean window bonus evaluation
+      const lookahead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
       const { data, error } = await supabase
         .from('economic_events')
@@ -31,7 +32,7 @@ export function useUpcomingEconomicEvents() {
       if (error) throw error;
       return (data || []) as UpcomingEconomicEvent[];
     },
-    staleTime: 300_000, // 5 min
+    staleTime: 300_000,
     refetchInterval: 600_000,
   });
 }
@@ -96,26 +97,76 @@ export function computeTimingFromEvents(
   symbol: string,
   assetType: string,
   events: UpcomingEconomicEvent[]
-): { score: number; eventCount: number; highCount: number; nearestEvent: string | null } {
+): {
+  score: number;
+  eventCount: number;
+  highCount: number;
+  nearestEvent: string | null;
+  timingWindow: {
+    daysUntilNextHighImpact: number | null;
+    isExtendedClean: boolean;
+    bonus: number;
+  };
+} {
   const currencies = getAffectedCurrencies(symbol, assetType);
-  
+  const now = Date.now();
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
   // Find events whose country maps to one of the instrument's currencies
   const relevantEvents = events.filter(ev => {
     const eventCurrencies = COUNTRY_TO_CURRENCY[ev.country_code] || [];
     return currencies.some(c => eventCurrencies.includes(c));
   });
 
-  const highCount = relevantEvents.filter(e => e.impact_level === 'high').length;
-  const mediumCount = relevantEvents.filter(e => e.impact_level === 'medium').length;
+  // Split into 3-day window (standard penalties) and full 7-day window (bonus eval)
+  const eventsIn3Days = relevantEvents.filter(ev => {
+    const dt = new Date(ev.scheduled_time).getTime() - now;
+    return dt >= 0 && dt <= THREE_DAYS_MS;
+  });
 
-  // Penalty: each high-impact = -0.15, each medium = -0.06
-  const penalty = Math.min(1, highCount * 0.15 + mediumCount * 0.06);
-  const score = Math.max(0, 1 - penalty);
+  const highCount3d = eventsIn3Days.filter(e => e.impact_level === 'high').length;
+  const mediumCount3d = eventsIn3Days.filter(e => e.impact_level === 'medium').length;
+
+  // Standard penalties (unchanged)
+  const penalty = Math.min(1, highCount3d * 0.15 + mediumCount3d * 0.06);
+  let score = Math.max(0, 1 - penalty);
+
+  // Extended clean window bonus (7-day lookahead)
+  const highImpactAll = relevantEvents.filter(e => e.impact_level === 'high');
+  const highCountAll = highImpactAll.length;
+
+  // Find days until next high-impact event
+  let daysUntilNextHighImpact: number | null = null;
+  if (highImpactAll.length > 0) {
+    const sortedHigh = [...highImpactAll].sort(
+      (a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()
+    );
+    daysUntilNextHighImpact = Math.round(
+      (new Date(sortedHigh[0].scheduled_time).getTime() - now) / (1000 * 60 * 60 * 24) * 10
+    ) / 10;
+  }
+
+  let extendedBonus = 0;
+  if (relevantEvents.length === 0) {
+    extendedBonus = 0.12; // +3/25 — completely clear 7 days
+  } else if (highCountAll === 0) {
+    extendedBonus = 0.08; // +2/25 — no high-impact in 7 days
+  }
+
+  // Apply bonus after deductions, cap at 1.0
+  score = Math.min(1, score + extendedBonus);
+
+  const isExtendedClean = highCountAll === 0;
 
   return {
     score,
-    eventCount: relevantEvents.length,
-    highCount,
+    eventCount: eventsIn3Days.length,
+    highCount: highCount3d,
     nearestEvent: relevantEvents[0]?.event_name || null,
+    timingWindow: {
+      daysUntilNextHighImpact,
+      isExtendedClean,
+      bonus: extendedBonus === 0.12 ? 3 : extendedBonus === 0.08 ? 2 : 0,
+    },
   };
 }

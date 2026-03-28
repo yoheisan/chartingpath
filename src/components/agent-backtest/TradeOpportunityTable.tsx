@@ -128,11 +128,12 @@ export function deriveRawScores(d: LiveDetectionRow, ctx?: ScoringContext) {
 
   const trendScore = d.trend_alignment === 'with_trend' ? 0.85 : d.trend_alignment === 'counter_trend' ? 0.3 : 0.55;
   let timingRaw = trendScore;
-  let timingDetails: { eventCount?: number; highCount?: number; nearestEvent?: string | null } = {};
+  let timingDetails: { eventCount?: number; highCount?: number; nearestEvent?: string | null; timingWindow?: { daysUntilNextHighImpact: number | null; isExtendedClean: boolean; bonus: number } } = {};
   if (ctx?.economicEvents && ctx.economicEvents.length > 0) {
     const eventTiming = computeTimingFromEvents(d.instrument, d.asset_type, ctx.economicEvents);
+    // eventTiming.score already includes the extended clean window bonus
     timingRaw = trendScore * 0.5 + eventTiming.score * 0.5;
-    timingDetails = { eventCount: eventTiming.eventCount, highCount: eventTiming.highCount, nearestEvent: eventTiming.nearestEvent };
+    timingDetails = { eventCount: eventTiming.eventCount, highCount: eventTiming.highCount, nearestEvent: eventTiming.nearestEvent, timingWindow: eventTiming.timingWindow };
   }
 
   let portfolioRaw: number | null;
