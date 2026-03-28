@@ -1,76 +1,28 @@
 
 
-# Ensure Pattern Lab and DB Seeding Use EODHD (Not Yahoo)
+# Plan: Generate Pattern Identification Methodology Audit Document
 
-## Current State — Yahoo Still Primary in Key Services
+## What
+Create a comprehensive PDF audit note documenting all pattern detection methodologies, quality scoring, agent scoring, bracket level computation, and known issues across Dashboard, Screener, Pattern Lab, and Agent Scoring — formatted for a data scientist to review.
 
-| Service | Yahoo Usage | Role |
-|---|---|---|
-| `seed-historical-patterns/index.ts` | `fetchYahooData()` — **primary and only source** | Seeds historical pattern OHLCV |
-| `seed-historical-patterns-mtf/index.ts` | Yahoo **primary for FX intraday**, fallback for everything else | Seeds MTF historical patterns |
-| `seed-price-timeseries/index.ts` | Yahoo **primary for FX**, fallback for stocks/ETFs/indices | Seeds intraday price cache |
-| `scan-live-patterns/index.ts` | `fetchYahooDataSingle()` — **primary on DB miss** | Live pattern detection |
-| `validate-mtf-confluence/index.ts` | `fetch-yahoo-finance` — **primary fallback** | MTF confluence checks |
-| `get-cached-market-report/index.ts` | Yahoo — **primary for stocks, forex, commodities quotes** | Daily market report |
-| `fetch-market-breadth/index.ts` | Yahoo — **primary for VIX, A/D data** | Market breadth widget |
-| `DynamicArticle.tsx` | `fetch-yahoo-finance` — **primary fallback** | Blog article charts |
+## Document Structure
+1. **Executive Summary** — scope, purpose, systems covered
+2. **Pattern Registry** — all 17 active patterns with detection logic parameters
+3. **Detection Methodology per Pattern** — pivot detection, tolerances, confirmation rules, trend gating
+4. **Bracket Levels (SL/TP)** — ATR-based computation, flooring, R:R guards
+5. **Quality Scoring System** — 9 factors with weights, grade thresholds, repeatability gate
+6. **Agent Scoring Pipeline** — 4 agents (Analyst, Risk, Timing, Portfolio), scoring math, verdict cutoffs
+7. **Known Issues & Audit Flags** — identified weaknesses for data scientist review
+8. **Data Source Routing** — EODHD primary, Binance for crypto, Yahoo fallback
 
-Pattern Lab backtest engine (`projects-run`) is already clean — no Yahoo.
+## Implementation
+- Single script generating a PDF via Python (`reportlab`) to `/mnt/documents/`
+- Content sourced from codebase analysis above
+- No codebase changes needed
 
-## Implementation Plan
-
-### 1. `seed-historical-patterns/index.ts` — Replace Yahoo with EODHD
-- Replace `fetchYahooData()` with a new `fetchEODHDData()` that calls the EODHD EOD API directly using `Deno.env.get('EODHD_API_KEY')`
-- Convert Yahoo-format symbols to EODHD format (reuse `toEODHDSymbol` logic from `fetch-eodhd`)
-- Keep Yahoo as last-resort fallback only
-
-### 2. `seed-historical-patterns-mtf/index.ts` — Fix FX intraday routing
-- Change FX intraday path (lines 1511-1519) from Yahoo-first to **EODHD-first**
-- EODHD covers FX intraday (1h) for 120 days; Yahoo has 729 days but should only be fallback
-- Keep Yahoo as fallback if EODHD returns nothing
-
-### 3. `seed-price-timeseries/index.ts` — Fix FX routing
-- Change FX path (lines 218-222) from Yahoo-first to **EODHD-first**
-- Keep Yahoo as fallback only
-
-### 4. `scan-live-patterns/index.ts` — Replace primary Yahoo fetch
-- Replace `fetchYahooDataSingle()` with `fetchEODHDDataSingle()` that calls EODHD API directly
-- Rename `symbolsNeedingYahoo` → `symbolsNeedingExternal`
-- Try EODHD first, fall back to Yahoo only if EODHD returns empty
-- Crypto symbols route to Binance/Yahoo (not EODHD)
-
-### 5. `validate-mtf-confluence/index.ts` — Replace Yahoo fallback
-- Change `fetch-yahoo-finance` invoke to `fetch-eodhd` invoke
-- Add Yahoo as second fallback if EODHD returns nothing
-
-### 6. `get-cached-market-report/index.ts` — Replace Yahoo quote fetching
-- Replace `fetchYahooQuote()` with `fetchEODHDQuote()` using EODHD's real-time/EOD endpoint
-- EODHD supports stocks (`.INDX`), forex (`.FOREX`), commodities (`.COMM`)
-- Keep Finnhub for US stocks (already in place) and crypto (Binance, already in place)
-- Yahoo becomes last-resort only
-
-### 7. `fetch-market-breadth/index.ts` — Replace where possible
-- VIX: use EODHD (`VIX.INDX`)
-- A/D data (`^ADV`, `^DECL`, `^UNCH`): these are NYSE breadth indicators — EODHD may not cover them. Keep Yahoo for these specific symbols only, with a comment explaining why
-- Put/Call ratio: same — Yahoo may be the only free source
-
-### 8. `DynamicArticle.tsx` — Replace Yahoo fallback
-- Change `fetch-yahoo-finance` invoke to `fetch-eodhd` invoke
-- Add Yahoo as second fallback if EODHD returns nothing
-
-## Scope
-- 8 files modified
-- 2 edge functions need redeployment (`scan-live-patterns`, `validate-mtf-confluence`, `seed-historical-patterns`, `seed-historical-patterns-mtf`, `seed-price-timeseries`, `get-cached-market-report`, `fetch-market-breadth`)
-- No DB changes
-- No UI changes
-- Symbol conversion logic (Yahoo→EODHD format) will be duplicated inline in each edge function since they can't import from `fetch-eodhd` (each function is self-contained)
-
-## Data Source After Fix
-
-```text
-Crypto             →  Binance (primary) → Yahoo fallback
-Everything else    →  DB-first → EODHD → Yahoo (last resort only)
-Market breadth A/D →  Yahoo (only source for ^ADV/^DECL/^UNCH)
-4H / 8H            →  Fetch 1H from EODHD → aggregate
-```
+## Technical Details
+- All detection parameters extracted from `patternDetectors.ts` (1087 lines)
+- Quality scorer from `patternQualityScorer.ts` (919 lines, 9 weighted factors)
+- Bracket levels from `bracketLevels.ts` (v1.1.0, ATR floor + min R:R)
+- Agent scoring from `engine/backtester-v2/agents/` (4 agents, 0-25 each, 0-100 composite)
 
