@@ -1095,22 +1095,35 @@ const TF_DATA_LIMITS: Record<string, { rangeDays: number; maxBars: number }> = {
   '1wk': { rangeDays: 365 * 10, maxBars: 520 }  // 10+ years
 };
 
-// Aggregate 1h bars to 4h bars
+// Aggregate 1h bars to 4h bars (UTC-anchored, skip partial bars)
 function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+  const grouped = new Map<string, OHLCBar[]>();
+  
+  for (const bar of bars) {
+    const d = new Date(bar.date);
+    const periodStart = Math.floor(d.getUTCHours() / 4) * 4;
+    const boundary = new Date(d);
+    boundary.setUTCHours(periodStart, 0, 0, 0);
+    const key = boundary.toISOString();
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(bar);
+  }
+  
   const result: OHLCBar[] = [];
-  for (let i = 0; i < bars.length; i += 4) {
-    const chunk = bars.slice(i, Math.min(i + 4, bars.length));
-    if (chunk.length === 0) continue;
-    
+  for (const [key, wBars] of grouped) {
+    if (wBars.length < 4) continue; // skip partial bars
+    wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
-      date: chunk[0].date,
-      open: chunk[0].open,
-      high: Math.max(...chunk.map(b => b.high)),
-      low: Math.min(...chunk.map(b => b.low)),
-      close: chunk[chunk.length - 1].close,
-      volume: chunk.reduce((sum, b) => sum + (b.volume || 0), 0)
+      date: key,
+      open: wBars[0].open,
+      high: Math.max(...wBars.map(b => b.high)),
+      low: Math.min(...wBars.map(b => b.low)),
+      close: wBars[wBars.length - 1].close,
+      volume: wBars.reduce((sum, b) => sum + (b.volume || 0), 0)
     });
   }
+  
+  result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   return result;
 }
 

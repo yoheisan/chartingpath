@@ -219,22 +219,33 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       let processedData = data.reverse();
 
-      // Aggregate 1h → 4h/8h if needed
+      // Aggregate 1h → 4h/8h if needed (UTC-anchored)
       if (isHourlyAggregated) {
         const hours = timeframe === '8h' ? 8 : 4;
+        const grouped = new Map<string, typeof processedData>();
+        for (const bar of processedData) {
+          const d = new Date(bar.date);
+          const periodStart = Math.floor(d.getUTCHours() / hours) * hours;
+          const boundary = new Date(d);
+          boundary.setUTCHours(periodStart, 0, 0, 0);
+          const key = boundary.toISOString();
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key)!.push(bar);
+        }
         const aggregated: typeof processedData = [];
-        for (let i = 0; i < processedData.length; i += hours) {
-          const chunk = processedData.slice(i, i + hours);
-          if (chunk.length === 0) break;
+        for (const [key, wBars] of grouped) {
+          if (wBars.length < hours) continue; // skip partial bars
+          wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           aggregated.push({
-            date: chunk[0].date,
-            open: chunk[0].open,
-            high: Math.max(...chunk.map(b => b.high)),
-            low: Math.min(...chunk.map(b => b.low)),
-            close: chunk[chunk.length - 1].close,
-            volume: chunk.reduce((sum, b) => sum + (b.volume || 0), 0),
+            date: key,
+            open: wBars[0].open,
+            high: Math.max(...wBars.map(b => b.high)),
+            low: Math.min(...wBars.map(b => b.low)),
+            close: wBars[wBars.length - 1].close,
+            volume: wBars.reduce((sum, b) => sum + (b.volume || 0), 0),
           });
         }
+        aggregated.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         processedData = aggregated;
       }
 
@@ -314,23 +325,34 @@ export const CommandCenterChart = memo(function CommandCenterChart({
 
       if (dbError) throw dbError;
 
-      // Aggregate 1h → 4h/8h if needed
+      // Aggregate 1h → 4h/8h if needed (UTC-anchored)
       let processedData = data;
       if (isHourlyAggregated && data && data.length > 0) {
         const hours = timeframe === '8h' ? 8 : 4;
+        const grouped = new Map<string, typeof data>();
+        for (const bar of data) {
+          const d = new Date(bar.date);
+          const periodStart = Math.floor(d.getUTCHours() / hours) * hours;
+          const boundary = new Date(d);
+          boundary.setUTCHours(periodStart, 0, 0, 0);
+          const key = boundary.toISOString();
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key)!.push(bar);
+        }
         const aggregated: typeof data = [];
-        for (let i = 0; i < data.length; i += hours) {
-          const chunk = data.slice(i, i + hours);
-          if (chunk.length === 0) break;
+        for (const [key, wBars] of grouped) {
+          if (wBars.length < hours) continue; // skip partial bars
+          wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           aggregated.push({
-            date: chunk[0].date,
-            open: chunk[0].open,
-            high: Math.max(...chunk.map(b => b.high)),
-            low: Math.min(...chunk.map(b => b.low)),
-            close: chunk[chunk.length - 1].close,
-            volume: chunk.reduce((sum, b) => sum + (b.volume || 0), 0),
+            date: key,
+            open: wBars[0].open,
+            high: Math.max(...wBars.map(b => b.high)),
+            low: Math.min(...wBars.map(b => b.low)),
+            close: wBars[wBars.length - 1].close,
+            volume: wBars.reduce((sum, b) => sum + (b.volume || 0), 0),
           });
         }
+        aggregated.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         processedData = aggregated;
         console.log(`[CommandCenterChart] Aggregated ${data.length} 1h bars → ${aggregated.length} ${timeframe} bars from DB`);
       }
