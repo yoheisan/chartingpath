@@ -3325,19 +3325,25 @@ export type Database = {
           avg_holding_hours: number | null
           avg_r_multiple: number
           created_at: string
+          data_version: number | null
           direction: string
           expectancy: number
           first_signal_date: string | null
           id: string
           instrument_category: string | null
+          is_reseeding: boolean | null
+          last_reseeded_at: string | null
           last_signal_date: string | null
           losses: number
           max_drawdown_r: number | null
           pattern_id: string
           pattern_name: string
+          previous_sample_size: number | null
+          previous_win_rate: number | null
           profit_factor: number
           regime_breakdown: Json | null
           reliability_score: number
+          reseed_reason: string | null
           sample_confidence: string | null
           timeframe: string
           total_signals: number
@@ -3350,19 +3356,25 @@ export type Database = {
           avg_holding_hours?: number | null
           avg_r_multiple?: number
           created_at?: string
+          data_version?: number | null
           direction: string
           expectancy?: number
           first_signal_date?: string | null
           id?: string
           instrument_category?: string | null
+          is_reseeding?: boolean | null
+          last_reseeded_at?: string | null
           last_signal_date?: string | null
           losses?: number
           max_drawdown_r?: number | null
           pattern_id: string
           pattern_name: string
+          previous_sample_size?: number | null
+          previous_win_rate?: number | null
           profit_factor?: number
           regime_breakdown?: Json | null
           reliability_score?: number
+          reseed_reason?: string | null
           sample_confidence?: string | null
           timeframe: string
           total_signals?: number
@@ -3375,19 +3387,25 @@ export type Database = {
           avg_holding_hours?: number | null
           avg_r_multiple?: number
           created_at?: string
+          data_version?: number | null
           direction?: string
           expectancy?: number
           first_signal_date?: string | null
           id?: string
           instrument_category?: string | null
+          is_reseeding?: boolean | null
+          last_reseeded_at?: string | null
           last_signal_date?: string | null
           losses?: number
           max_drawdown_r?: number | null
           pattern_id?: string
           pattern_name?: string
+          previous_sample_size?: number | null
+          previous_win_rate?: number | null
           profit_factor?: number
           regime_breakdown?: Json | null
           reliability_score?: number
+          reseed_reason?: string | null
           sample_confidence?: string | null
           timeframe?: string
           total_signals?: number
@@ -3686,6 +3704,39 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
           yearly_price_cents?: number
+        }
+        Relationships: []
+      }
+      platform_data_version: {
+        Row: {
+          activated_at: string | null
+          changes_summary: string[] | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          version: number
+        }
+        Insert: {
+          activated_at?: string | null
+          changes_summary?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          version: number
+        }
+        Update: {
+          activated_at?: string | null
+          changes_summary?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          version?: number
         }
         Relationships: []
       }
@@ -4277,6 +4328,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reseed_audit_log: {
+        Row: {
+          asset_class: string | null
+          completed_at: string | null
+          detections_after: number | null
+          detections_before: number | null
+          id: string
+          instruments_affected: number | null
+          pattern_id: string | null
+          reseed_batch: string
+          reseed_reason: string | null
+          started_at: string | null
+          status: string | null
+          timeframe: string | null
+          win_rate_after: number | null
+          win_rate_before: number | null
+        }
+        Insert: {
+          asset_class?: string | null
+          completed_at?: string | null
+          detections_after?: number | null
+          detections_before?: number | null
+          id?: string
+          instruments_affected?: number | null
+          pattern_id?: string | null
+          reseed_batch: string
+          reseed_reason?: string | null
+          started_at?: string | null
+          status?: string | null
+          timeframe?: string | null
+          win_rate_after?: number | null
+          win_rate_before?: number | null
+        }
+        Update: {
+          asset_class?: string | null
+          completed_at?: string | null
+          detections_after?: number | null
+          detections_before?: number | null
+          id?: string
+          instruments_affected?: number | null
+          pattern_id?: string | null
+          reseed_batch?: string
+          reseed_reason?: string | null
+          started_at?: string | null
+          status?: string | null
+          timeframe?: string | null
+          win_rate_after?: number | null
+          win_rate_before?: number | null
+        }
+        Relationships: []
       }
       scan_requests: {
         Row: {

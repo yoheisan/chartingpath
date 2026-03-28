@@ -11,6 +11,7 @@ import { OnboardingTour } from "./onboarding/OnboardingTour";
 import { ActivationChecklist } from "./onboarding/ActivationChecklist";
 import { CaptureButton } from "./capture";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DataQualityBanner } from "./platform/DataQualityBanner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -44,6 +45,7 @@ const Layout = ({ children }: LayoutProps) => {
     return (
       <div className="h-screen flex flex-col overflow-hidden">
         <Navigation />
+        <DataQualityBanner />
         <main className="flex-1 min-h-0">
           {children}
         </main>
@@ -67,6 +69,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
+      <DataQualityBanner />
       <main className="flex-1">
         {children}
       </main>

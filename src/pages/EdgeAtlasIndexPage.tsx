@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { PageMeta } from '@/components/PageMeta';
+import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
 
 const BULLISH_PATTERNS = new Set([
   "donchian-breakout-long",
@@ -27,11 +28,14 @@ const EdgeAtlasIndexPage = () => {
         canonicalPath="/edge-atlas"
       />
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 rounded-lg bg-amber-500/15">
-          <Trophy className="h-6 w-6 text-amber-500" />
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/15">
+            <Trophy className="h-6 w-6 text-amber-500" />
+          </div>
+          <h1 className="text-3xl font-bold">{t('edgeAtlas.indexTitle')}</h1>
         </div>
-        <h1 className="text-3xl font-bold">{t('edgeAtlas.indexTitle')}</h1>
+        <DataVersionBadge />
       </div>
       <p className="text-muted-foreground mb-8 max-w-2xl">
         {t('edgeAtlas.indexDescription')}
