@@ -41,6 +41,9 @@ interface BreadthMeta {
 interface BreadthResponse {
   data: BreadthData;
   meta: BreadthMeta;
+  dataAvailable?: boolean;
+  dataSource?: 'yahoo' | 'finnhub' | 'fallback' | 'unavailable';
+  breadthError?: string;
 }
 
 interface MarketOverviewPanelProps {
@@ -87,7 +90,13 @@ async function fetchBreadthDataFn(): Promise<BreadthResponse | null> {
   }
 
   if (data?.success) {
-    return { data: data.data, meta: data.meta };
+    return {
+      data: data.data,
+      meta: data.meta,
+      dataAvailable: data.dataAvailable ?? true,
+      dataSource: data.dataSource ?? 'yahoo',
+      breadthError: data.breadthError,
+    };
   }
   return null;
 }
@@ -258,6 +267,9 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
   const topLosers = marketData?.topLosers || [];
   const breadthData = breadthResponse?.data || null;
   const breadthMeta = breadthResponse?.meta || null;
+  const breadthDataSource = breadthResponse?.dataSource ?? 'yahoo';
+  const breadthDataAvailable = breadthResponse?.dataAvailable ?? true;
+  const breadthErrorMsg = breadthResponse?.breadthError;
   const loading = marketLoading;
 
   const formatPrice = (price: number) => {
@@ -451,6 +463,18 @@ export function MarketOverviewPanel({ onSymbolSelect, defaultTab = 'indices', on
                         "Weak breadth — broad selling pressure across the market."}
                     </p>
                   </div>
+
+                  {/* Data Source Indicator */}
+                  {(breadthDataSource === 'fallback' || !breadthDataAvailable) && (
+                    <div className="rounded-md bg-muted/80 border border-border px-2.5 py-1.5 flex items-center gap-1.5">
+                      <Activity className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {breadthDataSource === 'fallback'
+                          ? 'Using cached data'
+                          : 'Breadth data unavailable'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Last Updated */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
