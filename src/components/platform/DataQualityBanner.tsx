@@ -32,11 +32,16 @@ const BATCH_LABELS = [
   'Final validation',
 ];
 
+/** Banner auto-hides 7 days after v2.0 activation */
+const BANNER_EXPIRY_DAYS = 7;
+
 export function DataQualityBanner() {
   const [progress, setProgress] = useState<ReseedProgress | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [version, setVersion] = useState<PlatformVersion | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     fetchVersionAndProgress();
@@ -75,11 +80,45 @@ export function DataQualityBanner() {
     const activeVersion = versions.find((v: any) => v.is_active);
     setVersion(activeVersion ?? null);
 
+    // Check if v2.0 is active and all batches are done — completion state
+    const v2Active = activeVersion?.version === 2;
+    const hasFinalEntry = auditLogs.some((l: any) =>
+      l.reseed_batch?.includes('FINAL') && l.status === 'completed'
+    );
+
+    if (v2Active && hasFinalEntry) {
+      // Check if banner has expired (7 days after activation)
+      const activatedAt = activeVersion?.activated_at;
+      if (activatedAt) {
+        const expiryDate = new Date(activatedAt);
+        expiryDate.setDate(expiryDate.getDate() + BANNER_EXPIRY_DAYS);
+        if (new Date() > expiryDate) {
+          setIsExpired(true);
+          return;
+        }
+      }
+
+      setIsComplete(true);
+      const completedBatches = auditLogs
+        .filter((l: any) => l.status === 'completed')
+        .map((l: any) => l.reseed_batch);
+
+      setProgress({
+        isReseeding: false,
+        currentBatch: null,
+        patternsAffected: [],
+        estimatedCompletion: null,
+        completedBatches,
+        totalBatches: 8,
+      });
+      return;
+    }
+
     const runningBatches = auditLogs.filter((l: any) => l.status === 'running');
     const completedBatches = auditLogs.filter((l: any) => l.status === 'completed');
     const isReseeding = runningBatches.length > 0;
 
-    if (isReseeding || (completedBatches.length > 0 && activeVersion?.version === 1)) {
+    if (isReseeding || (completedBatches.length > 0 && !v2Active)) {
       setProgress({
         isReseeding,
         currentBatch: runningBatches[0]?.reseed_batch ?? null,
@@ -91,7 +130,7 @@ export function DataQualityBanner() {
     }
   };
 
-  if (dismissed || !progress) return null;
+  if (dismissed || isExpired || !progress) return null;
 
   return (
     <div className="border-b border-border bg-muted/50">
@@ -99,16 +138,20 @@ export function DataQualityBanner() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              {progress.isReseeding ? (
+              {isComplete ? (
+                <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              ) : progress.isReseeding ? (
                 <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
               ) : (
                 <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
               )}
 
               <p className="text-sm text-foreground">
-                {progress.isReseeding
-                  ? `Improving detection accuracy — updating ${progress.currentBatch} data. Win rates may shift slightly as methodology improves.`
-                  : `Detection accuracy upgrade complete — ${progress.completedBatches.length} pattern types now use improved methodology.`
+                {isComplete
+                  ? "Detection accuracy upgrade complete — pattern detection methodology has been improved across 8 pattern types. Win rates and statistics now reflect more accurate historical analysis."
+                  : progress.isReseeding
+                    ? `Improving detection accuracy — updating ${progress.currentBatch} data. Win rates may shift slightly as methodology improves.`
+                    : `Detection accuracy upgrade complete — ${progress.completedBatches.length} pattern types now use improved methodology.`
                 }
               </p>
 
@@ -138,38 +181,35 @@ export function DataQualityBanner() {
             <div>
               <h4 className="font-medium mb-1.5 flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                Why are win rates changing?
+                {isComplete ? 'What improved?' : 'Why are win rates changing?'}
               </h4>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                We identified 8 areas where our pattern detection methodology
-                could be more accurate. The improvements fix issues like
-                incorrect ATR calculations for stocks, missed Symmetrical
-                Triangle short breakouts, and overly tight stop levels on
-                Forex. The historical data is being recalculated to reflect
-                these improvements — this is the data becoming more accurate,
-                not less reliable.
+                {isComplete
+                  ? "We improved 8 areas of our pattern detection methodology: corrected ATR calculations for stocks, fixed Symmetrical Triangle short breakouts, tightened Cup/Handle retracement limits, improved Triple Top/Bottom pivot detection, widened Forex stop levels, and enhanced quality scoring with multi-timeframe confirmation and symmetry analysis. All historical data has been recalculated to reflect these improvements."
+                  : "We identified 8 areas where our pattern detection methodology could be more accurate. The improvements fix issues like incorrect ATR calculations for stocks, missed Symmetrical Triangle short breakouts, and overly tight stop levels on Forex. The historical data is being recalculated to reflect these improvements — this is the data becoming more accurate, not less reliable."
+                }
               </p>
-              {progress.currentBatch?.includes('Triple') && (
+              {!isComplete && progress.currentBatch?.includes('Triple') && (
                 <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
                   <strong>Triple Top/Bottom:</strong> These patterns are being recalculated with a stricter detection filter. You may see fewer Triple Top/Bottom signals going forward — this is intentional. The remaining signals are higher quality.
                 </p>
               )}
-              {progress.currentBatch?.includes('Forex') && (
+              {!isComplete && progress.currentBatch?.includes('Forex') && (
                 <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
                   <strong>Forex Brackets:</strong> Forex pattern stop levels are being recalculated with more appropriate minimum distances. This may cause Forex win rates to increase slightly — the previous data slightly underestimated performance due to stops that were too tight for normal market conditions.
                 </p>
               )}
-              {progress.currentBatch?.includes('Stocks') && (
+              {!isComplete && progress.currentBatch?.includes('Stocks') && (
                 <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
                   <strong>Stocks/Indices/Commodities ATR:</strong> Pattern statistics are being recalculated with a more accurate volatility measurement. The previous calculation didn't account for overnight gaps — this fix gives a more realistic picture of pattern performance for these asset classes.
                 </p>
               )}
-              {progress.currentBatch?.includes('Score') && (
+              {!isComplete && progress.currentBatch?.includes('Score') && (
                 <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
                   <strong>Score Recalculation:</strong> Pattern quality grades are being recalculated with improved scoring factors including multi-timeframe confirmation, more accurate volume handling for Forex, and better symmetry assessment. Some patterns may shift by one grade in either direction.
                 </p>
               )}
-              {progress.currentBatch?.includes('4H/8H') && (
+              {!isComplete && progress.currentBatch?.includes('4H/8H') && (
                 <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
                   <strong>4H/8H OHLC Reseed:</strong> 4H and 8H pattern data is being fully recalculated following the detection of an OHLC data accuracy issue. This process takes several hours. 1H and 1D data is completely unaffected.
                 </p>
@@ -178,23 +218,34 @@ export function DataQualityBanner() {
 
             <div>
               <h4 className="font-medium mb-1.5">
-                Progress ({progress.completedBatches.length}/{progress.totalBatches} batches)
+                {isComplete
+                  ? `All ${progress.totalBatches} batches complete ✓`
+                  : `Progress (${progress.completedBatches.length}/${progress.totalBatches} batches)`
+                }
               </h4>
               <div className="space-y-1">
                 {BATCH_LABELS.map((batch, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <div className={cn(
                       'h-1.5 w-1.5 rounded-full flex-shrink-0',
-                      progress.completedBatches.some(b => b.includes(batch.split(' ')[0]))
+                      isComplete || progress.completedBatches.some(b => b.includes(batch.split(' ')[0]))
                         ? 'bg-emerald-400'
                         : progress.currentBatch?.includes(batch.split(' ')[0])
                           ? 'bg-amber-400 animate-pulse'
                           : 'bg-muted-foreground/30'
                     )} />
-                    <span className="text-muted-foreground">{batch}</span>
+                    <span className={cn(
+                      'text-muted-foreground',
+                      isComplete && 'line-through opacity-70'
+                    )}>{batch}</span>
                   </div>
                 ))}
               </div>
+              {isComplete && version?.activated_at && (
+                <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
+                  v2.0 activated {new Date(version.activated_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
         )}
