@@ -39,6 +39,7 @@ export const PATTERN_OVERLAY_COLORS = {
   winOutcome: '#22c55e',
   lossOutcome: '#ef4444',
   pendingOutcome: '#6b7280',
+  neckline: 'rgba(200, 200, 200, 0.6)',
 } as const;
 
 /** A historical pattern occurrence for chart overlay rendering */
