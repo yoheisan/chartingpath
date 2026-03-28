@@ -90,7 +90,13 @@ async function fetchBreadthDataFn(): Promise<BreadthResponse | null> {
   }
 
   if (data?.success) {
-    return { data: data.data, meta: data.meta };
+    return {
+      data: data.data,
+      meta: data.meta,
+      dataAvailable: data.dataAvailable ?? true,
+      dataSource: data.dataSource ?? 'yahoo',
+      breadthError: data.breadthError,
+    };
   }
   return null;
 }
