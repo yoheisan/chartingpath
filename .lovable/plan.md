@@ -1,54 +1,76 @@
 
 
-# Unify All Non-Crypto Data to EODHD
+# Ensure Pattern Lab and DB Seeding Use EODHD (Not Yahoo)
 
-## What changes and why
+## Current State — Yahoo Still Primary in Key Services
 
-Currently, all intraday requests (1h, 4h, 8h) for non-crypto symbols bypass EODHD and go straight to Yahoo Finance. This creates data parity issues between the pattern detector and the chart display. The fix is simple: remove the Yahoo bypass for intraday and route everything through EODHD first.
+| Service | Yahoo Usage | Role |
+|---|---|---|
+| `seed-historical-patterns/index.ts` | `fetchYahooData()` — **primary and only source** | Seeds historical pattern OHLCV |
+| `seed-historical-patterns-mtf/index.ts` | Yahoo **primary for FX intraday**, fallback for everything else | Seeds MTF historical patterns |
+| `seed-price-timeseries/index.ts` | Yahoo **primary for FX**, fallback for stocks/ETFs/indices | Seeds intraday price cache |
+| `scan-live-patterns/index.ts` | `fetchYahooDataSingle()` — **primary on DB miss** | Live pattern detection |
+| `validate-mtf-confluence/index.ts` | `fetch-yahoo-finance` — **primary fallback** | MTF confluence checks |
+| `get-cached-market-report/index.ts` | Yahoo — **primary for stocks, forex, commodities quotes** | Daily market report |
+| `fetch-market-breadth/index.ts` | Yahoo — **primary for VIX, A/D data** | Market breadth widget |
+| `DynamicArticle.tsx` | `fetch-yahoo-finance` — **primary fallback** | Blog article charts |
 
-**EODHD coverage confirmed** (from their docs):
-- **Stocks (US + global)**: 1m since 2004, 5m/1h since Oct 2020 — up to 7200 days for 1h
-- **Forex**: 1m since 2009, 5m/1h since Oct 2020
-- **Commodities** (GC=F → GC.COMM): Supported via `.COMM` exchange
-- **Indices** (^GSPC → GSPC.INDX): Supported via `.INDX` exchange
-- **ETFs**: Supported same as stocks (e.g., SPY.US)
+Pattern Lab backtest engine (`projects-run`) is already clean — no Yahoo.
 
-4H and 8H are not natively available from EODHD — the existing aggregation from 1h bars (already implemented in both `fetch-eodhd` and `fetchMarketBars.ts`) will continue to handle these.
+## Implementation Plan
 
-## Implementation
+### 1. `seed-historical-patterns/index.ts` — Replace Yahoo with EODHD
+- Replace `fetchYahooData()` with a new `fetchEODHDData()` that calls the EODHD EOD API directly using `Deno.env.get('EODHD_API_KEY')`
+- Convert Yahoo-format symbols to EODHD format (reuse `toEODHDSymbol` logic from `fetch-eodhd`)
+- Keep Yahoo as last-resort fallback only
 
-### File 1: `src/lib/fetchMarketBars.ts`
-**Remove the intraday Yahoo bypass** (lines 162-172). Instead, route non-crypto intraday through EODHD-first with Yahoo as last-resort fallback only.
+### 2. `seed-historical-patterns-mtf/index.ts` — Fix FX intraday routing
+- Change FX intraday path (lines 1511-1519) from Yahoo-first to **EODHD-first**
+- EODHD covers FX intraday (1h) for 120 days; Yahoo has 729 days but should only be fallback
+- Keep Yahoo as fallback if EODHD returns nothing
 
-- Delete the block that says "Non-crypto intraday: skip EODHD entirely, go straight to Yahoo"
-- Let intraday requests fall through to the existing EODHD-first → Yahoo-fallback path (lines 174-209)
-- Keep the crypto path unchanged (Binance-first → Yahoo-fallback)
+### 3. `seed-price-timeseries/index.ts` — Fix FX routing
+- Change FX path (lines 218-222) from Yahoo-first to **EODHD-first**
+- Keep Yahoo as fallback only
 
-### File 2: `supabase/functions/scan-live-patterns/index.ts`
-- Verify no direct Yahoo calls remain for non-crypto instruments (already clean based on search)
+### 4. `scan-live-patterns/index.ts` — Replace primary Yahoo fetch
+- Replace `fetchYahooDataSingle()` with `fetchEODHDDataSingle()` that calls EODHD API directly
+- Rename `symbolsNeedingYahoo` → `symbolsNeedingExternal`
+- Try EODHD first, fall back to Yahoo only if EODHD returns empty
+- Crypto symbols route to Binance/Yahoo (not EODHD)
 
-### File 3: Backend callers audit
-- `validate-mtf-confluence/index.ts` — calls Yahoo directly for bar fetching; update to call `fetch-eodhd` first
-- `trading-copilot/index.ts` — calls Yahoo directly; update to call `fetch-eodhd` first
-- `TickerStudy.tsx` — calls Yahoo for candlestick data; update to call `fetch-eodhd` first
-- `SupabaseDBFirstAdapter.ts` — uses Yahoo as external fallback; update fallback to `fetch-eodhd`
+### 5. `validate-mtf-confluence/index.ts` — Replace Yahoo fallback
+- Change `fetch-yahoo-finance` invoke to `fetch-eodhd` invoke
+- Add Yahoo as second fallback if EODHD returns nothing
 
-### No changes needed
-- `fetch-eodhd/index.ts` — already handles intraday (1h), forex (`.FOREX`), commodities (`.COMM`), indices (`.INDX`), ETFs (`.US`), and aggregation for 4h/8h/15m/30m
-- Crypto path stays Binance-first (unchanged)
-- `dataCoverageContract.ts` — coverage limits remain valid for EODHD
+### 6. `get-cached-market-report/index.ts` — Replace Yahoo quote fetching
+- Replace `fetchYahooQuote()` with `fetchEODHDQuote()` using EODHD's real-time/EOD endpoint
+- EODHD supports stocks (`.INDX`), forex (`.FOREX`), commodities (`.COMM`)
+- Keep Finnhub for US stocks (already in place) and crypto (Binance, already in place)
+- Yahoo becomes last-resort only
 
-## Summary of routing after fix
+### 7. `fetch-market-breadth/index.ts` — Replace where possible
+- VIX: use EODHD (`VIX.INDX`)
+- A/D data (`^ADV`, `^DECL`, `^UNCH`): these are NYSE breadth indicators — EODHD may not cover them. Keep Yahoo for these specific symbols only, with a comment explaining why
+- Put/Call ratio: same — Yahoo may be the only free source
 
-```text
-Crypto (BTC-USD, ETH-USD)  →  Binance → Yahoo fallback
-Everything else (all TFs)  →  DB-first → EODHD → Yahoo fallback (last resort only)
-4H / 8H                   →  Fetch 1H from EODHD → aggregate client/server-side
-```
+### 8. `DynamicArticle.tsx` — Replace Yahoo fallback
+- Change `fetch-yahoo-finance` invoke to `fetch-eodhd` invoke
+- Add Yahoo as second fallback if EODHD returns nothing
 
 ## Scope
-- ~4-6 files modified
-- Primary change is removing one `if` block in `fetchMarketBars.ts`
-- Secondary changes are updating direct Yahoo calls in edge functions and pages to prefer EODHD
-- Deploy updated edge functions (`validate-mtf-confluence`, `trading-copilot`)
+- 8 files modified
+- 2 edge functions need redeployment (`scan-live-patterns`, `validate-mtf-confluence`, `seed-historical-patterns`, `seed-historical-patterns-mtf`, `seed-price-timeseries`, `get-cached-market-report`, `fetch-market-breadth`)
+- No DB changes
+- No UI changes
+- Symbol conversion logic (Yahoo→EODHD format) will be duplicated inline in each edge function since they can't import from `fetch-eodhd` (each function is self-contained)
+
+## Data Source After Fix
+
+```text
+Crypto             →  Binance (primary) → Yahoo fallback
+Everything else    →  DB-first → EODHD → Yahoo (last resort only)
+Market breadth A/D →  Yahoo (only source for ^ADV/^DECL/^UNCH)
+4H / 8H            →  Fetch 1H from EODHD → aggregate
+```
 
