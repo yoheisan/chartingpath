@@ -614,7 +614,7 @@ export default function FullChartViewer({
                 // Distance guard: suppress lines too far from current price
                 const dist = pctDist(overlay.price);
                 const maxDist = isEntry ? 20 : 25;
-                if (dist > maxDist) return;
+                if (dist > maxDist && !forceShowLevels) return;
 
                 candleSeries.createPriceLine({
                   price: overlay.price,
@@ -631,10 +631,14 @@ export default function FullChartViewer({
 
         // Suppress overlay prices entirely when entry is too far from current price
         // This prevents zones, triangles, and other derived visuals from rendering out of sync
-        if (pctDist(overlayEntryPrice) > 20) {
+        const entryTooFar = pctDist(overlayEntryPrice) > 20;
+        if (entryTooFar && !forceShowLevels) {
+          setTradeLevelsSuppressed({ suppressed: true, entryPrice: overlayEntryPrice });
           overlayEntryPrice = undefined;
           overlaySlPrice = undefined;
           overlayTpPrice = undefined;
+        } else {
+          setTradeLevelsSuppressed({ suppressed: false });
         }
 
         // Note: some pivots can carry a "signalTs" timestamp (intraday) while bars are daily (00:00:00Z).
