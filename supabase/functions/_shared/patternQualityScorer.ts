@@ -738,6 +738,10 @@ interface PatternQualityScorerInput {
   mtfTimeframe?: string;
   // Triangle patterns: number of touches on flat resistance/support
   touchCount?: number;
+  // H&S shoulder/head prices for symmetry scoring
+  leftShoulderPrice?: number;
+  rightShoulderPrice?: number;
+  headPrice?: number;
 }
 
 export function calculatePatternQualityScore(
@@ -759,7 +763,10 @@ export function calculatePatternQualityScore(
     handleDepth,
     mtfConfirmed,
     mtfTimeframe,
-    touchCount
+    touchCount,
+    leftShoulderPrice,
+    rightShoulderPrice,
+    headPrice
   } = input;
   
   const factors: QualityFactor[] = [];
