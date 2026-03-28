@@ -311,7 +311,7 @@ serve(async (req) => {
       .from("economic_events")
       .select("*")
       .gte("scheduled_time", now.toISOString())
-      .lte("scheduled_time", in48h.toISOString());
+      .lte("scheduled_time", in7d.toISOString());
 
     // 3. Identify detections needing data lookup and fetch per-symbol stats FIRST
     const dataPoorDetections = detections.filter((d: any) => {
