@@ -689,7 +689,7 @@ export default function FullChartViewer({
                 position: isHigh ? 'aboveBar' : 'belowBar',
                 color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
                 shape: isHigh ? 'arrowDown' : 'arrowUp',
-                text: pivot.label || (isHigh ? 'H' : 'L'),
+                text: pivot.role || pivot.label || (isHigh ? 'H' : 'L'),
               });
             }
           });

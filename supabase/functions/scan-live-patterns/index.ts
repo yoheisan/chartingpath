@@ -808,6 +808,59 @@ async function fetchDataBatchWithDbFallback(
   return results;
 }
 
+/**
+ * Assign structural role labels to pivots based on the pattern type.
+ * Only the 8 pattern families listed get roles; all others pass through unchanged.
+ */
+function assignPivotRoles(pivots: any[], patternId: string): any[] {
+  if (!pivots || pivots.length === 0) return pivots;
+
+  switch (patternId) {
+    case 'double-bottom': {
+      const lows = pivots.filter(p => p.type === 'low');
+      if (lows.length >= 2) { lows[0].role = 'B1'; lows[1].role = 'B2'; }
+      return pivots;
+    }
+    case 'double-top': {
+      const highs = pivots.filter(p => p.type === 'high');
+      if (highs.length >= 2) { highs[0].role = 'T1'; highs[1].role = 'T2'; }
+      return pivots;
+    }
+    case 'head-and-shoulders': {
+      const highs = pivots.filter(p => p.type === 'high');
+      if (highs.length >= 3) { highs[0].role = 'LS'; highs[1].role = 'H'; highs[2].role = 'RS'; }
+      return pivots;
+    }
+    case 'inverse-head-and-shoulders': {
+      const lows = pivots.filter(p => p.type === 'low');
+      if (lows.length >= 3) { lows[0].role = 'LS'; lows[1].role = 'H'; lows[2].role = 'RS'; }
+      return pivots;
+    }
+    case 'cup-and-handle': {
+      // Expected pivot order: left rim (high), cup bottom (low), right rim (high), handle low (low)
+      const highs = pivots.filter(p => p.type === 'high');
+      const lows = pivots.filter(p => p.type === 'low');
+      if (highs.length >= 1) highs[0].role = 'Rim';
+      if (lows.length >= 1) lows[0].role = 'Cup';
+      if (highs.length >= 2) highs[1].role = 'Rim';
+      if (lows.length >= 2) lows[1].role = 'Handle';
+      return pivots;
+    }
+    case 'triple-top': {
+      const highs = pivots.filter(p => p.type === 'high');
+      highs.forEach((h, i) => { if (i < 3) h.role = String(i + 1); });
+      return pivots;
+    }
+    case 'triple-bottom': {
+      const lows = pivots.filter(p => p.type === 'low');
+      lows.forEach((l, i) => { if (i < 3) l.role = String(i + 1); });
+      return pivots;
+    }
+    default:
+      return pivots;
+  }
+}
+
 function safeComputeTrend(bars: any[], direction: 'long' | 'short'): { trendAlignment: string | null; trendIndicators: any | null } {
   if (!bars || bars.length < 200) return { trendAlignment: null, trendIndicators: null };
   try {
@@ -1387,6 +1440,7 @@ serve(async (req) => {
       
       for (const patternId of allPatternsToScan) {
         const pattern = PATTERN_REGISTRY[patternId];
+        // assignPivotRoles is defined below the detection loop
         if (!pattern) continue;
         const detectionResult = pattern.detector(bars.slice(-20), timeframe);
         if (!detectionResult.detected) continue;
@@ -1410,8 +1464,11 @@ serve(async (req) => {
           const visIdx = absIdx - visualOffset;
           return { ...pivot, index: Math.max(0, visIdx), timestamp: bars[absIdx]?.date || lastBar.date };
         }).filter(p => p.index >= 0 && p.index < visualBars.length);
+
+        // Assign structural roles to pivots based on pattern type
+        const pivotsWithRoles = assignPivotRoles(pivotsWithTs, patternId);
         
-        const visualSpec = { version: '2.0.0', symbol: instrument, timeframe, patternId, signalTs: lastBar.date, window: { startTs: visualBars[0]?.date, endTs: visualBars[visualBars.length - 1]?.date }, yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 }, overlays: [{ type: 'hline', id: 'entry', price: lastBar.close, label: 'Entry', style: 'primary' }, { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' }, { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' }], pivots: pivotsWithTs };
+        const visualSpec = { version: '2.0.0', symbol: instrument, timeframe, patternId, signalTs: lastBar.date, window: { startTs: visualBars[0]?.date, endTs: visualBars[visualBars.length - 1]?.date }, yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 }, overlays: [{ type: 'hline', id: 'entry', price: lastBar.close, label: 'Entry', style: 'primary' }, { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' }, { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' }], pivots: pivotsWithRoles };
         
         const prevBar = bars.length >= 2 ? bars[bars.length - 2] : null;
         const changePercent = prevBar?.close ? ((lastBar.close - prevBar.close) / prevBar.close) * 100 : null;

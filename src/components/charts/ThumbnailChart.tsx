@@ -248,7 +248,7 @@ const ThumbnailChart = memo(({ bars, visualSpec, quality, height = 120, onClick,
             position: (isHigh ? 'aboveBar' : 'belowBar') as 'aboveBar' | 'belowBar',
             color: isHigh ? PIVOT_COLORS.high : PIVOT_COLORS.low,
             shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-            text: pivot.label || '',
+            text: pivot.role || pivot.label || '',
           };
         })
         .filter((m): m is any => Boolean(m));

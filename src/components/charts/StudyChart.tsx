@@ -1032,7 +1032,7 @@ const StudyChart = memo(({
               position: isHigh ? 'aboveBar' : 'belowBar',
               color: isHigh ? '#f97316' : '#8b5cf6',
               shape: (isHigh ? 'arrowDown' : 'arrowUp') as SeriesMarkerShape,
-              text: pivot.label || '',
+              text: pivot.role || pivot.label || '',
             });
           }
         });
