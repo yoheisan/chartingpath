@@ -646,7 +646,21 @@ export interface RepeatabilityProof {
   expectancyR: number;   // expectancy in R-multiples
 }
 
-export interface PatternQualityScorerInput {
+/**
+ * Cup & Handle handle depth bonus/penalty.
+ * Rewards shallow handles (Bulkowski: shallower handles have higher breakout success).
+ */
+function getCupHandleHandleBonus(patternType: string, handleDepth?: number): number {
+  if (!['cup-and-handle', 'inverse-cup-and-handle'].includes(patternType)) return 0;
+  if (handleDepth === undefined || handleDepth === null) return 0;
+  
+  if (handleDepth <= 0.15) return 1.0;   // very shallow — strong signal
+  if (handleDepth <= 0.25) return 0.5;   // shallow — good signal
+  if (handleDepth <= 0.33) return 0;     // normal — no bonus
+  return -0.5;                            // deep handle — slight penalty
+}
+
+
   bars: OHLCBar[];
   patternType: string;
   patternStartIndex: number;
@@ -661,6 +675,8 @@ export interface PatternQualityScorerInput {
   historicalPerformance?: HistoricalPerformanceInput;
   // Repeatability gate (from Edge Atlas)
   repeatabilityProof?: RepeatabilityProof;
+  // Cup & Handle handle depth (ratio 0-1 of cup depth)
+  handleDepth?: number;
 }
 
 export function calculatePatternQualityScore(
@@ -678,7 +694,8 @@ export function calculatePatternQualityScore(
     atr,
     trendIndicators,
     historicalPerformance,
-    repeatabilityProof
+    repeatabilityProof,
+    handleDepth
   } = input;
   
   const factors: QualityFactor[] = [];
@@ -812,7 +829,11 @@ export function calculatePatternQualityScore(
     weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
   }
   
-  const finalScore = Math.round(weightedScore * 10) / 10;
+  // Cup & Handle handle depth bonus/penalty
+  const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
+  weightedScore += handleBonus;
+  
+  const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Grade — recalibrated thresholds so A-grade is rare but achievable (~5-10%)
   let grade: 'A' | 'B' | 'C' | 'D' | 'F';

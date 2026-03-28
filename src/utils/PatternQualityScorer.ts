@@ -421,6 +421,20 @@ export function analyzeTargetValidity(
   };
 }
 
+/**
+ * Cup & Handle handle depth bonus/penalty.
+ * Rewards shallow handles (Bulkowski: shallower handles have higher breakout success).
+ */
+function getCupHandleHandleBonus(patternType: string, handleDepth?: number): number {
+  if (!['cup-and-handle', 'inverse-cup-and-handle'].includes(patternType)) return 0;
+  if (handleDepth === undefined || handleDepth === null) return 0;
+  
+  if (handleDepth <= 0.15) return 1.0;   // very shallow — strong signal
+  if (handleDepth <= 0.25) return 0.5;   // shallow — good signal
+  if (handleDepth <= 0.33) return 0;     // normal — no bonus
+  return -0.5;                            // deep handle — slight penalty
+}
+
 // ============= MAIN SCORING FUNCTION =============
 
 export interface PatternQualityScorerInput {
@@ -433,6 +447,7 @@ export interface PatternQualityScorerInput {
   stopLoss: number;
   takeProfit: number;
   atr: number;
+  handleDepth?: number; // Cup & Handle: handle retracement as ratio of cup depth (0-1)
 }
 
 /**
@@ -513,8 +528,13 @@ export function calculatePatternQualityScore(
   });
   
   // Calculate weighted score
-  const weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
-  const finalScore = Math.round(weightedScore * 10) / 10;
+  let weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
+  
+  // Cup & Handle handle depth bonus/penalty
+  const handleBonus = getCupHandleHandleBonus(input.patternType, input.handleDepth);
+  weightedScore += handleBonus;
+  
+  const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Determine grade
   let grade: 'A' | 'B' | 'C' | 'D' | 'F';
