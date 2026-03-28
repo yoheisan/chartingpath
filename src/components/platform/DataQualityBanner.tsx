@@ -159,6 +159,11 @@ export function DataQualityBanner() {
                   <strong>Forex Brackets:</strong> Forex pattern stop levels are being recalculated with more appropriate minimum distances. This may cause Forex win rates to increase slightly — the previous data slightly underestimated performance due to stops that were too tight for normal market conditions.
                 </p>
               )}
+              {progress.currentBatch?.includes('Stocks') && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
+                  <strong>Stocks/Indices/Commodities ATR:</strong> Pattern statistics are being recalculated with a more accurate volatility measurement. The previous calculation didn't account for overnight gaps — this fix gives a more realistic picture of pattern performance for these asset classes.
+                </p>
+              )}
             </div>
 
             <div>
