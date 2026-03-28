@@ -259,11 +259,48 @@ function getTriangleTouchBonus(patternType: string, touchCount: number): number 
   return -1.0;
 }
 
+function getHSSymmetryScore(
+  patternType: string,
+  leftShoulderPrice?: number,
+  rightShoulderPrice?: number,
+  headPrice?: number
+): number | null {
+  if (!['head-and-shoulders', 'inverse-head-and-shoulders'].includes(patternType)) return null;
+  if (leftShoulderPrice == null || rightShoulderPrice == null || headPrice == null) return null;
+
+  const headRange = patternType === 'head-and-shoulders'
+    ? headPrice - Math.min(leftShoulderPrice, rightShoulderPrice)
+    : Math.max(leftShoulderPrice, rightShoulderPrice) - headPrice;
+  if (headRange <= 0) return null;
+
+  const shoulderDiff = Math.abs(leftShoulderPrice - rightShoulderPrice);
+  const symmetryRatio = shoulderDiff / headRange;
+
+  if (symmetryRatio < 0.05) return 10;
+  if (symmetryRatio < 0.10) return 8;
+  if (symmetryRatio < 0.15) return 6;
+  if (symmetryRatio < 0.20) return 4;
+  if (symmetryRatio < 0.25) return 2;
+  return 0;
+}
+
 function analyzePatternSymmetry(
   pivots: ZigZagPivot[],
   patternType: string,
-  touchCount?: number
+  touchCount?: number,
+  leftShoulderPrice?: number,
+  rightShoulderPrice?: number,
+  headPrice?: number
 ): { score: number; description: string } {
+  // H&S-specific: use dedicated shoulder symmetry scoring if available
+  const hsScore = getHSSymmetryScore(patternType, leftShoulderPrice, rightShoulderPrice, headPrice);
+  if (hsScore !== null) {
+    const ratioDesc = leftShoulderPrice != null && rightShoulderPrice != null && headPrice != null
+      ? `Shoulder symmetry ratio ${(Math.abs(leftShoulderPrice - rightShoulderPrice) / (patternType === 'head-and-shoulders' ? headPrice - Math.min(leftShoulderPrice, rightShoulderPrice) : Math.max(leftShoulderPrice, rightShoulderPrice) - headPrice) * 100).toFixed(1)}%`
+      : 'H&S symmetry scored';
+    return { score: hsScore, description: ratioDesc };
+  }
+
   if (pivots.length < 3) {
     return { score: 5, description: 'Insufficient pivots' };
   }
@@ -701,6 +738,10 @@ interface PatternQualityScorerInput {
   mtfTimeframe?: string;
   // Triangle patterns: number of touches on flat resistance/support
   touchCount?: number;
+  // H&S shoulder/head prices for symmetry scoring
+  leftShoulderPrice?: number;
+  rightShoulderPrice?: number;
+  headPrice?: number;
 }
 
 export function calculatePatternQualityScore(
@@ -722,7 +763,10 @@ export function calculatePatternQualityScore(
     handleDepth,
     mtfConfirmed,
     mtfTimeframe,
-    touchCount
+    touchCount,
+    leftShoulderPrice,
+    rightShoulderPrice,
+    headPrice
   } = input;
   
   const factors: QualityFactor[] = [];
@@ -755,7 +799,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (10% - reduced from 15%)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,

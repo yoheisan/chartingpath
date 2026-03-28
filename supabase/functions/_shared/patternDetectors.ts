@@ -14,7 +14,11 @@ interface PatternDetectionResult {
   detectedDirection?: 'long' | 'short';
   handleDepth?: number;
   regressionQuality?: number;
-  touchCount?: number; // Triangle patterns: number of touches on flat resistance/support
+  touchCount?: number;
+  // H&S shoulder/head prices for quality scoring
+  leftShoulderPrice?: number;
+  rightShoulderPrice?: number;
+  headPrice?: number;
 }
 
 // --- Linear regression & pivot extraction utilities for wedge detection ---
@@ -563,6 +567,9 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       
       return {
         detected,
+        leftShoulderPrice: detected ? leftShoulder.value : undefined,
+        rightShoulderPrice: detected ? rightShoulder.value : undefined,
+        headPrice: detected ? head.value : undefined,
         pivots: detected ? [
           { index: leftShoulder.index, price: leftShoulder.value, type: 'high', label: 'Left Shoulder' },
           { index: head.index, price: head.value, type: 'high', label: 'Head' },
@@ -646,6 +653,9 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       
       return {
         detected,
+        leftShoulderPrice: detected ? leftShoulder.value : undefined,
+        rightShoulderPrice: detected ? rightShoulder.value : undefined,
+        headPrice: detected ? head.value : undefined,
         pivots: detected ? [
           { index: leftShoulder.index, price: leftShoulder.value, type: 'low', label: 'Left Shoulder' },
           { index: head.index, price: head.value, type: 'low', label: 'Head' },
