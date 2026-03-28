@@ -308,11 +308,11 @@ serve(async (req) => {
       }
     }
 
-    // Fetch forex data (sequential to avoid Yahoo 429)
+    // Fetch forex data (EODHD-first with Yahoo fallback)
     if (markets.includes("forex")) {
       const forexSymbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X"];
       const forexNames = ["EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD"];
-      const forexResults = await fetchYahooSequential(forexSymbols);
+      const forexResults = await fetchSequential(forexSymbols);
       marketData.forex = forexResults.map((r, i) => ({ ...r, symbol: forexNames[i] }));
     }
 
@@ -332,11 +332,11 @@ serve(async (req) => {
       marketData.crypto = await Promise.all(cryptoPromises);
     }
 
-    // Fetch commodities data (sequential to avoid Yahoo 429)
+    // Fetch commodities data (EODHD-first with Yahoo fallback)
     if (markets.includes("commodities")) {
       const comSymbols = ["GC=F", "SI=F", "CL=F", "BZ=F"];
       const comNames = ["Gold (XAU/USD)", "Silver (XAG/USD)", "WTI Crude", "Brent Crude"];
-      const comResults = await fetchYahooSequential(comSymbols);
+      const comResults = await fetchSequential(comSymbols);
       marketData.commodities = comResults.map((r, i) => ({ ...r, symbol: comNames[i] }));
     }
 
