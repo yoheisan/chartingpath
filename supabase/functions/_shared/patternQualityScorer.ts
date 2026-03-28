@@ -313,6 +313,13 @@ function analyzePatternSymmetry(
     }
   }
   
+  // Triangle touch count bonus/penalty
+  const touchBonus = getTriangleTouchBonus(patternType, touchCount ?? 3);
+  if (touchBonus !== 0) {
+    score += touchBonus;
+    descriptions.push(touchBonus > 0 ? `${touchCount} touches — strong confirmation` : 'Few touches — weak confirmation');
+  }
+
   score = Math.max(0, Math.min(10, score));
   
   return {
@@ -748,7 +755,7 @@ export function calculatePatternQualityScore(
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
   // Factor 3: Pattern Symmetry (10% - reduced from 15%)
-  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType);
+  const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount);
   factors.push({
     name: 'Pattern Symmetry',
     score: symmetryAnalysis.score,
