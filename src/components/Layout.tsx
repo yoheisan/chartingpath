@@ -11,6 +11,7 @@ import { OnboardingTour } from "./onboarding/OnboardingTour";
 import { ActivationChecklist } from "./onboarding/ActivationChecklist";
 import { CaptureButton } from "./capture";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DataQualityBanner } from "./platform/DataQualityBanner";
 
 interface LayoutProps {
   children: ReactNode;
