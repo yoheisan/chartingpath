@@ -164,6 +164,11 @@ export function DataQualityBanner() {
                   <strong>Stocks/Indices/Commodities ATR:</strong> Pattern statistics are being recalculated with a more accurate volatility measurement. The previous calculation didn't account for overnight gaps — this fix gives a more realistic picture of pattern performance for these asset classes.
                 </p>
               )}
+              {progress.currentBatch?.includes('Score') && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-2 border-t border-border pt-2">
+                  <strong>Score Recalculation:</strong> Pattern quality grades are being recalculated with improved scoring factors including multi-timeframe confirmation, more accurate volume handling for Forex, and better symmetry assessment. Some patterns may shift by one grade in either direction.
+                </p>
+              )}
             </div>
 
             <div>
