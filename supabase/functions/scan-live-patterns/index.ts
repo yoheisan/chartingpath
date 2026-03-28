@@ -1361,6 +1361,26 @@ serve(async (req) => {
           trendIndicators = computed.trendIndicators;
         }
         
+        // MTF confirmation lookup
+        const TIMEFRAME_LADDER = ['1h', '4h', '8h', '1d', '1w'];
+        const currentTFIndex = TIMEFRAME_LADDER.indexOf(timeframe);
+        const higherTF = currentTFIndex >= 0 && currentTFIndex < TIMEFRAME_LADDER.length - 1
+          ? TIMEFRAME_LADDER[currentTFIndex + 1] : null;
+        let mtfConfirmed = false;
+        if (higherTF) {
+          const { data: mtfDetection } = await supabaseService
+            .from('live_pattern_detections')
+            .select('id')
+            .eq('instrument', instrument)
+            .eq('pattern_id', patternId)
+            .eq('timeframe', higherTF)
+            .eq('direction', effectiveDirection)
+            .gte('detected_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .limit(1)
+            .maybeSingle();
+          mtfConfirmed = !!mtfDetection;
+        }
+
         // Calculate professional-grade quality score using Phase 1 enhanced scorer
         const qualityScorerInput: PatternQualityScorerInput = {
           bars: bars.map(b => ({
@@ -1380,6 +1400,8 @@ serve(async (req) => {
           takeProfit: bracketLevels.takeProfitPrice,
           atr,
           trendIndicators: trendIndicators || undefined,
+          mtfConfirmed,
+          mtfTimeframe: mtfConfirmed && higherTF ? higherTF : undefined,
           // historicalPerformance will be added after stats enrichment
         };
         
