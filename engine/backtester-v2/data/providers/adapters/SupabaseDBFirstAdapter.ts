@@ -275,7 +275,72 @@ export class SupabaseDBFirstAdapter implements DataProvider {
     }
   }
 
-  // ─── Private: Yahoo fallback ─────────────────────────────────────────
+  // ─── Private: EODHD fallback (preferred) ─────────────────────────────
+
+  private async fetchFromEODHD(
+    symbol: string,
+    start: string,
+    end: string,
+    interval: string
+  ): Promise<PriceFrame> {
+    const resp = await fetch(
+      `${this.supabaseUrl}/functions/v1/fetch-eodhd`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.supabaseKey}`,
+        },
+        body: JSON.stringify({ symbol, startDate: start, endDate: end, interval, includeOhlc: true })
+      }
+    );
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: resp.statusText }));
+      throw new Error(`EODHD error: ${err.error || resp.statusText}`);
+    }
+
+    const data = await resp.json();
+    // Convert bars format to PriceFrame if needed
+    if (data.bars && Array.isArray(data.bars)) {
+      const bars = data.bars as Array<{ t: string; o: number; h: number; l: number; c: number; v: number }>;
+      return {
+        index: bars.map(b => b.t),
+        columns: [symbol],
+        data: bars.map(b => [b.c]),
+        meta: { provider: 'eodhd' }
+      };
+    }
+    return data;
+  }
+
+  private async fetchBarsFromEODHD(
+    symbol: string,
+    start: string,
+    end: string,
+    interval: string
+  ): Promise<Bar[]> {
+    const resp = await fetch(
+      `${this.supabaseUrl}/functions/v1/fetch-eodhd`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.supabaseKey}`,
+        },
+        body: JSON.stringify({ symbol, startDate: start, endDate: end, interval, includeOhlc: true })
+      }
+    );
+
+    if (!resp.ok) {
+      throw new Error(`EODHD error for bars: ${resp.statusText}`);
+    }
+
+    const data = await resp.json();
+    return data.bars || [];
+  }
+
+  // ─── Private: Yahoo fallback (last resort) ──────────────────────────
 
   private async fetchFromYahoo(
     symbol: string,
