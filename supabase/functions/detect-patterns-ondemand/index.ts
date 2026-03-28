@@ -55,6 +55,7 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
   const intervalMap: Record<string, string> = {
     '1h': '1h',
     '4h': '1h', // We'll aggregate 1h to 4h
+    '8h': '1h', // We'll aggregate 1h to 8h
     '1d': '1d',
     '1wk': '1wk',
   };
