@@ -24,7 +24,7 @@
 
 import { Time, IChartApi, CandlestickSeries, LineSeries, SeriesMarkerShape, createSeriesMarkers } from 'lightweight-charts';
 import { ZigZagPivot, CompressedBar } from '@/types/VisualSpec';
-import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, FormationOverlayData, ZigZagSegmentSplit, FormationLineData } from '@/utils/formationOverlay';
 
 // === PATTERN OVERLAY COLORS (standardized) ===
 export const PATTERN_OVERLAY_COLORS = {
@@ -301,6 +301,68 @@ export function drawPatternZones(
       ctx.fillStyle = PATTERN_OVERLAY_COLORS.slZone;
       ctx.fillRect(0, Math.min(entryY, slY), canvasWidth, Math.abs(slY - entryY));
     }
+  }
+}
+
+// === ZIGZAG SEGMENT RENDERING ===
+
+/** Deduplicate line data by time */
+function dedupeLineData(data: FormationLineData[]): FormationLineData[] {
+  const m = new Map<number, FormationLineData>();
+  for (const d of data) m.set(d.time as number, d);
+  return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+}
+
+/**
+ * Render zigzag polyline(s) on a chart, using segment-split styling when available.
+ * For patterns with a segmentSplit, renders two LineSeries with different opacity/width.
+ * For all other patterns, renders a single uniform cyan LineSeries.
+ */
+export function renderZigZagSeries(
+  chart: IChartApi,
+  formation: FormationOverlayData,
+): void {
+  const split = formation.segmentSplit;
+
+  if (split && (split.emphasized.length >= 2 || split.normal.length >= 2)) {
+    // Emphasized segments: higher opacity, thicker line
+    if (split.emphasized.length >= 2) {
+      const emphSeries = chart.addSeries(LineSeries, {
+        color: 'rgba(0, 200, 255, 0.9)',
+        lineWidth: 2,
+        lineStyle: 0,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        autoscaleInfoProvider: () => null,
+      });
+      emphSeries.setData(dedupeLineData(split.emphasized));
+    }
+    // Normal segments: lower opacity, thinner line
+    if (split.normal.length >= 2) {
+      const normSeries = chart.addSeries(LineSeries, {
+        color: 'rgba(0, 200, 255, 0.5)',
+        lineWidth: 1,
+        lineStyle: 0,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        autoscaleInfoProvider: () => null,
+      });
+      normSeries.setData(dedupeLineData(split.normal));
+    }
+  } else {
+    // Default: single uniform zigzag
+    const zigzagSeries = chart.addSeries(LineSeries, {
+      color: PATTERN_OVERLAY_COLORS.zigzag,
+      lineWidth: 2,
+      lineStyle: 0,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+      autoscaleInfoProvider: () => null,
+    });
+    zigzagSeries.setData(dedupeLineData(formation.zigzag));
   }
 }
 

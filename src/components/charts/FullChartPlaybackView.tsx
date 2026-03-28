@@ -35,7 +35,7 @@ import {
 import { IndicatorSettings } from './FullChartViewer';
 import { VisualSpec } from '@/types/VisualSpec';
 import { deriveFormationOverlay, buildZonePoints } from '@/utils/formationOverlay';
-import { renderNeckline } from './PatternOverlayRenderer';
+import { renderNeckline, renderZigZagSeries } from './PatternOverlayRenderer';
 
 interface FullChartPlaybackViewProps {
   bars: CompressedBar[];
@@ -332,22 +332,15 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
         );
 
         if (formation && formation.zigzag.length >= 2) {
-          // ZigZag polyline (cyan)
-          const zigzagSeries = chart.addSeries(LineSeries, {
-            color: 'rgba(0, 200, 255, 0.85)',
-            lineWidth: 2,
-            lineStyle: 0,
-            priceLineVisible: false,
-            lastValueVisible: false,
-            crosshairMarkerVisible: false,
-          });
-          // Dedupe formation line data to prevent timestamp crashes
+          // ZigZag polyline — uses segment-split styling for flags/H&S
+          renderZigZagSeries(chart, formation);
+
+          // Dedupe helper for trendlines
           const dedupeLineData = (data: typeof formation.zigzag) => {
             const m = new Map<number, typeof data[0]>();
             for (const d of data) m.set(d.time as number, d);
             return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v);
           };
-          zigzagSeries.setData(dedupeLineData(formation.zigzag));
 
           // Upper trendline (green, dashed)
           if (formation.upperTrend.length >= 2) {

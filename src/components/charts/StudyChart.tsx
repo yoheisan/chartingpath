@@ -13,7 +13,7 @@ import {
 } from 'lightweight-charts';
 import { CompressedBar } from '@/types/VisualSpec';
 import { FormationOverlayData, buildZonePoints, snapFormationToChartTimes, findNearestCandleTime } from '@/utils/formationOverlay';
-import { renderNeckline } from './PatternOverlayRenderer';
+import { renderNeckline, renderZigZagSeries } from './PatternOverlayRenderer';
 import {
   calculateEMA,
   calculateSMA,
@@ -1086,16 +1086,7 @@ const StudyChart = memo(({
           let formation = deriveFormationOverlay(pattern.pivots, patternBars, pattern.patternId);
           if (formation) formation = snapFormationToChartTimes(formation, safeChartData);
           if (formation && formation.zigzag.length >= 2) {
-            const zigzagSeries = chart.addSeries(LineSeries, {
-              color: PATTERN_OVERLAY_COLORS.zigzag,
-              lineWidth: 2,
-              lineStyle: 0,
-              priceLineVisible: false,
-              lastValueVisible: false,
-              crosshairMarkerVisible: false,
-              autoscaleInfoProvider: () => null,
-            });
-            zigzagSeries.setData(sanitizeSeriesData(formation.zigzag as Array<{ time: Time; value: number }>));
+            renderZigZagSeries(chart, formation);
           }
         }
 
