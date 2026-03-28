@@ -566,9 +566,106 @@ async function fetchCrossTimeframeFallback(
   return result;
 }
 
+/**
+ * Convert Yahoo-format symbol to EODHD format
+ */
+function toEODHDSymbol(symbol: string): string {
+  if (symbol.includes('-USD') && !symbol.startsWith('^') && !symbol.includes('=')) {
+    return `${symbol.replace('-USD', '')}-USD.CC`;
+  }
+  if (symbol.includes('=X')) return `${symbol.replace('=X', '')}.FOREX`;
+  if (symbol.includes('=F')) return `${symbol.replace('=F', '')}.COMM`;
+  if (symbol.startsWith('^')) return `${symbol.replace('^', '')}.INDX`;
+  if (symbol.endsWith('.HK')) return symbol;
+  if (symbol.endsWith('.SI')) return `${symbol.replace('.SI', '')}.SG`;
+  if (symbol.endsWith('.SS')) return `${symbol.replace('.SS', '')}.SHG`;
+  if (symbol.endsWith('.SZ')) return `${symbol.replace('.SZ', '')}.SHE`;
+  return `${symbol}.US`;
+}
+
+/**
+ * EODHD-first data fetch with Yahoo as last-resort fallback
+ */
+async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return [];
+  
+  try {
+    const eodhSymbol = toEODHDSymbol(symbol);
+    const isIntraday = ['1m', '5m', '15m', '1h', '4h'].includes(interval);
+    const eodhInterval = interval === '4h' ? '1h' : interval === '15m' ? '5m' : interval;
+    
+    let url: string;
+    if (isIntraday && ['1m', '5m', '1h'].includes(eodhInterval)) {
+      const fromTs = Math.floor(new Date(startDate).getTime() / 1000);
+      const toTs = Math.floor(new Date(endDate).getTime() / 1000);
+      url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${fromTs}&to=${toTs}&fmt=json`;
+    } else {
+      const start = startDate.split('T')[0];
+      const end = endDate.split('T')[0];
+      url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${start}&to=${end}&period=d&fmt=json`;
+    }
+    
+    const response = await fetch(url);
+    if (!response.ok) return [];
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) return [];
+    
+    let bars: any[];
+    if (isIntraday && ['1m', '5m', '1h'].includes(eodhInterval)) {
+      bars = data
+        .filter((bar: any) => bar.close && Number.isFinite(bar.close))
+        .map((bar: any) => ({
+          date: bar.datetime || new Date(bar.timestamp * 1000).toISOString(),
+          open: Number(bar.open), high: Number(bar.high), low: Number(bar.low),
+          close: Number(bar.close), volume: Number(bar.volume) || 0,
+        }));
+    } else {
+      bars = data
+        .filter((bar: any) => bar.close && Number.isFinite(bar.close))
+        .map((bar: any) => ({
+          date: new Date(bar.date).toISOString(),
+          open: Number(bar.open), high: Number(bar.high), low: Number(bar.low),
+          close: Number(bar.adjusted_close || bar.close), volume: Number(bar.volume) || 0,
+        }));
+    }
+    
+    // Aggregate 4h from 1h if needed
+    if (interval === '4h' && bars.length > 0) {
+      bars = aggregateBarsTo4h(bars);
+    }
+    
+    return bars;
+  } catch { return []; }
+}
+
+function aggregateBarsTo4h(bars: any[]): any[] {
+  const grouped = new Map<string, any[]>();
+  for (const bar of bars) {
+    const d = new Date(bar.date);
+    const h = Math.floor(d.getUTCHours() / 4) * 4;
+    const wd = new Date(d); wd.setUTCHours(h, 0, 0, 0);
+    const key = wd.toISOString();
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(bar);
+  }
+  const result: any[] = [];
+  for (const [k, wBars] of grouped) {
+    wBars.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    result.push({
+      date: k, open: wBars[0].open,
+      high: Math.max(...wBars.map((b: any) => b.high)),
+      low: Math.min(...wBars.map((b: any) => b.low)),
+      close: wBars[wBars.length - 1].close,
+      volume: wBars.reduce((s: number, b: any) => s + b.volume, 0),
+    });
+  }
+  result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return result;
+}
+
 async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
   try {
-    // Yahoo supports: 1m, 2m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo - 15m is native, 4h needs 1h aggregation
     const yahooInterval = interval === '4h' ? '1h' : interval;
     const period1 = Math.floor(new Date(startDate).getTime() / 1000);
     const period2 = Math.floor(new Date(endDate).getTime() / 1000);
@@ -589,6 +686,25 @@ async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: 
     }
     return bars;
   } catch { return []; }
+}
+
+/**
+ * EODHD-first external data fetch. Crypto uses Yahoo directly (Binance is primary via different path).
+ */
+async function fetchExternalDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+  const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
+  
+  if (isCrypto) {
+    // Crypto: Yahoo fallback only (Binance is primary via different path)
+    return fetchYahooDataSingle(symbol, startDate, endDate, interval);
+  }
+  
+  // Non-crypto: EODHD first, Yahoo last-resort
+  const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval);
+  if (eodhBars.length > 0) return eodhBars;
+  
+  console.log(`[scan-live-patterns] EODHD empty for ${symbol}, falling back to Yahoo`);
+  return fetchYahooDataSingle(symbol, startDate, endDate, interval);
 }
 
 async function fetchDataBatchWithDbFallback(
