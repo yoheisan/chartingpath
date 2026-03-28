@@ -33,6 +33,8 @@ export interface ZigZagPivot {
   type: 'high' | 'low';
   timestamp: string;
   label?: string;
+  /** Structural role within the pattern (e.g. "B1", "T1", "LS", "H", "RS", "Rim", "Cup", "Handle") */
+  role?: string;
 }
 
 export interface PivotOverlay {

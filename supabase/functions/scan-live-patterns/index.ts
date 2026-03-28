@@ -1410,8 +1410,11 @@ serve(async (req) => {
           const visIdx = absIdx - visualOffset;
           return { ...pivot, index: Math.max(0, visIdx), timestamp: bars[absIdx]?.date || lastBar.date };
         }).filter(p => p.index >= 0 && p.index < visualBars.length);
+
+        // Assign structural roles to pivots based on pattern type
+        const pivotsWithRoles = assignPivotRoles(pivotsWithTs, patternId);
         
-        const visualSpec = { version: '2.0.0', symbol: instrument, timeframe, patternId, signalTs: lastBar.date, window: { startTs: visualBars[0]?.date, endTs: visualBars[visualBars.length - 1]?.date }, yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 }, overlays: [{ type: 'hline', id: 'entry', price: lastBar.close, label: 'Entry', style: 'primary' }, { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' }, { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' }], pivots: pivotsWithTs };
+        const visualSpec = { version: '2.0.0', symbol: instrument, timeframe, patternId, signalTs: lastBar.date, window: { startTs: visualBars[0]?.date, endTs: visualBars[visualBars.length - 1]?.date }, yDomain: { min: minPrice * 0.97, max: maxPrice * 1.03 }, overlays: [{ type: 'hline', id: 'entry', price: lastBar.close, label: 'Entry', style: 'primary' }, { type: 'hline', id: 'sl', price: bracketLevels.stopLossPrice, label: 'Stop', style: 'destructive' }, { type: 'hline', id: 'tp', price: bracketLevels.takeProfitPrice, label: 'Target', style: 'positive' }], pivots: pivotsWithRoles };
         
         const prevBar = bars.length >= 2 ? bars[bars.length - 2] : null;
         const changePercent = prevBar?.close ? ((lastBar.close - prevBar.close) / prevBar.close) * 100 : null;
