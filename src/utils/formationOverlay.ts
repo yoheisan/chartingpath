@@ -293,6 +293,10 @@ export function snapFormationToChartTimes(
     upperTrend: snapLine(formation.upperTrend),
     lowerTrend: snapLine(formation.lowerTrend),
     hasZone: formation.hasZone,
+    segmentSplit: formation.segmentSplit ? {
+      emphasized: snapLine(formation.segmentSplit.emphasized),
+      normal: snapLine(formation.segmentSplit.normal),
+    } : undefined,
   };
 }
 
