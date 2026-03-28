@@ -817,6 +817,19 @@ function safeComputeTrend(bars: any[], direction: 'long' | 'short'): { trendAlig
   } catch { return { trendAlignment: null, trendIndicators: null }; }
 }
 
+// Return the close-time of a candle given its open timestamp and the timeframe
+function getCandleCloseTime(openTs: string, tf: string): number {
+  const intervalMs: Record<string, number> = {
+    '1h': 60 * 60 * 1000,
+    '4h': 4 * 60 * 60 * 1000,
+    '8h': 8 * 60 * 60 * 1000,
+    '1d': 24 * 60 * 60 * 1000,
+    '1wk': 7 * 24 * 60 * 60 * 1000,
+    '1w': 7 * 24 * 60 * 60 * 1000,
+  };
+  return new Date(openTs).getTime() + (intervalMs[tf] || 24 * 60 * 60 * 1000);
+}
+
 async function persistPatterns(supabase: any, detectedPatterns: any[], assetType: string, timeframe: string): Promise<Map<string, Date>> {
   const patternKeys = new Map<string, Date>();
   if (!detectedPatterns.length) return patternKeys;
