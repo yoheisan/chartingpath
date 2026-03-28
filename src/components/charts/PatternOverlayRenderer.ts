@@ -24,7 +24,7 @@
 
 import { Time, IChartApi, CandlestickSeries, LineSeries, SeriesMarkerShape, createSeriesMarkers } from 'lightweight-charts';
 import { ZigZagPivot, CompressedBar } from '@/types/VisualSpec';
-import { deriveFormationOverlay, FormationOverlayData } from '@/utils/formationOverlay';
+import { deriveFormationOverlay, FormationOverlayData, ZigZagSegmentSplit, FormationLineData } from '@/utils/formationOverlay';
 
 // === PATTERN OVERLAY COLORS (standardized) ===
 export const PATTERN_OVERLAY_COLORS = {
