@@ -101,6 +101,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
     let cleanedUp = false;
     let resizeObserver: ResizeObserver | null = null;
     let rafId: number | null = null;
+    let zoneRafId: number = 0;
     let attempts = 0;
 
     const initChart = () => {
@@ -432,7 +433,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
               };
 
               // Draw initially and on range changes
-              requestAnimationFrame(drawZone);
+              zoneRafId = requestAnimationFrame(drawZone);
               chart.timeScale().subscribeVisibleLogicalRangeChange(drawZone);
             }
           }
@@ -626,6 +627,7 @@ export const FullChartPlaybackView = memo(function FullChartPlaybackView({
     return () => {
       cleanedUp = true;
       if (rafId) window.cancelAnimationFrame(rafId);
+      if (zoneRafId) cancelAnimationFrame(zoneRafId);
       if (resizeObserver) resizeObserver.disconnect();
       if (chartRef.current) {
         chartRef.current.remove();
