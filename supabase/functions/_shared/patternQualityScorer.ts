@@ -680,7 +680,8 @@ export function calculatePatternQualityScore(
     atr,
     trendIndicators,
     historicalPerformance,
-    repeatabilityProof
+    repeatabilityProof,
+    handleDepth
   } = input;
   
   const factors: QualityFactor[] = [];
@@ -814,7 +815,11 @@ export function calculatePatternQualityScore(
     weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
   }
   
-  const finalScore = Math.round(weightedScore * 10) / 10;
+  // Cup & Handle handle depth bonus/penalty
+  const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
+  weightedScore += handleBonus;
+  
+  const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Grade — recalibrated thresholds so A-grade is rare but achievable (~5-10%)
   let grade: 'A' | 'B' | 'C' | 'D' | 'F';
