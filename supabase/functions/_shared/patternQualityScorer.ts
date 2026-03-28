@@ -251,9 +251,18 @@ function analyzeTrendAlignment(
   return { score, description, aligned };
 }
 
+function getTriangleTouchBonus(patternType: string, touchCount: number): number {
+  if (!['ascending-triangle', 'descending-triangle'].includes(patternType)) return 0;
+  if (touchCount >= 5) return 1.5;
+  if (touchCount >= 4) return 1.0;
+  if (touchCount >= 3) return 0;
+  return -1.0;
+}
+
 function analyzePatternSymmetry(
   pivots: ZigZagPivot[],
-  patternType: string
+  patternType: string,
+  touchCount?: number
 ): { score: number; description: string } {
   if (pivots.length < 3) {
     return { score: 5, description: 'Insufficient pivots' };
@@ -683,6 +692,8 @@ interface PatternQualityScorerInput {
   // MTF confirmation — true if same pattern exists on next higher timeframe
   mtfConfirmed?: boolean;
   mtfTimeframe?: string;
+  // Triangle patterns: number of touches on flat resistance/support
+  touchCount?: number;
 }
 
 export function calculatePatternQualityScore(
@@ -703,7 +714,8 @@ export function calculatePatternQualityScore(
     repeatabilityProof,
     handleDepth,
     mtfConfirmed,
-    mtfTimeframe
+    mtfTimeframe,
+    touchCount
   } = input;
   
   const factors: QualityFactor[] = [];
