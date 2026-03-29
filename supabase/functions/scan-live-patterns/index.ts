@@ -17,6 +17,13 @@ import {
   calculatePatternQualityScore,
   type PatternQualityScorerInput,
 } from "../_shared/patternQualityScorer.ts";
+import {
+  fetchPatternStats,
+  BAYESIAN_PRIOR_WIN_RATE,
+  BAYESIAN_PRIOR_EXPECTANCY,
+  BAYESIAN_VIRTUAL_SAMPLE,
+  type StatsSource,
+} from "../_shared/statsEnrichment.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -649,6 +656,22 @@ async function fetchCrossTimeframeFallback(
       }
     } catch (err: any) {
       console.warn(`[crossTimeframeFallback] Pattern aggregate error: ${err.message}`);
+    }
+  }
+
+  // Phase 3: Bayesian prior for any remaining pairs (from shared statsEnrichment)
+  const finalMissing = pairs.filter(p => !result.has(getStatsKey(p.patternId, p.symbol, originalTimeframe, rrTier)));
+  if (finalMissing.length > 0) {
+    console.info(`[crossTimeframeFallback] Phase 3: ${finalMissing.length} pairs falling back to Bayesian prior`);
+    for (const pair of finalMissing) {
+      const key = getStatsKey(pair.patternId, pair.symbol, originalTimeframe, rrTier);
+      result.set(key, {
+        winRate: BAYESIAN_PRIOR_WIN_RATE * 100, // Convert to percentage (50.0) to match PatternStats format
+        avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY,
+        sampleSize: BAYESIAN_VIRTUAL_SAMPLE,
+        avgDurationBars: 0,
+        accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
+      });
     }
   }
 

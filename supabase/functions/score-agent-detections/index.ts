@@ -1,5 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  fetchPatternStatsBatch,
+  BAYESIAN_PRIOR_WIN_RATE,
+  BAYESIAN_PRIOR_EXPECTANCY,
+  BAYESIAN_VIRTUAL_SAMPLE,
+  type PatternStatsResult,
+} from "../_shared/statsEnrichment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,11 +19,6 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PROOF_GATE_MIN_SAMPLE = 15;
 const PROOF_GATE_MIN_WIN_RATE = 0.45;
 const BATCH_SIZE = 100;
-
-// Bayesian prior: neutral assumption when no data exists
-const BAYESIAN_PRIOR_WIN_RATE = 0.50;
-const BAYESIAN_PRIOR_EXPECTANCY = 0;
-const BAYESIAN_VIRTUAL_SAMPLE = 10;
 
 // ── Analyst Agent (matches AnalystAgent.ts engine logic) ──────────────────
 function scoreAnalyst(hp: any, source: string = "per_symbol"): { raw: number; details: Record<string, any> } {
@@ -96,7 +98,6 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
     : d.trend_alignment === "counter_trend" ? 0.3 : 0.55;
 
   if (!economicEvents || economicEvents.length === 0) {
-    // No events at all in 7 days — maximum extended bonus (+3/25 = +0.12)
     const raw = Math.min(1, trendScore * 0.5 + 1.0 * 0.5 + 0.12);
     return {
       raw,
@@ -124,7 +125,6 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
     return instrument.includes(currency) || currency.includes(instrument.slice(0, 3));
   });
 
-  // Split into 3-day (standard penalties) and full window (bonus eval)
   const eventsIn3Days = relevantEvents.filter((e: any) => {
     const eventTime = new Date(e.scheduled_time || e.date).getTime();
     return eventTime >= now && eventTime <= now + THREE_DAYS_MS;
@@ -141,7 +141,6 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
   }
   eventScore = Math.max(0, Math.min(1, eventScore));
 
-  // Extended clean window bonus (all relevant events in 7 days)
   const highImpactAll = relevantEvents.filter((e: any) => {
     const impact = (e.impact || e.impact_level || "").toLowerCase();
     return impact === "high";
@@ -159,9 +158,9 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
 
   let extendedBonus = 0;
   if (relevantEvents.length === 0) {
-    extendedBonus = 0.12; // +3/25
+    extendedBonus = 0.12;
   } else if (highImpactAll.length === 0) {
-    extendedBonus = 0.08; // +2/25
+    extendedBonus = 0.08;
   }
 
   const raw = Math.min(1, trendScore * 0.5 + eventScore * 0.5 + extendedBonus);
@@ -187,100 +186,6 @@ function scoreTiming(d: any, economicEvents: any[]): { raw: number; details: Rec
 function scorePortfolio(d: any): number {
   const gradeMap: Record<string, number> = { A: 0.95, B: 0.78, C: 0.55, D: 0.35, F: 0.15 };
   return gradeMap[d.quality_score || "C"] ?? 0.55;
-}
-
-// ── Per-Symbol History Fetcher ────────────────────────────────────────────
-// Queries historical_pattern_occurrences for the EXACT symbol+pattern combo
-async function fetchPerSymbolStats(
-  supabase: any,
-  detections: Array<{ instrument: string; pattern_id: string }>
-): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
-  const map = new Map();
-  if (!detections.length) return map;
-
-  // Build unique symbol+pattern_id combos
-  const combos = [...new Set(detections.map((d) => `${d.instrument}||${d.pattern_id}`))];
-
-  // Batch fetch — we need symbol-level data so query with both filters
-  for (const combo of combos) {
-    const [symbol, patternId] = combo.split("||");
-    try {
-      const { data, error } = await supabase
-        .from("historical_pattern_occurrences")
-        .select("outcome, outcome_pnl_percent")
-        .eq("symbol", symbol)
-        .eq("pattern_id", patternId)
-        .in("outcome", ["hit_tp", "hit_sl"])
-        .limit(2000);
-
-      if (error || !data?.length) continue;
-
-      let wins = 0, total = 0, pnlSum = 0;
-      for (const row of data) {
-        total++;
-        if (row.outcome === "hit_tp") wins++;
-        pnlSum += row.outcome_pnl_percent ?? 0;
-      }
-
-      if (total >= 5) {
-        map.set(combo, {
-          winRate: Math.round((wins / total) * 1000) / 10,
-          avgRMultiple: Math.round((pnlSum / total / 100) * 100) / 100,
-          sampleSize: total,
-        });
-      }
-    } catch (err: any) {
-      console.warn(`[score-agent-detections] Per-symbol fetch error for ${symbol}/${patternId}:`, err.message);
-    }
-  }
-
-  console.log(`[score-agent-detections] Per-symbol stats found for ${map.size}/${combos.length} combos`);
-  return map;
-}
-
-// ── Pattern-Level Aggregate Fetcher (cross-symbol fallback) ──────────────
-async function fetchPatternAggregates(
-  supabase: any,
-  patternIds: string[]
-): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
-  const map = new Map();
-  if (!patternIds.length) return map;
-
-  try {
-    const { data, error } = await supabase
-      .from("historical_pattern_occurrences")
-      .select("pattern_id, outcome, outcome_pnl_percent")
-      .in("pattern_id", patternIds)
-      .in("outcome", ["hit_tp", "hit_sl"])
-      .limit(5000);
-
-    if (error || !data?.length) return map;
-
-    const grouped = new Map<string, { wins: number; total: number; pnlSum: number }>();
-    for (const row of data) {
-      if (!grouped.has(row.pattern_id)) grouped.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0 });
-      const e = grouped.get(row.pattern_id)!;
-      e.total++;
-      if (row.outcome === "hit_tp") e.wins++;
-      e.pnlSum += row.outcome_pnl_percent ?? 0;
-    }
-
-    for (const [patternId, e] of grouped) {
-      if (e.total >= 5) {
-        map.set(patternId, {
-          winRate: Math.round((e.wins / e.total) * 1000) / 10,
-          avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
-          sampleSize: e.total,
-        });
-      }
-    }
-
-    console.log(`[score-agent-detections] Pattern aggregates fetched for ${map.size}/${patternIds.length} patterns`);
-  } catch (err: any) {
-    console.warn("[score-agent-detections] Pattern aggregate fetch error:", err.message);
-  }
-
-  return map;
 }
 
 // ── Main Handler ──────────────────────────────────────────────────────────
@@ -313,30 +218,21 @@ serve(async (req) => {
       .gte("scheduled_time", now.toISOString())
       .lte("scheduled_time", in7d.toISOString());
 
-    // 3. Identify detections needing data lookup and fetch per-symbol stats FIRST
+    // 3. Batch-fetch stats for data-poor detections via shared enrichment module
     const dataPoorDetections = detections.filter((d: any) => {
       const hp = d.historical_performance;
       const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
       return sampleSize < 5;
     });
 
-    // 3a. Try per-symbol historical lookup (exact symbol+pattern match)
-    let perSymbolStats = new Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>();
-    let patternAggregates = new Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>();
-
+    let enrichedStats = new Map<string, PatternStatsResult>();
     if (dataPoorDetections.length > 0) {
-      console.log(`[score-agent-detections] ${dataPoorDetections.length} detections have sparse live data, checking historical DB...`);
-      
-      // First: per-symbol lookup (highest fidelity)
-      perSymbolStats = await fetchPerSymbolStats(supabase, dataPoorDetections);
-
-      // Second: pattern-aggregate fallback for anything still unresolved
-      const stillPoor = dataPoorDetections.filter((d: any) => !perSymbolStats.has(`${d.instrument}||${d.pattern_id}`));
-      if (stillPoor.length > 0) {
-        const patternIds = [...new Set(stillPoor.map((d: any) => d.pattern_id))];
-        console.log(`[score-agent-detections] ${stillPoor.length} still need fallback, fetching aggregates for ${patternIds.length} patterns`);
-        patternAggregates = await fetchPatternAggregates(supabase, patternIds);
-      }
+      console.log(`[score-agent-detections] ${dataPoorDetections.length} detections have sparse live data, fetching via shared statsEnrichment...`);
+      enrichedStats = await fetchPatternStatsBatch(
+        supabase,
+        dataPoorDetections.map((d: any) => ({ patternId: d.pattern_id, symbol: d.instrument })),
+        dataPoorDetections[0]?.timeframe || "1d"
+      );
     }
 
     // 4. Score in batches and upsert
@@ -352,27 +248,21 @@ serve(async (req) => {
         const originalSampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
         let analystSource = "per_symbol";
 
-        // Fallback chain for data-poor detections
+        // Fallback chain for data-poor detections (now via shared module)
         if (originalSampleSize < 5) {
-          // Priority 1: per-symbol DB lookup
-          const perSymbol = perSymbolStats.get(`${d.instrument}||${d.pattern_id}`);
-          if (perSymbol && perSymbol.sampleSize >= 5) {
-            hp = { winRate: perSymbol.winRate, avgRMultiple: perSymbol.avgRMultiple, sampleSize: perSymbol.sampleSize };
-            analystSource = "per_symbol";  // Real per-symbol data, no discount
-            fallbackUsed.per_symbol_db++;
+          const key = `${d.instrument}||${d.pattern_id}`;
+          const enriched = enrichedStats.get(key);
+          if (enriched) {
+            hp = { winRate: enriched.winRate, avgRMultiple: enriched.expectancy, sampleSize: enriched.sampleSize };
+            analystSource = enriched.source;
+            if (enriched.source === "per_symbol") fallbackUsed.per_symbol_db++;
+            else if (enriched.source === "pattern_aggregate") fallbackUsed.pattern_aggregate++;
+            else fallbackUsed.bayesian_prior++;
           } else {
-            // Priority 2: pattern aggregate (cross-symbol)
-            const agg = patternAggregates.get(d.pattern_id);
-            if (agg && agg.sampleSize >= 5) {
-              hp = { winRate: agg.winRate, avgRMultiple: agg.avgRMultiple, sampleSize: agg.sampleSize };
-              analystSource = "pattern_aggregate";
-              fallbackUsed.pattern_aggregate++;
-            } else {
-              // Priority 3: Bayesian prior
-              hp = { winRate: BAYESIAN_PRIOR_WIN_RATE, avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY, sampleSize: BAYESIAN_VIRTUAL_SAMPLE };
-              analystSource = "bayesian_prior";
-              fallbackUsed.bayesian_prior++;
-            }
+            // Safety net — should not happen since batch always returns bayesian prior
+            hp = { winRate: BAYESIAN_PRIOR_WIN_RATE, avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY, sampleSize: BAYESIAN_VIRTUAL_SAMPLE };
+            analystSource = "bayesian_prior";
+            fallbackUsed.bayesian_prior++;
           }
         }
 
