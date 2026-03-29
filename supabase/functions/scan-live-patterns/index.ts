@@ -1579,7 +1579,7 @@ serve(async (req) => {
           ? TIMEFRAME_LADDER[currentTFIndex + 1] : null;
         let mtfConfirmed = false;
         if (higherTF) {
-          const { data: mtfDetection } = await supabaseService
+          const { data: mtfDetection } = await supabase
             .from('live_pattern_detections')
             .select('id')
             .eq('instrument', instrument)

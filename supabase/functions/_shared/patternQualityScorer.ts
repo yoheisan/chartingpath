@@ -724,7 +724,7 @@ export interface RepeatabilityProof {
   expectancyR: number;   // expectancy in R-multiples
 }
 
-// getCupHandleHandleBonus already declared above — removed duplicate
+
 
 interface PatternQualityScorerInput {
   bars: OHLCBar[];
