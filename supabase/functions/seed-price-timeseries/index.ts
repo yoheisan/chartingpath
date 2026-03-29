@@ -281,7 +281,7 @@ async function persistBars(
       high: bar.high,
       low: bar.low,
       close: bar.close,
-      volume: bar.volume || 0,
+      volume: Math.floor(bar.volume || 0),
     }));
 
     const { error } = await supabase
