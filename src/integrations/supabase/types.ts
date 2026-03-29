@@ -2117,6 +2117,7 @@ export type Database = {
           bars_to_outcome_rr5: number | null
           created_at: string
           detected_at: string
+          detector_version: string | null
           direction: string
           entry_price: number
           exchange: string | null
@@ -2160,6 +2161,7 @@ export type Database = {
           bars_to_outcome_rr5?: number | null
           created_at?: string
           detected_at: string
+          detector_version?: string | null
           direction: string
           entry_price: number
           exchange?: string | null
@@ -2203,6 +2205,7 @@ export type Database = {
           bars_to_outcome_rr5?: number | null
           created_at?: string
           detected_at?: string
+          detector_version?: string | null
           direction?: string
           entry_price?: number
           exchange?: string | null
