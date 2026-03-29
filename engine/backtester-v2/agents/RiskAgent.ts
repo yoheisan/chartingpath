@@ -22,18 +22,24 @@ const DEFAULT_RISK_CONFIG: RiskConfig = {
  *  - ATR stability:       up to 8 pts  (low ATR-CV → stable → higher score)
  *  - Kelly sizing room:   up to 7 pts  (positive Kelly → room to size)
  */
+export interface OHLCBar {
+  high: number;
+  low: number;
+  close: number;
+}
+
 export class RiskAgent {
   private config: RiskConfig;
-  private priceHistory: Map<string, number[]> = new Map();
+  private priceHistory: Map<string, OHLCBar[]> = new Map();
 
   constructor(config?: Partial<RiskConfig>) {
     this.config = { ...DEFAULT_RISK_CONFIG, ...config };
   }
 
-  /** Feed daily prices to build ATR history */
-  updatePrice(symbol: string, price: number): void {
+  /** Feed daily bars to build ATR history */
+  updatePrice(symbol: string, bar: OHLCBar): void {
     const hist = this.priceHistory.get(symbol) || [];
-    hist.push(price);
+    hist.push(bar);
     // Keep only what we need
     if (hist.length > this.config.atrPeriod + 5) {
       hist.shift();
@@ -90,22 +96,31 @@ export class RiskAgent {
     };
   }
 
-  private calculateATR(prices: number[]): number {
-    if (prices.length < 2) return 0;
+  private calculateATR(bars: OHLCBar[]): number {
+    if (bars.length < 2) return 0;
     const trs: number[] = [];
-    for (let i = 1; i < prices.length; i++) {
-      trs.push(Math.abs(prices[i] - prices[i - 1]));
+    for (let i = 1; i < bars.length; i++) {
+      const tr = Math.max(
+        bars[i].high - bars[i].low,
+        Math.abs(bars[i].high - bars[i - 1].close),
+        Math.abs(bars[i].low - bars[i - 1].close)
+      );
+      trs.push(tr);
     }
     const period = Math.min(this.config.atrPeriod, trs.length);
-    const recentTRs = trs.slice(-period);
-    return recentTRs.reduce((a, b) => a + b, 0) / recentTRs.length;
+    return trs.slice(-period).reduce((a, b) => a + b, 0) / period;
   }
 
-  private calculateATRCoeffOfVariation(prices: number[]): number {
-    if (prices.length < 3) return 0.5; // neutral
+  private calculateATRCoeffOfVariation(bars: OHLCBar[]): number {
+    if (bars.length < 3) return 0.5; // neutral
     const trs: number[] = [];
-    for (let i = 1; i < prices.length; i++) {
-      trs.push(Math.abs(prices[i] - prices[i - 1]));
+    for (let i = 1; i < bars.length; i++) {
+      const tr = Math.max(
+        bars[i].high - bars[i].low,
+        Math.abs(bars[i].high - bars[i - 1].close),
+        Math.abs(bars[i].low - bars[i - 1].close)
+      );
+      trs.push(tr);
     }
     const mean = trs.reduce((a, b) => a + b, 0) / trs.length;
     if (mean === 0) return 0;
