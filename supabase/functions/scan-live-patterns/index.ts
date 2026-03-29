@@ -1632,6 +1632,15 @@ serve(async (req) => {
           continue; // skip this pattern entirely
         }
 
+        // Price drift: extreme filter — block any level >35% from current close
+        const slDrift = Math.abs(lastBar.close - bracketLevels.stopLossPrice) / lastBar.close;
+        const tpDrift = Math.abs(lastBar.close - bracketLevels.takeProfitPrice) / lastBar.close;
+
+        if (slDrift > 0.35 || tpDrift > 0.35) {
+          console.warn(`[scan-live-patterns] Extreme level blocked: ${patternId} on ${instrument} SL=${slDrift.toFixed(2)} TP=${tpDrift.toFixed(2)}`);
+          continue;
+        }
+
         detectedPatterns.push({ 
           instrument, 
           patternId, 
