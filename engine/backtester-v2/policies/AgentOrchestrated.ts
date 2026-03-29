@@ -75,7 +75,9 @@ export class AgentOrchestratedPolicy {
     // Feed prices to risk agent for ATR calculation
     for (const symbol of this.params.symbols) {
       if (prices[symbol]) {
-        this.risk.updatePrice(symbol, prices[symbol]);
+        // Synthesize bar from close price — will use true range when OHLC data is available
+        const close = prices[symbol];
+        this.risk.updatePrice(symbol, { high: close, low: close, close });
       }
     }
 
