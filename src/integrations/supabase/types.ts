@@ -6100,12 +6100,12 @@ export type Database = {
       }
       cleanup_old_health_checks: { Args: never; Returns: undefined }
       cleanup_pattern_pipeline_results: {
-        Args: { p_keep_days?: number }
-        Returns: number
+        Args: { keep_days?: number }
+        Returns: Json
       }
       cleanup_stale_historical_prices: {
-        Args: { p_keep_days?: number }
-        Returns: number
+        Args: { keep_days?: number }
+        Returns: Json
       }
       deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
       estimate_project_credits: {
