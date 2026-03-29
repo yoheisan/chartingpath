@@ -899,6 +899,7 @@ async function fetchDataBatchWithDbFallback(
             volume: bar.volume || 0,
             timeframe: interval,
             instrument_type: instrType,
+            source: 'yahoo_fallback',
           });
         }
       }
