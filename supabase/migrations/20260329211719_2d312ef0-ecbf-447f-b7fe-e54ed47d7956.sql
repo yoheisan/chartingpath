@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS public.reseed_state (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  timeframe TEXT NOT NULL DEFAULT '1d',
+  "offset" INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'idle',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.reseed_state ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO public.reseed_state (id) VALUES (1) ON CONFLICT DO NOTHING;
