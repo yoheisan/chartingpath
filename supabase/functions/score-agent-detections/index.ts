@@ -193,9 +193,8 @@ function scorePortfolio(d: any): number {
   return gradeMap[d.quality_score || "C"] ?? 0.55;
 }
 
-// ── Per-Symbol History Fetcher ────────────────────────────────────────────
-// Queries historical_pattern_occurrences for the EXACT symbol+pattern combo
-async function fetchPerSymbolStats(
+// Per-symbol and pattern-aggregate fetchers removed — now uses _shared/statsEnrichment.ts
+
   supabase: any,
   detections: Array<{ instrument: string; pattern_id: string }>
 ): Promise<Map<string, { winRate: number; avgRMultiple: number; sampleSize: number }>> {
