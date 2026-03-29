@@ -651,11 +651,11 @@ R:R = 1:${tradePlan.rr.toFixed(1)}`;
         {/* Right Sidebar — auto-collapse on smaller screens, TradingView-style icon strip */}
         <div className={cn(
           "flex h-full border-l border-border/60 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
-          rightSidebarCollapsed ? "w-12" : "w-[280px]"
+          rightSidebarCollapsed ? "w-[52px]" : "w-[280px]"
         )}>
           {rightSidebarCollapsed ? (
             /* Icon strip — TradingView-style right toolbar */
-            <div className="flex flex-col items-center w-12 py-2 gap-1">
+            <div className="flex flex-col items-center w-[52px] py-2 gap-1.5">
               <button
                 className="h-9 w-9 flex items-center justify-center rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                 onClick={() => toggleSidebar(false)}
