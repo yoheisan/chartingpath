@@ -4380,6 +4380,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reseed_snapshot_batch1: {
+        Row: {
+          avg_r_multiple: number | null
+          data_version: number | null
+          direction: string | null
+          expectancy: number | null
+          instrument_category: string | null
+          losses: number | null
+          pattern_id: string | null
+          pattern_name: string | null
+          snapshotted_at: string | null
+          timeframe: string | null
+          total_signals: number | null
+          win_rate: number | null
+          wins: number | null
+        }
+        Insert: {
+          avg_r_multiple?: number | null
+          data_version?: number | null
+          direction?: string | null
+          expectancy?: number | null
+          instrument_category?: string | null
+          losses?: number | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          snapshotted_at?: string | null
+          timeframe?: string | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
+        }
+        Update: {
+          avg_r_multiple?: number | null
+          data_version?: number | null
+          direction?: string | null
+          expectancy?: number | null
+          instrument_category?: string | null
+          losses?: number | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          snapshotted_at?: string | null
+          timeframe?: string | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
+        }
+        Relationships: []
+      }
       scan_requests: {
         Row: {
           asset_type: string | null
@@ -6046,7 +6094,19 @@ export type Database = {
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_captures: { Args: never; Returns: undefined }
       cleanup_expired_reports: { Args: never; Returns: undefined }
+      cleanup_http_response_logs: {
+        Args: { p_keep_hours?: number }
+        Returns: number
+      }
       cleanup_old_health_checks: { Args: never; Returns: undefined }
+      cleanup_pattern_pipeline_results: {
+        Args: { p_keep_days?: number }
+        Returns: number
+      }
+      cleanup_stale_historical_prices: {
+        Args: { p_keep_days?: number }
+        Returns: number
+      }
       deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
       estimate_project_credits: {
         Args: {
@@ -6282,6 +6342,7 @@ export type Database = {
         Returns: undefined
       }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
+      run_database_maintenance: { Args: never; Returns: Json }
       set_user_language: {
         Args: {
           p_detected_country?: string
