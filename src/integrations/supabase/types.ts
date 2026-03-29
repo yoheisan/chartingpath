@@ -2249,6 +2249,7 @@ export type Database = {
           instrument_type: string
           low: number
           open: number
+          source: string | null
           symbol: string
           timeframe: string
           updated_at: string | null
@@ -2263,6 +2264,7 @@ export type Database = {
           instrument_type: string
           low: number
           open: number
+          source?: string | null
           symbol: string
           timeframe: string
           updated_at?: string | null
@@ -2277,6 +2279,7 @@ export type Database = {
           instrument_type?: string
           low?: number
           open?: number
+          source?: string | null
           symbol?: string
           timeframe?: string
           updated_at?: string | null
