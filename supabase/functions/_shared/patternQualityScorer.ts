@@ -724,19 +724,7 @@ export interface RepeatabilityProof {
   expectancyR: number;   // expectancy in R-multiples
 }
 
-/**
- * Cup & Handle handle depth bonus/penalty.
- * Rewards shallow handles (Bulkowski: shallower handles have higher breakout success).
- */
-function getCupHandleHandleBonus(patternType: string, handleDepth?: number): number {
-  if (!['cup-and-handle', 'inverse-cup-and-handle'].includes(patternType)) return 0;
-  if (handleDepth === undefined || handleDepth === null) return 0;
-  
-  if (handleDepth <= 0.15) return 1.0;   // very shallow — strong signal
-  if (handleDepth <= 0.25) return 0.5;   // shallow — good signal
-  if (handleDepth <= 0.33) return 0;     // normal — no bonus
-  return -0.5;                            // deep handle — slight penalty
-}
+// getCupHandleHandleBonus already declared above — removed duplicate
 
 interface PatternQualityScorerInput {
   bars: OHLCBar[];
