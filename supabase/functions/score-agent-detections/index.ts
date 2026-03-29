@@ -218,8 +218,22 @@ serve(async (req) => {
       .gte("scheduled_time", now.toISOString())
       .lte("scheduled_time", in7d.toISOString());
 
+    // 2b. Filter out counter-trend and null trend_alignment detections
+    const preFilterCount = detections.length;
+    const scorableDetections = detections.filter((d: any) => {
+      if (!d.trend_alignment || d.trend_alignment === 'counter_trend') {
+        console.info(`[score-agent-detections] Skipping counter_trend detection: ${d.pattern_id} on ${d.instrument}`);
+        return false;
+      }
+      return true;
+    });
+    const counterTrendSkipped = preFilterCount - scorableDetections.length;
+    if (counterTrendSkipped > 0) {
+      console.info(`[score-agent-detections] Filtered out ${counterTrendSkipped} counter-trend/null-trend detections`);
+    }
+
     // 3. Batch-fetch stats for data-poor detections via shared enrichment module
-    const dataPoorDetections = detections.filter((d: any) => {
+    const dataPoorDetections = scorableDetections.filter((d: any) => {
       const hp = d.historical_performance;
       const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
       return sampleSize < 5;
