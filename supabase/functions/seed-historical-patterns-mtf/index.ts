@@ -2026,6 +2026,7 @@ serve(async (req) => {
           trend_indicators: occ.trend_indicators,
           validation_status: 'pending',
           validation_layers_passed: ['bulkowski_engine'],
+          detector_version: 'post-audit-2026-03-29',
         })), {
           onConflict: 'pattern_id,symbol,timeframe,pattern_end_date',
           ignoreDuplicates: true

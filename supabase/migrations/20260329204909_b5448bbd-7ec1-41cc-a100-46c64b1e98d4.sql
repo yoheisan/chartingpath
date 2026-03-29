@@ -1,0 +1,1 @@
+ALTER TABLE historical_pattern_occurrences ADD COLUMN IF NOT EXISTS detector_version TEXT DEFAULT 'pre-audit';
