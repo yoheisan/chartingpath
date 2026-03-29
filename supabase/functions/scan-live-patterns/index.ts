@@ -17,6 +17,13 @@ import {
   calculatePatternQualityScore,
   type PatternQualityScorerInput,
 } from "../_shared/patternQualityScorer.ts";
+import {
+  fetchPatternStats,
+  BAYESIAN_PRIOR_WIN_RATE,
+  BAYESIAN_PRIOR_EXPECTANCY,
+  BAYESIAN_VIRTUAL_SAMPLE,
+  type StatsSource,
+} from "../_shared/statsEnrichment.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
