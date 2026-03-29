@@ -4380,6 +4380,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reseed_snapshot_batch1: {
+        Row: {
+          avg_r_multiple: number | null
+          data_version: number | null
+          direction: string | null
+          expectancy: number | null
+          instrument_category: string | null
+          losses: number | null
+          pattern_id: string | null
+          pattern_name: string | null
+          snapshotted_at: string | null
+          timeframe: string | null
+          total_signals: number | null
+          win_rate: number | null
+          wins: number | null
+        }
+        Insert: {
+          avg_r_multiple?: number | null
+          data_version?: number | null
+          direction?: string | null
+          expectancy?: number | null
+          instrument_category?: string | null
+          losses?: number | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          snapshotted_at?: string | null
+          timeframe?: string | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
+        }
+        Update: {
+          avg_r_multiple?: number | null
+          data_version?: number | null
+          direction?: string | null
+          expectancy?: number | null
+          instrument_category?: string | null
+          losses?: number | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          snapshotted_at?: string | null
+          timeframe?: string | null
+          total_signals?: number | null
+          win_rate?: number | null
+          wins?: number | null
+        }
+        Relationships: []
+      }
       scan_requests: {
         Row: {
           asset_type: string | null
