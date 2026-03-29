@@ -26,6 +26,7 @@ interface SeedRequest {
   timeframes?: string[];    // 1m, 5m, 15m, 1h, 4h
   maxSymbols?: number;      // limit symbols per run (default: 10)
   offset?: number;          // pagination offset
+  forceRefresh?: boolean;   // bypass existing bar count skip logic
 }
 
 interface OHLCBar {
