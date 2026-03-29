@@ -879,7 +879,7 @@ async function fetchDataBatchWithDbFallback(
   for (let i = 0; i < symbolsNeedingExternal.length; i += concurrency) {
     const batch = symbolsNeedingExternal.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map(s => fetchExternalDataSingle(s, startDate, endDate, interval)));
-    const barsToUpsert: Array<{ symbol: string; date: string; open: number; high: number; low: number; close: number; volume: number; timeframe: string; instrument_type: string }> = [];
+    const barsToUpsert: Array<{ symbol: string; date: string; open: number; high: number; low: number; close: number; volume: number; timeframe: string; instrument_type: string; source: string }> = [];
     batchResults.forEach((r, idx) => {
       const symbol = batch[idx];
       if (r.status === 'fulfilled' && r.value.length > 0) {
