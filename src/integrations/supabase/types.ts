@@ -4434,6 +4434,30 @@ export type Database = {
         }
         Relationships: []
       }
+      reseed_state: {
+        Row: {
+          id: number
+          offset: number
+          status: string
+          timeframe: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          offset?: number
+          status?: string
+          timeframe?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          offset?: number
+          status?: string
+          timeframe?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       scan_requests: {
         Row: {
           asset_type: string | null
