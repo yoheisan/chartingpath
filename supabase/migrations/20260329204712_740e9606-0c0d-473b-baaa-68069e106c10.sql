@@ -1,0 +1,1 @@
+ALTER TABLE historical_prices ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'seed';
