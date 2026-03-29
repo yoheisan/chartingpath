@@ -254,8 +254,8 @@ serve(async (req) => {
     let skipped = 0;
     let fallbackUsed = { per_symbol_db: 0, pattern_aggregate: 0, bayesian_prior: 0 };
 
-    for (let i = 0; i < detections.length; i += BATCH_SIZE) {
-      const batch = detections.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < scorableDetections.length; i += BATCH_SIZE) {
+      const batch = scorableDetections.slice(i, i + BATCH_SIZE);
 
       const rows = batch.map((d: any) => {
         let hp = d.historical_performance;
