@@ -9,9 +9,12 @@ const corsHeaders = {
  * Database Maintenance Edge Function
  * 
  * Runs automated cleanup jobs to keep database size under control:
- * 1. pattern_pipeline_results — purge rows older than 7 days
+ * 1. pattern_pipeline_results — batch-delete rows older than 7 days (10k per loop)
  * 2. net._http_response — purge logs older than 24 hours
  * 3. historical_prices — remove duplicate rows
+ * 
+ * Each cleanup runs independently — one failure won't block others.
+ * Safe to call repeatedly; the next run picks up where the last left off.
  * 
  * Designed to be called by pg_cron daily at 03:00 UTC (before seeding window).
  */
@@ -27,7 +30,7 @@ Deno.serve(async (req) => {
 
     console.log('[db-maintenance] Starting database maintenance...');
 
-    // Run the master cleanup function
+    // Run the master cleanup function (each sub-task is error-isolated)
     const { data, error } = await supabase.rpc('run_database_maintenance');
 
     if (error) {
