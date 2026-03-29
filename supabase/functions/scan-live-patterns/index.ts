@@ -1621,7 +1621,17 @@ serve(async (req) => {
         };
         
         const qualityResult = calculatePatternQualityScore(qualityScorerInput);
-        
+
+        // Coherence: TP must be on the correct side of entry for the pattern's direction
+        const tpCoherent = effectiveDirection === 'long'
+          ? bracketLevels.takeProfitPrice > lastBar.close
+          : bracketLevels.takeProfitPrice < lastBar.close;
+
+        if (!tpCoherent) {
+          console.warn(`[scan-live-patterns] Coherence violation blocked: ${patternId} ${effectiveDirection} on ${instrument}`);
+          continue; // skip this pattern entirely
+        }
+
         detectedPatterns.push({ 
           instrument, 
           patternId, 
