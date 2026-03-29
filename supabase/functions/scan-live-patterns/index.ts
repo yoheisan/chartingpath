@@ -1537,6 +1537,16 @@ serve(async (req) => {
         // Use detector-returned direction for neutral patterns (e.g. symmetrical triangle), otherwise use config direction
         const effectiveDirection: 'long' | 'short' = detectionResult.detectedDirection || pattern.direction;
         
+        // Pivot span guard: first-to-last pivot must span ≥2 bars
+        if (detectionResult.pivots && detectionResult.pivots.length >= 2) {
+          const firstPivotIdx = detectionResult.pivots[0].index;
+          const lastPivotIdx = detectionResult.pivots[detectionResult.pivots.length - 1].index;
+          if (lastPivotIdx - firstPivotIdx < 2) {
+            console.warn(`[scan-live-patterns] Pivot span too narrow, skipping: ${patternId} on ${instrument}`);
+            continue;
+          }
+        }
+
         const lastBar = bars[bars.length - 1];
         const atr = calculateATR(bars, 14);
         const bracketLevels = computeBracketLevels({ direction: effectiveDirection, entryPrice: lastBar.close, stopPercent: (atr / lastBar.close) * 100 * 2, targetPercent: (atr / lastBar.close) * 100 * 4, atr, atrMultiplier: 2.0, stopLossMethod: 'atr', takeProfitMethod: 'ratio', instrument });
