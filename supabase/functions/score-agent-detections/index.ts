@@ -218,8 +218,22 @@ serve(async (req) => {
       .gte("scheduled_time", now.toISOString())
       .lte("scheduled_time", in7d.toISOString());
 
+    // 2b. Filter out counter-trend and null trend_alignment detections
+    const preFilterCount = detections.length;
+    const scorableDetections = detections.filter((d: any) => {
+      if (!d.trend_alignment || d.trend_alignment === 'counter_trend') {
+        console.info(`[score-agent-detections] Skipping counter_trend detection: ${d.pattern_id} on ${d.instrument}`);
+        return false;
+      }
+      return true;
+    });
+    const counterTrendSkipped = preFilterCount - scorableDetections.length;
+    if (counterTrendSkipped > 0) {
+      console.info(`[score-agent-detections] Filtered out ${counterTrendSkipped} counter-trend/null-trend detections`);
+    }
+
     // 3. Batch-fetch stats for data-poor detections via shared enrichment module
-    const dataPoorDetections = detections.filter((d: any) => {
+    const dataPoorDetections = scorableDetections.filter((d: any) => {
       const hp = d.historical_performance;
       const sampleSize = hp?.sampleSize ?? hp?.sample_size ?? 0;
       return sampleSize < 5;
@@ -240,8 +254,8 @@ serve(async (req) => {
     let skipped = 0;
     let fallbackUsed = { per_symbol_db: 0, pattern_aggregate: 0, bayesian_prior: 0 };
 
-    for (let i = 0; i < detections.length; i += BATCH_SIZE) {
-      const batch = detections.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < scorableDetections.length; i += BATCH_SIZE) {
+      const batch = scorableDetections.slice(i, i + BATCH_SIZE);
 
       const rows = batch.map((d: any) => {
         let hp = d.historical_performance;
@@ -311,10 +325,10 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} duration=${duration}ms fallbacks=${JSON.stringify(fallbackUsed)}`);
+    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} counterTrendFiltered=${counterTrendSkipped} duration=${duration}ms fallbacks=${JSON.stringify(fallbackUsed)}`);
 
     return new Response(
-      JSON.stringify({ scored, skipped, duration_ms: duration, total: detections.length, fallbacks: fallbackUsed }),
+      JSON.stringify({ scored, skipped, counter_trend_filtered: counterTrendSkipped, duration_ms: duration, total: detections.length, fallbacks: fallbackUsed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
