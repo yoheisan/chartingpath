@@ -44,14 +44,16 @@ const TIMEFRAME_LIMITS: Record<string, { yahooDays: number; binanceDays: number;
   '15m': { yahooDays: 60,  binanceDays: 200, eodhdDays: 60 },
   '1h':  { yahooDays: 729, binanceDays: 730, eodhdDays: 120 },
   '4h':  { yahooDays: 729, binanceDays: 730, eodhdDays: 120 },
+  '8h':  { yahooDays: 729, binanceDays: 730, eodhdDays: 365 },
+  '1d':  { yahooDays: 1825, binanceDays: 1825, eodhdDays: 3650 },
 };
 
 const BINANCE_INTERVALS: Record<string, string> = {
-  '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '4h',
+  '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '4h', '8h': '8h', '1d': '1d',
 };
 
 const YAHOO_INTERVALS: Record<string, string> = {
-  '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '1h', // 4h aggregated from 1h
+  '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '1h', '8h': '1h', '1d': '1d',
 };
 
 // ============= PROVIDERS =============
@@ -123,9 +125,11 @@ async function fetchYahooBars(symbol: string, timeframe: string, lookbackDays: n
       volume: q.volume?.[i] || 0,
     })).filter((b: OHLCBar) => b.close > 0);
 
-    // Aggregate 1h → 4h if needed
+    // Aggregate 1h → 4h/8h if needed
     if (timeframe === '4h') {
       bars = aggregate(bars, 4);
+    } else if (timeframe === '8h') {
+      bars = aggregate(bars, 8);
     }
 
     return bars;
@@ -180,14 +184,15 @@ async function fetchEODHDBars(symbol: string, timeframe: string, lookbackDays: n
   const startDate = new Date(endDate.getTime() - lookbackDays * 24 * 60 * 60 * 1000);
   const eodhSymbol = toEODHDSymbol(symbol);
 
-  const isIntraday = ['1m', '5m', '15m', '1h', '4h'].includes(timeframe);
-  const eodhInterval = timeframe === '4h' ? '1h' : timeframe;
+  const isIntraday = ['1m', '5m', '15m', '1h', '4h', '8h'].includes(timeframe);
+  const eodhInterval = (timeframe === '4h' || timeframe === '8h') ? '1h' : timeframe;
 
   let url: string;
   if (isIntraday) {
     url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${apiKey}&interval=${eodhInterval}&from=${startDate.toISOString().split('T')[0]}&to=${endDate.toISOString().split('T')[0]}&fmt=json`;
   } else {
-    return []; // This function only handles intraday for this seeder
+    // Daily bars via EODHD EOD endpoint
+    url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${apiKey}&from=${startDate.toISOString().split('T')[0]}&to=${endDate.toISOString().split('T')[0]}&fmt=json`;
   }
 
   try {
@@ -204,6 +209,7 @@ async function fetchEODHDBars(symbol: string, timeframe: string, lookbackDays: n
     }));
 
     if (timeframe === '4h') bars = aggregate(bars, 4);
+    else if (timeframe === '8h') bars = aggregate(bars, 8);
     return bars;
   } catch { return []; }
 }
@@ -413,7 +419,7 @@ serve(async (req) => {
 
 function estimateExpectedBars(timeframe: string, lookbackDays: number): number {
   const barsPerDay: Record<string, number> = {
-    '1m': 1440, '5m': 288, '15m': 96, '1h': 24, '4h': 6,
+    '1m': 1440, '5m': 288, '15m': 96, '1h': 24, '4h': 6, '8h': 3, '1d': 1,
   };
   return (barsPerDay[timeframe] || 24) * lookbackDays;
 }
