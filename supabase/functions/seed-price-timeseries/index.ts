@@ -348,8 +348,9 @@ serve(async (req) => {
         if (!limits) continue;
 
         // Check if we already have data (skip if already seeded) — unless forceRefresh
+        let existing = 0;
         if (!forceRefresh) {
-          const existing = await getExistingBarCount(supabase, symbol, tf);
+          existing = await getExistingBarCount(supabase, symbol, tf);
           const expectedBars = estimateExpectedBars(tf, limits.yahooDays);
           if (existing > expectedBars * 0.8) {
             results.push({ symbol, timeframe: tf, bars: existing, skipped: true });
