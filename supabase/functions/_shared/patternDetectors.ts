@@ -118,21 +118,45 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const closeBeyond = currentClose > recentHigh * 1.001 || prevClose > recentHigh * 1.001;
       if (!closeBeyond) return { detected: false, pivots: [] };
       
-      // ADX > 20 filter: use directional movement as proxy
-      // Calculate average directional range over last 14 bars
-      const adxBars = window.slice(-15);
-      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
+      // ADX > 20 filter: Wilder's smoothed ADX (period=14, needs 28 bars minimum)
+      const ADX_PERIOD = 14;
+      const adxBars = window.slice(-(ADX_PERIOD * 2 + 1));
+      if (adxBars.length < ADX_PERIOD * 2 + 1) return { detected: false, pivots: [] };
+
+      // First pass: calculate raw TR, +DM, -DM
+      const trs: number[] = [], dmPlusArr: number[] = [], dmMinusArr: number[] = [];
       for (let i = 1; i < adxBars.length; i++) {
-        const dmPlus = Math.max(0, adxBars[i].high - adxBars[i-1].high);
-        const dmMinus = Math.max(0, adxBars[i-1].low - adxBars[i].low);
-        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
-        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
-        trSum += tr;
+        const tr = Math.max(
+          adxBars[i].high - adxBars[i].low,
+          Math.abs(adxBars[i].high - adxBars[i-1].close),
+          Math.abs(adxBars[i].low - adxBars[i-1].close)
+        );
+        const dmp = Math.max(0, adxBars[i].high - adxBars[i-1].high);
+        const dmm = Math.max(0, adxBars[i-1].low - adxBars[i].low);
+        trs.push(tr);
+        dmPlusArr.push(dmp > dmm ? dmp : 0);
+        dmMinusArr.push(dmm > dmp ? dmm : 0);
       }
-      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
-      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
-      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
-      if (dx < 20) return { detected: false, pivots: [] };
+
+      // Wilder smoothing
+      let smoothTR = trs.slice(0, ADX_PERIOD).reduce((a, b) => a + b, 0);
+      let smoothDMP = dmPlusArr.slice(0, ADX_PERIOD).reduce((a, b) => a + b, 0);
+      let smoothDMM = dmMinusArr.slice(0, ADX_PERIOD).reduce((a, b) => a + b, 0);
+
+      const dxValues: number[] = [];
+      for (let i = ADX_PERIOD; i < trs.length; i++) {
+        smoothTR = smoothTR - smoothTR / ADX_PERIOD + trs[i];
+        smoothDMP = smoothDMP - smoothDMP / ADX_PERIOD + dmPlusArr[i];
+        smoothDMM = smoothDMM - smoothDMM / ADX_PERIOD + dmMinusArr[i];
+        const diP = smoothTR > 0 ? (smoothDMP / smoothTR) * 100 : 0;
+        const diM = smoothTR > 0 ? (smoothDMM / smoothTR) * 100 : 0;
+        const dx = (diP + diM) > 0 ? Math.abs(diP - diM) / (diP + diM) * 100 : 0;
+        dxValues.push(dx);
+      }
+
+      // ADX = Wilder smoothed average of DX values
+      const adx = dxValues.reduce((a, b) => a + b, 0) / dxValues.length;
+      if (adx < 20) return { detected: false, pivots: [] };
       
       return {
         detected: true,
@@ -161,20 +185,42 @@ export const PATTERN_REGISTRY: Record<string, PatternConfig> = {
       const closeBeyond = currentClose < recentLow * 0.999 || prevClose < recentLow * 0.999;
       if (!closeBeyond) return { detected: false, pivots: [] };
       
-      // ADX > 20 filter
-      const adxBars = window.slice(-15);
-      let dmPlusSum = 0, dmMinusSum = 0, trSum = 0;
-      for (let i = 1; i < adxBars.length; i++) {
-        const dmPlus = Math.max(0, adxBars[i].high - adxBars[i-1].high);
-        const dmMinus = Math.max(0, adxBars[i-1].low - adxBars[i].low);
-        const tr = Math.max(adxBars[i].high - adxBars[i].low, Math.abs(adxBars[i].high - adxBars[i-1].close), Math.abs(adxBars[i].low - adxBars[i-1].close));
-        if (dmPlus > dmMinus) { dmPlusSum += dmPlus; } else { dmMinusSum += dmMinus; }
-        trSum += tr;
+      // ADX > 20 filter: Wilder's smoothed ADX (period=14, needs 28 bars minimum)
+      const ADX_PERIOD_S = 14;
+      const adxBarsS = window.slice(-(ADX_PERIOD_S * 2 + 1));
+      if (adxBarsS.length < ADX_PERIOD_S * 2 + 1) return { detected: false, pivots: [] };
+
+      const trsS: number[] = [], dmPlusArrS: number[] = [], dmMinusArrS: number[] = [];
+      for (let i = 1; i < adxBarsS.length; i++) {
+        const tr = Math.max(
+          adxBarsS[i].high - adxBarsS[i].low,
+          Math.abs(adxBarsS[i].high - adxBarsS[i-1].close),
+          Math.abs(adxBarsS[i].low - adxBarsS[i-1].close)
+        );
+        const dmp = Math.max(0, adxBarsS[i].high - adxBarsS[i-1].high);
+        const dmm = Math.max(0, adxBarsS[i-1].low - adxBarsS[i].low);
+        trsS.push(tr);
+        dmPlusArrS.push(dmp > dmm ? dmp : 0);
+        dmMinusArrS.push(dmm > dmp ? dmm : 0);
       }
-      const diPlus = trSum > 0 ? (dmPlusSum / trSum) * 100 : 0;
-      const diMinus = trSum > 0 ? (dmMinusSum / trSum) * 100 : 0;
-      const dx = (diPlus + diMinus) > 0 ? Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100 : 0;
-      if (dx < 20) return { detected: false, pivots: [] };
+
+      let smoothTRS = trsS.slice(0, ADX_PERIOD_S).reduce((a, b) => a + b, 0);
+      let smoothDMPS = dmPlusArrS.slice(0, ADX_PERIOD_S).reduce((a, b) => a + b, 0);
+      let smoothDMMS = dmMinusArrS.slice(0, ADX_PERIOD_S).reduce((a, b) => a + b, 0);
+
+      const dxValuesS: number[] = [];
+      for (let i = ADX_PERIOD_S; i < trsS.length; i++) {
+        smoothTRS = smoothTRS - smoothTRS / ADX_PERIOD_S + trsS[i];
+        smoothDMPS = smoothDMPS - smoothDMPS / ADX_PERIOD_S + dmPlusArrS[i];
+        smoothDMMS = smoothDMMS - smoothDMMS / ADX_PERIOD_S + dmMinusArrS[i];
+        const diP = smoothTRS > 0 ? (smoothDMPS / smoothTRS) * 100 : 0;
+        const diM = smoothTRS > 0 ? (smoothDMMS / smoothTRS) * 100 : 0;
+        const dx = (diP + diM) > 0 ? Math.abs(diP - diM) / (diP + diM) * 100 : 0;
+        dxValuesS.push(dx);
+      }
+
+      const adxS = dxValuesS.reduce((a, b) => a + b, 0) / dxValuesS.length;
+      if (adxS < 20) return { detected: false, pivots: [] };
       
       return {
         detected: true,
