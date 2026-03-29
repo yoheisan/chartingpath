@@ -325,10 +325,10 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} duration=${duration}ms fallbacks=${JSON.stringify(fallbackUsed)}`);
+    console.log(`[score-agent-detections] scored=${scored} skipped=${skipped} counterTrendFiltered=${counterTrendSkipped} duration=${duration}ms fallbacks=${JSON.stringify(fallbackUsed)}`);
 
     return new Response(
-      JSON.stringify({ scored, skipped, duration_ms: duration, total: detections.length, fallbacks: fallbackUsed }),
+      JSON.stringify({ scored, skipped, counter_trend_filtered: counterTrendSkipped, duration_ms: duration, total: detections.length, fallbacks: fallbackUsed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
