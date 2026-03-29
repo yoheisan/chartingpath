@@ -26,6 +26,7 @@ interface SeedRequest {
   timeframes?: string[];    // 1m, 5m, 15m, 1h, 4h
   maxSymbols?: number;      // limit symbols per run (default: 10)
   offset?: number;          // pagination offset
+  forceRefresh?: boolean;   // bypass existing bar count skip logic
 }
 
 interface OHLCBar {
@@ -326,8 +327,9 @@ serve(async (req) => {
     const timeframes = body.timeframes || ['15m'];
     const maxSymbols = body.maxSymbols || 10;
     const offset = body.offset || 0;
+    const forceRefresh = body.forceRefresh || false;
 
-    console.log(`[seed-prices] Starting: partition=${partition}, timeframes=${timeframes.join(',')}, max=${maxSymbols}, offset=${offset}`);
+    console.log(`[seed-prices] Starting: partition=${partition}, timeframes=${timeframes.join(',')}, max=${maxSymbols}, offset=${offset}, forceRefresh=${forceRefresh}`);
 
     // Get instruments for partition
     const instrumentList = ALL_INSTRUMENTS[partition as keyof typeof ALL_INSTRUMENTS] || [];
@@ -342,16 +344,17 @@ serve(async (req) => {
       const assetType = getAssetType(symbol);
 
       for (const tf of timeframes) {
-        // Check if we already have data (skip if already seeded)
-        const existing = await getExistingBarCount(supabase, symbol, tf);
         const limits = TIMEFRAME_LIMITS[tf];
         if (!limits) continue;
 
-        // Skip if we already have >80% of expected bars
-        const expectedBars = estimateExpectedBars(tf, limits.yahooDays);
-        if (existing > expectedBars * 0.8) {
-          results.push({ symbol, timeframe: tf, bars: existing, skipped: true });
-          continue;
+        // Check if we already have data (skip if already seeded) — unless forceRefresh
+        if (!forceRefresh) {
+          const existing = await getExistingBarCount(supabase, symbol, tf);
+          const expectedBars = estimateExpectedBars(tf, limits.yahooDays);
+          if (existing > expectedBars * 0.8) {
+            results.push({ symbol, timeframe: tf, bars: existing, skipped: true });
+            continue;
+          }
         }
 
         console.log(`[seed-prices] Fetching ${symbol}@${tf} (existing: ${existing} bars)`);
