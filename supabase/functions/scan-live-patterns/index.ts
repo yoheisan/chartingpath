@@ -1708,7 +1708,14 @@ serve(async (req) => {
     
     let statsAttachedCount = 0;
     let repeatabilityAppliedCount = 0;
-    const setups = detectedPatterns.slice(0, limit).map(pattern => {
+    const setups = detectedPatterns.slice(0, limit).filter(pattern => {
+      // Block counter_trend and null trend_alignment from screener output
+      if (!pattern.trendAlignment || pattern.trendAlignment === 'counter_trend') {
+        console.info(`[scan-live-patterns] Counter-trend blocked from output: ${pattern.patternId} on ${pattern.instrument}`);
+        return false;
+      }
+      return true;
+    }).map(pattern => {
       const key = `${pattern.instrument}|${pattern.patternId}|${timeframe}`;
       const firstDetectedAt = patternTimestamps.get(key);
       const statsKey = getStatsKey(pattern.patternId, pattern.instrument, timeframe, rrTier);
