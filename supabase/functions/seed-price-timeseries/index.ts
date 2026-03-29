@@ -60,7 +60,7 @@ const YAHOO_INTERVALS: Record<string, string> = {
 // ============= PROVIDERS =============
 
 async function fetchBinanceBars(symbol: string, timeframe: string, lookbackDays: number): Promise<OHLCBar[]> {
-  const binanceSymbol = symbol.replace('-USD', 'USDT');
+  const binanceSymbol = symbol.replace('-USD', '').replace('-', '') + 'USDT';
   const interval = BINANCE_INTERVALS[timeframe];
   if (!interval) return [];
 
@@ -73,10 +73,16 @@ async function fetchBinanceBars(symbol: string, timeframe: string, lookbackDays:
     while (currentStart < endMs) {
       const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&startTime=${currentStart}&endTime=${endMs}&limit=1000`;
       const response = await fetch(url);
-      if (!response.ok) { await response.text(); return allBars; }
+      if (!response.ok) {
+        console.warn(`[seed-prices] Binance error for ${binanceSymbol}: ${response.status}`);
+        return allBars;
+      }
 
       const data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) break;
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn(`[seed-prices] Binance returned empty data for ${binanceSymbol}@${interval}`);
+        break;
+      }
 
       for (const k of data) {
         allBars.push({
