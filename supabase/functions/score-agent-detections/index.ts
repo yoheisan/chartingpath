@@ -20,10 +20,7 @@ const PROOF_GATE_MIN_SAMPLE = 15;
 const PROOF_GATE_MIN_WIN_RATE = 0.45;
 const BATCH_SIZE = 100;
 
-// Bayesian prior: neutral assumption when no data exists
-const BAYESIAN_PRIOR_WIN_RATE = 0.50;
-const BAYESIAN_PRIOR_EXPECTANCY = 0;
-const BAYESIAN_VIRTUAL_SAMPLE = 10;
+// Bayesian prior constants imported from _shared/statsEnrichment.ts
 
 // ── Analyst Agent (matches AnalystAgent.ts engine logic) ──────────────────
 function scoreAnalyst(hp: any, source: string = "per_symbol"): { raw: number; details: Record<string, any> } {
