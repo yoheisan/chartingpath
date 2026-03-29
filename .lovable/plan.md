@@ -1,28 +1,33 @@
 
 
-# Plan: Generate Pattern Identification Methodology Audit Document
+# Add TP Coherence Guard Before Pattern Push
 
 ## What
-Create a comprehensive PDF audit note documenting all pattern detection methodologies, quality scoring, agent scoring, bracket level computation, and known issues across Dashboard, Screener, Pattern Lab, and Agent Scoring — formatted for a data scientist to review.
+Add a coherence check after bracket levels are computed (line 1542) and quality score is calculated (line 1623), but before the pattern is pushed to `detectedPatterns` (line 1625). If the take profit price is on the wrong side of entry for the pattern's direction, the pattern is skipped with a warning log.
 
-## Document Structure
-1. **Executive Summary** — scope, purpose, systems covered
-2. **Pattern Registry** — all 17 active patterns with detection logic parameters
-3. **Detection Methodology per Pattern** — pivot detection, tolerances, confirmation rules, trend gating
-4. **Bracket Levels (SL/TP)** — ATR-based computation, flooring, R:R guards
-5. **Quality Scoring System** — 9 factors with weights, grade thresholds, repeatability gate
-6. **Agent Scoring Pipeline** — 4 agents (Analyst, Risk, Timing, Portfolio), scoring math, verdict cutoffs
-7. **Known Issues & Audit Flags** — identified weaknesses for data scientist review
-8. **Data Source Routing** — EODHD primary, Binance for crypto, Yahoo fallback
+## Where
+**File:** `supabase/functions/scan-live-patterns/index.ts`
 
-## Implementation
-- Single script generating a PDF via Python (`reportlab`) to `/mnt/documents/`
-- Content sourced from codebase analysis above
-- No codebase changes needed
+**Insert between lines 1623 and 1625** (after `const qualityResult = ...` and before `detectedPatterns.push({`):
 
-## Technical Details
-- All detection parameters extracted from `patternDetectors.ts` (1087 lines)
-- Quality scorer from `patternQualityScorer.ts` (919 lines, 9 weighted factors)
-- Bracket levels from `bracketLevels.ts` (v1.1.0, ATR floor + min R:R)
-- Agent scoring from `engine/backtester-v2/agents/` (4 agents, 0-25 each, 0-100 composite)
+```typescript
+        // Coherence: TP must be on the correct side of entry for the pattern's direction
+        const tpCoherent = effectiveDirection === 'long'
+          ? bracketLevels.takeProfitPrice > lastBar.close
+          : bracketLevels.takeProfitPrice < lastBar.close;
+
+        if (!tpCoherent) {
+          console.warn(`[scan-live-patterns] Coherence violation blocked: ${patternId} ${effectiveDirection} on ${instrument}`);
+          continue; // skip this pattern entirely
+        }
+```
+
+## What does NOT change
+- No detection logic changes
+- No bracket computation changes
+- No quality scorer changes
+- The `detectedPatterns.push()` call and everything after it stays identical
+
+## After
+Redeploy `scan-live-patterns` edge function.
 
