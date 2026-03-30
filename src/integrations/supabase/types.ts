@@ -3863,6 +3863,7 @@ export type Database = {
           email_notifications_enabled: boolean | null
           first_destination: string | null
           id: string
+          last_sign_in_at: string | null
           push_notifications_enabled: boolean | null
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
@@ -3879,6 +3880,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           first_destination?: string | null
           id?: string
+          last_sign_in_at?: string | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
@@ -3895,6 +3897,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           first_destination?: string | null
           id?: string
+          last_sign_in_at?: string | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
