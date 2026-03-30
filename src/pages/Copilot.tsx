@@ -327,6 +327,7 @@ const Copilot = () => {
             openTrades={openTrades}
             selectedTradeId={selectedTradeId}
             activePlan={activePlan}
+            onCloseTrade={handleCloseTrade}
             onSelectTrade={(id) => {
               setSelectedClosedTrade(null);
               setSelectedTradeId(id);
