@@ -247,16 +247,22 @@ Deno.serve(async (req) => {
       }
 
       if (newStatus && exitPrice !== null) {
+        const closedAtStr = new Date().toISOString();
+        const updateData: Record<string, any> = {
+          status: newStatus,
+          exit_price: exitPrice,
+          pnl: Math.round(pnl * 100) / 100,
+          closed_at: closedAtStr,
+          close_reason: closeReason,
+          outcome_r: outcomeR,
+        };
+        // Set cooldown on stop loss hits
+        if (closeReason?.startsWith('Stop loss hit')) {
+          updateData.cooldown_until = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+        }
         await supabase
           .from('paper_trades')
-          .update({
-            status: newStatus,
-            exit_price: exitPrice,
-            pnl: Math.round(pnl * 100) / 100,
-            closed_at: new Date().toISOString(),
-            close_reason: closeReason,
-            outcome_r: outcomeR,
-          })
+          .update(updateData)
           .eq('id', trade.id);
 
         try {

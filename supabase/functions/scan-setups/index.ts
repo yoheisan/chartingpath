@@ -187,8 +187,8 @@ Deno.serve(async (req) => {
           .eq("user_id", userId)
           .eq("symbol", det.instrument)
           .eq("status", "closed")
-          .eq("close_reason", "stop_hit")
           .gte("closed_at", new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString())
+          .like("close_reason", "Stop loss hit%")
           .order("closed_at", { ascending: false })
           .limit(1)
           .maybeSingle();
