@@ -3209,6 +3209,7 @@ export type Database = {
           id: string
           instrument_type: string | null
           master_plan_id: string | null
+          monitoring_paused: boolean
           notes: string | null
           notified_at: string | null
           outcome: string | null
@@ -3250,6 +3251,7 @@ export type Database = {
           id?: string
           instrument_type?: string | null
           master_plan_id?: string | null
+          monitoring_paused?: boolean
           notes?: string | null
           notified_at?: string | null
           outcome?: string | null
@@ -3291,6 +3293,7 @@ export type Database = {
           id?: string
           instrument_type?: string | null
           master_plan_id?: string | null
+          monitoring_paused?: boolean
           notes?: string | null
           notified_at?: string | null
           outcome?: string | null
