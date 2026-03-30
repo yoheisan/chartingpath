@@ -28,9 +28,9 @@ export default function PaperTradingPage() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const handleOverrideConfirm = async (trade: PaperTrade, reason: string, notes: string) => {
+  const handleOverrideConfirm = async (trade: PaperTrade, reason: string, notes: string, manualPrice?: number) => {
     setOverrideSubmitting(true);
-    await handleCloseTrade(trade.id, trade.symbol, { reason, notes });
+    await handleCloseTrade(trade.id, trade.symbol, { reason, notes, manualPrice });
     setOverrideSubmitting(false);
     setOverrideTrade(null);
   };
