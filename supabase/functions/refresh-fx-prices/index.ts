@@ -4,6 +4,7 @@
  * Fetches current quotes for all active FX instruments in live_pattern_detections
  * and updates current_price, prev_close, change_percent fields.
  * 
+ * Uses EODHD real-time quote endpoint (bulk mode).
  * Runs on a 5-minute cron schedule. Does NOT create new detections —
  * only refreshes prices on existing active patterns.
  */
@@ -15,39 +16,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const BATCH_SIZE = 20; // Yahoo Finance quote endpoint limit per request
-
-interface YahooQuoteResult {
-  symbol: string;
-  regularMarketPrice?: number;
-  regularMarketPreviousClose?: number;
-  regularMarketChangePercent?: number;
+interface EODHDRealTimeQuote {
+  code: string;
+  close: number;
+  previousClose: number;
+  change_p: number;
 }
 
 /**
- * Fetch quotes from Yahoo Finance quote endpoint for a batch of symbols
+ * Convert Yahoo-style FX symbol to EODHD format
+ * EURUSD=X → EURUSD.FOREX
  */
-async function fetchQuotes(symbols: string[]): Promise<YahooQuoteResult[]> {
-  const symbolList = symbols.map(s => encodeURIComponent(s)).join(',');
-  const url = `https://query1.finance.yahoo.com/v8/finance/quote?symbols=${symbolList}`;
+function toEODHDSymbol(instrument: string): string {
+  return instrument.replace('=X', '.FOREX');
+}
 
-  console.log(`[refresh-fx-prices] Fetching quotes: ${symbols.join(', ')}`);
+/**
+ * Fetch real-time quotes from EODHD bulk endpoint.
+ * First symbol goes in the URL path, rest go in &s= param.
+ */
+async function fetchEODHDQuotes(
+  symbols: string[],
+  apiKey: string
+): Promise<EODHDRealTimeQuote[]> {
+  if (symbols.length === 0) return [];
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    },
-  });
+  const eodhSymbols = symbols.map(toEODHDSymbol);
+  const primary = eodhSymbols[0];
+  const rest = eodhSymbols.slice(1);
+
+  let url = `https://eodhd.com/api/real-time/${primary}?api_token=${apiKey}&fmt=json`;
+  if (rest.length > 0) {
+    url += `&s=${rest.join(',')}`;
+  }
+
+  console.log(`[refresh-fx-prices] Fetching ${symbols.length} quotes via EODHD real-time`);
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     const text = await response.text();
-    console.error(`[refresh-fx-prices] Yahoo quote API error: ${response.status} — ${text.slice(0, 200)}`);
+    console.error(`[refresh-fx-prices] EODHD API error: ${response.status} — ${text.slice(0, 200)}`);
     return [];
   }
 
   const data = await response.json();
-  const results: YahooQuoteResult[] = data?.quoteResponse?.result ?? [];
-  return results;
+
+  // Single symbol returns an object, multiple returns an array
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [data];
 }
 
 serve(async (req) => {
@@ -58,6 +77,11 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
+    const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+    if (!EODHD_API_KEY) {
+      throw new Error('EODHD_API_KEY not configured');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -86,54 +110,56 @@ serve(async (req) => {
     const uniqueSymbols = [...new Set(fxDetections.map(d => d.instrument))];
     console.log(`[refresh-fx-prices] Found ${uniqueSymbols.length} unique active FX symbols`);
 
-    // 2. Batch fetch quotes (up to BATCH_SIZE per request)
+    // 2. Fetch all quotes in one bulk request
+    const quotes = await fetchEODHDQuotes(uniqueSymbols, EODHD_API_KEY);
+
+    // Build a map from EODHD code → quote for easy lookup
+    const quoteMap = new Map<string, EODHDRealTimeQuote>();
+    for (const q of quotes) {
+      if (q.code) {
+        quoteMap.set(q.code, q);
+      }
+    }
+
+    // 3. Update each symbol
     let totalUpdated = 0;
-    const totalSymbols = uniqueSymbols.length;
 
-    for (let i = 0; i < uniqueSymbols.length; i += BATCH_SIZE) {
-      const batch = uniqueSymbols.slice(i, i + BATCH_SIZE);
-      const quotes = await fetchQuotes(batch);
+    for (const symbol of uniqueSymbols) {
+      const eodhCode = toEODHDSymbol(symbol);
+      const quote = quoteMap.get(eodhCode);
 
-      // 3. Update each symbol with valid price data
-      for (const quote of quotes) {
-        if (!quote.symbol || !Number.isFinite(quote.regularMarketPrice)) {
-          console.log(`[refresh-fx-prices] Skipping ${quote.symbol ?? 'unknown'} — no valid price`);
-          continue;
-        }
-
-        const { error: updateErr } = await supabase
-          .from('live_pattern_detections')
-          .update({
-            current_price: quote.regularMarketPrice,
-            last_confirmed_at: new Date().toISOString(),
-            prev_close: quote.regularMarketPreviousClose ?? null,
-            change_percent: quote.regularMarketChangePercent ?? null,
-          })
-          .eq('instrument', quote.symbol)
-          .eq('asset_type', 'fx')
-          .eq('status', 'active');
-
-        if (updateErr) {
-          console.error(`[refresh-fx-prices] Failed to update ${quote.symbol}: ${updateErr.message}`);
-        } else {
-          totalUpdated++;
-        }
+      if (!quote || !Number.isFinite(quote.close)) {
+        console.log(`[refresh-fx-prices] Skipping ${symbol} — no valid price from EODHD`);
+        continue;
       }
 
-      // Small delay between batches to respect rate limits
-      if (i + BATCH_SIZE < uniqueSymbols.length) {
-        await new Promise(r => setTimeout(r, 500));
+      const { error: updateErr } = await supabase
+        .from('live_pattern_detections')
+        .update({
+          current_price: quote.close,
+          last_confirmed_at: new Date().toISOString(),
+          prev_close: quote.previousClose ?? null,
+          change_percent: quote.change_p ?? null,
+        })
+        .eq('instrument', symbol)
+        .eq('asset_type', 'fx')
+        .eq('status', 'active');
+
+      if (updateErr) {
+        console.error(`[refresh-fx-prices] Failed to update ${symbol}: ${updateErr.message}`);
+      } else {
+        totalUpdated++;
       }
     }
 
     const elapsed = Date.now() - startTime;
-    console.log(`[refresh-fx-prices] Updated prices for ${totalUpdated}/${totalSymbols} FX instruments in ${elapsed}ms`);
+    console.log(`[refresh-fx-prices] Updated ${totalUpdated}/${uniqueSymbols.length} FX prices via EODHD real-time in ${elapsed}ms`);
 
     return new Response(
       JSON.stringify({
         success: true,
         updated: totalUpdated,
-        total: totalSymbols,
+        total: uniqueSymbols.length,
         elapsed_ms: elapsed,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
