@@ -18,6 +18,7 @@ import { injectPatternLinks } from "@/utils/patternAutoLinker";
 import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/optionsStrategyMapping";
 import { getStrategyPrimer, hasStrategyPrimer } from "@/utils/strategyPrimerMapping";
 import { CompressedBar } from "@/types/VisualSpec";
+import BlogCTA from "@/components/blog/BlogCTA";
 
 // Lazy load heavy chart components and primers
 const DynamicPatternChart = lazy(() => 
@@ -1071,6 +1072,18 @@ function TableOfContents({ sections }: { sections: ParsedSection[] }) {
   );
 }
 
+// Map blog slugs to their primary pattern for the BlogCTA component
+const SLUG_PATTERN_MAP: Record<string, { name: string; slug: string }> = {
+  'gap-trading-strategy': { name: 'Donchian Breakout', slug: 'donchian-breakout' },
+  'head-and-shoulders': { name: 'Head & Shoulders', slug: 'head-and-shoulders' },
+  'double-top-bottom': { name: 'Double Top/Bottom', slug: 'double-top' },
+  'triangle-patterns': { name: 'Triangle', slug: 'ascending-triangle' },
+  'wedge-patterns': { name: 'Wedge', slug: 'rising-wedge' },
+  'flag-pennant-patterns': { name: 'Flag', slug: 'bull-flag' },
+  'cup-and-handle': { name: 'Cup & Handle', slug: 'cup-and-handle' },
+  'breakout-trading': { name: 'Donchian Breakout', slug: 'donchian-breakout' },
+};
+
 const DynamicArticle = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -1613,27 +1626,34 @@ const DynamicArticle = () => {
             </div>
           )}
 
-          {/* CTA — contextual links to screener and Pattern Lab */}
-          <div className="mt-12 p-6 bg-muted/30 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">{t('learn.readyToApply')}</h3>
-            <p className="text-muted-foreground mb-4">
-              {t('learn.readyToApplyDesc')}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link 
-                to="/patterns/live"
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                {t('learn.findSetups')}
-              </Link>
-              <Link 
-                to="/projects/pattern-lab/new?mode=validate"
-                className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
-              >
-                {t('patternLabWizard.validateSignal', 'Backtest a Pattern')}
-              </Link>
+          {/* CTA — contextual with live pattern count */}
+          {slug && SLUG_PATTERN_MAP[slug] ? (
+            <BlogCTA
+              patternName={SLUG_PATTERN_MAP[slug].name}
+              patternSlug={SLUG_PATTERN_MAP[slug].slug}
+            />
+          ) : (
+            <div className="mt-12 p-6 bg-muted/30 rounded-lg">
+              <h3 className="text-xl font-bold mb-4">{t('learn.readyToApply')}</h3>
+              <p className="text-muted-foreground mb-4">
+                {t('learn.readyToApplyDesc')}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link 
+                  to="/patterns/live"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  {t('learn.findSetups')}
+                </Link>
+                <Link 
+                  to="/projects/pattern-lab/new?mode=validate"
+                  className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                >
+                  {t('patternLabWizard.validateSignal', 'Backtest a Pattern')}
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </article>
       </div>
     </div>
