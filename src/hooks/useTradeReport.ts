@@ -101,16 +101,27 @@ export function useTradeReport(dateRange: DateRange): ReportData {
 }
 
 // Utility functions for report calculations
+export const INCONCLUSIVE_CLOSE_REASONS = [
+  'session_end_unresolved',
+  'session_end_tp_proximity',
+];
+
+export function isInconclusiveTrade(t: PaperTrade): boolean {
+  return INCONCLUSIVE_CLOSE_REASONS.includes(t.close_reason ?? '');
+}
+
 export function calcWinRate(trades: PaperTrade[]): number {
-  if (trades.length === 0) return 0;
-  const wins = trades.filter(t => (t.outcome_r ?? 0) > 0).length;
-  return Math.round((wins / trades.length) * 100);
+  const resolved = trades.filter(t => !isInconclusiveTrade(t));
+  if (resolved.length === 0) return 0;
+  const wins = resolved.filter(t => (t.outcome_r ?? 0) > 0).length;
+  return Math.round((wins / resolved.length) * 100);
 }
 
 export function calcAvgR(trades: PaperTrade[]): number {
-  if (trades.length === 0) return 0;
-  const sum = trades.reduce((s, t) => s + (t.outcome_r ?? 0), 0);
-  return sum / trades.length;
+  const resolved = trades.filter(t => !isInconclusiveTrade(t));
+  if (resolved.length === 0) return 0;
+  const sum = resolved.reduce((s, t) => s + (t.outcome_r ?? 0), 0);
+  return sum / resolved.length;
 }
 
 export function calcTotalR(trades: PaperTrade[]): number {

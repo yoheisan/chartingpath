@@ -227,6 +227,21 @@ Deno.serve(async (req) => {
               ? calcForexPnl(trade.symbol, isLong ? currentPrice - entryPrice : entryPrice - currentPrice, forexLotSize)
               : pnlDollars;
 
+            // Determine granular session-end close reason
+            let sessionCloseReason = "session_end";
+            const tpDistance = Math.abs(takeProfit - currentPrice);
+            const tpRange = Math.abs(takeProfit - entryPrice);
+            const withinTpProximity = tpRange > 0 && (tpDistance / tpRange) <= 0.10;
+            const movingFavorably = isLong
+              ? currentPrice > entryPrice && currentPrice < takeProfit
+              : currentPrice < entryPrice && currentPrice > takeProfit;
+
+            if (withinTpProximity) {
+              sessionCloseReason = "session_end_tp_proximity";
+            } else if (movingFavorably) {
+              sessionCloseReason = "session_end_unresolved";
+            }
+
             await supabase
               .from("paper_trades")
               .update({
@@ -235,7 +250,7 @@ Deno.serve(async (req) => {
                 pnl: Math.round(windowPnl * 100) / 100,
                 outcome_r: pnlR,
                 closed_at: new Date().toISOString(),
-                close_reason: "Trading window closed",
+                close_reason: sessionCloseReason,
                 hold_duration_mins: holdMins,
                 outcome: pnlR >= 0 ? "win" : "loss",
               })
