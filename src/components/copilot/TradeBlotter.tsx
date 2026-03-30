@@ -40,7 +40,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
   return (
     <div className="border-t border-border/40 flex flex-col bg-card/30 h-full min-h-0">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
         className="flex items-center justify-between px-4 py-1.5 hover:bg-secondary/40 transition-colors shrink-0"
       >
         <div className="flex items-center gap-3">
