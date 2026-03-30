@@ -18,6 +18,7 @@ import type { MasterPlan } from '@/hooks/useMasterPlan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { supabase } from '@/integrations/supabase/client';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
@@ -517,7 +518,30 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             <Button variant="outline" size="sm" className="text-sm h-7" onClick={() => onFocusNLBar('Why did you enter ' + trade.symbol + '?')}>
               {t('copilotPage.why')}
             </Button>
-            <Button variant="outline" size="sm" className="text-sm h-7 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={() => setOverrideModalOpen(true)}>
+            <Button variant="outline" size="sm" className="text-sm h-7 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={async () => {
+              setOverrideModalOpen(true);
+              setCheckingPrice(true);
+              setLivePriceUnavailable(false);
+              try {
+                const { data } = await supabase
+                  .from('live_pattern_detections')
+                  .select('current_price')
+                  .eq('instrument', trade.symbol)
+                  .not('current_price', 'is', null)
+                  .order('last_confirmed_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (!data?.current_price) {
+                  setLivePriceUnavailable(true);
+                  setManualExitPrice(String(trade.entry_price));
+                }
+              } catch {
+                setLivePriceUnavailable(true);
+                setManualExitPrice(String(trade.entry_price));
+              } finally {
+                setCheckingPrice(false);
+              }
+            }}>
               {t('copilotPage.overrideExit')}
             </Button>
           </div>
