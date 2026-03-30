@@ -1499,9 +1499,24 @@ async function fetchMarketData(
     const fromDate = new Date(fromTimestamp).toISOString().split('T')[0];
     const toDate = new Date().toISOString().split('T')[0];
     const cachedBars = await readBarsFromDB(supabase, symbol, timeframe, fromDate, toDate);
+    
     if (cachedBars.length >= 50) {
-      console.log(`[Provider] Using ${cachedBars.length} cached bars from DB for ${symbol}@${timeframe}`);
-      return cachedBars;
+      // Check if cache is fresh enough
+      const latestCachedBar = cachedBars[cachedBars.length - 1];
+      const latestDate = new Date(latestCachedBar.date);
+      const hoursStale = (Date.now() - latestDate.getTime()) / (1000 * 60 * 60);
+      
+      // For intraday timeframes, cache is stale if latest bar is more than 26 hours old
+      // (allows for weekends + 2h buffer)
+      const maxStaleHours = ['1h', '4h', '8h'].includes(timeframe) ? 26 : 72;
+      
+      if (hoursStale <= maxStaleHours) {
+        console.log(`[Provider] Using ${cachedBars.length} cached bars for ${symbol}@${timeframe} (${hoursStale.toFixed(1)}h old)`);
+        return cachedBars;
+      } else {
+        console.log(`[Provider] Cache stale for ${symbol}@${timeframe} (${hoursStale.toFixed(1)}h old) — fetching fresh data`);
+        // Fall through to external providers
+      }
     }
   }
   
@@ -1528,6 +1543,13 @@ async function fetchMarketData(
     if (bars.length === 0) {
       console.log(`[Provider] EODHD returned no data for FX ${symbol}, trying Yahoo fallback`);
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    }
+    
+    // Final fallback: use EODHD EOD (daily) bars to prevent data starvation
+    if (bars.length === 0) {
+      console.log(`[Provider] Both EODHD intraday and Yahoo failed for FX ${symbol} — trying EODHD EOD as final fallback`);
+      bars = await fetchEODHDData(symbol, '1d', fromTimestamp);
+      // Note: this gives daily bars not hourly, but keeps the pattern detector from starving on zero data
     }
   } else {
     // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
