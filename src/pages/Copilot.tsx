@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { isForexSymbol, calcForexPnl } from "@/utils/forexUtils";
 import { ChevronLeft, LayoutDashboard, Bell, FileText, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MandateCard } from "@/components/copilot/MandateCard";
@@ -123,9 +124,13 @@ const Copilot = () => {
       }
 
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
-      const pnl = isLong
-        ? (exitPrice - trade.entry_price) * trade.quantity
-        : (trade.entry_price - exitPrice) * trade.quantity;
+      const isForex = isForexSymbol(trade.symbol);
+      const forexLotSize = isForex ? 0.01 : 0; // micro lot default
+
+      const signedMove = isLong ? exitPrice - trade.entry_price : trade.entry_price - exitPrice;
+      const pnl = isForex
+        ? calcForexPnl(trade.symbol, isLong ? exitPrice - trade.entry_price : trade.entry_price - exitPrice, forexLotSize)
+        : signedMove * trade.quantity;
       const riskAmount = Math.abs(trade.entry_price - (trade.stop_loss ?? trade.entry_price));
       const priceMove = isLong ? exitPrice - trade.entry_price : trade.entry_price - exitPrice;
       const outcomeR = riskAmount > 0 ? Math.round((priceMove / riskAmount) * 100) / 100 : 0;
