@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { ChevronLeft, LayoutDashboard, Bell, FileText, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MandateCard } from "@/components/copilot/MandateCard";
@@ -23,7 +24,7 @@ const Copilot = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { subscriptionPlan } = useUserProfile();
-  const { openTrades } = useCopilotTrades(user?.id);
+  const { openTrades, refetch: refetchTrades } = useCopilotTrades(user?.id);
 
   const canCreateMore = useMemo(() => {
     const planMapping: Record<string, PlanTier> = {
