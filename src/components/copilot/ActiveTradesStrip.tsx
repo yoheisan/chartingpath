@@ -1,8 +1,9 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrendingUp, TrendingDown, X } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
+import { useLivePrices } from '@/hooks/useLivePrices';
+import { useMemo } from 'react';
 
 interface ActiveTradesStripProps {
   trades: CopilotTrade[];
@@ -12,11 +13,12 @@ interface ActiveTradesStripProps {
 }
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
+const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
 const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrade }: ActiveTradesStripProps) => {
-  const displayTrades = trades;
+  const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
+  const livePrices = useLivePrices(symbols);
   const isEmpty = trades.length === 0;
-
 
   if (isEmpty) {
     return (
@@ -32,17 +34,31 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
       <div className="flex items-center justify-between px-1">
         <span className="text-sm font-semibold text-foreground">Active Trades</span>
         <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
-          {displayTrades.length}
+          {trades.length}
         </Badge>
       </div>
 
       <ScrollArea className="max-h-[200px]">
         <div className="flex flex-col gap-1">
-          {displayTrades.map((trade) => {
+          {trades.map((trade) => {
             const isSelected = trade.id === selectedTradeId;
-            const pnlR = trade.outcome_r ?? 0;
             const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
-            const isPositive = pnlR >= 0;
+            const isOpen = trade.status === 'open';
+            const currentPrice = isOpen ? livePrices[trade.symbol] : trade.exit_price;
+            const pnlR = trade.outcome_r ?? 0;
+
+            // Calculate unrealized dollar P&L for open trades
+            let dollarPnl: number | null = null;
+            if (isOpen && currentPrice && trade.entry_price && trade.quantity) {
+              dollarPnl = isLong
+                ? (currentPrice - trade.entry_price) * trade.quantity
+                : (trade.entry_price - currentPrice) * trade.quantity;
+            } else if (!isOpen && trade.pnl != null) {
+              dollarPnl = trade.pnl;
+            }
+
+            const displayPnl = dollarPnl ?? 0;
+            const isPositive = isOpen ? displayPnl >= 0 : pnlR >= 0;
 
             return (
               <button
@@ -61,8 +77,11 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                 )}
                 <span className="text-sm font-mono font-bold text-foreground truncate">{trade.symbol}</span>
                 <span className="text-sm font-mono text-muted-foreground">${trade.entry_price?.toFixed(2)}</span>
+                {isOpen && currentPrice && (
+                  <span className="text-sm font-mono text-foreground">→ ${currentPrice.toFixed(2)}</span>
+                )}
                 <span className={`ml-auto text-sm font-mono font-semibold shrink-0 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                  {formatR(pnlR)}
+                  {dollarPnl != null ? formatPnl(dollarPnl) : formatR(pnlR)}
                 </span>
                 {onCloseTrade && (
                   <button
