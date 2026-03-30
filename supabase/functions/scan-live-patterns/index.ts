@@ -1511,7 +1511,8 @@ serve(async (req) => {
     const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
     const cached = scanCache.get(cacheKey);
     const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
-    if (cached && Date.now() - cached.timestamp < cacheTtl) {
+    // Never serve memory cache if forceRefresh=true — cron jobs set this to force a real scan
+    if (cached && Date.now() - cached.timestamp < cacheTtl && !forceRefresh) {
       return new Response(JSON.stringify(cached.data), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
     }
     
