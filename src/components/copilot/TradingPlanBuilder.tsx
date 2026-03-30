@@ -3,12 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Globe } from "lucide-react";
+import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Globe, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MasterPlan, AssetTradingSchedule, TradingSchedules } from "@/hooks/useMasterPlan";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// G10 major FX pairs — reliable price feeds
+const G10_MAJORS = new Set([
+  "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X",
+  "USDCAD=X", "NZDUSD=X", "USDCHF=X", "EURGBP=X",
+  "EURJPY=X", "GBPJPY=X",
+]);
 
 // ── All 15 patterns ChartingPath detects ──
 const ALL_PATTERNS = [
@@ -323,7 +340,33 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
   const canSave = selectedPatterns.length > 0;
 
-  const handleSave = async () => {
+  // Detect if the plan includes exotic FX
+  const hasExoticFx = assetClasses.includes("forex") && fxCategories.includes("exotic");
+
+  const [showExoticConfirm, setShowExoticConfirm] = useState(false);
+
+  const handleSaveClick = () => {
+    if (!canSave) return;
+    if (hasExoticFx) {
+      setShowExoticConfirm(true);
+      return;
+    }
+    performSave();
+  };
+
+  const handleRemoveExoticAndSave = () => {
+    setFxCategories(prev => prev.filter(c => c !== "exotic"));
+    setShowExoticConfirm(false);
+    // Save after state update via setTimeout
+    setTimeout(() => performSave(), 0);
+  };
+
+  const handleContinueWithExotic = () => {
+    setShowExoticConfirm(false);
+    performSave();
+  };
+
+  const performSave = async () => {
     if (!canSave) return;
     setIsSaving(true);
     try {
@@ -477,6 +520,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               <div className="flex flex-wrap gap-1.5">
                 {FX_CATEGORY_OPTIONS.map(cat => {
                   const selected = fxCategories.includes(cat.value);
+                  const isExotic = cat.value === "exotic";
                   return (
                     <button
                       key={cat.value}
@@ -484,16 +528,25 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       className={cn(
                         "px-2 py-1 rounded-md text-sm font-medium transition-all border",
                         selected
-                          ? "bg-primary/10 border-primary/30 text-primary"
+                          ? isExotic && selected
+                            ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                            : "bg-primary/10 border-primary/30 text-primary"
                           : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {isExotic && selected && <AlertTriangle className="h-2.5 w-2.5 mr-0.5 inline text-amber-400" />}
                       {cat.label}
                     </button>
                   );
                 })}
               </div>
+              {fxCategories.includes("exotic") && (
+                <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  Exotic pairs have reduced price feed reliability
+                </p>
+              )}
             </div>
           )}
 
@@ -1026,7 +1079,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         <div className="space-y-2 pt-2">
           <Button
             className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-            onClick={handleSave}
+            onClick={handleSaveClick}
             disabled={!canSave || isSaving}
           >
             {isSaving ? (
@@ -1053,6 +1106,37 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </div>
         </div>
       </div>
+      {/* Exotic FX confirmation dialog */}
+      <AlertDialog open={showExoticConfirm} onOpenChange={setShowExoticConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-400" />
+              Exotic FX pairs detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Your plan includes <span className="font-semibold text-amber-400">exotic FX pairs</span>.
+              </p>
+              <p>
+                These pairs have limited price feed coverage and may not be monitored reliably.
+              </p>
+              <p className="text-xs text-muted-foreground">Continue anyway?</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRemoveExoticAndSave}>
+              Remove exotic pairs
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleContinueWithExotic}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              Continue with exotic pairs
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ScrollArea>
   );
 }
