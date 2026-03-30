@@ -19,14 +19,33 @@ const NEUTRAL_OVERRIDES = [
   'News event risk',
 ];
 
+// ── Forex helpers ──
+function isForexSymbol(symbol: string): boolean {
+  return symbol.endsWith("=X");
+}
+
+function getForexPipSize(symbol: string): number {
+  return symbol.toUpperCase().includes("JPY") ? 0.01 : 0.0001;
+}
+
+function priceToPips(symbol: string, priceMove: number): number {
+  return priceMove / getForexPipSize(symbol);
+}
+
+function getForexPipValue(symbol: string, lotSize: number): number {
+  const pipSize = getForexPipSize(symbol);
+  const lotUnits = lotSize * 100_000;
+  return pipSize * lotUnits;
+}
+
+function calcForexPnl(symbol: string, priceMove: number, lotSize: number): number {
+  const pips = priceToPips(symbol, Math.abs(priceMove));
+  const pipValue = getForexPipValue(symbol, lotSize);
+  return (priceMove >= 0 ? 1 : -1) * pips * pipValue;
+}
+
 /**
  * Feed trade outcome back into agent_scores to make scoring self-improving.
- * 
- * - TP hit: full positive signal (weight 1.0)
- * - SL hit: full negative signal (weight 1.0)
- * - Timeout: weighted by R outcome (positive = partial win, negative = partial loss)
- * - Override (negative signal): soft negative (weight 0.3)
- * - Override (neutral): no signal quality update
  */
 async function feedbackToAgentScores(
   supabase: ReturnType<typeof createClient>,
@@ -34,7 +53,6 @@ async function feedbackToAgentScores(
   outcomeR: number,
   closeReason: string,
 ) {
-  // Extract pattern_id and timeframe from trade columns or notes
   const patternId = trade.pattern_id || trade.notes?.match(/\[pattern:(.*?)\]/)?.[1];
   const timeframe = trade.timeframe || trade.notes?.match(/on (\w+)/)?.[1];
   
@@ -43,22 +61,20 @@ async function feedbackToAgentScores(
     return;
   }
 
-  // Determine signal weight based on close reason
   let signalWeight = 1.0;
   const overrideReason = trade.override_reason;
 
   if (overrideReason) {
     if (NEUTRAL_OVERRIDES.includes(overrideReason)) {
       console.log(`[feedback] Neutral override "${overrideReason}" — no signal quality update`);
-      return; // Skip entirely for neutral overrides
+      return;
     }
     if (NEGATIVE_SIGNAL_OVERRIDES.includes(overrideReason)) {
-      signalWeight = 0.3; // Soft negative
+      signalWeight = 0.3;
       console.log(`[feedback] Soft negative override "${overrideReason}" — weight 0.3`);
     }
   }
 
-  // Find the matching agent_scores row for this instrument+pattern+timeframe
   const { data: agentScore } = await supabase
     .from('agent_scores')
     .select('id, analyst_raw, win_rate, sample_size, analyst_details')
@@ -74,25 +90,20 @@ async function feedbackToAgentScores(
     return;
   }
 
-  // Calculate updated stats
   const currentWinRate = agentScore.win_rate ?? 0.5;
   const currentSampleSize = agentScore.sample_size ?? 0;
   const isWin = outcomeR > 0;
 
-  // Weighted incremental update: new_wr = (old_wr * n + weighted_outcome) / (n + weight)
   const effectiveOutcome = isWin ? signalWeight : 0;
   const newSampleSize = currentSampleSize + signalWeight;
   const newWinRate = newSampleSize > 0
     ? (currentWinRate * currentSampleSize + effectiveOutcome) / newSampleSize
     : currentWinRate;
 
-  // Update analyst_raw score based on new win rate (out of 25)
-  // Formula: base from win rate (0-15) + confidence bonus from sample size (0-10)
   const wrScore = Math.min(15, newWinRate * 15);
   const confidenceBonus = Math.min(10, Math.log2(Math.max(1, newSampleSize)) * 1.5);
   const newAnalystRaw = Math.round((wrScore + confidenceBonus) * 100) / 100;
 
-  // Update analyst_details with outcome tracking
   const details = (agentScore.analyst_details as Record<string, any>) || {};
   const outcomes = details.outcome_feedback || { wins: 0, losses: 0, overrides: 0 };
   if (isWin) outcomes.wins = (outcomes.wins || 0) + 1;
@@ -128,7 +139,6 @@ Deno.serve(async (req) => {
   );
 
   try {
-    // Fetch all open paper trades that have SL and TP set
     const { data: openTrades, error } = await supabase
       .from('paper_trades')
       .select('*')
@@ -151,7 +161,6 @@ Deno.serve(async (req) => {
     let feedbackCount = 0;
 
     for (const trade of openTrades) {
-      // Get latest price for this instrument from live_pattern_detections
       const { data: latestPrice } = await supabase
         .from('live_pattern_detections')
         .select('current_price, detected_at')
@@ -166,6 +175,10 @@ Deno.serve(async (req) => {
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const openedHoursAgo = (Date.now() - new Date(trade.created_at).getTime()) / 3600000;
 
+      // Detect forex
+      const isForex = trade.instrument_type === "forex" || isForexSymbol(trade.symbol);
+      const forexLotSize = isForex ? Number(trade.forex_lot_size || 0.01) : 0;
+
       let newStatus: string | null = null;
       let exitPrice: number | null = null;
       let outcomeR: number | null = null;
@@ -174,6 +187,14 @@ Deno.serve(async (req) => {
 
       const riskAmount = Math.abs(Number(trade.entry_price) - Number(trade.stop_loss));
 
+      // Helper to calculate P&L based on instrument type
+      const calcPnl = (pMove: number): number => {
+        if (isForex) {
+          return calcForexPnl(trade.symbol, pMove, forexLotSize);
+        }
+        return pMove * Number(trade.quantity);
+      };
+
       // Check TP hit
       if (isLong && currentPrice >= Number(trade.take_profit)) {
         newStatus = 'closed';
@@ -181,7 +202,7 @@ Deno.serve(async (req) => {
         outcomeR = riskAmount > 0
           ? Math.round(((exitPrice - Number(trade.entry_price)) / riskAmount) * 100) / 100
           : 0;
-        pnl = (exitPrice - Number(trade.entry_price)) * Number(trade.quantity);
+        pnl = calcPnl(exitPrice - Number(trade.entry_price));
         closeReason = `Take profit hit at ${exitPrice}`;
         hitTp++;
       } else if (!isLong && currentPrice <= Number(trade.take_profit)) {
@@ -190,7 +211,7 @@ Deno.serve(async (req) => {
         outcomeR = riskAmount > 0
           ? Math.round(((Number(trade.entry_price) - exitPrice) / riskAmount) * 100) / 100
           : 0;
-        pnl = (Number(trade.entry_price) - exitPrice) * Number(trade.quantity);
+        pnl = calcPnl(Number(trade.entry_price) - exitPrice);
         closeReason = `Take profit hit at ${exitPrice}`;
         hitTp++;
       }
@@ -199,14 +220,14 @@ Deno.serve(async (req) => {
         newStatus = 'closed';
         exitPrice = Number(trade.stop_loss);
         outcomeR = -1.0;
-        pnl = (exitPrice - Number(trade.entry_price)) * Number(trade.quantity);
+        pnl = calcPnl(exitPrice - Number(trade.entry_price));
         closeReason = `Stop loss hit at ${exitPrice}`;
         hitSl++;
       } else if (!isLong && currentPrice >= Number(trade.stop_loss)) {
         newStatus = 'closed';
         exitPrice = Number(trade.stop_loss);
         outcomeR = -1.0;
-        pnl = (Number(trade.entry_price) - exitPrice) * Number(trade.quantity);
+        pnl = calcPnl(Number(trade.entry_price) - exitPrice);
         closeReason = `Stop loss hit at ${exitPrice}`;
         hitSl++;
       }
@@ -220,15 +241,12 @@ Deno.serve(async (req) => {
         outcomeR = riskAmount > 0
           ? Math.round((priceMove / riskAmount) * 100) / 100
           : 0;
-        pnl = isLong
-          ? (currentPrice - Number(trade.entry_price)) * Number(trade.quantity)
-          : (Number(trade.entry_price) - currentPrice) * Number(trade.quantity);
+        pnl = calcPnl(isLong ? currentPrice - Number(trade.entry_price) : Number(trade.entry_price) - currentPrice);
         closeReason = `Timed out after 7 days at ${currentPrice}`;
         timedOut++;
       }
 
       if (newStatus && exitPrice !== null) {
-        // Close the trade
         await supabase
           .from('paper_trades')
           .update({
@@ -241,7 +259,6 @@ Deno.serve(async (req) => {
           })
           .eq('id', trade.id);
 
-        // Feed outcome back to agent scoring
         try {
           await feedbackToAgentScores(supabase, trade, outcomeR ?? 0, closeReason ?? '');
           feedbackCount++;
@@ -249,7 +266,6 @@ Deno.serve(async (req) => {
           console.warn('[monitor-paper-trades] Feedback error:', fbErr);
         }
 
-        // Send outcome email notification
         const { data: prefs } = await supabase
           .from('user_email_preferences')
           .select('alert_emails, unsubscribed')

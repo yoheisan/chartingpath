@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isForexSymbol, calcForexPnl } from '@/utils/forexUtils';
 
 export interface PaperPortfolio {
   id: string;
@@ -103,16 +104,24 @@ export function usePaperTrading(userId?: string) {
 
       const { data: trade } = await supabase
         .from('paper_trades')
-        .select('entry_price, quantity, trade_type, stop_loss, user_id')
+        .select('entry_price, quantity, trade_type, stop_loss, user_id, instrument_type, forex_lot_size')
         .eq('id', tradeId)
         .single();
 
       if (!trade || exitPrice == null) { toast.error('Could not fetch current price'); return; }
 
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
-      const pnl = isLong
-        ? (exitPrice - Number(trade.entry_price)) * Number(trade.quantity)
-        : (Number(trade.entry_price) - exitPrice) * Number(trade.quantity);
+      const isForex = trade.instrument_type === 'forex' || isForexSymbol(symbol);
+      const forexLotSize = isForex ? Number(trade.forex_lot_size || 0.01) : 0;
+
+      const signedMove = isLong
+        ? exitPrice - Number(trade.entry_price)
+        : Number(trade.entry_price) - exitPrice;
+
+      const pnl = isForex
+        ? calcForexPnl(symbol, isLong ? exitPrice - Number(trade.entry_price) : Number(trade.entry_price) - exitPrice, forexLotSize)
+        : signedMove * Number(trade.quantity);
+
       const riskAmount = Math.abs(Number(trade.entry_price) - Number(trade.stop_loss ?? trade.entry_price));
       const priceMove = isLong ? exitPrice - Number(trade.entry_price) : Number(trade.entry_price) - exitPrice;
       const outcomeR = riskAmount > 0 ? Math.round((priceMove / riskAmount) * 100) / 100 : 0;
