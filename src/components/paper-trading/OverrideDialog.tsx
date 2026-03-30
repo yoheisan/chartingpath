@@ -38,13 +38,17 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
       try {
         const { data } = await supabase
           .from('live_pattern_detections')
-          .select('current_price')
+          .select('current_price, last_confirmed_at')
           .eq('instrument', trade.symbol)
           .not('current_price', 'is', null)
           .order('last_confirmed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (!data?.current_price) {
+
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        const lastConfirmed = data?.last_confirmed_at ? new Date(data.last_confirmed_at) : null;
+
+        if (!data?.current_price || !lastConfirmed || lastConfirmed < fourHoursAgo) {
           setLivePriceUnavailable(true);
         }
       } catch {
