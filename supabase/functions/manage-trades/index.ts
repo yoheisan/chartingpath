@@ -6,6 +6,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Forex helpers ──
+function isForexSymbol(symbol: string): boolean {
+  return symbol.endsWith("=X");
+}
+
+function getForexPipSize(symbol: string): number {
+  return symbol.toUpperCase().includes("JPY") ? 0.01 : 0.0001;
+}
+
+function priceToPips(symbol: string, priceMove: number): number {
+  return priceMove / getForexPipSize(symbol);
+}
+
+function getForexPipValue(symbol: string, lotSize: number): number {
+  const pipSize = getForexPipSize(symbol);
+  const lotUnits = lotSize * 100_000;
+  return pipSize * lotUnits;
+}
+
+function calcForexPnl(symbol: string, priceMove: number, lotSize: number): number {
+  const pips = priceToPips(symbol, Math.abs(priceMove));
+  const pipValue = getForexPipValue(symbol, lotSize);
+  return (priceMove >= 0 ? 1 : -1) * pips * pipValue;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,7 +41,6 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Get all open paper trades
     const { data: openTrades, error: fetchErr } = await supabase
       .from("paper_trades")
       .select("*, master_plan_id")
@@ -34,7 +58,6 @@ Deno.serve(async (req) => {
     let updatedCount = 0;
 
     for (const trade of openTrades) {
-      // Get simulated current price from live detections
       const { data: priceData } = await supabase
         .from("live_pattern_detections")
         .select("current_price")
@@ -59,12 +82,19 @@ Deno.serve(async (req) => {
       const createdAt = new Date(trade.created_at);
       const holdMins = Math.round((Date.now() - createdAt.getTime()) / 60000);
 
+      // Detect forex
+      const isForex = trade.instrument_type === "forex" || isForexSymbol(trade.symbol);
+      const forexLotSize = isForex ? Number(trade.forex_lot_size || 0.01) : 0;
+
       // Calculate current PnL
       const priceMove = isLong
         ? currentPrice - entryPrice
         : entryPrice - currentPrice;
       const pnlR = rUnit > 0 ? Math.round((priceMove / rUnit) * 100) / 100 : 0;
-      const pnlDollars = Math.round(priceMove * quantity * 100) / 100;
+
+      const pnlDollars = isForex
+        ? calcForexPnl(trade.symbol, isLong ? currentPrice - entryPrice : entryPrice - currentPrice, forexLotSize)
+        : Math.round(priceMove * quantity * 100) / 100;
 
       // Check stop loss hit
       const stopHit = isLong
@@ -77,12 +107,11 @@ Deno.serve(async (req) => {
         : currentPrice <= takeProfit;
 
       if (stopHit) {
-        const exitPnlR = isLong
-          ? (stopLoss - entryPrice) / rUnit
-          : (entryPrice - stopLoss) / rUnit;
-        const exitPnlDollars = isLong
-          ? (stopLoss - entryPrice) * quantity
-          : (entryPrice - stopLoss) * quantity;
+        const slMove = isLong ? stopLoss - entryPrice : entryPrice - stopLoss;
+        const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
+        const exitPnlDollars = isForex
+          ? calcForexPnl(trade.symbol, isLong ? stopLoss - entryPrice : entryPrice - stopLoss, forexLotSize)
+          : (isLong ? (stopLoss - entryPrice) : (entryPrice - stopLoss)) * quantity;
 
         await supabase
           .from("paper_trades")
@@ -99,17 +128,16 @@ Deno.serve(async (req) => {
           .eq("id", trade.id);
 
         closedCount++;
-        console.log(`[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R`);
+        console.log(`[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R ${isForex ? '(forex)' : ''}`);
         continue;
       }
 
       if (tpHit) {
-        const exitPnlR = isLong
-          ? (takeProfit - entryPrice) / rUnit
-          : (entryPrice - takeProfit) / rUnit;
-        const exitPnlDollars = isLong
-          ? (takeProfit - entryPrice) * quantity
-          : (entryPrice - takeProfit) * quantity;
+        const tpMove = isLong ? takeProfit - entryPrice : entryPrice - takeProfit;
+        const exitPnlR = rUnit > 0 ? tpMove / rUnit : 0;
+        const exitPnlDollars = isForex
+          ? calcForexPnl(trade.symbol, isLong ? takeProfit - entryPrice : entryPrice - takeProfit, forexLotSize)
+          : (isLong ? (takeProfit - entryPrice) : (entryPrice - takeProfit)) * quantity;
 
         await supabase
           .from("paper_trades")
@@ -126,7 +154,7 @@ Deno.serve(async (req) => {
           .eq("id", trade.id);
 
         closedCount++;
-        console.log(`[manage-trades] TP hit: ${trade.symbol} +${exitPnlR.toFixed(2)}R`);
+        console.log(`[manage-trades] TP hit: ${trade.symbol} +${exitPnlR.toFixed(2)}R ${isForex ? '(forex)' : ''}`);
         continue;
       }
 
@@ -134,9 +162,9 @@ Deno.serve(async (req) => {
       let newStop = stopLoss;
       if (isLong) {
         if (currentPrice >= entryPrice + 2 * rUnit) {
-          newStop = Math.max(stopLoss, entryPrice + rUnit); // trail to +1R
+          newStop = Math.max(stopLoss, entryPrice + rUnit);
         } else if (currentPrice >= entryPrice + rUnit) {
-          newStop = Math.max(stopLoss, entryPrice); // move to breakeven
+          newStop = Math.max(stopLoss, entryPrice);
         }
       } else {
         if (currentPrice <= entryPrice - 2 * rUnit) {
@@ -156,7 +184,7 @@ Deno.serve(async (req) => {
         console.log(`[manage-trades] Trailing stop updated: ${trade.symbol} → ${newStop}`);
       }
 
-      // Check if past trading window — close trade
+      // Check if past trading window
       if (trade.master_plan_id) {
         const { data: plan } = await supabase
           .from("master_plans")
@@ -172,7 +200,6 @@ Deno.serve(async (req) => {
           const dayOfWeek = localDate.getDay();
           const schedules = (plan.trading_schedules as Record<string, any>) || {};
           
-          // Map trade asset type to schedule key
           const assetTypeMap: Record<string, string> = {
             stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
             crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
@@ -192,12 +219,16 @@ Deno.serve(async (req) => {
           }
 
           if (shouldClose) {
+            const windowPnl = isForex
+              ? calcForexPnl(trade.symbol, isLong ? currentPrice - entryPrice : entryPrice - currentPrice, forexLotSize)
+              : pnlDollars;
+
             await supabase
               .from("paper_trades")
               .update({
                 status: "closed",
                 exit_price: currentPrice,
-                pnl: Math.round(pnlDollars * 100) / 100,
+                pnl: Math.round(windowPnl * 100) / 100,
                 outcome_r: pnlR,
                 closed_at: new Date().toISOString(),
                 close_reason: "Trading window closed",
@@ -207,7 +238,7 @@ Deno.serve(async (req) => {
               .eq("id", trade.id);
 
             closedCount++;
-            console.log(`[manage-trades] Window close: ${trade.symbol} ${pnlR}R`);
+            console.log(`[manage-trades] Window close: ${trade.symbol} ${pnlR}R ${isForex ? '(forex)' : ''}`);
           }
         }
       }

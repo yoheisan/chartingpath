@@ -6,6 +6,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Forex helpers ──
+function isForexSymbol(symbol: string): boolean {
+  return symbol.endsWith("=X");
+}
+
+/**
+ * Get pip value for a forex pair.
+ * JPY pairs: pip = 0.01; all others: pip = 0.0001
+ * pip_value = pip / price * lot_size_units
+ * For micro lot (0.01 = 1,000 units): pip_value ≈ $0.10 for majors
+ */
+function getForexPipValue(symbol: string, price: number, lotSize = 0.01): number {
+  const isJpy = symbol.toUpperCase().includes("JPY");
+  const pipSize = isJpy ? 0.01 : 0.0001;
+  const lotUnits = lotSize * 100_000; // 0.01 lot = 1,000 units
+  return pipSize * lotUnits; // pip value in quote currency
+}
+
+function priceToPips(symbol: string, priceMove: number): number {
+  const isJpy = symbol.toUpperCase().includes("JPY");
+  const pipSize = isJpy ? 0.01 : 0.0001;
+  return priceMove / pipSize;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,14 +62,12 @@ Deno.serve(async (req) => {
       const nowInTz = new Date().toLocaleString("en-US", { timeZone: tz });
       const localDate = new Date(nowInTz);
       const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
-      const dayOfWeek = localDate.getDay(); // 0=Sun, 6=Sat
+      const dayOfWeek = localDate.getDay();
       console.log(`[scan-setups] Processing plan "${plan.name}" for user ${userId} | local=${hhmm} ${tz} day=${dayOfWeek}`);
 
-      // Helper: check if trading is allowed for a given asset type
       const schedules = (plan.trading_schedules as Record<string, any>) || {};
       const isAssetTradable = (assetType: string | null): boolean => {
         if (!assetType) {
-          // Fallback to legacy window
           if (plan.trading_window_start && plan.trading_window_end) {
             return hhmm >= plan.trading_window_start && hhmm <= plan.trading_window_end;
           }
@@ -63,21 +85,18 @@ Deno.serve(async (req) => {
           if (sched.start && sched.end) return hhmm >= sched.start && hhmm <= sched.end;
           return true;
         }
-        // No per-asset schedule — use legacy window
         if (plan.trading_window_start && plan.trading_window_end) {
           return hhmm >= plan.trading_window_start && hhmm <= plan.trading_window_end;
         }
         return true;
       };
 
-      // If no schedules and legacy window is set, check it globally
       if (Object.keys(schedules).length === 0 && plan.trading_window_start && plan.trading_window_end) {
         if (hhmm < plan.trading_window_start || hhmm > plan.trading_window_end) {
           continue;
         }
       }
 
-      // 3. Check open position count
       const maxOpen = plan.max_open_positions ?? 6;
       const { count: openCount } = await supabase
         .from("paper_trades")
@@ -87,15 +106,12 @@ Deno.serve(async (req) => {
 
       if ((openCount ?? 0) >= maxOpen) continue;
 
-      // 4. Get candidate setups from live detections
-      // Query per tradable asset class to ensure balanced coverage
       const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
       const reverseAssetMap: Record<string, string> = {
         stocks: "stocks", forex: "fx", crypto: "crypto",
         commodities: "commodities", indices: "indices", etfs: "etfs",
       };
 
-      // Only query asset classes that are currently tradable
       const tradableAssetTypes = planAssetClasses
         .filter(c => {
           const detType = reverseAssetMap[c] || c;
@@ -108,7 +124,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Fetch 10 detections per tradable asset class for balanced coverage
       const allDetections: any[] = [];
       for (const assetType of tradableAssetTypes) {
         const { data: dets, error: detErr } = await supabase
@@ -135,7 +150,6 @@ Deno.serve(async (req) => {
       }
       console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} across ${tradableAssetTypes.join(",")}`);
 
-      // 5. Get user's portfolio
       const { data: portfolio } = await supabase
         .from("paper_portfolios")
         .select("id, current_balance")
@@ -150,13 +164,11 @@ Deno.serve(async (req) => {
       for (const det of detections) {
         totalScanned++;
 
-        // Check if this asset is tradable right now based on schedule
         if (!isAssetTradable(det.asset_type)) {
           console.log(`[scan-setups] ${det.instrument} (${det.asset_type}) outside trading window, skipping`);
           continue;
         }
 
-        // Check if already have open trade on this symbol
         const { data: existing } = await supabase
           .from("paper_trades")
           .select("id")
@@ -168,7 +180,6 @@ Deno.serve(async (req) => {
 
         if (existing) continue;
 
-        // Re-check open count
         const { count: currentOpen } = await supabase
           .from("paper_trades")
           .select("id", { count: "exact", head: true })
@@ -177,13 +188,12 @@ Deno.serve(async (req) => {
 
         if ((currentOpen ?? 0) >= maxOpen) break;
 
-        // Run gate evaluation inline (simplified — mirrors evaluate-gate logic)
+        // Gate evaluation
         let gateResult = "partial";
         let gateReason = "";
         let agentVerdict = "WATCH";
         let agentScore: number | null = null;
 
-        // Check agent scores
         const { data: scoreData } = await supabase
           .from("agent_scores")
           .select("analyst_raw, risk_raw, timing_raw, portfolio_raw")
@@ -218,18 +228,16 @@ Deno.serve(async (req) => {
         const verdictMap: Record<string, string> = { TAKE: "aligned", WATCH: "partial", SKIP: "conflict" };
         gateResult = verdictMap[agentVerdict] || "partial";
 
-        // Master Plan rule checks
         const reasons: string[] = [];
 
-        // Instrument universe check
-        const planAssetClasses = (plan.asset_classes as string[] | null) ?? [];
-        if (planAssetClasses.length > 0 && det.asset_type) {
+        const planAssetClasses2 = (plan.asset_classes as string[] | null) ?? [];
+        if (planAssetClasses2.length > 0 && det.asset_type) {
           const assetTypeMap: Record<string, string> = {
             stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
             crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
           };
           const mappedType = assetTypeMap[det.asset_type.toLowerCase()] || det.asset_type.toLowerCase();
-          if (!planAssetClasses.includes(mappedType)) {
+          if (!planAssetClasses2.includes(mappedType)) {
             gateResult = "conflict";
             reasons.push(`${det.asset_type} outside instrument universe`);
           }
@@ -264,7 +272,6 @@ Deno.serve(async (req) => {
             ? `${det.instrument} aligns with Master Plan`
             : `${det.instrument} partially matches`;
 
-        // Save gate evaluation
         const { data: evalRow } = await supabase
           .from("gate_evaluations")
           .insert({
@@ -283,17 +290,65 @@ Deno.serve(async (req) => {
           .select("id")
           .single();
 
-        // 5. TAKE action based on gate result
         if (gateResult === "aligned" || gateResult === "partial") {
           const entryPrice = Number(det.current_price) || 100;
           const positionPct = plan.max_position_pct ?? 3;
-          const rUnit = entryPrice * (positionPct / 100);
           const isLong = det.direction !== "short";
-          const stopPrice = isLong ? entryPrice - 2 * rUnit : entryPrice + 2 * rUnit;
-          const targetPrice = isLong ? entryPrice + 3 * rUnit : entryPrice - 3 * rUnit;
-          const quantity = (portfolio.current_balance * positionPct / 100) / entryPrice;
 
-          // Generate copilot reasoning via Anthropic Claude Sonnet
+          // ── Detect instrument type ──
+          const instrumentType = isForexSymbol(det.instrument) ? "forex" : (det.asset_type || null);
+          const isForex = instrumentType === "forex";
+          const forexLotSize = isForex ? 0.01 : null; // micro lot default
+
+          let stopPrice: number;
+          let targetPrice: number;
+          let quantity: number;
+          let metadata: Record<string, any> | null = null;
+
+          if (isForex) {
+            // Forex: use pip-based sizing
+            const pipValue = getForexPipValue(det.instrument, entryPrice, 0.01);
+            const isJpy = det.instrument.toUpperCase().includes("JPY");
+            const pipSize = isJpy ? 0.01 : 0.0001;
+
+            // Risk budget in dollars
+            const riskBudget = portfolio.current_balance * (positionPct / 100);
+            // SL distance: 50 pips for majors, 100 pips for exotics
+            const slPips = 50;
+            const tpPips = slPips * 1.5; // 1.5:1 RR for forex
+
+            stopPrice = isLong
+              ? entryPrice - slPips * pipSize
+              : entryPrice + slPips * pipSize;
+            targetPrice = isLong
+              ? entryPrice + tpPips * pipSize
+              : entryPrice - tpPips * pipSize;
+
+            // Calculate lots from risk: riskBudget = slPips * pipValue * lots / 0.01
+            // lots = riskBudget / (slPips * pipValue / lotSize)
+            const pipValuePerLot = getForexPipValue(det.instrument, entryPrice, 1.0);
+            const lots = riskBudget / (slPips * pipValuePerLot);
+            quantity = Math.max(0.01, Number(lots.toFixed(2))); // minimum micro lot
+
+            metadata = {
+              pip_value: pipValue,
+              pip_size: pipSize,
+              sl_pips: slPips,
+              tp_pips: tpPips,
+              lot_size: forexLotSize,
+              is_jpy_pair: isJpy,
+            };
+
+            console.log(`[scan-setups] Forex trade: ${det.instrument} pipValue=${pipValue} lots=${quantity} SL=${slPips}pips`);
+          } else {
+            // Standard equity/crypto sizing
+            const rUnit = entryPrice * (positionPct / 100);
+            stopPrice = isLong ? entryPrice - 2 * rUnit : entryPrice + 2 * rUnit;
+            targetPrice = isLong ? entryPrice + 3 * rUnit : entryPrice - 3 * rUnit;
+            quantity = (portfolio.current_balance * positionPct / 100) / entryPrice;
+          }
+
+          // Generate copilot reasoning
           let reasoning = `Automated entry: ${det.pattern_name || "pattern"} on ${det.instrument} (${det.timeframe}). Risk: ${positionPct}% of portfolio.`;
           try {
             const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -318,9 +373,9 @@ Deno.serve(async (req) => {
                         direction: det.direction,
                         timeframe: det.timeframe,
                         entry_price: entryPrice,
-                        r_unit: rUnit,
                         stop: stopPrice,
                         target: targetPrice,
+                        instrument_type: instrumentType,
                       }),
                     },
                   ],
@@ -335,43 +390,50 @@ Deno.serve(async (req) => {
             console.error("[scan-setups] AI reasoning error:", e);
           }
 
+          const insertData: Record<string, any> = {
+            user_id: userId,
+            portfolio_id: portfolio.id,
+            symbol: det.instrument,
+            trade_type: det.direction === "short" ? "short" : "long",
+            entry_price: entryPrice,
+            quantity: Number(quantity.toFixed(6)),
+            stop_loss: stopPrice,
+            take_profit: targetPrice,
+            status: "open",
+            pattern_id: det.pattern_id || null,
+            timeframe: det.timeframe || null,
+            asset_type: det.asset_type || null,
+            gate_evaluation_id: evalRow?.id || null,
+            master_plan_id: plan.id,
+            position_size_pct: positionPct,
+            setup_type: det.pattern_name || null,
+            copilot_reasoning: reasoning,
+            source: "ai_scan",
+            gate_result: gateResult,
+            gate_reason: gateReason,
+            user_action: "auto",
+            attribution: gateResult === "aligned" ? "ai_approved" : "ai_partial",
+            outcome: "open",
+            notes: `[auto-scan] ${det.pattern_name || "pattern"} on ${det.timeframe || "unknown"}`,
+            instrument_type: instrumentType,
+          };
+
+          if (isForex) {
+            insertData.forex_lot_size = forexLotSize;
+            insertData.metadata = metadata;
+          }
+
           const { error: tradeErr } = await supabase
             .from("paper_trades")
-            .insert({
-              user_id: userId,
-              portfolio_id: portfolio.id,
-              symbol: det.instrument,
-              trade_type: det.direction === "short" ? "short" : "long",
-              entry_price: entryPrice,
-              quantity: Number(quantity.toFixed(6)),
-              stop_loss: stopPrice,
-              take_profit: targetPrice,
-              status: "open",
-              pattern_id: det.pattern_id || null,
-              timeframe: det.timeframe || null,
-              asset_type: det.asset_type || null,
-              gate_evaluation_id: evalRow?.id || null,
-              master_plan_id: plan.id,
-              position_size_pct: positionPct,
-              setup_type: det.pattern_name || null,
-              copilot_reasoning: reasoning,
-              source: "ai_scan",
-              gate_result: gateResult,
-              gate_reason: gateReason,
-              user_action: "auto",
-              attribution: gateResult === "aligned" ? "ai_approved" : "ai_partial",
-              outcome: "open",
-              notes: `[auto-scan] ${det.pattern_name || "pattern"} on ${det.timeframe || "unknown"}`,
-            });
+            .insert(insertData);
 
           if (tradeErr) {
             console.error(`[scan-setups] Trade insert error for ${det.instrument}:`, tradeErr);
           } else {
             totalTradesOpened++;
-            console.log(`[scan-setups] Opened paper trade: ${det.instrument} ${det.direction}`);
+            console.log(`[scan-setups] Opened paper trade: ${det.instrument} ${det.direction} (${instrumentType || "standard"})`);
           }
         } else {
-          // conflict = logged in gate_evaluations — do not trade
           console.log(`[scan-setups] Conflict skipped: ${det.instrument} — ${gateReason}`);
         }
       }
