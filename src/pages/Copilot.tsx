@@ -97,21 +97,31 @@ const Copilot = () => {
     setSelectedClosedTrade(null);
   }, []);
 
-  const handleCloseTrade = useCallback(async (tradeId: string) => {
+  const handleCloseTrade = useCallback(async (tradeId: string, manualPrice?: number) => {
     try {
       const trade = openTrades.find(t => t.id === tradeId);
       if (!trade) { toast.error('Trade not found'); return; }
 
-      const { data: latest } = await supabase
-        .from('live_pattern_detections')
-        .select('current_price')
-        .eq('instrument', trade.symbol)
-        .not('current_price', 'is', null)
-        .order('last_confirmed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      let exitPrice: number;
+      let closeReason: string;
 
-      const exitPrice = latest?.current_price ? Number(latest.current_price) : trade.entry_price;
+      if (manualPrice != null) {
+        exitPrice = manualPrice;
+        closeReason = 'manual_price_override';
+      } else {
+        const { data: latest } = await supabase
+          .from('live_pattern_detections')
+          .select('current_price')
+          .eq('instrument', trade.symbol)
+          .not('current_price', 'is', null)
+          .order('last_confirmed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        exitPrice = latest?.current_price ? Number(latest.current_price) : trade.entry_price;
+        closeReason = 'Override exit by trader';
+      }
+
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const pnl = isLong
         ? (exitPrice - trade.entry_price) * trade.quantity
@@ -125,7 +135,7 @@ const Copilot = () => {
         exit_price: exitPrice,
         pnl: Math.round(pnl * 100) / 100,
         closed_at: new Date().toISOString(),
-        close_reason: 'Override exit by trader',
+        close_reason: closeReason,
         outcome_r: outcomeR,
         user_action: 'override_exit',
         attribution: 'human_overwrite',

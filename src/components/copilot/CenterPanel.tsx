@@ -426,10 +426,13 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
   trade: CopilotTrade;
   onBack: () => void;
   onFocusNLBar: (prefill?: string) => void;
-  onCloseTrade?: (tradeId: string) => void;
+  onCloseTrade?: (tradeId: string, manualPrice?: number) => void;
 }) => {
   const { t } = useTranslation();
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [livePriceUnavailable, setLivePriceUnavailable] = useState(false);
+  const [manualExitPrice, setManualExitPrice] = useState(String(trade.entry_price ?? 0));
+  const [checkingPrice, setCheckingPrice] = useState(false);
   const isAi = trade.attribution === 'ai_approved';
   const pnlR = trade.outcome_r ?? 0;
   const entryTime = new Date(trade.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
