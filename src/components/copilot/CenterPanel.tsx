@@ -46,6 +46,7 @@ interface CenterPanelProps {
   openTrades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (id: string) => void;
+  onCloseTrade?: (tradeId: string) => void;
   activePlan: MasterPlan | null;
 }
 
