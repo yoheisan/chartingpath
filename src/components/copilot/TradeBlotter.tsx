@@ -12,6 +12,8 @@ interface TradeBlotterProps {
   trades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (tradeId: string) => void;
+  expanded?: boolean;
+  onToggle?: () => void;
 }
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
@@ -23,9 +25,11 @@ const formatDuration = (createdAt: string) => {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 };
 
-const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterProps) => {
+const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: externalExpanded, onToggle }: TradeBlotterProps) => {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(true);
+  const [internalExpanded, setInternalExpanded] = useState(true);
+  const expanded = externalExpanded ?? internalExpanded;
+  const handleToggle = onToggle ?? (() => setInternalExpanded(prev => !prev));
   const goToSymbol = useNavigateToDashboard();
 
   const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
@@ -36,7 +40,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
   return (
     <div className="border-t border-border/40 flex flex-col bg-card/30 h-full min-h-0">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
         className="flex items-center justify-between px-4 py-1.5 hover:bg-secondary/40 transition-colors shrink-0"
       >
         <div className="flex items-center gap-3">

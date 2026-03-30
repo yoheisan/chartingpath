@@ -17,7 +17,7 @@ import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 import type { MasterPlan } from '@/hooks/useMasterPlan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+
 import { supabase } from '@/integrations/supabase/client';
 
 /* ─── types ─── */
@@ -830,23 +830,25 @@ const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, o
     return <ScanningState plan={activePlan} />;
   })();
 
+  const [blotterExpanded, setBlotterExpanded] = useState(true);
+
   return (
     <div className="flex flex-col h-full min-h-0">
-      <ResizablePanelGroup direction="vertical" className="flex-1 min-h-0">
-        <ResizablePanel defaultSize={60} minSize={15}>
-          <div className="h-full overflow-hidden">
-            {mainContent}
-          </div>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={40} minSize={10} maxSize={85}>
-          <TradeBlotter
-            trades={openTrades}
-            selectedTradeId={selectedTradeId}
-            onSelectTrade={onSelectTrade}
-          />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      {/* Main content — takes remaining space */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${blotterExpanded ? 'flex-1 min-h-0' : 'flex-1'}`}>
+        {mainContent}
+      </div>
+
+      {/* Trade blotter — collapsible with click toggle */}
+      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${blotterExpanded ? 'max-h-[45%] min-h-[120px]' : 'max-h-[36px]'}`}>
+        <TradeBlotter
+          trades={openTrades}
+          selectedTradeId={selectedTradeId}
+          onSelectTrade={onSelectTrade}
+          expanded={blotterExpanded}
+          onToggle={() => setBlotterExpanded(prev => !prev)}
+        />
+      </div>
     </div>
   );
 };
