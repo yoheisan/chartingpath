@@ -3861,6 +3861,7 @@ export type Database = {
           display_alias: string | null
           email: string | null
           email_notifications_enabled: boolean | null
+          first_destination: string | null
           id: string
           push_notifications_enabled: boolean | null
           subscription_plan:
@@ -3876,6 +3877,7 @@ export type Database = {
           display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
+          first_destination?: string | null
           id?: string
           push_notifications_enabled?: boolean | null
           subscription_plan?:
@@ -3891,6 +3893,7 @@ export type Database = {
           display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
+          first_destination?: string | null
           id?: string
           push_notifications_enabled?: boolean | null
           subscription_plan?:

@@ -59,9 +59,28 @@ const Auth = () => {
   const { user: authUser, isAuthLoading } = useAuth();
 
   // If user is already authenticated, redirect immediately
+  const hasRedirectedRef = useRef(false);
   useEffect(() => {
-    if (!isAuthLoading && authUser && !isResetPassword) {
-      navigate(redirectPath, { replace: true });
+    if (!isAuthLoading && authUser && !isResetPassword && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+
+      // New signup: created_at within 60s → redirect to /patterns/live
+      const isNewUser = authUser.created_at
+        ? Date.now() - new Date(authUser.created_at).getTime() < 60_000
+        : false;
+
+      if (isNewUser) {
+        // Record first_destination in profiles (fire-and-forget)
+        supabase
+          .from('profiles')
+          .update({ first_destination: 'patterns_live' } as any)
+          .eq('user_id', authUser.id)
+          .then(() => {});
+
+        navigate('/patterns/live', { replace: true });
+      } else {
+        navigate(redirectPath, { replace: true });
+      }
     }
   }, [isAuthLoading, authUser, isResetPassword, navigate, redirectPath]);
 
