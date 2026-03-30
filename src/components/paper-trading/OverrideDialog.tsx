@@ -65,7 +65,7 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
     if (livePriceUnavailable) {
       const price = Number(manualExitPrice);
       if (isNaN(price) || price <= 0) return;
-      onConfirm(trade, selectedReason, notes, price);
+      onConfirm(trade, 'manual_price_override', notes, price);
     } else {
       onConfirm(trade, selectedReason, notes);
     }
