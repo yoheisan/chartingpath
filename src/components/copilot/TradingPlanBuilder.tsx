@@ -3,12 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Globe } from "lucide-react";
+import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Globe, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MasterPlan, AssetTradingSchedule, TradingSchedules } from "@/hooks/useMasterPlan";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// G10 major FX pairs — reliable price feeds
+const G10_MAJORS = new Set([
+  "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X",
+  "USDCAD=X", "NZDUSD=X", "USDCHF=X", "EURGBP=X",
+  "EURJPY=X", "GBPJPY=X",
+]);
 
 // ── All 15 patterns ChartingPath detects ──
 const ALL_PATTERNS = [
