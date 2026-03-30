@@ -212,6 +212,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           detectedAt: d.first_detected_at,
           currentPrice: d.current_price ?? null,
           assetType: d.asset_type ?? null,
+          cooldownUntil: cooldownMap[d.instrument] ?? null,
         };
       });
 
