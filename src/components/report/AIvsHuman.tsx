@@ -52,11 +52,29 @@ export function AIvsHuman({ trades }: Props) {
           <StatBlock label={t('report.avgHoldTime')} value={t('report.holdTimeFormat', { hours: aiStats.hold.hours, mins: aiStats.hold.mins })} />
         </div>
 
-        {/* Human column */}
+      {/* Human column */}
         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
           <h3 className="text-sm font-semibold text-amber-400 mb-3">{t('report.yourOverrides')}</h3>
           {humanStats.count === 0 ? (
             <p className="text-sm text-muted-foreground py-4">{t('report.noOverridesYet')}</p>
+          ) : humanStats.count < 15 ? (
+            <div className="space-y-3">
+              <div className="rounded-md border border-border/30 bg-muted/20 p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Not enough override trades for reliable comparison.
+                </p>
+                <p className="text-sm font-medium text-muted-foreground mt-1">
+                  Need <span className="text-foreground font-mono">{15 - humanStats.count}</span> more overrides.
+                </p>
+              </div>
+              <div className="opacity-50 space-y-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-medium">Early signal only</p>
+                <StatBlock label={t('report.winRate')} value={`${humanStats.wr}%`} />
+                <StatBlock label={t('report.avgRPerTrade')} value={`${humanStats.avgR >= 0 ? '+' : ''}${humanStats.avgR.toFixed(1)}R`} color={humanStats.avgR >= 0} />
+                <StatBlock label={t('report.totalPnlR')} value={`${humanStats.totalR >= 0 ? '+' : ''}${humanStats.totalR.toFixed(1)}R`} color={humanStats.totalR >= 0} />
+                <StatBlock label={t('report.tradeCount')} value={t('report.tradesUnit', { count: humanStats.count })} />
+              </div>
+            </div>
           ) : (
             <>
               <StatBlock label={t('report.winRate')} value={`${humanStats.wr}%`} />
