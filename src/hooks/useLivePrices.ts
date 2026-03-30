@@ -20,7 +20,8 @@ export function useLivePrices(symbols: string[], intervalMs = 30_000) {
           .from('live_pattern_detections')
           .select('current_price')
           .eq('instrument', sym)
-          .order('first_detected_at', { ascending: false })
+          .not('current_price', 'is', null)
+          .order('last_confirmed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
         if (data?.current_price) results[sym] = Number(data.current_price);
