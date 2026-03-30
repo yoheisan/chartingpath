@@ -113,6 +113,9 @@ Deno.serve(async (req) => {
           ? calcForexPnl(trade.symbol, isLong ? stopLoss - entryPrice : entryPrice - stopLoss, forexLotSize)
           : (isLong ? (stopLoss - entryPrice) : (entryPrice - stopLoss)) * quantity;
 
+        const closedAtStr = new Date().toISOString();
+        const cooldownUntilStr = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+
         await supabase
           .from("paper_trades")
           .update({
@@ -120,10 +123,11 @@ Deno.serve(async (req) => {
             exit_price: stopLoss,
             pnl: Math.round(exitPnlDollars * 100) / 100,
             outcome_r: Math.round(exitPnlR * 100) / 100,
-            closed_at: new Date().toISOString(),
+            closed_at: closedAtStr,
             close_reason: "Stop loss hit",
             hold_duration_mins: holdMins,
             outcome: "loss",
+            cooldown_until: cooldownUntilStr,
           })
           .eq("id", trade.id);
 

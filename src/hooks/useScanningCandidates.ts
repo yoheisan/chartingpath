@@ -16,6 +16,7 @@ export interface ScanningCandidate {
   detectedAt: string;
   currentPrice: number | null;
   assetType: string | null;
+  cooldownUntil: string | null;
 }
 
 export function useScanningCandidates(plan: MasterPlan | null) {
@@ -118,6 +119,27 @@ export function useScanningCandidates(plan: MasterPlan | null) {
         }
       }
 
+      // 5b. Fetch cooldown data for these instruments
+      let cooldownMap: Record<string, string> = {};
+      if (instruments.length > 0) {
+        const { data: cooldowns } = await supabase
+          .from("paper_trades" as any)
+          .select("symbol, cooldown_until")
+          .eq("status", "closed")
+          .in("symbol", instruments)
+          .not("cooldown_until", "is", null)
+          .gte("cooldown_until", new Date().toISOString())
+          .order("closed_at", { ascending: false });
+
+        if (cooldowns) {
+          for (const c of cooldowns as any[]) {
+            if (!cooldownMap[c.symbol]) {
+              cooldownMap[c.symbol] = c.cooldown_until;
+            }
+          }
+        }
+      }
+
       // 6. Compute gate inline for instruments without a gate evaluation
       const preferred = plan?.preferred_patterns ?? [];
 
@@ -190,6 +212,7 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           detectedAt: d.first_detected_at,
           currentPrice: d.current_price ?? null,
           assetType: d.asset_type ?? null,
+          cooldownUntil: cooldownMap[d.instrument] ?? null,
         };
       });
 

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield, TrendingUp, TrendingDown, ChevronDown, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useScanningCandidates, ScanningCandidate } from '@/hooks/useScanningCandidates';
@@ -262,6 +262,12 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
             const isLong = dirLower === 'long' || dirLower === 'bullish';
             const isShort = dirLower === 'short' || dirLower === 'bearish';
 
+            // Cooldown check
+            const inCooldown = c.cooldownUntil && new Date(c.cooldownUntil) > new Date();
+            const cooldownHoursAgo = inCooldown
+              ? Math.max(0, Math.round((4 - (new Date(c.cooldownUntil!).getTime() - Date.now()) / (60 * 60 * 1000)) * 10) / 10)
+              : 0;
+
             return (
               <Card key={c.id} className="bg-card/60 border-border/40">
                 <CardContent className="p-3 flex flex-col gap-0">
@@ -288,6 +294,12 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
+                      {inCooldown && (
+                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs px-2 py-0.5 rounded font-medium gap-1">
+                          <Clock className="h-3 w-3" />
+                          Cooling down — stop hit {cooldownHoursAgo}h ago
+                        </Badge>
+                      )}
                       {c.verdict && (() => {
                         const verdictStyles: Record<string, string> = {
                           TAKE: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -344,8 +356,9 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           size="sm"
                           variant={isAutoEligible ? "default" : "outline"}
                           className="h-7 text-xs gap-1"
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || !!inCooldown}
                           onClick={() => setExitCandidate(c)}
+                          title={inCooldown ? 'Symbol in cooldown after stop loss hit' : undefined}
                         >
                           <Play className="h-3 w-3" />
                           {isAutoEligible

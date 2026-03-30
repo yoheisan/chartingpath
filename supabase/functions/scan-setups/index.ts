@@ -180,6 +180,27 @@ Deno.serve(async (req) => {
 
         if (existing) continue;
 
+        // ── Stop-hit cooldown check ──
+        const { data: cooldownTrade } = await supabase
+          .from("paper_trades")
+          .select("id, closed_at, cooldown_until")
+          .eq("user_id", userId)
+          .eq("symbol", det.instrument)
+          .eq("status", "closed")
+          .gte("closed_at", new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString())
+          .like("close_reason", "Stop loss hit%")
+          .order("closed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (cooldownTrade) {
+          const cooldownEnd = cooldownTrade.cooldown_until
+            ? new Date(cooldownTrade.cooldown_until)
+            : new Date(new Date(cooldownTrade.closed_at).getTime() + 4 * 60 * 60 * 1000);
+          console.log(`[scan-setups] Skipped ${det.instrument} — stop hit cooldown active until ${cooldownEnd.toISOString()}`);
+          continue;
+        }
+
         const { count: currentOpen } = await supabase
           .from("paper_trades")
           .select("id", { count: "exact", head: true })
