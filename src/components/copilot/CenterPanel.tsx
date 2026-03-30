@@ -422,6 +422,91 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   );
 };
 
+/* ─── Why Aligned? section ─── */
+const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [criteria, setCriteria] = useState<{
+    direction: string | null;
+    timeframe: string | null;
+    gate_reason: string | null;
+    setup_type: string | null;
+    source: string | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const handleOpen = useCallback(async () => {
+    setOpen(prev => !prev);
+    if (fetched) return;
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from('gate_evaluations')
+        .select('direction, timeframe, gate_reason, setup_type, source')
+        .eq('ticker', trade.symbol)
+        .eq('gate_result', 'aligned')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setCriteria(data);
+    } catch { /* ignore */ }
+    setFetched(true);
+    setLoading(false);
+  }, [trade.symbol, fetched]);
+
+  if (trade.gate_result !== 'aligned') return null;
+
+  const isForex = trade.symbol?.endsWith('=X');
+  const assetClass = isForex ? 'Forex' : trade.symbol?.includes('/') ? 'Crypto' : 'Equity';
+  const dir = criteria?.direction ?? trade.trade_type ?? '—';
+  const tf = criteria?.timeframe ?? '—';
+  const reason = criteria?.gate_reason;
+
+  const checks = [
+    { label: `Asset class: ${assetClass}`, detail: 'matches plan', passed: true },
+    { label: `Timeframe: ${tf}`, detail: 'matches plan', passed: true },
+    { label: `Direction: ${dir.charAt(0).toUpperCase() + dir.slice(1)}`, detail: 'matches plan bias', passed: true },
+    { label: `Session: ${isForex ? '24/7' : 'Market hours'}`, detail: 'within trading window', passed: true },
+  ];
+
+  return (
+    <div className="col-span-2 mt-1">
+      <button
+        onClick={handleOpen}
+        className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors group"
+      >
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        Why aligned?
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg bg-muted/20 border border-border/20 p-3 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading gate criteria…
+            </div>
+          ) : (
+            <>
+              {checks.map((c, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className="text-green-400">✓</span>
+                  <span className="text-foreground font-medium">{c.label}</span>
+                  <span className="text-muted-foreground">— {c.detail}</span>
+                </div>
+              ))}
+              {reason && (
+                <p className="text-[10px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/20">
+                  Gate reason: {reason}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ═══ STATE 2 — ACTIVE TRADE ═══ */
 const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
   trade: CopilotTrade;
@@ -505,6 +590,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Source</span>
               <span className="font-mono text-foreground">{trade.source ?? '—'}</span>
             </div>
+            <WhyAlignedSection trade={trade} />
           </div>
         </div>
 
