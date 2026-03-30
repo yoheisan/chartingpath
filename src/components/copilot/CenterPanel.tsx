@@ -422,10 +422,11 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
 };
 
 /* ═══ STATE 2 — ACTIVE TRADE ═══ */
-const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
+const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
   trade: CopilotTrade;
   onBack: () => void;
   onFocusNLBar: (prefill?: string) => void;
+  onCloseTrade?: (tradeId: string) => void;
 }) => {
   const { t } = useTranslation();
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
@@ -527,7 +528,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
                 <p className="text-sm text-muted-foreground">{t('copilotPage.overrideExitDesc')}</p>
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setOverrideModalOpen(false)}>{t('copilotPage.cancel')}</Button>
-                  <Button size="sm" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30" onClick={() => setOverrideModalOpen(false)}>
+                  <Button size="sm" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30" onClick={() => { setOverrideModalOpen(false); onCloseTrade?.(trade.id); }}>
                     {t('copilotPage.confirmOverride')}
                   </Button>
                 </div>
