@@ -1,0 +1,1 @@
+ALTER TABLE public.paper_trades ADD COLUMN IF NOT EXISTS monitoring_paused BOOLEAN NOT NULL DEFAULT false;
