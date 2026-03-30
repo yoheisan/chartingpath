@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { type PaperTrade } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
@@ -11,6 +12,16 @@ interface HourBucket {
   winRate: number;
 }
 
+const LABEL_HOURS = [0, 3, 6, 9, 12, 15, 18, 21];
+
+function getHeatColor(bucket: HourBucket): string {
+  if (bucket.trades === 0) return 'bg-muted/25';
+  if (bucket.winRate >= 70) return 'bg-emerald-600';
+  if (bucket.winRate >= 50) return 'bg-emerald-400';
+  if (bucket.winRate >= 30) return 'bg-amber-400';
+  return 'bg-red-400';
+}
+
 export function TimeOfDayHeatmap({ trades }: Props) {
   const { t } = useTranslation();
 
@@ -18,8 +29,7 @@ export function TimeOfDayHeatmap({ trades }: Props) {
     const map = new Map<number, PaperTrade[]>();
     for (let i = 0; i < 24; i++) map.set(i, []);
     for (const tr of trades) {
-      const d = new Date(tr.created_at);
-      const h = d.getHours();
+      const h = new Date(tr.created_at).getHours();
       map.get(h)!.push(tr);
     }
 
@@ -49,45 +59,113 @@ export function TimeOfDayHeatmap({ trades }: Props) {
     ? activeBuckets.reduce((a, b) => a.winRate < b.winRate ? a : b)
     : null;
 
-  const maxAbsR = Math.max(...buckets.map(b => Math.abs(b.avgR)), 0.1);
+  // Find consecutive weak hours to suggest exclusion
+  const excludeRange = useMemo(() => {
+    const weak = buckets.filter(b => b.trades >= 2 && b.winRate < 40);
+    if (weak.length < 2) return null;
+    // Find longest consecutive run of weak hours
+    let bestStart = weak[0].hour, bestLen = 1, curStart = weak[0].hour, curLen = 1;
+    for (let i = 1; i < weak.length; i++) {
+      if (weak[i].hour === weak[i - 1].hour + 1) {
+        curLen++;
+        if (curLen > bestLen) { bestLen = curLen; bestStart = curStart; }
+      } else {
+        curStart = weak[i].hour;
+        curLen = 1;
+      }
+    }
+    if (bestLen < 2) return null;
+    return { start: bestStart, end: (bestStart + bestLen) % 24 };
+  }, [buckets]);
+
+  const legend = [
+    { label: 'Strong', className: 'bg-emerald-600' },
+    { label: 'Positive', className: 'bg-emerald-400' },
+    { label: 'Weak', className: 'bg-amber-400' },
+    { label: 'Avoid', className: 'bg-red-400' },
+    { label: 'No data', className: 'bg-muted/25' },
+  ];
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">{t('report.timeOfDay')}</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-5">{t('report.timeOfDay')}</h2>
 
-      <div className="flex gap-0.5 items-end">
-        {buckets.map(b => {
-          let bg = 'bg-muted/30';
-          if (b.trades > 0) {
-            bg = b.avgR >= 0 ? 'bg-[hsl(var(--bullish))]' : 'bg-[hsl(var(--bearish))]';
-          }
-
-          return (
-            <div key={b.hour} className="flex-1 group relative">
+      {/* Heatmap grid */}
+      <div className="space-y-1">
+        {/* Cells */}
+        <div className="grid grid-cols-24 gap-1">
+          {buckets.map(b => (
+            <div key={b.hour} className="group relative">
               <div
-                className={`h-10 rounded-sm transition-all ${bg}`}
-                style={{
-                  opacity: b.trades === 0 ? 0.15 : Math.max(0.3, Math.min(1, Math.abs(b.avgR) / maxAbsR)),
-                }}
+                className={`aspect-square rounded-md ${getHeatColor(b)} transition-all hover:ring-2 hover:ring-foreground/30 cursor-default`}
               />
-              <span className="text-[8px] text-muted-foreground text-center block mt-1">
-                {String(b.hour).padStart(2, '0')}
-              </span>
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                <div className="bg-popover border border-border rounded-md px-2 py-1.5 text-sm whitespace-nowrap shadow-lg">
-                  <p className="font-medium">{String(b.hour).padStart(2, '0')}:00</p>
-                  <p>{t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}</p>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
+                <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-xl">
+                  <p className="font-semibold text-foreground">{String(b.hour).padStart(2, '0')}:00</p>
+                  {b.trades > 0 ? (
+                    <p className="text-muted-foreground mt-0.5">
+                      {b.trades} trade{b.trades !== 1 ? 's' : ''}, {b.winRate}% win rate, avg {b.avgR >= 0 ? '+' : ''}{b.avgR.toFixed(1)}R
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground mt-0.5">No trades</p>
+                  )}
                 </div>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
+
+        {/* X-axis labels */}
+        <div className="grid grid-cols-24 gap-1">
+          {buckets.map(b => (
+            <div key={b.hour} className="text-center">
+              {LABEL_HOURS.includes(b.hour) ? (
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  {String(b.hour).padStart(2, '0')}
+                </span>
+              ) : (
+                <span className="text-[10px] invisible">00</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mt-4 text-xs text-muted-foreground">
-        {bestHour && <span>{t('report.bestTradingHour')} <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: bestHour.winRate })}</span>}
-        {worstHour && <span>{t('report.worstTradingHour')} <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: worstHour.winRate })}</span>}
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-4">
+        {legend.map(l => (
+          <div key={l.label} className="flex items-center gap-1.5">
+            <div className={`w-3 h-3 rounded-sm ${l.className}`} />
+            <span className="text-[11px] text-muted-foreground">{l.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary */}
+      <div className="flex flex-col gap-1.5 mt-5 text-xs text-muted-foreground">
+        {bestHour && (
+          <span>
+            Best trading hour: <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {bestHour.winRate}% win rate
+          </span>
+        )}
+        {worstHour && (
+          <span>
+            Worst trading hour: <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {worstHour.winRate}% win rate
+          </span>
+        )}
+        {excludeRange && (
+          <span>
+            Consider restricting your{' '}
+            <Link to="/copilot?tab=plan" className="text-primary hover:underline font-medium">
+              Master Plan
+            </Link>{' '}
+            trading window to exclude{' '}
+            <span className="text-foreground font-medium">
+              {String(excludeRange.start).padStart(2, '0')}:00–{String(excludeRange.end).padStart(2, '0')}:00
+            </span>
+          </span>
+        )}
       </div>
     </div>
   );
