@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronUp, ChevronDown, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useNavigateToDashboard } from '@/hooks/useNavigateToDashboard';
+import { useLivePrices } from '@/hooks/useLivePrices';
 
 interface TradeBlotterProps {
   trades: CopilotTrade[];
@@ -13,6 +14,7 @@ interface TradeBlotterProps {
 }
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
+const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
 const formatDuration = (createdAt: string) => {
   const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
@@ -24,6 +26,9 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const goToSymbol = useNavigateToDashboard();
+
+  const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
+  const livePrices = useLivePrices(symbols);
 
   const totalR = trades.reduce((s, tr) => s + (tr.outcome_r ?? 0), 0);
 
@@ -51,11 +56,12 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
 
       {expanded && (
         <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-          <div className="grid grid-cols-[1fr_80px_100px_90px_80px_80px_80px] gap-2 px-4 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
+          <div className="grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
             <span>{t('copilotPage.symbol')}</span>
             <span>{t('copilotPage.side')}</span>
             <span>{t('copilotPage.pattern')}</span>
             <span>{t('copilotPage.entry')}</span>
+            <span>Now</span>
             <span>{t('copilotPage.stop')}</span>
             <span>{t('copilotPage.target')}</span>
             <span className="text-right">{t('copilotPage.pnl')}</span>
@@ -69,15 +75,29 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
             <ScrollArea className="flex-1 min-h-0">
               {trades.map((trade) => {
                 const isSelected = trade.id === selectedTradeId;
-                const pnlR = trade.outcome_r ?? 0;
                 const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
-                const isPositive = pnlR >= 0;
+                const isOpen = trade.status === 'open';
+                const currentPrice = isOpen ? livePrices[trade.symbol] : trade.exit_price;
+                const pnlR = trade.outcome_r ?? 0;
+
+                // Calculate unrealized dollar P&L for open trades
+                let dollarPnl: number | null = null;
+                if (isOpen && currentPrice && trade.entry_price && trade.quantity) {
+                  dollarPnl = isLong
+                    ? (currentPrice - trade.entry_price) * trade.quantity
+                    : (trade.entry_price - currentPrice) * trade.quantity;
+                } else if (!isOpen && trade.pnl != null) {
+                  dollarPnl = trade.pnl;
+                }
+
+                const displayPnl = dollarPnl ?? 0;
+                const isPositive = isOpen ? displayPnl >= 0 : pnlR >= 0;
 
                 return (
                   <button
                     key={trade.id}
                     onClick={() => onSelectTrade(trade.id)}
-                    className={`w-full grid grid-cols-[1fr_80px_100px_90px_80px_80px_80px] gap-2 px-4 py-1.5 text-left transition-colors ${
+                    className={`w-full grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1.5 text-left transition-colors ${
                       isSelected ? 'bg-accent/40' : 'hover:bg-secondary/40'
                     }`}
                   >
@@ -111,6 +131,9 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                     <span className="text-sm font-mono text-foreground">
                       ${trade.entry_price?.toFixed(2)}
                     </span>
+                    <span className={`text-sm font-mono ${currentPrice ? (isPositive ? 'text-green-500' : 'text-red-500') : 'text-muted-foreground'}`}>
+                      {currentPrice ? `$${currentPrice.toFixed(2)}` : '—'}
+                    </span>
                     <span className="text-sm font-mono text-red-400">
                       {trade.stop_loss ? `$${trade.stop_loss.toFixed(0)}` : '—'}
                     </span>
@@ -118,7 +141,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                       {trade.take_profit ? `$${trade.take_profit.toFixed(0)}` : '—'}
                     </span>
                     <span className={`text-sm font-mono font-semibold text-right ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                      {formatR(pnlR)}
+                      {dollarPnl != null ? formatPnl(dollarPnl) : formatR(pnlR)}
                     </span>
                   </button>
                 );
