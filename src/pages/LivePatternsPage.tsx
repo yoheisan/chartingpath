@@ -1057,6 +1057,7 @@ export default function LivePatternsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <WelcomeBackBanner />
       <PageMeta
         title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
         description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
