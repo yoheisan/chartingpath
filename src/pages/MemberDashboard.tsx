@@ -4,6 +4,7 @@ import { CommandCenterLayout } from "@/components/command-center";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
 import { PageMeta } from '@/components/PageMeta';
+import WelcomeBackBanner from '@/components/WelcomeBackBanner';
 import type { SetupWithVisuals } from "@/types/VisualSpec";
 
 /** Route state passed when navigating from Historical Occurrences for playback */
@@ -63,6 +64,7 @@ const MemberDashboard = () => {
         description="Your full trading command centre. Live charts with pattern overlays, watchlist, and market overview across forex, crypto, stocks and commodities."
         canonicalPath="/members/dashboard"
       />
+      <WelcomeBackBanner />
       {routeState?.backUrl && (
         <div className="bg-muted/30 border-b border-border/40 px-4 py-2">
           <button

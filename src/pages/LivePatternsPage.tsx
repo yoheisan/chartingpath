@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
+import WelcomeBackBanner from '@/components/WelcomeBackBanner';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
