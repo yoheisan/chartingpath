@@ -440,6 +440,7 @@ export type Database = {
         Row: {
           event_name: string
           id: string
+          is_bot_suspect: boolean
           properties: Json | null
           session_id: string | null
           ts: string
@@ -448,6 +449,7 @@ export type Database = {
         Insert: {
           event_name: string
           id?: string
+          is_bot_suspect?: boolean
           properties?: Json | null
           session_id?: string | null
           ts?: string
@@ -456,6 +458,7 @@ export type Database = {
         Update: {
           event_name?: string
           id?: string
+          is_bot_suspect?: boolean
           properties?: Json | null
           session_id?: string | null
           ts?: string

@@ -10,8 +10,10 @@ import {
   RefreshCw, Users, AlertTriangle, TrendingUp, TrendingDown,
   Globe, Search, Eye, MousePointerClick, ArrowDown, ArrowUp,
   Lightbulb, BarChart3, Zap, BookOpen, Bell, Mail, Brain,
-  FileText, LayoutDashboard,
+  FileText, LayoutDashboard, Bot,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, startOfDay, isSameDay, parseISO } from "date-fns";
 
@@ -113,6 +115,7 @@ export function DailyReportPanel() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [daysBack, setDaysBack] = useState("7");
   const [showNarrative, setShowNarrative] = useState(true);
+  const [showBots, setShowBots] = useState(false);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -129,7 +132,7 @@ export function DailyReportPanel() {
         while (hasMore) {
           const { data, error } = await supabase
             .from("analytics_events")
-            .select("event_name, properties, session_id, ts")
+            .select("event_name, properties, session_id, ts, is_bot_suspect")
             .gte("ts", since)
             .order("ts", { ascending: true })
             .range(from, from + PAGE_SIZE - 1);
@@ -161,7 +164,12 @@ export function DailyReportPanel() {
         supabase.from("community_messages").select("id").gte("created_at", since),
       ]);
 
-      const events = analyticsEvents || [];
+      const allFetchedEvents = analyticsEvents || [];
+      // Filter out suspected bots when toggle is off
+      const events = showBots
+        ? allFetchedEvents
+        : allFetchedEvents.filter((e: any) => !e.is_bot_suspect);
+      const botCount = allFetchedEvents.filter((e: any) => e.is_bot_suspect).length;
       const searches = searchRes.data || [];
       const alerts = alertsRes.data || [];
       const alertLogs = alertsLogRes.data || [];
@@ -527,7 +535,7 @@ export function DailyReportPanel() {
 
   useEffect(() => {
     fetchReport();
-  }, [daysBack]);
+  }, [daysBack, showBots]);
 
   if (loading) {
     return (
@@ -568,6 +576,17 @@ export function DailyReportPanel() {
           <Button variant="outline" size="icon" onClick={fetchReport}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <div className="flex items-center gap-2 ml-4 border-l pl-4">
+            <Bot className="h-4 w-4 text-muted-foreground" />
+            <Switch
+              id="bot-toggle"
+              checked={showBots}
+              onCheckedChange={setShowBots}
+            />
+            <Label htmlFor="bot-toggle" className="text-xs text-muted-foreground cursor-pointer">
+              {showBots ? "Showing suspected bots" : "Hiding suspected bots"}
+            </Label>
+          </div>
         </div>
       </div>
 
