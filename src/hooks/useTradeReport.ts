@@ -23,6 +23,7 @@ export interface PaperTrade {
   user_action: string | null;
   override_reason: string | null;
   master_plan_id: string | null;
+  close_reason: string | null;
 }
 
 export interface SessionLog {
