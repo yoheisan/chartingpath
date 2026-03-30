@@ -3195,6 +3195,7 @@ export type Database = {
           attribution: string | null
           close_reason: string | null
           closed_at: string | null
+          cooldown_until: string | null
           copilot_reasoning: string | null
           created_at: string
           detection_id: string | null
@@ -3235,6 +3236,7 @@ export type Database = {
           attribution?: string | null
           close_reason?: string | null
           closed_at?: string | null
+          cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
@@ -3275,6 +3277,7 @@ export type Database = {
           attribution?: string | null
           close_reason?: string | null
           closed_at?: string | null
+          cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
