@@ -58,6 +58,45 @@ Deno.serve(async (req) => {
     let updatedCount = 0;
 
     for (const trade of openTrades) {
+      // ── Price feed staleness / orphan check ──
+      const { data: freshnessRow } = await supabase
+        .from("live_pattern_detections")
+        .select("last_confirmed_at")
+        .eq("instrument", trade.symbol)
+        .eq("status", "active")
+        .order("last_confirmed_at", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+
+      const lastConfirmed = freshnessRow?.last_confirmed_at
+        ? new Date(freshnessRow.last_confirmed_at)
+        : null;
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      const feedStale = !lastConfirmed || lastConfirmed < fourHoursAgo;
+
+      if (feedStale) {
+        // Pause monitoring for this trade
+        if (!trade.monitoring_paused) {
+          await supabase
+            .from("paper_trades")
+            .update({ monitoring_paused: true })
+            .eq("id", trade.id);
+        }
+        console.log(
+          `[manage-trades] PAUSED monitoring ${trade.symbol} — price feed stale since ${lastConfirmed?.toISOString() ?? "never"}. Manual review required.`
+        );
+        continue;
+      }
+
+      // Feed is fresh — resume if previously paused
+      if (trade.monitoring_paused) {
+        await supabase
+          .from("paper_trades")
+          .update({ monitoring_paused: false })
+          .eq("id", trade.id);
+        console.log(`[manage-trades] RESUMED monitoring ${trade.symbol} — feed restored`);
+      }
+
       const { data: priceData } = await supabase
         .from("live_pattern_detections")
         .select("current_price")
