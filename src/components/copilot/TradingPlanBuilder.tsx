@@ -520,6 +520,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               <div className="flex flex-wrap gap-1.5">
                 {FX_CATEGORY_OPTIONS.map(cat => {
                   const selected = fxCategories.includes(cat.value);
+                  const isExotic = cat.value === "exotic";
                   return (
                     <button
                       key={cat.value}
@@ -527,16 +528,25 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       className={cn(
                         "px-2 py-1 rounded-md text-sm font-medium transition-all border",
                         selected
-                          ? "bg-primary/10 border-primary/30 text-primary"
+                          ? isExotic && selected
+                            ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                            : "bg-primary/10 border-primary/30 text-primary"
                           : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {selected && <Check className="h-2.5 w-2.5 mr-0.5 inline" />}
+                      {isExotic && selected && <AlertTriangle className="h-2.5 w-2.5 mr-0.5 inline text-amber-400" />}
                       {cat.label}
                     </button>
                   );
                 })}
               </div>
+              {fxCategories.includes("exotic") && (
+                <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  Exotic pairs have reduced price feed reliability
+                </p>
+              )}
             </div>
           )}
 
