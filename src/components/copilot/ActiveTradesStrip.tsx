@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, X } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { useMemo } from 'react';
+import { StalenessPrice } from './StalenessPrice';
 
 interface ActiveTradesStripProps {
   trades: CopilotTrade[];
@@ -44,10 +45,10 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
             const isSelected = trade.id === selectedTradeId;
             const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
             const isOpen = trade.status === 'open';
-            const currentPrice = isOpen ? livePrices[trade.symbol] : trade.exit_price;
+            const priceData = isOpen ? livePrices[trade.symbol] : null;
+            const currentPrice = isOpen ? priceData?.price : trade.exit_price;
             const pnlR = trade.outcome_r ?? 0;
 
-            // Calculate unrealized dollar P&L for open trades
             let dollarPnl: number | null = null;
             if (isOpen && currentPrice && trade.entry_price && trade.quantity) {
               dollarPnl = isLong
@@ -77,8 +78,15 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                 )}
                 <span className="text-sm font-mono font-bold text-foreground truncate">{trade.symbol}</span>
                 <span className="text-sm font-mono text-muted-foreground">${trade.entry_price?.toFixed(2)}</span>
-                {isOpen && currentPrice && (
-                  <span className="text-sm font-mono text-foreground">→ ${currentPrice.toFixed(2)}</span>
+                {isOpen && currentPrice && priceData && (
+                  <>
+                    <span className="text-sm font-mono text-muted-foreground">→</span>
+                    <StalenessPrice
+                      price={currentPrice}
+                      lastConfirmedAt={priceData.lastConfirmedAt}
+                      className="text-sm font-mono"
+                    />
+                  </>
                 )}
                 <span className={`ml-auto text-sm font-mono font-semibold shrink-0 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                   {dollarPnl != null ? formatPnl(dollarPnl) : formatR(pnlR)}

@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface LivePriceData {
+  price: number;
+  lastConfirmedAt: string; // ISO timestamp
+}
+
 /**
- * Fetches live prices for a list of symbols from live_pattern_detections.
+ * Fetches live prices + staleness timestamps for a list of symbols.
  * Refreshes every `intervalMs` (default 30s).
  */
 export function useLivePrices(symbols: string[], intervalMs = 30_000) {
-  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [prices, setPrices] = useState<Record<string, LivePriceData>>({});
 
   useEffect(() => {
     if (symbols.length === 0) return;
@@ -14,17 +19,22 @@ export function useLivePrices(symbols: string[], intervalMs = 30_000) {
     const uniqueSymbols = [...new Set(symbols)];
 
     const fetchPrices = async () => {
-      const results: Record<string, number> = {};
+      const results: Record<string, LivePriceData> = {};
       for (const sym of uniqueSymbols) {
         const { data } = await supabase
           .from('live_pattern_detections')
-          .select('current_price')
+          .select('current_price, last_confirmed_at')
           .eq('instrument', sym)
           .not('current_price', 'is', null)
           .order('last_confirmed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (data?.current_price) results[sym] = Number(data.current_price);
+        if (data?.current_price) {
+          results[sym] = {
+            price: Number(data.current_price),
+            lastConfirmedAt: data.last_confirmed_at ?? new Date().toISOString(),
+          };
+        }
       }
       setPrices(results);
     };
