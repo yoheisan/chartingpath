@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
 import {
   calcReadinessScore,
   type PaperTrade,
@@ -19,8 +20,82 @@ function scoreColor(score: number) {
   return 'hsl(var(--bearish))';
 }
 
+interface ComponentExplanation {
+  currentValue: string;
+  threshold: string;
+  description: string;
+  action: string;
+}
+
+function getExplanation(
+  label: string,
+  score: number,
+  max: number,
+  meta: { count: number; avgR: number; wr: number; profitable: number; overrides: number }
+): ComponentExplanation {
+  switch (label) {
+    case 'Sample size':
+      return {
+        currentValue: `${meta.count} closed trades`,
+        threshold: '50 trades for full score (20 pts)',
+        description: 'Measures whether you have enough trades for statistically meaningful results.',
+        action: meta.count < 50
+          ? `Complete ${50 - meta.count} more paper trades to max this score.`
+          : 'You have a strong sample size — keep trading to maintain it.',
+      };
+    case 'Plan profitability':
+      return {
+        currentValue: `${meta.avgR >= 0 ? '+' : ''}${meta.avgR.toFixed(2)}R avg per trade`,
+        threshold: '> 1.5R avg for full score (25 pts)',
+        description: 'Measures average R-multiple per trade — your plan\'s expected edge.',
+        action: meta.avgR < 0.5
+          ? 'Review losing setups and tighten stop losses to improve expectancy.'
+          : meta.avgR < 1.5
+          ? 'Focus on higher-conviction setups to push average R above 1.5.'
+          : 'Excellent expectancy — maintain current setup selection.',
+      };
+    case 'Win rate':
+      return {
+        currentValue: `${meta.wr}% win rate`,
+        threshold: '≥ 60% for full score (20 pts)',
+        description: 'Percentage of trades that closed with a positive R-multiple.',
+        action: meta.wr < 50
+          ? 'Be more selective — only take setups the AI scores highest on.'
+          : meta.wr < 60
+          ? `Win ${Math.ceil((0.6 * meta.count - meta.wr * meta.count / 100))} more of your next trades to reach 60%.`
+          : 'Strong win rate — keep following your plan.',
+      };
+    case 'Consistency':
+      return {
+        currentValue: `${meta.profitable}/5 recent sessions profitable`,
+        threshold: '≥ 4/5 sessions for full score (20 pts)',
+        description: 'Measures how many of your last 5 trading sessions ended net-positive.',
+        action: meta.profitable < 3
+          ? 'Reduce position sizes on losing days and stop trading after 2 consecutive losses.'
+          : `${4 - meta.profitable} more profitable session(s) in a row will improve this.`,
+      };
+    case 'Plan discipline':
+      return {
+        currentValue: `${meta.overrides} overrides in last 20 trades (${meta.count > 0 ? Math.round((meta.overrides / Math.min(meta.count, 20)) * 100) : 0}%)`,
+        threshold: '0 overrides for full score (15 pts)',
+        description: 'Tracks how often you override the AI\'s recommendations in recent trades.',
+        action: meta.overrides > 0
+          ? `Stay within plan on ${meta.overrides} more consecutive trades to improve this score.`
+          : 'Perfect discipline — you\'re following your plan consistently.',
+      };
+    default:
+      return {
+        currentValue: `${score}/${max}`,
+        threshold: `${max} pts max`,
+        description: '',
+        action: '',
+      };
+  }
+}
+
 export function ReadinessScore({ trades, sessions }: Props) {
   const { t } = useTranslation();
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const { total, components, meta } = useMemo(
     () => calcReadinessScore(trades, sessions),
     [trades, sessions]
@@ -72,7 +147,7 @@ export function ReadinessScore({ trades, sessions }: Props) {
         </div>
 
         {/* Breakdown */}
-        <div className="flex-1 w-full space-y-3">
+        <div className="flex-1 w-full space-y-1">
           {components.map(c => {
             const labelMap: Record<string, string> = {
               'Sample size': t('report.sampleSize'),
@@ -81,21 +156,39 @@ export function ReadinessScore({ trades, sessions }: Props) {
               'Consistency': t('report.consistency'),
               'Plan discipline': t('report.planDiscipline'),
             };
+            const isExpanded = expandedRow === c.label;
+            const explanation = getExplanation(c.label, c.score, c.max, meta);
             return (
-              <div key={c.label} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-28 flex-shrink-0">{labelMap[c.label] ?? c.label}</span>
-                <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${(c.score / c.max) * 100}%`,
-                      backgroundColor: scoreColor((c.score / c.max) * 100),
-                    }}
-                  />
-                </div>
-                <span className="text-xs font-mono text-muted-foreground w-12 text-right">
-                  {c.score}/{c.max}
-                </span>
+              <div key={c.label}>
+                <button
+                  onClick={() => setExpandedRow(isExpanded ? null : c.label)}
+                  className="w-full flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer group"
+                >
+                  <span className="text-xs text-muted-foreground w-28 flex-shrink-0 text-left">{labelMap[c.label] ?? c.label}</span>
+                  <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${(c.score / c.max) * 100}%`,
+                        backgroundColor: scoreColor((c.score / c.max) * 100),
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground w-12 text-right">
+                    {c.score}/{c.max}
+                  </span>
+                  <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} opacity-0 group-hover:opacity-100`} />
+                </button>
+                {isExpanded && (
+                  <div className="ml-2 mr-2 mb-2 mt-0.5 p-3 rounded-lg bg-muted/20 border border-border/20 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-medium text-foreground">{explanation.currentValue}</span>
+                      <span className="text-[10px] text-muted-foreground">→ {explanation.threshold}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{explanation.description}</p>
+                    <p className="text-xs text-primary leading-relaxed">💡 {explanation.action}</p>
+                  </div>
+                )}
               </div>
             );
           })}
