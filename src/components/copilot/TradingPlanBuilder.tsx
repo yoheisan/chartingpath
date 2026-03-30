@@ -340,7 +340,33 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
   const canSave = selectedPatterns.length > 0;
 
-  const handleSave = async () => {
+  // Detect if the plan includes exotic FX
+  const hasExoticFx = assetClasses.includes("forex") && fxCategories.includes("exotic");
+
+  const [showExoticConfirm, setShowExoticConfirm] = useState(false);
+
+  const handleSaveClick = () => {
+    if (!canSave) return;
+    if (hasExoticFx) {
+      setShowExoticConfirm(true);
+      return;
+    }
+    performSave();
+  };
+
+  const handleRemoveExoticAndSave = () => {
+    setFxCategories(prev => prev.filter(c => c !== "exotic"));
+    setShowExoticConfirm(false);
+    // Save after state update via setTimeout
+    setTimeout(() => performSave(), 0);
+  };
+
+  const handleContinueWithExotic = () => {
+    setShowExoticConfirm(false);
+    performSave();
+  };
+
+  const performSave = async () => {
     if (!canSave) return;
     setIsSaving(true);
     try {
