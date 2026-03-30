@@ -1079,7 +1079,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         <div className="space-y-2 pt-2">
           <Button
             className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-            onClick={handleSave}
+            onClick={handleSaveClick}
             disabled={!canSave || isSaving}
           >
             {isSaving ? (
