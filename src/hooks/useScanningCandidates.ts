@@ -16,6 +16,7 @@ export interface ScanningCandidate {
   detectedAt: string;
   currentPrice: number | null;
   assetType: string | null;
+  cooldownUntil: string | null;
 }
 
 export function useScanningCandidates(plan: MasterPlan | null) {
@@ -114,6 +115,27 @@ export function useScanningCandidates(plan: MasterPlan | null) {
           for (const g of gates as any[]) {
             if (gateMap[g.ticker]) continue;
             gateMap[g.ticker] = { result: g.gate_result, reason: g.gate_reason || "" };
+          }
+        }
+      }
+
+      // 5b. Fetch cooldown data for these instruments
+      let cooldownMap: Record<string, string> = {};
+      if (instruments.length > 0) {
+        const { data: cooldowns } = await supabase
+          .from("paper_trades" as any)
+          .select("symbol, cooldown_until")
+          .eq("status", "closed")
+          .in("symbol", instruments)
+          .not("cooldown_until", "is", null)
+          .gte("cooldown_until", new Date().toISOString())
+          .order("closed_at", { ascending: false });
+
+        if (cooldowns) {
+          for (const c of cooldowns as any[]) {
+            if (!cooldownMap[c.symbol]) {
+              cooldownMap[c.symbol] = c.cooldown_until;
+            }
           }
         }
       }
