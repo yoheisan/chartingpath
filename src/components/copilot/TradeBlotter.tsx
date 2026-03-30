@@ -6,6 +6,7 @@ import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useNavigateToDashboard } from '@/hooks/useNavigateToDashboard';
 import { useLivePrices } from '@/hooks/useLivePrices';
+import { StalenessPrice } from './StalenessPrice';
 
 interface TradeBlotterProps {
   trades: CopilotTrade[];
@@ -77,10 +78,10 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                 const isSelected = trade.id === selectedTradeId;
                 const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
                 const isOpen = trade.status === 'open';
-                const currentPrice = isOpen ? livePrices[trade.symbol] : trade.exit_price;
+                const priceData = isOpen ? livePrices[trade.symbol] : null;
+                const currentPrice = isOpen ? priceData?.price : trade.exit_price;
                 const pnlR = trade.outcome_r ?? 0;
 
-                // Calculate unrealized dollar P&L for open trades
                 let dollarPnl: number | null = null;
                 if (isOpen && currentPrice && trade.entry_price && trade.quantity) {
                   dollarPnl = isLong
@@ -131,8 +132,18 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade }: TradeBlotterPr
                     <span className="text-sm font-mono text-foreground">
                       ${trade.entry_price?.toFixed(2)}
                     </span>
-                    <span className={`text-sm font-mono ${currentPrice ? (isPositive ? 'text-green-500' : 'text-red-500') : 'text-muted-foreground'}`}>
-                      {currentPrice ? `$${currentPrice.toFixed(2)}` : '—'}
+                    <span className="text-sm font-mono">
+                      {isOpen && currentPrice && priceData ? (
+                        <StalenessPrice
+                          price={currentPrice}
+                          lastConfirmedAt={priceData.lastConfirmedAt}
+                          className="text-sm font-mono"
+                        />
+                      ) : currentPrice ? (
+                        `$${currentPrice.toFixed(2)}`
+                      ) : (
+                        '—'
+                      )}
                     </span>
                     <span className="text-sm font-mono text-red-400">
                       {trade.stop_loss ? `$${trade.stop_loss.toFixed(0)}` : '—'}
