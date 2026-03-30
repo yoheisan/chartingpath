@@ -164,8 +164,12 @@ export function DailyReportPanel() {
         supabase.from("community_messages").select("id").gte("created_at", since),
       ]);
 
-      const events = analyticsEvents || [];
-      const searches = searchRes.data || [];
+      const allFetchedEvents = analyticsEvents || [];
+      // Filter out suspected bots when toggle is off
+      const events = showBots
+        ? allFetchedEvents
+        : allFetchedEvents.filter((e: any) => !e.is_bot_suspect);
+      const botCount = allFetchedEvents.filter((e: any) => e.is_bot_suspect).length;
       const alerts = alertsRes.data || [];
       const alertLogs = alertsLogRes.data || [];
       const feedback = copilotRes.data || [];
@@ -530,7 +534,7 @@ export function DailyReportPanel() {
 
   useEffect(() => {
     fetchReport();
-  }, [daysBack]);
+  }, [daysBack, showBots]);
 
   if (loading) {
     return (
@@ -571,6 +575,17 @@ export function DailyReportPanel() {
           <Button variant="outline" size="icon" onClick={fetchReport}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <div className="flex items-center gap-2 ml-4 border-l pl-4">
+            <Bot className="h-4 w-4 text-muted-foreground" />
+            <Switch
+              id="bot-toggle"
+              checked={showBots}
+              onCheckedChange={setShowBots}
+            />
+            <Label htmlFor="bot-toggle" className="text-xs text-muted-foreground cursor-pointer">
+              {showBots ? "Showing suspected bots" : "Hiding suspected bots"}
+            </Label>
+          </div>
         </div>
       </div>
 
