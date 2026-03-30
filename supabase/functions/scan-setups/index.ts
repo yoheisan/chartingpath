@@ -288,8 +288,9 @@ Deno.serve(async (req) => {
           const entryPrice = Number(det.current_price) || 100;
           const positionPct = plan.max_position_pct ?? 3;
           const rUnit = entryPrice * (positionPct / 100);
-          const stopPrice = entryPrice - 2 * rUnit;
-          const targetPrice = entryPrice + 3 * rUnit;
+          const isLong = det.direction !== "short";
+          const stopPrice = isLong ? entryPrice - 2 * rUnit : entryPrice + 2 * rUnit;
+          const targetPrice = isLong ? entryPrice + 3 * rUnit : entryPrice - 3 * rUnit;
           const quantity = (portfolio.current_balance * positionPct / 100) / entryPrice;
 
           // Generate copilot reasoning via Anthropic Claude Sonnet
