@@ -1072,6 +1072,18 @@ function TableOfContents({ sections }: { sections: ParsedSection[] }) {
   );
 }
 
+// Map blog slugs to their primary pattern for the BlogCTA component
+const SLUG_PATTERN_MAP: Record<string, { name: string; slug: string }> = {
+  'gap-trading-strategy': { name: 'Donchian Breakout', slug: 'donchian-breakout' },
+  'head-and-shoulders': { name: 'Head & Shoulders', slug: 'head-and-shoulders' },
+  'double-top-bottom': { name: 'Double Top/Bottom', slug: 'double-top' },
+  'triangle-patterns': { name: 'Triangle', slug: 'ascending-triangle' },
+  'wedge-patterns': { name: 'Wedge', slug: 'rising-wedge' },
+  'flag-pennant-patterns': { name: 'Flag', slug: 'bull-flag' },
+  'cup-and-handle': { name: 'Cup & Handle', slug: 'cup-and-handle' },
+  'breakout-trading': { name: 'Donchian Breakout', slug: 'donchian-breakout' },
+};
+
 const DynamicArticle = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
