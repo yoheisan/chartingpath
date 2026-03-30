@@ -1,0 +1,3 @@
+ALTER TABLE public.paper_trades 
+  ADD COLUMN IF NOT EXISTS forex_lot_size DECIMAL(10,4) DEFAULT 0.01,
+  ADD COLUMN IF NOT EXISTS instrument_type TEXT DEFAULT NULL;

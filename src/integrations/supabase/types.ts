@@ -3200,11 +3200,13 @@ export type Database = {
           detection_id: string | null
           entry_price: number
           exit_price: number | null
+          forex_lot_size: number | null
           gate_evaluation_id: string | null
           gate_reason: string | null
           gate_result: string | null
           hold_duration_mins: number | null
           id: string
+          instrument_type: string | null
           master_plan_id: string | null
           notes: string | null
           notified_at: string | null
@@ -3238,11 +3240,13 @@ export type Database = {
           detection_id?: string | null
           entry_price: number
           exit_price?: number | null
+          forex_lot_size?: number | null
           gate_evaluation_id?: string | null
           gate_reason?: string | null
           gate_result?: string | null
           hold_duration_mins?: number | null
           id?: string
+          instrument_type?: string | null
           master_plan_id?: string | null
           notes?: string | null
           notified_at?: string | null
@@ -3276,11 +3280,13 @@ export type Database = {
           detection_id?: string | null
           entry_price?: number
           exit_price?: number | null
+          forex_lot_size?: number | null
           gate_evaluation_id?: string | null
           gate_reason?: string | null
           gate_result?: string | null
           hold_duration_mins?: number | null
           id?: string
+          instrument_type?: string | null
           master_plan_id?: string | null
           notes?: string | null
           notified_at?: string | null
