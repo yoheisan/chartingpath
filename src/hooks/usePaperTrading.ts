@@ -85,18 +85,21 @@ export function usePaperTrading(userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, fetchData]);
 
-  const handleCloseTrade = useCallback(async (tradeId: string, symbol: string, overrideData?: { reason: string; notes: string }) => {
+  const handleCloseTrade = useCallback(async (tradeId: string, symbol: string, overrideData?: { reason: string; notes: string; manualPrice?: number }) => {
     setClosingTradeId(tradeId);
     try {
-      const { data: latest } = await supabase
-        .from('live_pattern_detections')
-        .select('current_price')
-        .eq('instrument', symbol)
-        .order('first_detected_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      let exitPrice: number | null = overrideData?.manualPrice ?? null;
 
-      const exitPrice = latest?.current_price ? Number(latest.current_price) : null;
+      if (exitPrice == null) {
+        const { data: latest } = await supabase
+          .from('live_pattern_detections')
+          .select('current_price')
+          .eq('instrument', symbol)
+          .order('first_detected_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        exitPrice = latest?.current_price ? Number(latest.current_price) : null;
+      }
 
       const { data: trade } = await supabase
         .from('paper_trades')
@@ -104,7 +107,7 @@ export function usePaperTrading(userId?: string) {
         .eq('id', tradeId)
         .single();
 
-      if (!trade || !exitPrice) { toast.error('Could not fetch current price'); return; }
+      if (!trade || exitPrice == null) { toast.error('Could not fetch current price'); return; }
 
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const pnl = isLong
