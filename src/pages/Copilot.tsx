@@ -97,6 +97,52 @@ const Copilot = () => {
     setSelectedClosedTrade(null);
   }, []);
 
+  const handleCloseTrade = useCallback(async (tradeId: string) => {
+    try {
+      const trade = openTrades.find(t => t.id === tradeId);
+      if (!trade) { toast.error('Trade not found'); return; }
+
+      const { data: latest } = await supabase
+        .from('live_pattern_detections')
+        .select('current_price')
+        .eq('instrument', trade.symbol)
+        .not('current_price', 'is', null)
+        .order('last_confirmed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const exitPrice = latest?.current_price ? Number(latest.current_price) : trade.entry_price;
+      const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
+      const pnl = isLong
+        ? (exitPrice - trade.entry_price) * trade.quantity
+        : (trade.entry_price - exitPrice) * trade.quantity;
+      const riskAmount = Math.abs(trade.entry_price - (trade.stop_loss ?? trade.entry_price));
+      const priceMove = isLong ? exitPrice - trade.entry_price : trade.entry_price - exitPrice;
+      const outcomeR = riskAmount > 0 ? Math.round((priceMove / riskAmount) * 100) / 100 : 0;
+
+      const { error } = await supabase.from('paper_trades').update({
+        status: 'closed',
+        exit_price: exitPrice,
+        pnl: Math.round(pnl * 100) / 100,
+        closed_at: new Date().toISOString(),
+        close_reason: 'Override exit by trader',
+        outcome_r: outcomeR,
+        user_action: 'override_exit',
+        attribution: 'human_overwrite',
+      }).eq('id', tradeId);
+
+      if (error) { toast.error('Failed to close trade'); console.error(error); return; }
+
+      toast.success(`Closed ${trade.symbol} at $${exitPrice.toFixed(2)}`);
+      setSelectedTradeId(null);
+      setSelectedClosedTrade(null);
+      refetchTrades();
+    } catch (err) {
+      console.error('[Copilot] close trade error:', err);
+      toast.error('Failed to close trade');
+    }
+  }, [openTrades, refetchTrades]);
+
   // Listen for session_logs updates to detect session end
   useEffect(() => {
     if (!user?.id) return;
