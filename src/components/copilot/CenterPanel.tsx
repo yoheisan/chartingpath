@@ -18,6 +18,7 @@ import type { MasterPlan } from '@/hooks/useMasterPlan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { supabase } from '@/integrations/supabase/client';
 
 /* ─── types ─── */
 export type CenterPanelState = 'scanning' | 'active' | 'review';
@@ -46,7 +47,7 @@ interface CenterPanelProps {
   openTrades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (id: string) => void;
-  onCloseTrade?: (tradeId: string) => void;
+  onCloseTrade?: (tradeId: string, manualPrice?: number) => void;
   activePlan: MasterPlan | null;
 }
 
@@ -426,10 +427,13 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
   trade: CopilotTrade;
   onBack: () => void;
   onFocusNLBar: (prefill?: string) => void;
-  onCloseTrade?: (tradeId: string) => void;
+  onCloseTrade?: (tradeId: string, manualPrice?: number) => void;
 }) => {
   const { t } = useTranslation();
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [livePriceUnavailable, setLivePriceUnavailable] = useState(false);
+  const [manualExitPrice, setManualExitPrice] = useState(String(trade.entry_price ?? 0));
+  const [checkingPrice, setCheckingPrice] = useState(false);
   const isAi = trade.attribution === 'ai_approved';
   const pnlR = trade.outcome_r ?? 0;
   const entryTime = new Date(trade.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -514,7 +518,30 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             <Button variant="outline" size="sm" className="text-sm h-7" onClick={() => onFocusNLBar('Why did you enter ' + trade.symbol + '?')}>
               {t('copilotPage.why')}
             </Button>
-            <Button variant="outline" size="sm" className="text-sm h-7 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={() => setOverrideModalOpen(true)}>
+            <Button variant="outline" size="sm" className="text-sm h-7 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={async () => {
+              setOverrideModalOpen(true);
+              setCheckingPrice(true);
+              setLivePriceUnavailable(false);
+              try {
+                const { data } = await supabase
+                  .from('live_pattern_detections')
+                  .select('current_price')
+                  .eq('instrument', trade.symbol)
+                  .not('current_price', 'is', null)
+                  .order('last_confirmed_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (!data?.current_price) {
+                  setLivePriceUnavailable(true);
+                  setManualExitPrice(String(trade.entry_price));
+                }
+              } catch {
+                setLivePriceUnavailable(true);
+                setManualExitPrice(String(trade.entry_price));
+              } finally {
+                setCheckingPrice(false);
+              }
+            }}>
               {t('copilotPage.overrideExit')}
             </Button>
           </div>
@@ -522,13 +549,52 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
 
         {overrideModalOpen && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-            <Card className="w-[320px]">
+            <Card className="w-[340px]">
               <CardContent className="p-4 flex flex-col gap-3">
                 <p className="text-sm text-foreground font-medium">{t('copilotPage.overrideExitTitle')}</p>
                 <p className="text-sm text-muted-foreground">{t('copilotPage.overrideExitDesc')}</p>
+
+                {checkingPrice && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Checking live price…
+                  </div>
+                )}
+
+                {livePriceUnavailable && !checkingPrice && (
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                      <p className="text-xs text-amber-400">Live price unavailable — enter exit price manually.</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={manualExitPrice}
+                        onChange={(e) => setManualExitPrice(e.target.value)}
+                        className="h-8 text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setOverrideModalOpen(false)}>{t('copilotPage.cancel')}</Button>
-                  <Button size="sm" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30" onClick={() => { setOverrideModalOpen(false); onCloseTrade?.(trade.id); }}>
+                  <Button variant="outline" size="sm" onClick={() => { setOverrideModalOpen(false); setLivePriceUnavailable(false); }}>{t('copilotPage.cancel')}</Button>
+                  <Button
+                    size="sm"
+                    disabled={checkingPrice || (livePriceUnavailable && (!manualExitPrice || isNaN(Number(manualExitPrice)) || Number(manualExitPrice) <= 0))}
+                    className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
+                    onClick={() => {
+                      setOverrideModalOpen(false);
+                      if (livePriceUnavailable) {
+                        onCloseTrade?.(trade.id, Number(manualExitPrice));
+                      } else {
+                        onCloseTrade?.(trade.id);
+                      }
+                      setLivePriceUnavailable(false);
+                    }}
+                  >
                     {t('copilotPage.confirmOverride')}
                   </Button>
                 </div>
