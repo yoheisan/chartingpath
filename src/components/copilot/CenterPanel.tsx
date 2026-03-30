@@ -17,7 +17,7 @@ import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
 import type { MasterPlan } from '@/hooks/useMasterPlan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+
 import { supabase } from '@/integrations/supabase/client';
 
 /* ─── types ─── */
