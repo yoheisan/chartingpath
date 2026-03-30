@@ -27,7 +27,8 @@ import {
   Bell,
   Star,
   Bot,
-  Trophy
+  Trophy,
+  Zap
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -256,6 +257,19 @@ const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Pattern Lab — top-level */}
+            <Link
+              to="/projects/pattern-lab/new"
+              className={`flex items-center gap-1.5 text-base whitespace-nowrap transition-colors ${
+                isActive('/projects/pattern-lab')
+                  ? 'text-foreground font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Zap className="h-4 w-4 text-amber-500" />
+              {t('navigation.patternLab', 'Pattern Lab')}
+            </Link>
             
             {/* 5. Learning - Pattern Library, Blog & Articles */}
             <DropdownMenu>
