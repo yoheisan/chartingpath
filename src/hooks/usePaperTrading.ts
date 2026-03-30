@@ -122,7 +122,7 @@ export function usePaperTrading(userId?: string) {
         exit_price: exitPrice,
         pnl: Math.round(pnl * 100) / 100,
         closed_at: new Date().toISOString(),
-        close_reason: overrideData ? `Override: ${overrideData.reason}` : 'Manually closed by trader',
+        close_reason: overrideData?.manualPrice ? 'manual_price_override' : overrideData ? `Override: ${overrideData.reason}` : 'Manually closed by trader',
         outcome_r: outcomeR,
       };
 
