@@ -38,6 +38,7 @@ function makeTrades(count: number): PaperTrade[] {
       user_action: isOverride ? 'override' : 'follow',
       override_reason: isOverride ? 'Disagreed with entry timing' : null,
       master_plan_id: 'plan-1',
+      close_reason: i % 10 === 0 ? 'session_end_unresolved' : i % 15 === 0 ? 'session_end_tp_proximity' : null,
     });
   }
 
