@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
+import WelcomeBackBanner from '@/components/WelcomeBackBanner';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
@@ -1056,6 +1057,7 @@ export default function LivePatternsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <WelcomeBackBanner />
       <PageMeta
         title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
         description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
