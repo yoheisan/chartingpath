@@ -46,6 +46,7 @@ interface CenterPanelProps {
   openTrades: CopilotTrade[];
   selectedTradeId: string | null;
   onSelectTrade: (id: string) => void;
+  onCloseTrade?: (tradeId: string) => void;
   activePlan: MasterPlan | null;
 }
 
@@ -421,10 +422,11 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
 };
 
 /* ═══ STATE 2 — ACTIVE TRADE ═══ */
-const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
+const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
   trade: CopilotTrade;
   onBack: () => void;
   onFocusNLBar: (prefill?: string) => void;
+  onCloseTrade?: (tradeId: string) => void;
 }) => {
   const { t } = useTranslation();
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
@@ -526,7 +528,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar }: {
                 <p className="text-sm text-muted-foreground">{t('copilotPage.overrideExitDesc')}</p>
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setOverrideModalOpen(false)}>{t('copilotPage.cancel')}</Button>
-                  <Button size="sm" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30" onClick={() => setOverrideModalOpen(false)}>
+                  <Button size="sm" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30" onClick={() => { setOverrideModalOpen(false); onCloseTrade?.(trade.id); }}>
                     {t('copilotPage.confirmOverride')}
                   </Button>
                 </div>
@@ -646,7 +648,7 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
 };
 
 /* ═══ MAIN CENTER PANEL ═══ */
-const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade, activePlan }: CenterPanelProps) => {
+const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, openTrades, selectedTradeId, onSelectTrade, onCloseTrade, activePlan }: CenterPanelProps) => {
   const state: CenterPanelState = useMemo(() => {
     if (selectedClosedTrade) return 'review';
     if (activeTrade) return 'active';
@@ -658,7 +660,7 @@ const CenterPanel = ({ activeTrade, selectedClosedTrade, onBack, onFocusNLBar, o
       return <ReviewState trade={selectedClosedTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
     }
     if (state === 'active' && activeTrade) {
-      return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} />;
+      return <ActiveTradeState trade={activeTrade} onBack={onBack} onFocusNLBar={onFocusNLBar} onCloseTrade={onCloseTrade} />;
     }
     return <ScanningState plan={activePlan} />;
   })();

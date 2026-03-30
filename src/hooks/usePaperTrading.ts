@@ -92,7 +92,7 @@ export function usePaperTrading(userId?: string) {
         .from('live_pattern_detections')
         .select('current_price')
         .eq('instrument', symbol)
-        .order('detected_at', { ascending: false })
+        .order('first_detected_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
