@@ -132,7 +132,7 @@ export function DailyReportPanel() {
         while (hasMore) {
           const { data, error } = await supabase
             .from("analytics_events")
-            .select("event_name, properties, session_id, ts")
+            .select("event_name, properties, session_id, ts, is_bot_suspect")
             .gte("ts", since)
             .order("ts", { ascending: true })
             .range(from, from + PAGE_SIZE - 1);
