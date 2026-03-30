@@ -34,21 +34,26 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
     setManualExitPrice(String(trade.entry_price));
     setCheckingPrice(true);
 
-    supabase
-      .from('live_pattern_detections')
-      .select('current_price')
-      .eq('instrument', trade.symbol)
-      .not('current_price', 'is', null)
-      .order('last_confirmed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
+    const checkPrice = async () => {
+      try {
+        const { data } = await supabase
+          .from('live_pattern_detections')
+          .select('current_price')
+          .eq('instrument', trade.symbol)
+          .not('current_price', 'is', null)
+          .order('last_confirmed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
         if (!data?.current_price) {
           setLivePriceUnavailable(true);
         }
-      })
-      .catch(() => setLivePriceUnavailable(true))
-      .finally(() => setCheckingPrice(false));
+      } catch {
+        setLivePriceUnavailable(true);
+      } finally {
+        setCheckingPrice(false);
+      }
+    };
+    checkPrice();
   }, [open, trade]);
 
   const handleConfirm = () => {
