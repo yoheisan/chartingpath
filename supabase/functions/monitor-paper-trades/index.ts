@@ -266,49 +266,49 @@ Deno.serve(async (req) => {
           console.warn('[monitor-paper-trades] Feedback error:', fbErr);
         }
 
-        const { data: prefs } = await supabase
-          .from('user_email_preferences')
-          .select('alert_emails, unsubscribed')
+        // ── Email notification on trade close ──
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email_notifications_enabled, email')
           .eq('user_id', trade.user_id)
           .maybeSingle();
 
-        if (prefs?.alert_emails && !prefs?.unsubscribed && !trade.notified_at) {
-          const { data: { user } } = await supabase.auth.admin.getUserById(trade.user_id);
+        if (profile?.email_notifications_enabled && profile?.email && !trade.notified_at) {
+          const attribution = trade.attribution;
+          const closedByLabel = (attribution === 'human_overwrite' || closeReason?.includes('manual') || closeReason?.includes('override'))
+            ? 'You closed'
+            : 'AI closed';
+          const outcomeRStr = outcomeR !== null
+            ? (outcomeR > 0 ? `+${outcomeR}` : `${outcomeR}`)
+            : '0';
+          const setupType = trade.setup_type || trade.pattern_id || 'Setup';
 
-          if (user?.email) {
-            const isWin = closeReason?.includes('Take profit');
-            try {
-              await supabase.functions.invoke('send-email', {
-                body: {
-                  to: user.email,
-                  subject: isWin
-                    ? `🎯 TP Hit! ${trade.symbol} +${outcomeR}R`
-                    : closeReason?.includes('Stop loss')
-                      ? `📉 SL Hit: ${trade.symbol} -1R`
-                      : `⏱️ Trade Closed: ${trade.symbol} ${outcomeR && outcomeR > 0 ? '+' : ''}${outcomeR}R`,
-                  template: 'trade_outcome',
-                  data: {
-                    instrument: trade.symbol,
-                    pattern: trade.pattern_id || (trade.notes?.match(/\[pattern:(.*?)\]/)?.[1] ?? 'Pattern'),
-                    direction: trade.trade_type,
-                    entryPrice: trade.entry_price,
-                    exitPrice,
-                    outcomeR,
-                    closeReason,
-                    openedAt: trade.created_at,
-                    closedAt: new Date().toISOString(),
-                  },
+          try {
+            await supabase.functions.invoke('send-email', {
+              body: {
+                to: profile.email,
+                subject: `[ChartingPath] Trade closed: ${trade.symbol} ${outcomeRStr}R`,
+                template: 'trade_outcome',
+                data: {
+                  symbol: trade.symbol,
+                  setup_type: setupType,
+                  entry_price: trade.entry_price,
+                  exit_price: exitPrice,
+                  outcome_r: outcomeRStr,
+                  close_reason: closeReason,
+                  pnl: Math.round(pnl * 100) / 100,
+                  closed_by: closedByLabel,
                 },
-              });
-            } catch (emailErr) {
-              console.warn('[monitor-paper-trades] Email send failed:', emailErr);
-            }
-
-            await supabase
-              .from('paper_trades')
-              .update({ notified_at: new Date().toISOString() })
-              .eq('id', trade.id);
+              },
+            });
+          } catch (emailErr) {
+            console.warn('[monitor-paper-trades] Email send failed:', emailErr);
           }
+
+          await supabase
+            .from('paper_trades')
+            .update({ notified_at: new Date().toISOString() })
+            .eq('id', trade.id);
         }
 
         processed++;
