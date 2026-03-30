@@ -25,7 +25,7 @@ export function GuestScreenerOverlay({ totalCount, visibleCount }: GuestScreener
             {t('guestScreenerOverlay.seeingSignals', { visible: visibleCount, total: totalCount })}
           </p>
           <p className="text-sm text-muted-foreground mb-5">
-            {t('guestScreenerOverlay.unlockMessage')}
+            {t('guestScreenerOverlay.signUpFree', 'Sign up free to see all live patterns.')}
           </p>
 
           {/* Google Sign-In for 1-click conversion */}
