@@ -55,7 +55,8 @@ export function PaperPortfolioBar({ userId }: PaperPortfolioBarProps) {
       let pnl = 0;
       if (forex) {
         const lotSize = (trade as any).forex_lot_size ?? 0.01;
-        pnl = calcForexPnl(trade.symbol, entryPrice, exitPrice, lotSize, isShort ? 'short' : 'long');
+        const priceMove = isShort ? (entryPrice - exitPrice) : (exitPrice - entryPrice);
+        pnl = calcForexPnl(trade.symbol, priceMove, lotSize);
       } else {
         const qty = (trade as any).quantity ?? 1;
         pnl = isShort
