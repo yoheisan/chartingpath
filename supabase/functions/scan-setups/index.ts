@@ -201,6 +201,24 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // ── Price freshness gate ──
+        const { data: freshnessRow } = await supabase
+          .from("live_pattern_detections")
+          .select("last_confirmed_at")
+          .eq("instrument", det.instrument)
+          .eq("status", "active")
+          .order("last_confirmed_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+
+        const lastConfirmed = freshnessRow?.last_confirmed_at ? new Date(freshnessRow.last_confirmed_at) : null;
+        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+        if (!lastConfirmed || lastConfirmed < twoHoursAgo) {
+          console.log(`[scan-setups] BLOCKED ${det.instrument} — price feed stale. Last confirmed: ${lastConfirmed?.toISOString() ?? "never"}`);
+          continue;
+        }
+
         const { count: currentOpen } = await supabase
           .from("paper_trades")
           .select("id", { count: "exact", head: true })
