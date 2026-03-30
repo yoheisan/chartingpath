@@ -170,6 +170,7 @@ export function DailyReportPanel() {
         ? allFetchedEvents
         : allFetchedEvents.filter((e: any) => !e.is_bot_suspect);
       const botCount = allFetchedEvents.filter((e: any) => e.is_bot_suspect).length;
+      const searches = searchRes.data || [];
       const alerts = alertsRes.data || [];
       const alertLogs = alertsLogRes.data || [];
       const feedback = copilotRes.data || [];
