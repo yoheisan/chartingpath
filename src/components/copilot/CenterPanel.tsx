@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, AlertTriangle, Target, Shield, TrendingUp, TrendingDown, ChevronDown, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useScanningCandidates, ScanningCandidate } from '@/hooks/useScanningCandidates';
