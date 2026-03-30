@@ -115,6 +115,7 @@ export function DailyReportPanel() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [daysBack, setDaysBack] = useState("7");
   const [showNarrative, setShowNarrative] = useState(true);
+  const [showBots, setShowBots] = useState(false);
 
   const fetchReport = async () => {
     setLoading(true);
