@@ -548,13 +548,14 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 shrink-0">
+      {/* Top Bar */}
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-border/40 shrink-0">
         <span className="text-sm font-mono font-bold text-foreground">{trade.symbol}</span>
-        <span className="text-sm font-mono text-foreground">${formatPrice(trade.entry_price)}</span>
-        <span className={`text-sm font-mono ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {pnlR >= 0 ? '▲' : '▼'} {formatR(pnlR)}
+        <span className="text-sm font-mono text-muted-foreground">{formatPrice(trade.entry_price)}</span>
+        <span className={`text-sm font-mono font-semibold ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          {pnlR >= 0 ? '\u25b2' : '\u25bc'} {formatR(pnlR)}
         </span>
-        <Badge className={`text-sm px-1.5 py-0 rounded font-medium ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
+        <Badge className={`text-sm px-2 py-0.5 rounded font-medium ${isAi ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
           {isAi ? t('copilotPage.aiApproved') : t('copilotPage.humanOverwrite')}
         </Badge>
         <span className="ml-auto text-sm font-mono text-muted-foreground">
@@ -562,9 +563,10 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
         </span>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
+      {/* Copilot context strip */}
+      <div className="flex items-center gap-2 px-5 py-2 bg-blue-500/5 border-b border-blue-500/20 shrink-0">
         <CopilotAvatar />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground leading-snug truncate">
           {t('copilotPage.paperTradeOpen', {
             symbol: trade.symbol,
             pnlR: formatR(pnlR),
@@ -573,59 +575,64 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
         </p>
       </div>
 
-      <div className="flex-1 relative p-4">
-        {/* Trade info panel — real data from paper_trades */}
-        <div className="h-full flex flex-col items-center justify-center gap-4">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sideLabel')}</span>
-              <span className={`font-mono font-bold ${trade.trade_type === 'long' || trade.trade_type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
-                {t(`copilotPage.side${(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}`, (trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1))}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.setupLabel')}</span>
-              <span className="font-mono text-foreground">{trade.setup_type ? translatePatternName(trade.setup_type) : '—'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
-              <span className="font-mono text-foreground">${formatPrice(trade.entry_price)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.pnlLabel')}</span>
-              <span className={`font-mono font-bold ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(pnlR)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.stopLoss')}</span>
-              <span className="font-mono text-red-400">{formatPrice(trade.stop_loss)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.takeProfit')}</span>
-              <span className="font-mono text-green-400">{formatPrice(trade.take_profit)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.gateLabel')}</span>
-              <span className="font-mono text-foreground">{trade.gate_result ? t(`copilotPage.gate${trade.gate_result.charAt(0).toUpperCase() + trade.gate_result.slice(1)}Value`, trade.gate_result) : '—'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
-              <span className="font-mono text-foreground">{trade.source ? t(`copilotPage.source${trade.source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, trade.source) : '—'}</span>
+      {/* Main content: horizontal split */}
+      <div className="flex-1 flex min-h-0 overflow-auto relative">
+        {/* Left: Trade details */}
+        <div className="flex-1 p-5">
+          <div className="rounded-lg border border-border/40 bg-card/40 p-5">
+            <div className="grid grid-cols-4 gap-x-6 gap-y-5">
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.sideLabel')}</span>
+                <p className={`font-mono text-sm font-bold ${trade.trade_type === 'long' || trade.trade_type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
+                  {t(`copilotPage.side${(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}`, (trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1))}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.setupLabel')}</span>
+                <p className="font-mono text-sm text-foreground">{trade.setup_type ? translatePatternName(trade.setup_type) : '\u2014'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.entryPrice')}</span>
+                <p className="font-mono text-sm text-foreground">{formatPrice(trade.entry_price)}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.pnlLabel')}</span>
+                <p className={`font-mono text-sm font-bold ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(pnlR)}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.stopLoss')}</span>
+                <p className="font-mono text-sm text-red-400">{formatPrice(trade.stop_loss)}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.takeProfit')}</span>
+                <p className="font-mono text-sm text-green-400">{formatPrice(trade.take_profit)}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.gateLabel')}</span>
+                <p className="font-mono text-sm text-foreground">{trade.gate_result ? t(`copilotPage.gate${trade.gate_result.charAt(0).toUpperCase() + trade.gate_result.slice(1)}Value`, trade.gate_result) : '\u2014'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-sm uppercase tracking-wider">{t('copilotPage.sourceLabel')}</span>
+                <p className="font-mono text-sm text-foreground">{trade.source ? t(`copilotPage.source${trade.source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, trade.source) : '\u2014'}</p>
+              </div>
             </div>
             <WhyAlignedSection trade={trade} />
           </div>
         </div>
 
-        {/* Copilot reasoning overlay — uses real trade reasoning */}
-        <div className="absolute bottom-6 right-6 w-[240px] rounded-md bg-card/90 border border-border/60 p-3 backdrop-blur-sm">
-          <span className="text-sm font-mono uppercase tracking-wider text-blue-400 block mb-1.5">{t('copilotPage.copilotReasoning')}</span>
-          <p className="text-sm leading-[1.6] text-muted-foreground mb-2">
-            {trade.copilot_reasoning || t('copilotPage.defaultReasoning', { time: entryTime, stop: (trade.stop_loss ?? trade.entry_price * 0.98).toFixed(2) })}
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="text-sm h-7" onClick={() => onFocusNLBar('Why did you enter ' + trade.symbol + '?')}>
+        {/* Right: Reasoning + actions sidebar */}
+        <div className="w-[280px] shrink-0 border-l border-border/30 p-5 flex flex-col gap-4">
+          <div>
+            <span className="text-sm font-mono uppercase tracking-wider text-blue-400 block mb-2">{t('copilotPage.copilotReasoning')}</span>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {trade.copilot_reasoning || t('copilotPage.defaultReasoning', { time: entryTime, stop: (trade.stop_loss ?? trade.entry_price * 0.98).toFixed(2) })}
+            </p>
+          </div>
+          <div className="flex gap-2 mt-auto">
+            <Button variant="outline" size="sm" className="text-sm h-8 flex-1" onClick={() => onFocusNLBar('Why did you enter ' + trade.symbol + '?')}>
               {t('copilotPage.why')}
             </Button>
-            <Button variant="outline" size="sm" className="text-sm h-7 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={async () => {
+            <Button variant="outline" size="sm" className="text-sm h-8 flex-1 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" onClick={async () => {
               setOverrideModalOpen(true);
               setCheckingPrice(true);
               setLivePriceUnavailable(false);

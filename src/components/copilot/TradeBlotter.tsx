@@ -49,13 +49,13 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
     <div className="border-t border-border/40 flex flex-col bg-card/30 h-full min-h-0">
       <button
         onClick={handleToggle}
-        className="flex items-center justify-between px-4 py-1.5 hover:bg-secondary/40 transition-colors shrink-0"
+        className="flex items-center justify-between px-5 py-2 hover:bg-secondary/40 transition-colors shrink-0"
       >
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold text-foreground uppercase tracking-wider">
             {t('copilotPage.activeTrades')}
           </span>
-          <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
+          <Badge variant="outline" className="text-sm px-2 py-0.5 h-6 font-mono">
             {trades.length}
           </Badge>
         </div>
@@ -63,13 +63,13 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
           <span className={`text-sm font-mono font-semibold ${totalR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {t('copilotPage.day')} {formatR(totalR)}
           </span>
-          {expanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />}
+          {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
         </div>
       </button>
 
       {expanded && (
         <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-          <div className="grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
+          <div className="grid grid-cols-[1.5fr_70px_110px_100px_100px_90px_100px_90px] gap-3 px-5 py-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
             <span>{t('copilotPage.symbol')}</span>
             <span>{t('copilotPage.side')}</span>
             <span>{t('copilotPage.pattern')}</span>
@@ -110,7 +110,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                   <button
                     key={trade.id}
                     onClick={() => onSelectTrade(trade.id)}
-                    className={`w-full grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1.5 text-left transition-colors ${
+                    className={`w-full grid grid-cols-[1.5fr_70px_110px_100px_100px_90px_100px_90px] gap-3 px-5 py-2.5 text-left transition-colors ${
                       isSelected ? 'bg-accent/40' : 'hover:bg-secondary/40'
                     }`}
                   >
