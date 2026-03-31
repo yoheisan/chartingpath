@@ -757,7 +757,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
                     {/* Day of week selector */}
                     <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">Trading days</span>
+                      <span className="text-sm text-muted-foreground">{t('planBuilder.tradingDays')}</span>
                       <div className="flex gap-1">
                         {DAYS_OF_WEEK.map(day => {
                           const active = schedule.days.includes(day.value);
