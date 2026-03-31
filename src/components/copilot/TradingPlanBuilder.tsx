@@ -786,7 +786,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                           }}
                           className="ml-1 px-1.5 h-7 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                         >
-                          {schedule.days.length === 7 ? "Weekdays" : "All"}
+                          {schedule.days.length === 7 ? t('planBuilder.weekdays') : t('planBuilder.all')}
                         </button>
                       </div>
                     </div>
