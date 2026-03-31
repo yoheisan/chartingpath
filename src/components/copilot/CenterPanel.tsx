@@ -588,7 +588,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
               <span className={`font-mono font-bold ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(pnlR)}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Stop Loss</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.stopLoss')}</span>
               <span className="font-mono text-red-400">{trade.stop_loss ? `$${trade.stop_loss.toFixed(2)}` : '—'}</span>
             </div>
             <div>
