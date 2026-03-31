@@ -900,10 +900,10 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
               <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              Advanced settings
+              {t('planBuilder.advancedSettings')}
               {hasAdvancedSettings && (
                 <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
-                  Active
+                  {t('planBuilder.active')}
                 </span>
               )}
               <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
