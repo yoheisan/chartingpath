@@ -1114,16 +1114,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-400" />
-              Exotic FX pairs detected
+              {t('planBuilder.exoticFxDetected')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Your plan includes <span className="font-semibold text-amber-400">exotic FX pairs</span>.
+                {t('planBuilder.exoticFxIncluded')}
               </p>
               <p>
-                These pairs have limited price feed coverage and may not be monitored reliably.
+                {t('planBuilder.exoticFxLimited')}
               </p>
-              <p className="text-xs text-muted-foreground">Continue anyway?</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.continueAnyway')}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
