@@ -1236,7 +1236,8 @@ async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?:
     }
     
     if (timeframe === '4h') {
-      bars = aggregate1hTo4h(bars);
+      const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
+      bars = aggregate1hTo4h(bars, is24h);
     }
     
     console.log(`[EODHD] Fetched ${bars.length} bars for ${symbol}@${timeframe}`);
