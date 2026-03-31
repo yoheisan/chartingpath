@@ -871,8 +871,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 6: Exclusions ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Anything Copilot should always avoid? <span className="font-normal text-muted-foreground">(optional)</span></h4>
-          <p className="text-xs text-muted-foreground">These are the only exclusions the system can enforce.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.exclusionsTitle')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.exclusionsSubtext')}</p>
           <div className="flex flex-wrap gap-1.5">
             {EXCLUSION_OPTIONS.map(e => {
               const selected = exclusions.includes(e);
