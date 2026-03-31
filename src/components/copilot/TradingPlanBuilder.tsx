@@ -1032,7 +1032,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             {/* ── 7d: Confluence Requirements ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-semibold text-foreground">Confluence Score</h5>
+                <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.confluenceScore')}</h5>
                 <button
                   onClick={() => setConfluenceEnabled(!confluenceEnabled)}
                   className={cn(
