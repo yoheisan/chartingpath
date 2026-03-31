@@ -955,7 +955,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       <Plus className="h-3 w-3" />
                     </button>
                   </div>
-                  <span className="text-xs text-muted-foreground">of {mtfTimeframes.length} timeframes</span>
+                  <span className="text-xs text-muted-foreground">{t('planBuilder.mtfOfTimeframes', { count: mtfTimeframes.length })}</span>
                 </div>
               )}
               {mtfTimeframes.length === 1 && (
