@@ -835,8 +835,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   }}
                   className="rounded border-input"
                 />
-                <span className="text-sm font-medium">24h trading window</span>
-                <span className="text-xs text-muted-foreground">(trade all day)</span>
+                <span className="text-sm font-medium">{t('planBuilder.tradingWindow24h')}</span>
+                <span className="text-xs text-muted-foreground">({t('planBuilder.tradeAllDay')})</span>
               </label>
               <div className={`grid grid-cols-2 gap-2 ${is24hTrading ? 'opacity-40 pointer-events-none' : ''}`}>
                 <div>
