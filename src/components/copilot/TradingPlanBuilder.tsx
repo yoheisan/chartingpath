@@ -729,7 +729,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Per-asset-class schedules (when asset classes are selected) */}
           {assetClasses.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Configure trading hours per asset class. Crypto and FX can trade 24/7.</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.configureHoursPerAsset')}</p>
               {assetClasses.map(ac => {
                 const schedule = tradingSchedules[ac] || (ALWAYS_AVAILABLE_ASSETS.has(ac) ? DEFAULT_247_SCHEDULE : DEFAULT_SCHEDULE);
                 const acLabel = ASSET_CLASS_OPTIONS.find(o => o.value === ac)?.label || ac;
