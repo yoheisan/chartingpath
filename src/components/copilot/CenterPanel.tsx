@@ -600,7 +600,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
               <span className="font-mono text-foreground">{trade.gate_result ?? '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Source</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
               <span className="font-mono text-foreground">{trade.source ?? '—'}</span>
             </div>
             <WhyAlignedSection trade={trade} />
