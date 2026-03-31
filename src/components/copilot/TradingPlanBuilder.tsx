@@ -980,7 +980,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Only paper-trade setups that pass the 4-agent scoring system with a minimum composite score.
+                {t('planBuilder.agentScoreDesc')}
               </p>
               {agentScoreEnabled && (
                 <div className="space-y-1">
