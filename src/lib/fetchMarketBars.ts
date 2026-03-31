@@ -173,11 +173,10 @@ export async function fetchMarketBars(opts: FetchBarsOptions): Promise<OHLCBar[]
   
   if (needsAggregation && rawBars.length > 0) {
     // For non-24h markets (stocks/ETFs/indices), sessions are shorter than 8h
-    // so we can't require exactly N bars per period
     const is24h = isCryptoSymbol(symbol) || symbol.endsWith('=X');
-    const minBarsPerPeriod = is24h ? aggHours : 2;
+    const minBarsPerPeriod = is24h ? aggHours : MIN_BARS_NON_24H;
     const aggregated = aggregateHourlyBars(rawBars, aggHours, { minBarsPerPeriod });
-    console.log(`[fetchMarketBars] Aggregated ${rawBars.length} 1h bars → ${aggregated.length} ${interval} bars for ${symbol}`);
+    console.log(`[fetchMarketBars] Aggregated ${rawBars.length} 1h bars → ${aggregated.length} ${interval} bars for ${symbol} (min=${minBarsPerPeriod})`);
     return aggregated;
   }
   
