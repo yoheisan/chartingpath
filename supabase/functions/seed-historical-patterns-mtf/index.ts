@@ -1302,7 +1302,8 @@ async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?:
     })).filter((b: OHLCBar) => b.close > 0);
     
     if (timeframe === '4h') {
-      bars = aggregate1hTo4h(bars);
+      const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
+      bars = aggregate1hTo4h(bars, is24h);
     }
     
     console.log(`[Yahoo] Fetched ${bars.length} bars for ${symbol}@${timeframe}`);
