@@ -345,9 +345,9 @@ export const CommandCenterChart = memo(function CommandCenterChart({
         }
         const aggregated: typeof data = [];
         for (const [key, wBars] of grouped) {
-          // For stocks/ETFs/indices, trading sessions < 8h, so accept ≥2 bars
+          // Non-24h markets (stocks/ETFs) trade ~6.5h, so require 5 bars minimum
           const is24hMarket = symbol.endsWith('-USD') || symbol.endsWith('-USDT') || symbol.endsWith('=X');
-          const minBarsNeeded = is24hMarket ? hours : 2;
+          const minBarsNeeded = is24hMarket ? hours : 5;
           if (wBars.length < minBarsNeeded) continue;
           wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           aggregated.push({

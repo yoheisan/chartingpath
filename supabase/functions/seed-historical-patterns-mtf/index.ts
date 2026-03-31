@@ -1096,8 +1096,13 @@ const TF_DATA_LIMITS: Record<string, { rangeDays: number; maxBars: number }> = {
   '1wk': { rangeDays: 365 * 10, maxBars: 520 }  // 10+ years
 };
 
-// Aggregate 1h bars to 4h bars (UTC-anchored, skip partial bars)
-function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+// Aggregate 1h bars to 4h bars (UTC-anchored)
+// Non-24h markets require MIN_BARS_NON_24H=5 bars per period.
+// This threshold MUST match all other aggregation paths.
+const MIN_BARS_NON_24H = 5;
+
+function aggregate1hTo4h(bars: OHLCBar[], is24hMarket: boolean = true): OHLCBar[] {
+  const minBars = is24hMarket ? 4 : MIN_BARS_NON_24H;
   const grouped = new Map<string, OHLCBar[]>();
   
   for (const bar of bars) {
@@ -1112,7 +1117,7 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
   
   const result: OHLCBar[] = [];
   for (const [key, wBars] of grouped) {
-    if (wBars.length < 4) continue; // skip partial bars
+    if (wBars.length < minBars) continue;
     wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
       date: key,

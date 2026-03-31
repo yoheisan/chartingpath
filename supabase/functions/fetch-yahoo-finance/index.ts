@@ -56,8 +56,11 @@ function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   
   for (const [windowKey, windowBars] of groupedBars) {
     if (windowBars.length === 0) continue;
-    // Skip partial bars — only emit complete periods
-    if (windowBars.length < hoursPerBar) continue;
+    // Non-24h markets (stocks/ETFs/indices) trade ~6.5h — require 5 bars minimum
+    // This threshold MUST match MIN_BARS_NON_24H across all aggregation paths
+    const is24h = symbol.includes('-USD') || symbol.includes('=X') || symbol.includes('.CC') || symbol.includes('.FOREX');
+    const minBars = is24h ? hoursPerBar : 5;
+    if (windowBars.length < minBars) continue;
     
     // Sort bars by time to ensure correct OHLC
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
