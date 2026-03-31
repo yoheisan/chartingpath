@@ -490,7 +490,7 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors group"
       >
         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-        Why aligned?
+        {t('copilotPage.whyAligned')}
       </button>
       {open && (
         <div className="mt-2 rounded-lg bg-muted/20 border border-border/20 p-3 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
