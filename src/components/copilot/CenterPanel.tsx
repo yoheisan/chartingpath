@@ -496,7 +496,7 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
         <div className="mt-2 rounded-lg bg-muted/20 border border-border/20 p-3 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" /> Loading gate criteria…
+              <Loader2 className="h-3 w-3 animate-spin" /> {t('copilotPage.loadingGateCriteria')}
             </div>
           ) : (
             <>
