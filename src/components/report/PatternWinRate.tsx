@@ -46,7 +46,7 @@ export function PatternWinRate({ trades }: Props) {
           if (p.total < 3) {
             return (
               <div key={p.name} className="text-xs text-muted-foreground/60">
-                {p.name} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
+                {translatePatternName(p.name)} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
               </div>
             );
           }
