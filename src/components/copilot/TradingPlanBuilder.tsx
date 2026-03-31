@@ -1103,7 +1103,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               onClick={onCancel}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Cancel
+              {t('planBuilder.cancel')}
             </button>
           </div>
         </div>
