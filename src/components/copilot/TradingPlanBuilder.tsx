@@ -966,7 +966,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             {/* ── 7b: Agent Score Threshold ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-semibold text-foreground">Agent Score Threshold</h5>
+                <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.agentScoreThreshold')}</h5>
                 <button
                   onClick={() => setAgentScoreEnabled(!agentScoreEnabled)}
                   className={cn(
