@@ -358,7 +358,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           className="h-7 text-xs gap-1"
                           disabled={isSubmitting || !!inCooldown}
                           onClick={() => setExitCandidate(c)}
-                          title={inCooldown ? 'Symbol in cooldown after stop loss hit' : undefined}
+                          title={inCooldown ? t('copilotPage.cooldownTooltip') : undefined}
                         >
                           <Play className="h-3 w-3" />
                           {isAutoEligible
