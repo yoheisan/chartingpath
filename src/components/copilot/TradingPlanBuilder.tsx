@@ -456,7 +456,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               type="text"
               value={planName}
               onChange={e => setPlanName(e.target.value)}
-              placeholder="e.g. Momentum Breakouts, Swing Longs"
+              placeholder={t('planBuilder.planNamePlaceholder')}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground"
               maxLength={60}
             />
