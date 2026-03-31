@@ -133,10 +133,11 @@ async function fetchYahooBars(symbol: string, timeframe: string, lookbackDays: n
     })).filter((b: OHLCBar) => b.close > 0);
 
     // Aggregate 1h → 4h/8h if needed
+    const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
     if (timeframe === '4h') {
-      bars = aggregate(bars, 4);
+      bars = aggregate(bars, 4, is24h);
     } else if (timeframe === '8h') {
-      bars = aggregate(bars, 8);
+      bars = aggregate(bars, 8, is24h);
     }
 
     return bars;

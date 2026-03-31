@@ -125,11 +125,12 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
       .filter((b): b is CompressedBar => b !== null);
 
     // Aggregate to 4H or 8H if needed
+    const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
     if (timeframe === '4h' && bars.length > 0) {
-      return aggregateHourlyBars(bars, 4);
+      return aggregateHourlyBars(bars, 4, is24h);
     }
     if (timeframe === '8h' && bars.length > 0) {
-      return aggregateHourlyBars(bars, 8);
+      return aggregateHourlyBars(bars, 8, is24h);
     }
 
     return bars;

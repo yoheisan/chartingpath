@@ -743,10 +743,11 @@ async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: 
     }
     
     // Aggregate 4h/8h from 1h if needed
+    const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
     if (interval === '4h' && bars.length > 0) {
-      bars = aggregateHourlyBars(bars, 4);
+      bars = aggregateHourlyBars(bars, 4, is24h);
     } else if (interval === '8h' && bars.length > 0) {
-      bars = aggregateHourlyBars(bars, 8);
+      bars = aggregateHourlyBars(bars, 8, is24h);
     }
     
     return bars;
