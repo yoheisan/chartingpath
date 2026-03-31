@@ -280,11 +280,11 @@ serve(async (req) => {
     // Aggregate to target timeframe if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 4h bars`);
-      ohlcBars = aggregate1hBars(ohlcBars, 4);
+      ohlcBars = aggregate1hBars(ohlcBars, 4, symbol);
       console.log(`Result: ${ohlcBars.length} 4h bars`);
     } else if (needs8hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 8h bars`);
-      ohlcBars = aggregate1hBars(ohlcBars, 8);
+      ohlcBars = aggregate1hBars(ohlcBars, 8, symbol);
       console.log(`Result: ${ohlcBars.length} 8h bars`);
     } else if (needs15mAggregation && actualInterval === '5m' && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 5m bars into 15m bars`);

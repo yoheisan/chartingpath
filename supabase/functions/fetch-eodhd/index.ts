@@ -332,7 +332,7 @@ serve(async (req) => {
     // Aggregate if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 1h bars to 4h`);
-      ohlcBars = aggregate1hTo4h(ohlcBars);
+      ohlcBars = aggregate1hTo4h(ohlcBars, symbol);
       console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 4h bars`);
     } else if (needs15mAggregation && ohlcBars.length > 0) {
       console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 5m bars to 15m`);
