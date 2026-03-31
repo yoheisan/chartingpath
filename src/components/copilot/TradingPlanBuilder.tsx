@@ -518,7 +518,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Forex */}
           {assetClasses.includes("forex") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">FX pair categories</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.fxPairCategories')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {FX_CATEGORY_OPTIONS.map(cat => {
                   const selected = fxCategories.includes(cat.value);
