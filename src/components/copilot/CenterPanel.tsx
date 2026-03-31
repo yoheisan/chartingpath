@@ -572,12 +572,12 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sideLabel')}</span>
               <span className={`font-mono font-bold ${trade.trade_type === 'long' || trade.trade_type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
-                {(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}
+                {t(`copilotPage.side${(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}`, (trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1))}
               </span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.setupLabel')}</span>
-              <span className="font-mono text-foreground">{trade.setup_type ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.setup_type ? translatePatternName(trade.setup_type) : '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
@@ -597,11 +597,11 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.gateLabel')}</span>
-              <span className="font-mono text-foreground">{trade.gate_result ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.gate_result ? t(`copilotPage.gate${trade.gate_result.charAt(0).toUpperCase() + trade.gate_result.slice(1)}Value`, trade.gate_result) : '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
-              <span className="font-mono text-foreground">{trade.source ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.source ? t(`copilotPage.source${trade.source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, trade.source) : '—'}</span>
             </div>
             <WhyAlignedSection trade={trade} />
           </div>

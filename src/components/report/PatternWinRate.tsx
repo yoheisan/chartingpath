@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { type PaperTrade, calcAvgR } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
@@ -45,7 +46,7 @@ export function PatternWinRate({ trades }: Props) {
           if (p.total < 3) {
             return (
               <div key={p.name} className="text-xs text-muted-foreground/60">
-                {p.name} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
+                {translatePatternName(p.name)} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
               </div>
             );
           }
@@ -58,7 +59,7 @@ export function PatternWinRate({ trades }: Props) {
 
           return (
             <div key={p.name} className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-36 flex-shrink-0 truncate">{p.name}</span>
+              <span className="text-xs text-muted-foreground w-36 flex-shrink-0 truncate">{translatePatternName(p.name)}</span>
               <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${barColor} transition-all duration-700`}
@@ -75,8 +76,8 @@ export function PatternWinRate({ trades }: Props) {
 
       {best && worst && best.name !== worst.name && (
         <p className="text-xs text-muted-foreground mt-4">
-          {t('report.bestPattern')} <span className="text-foreground font-medium">{best.name}</span> {t('report.atWinRate', { rate: best.winRate })}{' '}
-          {t('report.worstPattern')} <span className="text-foreground font-medium">{worst.name}</span> {t('report.atWinRate', { rate: worst.winRate })}
+          {t('report.bestPattern')} <span className="text-foreground font-medium">{translatePatternName(best.name)}</span> {t('report.atWinRate', { rate: best.winRate })}{' '}
+          {t('report.worstPattern')} <span className="text-foreground font-medium">{translatePatternName(worst.name)}</span> {t('report.atWinRate', { rate: worst.winRate })}
         </p>
       )}
     </div>
