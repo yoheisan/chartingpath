@@ -55,12 +55,28 @@ export function getProviderInterval(interval: string): string {
  *     C=1.0840 (bar4 close)
  *     V=4100   (sum of volumes)
  */
+/**
+ * Minimum bars per aggregation period for non-24h markets (stocks, ETFs, indices).
+ * US stocks trade ~6.5h/day, so 5+ bars means we capture a representative majority.
+ * 24h markets (crypto, FX) require the full period count (4 or 8).
+ * 
+ * IMPORTANT: This constant MUST match across all aggregation paths:
+ * - src/lib/fetchMarketBars.ts (this file)
+ * - src/components/command-center/CommandCenterChart.tsx (inline aggregations)
+ * - supabase/functions/scan-live-patterns/index.ts
+ * - supabase/functions/detect-patterns-ondemand/index.ts
+ * - supabase/functions/seed-historical-patterns-mtf/index.ts
+ * - supabase/functions/seed-price-timeseries/index.ts
+ * - supabase/functions/fetch-eodhd/index.ts
+ * - supabase/functions/fetch-yahoo-finance/index.ts
+ */
+export const MIN_BARS_NON_24H = 5;
+
 export function aggregateHourlyBars(bars: OHLCBar[], hours: number, options?: { minBarsPerPeriod?: number }): OHLCBar[] {
   if (bars.length === 0 || hours <= 1) return bars;
   
-  // For non-24h markets (stocks/ETFs), trading sessions are shorter than 8h,
-  // so we can't require exactly N bars per period. Default to 2 for safety.
   const minBars = options?.minBarsPerPeriod ?? hours;
+  
   
   // Group bars by UTC-anchored period boundaries
   const grouped = new Map<string, OHLCBar[]>();
