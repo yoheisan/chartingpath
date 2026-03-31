@@ -821,7 +821,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           ) : (
             /* Legacy global window when no asset classes selected */
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Copilot only enters trades during this window. All open trades close at the end.</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.legacyWindowDesc')}</p>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
