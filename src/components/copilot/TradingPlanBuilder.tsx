@@ -664,19 +664,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            At {riskPct}% — a $10,000 account risks <span className="font-semibold text-foreground">${exampleRisk}</span> per trade
+            {t('planBuilder.riskExample', { pct: riskPct, risk: exampleRisk })}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-              <p className="text-xs text-muted-foreground">Stop loss</p>
-              <p className="text-sm font-semibold text-foreground">2R (fixed)</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.stopLoss')}</p>
+              <p className="text-sm font-semibold text-foreground">{t('planBuilder.fixedR', { value: '2' })}</p>
             </div>
             <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-              <p className="text-xs text-muted-foreground">Take profit</p>
-              <p className="text-sm font-semibold text-foreground">3R (fixed)</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.takeProfit')}</p>
+              <p className="text-sm font-semibold text-foreground">{t('planBuilder.fixedR', { value: '3' })}</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground/70">Stop and target are fixed at 2R/3R — the system trails your stop automatically</p>
+          <p className="text-xs text-muted-foreground/70">{t('planBuilder.trailingStopNote')}</p>
         </section>
 
         {/* ── Section 4: Position limits ── */}
