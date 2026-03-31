@@ -1096,7 +1096,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               onClick={onSwitchToNL}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Type my plan instead
+              {t('planBuilder.typeMyPlan')}
             </button>
             <span className="text-muted-foreground/40 text-xs">·</span>
             <button
