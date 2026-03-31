@@ -862,7 +862,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               </div>
               {!is24hTrading && (
                 <p className="text-xs text-muted-foreground/70">
-                  Trades opened during this window are automatically closed at {windowEnd} if still open
+                  {t('planBuilder.autoCloseNote', { time: windowEnd })}
                 </p>
               )}
             </div>
