@@ -54,6 +54,14 @@ interface CenterPanelProps {
 /* ─── helpers ─── */
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
+/** Smart price formatter for micro-cap assets */
+const formatPrice = (v: number | null | undefined): string => {
+  if (v == null || !Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1) return `$${v.toFixed(2)}`;
+  if (Math.abs(v) >= 0.01) return `$${v.toFixed(4)}`;
+  return `$${v.toFixed(6)}`;
+};
+
 const GateBadge = ({ result }: { result: string }) => {
   const { t } = useTranslation();
   const colors: Record<string, string> = {
