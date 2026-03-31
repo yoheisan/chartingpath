@@ -9,7 +9,7 @@ export const ALL_PATTERN_IDS = [
   // Base (FREE)
   'donchian-breakout-long', 'donchian-breakout-short',
   'double-top', 'double-bottom',
-  'ascending-triangle', 'descending-triangle',
+  'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
   // Extended (PLUS+)
   'head-and-shoulders', 'inverse-head-and-shoulders',
   'rising-wedge', 'falling-wedge',
@@ -27,6 +27,7 @@ export const PATTERN_DISPLAY_NAMES: Record<string, string> = {
   'double-bottom': 'Double Bottom',
   'ascending-triangle': 'Ascending Triangle',
   'descending-triangle': 'Descending Triangle',
+  'symmetrical-triangle': 'Symmetrical Triangle',
   'head-and-shoulders': 'Head & Shoulders',
   'inverse-head-and-shoulders': 'Inverse Head & Shoulders',
   'rising-wedge': 'Rising Wedge',
