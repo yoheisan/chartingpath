@@ -19,6 +19,14 @@ interface TradeBlotterProps {
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
+/** Smart price formatter: uses enough decimals so sub-dollar assets aren't rounded to $0 */
+const formatPrice = (v: number | null | undefined): string => {
+  if (v == null || !Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1) return `$${v.toFixed(2)}`;
+  if (Math.abs(v) >= 0.01) return `$${v.toFixed(4)}`;
+  return `$${v.toFixed(6)}`;
+};
+
 const formatDuration = (createdAt: string) => {
   const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
   if (mins < 60) return `${mins}m`;
