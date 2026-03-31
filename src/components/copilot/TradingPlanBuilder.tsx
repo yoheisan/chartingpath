@@ -465,8 +465,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Instrument Universe ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">What markets should Copilot trade? <span className="font-normal text-muted-foreground">(optional)</span></h4>
-          <p className="text-xs text-muted-foreground">Leave empty for all assets. Select specific asset classes to narrow the scan universe.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whatMarkets')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.leaveEmptyAll')}</p>
           <div className="flex flex-wrap gap-1.5">
             {ASSET_CLASS_OPTIONS.map(ac => {
               const selected = assetClasses.includes(ac.value);
