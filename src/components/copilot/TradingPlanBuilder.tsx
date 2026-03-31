@@ -589,14 +589,14 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               onClick={() => setSelectedPatterns([...ALL_PATTERNS])}
               className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
-              Select all
+              {t('planBuilder.selectAll')}
             </button>
             <span className="text-muted-foreground/40 text-xs">·</span>
             <button
               onClick={() => setSelectedPatterns([])}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Clear all
+              {t('planBuilder.clearAll')}
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
