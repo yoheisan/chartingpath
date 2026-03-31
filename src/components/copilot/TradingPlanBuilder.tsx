@@ -698,7 +698,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Copilot will not open a new trade if {maxPositions} are already open
+            {t('planBuilder.maxPositionsNote', { count: maxPositions })}
           </p>
         </section>
 
