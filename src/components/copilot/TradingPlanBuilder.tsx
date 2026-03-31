@@ -647,7 +647,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 3: Risk per trade ── */}
         <section className="space-y-3">
-          <h4 className="text-sm font-semibold text-foreground">How much of your account per trade?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.howMuchPerTrade')}</h4>
           <div className="px-1">
             <Slider
               value={[riskPct]}
