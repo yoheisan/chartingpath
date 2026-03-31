@@ -79,11 +79,11 @@ export function TimeOfDayHeatmap({ trades }: Props) {
   }, [buckets]);
 
   const legend = [
-    { label: 'Strong', className: 'bg-emerald-600' },
-    { label: 'Positive', className: 'bg-emerald-400' },
-    { label: 'Weak', className: 'bg-amber-400' },
-    { label: 'Avoid', className: 'bg-red-400' },
-    { label: 'No data', className: 'bg-muted/25' },
+    { label: t('report.legendStrong'), className: 'bg-emerald-600' },
+    { label: t('report.legendPositive'), className: 'bg-emerald-400' },
+    { label: t('report.legendWeak'), className: 'bg-amber-400' },
+    { label: t('report.legendAvoid'), className: 'bg-red-400' },
+    { label: t('report.legendNoData'), className: 'bg-muted/25' },
   ];
 
   return (
