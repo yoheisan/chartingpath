@@ -998,7 +998,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     <span>95 ({t('planBuilder.agentElite')})</span>
                   </div>
                   <p className="text-sm text-muted-foreground/70">
-                    {minAgentScore >= 70 ? "TAKE signals only — highest conviction" : minAgentScore >= 50 ? "TAKE + WATCH signals" : "Most signals will pass"}
+                    {minAgentScore >= 70 ? t('planBuilder.agentTakeOnly') : minAgentScore >= 50 ? t('planBuilder.agentTakeWatch') : t('planBuilder.agentMostPass')}
                   </p>
                 </div>
               )}
