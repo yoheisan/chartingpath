@@ -577,7 +577,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.setupLabel')}</span>
-              <span className="font-mono text-foreground">{trade.setup_type ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.setup_type ? translatePatternName(trade.setup_type) : '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
