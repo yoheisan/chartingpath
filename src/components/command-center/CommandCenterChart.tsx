@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
