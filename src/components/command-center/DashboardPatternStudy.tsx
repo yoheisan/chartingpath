@@ -586,7 +586,7 @@ export function DashboardPatternStudy({
                           <TrendingDown className="h-4 w-4 text-destructive" />
                         )}
                         <span className="font-medium text-sm">
-                          {PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name}
+                          {translatePatternName(PATTERN_DISPLAY_NAMES[pattern.pattern_id] || pattern.pattern_name)}
                         </span>
                         <GradeBadge grade={pattern.quality_score} variant="pill" size="sm" showTooltip={false} className="text-sm" />
                       </div>
