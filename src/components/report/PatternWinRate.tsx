@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { type PaperTrade, calcAvgR } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
