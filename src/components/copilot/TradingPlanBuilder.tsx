@@ -795,7 +795,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     {!schedule.is_247 && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-sm text-muted-foreground mb-1 block">Start</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">{t('planBuilder.start')}</label>
                           <input
                             type="time"
                             value={schedule.start || "09:30"}
