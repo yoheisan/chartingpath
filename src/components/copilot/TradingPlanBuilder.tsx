@@ -582,8 +582,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 1: Patterns ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Which patterns should Copilot watch for?</h4>
-          <p className="text-xs text-muted-foreground">Select one or more. Copilot only paper-trades setups it detects from these patterns.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whichPatterns')}</h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.patternsSubtext')}</p>
           <div className="flex gap-2 mb-2">
             <button
               onClick={() => setSelectedPatterns([...ALL_PATTERNS])}
