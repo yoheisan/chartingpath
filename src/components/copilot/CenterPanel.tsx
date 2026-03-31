@@ -146,7 +146,7 @@ const ExitPlanDialog = ({ open, onOpenChange, candidate, onConfirm, isSubmitting
         <div className="space-y-3">
           <div className="rounded-md bg-muted/30 p-3 text-sm flex justify-between">
             <span className="text-muted-foreground">{t('copilotPage.entryPrice', 'Entry')}</span>
-            <span className="font-mono font-medium">{hasPrice ? entryPrice.toFixed(2) : '—'}</span>
+            <span className="font-mono font-medium">{hasPrice ? formatPrice(entryPrice).replace("$","") : '—'}</span>
           </div>
           {!hasPrice && (
             <p className="text-xs text-amber-400">{t('copilotPage.noPriceWarning', 'No live price available. Trade will use market price at execution.')}</p>
@@ -550,7 +550,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 shrink-0">
         <span className="text-sm font-mono font-bold text-foreground">{trade.symbol}</span>
-        <span className="text-sm font-mono text-foreground">${trade.entry_price?.toFixed(2)}</span>
+        <span className="text-sm font-mono text-foreground">${formatPrice(trade.entry_price)}</span>
         <span className={`text-sm font-mono ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>
           {pnlR >= 0 ? '▲' : '▼'} {formatR(pnlR)}
         </span>
@@ -589,7 +589,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
-              <span className="font-mono text-foreground">${trade.entry_price?.toFixed(2)}</span>
+              <span className="font-mono text-foreground">${formatPrice(trade.entry_price)}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.pnlLabel')}</span>
@@ -597,11 +597,11 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.stopLoss')}</span>
-              <span className="font-mono text-red-400">{trade.stop_loss ? `$${trade.stop_loss.toFixed(2)}` : '—'}</span>
+              <span className="font-mono text-red-400">{formatPrice(trade.stop_loss)}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.takeProfit')}</span>
-              <span className="font-mono text-green-400">{trade.take_profit ? `$${trade.take_profit.toFixed(2)}` : '—'}</span>
+              <span className="font-mono text-green-400">{formatPrice(trade.take_profit)}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.gateLabel')}</span>
@@ -767,11 +767,11 @@ const ReviewState = ({ trade, onBack, onFocusNLBar }: {
               <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
                 <div>
                   <span className="text-muted-foreground">{t('copilotPage.entryLabel')}</span>
-                  <span className="ml-3 font-mono text-foreground">${trade.entry_price.toFixed(2)} at {entryTime}</span>
+                  <span className="ml-3 font-mono text-foreground">${formatPrice(trade.entry_price)} at {entryTime}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{t('copilotPage.exitLabel')}</span>
-                  <span className="ml-3 font-mono text-foreground">${trade.exit_price?.toFixed(2) ?? '—'} at {exitTime} ({t('copilotPage.stopHitLabel')})</span>
+                  <span className="ml-3 font-mono text-foreground">${formatPrice(trade.exit_price)} at {exitTime} ({t('copilotPage.stopHitLabel')})</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{t('copilotPage.result')}</span>
