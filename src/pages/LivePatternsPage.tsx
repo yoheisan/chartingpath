@@ -184,7 +184,6 @@ const AVAILABLE_INSTRUMENTS: Record<string, { symbol: string; name: string }[]> 
 import { useTranslation } from 'react-i18next';
 import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
-import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
@@ -423,15 +422,13 @@ export default function LivePatternsPage() {
       if (fnError) throw fnError;
       
       if (data?.patterns) {
-        // Filter out patterns where the trade has already ended (SL/TP breached)
-        const activeOnly = filterActiveTradesOnly(data.patterns);
-        setPatterns(activeOnly);
+        setPatterns(data.patterns);
         setLastScanned(data.scannedAt);
         setInstrumentsScanned(data.instrumentsScanned);
         setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
 
         // Trigger batch gate evaluations for loaded patterns
-        const items = activeOnly.slice(0, 20).map((s: any) => ({
+        const items = data.patterns.slice(0, 20).map((s: any) => ({
           ticker: s.instrument,
           setup_type: s.patternName,
           timeframe: tfToFetch,
