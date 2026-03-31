@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { type PaperTrade } from '@/hooks/useTradeReport';
+import { translatePatternName } from '@/utils/translatePatternName';
 
 interface Props { trades: PaperTrade[] }
 
