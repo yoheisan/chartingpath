@@ -1089,7 +1089,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             ) : (
               <ChevronRight className="h-4 w-4 mr-2" />
             )}
-            {existingPlan ? "Save changes" : "Start paper testing →"}
+            {existingPlan ? t('planBuilder.saveChanges') : t('planBuilder.startPaperTesting')}
           </Button>
           <div className="flex justify-center gap-3">
             <button
