@@ -155,6 +155,7 @@ interface TradingPlanBuilderProps {
 }
 
 export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchToNL, isNewPlan, plans, onSelectPlan }: TradingPlanBuilderProps) {
+  const { t } = useTranslation();
   // Plan name
   const [planName, setPlanName] = useState("My Trading Plan");
   // Section 1 — Patterns
