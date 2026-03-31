@@ -110,7 +110,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                   <button
                     key={trade.id}
                     onClick={() => onSelectTrade(trade.id)}
-                    className={`w-full grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1.5 text-left transition-colors ${
+                    className={`w-full grid grid-cols-[1.5fr_70px_110px_100px_100px_90px_100px_90px] gap-3 px-5 py-2.5 text-left transition-colors ${
                       isSelected ? 'bg-accent/40' : 'hover:bg-secondary/40'
                     }`}
                   >
