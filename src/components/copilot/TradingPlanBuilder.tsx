@@ -1006,9 +1006,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
             {/* ── 7c: Trend Context Filter ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
-              <h5 className="text-xs font-semibold text-foreground">Trend Context</h5>
+              <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.trendContext')}</h5>
               <p className="text-sm text-muted-foreground">
-                Filter setups by their alignment with the prevailing trend direction.
+                {t('planBuilder.trendContextDesc')}
               </p>
               <div className="flex gap-1.5">
                 {TREND_CONTEXT_OPTIONS.map(opt => (
