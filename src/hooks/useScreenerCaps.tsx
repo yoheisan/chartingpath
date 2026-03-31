@@ -27,6 +27,7 @@ export const PATTERN_DISPLAY_NAMES: Record<string, string> = {
   'double-bottom': 'Double Bottom',
   'ascending-triangle': 'Ascending Triangle',
   'descending-triangle': 'Descending Triangle',
+  'symmetrical-triangle': 'Symmetrical Triangle',
   'head-and-shoulders': 'Head & Shoulders',
   'inverse-head-and-shoulders': 'Inverse Head & Shoulders',
   'rising-wedge': 'Rising Wedge',
