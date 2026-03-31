@@ -79,11 +79,11 @@ export function TimeOfDayHeatmap({ trades }: Props) {
   }, [buckets]);
 
   const legend = [
-    { label: 'Strong', className: 'bg-emerald-600' },
-    { label: 'Positive', className: 'bg-emerald-400' },
-    { label: 'Weak', className: 'bg-amber-400' },
-    { label: 'Avoid', className: 'bg-red-400' },
-    { label: 'No data', className: 'bg-muted/25' },
+    { label: t('report.legendStrong'), className: 'bg-emerald-600' },
+    { label: t('report.legendPositive'), className: 'bg-emerald-400' },
+    { label: t('report.legendWeak'), className: 'bg-amber-400' },
+    { label: t('report.legendAvoid'), className: 'bg-red-400' },
+    { label: t('report.legendNoData'), className: 'bg-muted/25' },
   ];
 
   return (
@@ -105,10 +105,10 @@ export function TimeOfDayHeatmap({ trades }: Props) {
                   <p className="font-semibold text-foreground">{String(b.hour).padStart(2, '0')}:00</p>
                   {b.trades > 0 ? (
                     <p className="text-muted-foreground mt-0.5">
-                      {b.trades} trade{b.trades !== 1 ? 's' : ''}, {b.winRate}% win rate, avg {b.avgR >= 0 ? '+' : ''}{b.avgR.toFixed(1)}R
+                      {t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}
                     </p>
                   ) : (
-                    <p className="text-muted-foreground mt-0.5">No trades</p>
+                    <p className="text-muted-foreground mt-0.5">{t('report.noTrades')}</p>
                   )}
                 </div>
               </div>
@@ -146,21 +146,21 @@ export function TimeOfDayHeatmap({ trades }: Props) {
       <div className="flex flex-col gap-1.5 mt-5 text-xs text-muted-foreground">
         {bestHour && (
           <span>
-            Best trading hour: <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {bestHour.winRate}% win rate
+            {t('report.bestTradingHour')} <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: bestHour.winRate })}
           </span>
         )}
         {worstHour && (
           <span>
-            Worst trading hour: <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {worstHour.winRate}% win rate
+            {t('report.worstTradingHour')} <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: worstHour.winRate })}
           </span>
         )}
         {excludeRange && (
           <span>
-            Consider restricting your{' '}
+            {t('report.considerRestricting')}{' '}
             <Link to="/copilot?tab=plan" className="text-primary hover:underline font-medium">
-              Master Plan
+              {t('report.masterPlanLink')}
             </Link>{' '}
-            trading window to exclude{' '}
+            {t('report.tradingWindowExclude')}{' '}
             <span className="text-foreground font-medium">
               {String(excludeRange.start).padStart(2, '0')}:00–{String(excludeRange.end).padStart(2, '0')}:00
             </span>

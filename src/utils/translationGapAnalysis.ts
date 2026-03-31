@@ -15,6 +15,7 @@ import koTranslations from '@/i18n/locales/ko.json';
 import trTranslations from '@/i18n/locales/tr.json';
 import nlTranslations from '@/i18n/locales/nl.json';
 import plTranslations from '@/i18n/locales/pl.json';
+import viTranslations from '@/i18n/locales/vi.json';
 
 const localeMap: Record<string, Record<string, any>> = {
   es: esTranslations,
@@ -33,6 +34,7 @@ const localeMap: Record<string, Record<string, any>> = {
   tr: trTranslations,
   nl: nlTranslations,
   pl: plTranslations,
+  vi: viTranslations,
 };
 
 /** Flatten a nested object into dot-separated keys */

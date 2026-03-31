@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -154,6 +155,7 @@ interface TradingPlanBuilderProps {
 }
 
 export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchToNL, isNewPlan, plans, onSelectPlan }: TradingPlanBuilderProps) {
+  const { t } = useTranslation();
   // Plan name
   const [planName, setPlanName] = useState("My Trading Plan");
   // Section 1 — Patterns
@@ -436,7 +438,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       <div className="p-4 space-y-6 pb-8">
         {/* ── Plan Name / Plan Selector ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Plan name</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.planName')}</h4>
           {!isNewPlan && plans && plans.length > 1 ? (
             <select
               value={existingPlan?.id ?? ''}
@@ -454,7 +456,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               type="text"
               value={planName}
               onChange={e => setPlanName(e.target.value)}
-              placeholder="e.g. Momentum Breakouts, Swing Longs"
+              placeholder={t('planBuilder.planNamePlaceholder')}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground"
               maxLength={60}
             />
@@ -463,8 +465,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Instrument Universe ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">What markets should Copilot trade? <span className="font-normal text-muted-foreground">(optional)</span></h4>
-          <p className="text-xs text-muted-foreground">Leave empty for all assets. Select specific asset classes to narrow the scan universe.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whatMarkets')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.leaveEmptyAll')}</p>
           <div className="flex flex-wrap gap-1.5">
             {ASSET_CLASS_OPTIONS.map(ac => {
               const selected = assetClasses.includes(ac.value);
@@ -489,7 +491,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Stocks */}
           {assetClasses.includes("stocks") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">Stock exchanges</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.stockExchanges')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {STOCK_EXCHANGE_OPTIONS.map(ex => {
                   const selected = stockExchanges.includes(ex);
@@ -516,7 +518,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Forex */}
           {assetClasses.includes("forex") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">FX pair categories</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.fxPairCategories')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {FX_CATEGORY_OPTIONS.map(cat => {
                   const selected = fxCategories.includes(cat.value);
@@ -544,7 +546,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               {fxCategories.includes("exotic") && (
                 <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-3 w-3 shrink-0" />
-                  Exotic pairs have reduced price feed reliability
+                  {t('planBuilder.exoticWarning')}
                 </p>
               )}
             </div>
@@ -553,7 +555,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Crypto */}
           {assetClasses.includes("crypto") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">Crypto categories</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.cryptoCategories')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {CRYPTO_CATEGORY_OPTIONS.map(cat => {
                   const selected = cryptoCategories.includes(cat.value);
@@ -580,21 +582,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 1: Patterns ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Which patterns should Copilot watch for?</h4>
-          <p className="text-xs text-muted-foreground">Select one or more. Copilot only paper-trades setups it detects from these patterns.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whichPatterns')}</h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.patternsSubtext')}</p>
           <div className="flex gap-2 mb-2">
             <button
               onClick={() => setSelectedPatterns([...ALL_PATTERNS])}
               className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
-              Select all
+              {t('planBuilder.selectAll')}
             </button>
             <span className="text-muted-foreground/40 text-xs">·</span>
             <button
               onClick={() => setSelectedPatterns([])}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Clear all
+              {t('planBuilder.clearAll')}
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -618,13 +620,13 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             })}
           </div>
           {selectedPatterns.length === 0 && (
-            <p className="text-xs text-destructive">Select at least 1 pattern to continue</p>
+            <p className="text-xs text-destructive">{t('planBuilder.selectAtLeast1')}</p>
           )}
         </section>
 
         {/* ── Section 2: Direction ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Trade direction</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.tradeDirection')}</h4>
           <div className="flex gap-2">
             {DIRECTION_OPTIONS.map(opt => (
               <button
@@ -645,7 +647,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 3: Risk per trade ── */}
         <section className="space-y-3">
-          <h4 className="text-sm font-semibold text-foreground">How much of your account per trade?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.howMuchPerTrade')}</h4>
           <div className="px-1">
             <Slider
               value={[riskPct]}
@@ -662,24 +664,24 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            At {riskPct}% — a $10,000 account risks <span className="font-semibold text-foreground">${exampleRisk}</span> per trade
+            {t('planBuilder.riskExample', { pct: riskPct, risk: exampleRisk })}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-              <p className="text-xs text-muted-foreground">Stop loss</p>
-              <p className="text-sm font-semibold text-foreground">2R (fixed)</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.stopLoss')}</p>
+              <p className="text-sm font-semibold text-foreground">{t('planBuilder.fixedR', { value: '2' })}</p>
             </div>
             <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-              <p className="text-xs text-muted-foreground">Take profit</p>
-              <p className="text-sm font-semibold text-foreground">3R (fixed)</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.takeProfit')}</p>
+              <p className="text-sm font-semibold text-foreground">{t('planBuilder.fixedR', { value: '3' })}</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground/70">Stop and target are fixed at 2R/3R — the system trails your stop automatically</p>
+          <p className="text-xs text-muted-foreground/70">{t('planBuilder.trailingStopNote')}</p>
         </section>
 
         {/* ── Section 4: Position limits ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">How many trades at once?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.howManyTrades')}</h4>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMaxPositions(Math.max(1, maxPositions - 1))}
@@ -696,19 +698,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Copilot will not open a new trade if {maxPositions} are already open
+            {t('planBuilder.maxPositionsNote', { count: maxPositions })}
           </p>
         </section>
 
         {/* ── Section 5: Trading Window & Timezone ── */}
         <section className="space-y-3">
-          <h4 className="text-sm font-semibold text-foreground">When should Copilot scan for trades?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whenShouldScan')}</h4>
           
           {/* Timezone selector */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5">
               <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Timezone</span>
+              <span className="text-xs font-medium text-muted-foreground">{t('planBuilder.timezone')}</span>
             </div>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger className="w-full h-9 text-xs">
@@ -727,7 +729,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Per-asset-class schedules (when asset classes are selected) */}
           {assetClasses.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Configure trading hours per asset class. Crypto and FX can trade 24/7.</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.configureHoursPerAsset')}</p>
               {assetClasses.map(ac => {
                 const schedule = tradingSchedules[ac] || (ALWAYS_AVAILABLE_ASSETS.has(ac) ? DEFAULT_247_SCHEDULE : DEFAULT_SCHEDULE);
                 const acLabel = ASSET_CLASS_OPTIONS.find(o => o.value === ac)?.label || ac;
@@ -755,7 +757,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
                     {/* Day of week selector */}
                     <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">Trading days</span>
+                      <span className="text-sm text-muted-foreground">{t('planBuilder.tradingDays')}</span>
                       <div className="flex gap-1">
                         {DAYS_OF_WEEK.map(day => {
                           const active = schedule.days.includes(day.value);
@@ -784,7 +786,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                           }}
                           className="ml-1 px-1.5 h-7 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                         >
-                          {schedule.days.length === 7 ? "Weekdays" : "All"}
+                          {schedule.days.length === 7 ? t('planBuilder.weekdays') : t('planBuilder.all')}
                         </button>
                       </div>
                     </div>
@@ -793,7 +795,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     {!schedule.is_247 && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-sm text-muted-foreground mb-1 block">Start</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">{t('planBuilder.start')}</label>
                           <input
                             type="time"
                             value={schedule.start || "09:30"}
@@ -802,7 +804,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-muted-foreground mb-1 block">End</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">{t('planBuilder.end')}</label>
                           <input
                             type="time"
                             value={schedule.end || "16:00"}
@@ -819,7 +821,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           ) : (
             /* Legacy global window when no asset classes selected */
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Copilot only enters trades during this window. All open trades close at the end.</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.legacyWindowDesc')}</p>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -833,12 +835,12 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   }}
                   className="rounded border-input"
                 />
-                <span className="text-sm font-medium">24h trading window</span>
-                <span className="text-xs text-muted-foreground">(trade all day)</span>
+                <span className="text-sm font-medium">{t('planBuilder.tradingWindow24h')}</span>
+                <span className="text-xs text-muted-foreground">({t('planBuilder.tradeAllDay')})</span>
               </label>
               <div className={`grid grid-cols-2 gap-2 ${is24hTrading ? 'opacity-40 pointer-events-none' : ''}`}>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">{t('planBuilder.startTime')}</label>
                   <input
                     type="time"
                     value={windowStart}
@@ -848,7 +850,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">End time</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">{t('planBuilder.endTime')}</label>
                   <input
                     type="time"
                     value={windowEnd}
@@ -860,7 +862,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               </div>
               {!is24hTrading && (
                 <p className="text-xs text-muted-foreground/70">
-                  Trades opened during this window are automatically closed at {windowEnd} if still open
+                  {t('planBuilder.autoCloseNote', { time: windowEnd })}
                 </p>
               )}
             </div>
@@ -869,8 +871,8 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 6: Exclusions ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Anything Copilot should always avoid? <span className="font-normal text-muted-foreground">(optional)</span></h4>
-          <p className="text-xs text-muted-foreground">These are the only exclusions the system can enforce.</p>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.exclusionsTitle')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
+          <p className="text-xs text-muted-foreground">{t('planBuilder.exclusionsSubtext')}</p>
           <div className="flex flex-wrap gap-1.5">
             {EXCLUSION_OPTIONS.map(e => {
               const selected = exclusions.includes(e);
@@ -898,10 +900,10 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
               <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              Advanced settings
+              {t('planBuilder.advancedSettings')}
               {hasAdvancedSettings && (
                 <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
-                  Active
+                  {t('planBuilder.active')}
                 </span>
               )}
               <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
@@ -911,9 +913,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
             {/* ── 7a: Multi-Timeframe Alignment ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
-              <h5 className="text-xs font-semibold text-foreground">Multi-Timeframe Alignment</h5>
+              <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.mtfAlignment')}</h5>
               <p className="text-sm text-muted-foreground">
-                Require trend agreement across multiple timeframes before entering a trade.
+                {t('planBuilder.mtfDesc')}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {MTF_TIMEFRAME_OPTIONS.map(tf => {
@@ -937,7 +939,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               </div>
               {mtfTimeframes.length >= 2 && (
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-muted-foreground">Min aligned:</span>
+                  <span className="text-xs text-muted-foreground">{t('planBuilder.mtfMinAligned')}</span>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setMtfMinAligned(Math.max(2, mtfMinAligned - 1))}
@@ -953,18 +955,18 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                       <Plus className="h-3 w-3" />
                     </button>
                   </div>
-                  <span className="text-xs text-muted-foreground">of {mtfTimeframes.length} timeframes</span>
+                  <span className="text-xs text-muted-foreground">{t('planBuilder.mtfOfTimeframes', { count: mtfTimeframes.length })}</span>
                 </div>
               )}
               {mtfTimeframes.length === 1 && (
-                <p className="text-sm text-muted-foreground/70">Select at least 2 timeframes for alignment checks</p>
+                <p className="text-sm text-muted-foreground/70">{t('planBuilder.mtfSelectAtLeast2')}</p>
               )}
             </div>
 
             {/* ── 7b: Agent Score Threshold ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-semibold text-foreground">Agent Score Threshold</h5>
+                <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.agentScoreThreshold')}</h5>
                 <button
                   onClick={() => setAgentScoreEnabled(!agentScoreEnabled)}
                   className={cn(
@@ -978,7 +980,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Only paper-trade setups that pass the 4-agent scoring system with a minimum composite score.
+                {t('planBuilder.agentScoreDesc')}
               </p>
               {agentScoreEnabled && (
                 <div className="space-y-1">
@@ -991,12 +993,12 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     className="w-full"
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>40 (Watch)</span>
+                    <span>40 ({t('planBuilder.agentWatch')})</span>
                     <span className="font-semibold text-foreground">{minAgentScore}</span>
-                    <span>95 (Elite)</span>
+                    <span>95 ({t('planBuilder.agentElite')})</span>
                   </div>
                   <p className="text-sm text-muted-foreground/70">
-                    {minAgentScore >= 70 ? "TAKE signals only — highest conviction" : minAgentScore >= 50 ? "TAKE + WATCH signals" : "Most signals will pass"}
+                    {minAgentScore >= 70 ? t('planBuilder.agentTakeOnly') : minAgentScore >= 50 ? t('planBuilder.agentTakeWatch') : t('planBuilder.agentMostPass')}
                   </p>
                 </div>
               )}
@@ -1004,9 +1006,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
             {/* ── 7c: Trend Context Filter ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
-              <h5 className="text-xs font-semibold text-foreground">Trend Context</h5>
+              <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.trendContext')}</h5>
               <p className="text-sm text-muted-foreground">
-                Filter setups by their alignment with the prevailing trend direction.
+                {t('planBuilder.trendContextDesc')}
               </p>
               <div className="flex gap-1.5">
                 {TREND_CONTEXT_OPTIONS.map(opt => (
@@ -1030,7 +1032,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             {/* ── 7d: Confluence Requirements ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-semibold text-foreground">Confluence Score</h5>
+                <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.confluenceScore')}</h5>
                 <button
                   onClick={() => setConfluenceEnabled(!confluenceEnabled)}
                   className={cn(
@@ -1044,7 +1046,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Require minimum confluence from support/resistance, divergence, and volume confirmation.
+                {t('planBuilder.confluenceDesc')}
               </p>
               {confluenceEnabled && (
                 <div className="space-y-1">
@@ -1070,7 +1072,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         {/* ── Plan Summary ── */}
         {summaryText && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <p className="text-xs font-medium text-primary mb-1">Your trading plan:</p>
+            <p className="text-xs font-medium text-primary mb-1">{t('planBuilder.planSummaryLabel')}</p>
             <p className="text-xs text-foreground/80 leading-relaxed">{summaryText}</p>
           </div>
         )}
@@ -1087,21 +1089,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             ) : (
               <ChevronRight className="h-4 w-4 mr-2" />
             )}
-            {existingPlan ? "Save changes" : "Start paper testing →"}
+            {existingPlan ? t('planBuilder.saveChanges') : t('planBuilder.startPaperTesting')}
           </Button>
           <div className="flex justify-center gap-3">
             <button
               onClick={onSwitchToNL}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Type my plan instead
+              {t('planBuilder.typeMyPlan')}
             </button>
             <span className="text-muted-foreground/40 text-xs">·</span>
             <button
               onClick={onCancel}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Cancel
+              {t('planBuilder.cancel')}
             </button>
           </div>
         </div>
@@ -1112,27 +1114,27 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-400" />
-              Exotic FX pairs detected
+              {t('planBuilder.exoticFxDetected')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Your plan includes <span className="font-semibold text-amber-400">exotic FX pairs</span>.
+                {t('planBuilder.exoticFxIncluded')}
               </p>
               <p>
-                These pairs have limited price feed coverage and may not be monitored reliably.
+                {t('planBuilder.exoticFxLimited')}
               </p>
-              <p className="text-xs text-muted-foreground">Continue anyway?</p>
+              <p className="text-xs text-muted-foreground">{t('planBuilder.continueAnyway')}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleRemoveExoticAndSave}>
-              Remove exotic pairs
+              {t('planBuilder.removeExoticPairs')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleContinueWithExotic}
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
-              Continue with exotic pairs
+              {t('planBuilder.continueWithExotic')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -31,57 +31,58 @@ function getExplanation(
   label: string,
   score: number,
   max: number,
-  meta: { count: number; avgR: number; wr: number; profitable: number; overrides: number }
+  meta: { count: number; avgR: number; wr: number; profitable: number; overrides: number },
+  t: (key: string, opts?: Record<string, any>) => string
 ): ComponentExplanation {
   switch (label) {
     case 'Sample size':
       return {
-        currentValue: `${meta.count} closed trades`,
-        threshold: '50 trades for full score (20 pts)',
-        description: 'Measures whether you have enough trades for statistically meaningful results.',
+        currentValue: t('report.readinessSampleSize', { count: meta.count }),
+        threshold: t('report.readinessSampleThreshold'),
+        description: t('report.readinessSampleDesc'),
         action: meta.count < 50
-          ? `Complete ${50 - meta.count} more paper trades to max this score.`
-          : 'You have a strong sample size — keep trading to maintain it.',
+          ? t('report.readinessSampleAction', { count: 50 - meta.count })
+          : t('report.readinessSampleDone'),
       };
     case 'Plan profitability':
       return {
-        currentValue: `${meta.avgR >= 0 ? '+' : ''}${meta.avgR.toFixed(2)}R avg per trade`,
-        threshold: '> 1.5R avg for full score (25 pts)',
-        description: 'Measures average R-multiple per trade — your plan\'s expected edge.',
+        currentValue: t('report.readinessProfitValue', { value: `${meta.avgR >= 0 ? '+' : ''}${meta.avgR.toFixed(2)}` }),
+        threshold: t('report.readinessProfitThreshold'),
+        description: t('report.readinessProfitDesc'),
         action: meta.avgR < 0.5
-          ? 'Review losing setups and tighten stop losses to improve expectancy.'
+          ? t('report.readinessProfitActionLow')
           : meta.avgR < 1.5
-          ? 'Focus on higher-conviction setups to push average R above 1.5.'
-          : 'Excellent expectancy — maintain current setup selection.',
+          ? t('report.readinessProfitActionMid')
+          : t('report.readinessProfitActionHigh'),
       };
     case 'Win rate':
       return {
-        currentValue: `${meta.wr}% win rate`,
-        threshold: '≥ 60% for full score (20 pts)',
-        description: 'Percentage of trades that closed with a positive R-multiple.',
+        currentValue: t('report.readinessWinValue', { wr: meta.wr }),
+        threshold: t('report.readinessWinThreshold'),
+        description: t('report.readinessWinDesc'),
         action: meta.wr < 50
-          ? 'Be more selective — only take setups the AI scores highest on.'
+          ? t('report.readinessWinActionLow')
           : meta.wr < 60
-          ? `Win ${Math.ceil((0.6 * meta.count - meta.wr * meta.count / 100))} more of your next trades to reach 60%.`
-          : 'Strong win rate — keep following your plan.',
+          ? t('report.readinessWinActionMid', { count: Math.ceil((0.6 * meta.count - meta.wr * meta.count / 100)) })
+          : t('report.readinessWinActionHigh'),
       };
     case 'Consistency':
       return {
-        currentValue: `${meta.profitable}/5 recent sessions profitable`,
-        threshold: '≥ 4/5 sessions for full score (20 pts)',
-        description: 'Measures how many of your last 5 trading sessions ended net-positive.',
+        currentValue: t('report.readinessConsistencyValue', { count: meta.profitable }),
+        threshold: t('report.readinessConsistencyThreshold'),
+        description: t('report.readinessConsistencyDesc'),
         action: meta.profitable < 3
-          ? 'Reduce position sizes on losing days and stop trading after 2 consecutive losses.'
-          : `${4 - meta.profitable} more profitable session(s) in a row will improve this.`,
+          ? t('report.readinessConsistencyActionLow')
+          : t('report.readinessConsistencyActionMid', { count: 4 - meta.profitable }),
       };
     case 'Plan discipline':
       return {
-        currentValue: `${meta.overrides} overrides in last 20 trades (${meta.count > 0 ? Math.round((meta.overrides / Math.min(meta.count, 20)) * 100) : 0}%)`,
-        threshold: '0 overrides for full score (15 pts)',
-        description: 'Tracks how often you override the AI\'s recommendations in recent trades.',
+        currentValue: t('report.readinessDisciplineValue', { overrides: meta.overrides, pct: meta.count > 0 ? Math.round((meta.overrides / Math.min(meta.count, 20)) * 100) : 0 }),
+        threshold: t('report.readinessDisciplineThreshold'),
+        description: t('report.readinessDisciplineDesc'),
         action: meta.overrides > 0
-          ? `Stay within plan on ${meta.overrides} more consecutive trades to improve this score.`
-          : 'Perfect discipline — you\'re following your plan consistently.',
+          ? t('report.readinessDisciplineActionBad', { count: meta.overrides })
+          : t('report.readinessDisciplineActionGood'),
       };
     default:
       return {
@@ -157,7 +158,7 @@ export function ReadinessScore({ trades, sessions }: Props) {
               'Plan discipline': t('report.planDiscipline'),
             };
             const isExpanded = expandedRow === c.label;
-            const explanation = getExplanation(c.label, c.score, c.max, meta);
+            const explanation = getExplanation(c.label, c.score, c.max, meta, t);
             return (
               <div key={c.label}>
                 <button

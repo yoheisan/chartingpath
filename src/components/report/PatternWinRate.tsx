@@ -66,7 +66,7 @@ export function PatternWinRate({ trades }: Props) {
                 />
               </div>
               <span className="text-xs font-mono text-foreground w-40 text-right flex-shrink-0">
-                {p.winRate}% · ({t('report.tradesUnit', { count: p.total })}) · Avg {p.avgR >= 0 ? '+' : ''}{p.avgR.toFixed(1)}R
+                {p.winRate}% · ({t('report.tradesUnit', { count: p.total })}) · {t('report.patternAvg', { value: `${p.avgR >= 0 ? '+' : ''}${p.avgR.toFixed(1)}` })}
               </span>
             </div>
           );
