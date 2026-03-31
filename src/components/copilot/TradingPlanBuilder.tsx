@@ -620,7 +620,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             })}
           </div>
           {selectedPatterns.length === 0 && (
-            <p className="text-xs text-destructive">Select at least 1 pattern to continue</p>
+            <p className="text-xs text-destructive">{t('planBuilder.selectAtLeast1')}</p>
           )}
         </section>
 
