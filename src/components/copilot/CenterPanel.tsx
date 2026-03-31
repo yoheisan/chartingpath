@@ -666,7 +666,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
                       <p className="text-xs text-amber-400">{t('copilotPage.livePriceUnavailable')}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">{t('copilotPage.exitPriceLabel')}</Label>
                       <Input
                         type="number"
                         step="0.01"
