@@ -993,9 +993,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                     className="w-full"
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>40 (Watch)</span>
+                    <span>40 ({t('planBuilder.agentWatch')})</span>
                     <span className="font-semibold text-foreground">{minAgentScore}</span>
-                    <span>95 (Elite)</span>
+                    <span>95 ({t('planBuilder.agentElite')})</span>
                   </div>
                   <p className="text-sm text-muted-foreground/70">
                     {minAgentScore >= 70 ? "TAKE signals only — highest conviction" : minAgentScore >= 50 ? "TAKE + WATCH signals" : "Most signals will pass"}
