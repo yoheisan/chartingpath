@@ -1128,13 +1128,13 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleRemoveExoticAndSave}>
-              Remove exotic pairs
+              {t('planBuilder.removeExoticPairs')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleContinueWithExotic}
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
-              Continue with exotic pairs
+              {t('planBuilder.continueWithExotic')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
