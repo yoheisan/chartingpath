@@ -142,7 +142,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                       {trade.setup_type ?? '—'}
                     </span>
                     <span className="text-sm font-mono text-foreground">
-                      ${trade.entry_price?.toFixed(2)}
+                      {formatPrice(trade.entry_price)}
                     </span>
                     <span className="text-sm font-mono">
                       {isOpen && currentPrice && priceData ? (
@@ -152,16 +152,16 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                           className="text-sm font-mono"
                         />
                       ) : currentPrice ? (
-                        `$${currentPrice.toFixed(2)}`
+                        formatPrice(currentPrice)
                       ) : (
                         '—'
                       )}
                     </span>
                     <span className="text-sm font-mono text-red-400">
-                      {trade.stop_loss ? `$${trade.stop_loss.toFixed(0)}` : '—'}
+                      {formatPrice(trade.stop_loss)}
                     </span>
                     <span className="text-sm font-mono text-green-400">
-                      {trade.take_profit ? `$${trade.take_profit.toFixed(0)}` : '—'}
+                      {formatPrice(trade.take_profit)}
                     </span>
                     <span className={`text-sm font-mono font-semibold text-right ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                       {dollarPnl != null ? formatPnl(dollarPnl) : formatR(pnlR)}
