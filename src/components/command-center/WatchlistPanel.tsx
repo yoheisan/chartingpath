@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -431,7 +432,7 @@ export function WatchlistPanel({
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">
-                          {formatPatternName(pattern.pattern_name)}
+                          {translatePatternName(pattern.pattern_name)}
                         </span>
                         <Badge variant="secondary" className="text-xs px-1 py-0">
                           {pattern.timeframe}

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ export function ForwardPerformancePanel({ userId }: ForwardPerformancePanelProps
           <Card key={item.patternName} className="border-border/60 bg-muted/20">
             <CardContent className="p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold truncate">{item.patternName}</span>
+                <span className="text-xs font-semibold truncate">{translatePatternName(item.patternName)}</span>
                 {item.confidenceScore !== null && (
                   <Badge
                     variant="secondary"
