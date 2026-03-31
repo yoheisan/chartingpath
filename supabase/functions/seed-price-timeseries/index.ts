@@ -133,17 +133,23 @@ async function fetchYahooBars(symbol: string, timeframe: string, lookbackDays: n
     })).filter((b: OHLCBar) => b.close > 0);
 
     // Aggregate 1h → 4h/8h if needed
+    const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
     if (timeframe === '4h') {
-      bars = aggregate(bars, 4);
+      bars = aggregate(bars, 4, is24h);
     } else if (timeframe === '8h') {
-      bars = aggregate(bars, 8);
+      bars = aggregate(bars, 8, is24h);
     }
 
     return bars;
   } catch { return []; }
 }
 
-function aggregate(bars: OHLCBar[], factor: number): OHLCBar[] {
+// Non-24h markets require MIN_BARS_NON_24H=5 bars per period.
+// This threshold MUST match all other aggregation paths.
+const MIN_BARS_NON_24H = 5;
+
+function aggregate(bars: OHLCBar[], factor: number, is24hMarket: boolean = true): OHLCBar[] {
+  const minBars = is24hMarket ? factor : MIN_BARS_NON_24H;
   const grouped = new Map<string, OHLCBar[]>();
   
   for (const bar of bars) {
@@ -159,7 +165,7 @@ function aggregate(bars: OHLCBar[], factor: number): OHLCBar[] {
   
   const result: OHLCBar[] = [];
   for (const [key, wBars] of grouped) {
-    if (wBars.length < factor) continue; // skip partial bars
+    if (wBars.length < minBars) continue;
     wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     result.push({
       date: key,

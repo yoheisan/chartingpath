@@ -28,7 +28,7 @@ interface OHLCBar {
  * @param bars - Array of 1h OHLC bars
  * @param hoursPerBar - Number of hours to aggregate (4 or 8)
  */
-function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
+function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number, symbol: string = ''): OHLCBar[] {
   if (!bars || bars.length === 0) return [];
   
   // Group bars by N-hour window
@@ -56,8 +56,11 @@ function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
   
   for (const [windowKey, windowBars] of groupedBars) {
     if (windowBars.length === 0) continue;
-    // Skip partial bars — only emit complete periods
-    if (windowBars.length < hoursPerBar) continue;
+    // Non-24h markets (stocks/ETFs/indices) trade ~6.5h — require 5 bars minimum
+    // This threshold MUST match MIN_BARS_NON_24H across all aggregation paths
+    const is24h = symbol.includes('-USD') || symbol.includes('=X') || symbol.includes('.CC') || symbol.includes('.FOREX');
+    const minBars = is24h ? hoursPerBar : 5;
+    if (windowBars.length < minBars) continue;
     
     // Sort bars by time to ensure correct OHLC
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
@@ -277,11 +280,11 @@ serve(async (req) => {
     // Aggregate to target timeframe if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 4h bars`);
-      ohlcBars = aggregate1hBars(ohlcBars, 4);
+      ohlcBars = aggregate1hBars(ohlcBars, 4, symbol);
       console.log(`Result: ${ohlcBars.length} 4h bars`);
     } else if (needs8hAggregation && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 1h bars into 8h bars`);
-      ohlcBars = aggregate1hBars(ohlcBars, 8);
+      ohlcBars = aggregate1hBars(ohlcBars, 8, symbol);
       console.log(`Result: ${ohlcBars.length} 8h bars`);
     } else if (needs15mAggregation && actualInterval === '5m' && ohlcBars.length > 0) {
       console.log(`Aggregating ${ohlcBars.length} 5m bars into 15m bars`);

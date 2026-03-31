@@ -90,7 +90,7 @@ function aggregate5mBars(bars: OHLCBar[], targetMinutes: number): OHLCBar[] {
 /**
  * Aggregate 1h bars into 4h bars
  */
-function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+function aggregate1hTo4h(bars: OHLCBar[], symbol: string = ''): OHLCBar[] {
   if (!bars || bars.length === 0) return [];
   
   const groupedBars = new Map<string, OHLCBar[]>();
@@ -114,8 +114,11 @@ function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
   
   for (const [windowKey, windowBars] of groupedBars) {
     if (windowBars.length === 0) continue;
-    // Skip partial bars — only emit complete 4H periods
-    if (windowBars.length < 4) continue;
+    // Non-24h markets (stocks/ETFs/indices) trade ~6.5h — require 5 bars minimum
+    // This threshold MUST match MIN_BARS_NON_24H across all aggregation paths
+    const is24h = symbol.includes('-USD') || symbol.includes('=X') || symbol.includes('.CC') || symbol.includes('.FOREX');
+    const minBars = is24h ? 4 : 5;
+    if (windowBars.length < minBars) continue;
     
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     
@@ -329,7 +332,7 @@ serve(async (req) => {
     // Aggregate if needed
     if (needs4hAggregation && ohlcBars.length > 0) {
       console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 1h bars to 4h`);
-      ohlcBars = aggregate1hTo4h(ohlcBars);
+      ohlcBars = aggregate1hTo4h(ohlcBars, symbol);
       console.log(`[fetch-eodhd] Result: ${ohlcBars.length} 4h bars`);
     } else if (needs15mAggregation && ohlcBars.length > 0) {
       console.log(`[fetch-eodhd] Aggregating ${ohlcBars.length} 5m bars to 15m`);

@@ -125,11 +125,12 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
       .filter((b): b is CompressedBar => b !== null);
 
     // Aggregate to 4H or 8H if needed
+    const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
     if (timeframe === '4h' && bars.length > 0) {
-      return aggregateHourlyBars(bars, 4);
+      return aggregateHourlyBars(bars, 4, is24h);
     }
     if (timeframe === '8h' && bars.length > 0) {
-      return aggregateHourlyBars(bars, 8);
+      return aggregateHourlyBars(bars, 8, is24h);
     }
 
     return bars;
@@ -139,21 +140,12 @@ async function fetchYahooData(symbol: string, timeframe: string, lookbackDays: n
 }
 
 // Aggregate 1H bars to 4H or 8H (UTC-anchored, skip partial bars)
-// 4H boundaries: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
-// 8H boundaries: 00:00, 08:00, 16:00 UTC
-//
-// OHLCV rules: O=first open, H=max highs, L=min lows, C=last close, V=sum
-// Partial bars at period end are skipped entirely.
-//
-// Expected aggregation test case (4H):
-//   Input 1H bars:
-//     Bar1: O=1.0800 H=1.0850 L=1.0780 C=1.0820 V=1000
-//     Bar2: O=1.0820 H=1.0900 L=1.0810 C=1.0880 V=1200
-//     Bar3: O=1.0880 H=1.0920 L=1.0860 C=1.0870 V=800
-//     Bar4: O=1.0870 H=1.0890 L=1.0830 C=1.0840 V=1100
-//   Expected 4H bar:
-//     O=1.0800, H=1.0920, L=1.0780, C=1.0840, V=4100
-function aggregateHourlyBars(hourlyBars: CompressedBar[], period: 4 | 8): CompressedBar[] {
+// Non-24h markets (stocks/ETFs/indices) require MIN_BARS_NON_24H=5 bars per period.
+// This threshold MUST match all other aggregation paths.
+const MIN_BARS_NON_24H = 5;
+
+function aggregateHourlyBars(hourlyBars: CompressedBar[], period: 4 | 8, is24hMarket: boolean = true): CompressedBar[] {
+  const minBars = is24hMarket ? period : MIN_BARS_NON_24H;
   const grouped = new Map<string, CompressedBar[]>();
   
   for (const bar of hourlyBars) {
@@ -168,7 +160,7 @@ function aggregateHourlyBars(hourlyBars: CompressedBar[], period: 4 | 8): Compre
   
   const aggregated: CompressedBar[] = [];
   for (const [key, wBars] of grouped) {
-    if (wBars.length < period) continue; // skip partial bars
+    if (wBars.length < minBars) continue;
     wBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
     aggregated.push({
       t: key,
