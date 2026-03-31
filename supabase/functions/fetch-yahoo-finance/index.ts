@@ -28,7 +28,7 @@ interface OHLCBar {
  * @param bars - Array of 1h OHLC bars
  * @param hoursPerBar - Number of hours to aggregate (4 or 8)
  */
-function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number): OHLCBar[] {
+function aggregate1hBars(bars: OHLCBar[], hoursPerBar: number, symbol: string = ''): OHLCBar[] {
   if (!bars || bars.length === 0) return [];
   
   // Group bars by N-hour window

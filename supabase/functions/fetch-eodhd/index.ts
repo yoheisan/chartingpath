@@ -90,7 +90,7 @@ function aggregate5mBars(bars: OHLCBar[], targetMinutes: number): OHLCBar[] {
 /**
  * Aggregate 1h bars into 4h bars
  */
-function aggregate1hTo4h(bars: OHLCBar[]): OHLCBar[] {
+function aggregate1hTo4h(bars: OHLCBar[], symbol: string = ''): OHLCBar[] {
   if (!bars || bars.length === 0) return [];
   
   const groupedBars = new Map<string, OHLCBar[]>();
