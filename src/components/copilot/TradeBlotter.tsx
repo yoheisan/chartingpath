@@ -19,6 +19,14 @@ interface TradeBlotterProps {
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
+/** Smart price formatter: uses enough decimals so sub-dollar assets aren't rounded to $0 */
+const formatPrice = (v: number | null | undefined): string => {
+  if (v == null || !Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1) return `$${v.toFixed(2)}`;
+  if (Math.abs(v) >= 0.01) return `$${v.toFixed(4)}`;
+  return `$${v.toFixed(6)}`;
+};
+
 const formatDuration = (createdAt: string) => {
   const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
   if (mins < 60) return `${mins}m`;
@@ -134,7 +142,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                       {trade.setup_type ?? '—'}
                     </span>
                     <span className="text-sm font-mono text-foreground">
-                      ${trade.entry_price?.toFixed(2)}
+                      {formatPrice(trade.entry_price)}
                     </span>
                     <span className="text-sm font-mono">
                       {isOpen && currentPrice && priceData ? (
@@ -144,16 +152,16 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
                           className="text-sm font-mono"
                         />
                       ) : currentPrice ? (
-                        `$${currentPrice.toFixed(2)}`
+                        formatPrice(currentPrice)
                       ) : (
                         '—'
                       )}
                     </span>
                     <span className="text-sm font-mono text-red-400">
-                      {trade.stop_loss ? `$${trade.stop_loss.toFixed(0)}` : '—'}
+                      {formatPrice(trade.stop_loss)}
                     </span>
                     <span className="text-sm font-mono text-green-400">
-                      {trade.take_profit ? `$${trade.take_profit.toFixed(0)}` : '—'}
+                      {formatPrice(trade.take_profit)}
                     </span>
                     <span className={`text-sm font-mono font-semibold text-right ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                       {dollarPnl != null ? formatPnl(dollarPnl) : formatR(pnlR)}
