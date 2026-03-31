@@ -597,7 +597,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.gateLabel')}</span>
-              <span className="font-mono text-foreground">{trade.gate_result ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.gate_result ? t(`copilotPage.gate${trade.gate_result.charAt(0).toUpperCase() + trade.gate_result.slice(1)}Value`, trade.gate_result) : '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
