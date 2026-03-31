@@ -21,6 +21,7 @@ const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R
 const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
 const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrade }: ActiveTradesStripProps) => {
+  const { t } = useTranslation();
   const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
   const livePrices = useLivePrices(symbols);
   const isEmpty = trades.length === 0;
@@ -28,8 +29,8 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   if (isEmpty) {
     return (
       <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
-        <span className="text-sm font-semibold text-foreground px-1">Active Trades</span>
-        <p className="text-xs text-muted-foreground px-1 py-2">No active trades. Copilot is scanning for setups…</p>
+        <span className="text-sm font-semibold text-foreground px-1">{t('copilotPage.activeTrades')}</span>
+        <p className="text-xs text-muted-foreground px-1 py-2">{t('copilotPage.noActiveTradesScanning')}</p>
       </div>
     );
   }
