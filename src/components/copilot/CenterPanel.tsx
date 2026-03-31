@@ -592,7 +592,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
               <span className="font-mono text-red-400">{trade.stop_loss ? `$${trade.stop_loss.toFixed(2)}` : '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Take Profit</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.takeProfit')}</span>
               <span className="font-mono text-green-400">{trade.take_profit ? `$${trade.take_profit.toFixed(2)}` : '—'}</span>
             </div>
             <div>
