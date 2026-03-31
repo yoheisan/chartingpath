@@ -491,7 +491,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Stocks */}
           {assetClasses.includes("stocks") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">Stock exchanges</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.stockExchanges')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {STOCK_EXCHANGE_OPTIONS.map(ex => {
                   const selected = stockExchanges.includes(ex);
