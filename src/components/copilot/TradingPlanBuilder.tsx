@@ -546,7 +546,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               {fxCategories.includes("exotic") && (
                 <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-3 w-3 shrink-0" />
-                  Exotic pairs have reduced price feed reliability
+                  {t('planBuilder.exoticWarning')}
                 </p>
               )}
             </div>
