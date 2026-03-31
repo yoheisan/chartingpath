@@ -117,7 +117,7 @@ export function EquityCurve({ trades }: Props) {
                     <p className="text-muted-foreground">{format(new Date(d.date), 'MMM d, yyyy HH:mm')}</p>
                     <div className="flex gap-3 pt-1">
                       <span>
-                        Trade:{' '}
+                        {t('report.tooltipTrade')}{' '}
                         <span className={d.r >= 0 ? 'text-[hsl(var(--bullish))] font-semibold' : 'text-[hsl(var(--bearish))] font-semibold'}>
                           {d.r >= 0 ? '+' : ''}{d.r}R
                         </span>
@@ -128,7 +128,7 @@ export function EquityCurve({ trades }: Props) {
                     </div>
                     <div className="flex gap-3">
                       <span>
-                        Cum:{' '}
+                        {t('report.tooltipCum')}{' '}
                         <span className={d.cumR >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
                           {d.cumR >= 0 ? '+' : ''}{d.cumR}R
                         </span>
@@ -137,7 +137,7 @@ export function EquityCurve({ trades }: Props) {
                         </span>
                       </span>
                     </div>
-                    <p className="text-muted-foreground">{d.isOverride ? '🧑 Override' : '🤖 AI'} · {d.setup}</p>
+                    <p className="text-muted-foreground">{d.isOverride ? `🧑 ${t('copilotPage.overridesLabel')}` : `🤖 ${t('copilotPage.ai')}`} · {d.setup}</p>
                   </div>
                 );
               }}
