@@ -1209,9 +1209,13 @@ async function readCachedPatternsFromDb(
 
     const fetchCached = async () => {
       // First try active patterns within the time window
+      // NOTE: Do NOT filter by .in('instrument', instruments) here — the hardcoded instrument
+      // list is only used for active scanning (slow path). The DB cache read must return ALL
+      // active patterns for the asset type, including those seeded by background jobs for
+      // instruments outside the live-scan top-25 list.
       const { data: activePatterns, error } = await supabase.from('live_pattern_detections').select(selectColumns)
         .eq('asset_type', assetType).eq('timeframe', timeframe).eq('status', 'active')
-        .in('pattern_id', allowedPatterns).in('instrument', instruments)
+        .in('pattern_id', allowedPatterns)
         .gte('last_confirmed_at', twentyFourHoursAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
       
       if (error) throw new Error(error.message);
