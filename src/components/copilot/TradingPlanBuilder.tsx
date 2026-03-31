@@ -555,7 +555,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           {/* Sub-filters for Crypto */}
           {assetClasses.includes("crypto") && (
             <div className="ml-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-              <p className="text-sm text-muted-foreground font-medium">Crypto categories</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('planBuilder.cryptoCategories')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {CRYPTO_CATEGORY_OPTIONS.map(cat => {
                   const selected = cryptoCategories.includes(cat.value);
