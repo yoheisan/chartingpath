@@ -69,7 +69,7 @@ const TradeBlotter = ({ trades, selectedTradeId, onSelectTrade, expanded: extern
 
       {expanded && (
         <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-          <div className="grid grid-cols-[1fr_80px_100px_90px_80px_80px_90px_80px] gap-2 px-4 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
+          <div className="grid grid-cols-[1.5fr_70px_110px_100px_100px_90px_100px_90px] gap-3 px-5 py-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30">
             <span>{t('copilotPage.symbol')}</span>
             <span>{t('copilotPage.side')}</span>
             <span>{t('copilotPage.pattern')}</span>
