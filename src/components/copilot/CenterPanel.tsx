@@ -663,7 +663,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
                   <div className="space-y-2">
                     <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
                       <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                      <p className="text-xs text-amber-400">Live price unavailable — enter exit price manually.</p>
+                      <p className="text-xs text-amber-400">{t('copilotPage.livePriceUnavailable')}</p>
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
