@@ -4,6 +4,10 @@ import { TrendingUp, TrendingDown, X } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StalenessPrice } from './StalenessPrice';
+import { useLivePrices } from '@/hooks/useLivePrices';
+import { useMemo } from 'react';
 import { StalenessPrice } from './StalenessPrice';
 
 interface ActiveTradesStripProps {
