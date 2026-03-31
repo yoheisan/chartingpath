@@ -850,7 +850,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">End time</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">{t('planBuilder.endTime')}</label>
                   <input
                     type="time"
                     value={windowEnd}
