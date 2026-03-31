@@ -1046,7 +1046,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Require minimum confluence from support/resistance, divergence, and volume confirmation.
+                {t('planBuilder.confluenceDesc')}
               </p>
               {confluenceEnabled && (
                 <div className="space-y-1">
