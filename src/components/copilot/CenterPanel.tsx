@@ -550,7 +550,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
           {isAi ? t('copilotPage.aiApproved') : t('copilotPage.humanOverwrite')}
         </Badge>
         <span className="ml-auto text-sm font-mono text-muted-foreground">
-          Paper trade · Entered {entryTime} · {elapsedLabel} ago
+          {t('copilotPage.paperTradeStatus', { time: entryTime, elapsed: elapsedLabel })}
         </span>
       </div>
 
