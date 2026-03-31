@@ -939,7 +939,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               </div>
               {mtfTimeframes.length >= 2 && (
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-muted-foreground">Min aligned:</span>
+                  <span className="text-xs text-muted-foreground">{t('planBuilder.mtfMinAligned')}</span>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setMtfMinAligned(Math.max(2, mtfMinAligned - 1))}
