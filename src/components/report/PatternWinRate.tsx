@@ -76,8 +76,8 @@ export function PatternWinRate({ trades }: Props) {
 
       {best && worst && best.name !== worst.name && (
         <p className="text-xs text-muted-foreground mt-4">
-          {t('report.bestPattern')} <span className="text-foreground font-medium">{best.name}</span> {t('report.atWinRate', { rate: best.winRate })}{' '}
-          {t('report.worstPattern')} <span className="text-foreground font-medium">{worst.name}</span> {t('report.atWinRate', { rate: worst.winRate })}
+          {t('report.bestPattern')} <span className="text-foreground font-medium">{translatePatternName(best.name)}</span> {t('report.atWinRate', { rate: best.winRate })}{' '}
+          {t('report.worstPattern')} <span className="text-foreground font-medium">{translatePatternName(worst.name)}</span> {t('report.atWinRate', { rate: worst.winRate })}
         </p>
       )}
     </div>

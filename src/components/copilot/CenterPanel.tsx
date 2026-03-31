@@ -601,7 +601,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
-              <span className="font-mono text-foreground">{trade.source ?? '—'}</span>
+              <span className="font-mono text-foreground">{trade.source ? t(`copilotPage.source${trade.source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, trade.source) : '—'}</span>
             </div>
             <WhyAlignedSection trade={trade} />
           </div>

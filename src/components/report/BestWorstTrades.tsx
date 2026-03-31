@@ -20,7 +20,7 @@ function TradeTable({ title, trades, colorPositive }: { title: string; trades: P
             <div key={tr.id} className="flex items-center justify-between px-4 py-2.5 text-xs">
               <div className="flex items-center gap-3">
                 <span className="font-mono font-medium text-foreground">{tr.symbol}</span>
-                <span className="text-muted-foreground truncate max-w-[100px]">{tr.setup_type || '—'}</span>
+                <span className="text-muted-foreground truncate max-w-[100px]">{tr.setup_type ? translatePatternName(tr.setup_type) : '—'}</span>
                 <span className="text-muted-foreground">{tr.closed_at ? format(new Date(tr.closed_at), 'MMM d') : '—'}</span>
               </div>
               <div className="flex items-center gap-3">
