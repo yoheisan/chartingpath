@@ -509,7 +509,7 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
               ))}
               {reason && (
                 <p className="text-[10px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/20">
-                  Gate reason: {reason}
+                  {t('copilotPage.gateReasonLabel', { reason })}
                 </p>
               )}
             </>
