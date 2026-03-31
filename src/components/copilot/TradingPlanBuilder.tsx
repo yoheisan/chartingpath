@@ -959,7 +959,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                 </div>
               )}
               {mtfTimeframes.length === 1 && (
-                <p className="text-sm text-muted-foreground/70">Select at least 2 timeframes for alignment checks</p>
+                <p className="text-sm text-muted-foreground/70">{t('planBuilder.mtfSelectAtLeast2')}</p>
               )}
             </div>
 
