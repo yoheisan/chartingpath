@@ -160,16 +160,16 @@ export function EquityCurve({ trades }: Props) {
 
       {/* Trade List */}
       <div className="border-t border-border/30 pt-4">
-        <h3 className="text-sm font-semibold text-foreground mb-2">Trade Log</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-2">{t('report.tradeLog')}</h3>
         <div className="grid grid-cols-[2.5rem_4rem_1fr_4rem_4rem_5rem_3.5rem_4.5rem] gap-x-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider pb-1.5 border-b border-border/30 px-2">
           <span>#</span>
-          <span>Date</span>
-          <span>Symbol</span>
-          <span>Type</span>
-          <span>Setup</span>
-          <span>Result</span>
+          <span>{t('report.tradeLogDate')}</span>
+          <span>{t('report.tradeLogSymbol')}</span>
+          <span>{t('report.tradeLogType')}</span>
+          <span>{t('report.tradeLogSetup')}</span>
+          <span>{t('report.tradeLogResult')}</span>
           <span>%</span>
-          <span className="text-right">Cum R</span>
+          <span className="text-right">{t('report.tradeLogCumR')}</span>
         </div>
         <ScrollArea className="max-h-60">
           <div className="divide-y divide-border/20">
