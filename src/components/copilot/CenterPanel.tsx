@@ -570,7 +570,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Side</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sideLabel')}</span>
               <span className={`font-mono font-bold ${trade.trade_type === 'long' || trade.trade_type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
                 {(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}
               </span>
