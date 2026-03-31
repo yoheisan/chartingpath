@@ -59,7 +59,7 @@ export function PatternWinRate({ trades }: Props) {
 
           return (
             <div key={p.name} className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-36 flex-shrink-0 truncate">{p.name}</span>
+              <span className="text-xs text-muted-foreground w-36 flex-shrink-0 truncate">{translatePatternName(p.name)}</span>
               <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${barColor} transition-all duration-700`}
