@@ -38,7 +38,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   return (
     <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-semibold text-foreground">Active Trades</span>
+        <span className="text-sm font-semibold text-foreground">{t('copilotPage.activeTrades')}</span>
         <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
           {trades.length}
         </Badge>
