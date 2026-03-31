@@ -68,12 +68,12 @@ export function EquityCurve({ trades }: Props) {
           </p>
         </div>
         <div className="flex gap-4 text-xs text-muted-foreground">
-          <span>🤖 AI{' '}
+          <span>🤖 {t('copilotPage.ai')}{' '}
             <span className={aiTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
               {aiTotalR >= 0 ? '+' : ''}{aiTotalR.toFixed(1)}R
             </span>
           </span>
-          <span>🧑 Override{' '}
+          <span>🧑 {t('copilotPage.overridesLabel')}{' '}
             <span className={humanTotalR >= 0 ? 'text-[hsl(var(--bullish))] font-medium' : 'text-[hsl(var(--bearish))] font-medium'}>
               {humanTotalR >= 0 ? '+' : ''}{humanTotalR.toFixed(1)}R
             </span>

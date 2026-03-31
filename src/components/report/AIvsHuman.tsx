@@ -61,14 +61,14 @@ export function AIvsHuman({ trades }: Props) {
             <div className="space-y-3">
               <div className="rounded-md border border-border/30 bg-muted/20 p-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Not enough override trades for reliable comparison.
+                  {t('report.notEnoughOverrides')}
                 </p>
                 <p className="text-sm font-medium text-muted-foreground mt-1">
-                  Need <span className="text-foreground font-mono">{15 - humanStats.count}</span> more overrides.
+                  {t('report.needMoreOverrides', { count: 15 - humanStats.count })}
                 </p>
               </div>
               <div className="opacity-50 space-y-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-medium">Early signal only</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-medium">{t('report.earlySignalOnly')}</p>
                 <StatBlock label={t('report.winRate')} value={`${humanStats.wr}%`} />
                 <StatBlock label={t('report.avgRPerTrade')} value={`${humanStats.avgR >= 0 ? '+' : ''}${humanStats.avgR.toFixed(1)}R`} color={humanStats.avgR >= 0} />
                 <StatBlock label={t('report.totalPnlR')} value={`${humanStats.totalR >= 0 ? '+' : ''}${humanStats.totalR.toFixed(1)}R`} color={humanStats.totalR >= 0} />

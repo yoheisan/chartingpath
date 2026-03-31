@@ -146,21 +146,21 @@ export function TimeOfDayHeatmap({ trades }: Props) {
       <div className="flex flex-col gap-1.5 mt-5 text-xs text-muted-foreground">
         {bestHour && (
           <span>
-            Best trading hour: <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {bestHour.winRate}% win rate
+            {t('report.bestTradingHour')} <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: bestHour.winRate })}
           </span>
         )}
         {worstHour && (
           <span>
-            Worst trading hour: <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {worstHour.winRate}% win rate
+            {t('report.worstTradingHour')} <span className="text-foreground font-medium">{String(worstHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: worstHour.winRate })}
           </span>
         )}
         {excludeRange && (
           <span>
-            Consider restricting your{' '}
+            {t('report.considerRestricting')}{' '}
             <Link to="/copilot?tab=plan" className="text-primary hover:underline font-medium">
-              Master Plan
+              {t('report.masterPlanLink')}
             </Link>{' '}
-            trading window to exclude{' '}
+            {t('report.tradingWindowExclude')}{' '}
             <span className="text-foreground font-medium">
               {String(excludeRange.start).padStart(2, '0')}:00–{String(excludeRange.end).padStart(2, '0')}:00
             </span>
