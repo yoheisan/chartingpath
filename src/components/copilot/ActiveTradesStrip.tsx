@@ -100,7 +100,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                   <button
                     onClick={(e) => { e.stopPropagation(); onCloseTrade(trade.id); }}
                     className="p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                    title="Close trade"
+                    title={t('copilotPage.closeTrade')}
                   >
                     <X className="h-3 w-3" />
                   </button>
