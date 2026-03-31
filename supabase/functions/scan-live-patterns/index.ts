@@ -1230,7 +1230,7 @@ async function readCachedPatternsFromDb(
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: expiredPatterns, error: expiredError } = await supabase.from('live_pattern_detections').select(selectColumns)
         .eq('asset_type', assetType).eq('timeframe', timeframe).in('status', ['expired', 'active'])
-        .in('pattern_id', allowedPatterns).in('instrument', instruments)
+        .in('pattern_id', allowedPatterns)
         .gte('last_confirmed_at', sevenDaysAgo).order('last_confirmed_at', { ascending: false }).limit(limit);
       
       if (expiredError) throw new Error(expiredError.message);
