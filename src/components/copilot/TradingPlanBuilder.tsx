@@ -704,7 +704,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 5: Trading Window & Timezone ── */}
         <section className="space-y-3">
-          <h4 className="text-sm font-semibold text-foreground">When should Copilot scan for trades?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whenShouldScan')}</h4>
           
           {/* Timezone selector */}
           <div className="space-y-1.5">
