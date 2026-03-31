@@ -913,9 +913,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
             {/* ── 7a: Multi-Timeframe Alignment ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
-              <h5 className="text-xs font-semibold text-foreground">Multi-Timeframe Alignment</h5>
+              <h5 className="text-xs font-semibold text-foreground">{t('planBuilder.mtfAlignment')}</h5>
               <p className="text-sm text-muted-foreground">
-                Require trend agreement across multiple timeframes before entering a trade.
+                {t('planBuilder.mtfDesc')}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {MTF_TIMEFRAME_OPTIONS.map(tf => {
