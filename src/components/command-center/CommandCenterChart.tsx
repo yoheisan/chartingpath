@@ -1128,7 +1128,7 @@ export const CommandCenterChart = memo(function CommandCenterChart({
                   <>
                     <span className="w-px h-3 bg-border/60" />
                     <span className="text-sm text-muted-foreground truncate max-w-[140px]">
-                      {PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name}
+                      {translatePatternName(PATTERN_DISPLAY_NAMES[overlayPattern.pattern_id] || overlayPattern.pattern_name)}
                     </span>
                     <span className={cn(
                       "text-sm font-medium px-1 rounded",
