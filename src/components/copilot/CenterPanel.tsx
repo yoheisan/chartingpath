@@ -297,7 +297,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       {inCooldown && (
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs px-2 py-0.5 rounded font-medium gap-1">
                           <Clock className="h-3 w-3" />
-                          Cooling down — stop hit {cooldownHoursAgo}h ago
+                          {t('copilotPage.coolingDown', { hours: cooldownHoursAgo })}
                         </Badge>
                       )}
                       {c.verdict && (() => {
@@ -358,7 +358,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                           className="h-7 text-xs gap-1"
                           disabled={isSubmitting || !!inCooldown}
                           onClick={() => setExitCandidate(c)}
-                          title={inCooldown ? 'Symbol in cooldown after stop loss hit' : undefined}
+                          title={inCooldown ? t('copilotPage.cooldownTooltip') : undefined}
                         >
                           <Play className="h-3 w-3" />
                           {isAutoEligible
@@ -477,10 +477,10 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
   const reason = criteria?.gate_reason;
 
   const checks = [
-    { label: `Asset class: ${assetClass}`, detail: 'matches plan', passed: true },
-    { label: `Timeframe: ${tf}`, detail: 'matches plan', passed: true },
-    { label: `Direction: ${dir.charAt(0).toUpperCase() + dir.slice(1)}`, detail: 'matches plan bias', passed: true },
-    { label: `Session: ${isForex ? '24/7' : 'Market hours'}`, detail: 'within trading window', passed: true },
+    { label: t('copilotPage.assetClassCheck', { assetClass }), detail: t('copilotPage.matchesPlan'), passed: true },
+    { label: t('copilotPage.timeframeCheck', { timeframe: tf }), detail: t('copilotPage.matchesPlan'), passed: true },
+    { label: t('copilotPage.directionCheck', { direction: dir.charAt(0).toUpperCase() + dir.slice(1) }), detail: t('copilotPage.matchesPlanBias'), passed: true },
+    { label: t('copilotPage.sessionCheck', { session: isForex ? '24/7' : t('copilotPage.marketHours') }), detail: t('copilotPage.withinTradingWindow'), passed: true },
   ];
 
   return (
@@ -490,13 +490,13 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors group"
       >
         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-        Why aligned?
+        {t('copilotPage.whyAligned')}
       </button>
       {open && (
         <div className="mt-2 rounded-lg bg-muted/20 border border-border/20 p-3 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" /> Loading gate criteria…
+              <Loader2 className="h-3 w-3 animate-spin" /> {t('copilotPage.loadingGateCriteria')}
             </div>
           ) : (
             <>
@@ -509,7 +509,7 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
               ))}
               {reason && (
                 <p className="text-[10px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/20">
-                  Gate reason: {reason}
+                  {t('copilotPage.gateReasonLabel', { reason })}
                 </p>
               )}
             </>
@@ -550,7 +550,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
           {isAi ? t('copilotPage.aiApproved') : t('copilotPage.humanOverwrite')}
         </Badge>
         <span className="ml-auto text-sm font-mono text-muted-foreground">
-          Paper trade · Entered {entryTime} · {elapsedLabel} ago
+          {t('copilotPage.paperTradeStatus', { time: entryTime, elapsed: elapsedLabel })}
         </span>
       </div>
 
@@ -570,37 +570,37 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Side</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sideLabel')}</span>
               <span className={`font-mono font-bold ${trade.trade_type === 'long' || trade.trade_type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
                 {(trade.trade_type ?? 'long').charAt(0).toUpperCase() + (trade.trade_type ?? 'long').slice(1)}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Setup</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.setupLabel')}</span>
               <span className="font-mono text-foreground">{trade.setup_type ?? '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Entry</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
               <span className="font-mono text-foreground">${trade.entry_price?.toFixed(2)}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">P&L</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.pnlLabel')}</span>
               <span className={`font-mono font-bold ${pnlR >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatR(pnlR)}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Stop Loss</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.stopLoss')}</span>
               <span className="font-mono text-red-400">{trade.stop_loss ? `$${trade.stop_loss.toFixed(2)}` : '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Take Profit</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.takeProfit')}</span>
               <span className="font-mono text-green-400">{trade.take_profit ? `$${trade.take_profit.toFixed(2)}` : '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Gate</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.gateLabel')}</span>
               <span className="font-mono text-foreground">{trade.gate_result ?? '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Source</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.sourceLabel')}</span>
               <span className="font-mono text-foreground">{trade.source ?? '—'}</span>
             </div>
             <WhyAlignedSection trade={trade} />
@@ -655,7 +655,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
 
                 {checkingPrice && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Checking live price…
+                    <Loader2 className="h-3 w-3 animate-spin" /> {t('copilotPage.checkingLivePrice')}
                   </div>
                 )}
 
@@ -663,10 +663,10 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
                   <div className="space-y-2">
                     <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
                       <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                      <p className="text-xs text-amber-400">Live price unavailable — enter exit price manually.</p>
+                      <p className="text-xs text-amber-400">{t('copilotPage.livePriceUnavailable')}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">{t('copilotPage.exitPriceLabel')}</Label>
                       <Input
                         type="number"
                         step="0.01"

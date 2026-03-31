@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, X } from 'lucide-react';
 import { CopilotTrade } from '@/hooks/useCopilotTrades';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StalenessPrice } from './StalenessPrice';
 
 interface ActiveTradesStripProps {
@@ -17,6 +18,7 @@ const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R
 const formatPnl = (v: number) => (v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
 
 const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrade }: ActiveTradesStripProps) => {
+  const { t } = useTranslation();
   const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
   const livePrices = useLivePrices(symbols);
   const isEmpty = trades.length === 0;
@@ -24,8 +26,8 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   if (isEmpty) {
     return (
       <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
-        <span className="text-sm font-semibold text-foreground px-1">Active Trades</span>
-        <p className="text-xs text-muted-foreground px-1 py-2">No active trades. Copilot is scanning for setups…</p>
+        <span className="text-sm font-semibold text-foreground px-1">{t('copilotPage.activeTrades')}</span>
+        <p className="text-xs text-muted-foreground px-1 py-2">{t('copilotPage.noActiveTradesScanning')}</p>
       </div>
     );
   }
@@ -33,7 +35,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   return (
     <div className="flex flex-col gap-1 pt-3 mt-2 border-t border-border/40">
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-semibold text-foreground">Active Trades</span>
+        <span className="text-sm font-semibold text-foreground">{t('copilotPage.activeTrades')}</span>
         <Badge variant="outline" className="text-sm px-1.5 py-0 h-5 font-mono">
           {trades.length}
         </Badge>
@@ -95,7 +97,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                   <button
                     onClick={(e) => { e.stopPropagation(); onCloseTrade(trade.id); }}
                     className="p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                    title="Close trade"
+                    title={t('copilotPage.closeTrade')}
                   >
                     <X className="h-3 w-3" />
                   </button>
