@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { translatePatternName } from '@/utils/translatePatternName';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
