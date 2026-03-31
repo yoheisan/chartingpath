@@ -55,8 +55,12 @@ export function getProviderInterval(interval: string): string {
  *     C=1.0840 (bar4 close)
  *     V=4100   (sum of volumes)
  */
-export function aggregateHourlyBars(bars: OHLCBar[], hours: number): OHLCBar[] {
+export function aggregateHourlyBars(bars: OHLCBar[], hours: number, options?: { minBarsPerPeriod?: number }): OHLCBar[] {
   if (bars.length === 0 || hours <= 1) return bars;
+  
+  // For non-24h markets (stocks/ETFs), trading sessions are shorter than 8h,
+  // so we can't require exactly N bars per period. Default to 2 for safety.
+  const minBars = options?.minBarsPerPeriod ?? hours;
   
   // Group bars by UTC-anchored period boundaries
   const grouped = new Map<string, OHLCBar[]>();
@@ -77,8 +81,8 @@ export function aggregateHourlyBars(bars: OHLCBar[], hours: number): OHLCBar[] {
   const result: OHLCBar[] = [];
   
   for (const [key, windowBars] of grouped) {
-    // Skip partial bars — only emit complete periods
-    if (windowBars.length < hours) continue;
+    // Skip periods with too few bars
+    if (windowBars.length < minBars) continue;
     
     // Sort by time to ensure correct OHLC ordering
     windowBars.sort((a, b) => new Date(a.t).getTime() - new Date(b.t).getTime());
