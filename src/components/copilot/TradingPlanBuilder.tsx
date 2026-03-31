@@ -1072,7 +1072,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         {/* ── Plan Summary ── */}
         {summaryText && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <p className="text-xs font-medium text-primary mb-1">Your trading plan:</p>
+            <p className="text-xs font-medium text-primary mb-1">{t('planBuilder.planSummaryLabel')}</p>
             <p className="text-xs text-foreground/80 leading-relaxed">{summaryText}</p>
           </div>
         )}
