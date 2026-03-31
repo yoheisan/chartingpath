@@ -297,7 +297,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
                       {inCooldown && (
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs px-2 py-0.5 rounded font-medium gap-1">
                           <Clock className="h-3 w-3" />
-                          Cooling down — stop hit {cooldownHoursAgo}h ago
+                          {t('copilotPage.coolingDown', { hours: cooldownHoursAgo })}
                         </Badge>
                       )}
                       {c.verdict && (() => {
