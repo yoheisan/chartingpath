@@ -804,7 +804,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-muted-foreground mb-1 block">End</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">{t('planBuilder.end')}</label>
                           <input
                             type="time"
                             value={schedule.end || "16:00"}
