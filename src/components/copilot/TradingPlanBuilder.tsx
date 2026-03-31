@@ -438,7 +438,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
       <div className="p-4 space-y-6 pb-8">
         {/* ── Plan Name / Plan Selector ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Plan name</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.planName')}</h4>
           {!isNewPlan && plans && plans.length > 1 ? (
             <select
               value={existingPlan?.id ?? ''}
