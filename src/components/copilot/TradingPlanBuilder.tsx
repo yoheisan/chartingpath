@@ -681,7 +681,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 4: Position limits ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">How many trades at once?</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.howManyTrades')}</h4>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMaxPositions(Math.max(1, maxPositions - 1))}
