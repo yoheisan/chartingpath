@@ -710,7 +710,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5">
               <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Timezone</span>
+              <span className="text-xs font-medium text-muted-foreground">{t('planBuilder.timezone')}</span>
             </div>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger className="w-full h-9 text-xs">
