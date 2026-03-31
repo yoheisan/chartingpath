@@ -840,7 +840,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
               </label>
               <div className={`grid grid-cols-2 gap-2 ${is24hTrading ? 'opacity-40 pointer-events-none' : ''}`}>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">{t('planBuilder.startTime')}</label>
                   <input
                     type="time"
                     value={windowStart}
