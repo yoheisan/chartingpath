@@ -105,10 +105,10 @@ export function TimeOfDayHeatmap({ trades }: Props) {
                   <p className="font-semibold text-foreground">{String(b.hour).padStart(2, '0')}:00</p>
                   {b.trades > 0 ? (
                     <p className="text-muted-foreground mt-0.5">
-                      {b.trades} trade{b.trades !== 1 ? 's' : ''}, {b.winRate}% win rate, avg {b.avgR >= 0 ? '+' : ''}{b.avgR.toFixed(1)}R
+                      {t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}
                     </p>
                   ) : (
-                    <p className="text-muted-foreground mt-0.5">No trades</p>
+                    <p className="text-muted-foreground mt-0.5">{t('report.noTrades')}</p>
                   )}
                 </div>
               </div>
