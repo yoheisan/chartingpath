@@ -626,7 +626,7 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
         {/* ── Section 2: Direction ── */}
         <section className="space-y-2">
-          <h4 className="text-sm font-semibold text-foreground">Trade direction</h4>
+          <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.tradeDirection')}</h4>
           <div className="flex gap-2">
             {DIRECTION_OPTIONS.map(opt => (
               <button
