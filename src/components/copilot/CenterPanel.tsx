@@ -477,10 +477,10 @@ const WhyAlignedSection = ({ trade }: { trade: CopilotTrade }) => {
   const reason = criteria?.gate_reason;
 
   const checks = [
-    { label: `Asset class: ${assetClass}`, detail: 'matches plan', passed: true },
-    { label: `Timeframe: ${tf}`, detail: 'matches plan', passed: true },
-    { label: `Direction: ${dir.charAt(0).toUpperCase() + dir.slice(1)}`, detail: 'matches plan bias', passed: true },
-    { label: `Session: ${isForex ? '24/7' : 'Market hours'}`, detail: 'within trading window', passed: true },
+    { label: t('copilotPage.assetClassCheck', { assetClass }), detail: t('copilotPage.matchesPlan'), passed: true },
+    { label: t('copilotPage.timeframeCheck', { timeframe: tf }), detail: t('copilotPage.matchesPlan'), passed: true },
+    { label: t('copilotPage.directionCheck', { direction: dir.charAt(0).toUpperCase() + dir.slice(1) }), detail: t('copilotPage.matchesPlanBias'), passed: true },
+    { label: t('copilotPage.sessionCheck', { session: isForex ? '24/7' : t('copilotPage.marketHours') }), detail: t('copilotPage.withinTradingWindow'), passed: true },
   ];
 
   return (
