@@ -580,7 +580,7 @@ const ActiveTradeState = ({ trade, onBack, onFocusNLBar, onCloseTrade }: {
               <span className="font-mono text-foreground">{trade.setup_type ?? '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">Entry</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-0.5">{t('copilotPage.entryPrice')}</span>
               <span className="font-mono text-foreground">${trade.entry_price?.toFixed(2)}</span>
             </div>
             <div>
