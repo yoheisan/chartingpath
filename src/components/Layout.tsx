@@ -6,6 +6,7 @@ import { TradingCopilot, useTradingCopilotContext } from "./copilot";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useCopilotStoreSync } from "@/hooks/useCopilotStoreSync";
 import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
 import { ActivationChecklist } from "./onboarding/ActivationChecklist";
