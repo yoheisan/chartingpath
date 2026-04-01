@@ -295,8 +295,9 @@ Deno.serve(async (req) => {
           }
 
           if (shouldClose) {
-            // Session-end exit: use currentPrice with slippage
-            const fillPrice = applySlippage(currentPrice, isLong);
+            // Session-end exit: use currentPrice with adverse slippage
+            const isBuySide = !isLong; // closing a long = sell, closing a short = buy
+            const fillPrice = applyAdverseSlippage(currentPrice, isBuySide, slippageBps);
             const sessionMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
             const sessionPnlR = rUnit > 0 ? Math.round((sessionMove / rUnit) * 100) / 100 : 0;
 
