@@ -6353,6 +6353,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
+      invoke_manage_trades_if_needed: { Args: never; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_member: { Args: { p_org_id: string }; Returns: boolean }
       is_service_role: { Args: never; Returns: boolean }
