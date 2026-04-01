@@ -12,6 +12,7 @@ export function useCopilotStoreSync() {
   const setRoute = useCopilotContextStore(s => s.setRoute);
   const setSymbol = useCopilotContextStore(s => s.setSymbol);
   const setTimeframe = useCopilotContextStore(s => s.setTimeframe);
+  const setArticleSlug = useCopilotContextStore(s => s.setArticleSlug);
   const incrementTimeOnPage = useCopilotContextStore(s => s.incrementTimeOnPage);
   const setLastUserAction = useCopilotContextStore(s => s.setLastUserAction);
   const prevPathRef = useRef(location.pathname);
