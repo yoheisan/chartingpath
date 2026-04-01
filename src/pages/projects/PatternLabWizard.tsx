@@ -1638,6 +1638,16 @@ const PatternLabWizard = () => {
                       <Lock className="h-4 w-4 mr-2" />
                       {t('patternLabWizard.upgradeToRun')}
                     </>
+                  ) : isAuthenticated && estimate && !estimate.allowed ? (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      {estimate.errors?.[0] || estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
+                    </>
+                  ) : hasNoPatterns ? (
+                    <>
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      {t('patternLabWizard.noOccurrencesShort', 'No pattern data found')}
+                    </>
                   ) : mode === 'automate' ? (
                     <>
                       <Code2 className="h-4 w-4 mr-2" />
