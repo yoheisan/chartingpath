@@ -276,6 +276,9 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(() => {
+    try { return !!localStorage.getItem('copilot_tooltip_dismissed'); } catch { return false; }
+  });
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -741,9 +744,20 @@ export function TradingCopilot({
     return (
       <div className={cn("fixed z-50 flex flex-col items-end gap-2", isMobile ? "bottom-20 right-4" : "bottom-[72px] right-6")}>
         {/* First-visit tooltip — disappears after first open */}
-        {typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
-          <div className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
+        {!tooltipDismissed && typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
+          <div className="relative bg-foreground text-background text-xs font-medium pl-3 pr-7 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
             {t('copilot.tooltip', 'Ask anything about markets, patterns & trade setups ✨')}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                try { localStorage.setItem('copilot_tooltip_dismissed', '1'); } catch {}
+                setTooltipDismissed(true);
+              }}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded-full hover:bg-background/20 transition-colors"
+              aria-label="Dismiss tooltip"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </div>
         )}
         <Button
