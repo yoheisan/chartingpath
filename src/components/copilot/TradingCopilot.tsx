@@ -742,6 +742,7 @@ export function TradingCopilot({
           viewContext: {
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
+            pageType,
           },
           // Inject chart context as system-level context for the AI
           ...(chartContextPrompt && { chartContext: chartContextPrompt }),
