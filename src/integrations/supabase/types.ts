@@ -1358,6 +1358,7 @@ export type Database = {
       copilot_conversations: {
         Row: {
           created_at: string
+          flow_type: string
           id: string
           title: string
           updated_at: string
@@ -1365,6 +1366,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          flow_type?: string
           id?: string
           title?: string
           updated_at?: string
@@ -1372,6 +1374,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          flow_type?: string
           id?: string
           title?: string
           updated_at?: string
@@ -3948,11 +3951,13 @@ export type Database = {
           first_destination: string | null
           id: string
           last_sign_in_at: string | null
+          onboarding_completed: boolean | null
           push_notifications_enabled: boolean | null
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
           subscription_status: string | null
+          trading_plan_structured: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -3965,11 +3970,13 @@ export type Database = {
           first_destination?: string | null
           id?: string
           last_sign_in_at?: string | null
+          onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
           subscription_status?: string | null
+          trading_plan_structured?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -3982,11 +3989,13 @@ export type Database = {
           first_destination?: string | null
           id?: string
           last_sign_in_at?: string | null
+          onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
           subscription_status?: string | null
+          trading_plan_structured?: Json | null
           updated_at?: string | null
           user_id?: string
         }

@@ -27,6 +27,7 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
 import { CopilotAlertBubble } from "./CopilotAlertBubble";
+import { OnboardingFlow } from "./OnboardingFlow";
 import { CopilotChartChips } from "./CopilotChartChips";
 import { usePaperTradeEntry } from "@/hooks/usePaperTradeEntry";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -286,6 +287,8 @@ export function TradingCopilot({
   });
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [onboardingMode, setOnboardingMode] = useState(false);
+  const onboardingCheckedRef = useRef(false);
   
   const contextProcessedRef = useRef(false);
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
@@ -401,7 +404,28 @@ export function TradingCopilot({
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
-  // Mandate handling — integrated into chat UI
+  // Check onboarding status on mount
+  useEffect(() => {
+    if (!isAuthenticated || onboardingCheckedRef.current) return;
+    onboardingCheckedRef.current = true;
+    const checkOnboarding = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) return;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+        if (profile && !(profile as any).onboarding_completed) {
+          setOnboardingMode(true);
+        }
+      } catch { /* ignore */ }
+    };
+    checkOnboarding();
+  }, [isAuthenticated]);
+
+
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
     onSaved: () => {
       setMessages(prev => [...prev, {
@@ -1072,6 +1096,19 @@ export function TradingCopilot({
                   setBuilderIsNewPlan(false);
                   setInput(hasPlan ? "Update my trading plan: " : "");
                   setTimeout(() => inputRef.current?.focus(), 100);
+                }}
+              />
+            ) : onboardingMode ? (
+              <OnboardingFlow
+                onComplete={() => {
+                  setOnboardingMode(false);
+                  refreshPlan();
+                  setMessages([{
+                    id: crypto.randomUUID(),
+                    role: "assistant" as const,
+                    content: "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
+                    timestamp: new Date(),
+                  }]);
                 }}
               />
             ) : (
