@@ -15,6 +15,8 @@ export interface TradeEntryParams {
   gate_reason?: string;
   gate_evaluation_id?: string;
   agent_score?: number;
+  source?: "copilot" | "override" | "manual";
+  override_reason?: string;
 }
 
 export interface PendingConflictTrade {
@@ -60,7 +62,15 @@ export function usePaperTradeEntry() {
         const stopPrice = params.stop_price ?? (entryPrice - 2 * rUnit);
         const targetPrice = params.target_price ?? (entryPrice + 3 * rUnit);
 
-        const { error } = await supabase.from("paper_trades" as any).insert({
+        // Determine source based on attribution and explicit param
+        let tradeSource = params.source || "manual";
+        if (attribution === "ai_approved" && !params.source) {
+          tradeSource = "copilot";
+        } else if (attribution === "human_overwrite" && !params.source) {
+          tradeSource = "override";
+        }
+
+        const insertData: Record<string, any> = {
           user_id: user.id,
           master_plan_id: (plan as any)?.id ?? null,
           gate_evaluation_id: params.gate_evaluation_id ?? null,
@@ -71,13 +81,19 @@ export function usePaperTradeEntry() {
           stop_price: stopPrice,
           target_price: targetPrice,
           entry_time: new Date().toISOString(),
-          source: "user_selected",
+          source: tradeSource,
           gate_result: params.gate_result ?? "aligned",
           gate_reason: params.gate_reason ?? null,
           user_action: attribution === "ai_approved" ? "auto" : "overwrite",
           attribution,
           outcome: "open",
-        });
+        };
+
+        if (params.override_reason) {
+          insertData.override_reason = params.override_reason;
+        }
+
+        const { error } = await supabase.from("paper_trades" as any).insert(insertData);
 
         if (error) {
           console.error("Paper trade insert error:", error);
@@ -117,9 +133,16 @@ export function usePaperTradeEntry() {
     [enterTrade]
   );
 
-  const confirmConflictTrade = useCallback(() => {
+  const confirmConflictTrade = useCallback((overrideReason?: string) => {
     if (!pendingConflict) return;
-    enterTrade(pendingConflict.params, "human_overwrite");
+    enterTrade(
+      {
+        ...pendingConflict.params,
+        source: "override",
+        override_reason: overrideReason,
+      },
+      "human_overwrite"
+    );
     setPendingConflict(null);
   }, [pendingConflict, enterTrade]);
 
