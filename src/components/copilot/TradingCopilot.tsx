@@ -655,6 +655,7 @@ export function TradingCopilot({
     if (!convoId && isAuthenticated) {
       convoId = await createConversation(userMessage.slice(0, 60));
       activeConvoRef.current = convoId;
+      if (convoId) copilotCtx.setActiveConversationId(convoId);
     }
 
     // Persist user message
