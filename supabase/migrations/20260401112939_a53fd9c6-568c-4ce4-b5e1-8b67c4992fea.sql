@@ -1,0 +1,1 @@
+SELECT cron.schedule('manage-trades-every-2min', '* * * * *', (SELECT command FROM cron.job WHERE jobid = 211));
