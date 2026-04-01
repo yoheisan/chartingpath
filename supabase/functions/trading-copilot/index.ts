@@ -2961,11 +2961,14 @@ serve(async (req) => {
       // ============================================
       writer.sendStatus("Preparing context…");
       console.log('[trading-copilot] Fetching all context layers...');
-      const [learnedRulesPrompt, ragContext, platformContext, userBehavior] = await Promise.all([
+      const pageType = viewContext?.pageType || null;
+      const liveContextRaw = viewContext?.liveContext || null;
+      const [learnedRulesPrompt, ragContext, platformContext, userBehavior, pageDbContext] = await Promise.all([
         fetchLearnedRules(supabase),
         fetchRAGContext(supabase, messages),
         fetchPlatformContext(supabase),
         fetchUserBehavior(supabase, userId),
+        fetchPageDbContext(supabase, userId, pageType, liveContextRaw),
       ]);
       const temporalContext = computeTemporalContext();
       const langCode = (language || "en").toLowerCase();
