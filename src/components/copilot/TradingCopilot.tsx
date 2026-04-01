@@ -27,6 +27,7 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
 import { CopilotAlertBubble } from "./CopilotAlertBubble";
+import { MorningBriefCard } from "./MorningBriefCard";
 import { OnboardingFlow } from "./OnboardingFlow";
 import { CopilotChartChips } from "./CopilotChartChips";
 import { usePaperTradeEntry } from "@/hooks/usePaperTradeEntry";
