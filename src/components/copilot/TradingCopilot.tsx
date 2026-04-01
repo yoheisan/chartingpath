@@ -462,10 +462,28 @@ export function TradingCopilot({
         if (!authUser) return;
         const { data: profile } = await supabase
           .from("profiles")
-          .select("onboarding_completed")
+          .select("onboarding_completed, trading_plan_structured")
           .eq("user_id", authUser.id)
           .maybeSingle();
-        if (profile && !(profile as any).onboarding_completed) {
+        
+        const onboardingCompleted = (profile as any)?.onboarding_completed;
+        const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
+        
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null' });
+        
+        // Skip onboarding if either flag is true, or if user already has a trading plan
+        // Treat null as "completed" for existing users who have a plan
+        if (onboardingCompleted === true || hasTradingPlan) {
+          // Existing user — skip onboarding
+          return;
+        }
+        
+        // Only show onboarding when explicitly false (new user) and no plan
+        if (onboardingCompleted === false && !hasTradingPlan) {
+          setOnboardingMode(true);
+        }
+        // If onboardingCompleted is null and no plan, also show onboarding (truly new user)
+        if (onboardingCompleted === null && !hasTradingPlan) {
           setOnboardingMode(true);
         }
       } catch { /* ignore */ }
