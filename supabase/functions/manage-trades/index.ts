@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
         const rawFillPrice = isLong
           ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
           : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
-        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, slippageBps); // exiting: long sells (false), short buys (true)
+        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
 
         const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
             outcome: "loss",
             cooldown_until: cooldownUntilStr,
             ideal_exit_price: stopLoss,
-            slippage_bps: slippageBps,
+            slippage_bps: totalSlippageBps,
             detection_latency_ms: detectionLatencyMs,
             price_crossed_at: priceCrossedAt,
           })
@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
         const rawFillPrice = isLong
           ? Math.max(currentPrice, takeProfit) // for longs, higher is better but we still apply slippage
           : Math.min(currentPrice, takeProfit);
-        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, slippageBps); // exiting: long sells (false), short buys (true)
+        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
 
         const tpMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? tpMove / rUnit : 0;
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
             hold_duration_mins: holdMins,
             outcome: "win",
             ideal_exit_price: takeProfit,
-            slippage_bps: slippageBps,
+            slippage_bps: totalSlippageBps,
             detection_latency_ms: detectionLatencyMs,
             price_crossed_at: tpPriceCrossedAt,
           })
@@ -299,7 +299,7 @@ Deno.serve(async (req) => {
           if (shouldClose) {
             // Session-end exit: use currentPrice with adverse slippage
             const isBuySide = !isLong; // closing a long = sell, closing a short = buy
-            const fillPrice = applyAdverseSlippage(currentPrice, isBuySide, slippageBps);
+            const fillPrice = applyAdverseSlippage(currentPrice, isBuySide, totalSlippageBps);
             const sessionMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
             const sessionPnlR = rUnit > 0 ? Math.round((sessionMove / rUnit) * 100) / 100 : 0;
 
@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
                 close_reason: sessionCloseReason,
                 hold_duration_mins: holdMins,
                 outcome: sessionPnlR >= 0 ? "win" : "loss",
-                slippage_bps: slippageBps,
+                slippage_bps: totalSlippageBps,
                 detection_latency_ms: detectionLatencyMs,
               })
               .eq("id", trade.id);
