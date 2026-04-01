@@ -1085,6 +1085,14 @@ export function TradingCopilot({
                         alert={alert}
                         onOpenTrade={handleAlertOpenTrade}
                         onDismiss={handleAlertDismiss}
+                        onFollowUpMessage={(content) => {
+                          setMessages(prev => [...prev, {
+                            id: crypto.randomUUID(),
+                            role: "assistant" as const,
+                            content,
+                            timestamp: new Date(),
+                          }]);
+                        }}
                       />
                     ))}
                   </div>
