@@ -23,9 +23,22 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const copilotCtx = useTradingCopilotContext();
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+
+  // Handle ?action=new-plan from email CTAs
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new-plan') {
+      copilotCtx.openNewPlanBuilder();
+      // Remove the query param so it doesn't re-trigger
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
   const { subscriptionPlan } = useUserProfile();
   const { openTrades, refetch: refetchTrades } = useCopilotTrades(user?.id);
 

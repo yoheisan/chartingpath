@@ -231,6 +231,7 @@ const App = () => (
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />
           <Route path="/patterns/stats/:patternSlug/:assetClass/:timeframe" element={withSuspense(<ProgrammaticPatternStatsPage />)} />
           <Route path="/instruments/:symbol" element={withSuspense(<InstrumentPage />)} />
+          <Route path="/members/copilot" element={<NavigateWithSearch to="/copilot" />} />
           <Route path="/copilot" element={withSuspense(<Copilot />)} />
           <Route path="/copilot/report" element={withSuspense(<CopilotReport />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />
