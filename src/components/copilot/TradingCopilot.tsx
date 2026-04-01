@@ -641,29 +641,37 @@ export function TradingCopilot({
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) return;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("onboarding_completed, trading_plan_structured")
-          .eq("user_id", authUser.id)
-          .maybeSingle();
+
+        // Check both profile flags AND master_plans table
+        const [{ data: profile }, { count: planCount }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("onboarding_completed, trading_plan_structured")
+            .eq("user_id", authUser.id)
+            .maybeSingle(),
+          supabase
+            .from("master_plans")
+            .select("id", { count: 'exact', head: true })
+            .eq("user_id", authUser.id)
+            .limit(1),
+        ]);
         
         const onboardingCompleted = (profile as any)?.onboarding_completed;
         const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
+        const hasMasterPlan = (planCount ?? 0) > 0;
         
-        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', pageType });
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', hasMasterPlan, pageType });
         
-        // Skip onboarding if either flag is true, or if user already has a trading plan
-        if (onboardingCompleted === true || hasTradingPlan) {
+        // Skip onboarding if ANY plan exists (profile flag, structured plan, or master_plans row)
+        if (onboardingCompleted === true || hasTradingPlan || hasMasterPlan) {
+          setNeedsOnboarding(false);
           return;
         }
         
-        // Mark that onboarding is needed
-        if ((onboardingCompleted === false || onboardingCompleted === null) && !hasTradingPlan) {
-          setNeedsOnboarding(true);
-          // Only auto-show on core trading pages
-          if (isCorePage) {
-            setOnboardingMode(true);
-          }
+        // Mark that onboarding is needed — but only auto-show on core trading pages
+        setNeedsOnboarding(true);
+        if (isCorePage) {
+          setOnboardingMode(true);
         }
       } catch { /* ignore */ }
     };
