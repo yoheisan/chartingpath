@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { OverrideFrictionGate } from './OverrideFrictionGate';
+import { useOverrideFriction } from '@/hooks/useOverrideFriction';
 import { translatePatternName } from '@/utils/translatePatternName';
 import { useTranslation } from 'react-i18next';
 import TradeBlotter from './TradeBlotter';
