@@ -96,6 +96,15 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { label: "What's the market doing?", prompt: "What's the market doing?" },
     ],
   },
+  '/tools/paper-trading': {
+    pageName: 'Paper Trading',
+    greeting: "Paper Trading is open. I can see your open positions.",
+    chips: [
+      { label: "Summarize my open positions", prompt: "Summarize my open positions with current P&L" },
+      { label: "Which trades are near TP/SL?", prompt: "Which of my open trades are approaching TP or SL?" },
+      { label: "Show today's paper results", prompt: "Show today's paper trading results" },
+    ],
+  },
   '/screener': {
     pageName: 'Active Pattern Screener',
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
@@ -215,6 +224,14 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { label: "Run a backtest", prompt: "Run a backtest" },
     ],
   },
+  '/learn': {
+    pageName: 'Learn',
+    greeting: "You're browsing learning content. Ask me about any trading concept.",
+    chips: [
+      { label: "Explain chart patterns", prompt: "Give me a quick overview of chart patterns" },
+      { label: "Which patterns suit my plan?", prompt: "Which patterns from this library suit my trading plan?" },
+    ],
+  },
 };
 
 const DEFAULT_PAGE_CONTEXT: PageContext = {
@@ -303,6 +320,25 @@ export function TradingCopilot({
   const chartContextPrompt = buildContextSystemPrompt(copilotContext);
   const [chartChipsUsed, setChartChipsUsed] = useState(false);
   const autoOpenFiredRef = useRef(false);
+
+  // Page context — updates on every route change
+  const currentPageContext = getPageContext(location.pathname);
+  const prevPathnameRef = useRef(location.pathname);
+
+  // Detect page type for AI context
+  const pageType = isChartPage ? 'chart'
+    : location.pathname.startsWith('/members/dashboard') ? 'dashboard'
+    : location.pathname.startsWith('/tools/paper-trading') ? 'paper-trading'
+    : location.pathname.startsWith('/patterns/live') || location.pathname.startsWith('/screener') ? 'screener'
+    : 'other';
+
+  // Log page context changes
+  useEffect(() => {
+    if (prevPathnameRef.current !== location.pathname) {
+      console.log('[Copilot] Page context changed:', { from: prevPathnameRef.current, to: location.pathname, pageType, pageName: currentPageContext.pageName });
+      prevPathnameRef.current = location.pathname;
+    }
+  }, [location.pathname, pageType, currentPageContext.pageName]);
 
   const {
     conversations,
@@ -462,10 +498,28 @@ export function TradingCopilot({
         if (!authUser) return;
         const { data: profile } = await supabase
           .from("profiles")
-          .select("onboarding_completed")
+          .select("onboarding_completed, trading_plan_structured")
           .eq("user_id", authUser.id)
           .maybeSingle();
-        if (profile && !(profile as any).onboarding_completed) {
+        
+        const onboardingCompleted = (profile as any)?.onboarding_completed;
+        const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
+        
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null' });
+        
+        // Skip onboarding if either flag is true, or if user already has a trading plan
+        // Treat null as "completed" for existing users who have a plan
+        if (onboardingCompleted === true || hasTradingPlan) {
+          // Existing user — skip onboarding
+          return;
+        }
+        
+        // Only show onboarding when explicitly false (new user) and no plan
+        if (onboardingCompleted === false && !hasTradingPlan) {
+          setOnboardingMode(true);
+        }
+        // If onboardingCompleted is null and no plan, also show onboarding (truly new user)
+        if (onboardingCompleted === null && !hasTradingPlan) {
           setOnboardingMode(true);
         }
       } catch { /* ignore */ }
@@ -688,6 +742,7 @@ export function TradingCopilot({
           viewContext: {
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
+            pageType,
           },
           // Inject chart context as system-level context for the AI
           ...(chartContextPrompt && { chartContext: chartContextPrompt }),
@@ -1085,8 +1140,7 @@ export function TradingCopilot({
 
                   {/* Home screen chips — when no messages and no builder */}
                   {messages.length === 0 && (() => {
-                    const pageCtx = getPageContext(location.pathname);
-                    const tier2Chips = isAuthenticated ? pageCtx.chips : [];
+                    const tier2Chips = isAuthenticated ? currentPageContext.chips : [];
                     const redirectPath = typeof window !== 'undefined'
                       ? encodeURIComponent(window.location.pathname + window.location.search)
                       : '/';
@@ -1302,8 +1356,8 @@ export function TradingCopilot({
           )}
         </div>
 
-        {/* ── INPUT BAR (fixed to bottom, ~52px) ── */}
-        {guestLimitReached ? (
+        {/* ── INPUT BAR — hidden during onboarding (OnboardingFlow has its own) ── */}
+        {onboardingMode ? null : guestLimitReached ? (
           <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
         ) : (
           <div className="shrink-0 border-t border-border/60 bg-card px-3 py-2">
