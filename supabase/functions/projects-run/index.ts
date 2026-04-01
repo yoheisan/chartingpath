@@ -2225,7 +2225,9 @@ serve(async (req) => {
               // Use entry price from the DB signal (validated during seeding)
               const entryPrice = signal.entry_price;
               const stopLossPrice = signal.stop_loss_price;
-              const direction = signal.direction as 'long' | 'short';
+              // Map DB direction (bullish/bearish) to engine direction (long/short)
+              const rawDir = signal.direction?.toLowerCase();
+              const direction: 'long' | 'short' = (rawDir === 'bullish' || rawDir === 'long') ? 'long' : 'short';
               const isLong = direction === 'long';
               const stopDistance = Math.abs(entryPrice - stopLossPrice);
 
