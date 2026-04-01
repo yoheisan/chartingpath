@@ -6,6 +6,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Constants ──
+const SLIPPAGE_PCT = 0.0005; // 0.05% adverse slippage on every fill
+
 // ── Forex helpers ──
 function isForexSymbol(symbol: string): boolean {
   return symbol.endsWith("=X");
@@ -29,6 +32,18 @@ function calcForexPnl(symbol: string, priceMove: number, lotSize: number): numbe
   const pips = priceToPips(symbol, Math.abs(priceMove));
   const pipValue = getForexPipValue(symbol, lotSize);
   return (priceMove >= 0 ? 1 : -1) * pips * pipValue;
+}
+
+// ── Slippage helper ──
+// Adverse slippage: makes exits worse for the trader
+function applySlippage(price: number, isLong: boolean): number {
+  if (isLong) {
+    // Long exit: fills lower (worse)
+    return price * (1 - SLIPPAGE_PCT);
+  } else {
+    // Short exit: fills higher (worse)
+    return price * (1 + SLIPPAGE_PCT);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -75,7 +90,6 @@ Deno.serve(async (req) => {
       const feedStale = !lastConfirmed || lastConfirmed < fourHoursAgo;
 
       if (feedStale) {
-        // Pause monitoring for this trade
         if (!trade.monitoring_paused) {
           await supabase
             .from("paper_trades")
@@ -131,9 +145,10 @@ Deno.serve(async (req) => {
         : entryPrice - currentPrice;
       const pnlR = rUnit > 0 ? Math.round((priceMove / rUnit) * 100) / 100 : 0;
 
-      const pnlDollars = isForex
-        ? calcForexPnl(trade.symbol, isLong ? currentPrice - entryPrice : entryPrice - currentPrice, forexLotSize)
-        : Math.round(priceMove * quantity * 100) / 100;
+      // ── Latency estimation ──
+      const detectionLatencyMs = lastConfirmed
+        ? Math.round(Date.now() - lastConfirmed.getTime())
+        : null;
 
       // Check stop loss hit
       const stopHit = isLong
@@ -146,11 +161,17 @@ Deno.serve(async (req) => {
         : currentPrice <= takeProfit;
 
       if (stopHit) {
-        const slMove = isLong ? stopLoss - entryPrice : entryPrice - stopLoss;
+        // ── Gap-aware exit: use currentPrice if it's worse than stopLoss ──
+        const rawFillPrice = isLong
+          ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
+          : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
+        const fillPrice = applySlippage(rawFillPrice, isLong);
+
+        const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
         const exitPnlDollars = isForex
-          ? calcForexPnl(trade.symbol, isLong ? stopLoss - entryPrice : entryPrice - stopLoss, forexLotSize)
-          : (isLong ? (stopLoss - entryPrice) : (entryPrice - stopLoss)) * quantity;
+          ? calcForexPnl(trade.symbol, slMove, forexLotSize)
+          : slMove * quantity;
 
         const closedAtStr = new Date().toISOString();
         const cooldownUntilStr = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
@@ -159,7 +180,7 @@ Deno.serve(async (req) => {
           .from("paper_trades")
           .update({
             status: "closed",
-            exit_price: stopLoss,
+            exit_price: Math.round(fillPrice * 1e8) / 1e8,
             pnl: Math.round(exitPnlDollars * 100) / 100,
             outcome_r: Math.round(exitPnlR * 100) / 100,
             closed_at: closedAtStr,
@@ -167,37 +188,53 @@ Deno.serve(async (req) => {
             hold_duration_mins: holdMins,
             outcome: "loss",
             cooldown_until: cooldownUntilStr,
+            ideal_exit_price: stopLoss,
+            slippage_pct: SLIPPAGE_PCT,
+            detection_latency_ms: detectionLatencyMs,
           })
           .eq("id", trade.id);
 
         closedCount++;
-        console.log(`[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R ${isForex ? '(forex)' : ''}`);
+        console.log(
+          `[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${stopLoss} gap=${(rawFillPrice !== stopLoss)} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
+        );
         continue;
       }
 
       if (tpHit) {
-        const tpMove = isLong ? takeProfit - entryPrice : entryPrice - takeProfit;
+        // ── Gap-aware exit: use currentPrice (may be better than TP), then apply adverse slippage ──
+        const rawFillPrice = isLong
+          ? Math.max(currentPrice, takeProfit) // for longs, higher is better but we still apply slippage
+          : Math.min(currentPrice, takeProfit);
+        const fillPrice = applySlippage(rawFillPrice, isLong);
+
+        const tpMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? tpMove / rUnit : 0;
         const exitPnlDollars = isForex
-          ? calcForexPnl(trade.symbol, isLong ? takeProfit - entryPrice : entryPrice - takeProfit, forexLotSize)
-          : (isLong ? (takeProfit - entryPrice) : (entryPrice - takeProfit)) * quantity;
+          ? calcForexPnl(trade.symbol, tpMove, forexLotSize)
+          : tpMove * quantity;
 
         await supabase
           .from("paper_trades")
           .update({
             status: "closed",
-            exit_price: takeProfit,
+            exit_price: Math.round(fillPrice * 1e8) / 1e8,
             pnl: Math.round(exitPnlDollars * 100) / 100,
             outcome_r: Math.round(exitPnlR * 100) / 100,
             closed_at: new Date().toISOString(),
             close_reason: "Take profit hit",
             hold_duration_mins: holdMins,
             outcome: "win",
+            ideal_exit_price: takeProfit,
+            slippage_pct: SLIPPAGE_PCT,
+            detection_latency_ms: detectionLatencyMs,
           })
           .eq("id", trade.id);
 
         closedCount++;
-        console.log(`[manage-trades] TP hit: ${trade.symbol} +${exitPnlR.toFixed(2)}R ${isForex ? '(forex)' : ''}`);
+        console.log(
+          `[manage-trades] TP hit: ${trade.symbol} +${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${takeProfit} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
+        );
         continue;
       }
 
@@ -242,7 +279,7 @@ Deno.serve(async (req) => {
           const hhmm = `${String(localDate.getHours()).padStart(2, "0")}:${String(localDate.getMinutes()).padStart(2, "0")}`;
           const dayOfWeek = localDate.getDay();
           const schedules = (plan.trading_schedules as Record<string, any>) || {};
-          
+
           const assetTypeMap: Record<string, string> = {
             stock: "stocks", equity: "stocks", fx: "forex", forex: "forex",
             crypto: "crypto", commodity: "commodities", index: "indices", etf: "etfs",
@@ -262,9 +299,14 @@ Deno.serve(async (req) => {
           }
 
           if (shouldClose) {
+            // Session-end exit: use currentPrice with slippage
+            const fillPrice = applySlippage(currentPrice, isLong);
+            const sessionMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
+            const sessionPnlR = rUnit > 0 ? Math.round((sessionMove / rUnit) * 100) / 100 : 0;
+
             const windowPnl = isForex
-              ? calcForexPnl(trade.symbol, isLong ? currentPrice - entryPrice : entryPrice - currentPrice, forexLotSize)
-              : pnlDollars;
+              ? calcForexPnl(trade.symbol, sessionMove, forexLotSize)
+              : sessionMove * quantity;
 
             // Determine granular session-end close reason
             let sessionCloseReason = "session_end";
@@ -285,18 +327,20 @@ Deno.serve(async (req) => {
               .from("paper_trades")
               .update({
                 status: "closed",
-                exit_price: currentPrice,
+                exit_price: Math.round(fillPrice * 1e8) / 1e8,
                 pnl: Math.round(windowPnl * 100) / 100,
-                outcome_r: pnlR,
+                outcome_r: sessionPnlR,
                 closed_at: new Date().toISOString(),
                 close_reason: sessionCloseReason,
                 hold_duration_mins: holdMins,
-                outcome: pnlR >= 0 ? "win" : "loss",
+                outcome: sessionPnlR >= 0 ? "win" : "loss",
+                slippage_pct: SLIPPAGE_PCT,
+                detection_latency_ms: detectionLatencyMs,
               })
               .eq("id", trade.id);
 
             closedCount++;
-            console.log(`[manage-trades] Window close: ${trade.symbol} ${pnlR}R ${isForex ? '(forex)' : ''}`);
+            console.log(`[manage-trades] Window close: ${trade.symbol} ${sessionPnlR}R fill=${fillPrice.toFixed(4)} ${isForex ? '(forex)' : ''}`);
           }
         }
       }

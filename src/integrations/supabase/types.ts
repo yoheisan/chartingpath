@@ -3199,6 +3199,7 @@ export type Database = {
           copilot_reasoning: string | null
           created_at: string
           detection_id: string | null
+          detection_latency_ms: number | null
           entry_price: number
           exit_price: number | null
           forex_lot_size: number | null
@@ -3207,6 +3208,7 @@ export type Database = {
           gate_result: string | null
           hold_duration_mins: number | null
           id: string
+          ideal_exit_price: number | null
           instrument_type: string | null
           master_plan_id: string | null
           monitoring_paused: boolean
@@ -3222,6 +3224,7 @@ export type Database = {
           position_size_pct: number | null
           quantity: number
           setup_type: string | null
+          slippage_pct: number | null
           source: string | null
           status: string
           stop_loss: number | null
@@ -3241,6 +3244,7 @@ export type Database = {
           copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
+          detection_latency_ms?: number | null
           entry_price: number
           exit_price?: number | null
           forex_lot_size?: number | null
@@ -3249,6 +3253,7 @@ export type Database = {
           gate_result?: string | null
           hold_duration_mins?: number | null
           id?: string
+          ideal_exit_price?: number | null
           instrument_type?: string | null
           master_plan_id?: string | null
           monitoring_paused?: boolean
@@ -3264,6 +3269,7 @@ export type Database = {
           position_size_pct?: number | null
           quantity: number
           setup_type?: string | null
+          slippage_pct?: number | null
           source?: string | null
           status?: string
           stop_loss?: number | null
@@ -3283,6 +3289,7 @@ export type Database = {
           copilot_reasoning?: string | null
           created_at?: string
           detection_id?: string | null
+          detection_latency_ms?: number | null
           entry_price?: number
           exit_price?: number | null
           forex_lot_size?: number | null
@@ -3291,6 +3298,7 @@ export type Database = {
           gate_result?: string | null
           hold_duration_mins?: number | null
           id?: string
+          ideal_exit_price?: number | null
           instrument_type?: string | null
           master_plan_id?: string | null
           monitoring_paused?: boolean
@@ -3306,6 +3314,7 @@ export type Database = {
           position_size_pct?: number | null
           quantity?: number
           setup_type?: string | null
+          slippage_pct?: number | null
           source?: string | null
           status?: string
           stop_loss?: number | null
