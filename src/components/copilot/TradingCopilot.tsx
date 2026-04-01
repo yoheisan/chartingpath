@@ -371,7 +371,7 @@ export function TradingCopilot({
         stop_price: undefined,
         target_price: undefined,
         gate_result: "aligned",
-      }, "copilot");
+      }, "ai_approved");
       if (success) opened++;
     }
     await actOnAlert(alertId);
