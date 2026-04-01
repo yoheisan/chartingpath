@@ -41,39 +41,31 @@ const Layout = ({ children }: LayoutProps) => {
   const excludedRoutes = isMobile ? COPILOT_EXCLUDED_ROUTES_MOBILE : COPILOT_EXCLUDED_ROUTES_DESKTOP;
   const showCopilot = !excludedRoutes.some(route => location.pathname.startsWith(route));
 
-  if (isFullscreen) {
-    return (
-      <div className="h-screen flex flex-col overflow-hidden">
-        <Navigation />
-        <DataQualityBanner />
-        <main className="flex-1 min-h-0">
-          {children}
-        </main>
-        {showCopilot && (
-          <TradingCopilot
-            isExpanded={copilot.isOpen}
-            onToggle={copilot.toggle}
-            pendingContext={copilot.pendingContext}
-            pendingAnalysis={copilot.pendingAnalysis}
-            onContextConsumed={copilot.consumePendingContext}
-            pendingPlanBuilder={copilot.pendingPlanBuilder}
-            pendingNewPlan={copilot.pendingNewPlan}
-            onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
-          />
-        )}
-        <CaptureButton />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-      <DataQualityBanner />
-      <main className="flex-1">
-        {children}
-      </main>
-      <Footer />
+    <>
+      {isFullscreen ? (
+        <div className="h-screen flex flex-col overflow-hidden">
+          <Navigation />
+          <DataQualityBanner />
+          <main className="flex-1 min-h-0">
+            {children}
+          </main>
+          <CaptureButton />
+        </div>
+      ) : (
+        <div className="min-h-screen flex flex-col">
+          <Navigation />
+          <DataQualityBanner />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <GuestSignupNudge />
+          <OnboardingTour />
+          <ActivationChecklist />
+          <CaptureButton />
+        </div>
+      )}
       {showCopilot && (
         <TradingCopilot
           isExpanded={copilot.isOpen}
@@ -86,11 +78,7 @@ const Layout = ({ children }: LayoutProps) => {
           onPlanBuilderConsumed={copilot.consumePendingPlanBuilder}
         />
       )}
-      <GuestSignupNudge />
-      <OnboardingTour />
-      <ActivationChecklist />
-      <CaptureButton />
-    </div>
+    </>
   );
 };
 
