@@ -276,6 +276,9 @@ export function TradingCopilot({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(() => {
+    try { return !!localStorage.getItem('copilot_tooltip_dismissed'); } catch { return false; }
+  });
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
