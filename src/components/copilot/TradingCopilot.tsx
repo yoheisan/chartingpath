@@ -36,6 +36,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCopilotContext, buildContextSystemPrompt } from "@/hooks/useCopilotContext";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
+import { useCopilotContextStore, buildLiveContextPrompt } from "@/stores/copilotContextStore";
+import { useCopilotInterruptions } from "@/hooks/useCopilotInterruptions";
 import {
   Drawer,
   DrawerContent,
@@ -340,6 +342,27 @@ export function TradingCopilot({
     }
   }, [location.pathname, pageType, currentPageContext.pageName]);
 
+  // Sync chart-level visible patterns & plan into the Zustand store
+  const storeSetPatterns = useCopilotContextStore(s => s.setVisiblePatterns);
+  const storeSetUserPlan = useCopilotContextStore(s => s.setUserPlan);
+  const storeSetPatternStats = useCopilotContextStore(s => s.setUserPatternStats);
+  const storeSetPendingAlerts = useCopilotContextStore(s => s.setPendingAlerts);
+
+  useEffect(() => {
+    storeSetPatterns(copilotContext.visible_patterns);
+  }, [copilotContext.visible_patterns, storeSetPatterns]);
+
+  useEffect(() => {
+    if (copilotContext.user_trading_plan) {
+      storeSetUserPlan(copilotContext.user_trading_plan as any);
+    }
+  }, [copilotContext.user_trading_plan, storeSetUserPlan]);
+
+  useEffect(() => {
+    storeSetPatternStats(copilotContext.user_pattern_stats);
+  }, [copilotContext.user_pattern_stats, storeSetPatternStats]);
+
+
   const {
     conversations,
     activeConversationId: _hookConvoId,
@@ -370,6 +393,36 @@ export function TradingCopilot({
   const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
   const { enterTrade } = usePaperTradeEntry();
 
+  // Sync pending alerts to store
+  useEffect(() => {
+    storeSetPendingAlerts(pendingAlerts.map(a => ({
+      id: a.id,
+      symbol: a.symbol,
+      alert_type: a.alert_type,
+      pattern_type: a.pattern_type || undefined,
+      direction: a.direction || undefined,
+    })));
+  }, [pendingAlerts, storeSetPendingAlerts]);
+
+  // Live context store — sync typing state
+  const storeSetIsTyping = useCopilotContextStore(s => s.setIsTyping);
+  useEffect(() => {
+    storeSetIsTyping(input.length > 0);
+  }, [input, storeSetIsTyping]);
+
+  // Interruption engine — inserts proactive Copilot messages
+  const handleInterruption = useCallback((event: import("@/hooks/useCopilotInterruptions").InterruptionEvent) => {
+    persistAssistantMsg(event.message);
+  }, []);
+
+  // persistAssistantMsg might not be defined yet at this point, so we use a ref
+  const persistAssistantMsgRef = useRef<(content: string) => void>(() => {});
+
+  useCopilotInterruptions({
+    enabled: isExpanded && !onboardingMode && isAuthenticated,
+    onInterrupt: (event) => persistAssistantMsgRef.current(event.message),
+  });
+
   const persistAssistantMsg = useCallback((content: string) => {
     const convoId = activeConvoRef.current;
     if (convoId) saveMessage(convoId, "assistant", content);
@@ -380,6 +433,11 @@ export function TradingCopilot({
       timestamp: new Date(),
     }]);
   }, [saveMessage]);
+
+  // Keep ref in sync for interruption engine
+  useEffect(() => {
+    persistAssistantMsgRef.current = persistAssistantMsg;
+  }, [persistAssistantMsg]);
 
   const handleAlertOpenTrade = useCallback(async (alert: import("@/hooks/useCopilotAlerts").CopilotAlert) => {
     const success = await enterTrade({
@@ -730,6 +788,10 @@ export function TradingCopilot({
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
+      // Build live context from Zustand store
+      const liveCtxState = useCopilotContextStore.getState();
+      const liveContextPrompt = buildLiveContextPrompt(liveCtxState);
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers,
@@ -743,6 +805,7 @@ export function TradingCopilot({
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
             pageType,
+            liveContext: liveContextPrompt,
           },
           // Inject chart context as system-level context for the AI
           ...(chartContextPrompt && { chartContext: chartContextPrompt }),

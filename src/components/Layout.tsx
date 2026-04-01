@@ -6,6 +6,7 @@ import { TradingCopilot, useTradingCopilotContext } from "./copilot";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrefetchRoutes } from "@/hooks/usePrefetchRoutes";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useCopilotStoreSync } from "@/hooks/useCopilotStoreSync";
 import { GuestSignupNudge } from "./GuestSignupNudge";
 import { OnboardingTour } from "./onboarding/OnboardingTour";
 import { ActivationChecklist } from "./onboarding/ActivationChecklist";
@@ -36,6 +37,9 @@ const Layout = ({ children }: LayoutProps) => {
   
   // Track page views & time-on-page
   usePageTracking();
+
+  // Sync route/activity into CopilotContextStore
+  useCopilotStoreSync();
   
   const isFullscreen = FULLSCREEN_ROUTES.some(route => location.pathname.startsWith(route)) && !location.pathname.startsWith('/copilot/report');
   const excludedRoutes = isMobile ? COPILOT_EXCLUDED_ROUTES_MOBILE : COPILOT_EXCLUDED_ROUTES_DESKTOP;
