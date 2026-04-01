@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCopilotContextStore } from '@/stores/copilotContextStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, Activity, History, BarChart3, Square, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
