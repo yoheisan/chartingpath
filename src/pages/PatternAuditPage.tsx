@@ -52,63 +52,52 @@ const PatternAuditPage = () => {
   const fetchAuditData = async () => {
     setLoading(true);
     try {
-      // Fetch sample counts for each pattern
-      const { data: counts, error: countError } = await supabase
-        .from('historical_pattern_occurrences')
-        .select('pattern_id, id')
-        .eq('timeframe', selectedTimeframe);
+      // Fetch counts + examples for all patterns in parallel (no massive full-table scan)
+      const results = await Promise.all(
+        ALL_PATTERN_IDS.map(async (patternId) => {
+          // Count via head request (no row download)
+          const [countRes, examplesRes] = await Promise.all([
+            supabase
+              .from('historical_pattern_occurrences')
+              .select('id', { count: 'exact', head: true })
+              .eq('pattern_id', patternId)
+              .eq('timeframe', selectedTimeframe),
+            supabase
+              .from('historical_pattern_occurrences')
+              .select('id, symbol, pattern_id, pattern_name, direction, timeframe, quality_score, bars, visual_spec, entry_price, stop_loss_price, take_profit_price, outcome')
+              .eq('pattern_id', patternId)
+              .eq('timeframe', selectedTimeframe)
+              .in('quality_score', ['A', 'B', 'C'])
+              .order('quality_score', { ascending: true })
+              .limit(6),
+          ]);
 
-      if (countError) throw countError;
+          const examples = examplesRes.data || [];
+          const mappedExamples = examples.map(e => {
+            const spec = e.visual_spec as unknown as VisualSpec;
+            return {
+              ...e,
+              bars: coerceBars(e.bars),
+              visual_spec: {
+                ...spec,
+                entryPrice: e.entry_price,
+                stopLoss: e.stop_loss_price,
+                takeProfit: e.take_profit_price,
+              } as VisualSpec
+            };
+          });
 
-      // Count by pattern_id
-      const patternCounts: Record<string, number> = {};
-      counts?.forEach(row => {
-        patternCounts[row.pattern_id] = (patternCounts[row.pattern_id] || 0) + 1;
-      });
-
-      // Fetch 3 examples per pattern with highest quality
-      const auditResults: PatternAuditData[] = [];
-
-      for (const patternId of ALL_PATTERN_IDS) {
-        const { data: examples, error: exampleError } = await supabase
-          .from('historical_pattern_occurrences')
-          .select('id, symbol, pattern_id, pattern_name, direction, timeframe, quality_score, bars, visual_spec, entry_price, stop_loss_price, take_profit_price, outcome')
-          .eq('pattern_id', patternId)
-          .eq('timeframe', selectedTimeframe)
-          .in('quality_score', ['A', 'B', 'C'])
-          .order('quality_score', { ascending: true })
-          .limit(6);
-
-        if (exampleError) {
-          console.error(`Error fetching ${patternId}:`, exampleError);
-          continue;
-        }
-
-        // Prepare enhanced visual_spec with entry/sl/tp for display
-        const mappedExamples = (examples || []).map(e => {
-          const spec = e.visual_spec as unknown as VisualSpec;
           return {
-            ...e,
-            bars: coerceBars(e.bars),
-            visual_spec: {
-              ...spec,
-              entryPrice: e.entry_price,
-              stopLoss: e.stop_loss_price,
-              takeProfit: e.take_profit_price,
-            } as VisualSpec
-          };
-        });
+            patternId,
+            displayName: PATTERN_DISPLAY_NAMES[patternId] || patternId,
+            totalSamples: countRes.count ?? 0,
+            examples: mappedExamples as PatternExample[],
+            hasData: examples.length > 0,
+          } as PatternAuditData;
+        })
+      );
 
-        auditResults.push({
-          patternId,
-          displayName: PATTERN_DISPLAY_NAMES[patternId] || patternId,
-          totalSamples: patternCounts[patternId] || 0,
-          examples: mappedExamples as PatternExample[],
-          hasData: (examples?.length || 0) > 0
-        });
-      }
-
-      setAuditData(auditResults);
+      setAuditData(results);
     } catch (err) {
       console.error('Audit fetch error:', err);
     } finally {
