@@ -387,42 +387,36 @@ export function getProjectCaps(tier: PlanTier, projectType: ProjectType) {
   return PLANS_CONFIG.tiers[tier]?.projects[projectType];
 }
 
-export interface ValidationError {
-  key: string;
-  params: Record<string, string | number>;
-  fallback: string;
-}
-
 export function validateProjectInputs(
   tier: PlanTier,
   projectType: ProjectType,
   inputs: { instrumentCount?: number; lookbackYears?: number; patternCount?: number; timeframe?: string }
-): { valid: boolean; errors: ValidationError[] } {
+): { valid: boolean; errors: string[] } {
   const caps = getProjectCaps(tier, projectType);
-  const errors: ValidationError[] = [];
+  const errors: string[] = [];
 
   if (!caps) {
-    return { valid: false, errors: [{ key: 'planValidation.projectNotAvailable', params: { tier }, fallback: 'Project type not available for your tier' }] };
+    return { valid: false, errors: ['Project type not available for your tier'] };
   }
 
   if ('enabled' in caps && !caps.enabled) {
-    return { valid: false, errors: [{ key: 'planValidation.notOnPlan', params: { tier }, fallback: 'This project is not available on your plan' }] };
+    return { valid: false, errors: ['This project is not available on your plan'] };
   }
 
   if ('maxInstruments' in caps && inputs.instrumentCount && inputs.instrumentCount > caps.maxInstruments) {
-    errors.push({ key: 'planValidation.maxInstruments', params: { max: caps.maxInstruments, tier }, fallback: `Maximum ${caps.maxInstruments} instruments allowed on ${tier} plan` });
+    errors.push(`Maximum ${caps.maxInstruments} instruments allowed on ${tier} plan`);
   }
 
   if ('maxLookbackYears' in caps && inputs.lookbackYears && inputs.lookbackYears > caps.maxLookbackYears) {
-    errors.push({ key: 'planValidation.maxLookback', params: { max: caps.maxLookbackYears, tier }, fallback: `Maximum ${caps.maxLookbackYears} years lookback allowed on ${tier} plan` });
+    errors.push(`Maximum ${caps.maxLookbackYears} years lookback allowed on ${tier} plan`);
   }
 
   if ('maxPatterns' in caps && inputs.patternCount && inputs.patternCount > (caps as SetupFinderCaps).maxPatterns) {
-    errors.push({ key: 'planValidation.maxPatterns', params: { max: (caps as SetupFinderCaps).maxPatterns, tier }, fallback: `Maximum ${(caps as SetupFinderCaps).maxPatterns} patterns allowed on ${tier} plan` });
+    errors.push(`Maximum ${(caps as SetupFinderCaps).maxPatterns} patterns allowed on ${tier} plan`);
   }
 
   if ('allowedTimeframes' in caps && inputs.timeframe && !caps.allowedTimeframes.includes(inputs.timeframe)) {
-    errors.push({ key: 'planValidation.timeframeNotAllowed', params: { timeframe: inputs.timeframe, tier, allowed: caps.allowedTimeframes.join(', ') }, fallback: `${inputs.timeframe} timeframe not available on ${tier} plan. Allowed: ${caps.allowedTimeframes.join(', ')}` });
+    errors.push(`${inputs.timeframe} timeframe not available on ${tier} plan. Allowed: ${caps.allowedTimeframes.join(', ')}`);
   }
 
   return { valid: errors.length === 0, errors };
