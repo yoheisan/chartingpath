@@ -590,6 +590,13 @@ export function TradingCopilot({
     checkOnboarding();
   }, [isAuthenticated, copilotCtx]);
 
+  // Auto-show onboarding when navigating to a core page (if needed but deferred)
+  useEffect(() => {
+    if (needsOnboarding && isCorePage && !onboardingMode) {
+      setOnboardingMode(true);
+    }
+  }, [needsOnboarding, isCorePage, onboardingMode]);
+
 
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
     onSaved: () => {
