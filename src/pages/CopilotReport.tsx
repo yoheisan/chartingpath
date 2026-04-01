@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { type DateRange } from '@/hooks/useTradeReport';
+import { type DateRange, useTradeReport } from '@/hooks/useTradeReport';
 import { ReadinessScore } from '@/components/report/ReadinessScore';
 import { KeyMetricsRow } from '@/components/report/KeyMetricsRow';
 import { EquityCurve } from '@/components/report/EquityCurve';
@@ -14,26 +14,12 @@ import { TimeOfDayHeatmap } from '@/components/report/TimeOfDayHeatmap';
 import { PlanChangeHistory } from '@/components/report/PlanChangeHistory';
 import { PeerComparison } from '@/components/report/PeerComparison';
 import { ReportEmptyState } from '@/components/report/ReportEmptyState';
-import {
-  MOCK_TRADES,
-  MOCK_SESSIONS,
-  MOCK_PLANS,
-  MOCK_FIRST_TRADE_DATE,
-} from '@/components/report/mockReportData';
-
-// ⚠️ TEMPORARY: Set to false when ready to use real Supabase data
-const USE_MOCK = true;
 
 const CopilotReport = () => {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<DateRange>('all');
 
-  // Mock data — bypass auth & Supabase
-  const closedTrades = MOCK_TRADES;
-  const sessions = MOCK_SESSIONS;
-  const plans = MOCK_PLANS;
-  const loading = false;
-  const firstTradeDate = MOCK_FIRST_TRADE_DATE;
+  const { closedTrades, sessions, plans, loading, firstTradeDate } = useTradeReport(dateRange);
 
   const ranges: { label: string; value: DateRange }[] = [
     { label: t('report.range7d'), value: '7d' },
