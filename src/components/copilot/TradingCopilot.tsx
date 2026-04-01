@@ -1155,6 +1155,17 @@ export function TradingCopilot({
                     )}
                   </div>
                 )})}
+                {/* Chart context quick-action chips — show after first assistant message */}
+                {isChartPage && !chartChipsUsed && messages.length > 0 && messages.some(m => m.role === 'assistant') && (
+                  <CopilotChartChips
+                    context={copilotContext}
+                    onChipClick={(prompt) => {
+                      setChartChipsUsed(true);
+                      streamChat(prompt);
+                    }}
+                    disabled={isLoading}
+                  />
+                )}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <div className="flex justify-start">
                     <div className="bg-muted rounded-lg px-3 py-2">
