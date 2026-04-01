@@ -27,8 +27,10 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
 import { CopilotAlertBubble } from "./CopilotAlertBubble";
+import { CopilotChartChips } from "./CopilotChartChips";
 import { usePaperTradeEntry } from "@/hooks/usePaperTradeEntry";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCopilotContext, buildContextSystemPrompt } from "@/hooks/useCopilotContext";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
 import {
