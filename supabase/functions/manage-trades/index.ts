@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
             outcome: "loss",
             cooldown_until: cooldownUntilStr,
             ideal_exit_price: stopLoss,
-            slippage_pct: SLIPPAGE_PCT,
+            slippage_bps: slippageBps,
             detection_latency_ms: detectionLatencyMs,
             price_crossed_at: priceCrossedAt,
           })
