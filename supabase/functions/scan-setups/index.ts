@@ -461,7 +461,7 @@ Deno.serve(async (req) => {
             outcome: "open",
             notes: `[auto-scan] ${det.pattern_name || "pattern"} on ${det.timeframe || "unknown"}`,
             instrument_type: instrumentType,
-            slippage_bps: entrySlippageBps,
+            slippage_bps: totalEntrySlippageBps,
           };
 
           if (isForex) {
