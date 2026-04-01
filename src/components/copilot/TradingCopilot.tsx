@@ -43,14 +43,8 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  toolCalls?: ToolCall[];
-  analysisData?: ChartAnalysisResult;
-}
+// Message type alias — uses the context's shared type
+type Message = CopilotChatMessage;
 
 interface ToolCall {
   name: string;
