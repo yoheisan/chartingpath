@@ -30,6 +30,7 @@ export function useCopilotConversations() {
       .from('copilot_conversations')
       .select('id, title, created_at, updated_at')
       .eq('user_id', user.id)
+      .neq('flow_type', 'onboarding')
       .order('updated_at', { ascending: false })
       .limit(50);
     if (data) setConversations(data);
