@@ -44,6 +44,15 @@ export function useCopilotStoreSync() {
       setTimeframe(null);
     }
 
+    // Extract article slug for blog/learn pages
+    if (pathname.startsWith('/blog/') || pathname.startsWith('/learn/')) {
+      const segments = pathname.split('/').filter(Boolean);
+      const slug = segments[segments.length - 1] || null;
+      setArticleSlug(slug);
+    } else {
+      setArticleSlug(null);
+    }
+
     prevPathRef.current = pathname;
   }, [location.pathname, location.search, setRoute, setSymbol, setTimeframe]);
 
