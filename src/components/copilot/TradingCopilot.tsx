@@ -362,15 +362,6 @@ export function TradingCopilot({
     storeSetPatternStats(copilotContext.user_pattern_stats);
   }, [copilotContext.user_pattern_stats, storeSetPatternStats]);
 
-  useEffect(() => {
-    storeSetPendingAlerts(pendingAlerts.map(a => ({
-      id: a.id,
-      symbol: a.symbol,
-      alert_type: a.alert_type,
-      pattern_type: a.pattern_type || undefined,
-      direction: a.direction || undefined,
-    })));
-  }, [pendingAlerts, storeSetPendingAlerts]);
 
   const {
     conversations,
