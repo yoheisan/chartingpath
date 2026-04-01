@@ -587,6 +587,8 @@ export function TradingCopilot({
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
           },
+          // Inject chart context as system-level context for the AI
+          ...(chartContextPrompt && { chartContext: chartContextPrompt }),
           ...(prewarmedCtx.ready && {
             prewarmed: {
               watchlist: prewarmedCtx.watchlistSymbols,
