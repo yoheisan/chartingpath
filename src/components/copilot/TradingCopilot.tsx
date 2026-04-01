@@ -669,8 +669,13 @@ export function TradingCopilot({
   }, [messages, checkScrollPosition]);
 
   useEffect(() => {
-    if (isExpanded && inputRef.current) {
-      inputRef.current.focus();
+    if (isExpanded) {
+      inputRef.current?.focus();
+      // Scroll to bottom when panel opens so user sees latest content
+      setTimeout(() => {
+        const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+        if (viewport) viewport.scrollTop = viewport.scrollHeight;
+      }, 50);
     }
   }, [isExpanded]);
 
