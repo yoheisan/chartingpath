@@ -53,6 +53,13 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
   const [pendingPlanBuilder, setPendingPlanBuilder] = useState(false);
   const [pendingNewPlan, setPendingNewPlan] = useState(false);
   const contextRef = useRef<ChartContextData | null>(null);
+  // Lifted chat state — survives TradingCopilot remounts
+  const [messages, setMessages] = useState<CopilotChatMessage[]>([]);
+  const [activeConversationId, setActiveConversationIdState] = useState<string | null>(null);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const setActiveConversationId = useCallback((id: string | null) => {
+    setActiveConversationIdState(id);
+  }, []);
 
   const toggle = useCallback(() => {
     setIsOpen(prev => !prev);
