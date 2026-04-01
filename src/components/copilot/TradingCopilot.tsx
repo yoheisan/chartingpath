@@ -1116,6 +1116,7 @@ export function TradingCopilot({
     activeConvoRef.current = null;
     setMessages([]);
     setShowBuilder(false);
+    setOnboardingMode(false); // Never re-trigger onboarding on new chat
   }, [startNewChat]);
 
   const handleSelectConversation = useCallback((id: string) => {
