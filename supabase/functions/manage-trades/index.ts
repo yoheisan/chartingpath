@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
                 close_reason: sessionCloseReason,
                 hold_duration_mins: holdMins,
                 outcome: sessionPnlR >= 0 ? "win" : "loss",
-                slippage_pct: SLIPPAGE_PCT,
+                slippage_bps: slippageBps,
                 detection_latency_ms: detectionLatencyMs,
               })
               .eq("id", trade.id);
