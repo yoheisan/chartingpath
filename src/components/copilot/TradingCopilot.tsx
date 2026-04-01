@@ -27,8 +27,10 @@ import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
 import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
 import { CopilotAlertBubble } from "./CopilotAlertBubble";
+import { CopilotChartChips } from "./CopilotChartChips";
 import { usePaperTradeEntry } from "@/hooks/usePaperTradeEntry";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCopilotContext, buildContextSystemPrompt } from "@/hooks/useCopilotContext";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -289,6 +291,19 @@ export function TradingCopilot({
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
+  // Chart context awareness
+  const isChartPage = location.pathname.startsWith('/chart') || location.pathname.startsWith('/members/chart');
+  const chartSymbol = isChartPage ? new URLSearchParams(location.search).get('symbol') || undefined : undefined;
+  const chartTimeframe = isChartPage ? new URLSearchParams(location.search).get('timeframe') || undefined : undefined;
+  const copilotContext = useCopilotContext(
+    isChartPage ? 'chart' : 'other',
+    chartSymbol,
+    chartTimeframe
+  );
+  const chartContextPrompt = buildContextSystemPrompt(copilotContext);
+  const [chartChipsUsed, setChartChipsUsed] = useState(false);
+  const autoOpenFiredRef = useRef(false);
+
   const {
     conversations,
     activeConversationId,
@@ -521,6 +536,35 @@ export function TradingCopilot({
     }
   }, [pendingPlanBuilder, pendingNewPlan, isExpanded, onPlanBuilderConsumed]);
 
+  // Auto-generate opening message on chart page when Copilot opens
+  useEffect(() => {
+    if (!isExpanded || !isChartPage || !isAuthenticated) return;
+    if (autoOpenFiredRef.current) return;
+    if (messages.length > 0 || isLoading || showBuilder) return;
+
+    autoOpenFiredRef.current = true;
+
+    if (copilotContext.visible_patterns.length > 0) {
+      // Fire an AI call to analyze the chart — user doesn't see the prompt
+      streamChat("Analyze what's on my chart right now and tell me what I should know.");
+    } else {
+      // Static fallback
+      const sym = chartSymbol || 'this chart';
+      const tf = chartTimeframe || '';
+      setMessages([{
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: `No confirmed patterns on **${sym}** ${tf} right now. I'll alert you when one forms.`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [isExpanded, isChartPage, isAuthenticated, copilotContext.visible_patterns.length]);
+
+  // Reset auto-open flag when panel closes or symbol changes
+  useEffect(() => {
+    if (!isExpanded) autoOpenFiredRef.current = false;
+  }, [isExpanded, chartSymbol, chartTimeframe]);
+
   const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
@@ -572,6 +616,8 @@ export function TradingCopilot({
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
           },
+          // Inject chart context as system-level context for the AI
+          ...(chartContextPrompt && { chartContext: chartContextPrompt }),
           ...(prewarmedCtx.ready && {
             prewarmed: {
               watchlist: prewarmedCtx.watchlistSymbols,
@@ -1109,6 +1155,17 @@ export function TradingCopilot({
                     )}
                   </div>
                 )})}
+                {/* Chart context quick-action chips — show after first assistant message */}
+                {isChartPage && !chartChipsUsed && messages.length > 0 && messages.some(m => m.role === 'assistant') && (
+                  <CopilotChartChips
+                    context={copilotContext}
+                    onChipClick={(prompt) => {
+                      setChartChipsUsed(true);
+                      streamChat(prompt);
+                    }}
+                    disabled={isLoading}
+                  />
+                )}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <div className="flex justify-start">
                     <div className="bg-muted rounded-lg px-3 py-2">
