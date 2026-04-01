@@ -3209,6 +3209,7 @@
     "none": "なし",
     "found": "{{count}}件発見",
     "noOccurrencesFound": "この設定では過去のパターン発生が見つかりません。バックテストは0トレードを返します。別の銘柄、パターン、または時間足をお試しください。",
+    "noOccurrencesShort": "パターンデータが見つかりません",
     "zeroOccurrenceCombos": "{{count}}件の組み合わせに発生がなく、0トレードとなります。",
     "fewOccurrences": "パターン発生回数が少なく、統計的に有意でない可能性があります。",
     "checkingPatternOccurrences": "パターン発生を確認中…",
