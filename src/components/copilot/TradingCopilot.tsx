@@ -393,6 +393,17 @@ export function TradingCopilot({
   const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
   const { enterTrade } = usePaperTradeEntry();
 
+  // Sync pending alerts to store
+  useEffect(() => {
+    storeSetPendingAlerts(pendingAlerts.map(a => ({
+      id: a.id,
+      symbol: a.symbol,
+      alert_type: a.alert_type,
+      pattern_type: a.pattern_type || undefined,
+      direction: a.direction || undefined,
+    })));
+  }, [pendingAlerts, storeSetPendingAlerts]);
+
   // Live context store — sync typing state
   const storeSetIsTyping = useCopilotContextStore(s => s.setIsTyping);
   useEffect(() => {
