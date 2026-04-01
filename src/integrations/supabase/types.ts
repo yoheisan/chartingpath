@@ -3950,6 +3950,7 @@ export type Database = {
           email_notifications_enabled: boolean | null
           first_destination: string | null
           id: string
+          last_brief_sent_at: string | null
           last_sign_in_at: string | null
           onboarding_completed: boolean | null
           push_notifications_enabled: boolean | null
@@ -3969,6 +3970,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           first_destination?: string | null
           id?: string
+          last_brief_sent_at?: string | null
           last_sign_in_at?: string | null
           onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
@@ -3988,6 +3990,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           first_destination?: string | null
           id?: string
+          last_brief_sent_at?: string | null
           last_sign_in_at?: string | null
           onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
