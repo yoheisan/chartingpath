@@ -1,13 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { getSlippageBps, applyAdverseSlippage } from "../_shared/slippage-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-// ── Constants ──
-const SLIPPAGE_PCT = 0.0005; // 0.05% adverse slippage on every fill
 
 // ── Forex helpers ──
 function isForexSymbol(symbol: string): boolean {
@@ -32,18 +30,6 @@ function calcForexPnl(symbol: string, priceMove: number, lotSize: number): numbe
   const pips = priceToPips(symbol, Math.abs(priceMove));
   const pipValue = getForexPipValue(symbol, lotSize);
   return (priceMove >= 0 ? 1 : -1) * pips * pipValue;
-}
-
-// ── Slippage helper ──
-// Adverse slippage: makes exits worse for the trader
-function applySlippage(price: number, isLong: boolean): number {
-  if (isLong) {
-    // Long exit: fills lower (worse)
-    return price * (1 - SLIPPAGE_PCT);
-  } else {
-    // Short exit: fills higher (worse)
-    return price * (1 + SLIPPAGE_PCT);
-  }
 }
 
 Deno.serve(async (req) => {
