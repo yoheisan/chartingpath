@@ -321,6 +321,25 @@ export function TradingCopilot({
   const [chartChipsUsed, setChartChipsUsed] = useState(false);
   const autoOpenFiredRef = useRef(false);
 
+  // Page context — updates on every route change
+  const currentPageContext = getPageContext(location.pathname);
+  const prevPathnameRef = useRef(location.pathname);
+
+  // Detect page type for AI context
+  const pageType = isChartPage ? 'chart'
+    : location.pathname.startsWith('/members/dashboard') ? 'dashboard'
+    : location.pathname.startsWith('/tools/paper-trading') ? 'paper-trading'
+    : location.pathname.startsWith('/patterns/live') || location.pathname.startsWith('/screener') ? 'screener'
+    : 'other';
+
+  // Log page context changes
+  useEffect(() => {
+    if (prevPathnameRef.current !== location.pathname) {
+      console.log('[Copilot] Page context changed:', { from: prevPathnameRef.current, to: location.pathname, pageType, pageName: currentPageContext.pageName });
+      prevPathnameRef.current = location.pathname;
+    }
+  }, [location.pathname, pageType, currentPageContext.pageName]);
+
   const {
     conversations,
     activeConversationId: _hookConvoId,
