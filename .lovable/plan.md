@@ -1,38 +1,27 @@
 
 
-## Plan: Add dismiss (X) button to the tooltip popup bubble
+## Plan: Add Article Slug Context to Copilot Prompts
 
-The bouncing tooltip bubble ("Ask anything about markets, patterns & trade setups ✨") near the floating AI button needs a close/dismiss button so users can permanently hide it.
+### What changes
 
-### Current behavior
-- The tooltip shows when `sessionStorage` has no `copilot_opened` key (first-visit only per session).
-- It disappears only when the user clicks the main AI button (which sets `copilot_opened` in sessionStorage).
+Add an `articleSlug` field to the context store and extract it from blog/learn URLs so the system prompt includes `"User is reading: {slug}"`.
 
-### Changes
+### 1. `src/stores/copilotContextStore.ts`
 
-**File: `src/components/copilot/TradingCopilot.tsx` (~lines 744-748)**
+- Add `articleSlug: string | null` to `CopilotContextState` (line 67, after `timeframe`)
+- Add `setArticleSlug` action
+- Initialize as `null` in the store, add setter
+- In `buildLiveContextPrompt`: after the page line, if `articleSlug` is set, push `- User is reading: ${state.articleSlug}`
 
-1. Add a small X button to the top-right corner of the tooltip bubble.
-2. On click, set `sessionStorage.setItem('copilot_opened', '1')` and hide the tooltip via local state.
-3. Use `localStorage` instead of `sessionStorage` so the dismissal persists across sessions (currently it reappears every new session).
+### 2. `src/hooks/useCopilotStoreSync.ts`
 
-```text
-Before:
-┌──────────────────────────┐
-│ Ask anything about ...   │
-└──────────────────────────┘
+- Import and use `setArticleSlug` from the store
+- In the route change effect, after determining `pageType`:
+  - If route matches blog or learn paths, extract the slug from the last URL segment (e.g., `/blog/head-and-shoulders` → `head-and-shoulders`)
+  - Call `setArticleSlug(slug)` for those page types, `setArticleSlug(null)` otherwise
 
-After:
-┌──────────────────────────┬───┐
-│ Ask anything about ...   │ ✕ │
-└──────────────────────────┴───┘
-```
+### Files changed (2)
 
-### Technical detail
-- Add a `tooltipDismissed` state initialized from `localStorage.getItem('copilot_tooltip_dismissed')`.
-- The X button calls `localStorage.setItem('copilot_tooltip_dismissed', '1')` and sets the state to hide.
-- The existing `sessionStorage.setItem('copilot_opened', '1')` on button click also hides it (existing behavior preserved).
-- Import `X` from lucide-react (already used elsewhere).
-
-Single file change, no locale changes needed.
+- `src/stores/copilotContextStore.ts`
+- `src/hooks/useCopilotStoreSync.ts`
 
