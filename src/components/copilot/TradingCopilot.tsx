@@ -630,6 +630,7 @@ export function TradingCopilot({
   // Check onboarding status on mount (only once via context flag)
   // Track whether user needs onboarding (but don't auto-show on non-core pages)
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const onboardingDismissedRef = useRef(false); // Once dismissed or completed, never auto-show again
   
   // Core pages where onboarding should auto-trigger (pageType already declared above)
   const isCorePage = ['chart', 'dashboard', 'screener', 'paper-trading'].includes(pageType);
