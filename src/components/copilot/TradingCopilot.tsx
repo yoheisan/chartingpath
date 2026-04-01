@@ -681,7 +681,7 @@ export function TradingCopilot({
 
   // Auto-show onboarding when navigating to a core page (if needed but deferred)
   useEffect(() => {
-    if (needsOnboarding && isCorePage && !onboardingMode) {
+    if (needsOnboarding && isCorePage && !onboardingMode && !onboardingDismissedRef.current) {
       setOnboardingMode(true);
     }
   }, [needsOnboarding, isCorePage, onboardingMode]);
