@@ -393,6 +393,10 @@ Deno.serve(async (req) => {
             quantity = (portfolio.current_balance * positionPct / 100) / entryPrice;
           }
 
+          // ── Compute total slippage bps including size-based market impact ──
+          const notionalUsd = entryPrice * quantity;
+          const totalEntrySlippageBps = getTotalSlippageBps(baseSlippageBps, notionalUsd);
+
           // Generate copilot reasoning
           let reasoning = `Automated entry: ${det.pattern_name || "pattern"} on ${det.instrument} (${det.timeframe}). Risk: ${positionPct}% of portfolio.`;
           try {
