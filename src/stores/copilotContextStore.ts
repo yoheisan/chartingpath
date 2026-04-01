@@ -97,6 +97,7 @@ export interface CopilotContextState {
   setRoute: (route: string, pageType: CopilotContextState['pageType']) => void;
   setSymbol: (symbol: string | null) => void;
   setTimeframe: (timeframe: string | null) => void;
+  setArticleSlug: (slug: string | null) => void;
   setVisiblePatterns: (patterns: VisiblePattern[]) => void;
   setCurrentPrice: (price: number | null) => void;
   setActiveFilters: (filters: ActiveFilter[]) => void;
