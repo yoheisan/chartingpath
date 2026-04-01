@@ -163,7 +163,13 @@ export function TradingCopilotProvider({ children }: { children: ReactNode }) {
       consumePendingPlanBuilder,
       consumePendingNewPlan,
       setChartContext,
-      getChartContext
+      getChartContext,
+      messages,
+      setMessages,
+      activeConversationId,
+      setActiveConversationId,
+      onboardingChecked,
+      setOnboardingChecked,
     }}>
       {children}
     </TradingCopilotContext.Provider>
