@@ -2732,8 +2732,15 @@ serve(async (req) => {
         console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
       }
 
+      // Inject chart context if provided (from useCopilotContext on chart page)
+      let chartContextLayer = '';
+      if (chartContext && typeof chartContext === 'string' && chartContext.length > 0) {
+        chartContextLayer = `## Live Chart Context (Injected)\n${chartContext}`;
+        console.log(`[trading-copilot] Chart context injected (${chartContext.length} chars)`);
+      }
+
       // Assemble enhanced system prompt with all context layers
-      const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer].filter(Boolean).join('\n\n');
+      const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer, chartContextLayer].filter(Boolean).join('\n\n');
       const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
         + (contextLayers ? '\n\n' + contextLayers : '')
         + langInstruction 
