@@ -6225,5 +6225,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "Maksimal {{max}} tahun lookback diizinkan di paket {{tier}}",
+    "maxInstruments": "Maksimal {{max}} instrumen diizinkan di paket {{tier}}",
+    "maxPatterns": "Maksimal {{max}} pola diizinkan di paket {{tier}}",
+    "timeframeNotAllowed": "Timeframe {{timeframe}} tidak tersedia di paket {{tier}}",
+    "notOnPlan": "Proyek ini tidak tersedia di paket Anda",
+    "projectNotAvailable": "Jenis proyek tidak tersedia untuk tingkat Anda"
   }
 }

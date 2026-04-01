@@ -6238,5 +6238,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "{{tier}} प्लान पर अधिकतम {{max}} वर्ष लुकबैक अनुमत",
+    "maxInstruments": "{{tier}} प्लान पर अधिकतम {{max}} इंस्ट्रूमेंट अनुमत",
+    "maxPatterns": "{{tier}} प्लान पर अधिकतम {{max}} पैटर्न अनुमत",
+    "timeframeNotAllowed": "{{timeframe}} टाइमफ्रेम {{tier}} प्लान पर उपलब्ध नहीं",
+    "notOnPlan": "यह प्रोजेक्ट आपके प्लान में उपलब्ध नहीं है",
+    "projectNotAvailable": "प्रोजेक्ट प्रकार आपके स्तर के लिए उपलब्ध नहीं"
   }
 }

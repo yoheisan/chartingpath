@@ -6234,5 +6234,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "{{tier}} 플랜에서 최대 {{max}}년 룩백 허용",
+    "maxInstruments": "{{tier}} 플랜에서 최대 {{max}}개 종목 허용",
+    "maxPatterns": "{{tier}} 플랜에서 최대 {{max}}개 패턴 허용",
+    "timeframeNotAllowed": "{{timeframe}} 타임프레임은 {{tier}} 플랜에서 사용할 수 없습니다",
+    "notOnPlan": "이 프로젝트는 귀하의 플랜에서 사용할 수 없습니다",
+    "projectNotAvailable": "프로젝트 유형을 귀하의 등급에서 사용할 수 없습니다"
   }
 }
