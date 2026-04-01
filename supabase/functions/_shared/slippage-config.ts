@@ -34,6 +34,12 @@ export const SLIPPAGE_BPS: Record<string, number> = {
 /** Default fallback if asset class isn't mapped above */
 export const DEFAULT_SLIPPAGE_BPS = 10;
 
+// ── Market-impact surcharge for large positions ──
+/** Notional value threshold (USD) above which extra slippage applies */
+export const SIZE_IMPACT_THRESHOLD_USD = 5_000;
+/** Additional bps added when notional exceeds the threshold */
+export const SIZE_IMPACT_EXTRA_BPS = 3;
+
 // ── FX minor pairs for classification ──
 const FX_MINOR_KEYWORDS = [
   "TRY", "ZAR", "MXN", "PLN", "HUF", "CZK", "SEK", "NOK", "DKK",
@@ -42,16 +48,11 @@ const FX_MINOR_KEYWORDS = [
 ];
 
 /**
- * Determine slippage bps for a given trade.
- *
- * @param assetType  The raw asset_type from the detection / trade (e.g. "crypto", "stock", "forex")
- * @param symbol     The instrument symbol (used for FX minor classification)
- * @returns          Slippage in basis points
+ * Determine base slippage bps for a given asset class / symbol.
  */
 export function getSlippageBps(assetType: string | null, symbol: string): number {
   const at = (assetType || "").toLowerCase();
 
-  // FX minor / exotic classification
   if (at === "forex" || at === "fx" || symbol.endsWith("=X")) {
     const upper = symbol.toUpperCase().replace("=X", "");
     const isMinor = FX_MINOR_KEYWORDS.some((kw) => upper.includes(kw));
@@ -60,6 +61,20 @@ export function getSlippageBps(assetType: string | null, symbol: string): number
   }
 
   return SLIPPAGE_BPS[at] ?? DEFAULT_SLIPPAGE_BPS;
+}
+
+/**
+ * Compute total slippage bps including size-based market impact.
+ *
+ * @param baseBps       Base slippage from getSlippageBps()
+ * @param notionalUsd   Position notional value in USD (price × quantity)
+ * @returns             Total slippage bps to apply
+ */
+export function getTotalSlippageBps(baseBps: number, notionalUsd: number): number {
+  if (notionalUsd > SIZE_IMPACT_THRESHOLD_USD) {
+    return baseBps + SIZE_IMPACT_EXTRA_BPS;
+  }
+  return baseBps;
 }
 
 /** Convert bps to a multiplier fraction (e.g. 5 bps → 0.0005) */
@@ -72,10 +87,6 @@ export function bpsToFraction(bps: number): number {
  *
  * For **buys** (entries on longs, exits on shorts covering): price goes UP (worse for buyer).
  * For **sells** (exits on longs, entries on shorts): price goes DOWN (worse for seller).
- *
- * @param price       Raw fill price before slippage
- * @param isBuySide   true if the trader is buying at this price
- * @param slippageBps Slippage in basis points
  */
 export function applyAdverseSlippage(
   price: number,
@@ -84,6 +95,6 @@ export function applyAdverseSlippage(
 ): number {
   const frac = bpsToFraction(slippageBps);
   return isBuySide
-    ? price * (1 + frac)   // buying → fill higher (worse)
-    : price * (1 - frac);  // selling → fill lower (worse)
+    ? price * (1 + frac)
+    : price * (1 - frac);
 }
