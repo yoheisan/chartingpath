@@ -2279,6 +2279,7 @@ serve(async (req) => {
               if (funnel) funnel.traded++;
               lastTradeEndIndex = entryIndex + 5;
             }
+            console.log(`[PatternLab] ${instrument} signal matching: ${JSON.stringify(debugSkipReasons)}, traded: ${allTrades.length}`);
           }
           
           ensureBudget('result computation preflight');
