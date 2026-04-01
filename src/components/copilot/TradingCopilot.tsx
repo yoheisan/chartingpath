@@ -1256,6 +1256,8 @@ export function TradingCopilot({
                 <OnboardingFlow
                   onComplete={() => {
                     setOnboardingMode(false);
+                    onboardingDismissedRef.current = true;
+                    setNeedsOnboarding(false);
                     refreshPlan();
                     setMessages([{
                       id: crypto.randomUUID(),
