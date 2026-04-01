@@ -981,346 +981,339 @@ export function TradingCopilot({
         />
       )}
 
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-accent text-white">
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col flex-1 min-w-0 h-full">
+        {/* ── HEADER (fixed, ~48px) ── */}
+        <div className="flex items-center justify-between px-4 h-12 border-b border-border/60 bg-card shrink-0">
+          <div className="flex items-center gap-2.5">
             {!isMobile && isAuthenticated && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10" onClick={() => setShowHistory(v => !v)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setShowHistory(v => !v)}>
                 {showHistory ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
               </Button>
             )}
-            <Sparkles className="h-5 w-5 text-white/90" />
-            <div>
-              <h3 className="font-semibold text-sm text-white">{t('copilot.title')}</h3>
-              <p className="text-sm text-white/70">
-                {isAuthenticated && hasPlan ? t('copilot.panel.yourDesk', 'Your trading desk') : isAuthenticated ? t('copilot.panel.setupPlan', 'Set up your trading plan') : t('copilot.panel.seeAiTrading', 'See what AI-native trading looks like.')}
-              </p>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#f97316]" />
+              <span className="font-semibold text-sm text-foreground">Copilot</span>
             </div>
+            {/* Live indicator when paper trading is active */}
+            {isAuthenticated && hasPlan && (
+              <div className="flex items-center gap-1 ml-1">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                <span className="text-[10px] text-emerald-500 font-medium uppercase tracking-wider">live</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
-              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={handleNewChat} title={t('copilot.home', 'Home')}>
-                <Home className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={handleNewChat} title={t('copilot.home', 'Home')}>
+                <MessageSquarePlus className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={onToggle}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onToggle}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Messages */}
+        {/* ── THREAD AREA (flex: 1, scrollable) ── */}
         <div className="flex-1 relative min-h-0">
-          <ScrollArea className="h-full p-4" ref={scrollRef}>
-            {isLoadingHistory ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : messages.length === 0 && !showBuilder ? (
-              (() => {
-                const pageCtx = getPageContext(location.pathname);
-                const tier2Chips = isAuthenticated ? pageCtx.chips : [];
-                const redirectPath = typeof window !== 'undefined'
-                  ? encodeURIComponent(window.location.pathname + window.location.search)
-                  : '/';
-                return (
-              <div className="space-y-4">
-                <div className="text-center py-6">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 mx-auto flex items-center justify-center mb-4">
-                    <Sparkles className="h-8 w-8 text-primary" />
-                  </div>
-                  {!isAuthenticated ? (
-                    <>
-                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.setFirstPlan', 'Set your first trading plan and see how it performs')}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {t('copilot.panel.likeBacktesting', 'Like backtesting in MT4 or Pine Script — but running live, automatically, on paper. No risk. See results first.')}
-                      </p>
-                    </>
-                  ) : hasPlan ? (
-                    <>
-                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.planRunning', 'Your trading plan is running')}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {t('copilot.panel.paperTesting', 'Copilot is paper-testing your plan live.')} {todayTradeCount !== null ? `${todayTradeCount} ${t('copilot.panel.tradesTakenToday', 'trade(s) taken today.')} ${t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}` : t('copilot.panel.reviewBeforeLive', 'Review results before going live.')}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <h4 className="font-semibold text-base mb-1">{t('copilot.panel.whatsYourPlan', "What's your trading plan?")}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {t('copilot.panel.describeTrading', 'Describe how you like to trade — patterns, risk, timing. Copilot runs it as a live paper simulation so you can see how it performs before risking real money.')}
-                      </p>
-                    </>
-                  )}
+          <ScrollArea className="h-full" ref={scrollRef}>
+            <div className="p-4 space-y-3">
+              {isLoadingHistory ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
-
-                <div className="space-y-3">
-                  {/* ── LOGGED-OUT: 3 demo chips ── */}
-                  {!isAuthenticated && (
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { label: t('copilot.panel.chipPatterns', 'What patterns are active right now?'), prompt: "What patterns are active right now?" },
-                        { label: t('copilot.panel.chipScore', 'Score a trade for me'), prompt: "Score a trade for me" },
-                        { label: t('copilot.panel.chipGate', 'How does the AI Gate work?'), prompt: "How does the AI Gate work?" },
-                      ].map((chip) => (
-                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-sm">{chip.label}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* ── LOGGED-OUT: Active setups banner ── */}
-                  {!isAuthenticated && (
-                    <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
-                       <p className="text-sm text-foreground/80 mb-2">
-                        {(t as any)('copilot.panel.activeSetups', { count: String(activePatternCount ?? '…'), defaultValue: 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.' })}
-                      </p>
-                      <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-sm">
-                        <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
-                          {t('copilot.panel.createFirstPlan', 'Create your first trading plan →')}
-                        </Link>
-                      </Button>
-                      <p className="text-sm text-muted-foreground/60 text-center mt-1">{t('copilot.panel.freeToTry', 'Free to try · No real money · You decide when to go live')}</p>
-                    </div>
-                  )}
-
-                  {/* ── LOGGED-IN: Tier 1 — Mandate & Session ── */}
-                  {isAuthenticated && hasPlan && (
-                    <div className="flex flex-wrap gap-2">
-                     <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
-                       <span className="text-sm">{t('copilot.panel.reviewResults', "Review today's paper results")}</span>
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => setShowBuilder(true)} disabled={isLoading}>
-                        <span className="text-sm">{t('copilot.panel.updatePlan', 'Update your trading plan')}</span>
-                       </Button>
-                       <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => { setBuilderIsNewPlan(true); setShowBuilder(true); }} disabled={isLoading}>
-                        <span className="text-sm">{t('copilot.panel.addNewPlan', 'Add new trading plan')}</span>
-                       </Button>
-                     </div>
-                  )}
-
-                  {/* ── LOGGED-IN: Tier 1 — Getting started (no mandate) ── */}
-                   {isAuthenticated && !hasPlan && (
-                     <Button
-                       className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                       onClick={() => setShowBuilder(true)}
-                       disabled={isLoading}
-                     >
-                       {t('copilot.panel.setPlan', 'Set your trading plan →')}
-                     </Button>
-                   )}
-
-                  {/* ── LOGGED-IN: Tier 2 — Page-aware chips ── */}
-                  {tier2Chips.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {tier2Chips.map((chip) => (
-                        <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
-                          <span className="text-sm">{chip.labelKey ? t(chip.labelKey, chip.label) : chip.label}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Tier 3 — Utility row (small text links) */}
-                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
-                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>{t('copilot.generateScript', 'Generate script')}</button>
-                    <span className="text-muted-foreground/40 text-sm">·</span>
-                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>{t('copilot.createAlert', 'Create alert')}</button>
-                    <span className="text-muted-foreground/40 text-sm">·</span>
-                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>{t('copilot.learnPatterns', 'Learn patterns')}</button>
-                    <span className="text-muted-foreground/40 text-sm">·</span>
-                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>{t('copilot.marketBreadth', 'Market breadth')}</button>
-                    <span className="text-muted-foreground/40 text-sm">·</span>
-                    <ContactSupportDialog
-                      trigger={
-                        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('copilot.contactSupport', 'Contact Support')}</button>
-                      }
-                      defaultCategory="other"
-                      defaultSubject=""
-                      defaultDescription=""
-                      source="copilot_quick_action"
-                    />
-                  </div>
-                </div>
-              </div>
-                );
-              })()
-            ) : showBuilder ? (
-              <TradingPlanBuilder
-                existingPlan={builderIsNewPlan ? null : plan}
-                isNewPlan={builderIsNewPlan}
-                plans={plans}
-                onSelectPlan={selectPlan}
-                onSaved={() => {
-                  setShowBuilder(false);
-                  setBuilderIsNewPlan(false);
-                  refreshPlan();
-                  setMessages(prev => [...prev, {
-                    id: crypto.randomUUID(),
-                    role: "assistant" as const,
-                    content: builderIsNewPlan
-                      ? `✅ New trading plan created! Copilot is now paper-testing it live.\n\nSwitch between plans from the Master Plan card on your desk.`
-                      : `✅ Your trading plan is updated. Copilot is now paper-testing it live.\n\nI'll scan for matching setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
-                    timestamp: new Date(),
-                  }]);
-                }}
-                onCancel={() => { setShowBuilder(false); setBuilderIsNewPlan(false); }}
-                onSwitchToNL={() => {
-                  setShowBuilder(false);
-                  setBuilderIsNewPlan(false);
-                  setInput(hasPlan ? "Update my trading plan: " : "");
-                  setTimeout(() => inputRef.current?.focus(), 100);
-                }}
-              />
-            ) : onboardingMode ? (
-              <OnboardingFlow
-                onComplete={() => {
-                  setOnboardingMode(false);
-                  refreshPlan();
-                  setMessages([{
-                    id: crypto.randomUUID(),
-                    role: "assistant" as const,
-                    content: "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
-                    timestamp: new Date(),
-                  }]);
-                }}
-              />
-            ) : (
-              <div className="space-y-4">
-                {/* Morning Brief — highest priority, show latest only */}
-                {(() => {
-                  const morningBriefs = pendingAlerts.filter(a => a.alert_type === 'morning_brief');
-                  const latestBrief = morningBriefs[0];
-                  // Auto-dismiss older briefs
-                  if (morningBriefs.length > 1) {
-                    morningBriefs.slice(1).forEach(b => dismissAlert(b.id));
-                  }
-                  return latestBrief ? (
-                    <MorningBriefCard
-                      alert={latestBrief}
-                      onAutoEnterAll={handleBriefAutoEnter}
-                      onReviewOneByOne={handleBriefReviewOneByOne}
-                      onSkip={handleBriefSkip}
-                    />
-                  ) : null;
-                })()}
-
-                {/* Pending Copilot Alerts (interventions + pattern matches) */}
-                {pendingAlerts.filter(a => a.alert_type !== 'morning_brief').length > 0 && (
-                  <div className="space-y-2">
-                    {pendingAlerts
-                      .filter(a => a.alert_type !== 'morning_brief')
-                      .sort((a, b) => {
-                        // Interventions first, then pattern matches
-                        if (a.alert_type === 'intervention' && b.alert_type !== 'intervention') return -1;
-                        if (b.alert_type === 'intervention' && a.alert_type !== 'intervention') return 1;
-                        return 0;
-                      })
-                      .map((alert) => (
-                      <CopilotAlertBubble
-                        key={alert.id}
-                        alert={alert}
-                        onOpenTrade={handleAlertOpenTrade}
-                        onDismiss={handleAlertDismiss}
-                        onFollowUpMessage={(content) => {
-                          setMessages(prev => [...prev, {
-                            id: crypto.randomUUID(),
-                            role: "assistant" as const,
-                            content,
-                            timestamp: new Date(),
-                          }]);
-                        }}
+              ) : showBuilder ? (
+                <TradingPlanBuilder
+                  existingPlan={builderIsNewPlan ? null : plan}
+                  isNewPlan={builderIsNewPlan}
+                  plans={plans}
+                  onSelectPlan={selectPlan}
+                  onSaved={() => {
+                    setShowBuilder(false);
+                    setBuilderIsNewPlan(false);
+                    refreshPlan();
+                    setMessages(prev => [...prev, {
+                      id: crypto.randomUUID(),
+                      role: "assistant" as const,
+                      content: builderIsNewPlan
+                        ? `✅ New trading plan created! Copilot is now paper-testing it live.\n\nSwitch between plans from the Master Plan card on your desk.`
+                        : `✅ Your trading plan is updated. Copilot is now paper-testing it live.\n\nI'll scan for matching setups and log every trade.\nCheck back here or visit your Copilot desk to see results.`,
+                      timestamp: new Date(),
+                    }]);
+                  }}
+                  onCancel={() => { setShowBuilder(false); setBuilderIsNewPlan(false); }}
+                  onSwitchToNL={() => {
+                    setShowBuilder(false);
+                    setBuilderIsNewPlan(false);
+                    setInput(hasPlan ? "Update my trading plan: " : "");
+                    setTimeout(() => inputRef.current?.focus(), 100);
+                  }}
+                />
+              ) : onboardingMode ? (
+                <OnboardingFlow
+                  onComplete={() => {
+                    setOnboardingMode(false);
+                    refreshPlan();
+                    setMessages([{
+                      id: crypto.randomUUID(),
+                      role: "assistant" as const,
+                      content: "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
+                      timestamp: new Date(),
+                    }]);
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Morning Brief — highest priority, show latest only */}
+                  {(() => {
+                    const morningBriefs = pendingAlerts.filter(a => a.alert_type === 'morning_brief');
+                    const latestBrief = morningBriefs[0];
+                    if (morningBriefs.length > 1) {
+                      morningBriefs.slice(1).forEach(b => dismissAlert(b.id));
+                    }
+                    return latestBrief ? (
+                      <MorningBriefCard
+                        alert={latestBrief}
+                        onAutoEnterAll={handleBriefAutoEnter}
+                        onReviewOneByOne={handleBriefReviewOneByOne}
+                        onSkip={handleBriefSkip}
                       />
-                    ))}
-                  </div>
-                )}
-                {messages.map((message, idx) => {
-                  const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
-                  return (
-                  <div key={message.id} className={cn("flex flex-col gap-2", message.role === "user" ? "items-end" : "items-start")}>
-                    {message.role === "user" && message.analysisData && (
-                      <Card className="w-full p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                        <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <BarChart3 className="h-3.5 w-3.5" />
-                            <span>{t('copilot.chartAnalysis')}</span>
-                          </div>
-                        </div>
-                        <ChartAnalysisSummary analysis={message.analysisData} />
-                      </Card>
-                    )}
-                    <div className={cn(
-                      "rounded-lg px-3 py-2 text-sm",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground max-w-[85%]"
-                        : "bg-muted w-full"
-                    )}>
-                      {message.role === "assistant" ? (
-                        <CopilotRichMessage content={message.content || "..."} onQuickReply={isLastAssistant ? (text) => { if (!isLoading) streamChat(text); } : undefined} />
-                      ) : message.analysisData ? (
-                        <span className="text-xs opacity-80">{t('chartAnalysisDialog.analyzeSymbol', { symbol: message.analysisData.symbol, timeframe: message.analysisData.timeframe })}</span>
-                      ) : (
-                        message.content
-                      )}
-                    </div>
-                    {message.role === "assistant" && message.content && message.content !== "..." && (
-                      <div className="flex items-center gap-1 mt-1 ml-1">
-                        <button
-                          onClick={() => {
-                            logFeedback(message.content || '', true);
-                            toast.success(t('copilot.feedbackThanks', 'Thanks for your feedback!'));
+                    ) : null;
+                  })()}
+
+                  {/* Pending Copilot Alerts (interventions + pattern matches) */}
+                  {pendingAlerts.filter(a => a.alert_type !== 'morning_brief').length > 0 && (
+                    <div className="space-y-2">
+                      {pendingAlerts
+                        .filter(a => a.alert_type !== 'morning_brief')
+                        .sort((a, b) => {
+                          if (a.alert_type === 'intervention' && b.alert_type !== 'intervention') return -1;
+                          if (b.alert_type === 'intervention' && a.alert_type !== 'intervention') return 1;
+                          return 0;
+                        })
+                        .map((alert) => (
+                        <CopilotAlertBubble
+                          key={alert.id}
+                          alert={alert}
+                          onOpenTrade={handleAlertOpenTrade}
+                          onDismiss={handleAlertDismiss}
+                          onFollowUpMessage={(content) => {
+                            setMessages(prev => [...prev, {
+                              id: crypto.randomUUID(),
+                              role: "assistant" as const,
+                              content,
+                              timestamp: new Date(),
+                            }]);
                           }}
-                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-green-500 transition-colors"
-                          aria-label="Helpful"
-                        >
-                          <ThumbsUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            logFeedback(message.content || '', false);
-                            toast.info(t('copilot.feedbackNoted', 'Feedback noted. We\'ll improve!'));
-                          }}
-                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
-                          aria-label="Not helpful"
-                        >
-                          <ThumbsDown className="h-3 w-3" />
-                        </button>
-                        <ContactSupportDialog
-                          trigger={
-                            <button className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Report issue">
-                              <MessageSquarePlus className="h-3 w-3" />
-                            </button>
-                          }
-                          defaultCategory="bug"
-                          defaultSubject="Copilot Response Issue"
-                          defaultDescription={`Issue with copilot response:\n\n"${(message.content || '').slice(0, 200)}..."\n\nPlease describe the problem:\n`}
-                          source="copilot_feedback"
                         />
-                      </div>
-                    )}
-                  </div>
-                )})}
-                {/* Chart context quick-action chips — show after first assistant message */}
-                {isChartPage && !chartChipsUsed && messages.length > 0 && messages.some(m => m.role === 'assistant') && (
-                  <CopilotChartChips
-                    context={copilotContext}
-                    onChipClick={(prompt) => {
-                      setChartChipsUsed(true);
-                      streamChat(prompt);
-                    }}
-                    disabled={isLoading}
-                  />
-                )}
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
-                  <div className="flex justify-start">
-                    <div className="bg-muted rounded-lg px-3 py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      ))}
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {/* Home screen chips — when no messages and no builder */}
+                  {messages.length === 0 && (() => {
+                    const pageCtx = getPageContext(location.pathname);
+                    const tier2Chips = isAuthenticated ? pageCtx.chips : [];
+                    const redirectPath = typeof window !== 'undefined'
+                      ? encodeURIComponent(window.location.pathname + window.location.search)
+                      : '/';
+                    return (
+                      <div className="space-y-3 pt-2">
+                        {!isAuthenticated && (
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { label: t('copilot.panel.chipPatterns', 'What patterns are active right now?'), prompt: "What patterns are active right now?" },
+                              { label: t('copilot.panel.chipScore', 'Score a trade for me'), prompt: "Score a trade for me" },
+                              { label: t('copilot.panel.chipGate', 'How does the AI Gate work?'), prompt: "How does the AI Gate work?" },
+                            ].map((chip) => (
+                              <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left text-sm" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                                {chip.label}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        {!isAuthenticated && (
+                          <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                            <p className="text-sm text-foreground/80 mb-2">
+                              {(t as any)('copilot.panel.activeSetups', { count: String(activePatternCount ?? '…'), defaultValue: 'Copilot found {{count}} active setups right now — sign up free to see them scored against your mandate.' })}
+                            </p>
+                            <Button asChild size="sm" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-sm">
+                              <Link to={`/auth?redirect=${redirectPath}&mode=register`}>
+                                {t('copilot.panel.createFirstPlan', 'Create your first trading plan →')}
+                              </Link>
+                            </Button>
+                            <p className="text-sm text-muted-foreground/60 text-center mt-1">{t('copilot.panel.freeToTry', 'Free to try · No real money · You decide when to go live')}</p>
+                          </div>
+                        )}
+                        {isAuthenticated && hasPlan && (
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left text-sm" onClick={() => handleQuickAction("Review today's paper results")} disabled={isLoading}>
+                              {t('copilot.panel.reviewResults', "Review today's paper results")}
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left text-sm" onClick={() => setShowBuilder(true)} disabled={isLoading}>
+                              {t('copilot.panel.updatePlan', 'Update your trading plan')}
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left text-sm" onClick={() => { setBuilderIsNewPlan(true); setShowBuilder(true); }} disabled={isLoading}>
+                              {t('copilot.panel.addNewPlan', 'Add new trading plan')}
+                            </Button>
+                          </div>
+                        )}
+                        {isAuthenticated && !hasPlan && (
+                          <Button
+                            className="w-full h-auto py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+                            onClick={() => setShowBuilder(true)}
+                            disabled={isLoading}
+                          >
+                            {t('copilot.panel.setPlan', 'Set your trading plan →')}
+                          </Button>
+                        )}
+                        {tier2Chips.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {tier2Chips.map((chip) => (
+                              <Button key={chip.label} variant="outline" size="sm" className="h-auto py-1.5 px-3 text-left text-sm" onClick={() => handleQuickAction(chip.prompt)} disabled={isLoading}>
+                                {chip.labelKey ? t(chip.labelKey, chip.label) : chip.label}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2">
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Generate a Pine Script")} disabled={isLoading}>{t('copilot.generateScript', 'Generate script')}</button>
+                          <span className="text-muted-foreground/40 text-sm">·</span>
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Create an alert for my top setup")} disabled={isLoading}>{t('copilot.createAlert', 'Create alert')}</button>
+                          <span className="text-muted-foreground/40 text-sm">·</span>
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("Teach me about chart patterns")} disabled={isLoading}>{t('copilot.learnPatterns', 'Learn patterns')}</button>
+                          <span className="text-muted-foreground/40 text-sm">·</span>
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => handleQuickAction("What's the market doing right now?")} disabled={isLoading}>{t('copilot.marketBreadth', 'Market breadth')}</button>
+                          <span className="text-muted-foreground/40 text-sm">·</span>
+                          <ContactSupportDialog
+                            trigger={
+                              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('copilot.contactSupport', 'Contact Support')}</button>
+                            }
+                            defaultCategory="other"
+                            defaultSubject=""
+                            defaultDescription=""
+                            source="copilot_quick_action"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Chat messages ── */}
+                  {messages.map((message, idx) => {
+                    const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
+                    const timeStr = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const isUser = message.role === "user";
+
+                    return (
+                      <div key={message.id} className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
+                        {/* Label above bubble */}
+                        {!isUser && (
+                          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1 ml-1">
+                            Copilot · {timeStr}
+                          </span>
+                        )}
+
+                        {/* Analysis card for chart analysis messages */}
+                        {isUser && message.analysisData && (
+                          <Card className="w-full p-3 mb-1 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+                            <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-2">
+                                <BarChart3 className="h-3.5 w-3.5" />
+                                <span>{t('copilot.chartAnalysis')}</span>
+                              </div>
+                            </div>
+                            <ChartAnalysisSummary analysis={message.analysisData} />
+                          </Card>
+                        )}
+
+                        {/* Message bubble */}
+                        <div
+                          className={cn(
+                            "px-3 py-2 text-sm leading-relaxed",
+                            isUser
+                              ? "bg-[#f97316] text-white rounded-[12px_4px_12px_12px] max-w-[75%]"
+                              : "bg-muted rounded-[4px_12px_12px_12px] max-w-[85%]"
+                          )}
+                        >
+                          {message.role === "assistant" ? (
+                            <CopilotRichMessage content={message.content || "..."} onQuickReply={isLastAssistant ? (text) => { if (!isLoading) streamChat(text); } : undefined} />
+                          ) : message.analysisData ? (
+                            <span className="text-xs opacity-80">{t('chartAnalysisDialog.analyzeSymbol', { symbol: message.analysisData.symbol, timeframe: message.analysisData.timeframe })}</span>
+                          ) : (
+                            message.content
+                          )}
+                        </div>
+
+                        {/* Feedback row for assistant messages */}
+                        {!isUser && message.content && message.content !== "..." && (
+                          <div className="flex items-center gap-1 mt-1 ml-1">
+                            <button
+                              onClick={() => {
+                                logFeedback(message.content || '', true);
+                                toast.success(t('copilot.feedbackThanks', 'Thanks for your feedback!'));
+                              }}
+                              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-emerald-500 transition-colors"
+                              aria-label="Helpful"
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                logFeedback(message.content || '', false);
+                                toast.info(t('copilot.feedbackNoted', 'Feedback noted. We\'ll improve!'));
+                              }}
+                              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                              aria-label="Not helpful"
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </button>
+                            <ContactSupportDialog
+                              trigger={
+                                <button className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Report issue">
+                                  <MessageSquarePlus className="h-3 w-3" />
+                                </button>
+                              }
+                              defaultCategory="bug"
+                              defaultSubject="Copilot Response Issue"
+                              defaultDescription={`Issue with copilot response:\n\n"${(message.content || '').slice(0, 200)}..."\n\nPlease describe the problem:\n`}
+                              source="copilot_feedback"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Chart context quick-action chips */}
+                  {isChartPage && !chartChipsUsed && messages.length > 0 && messages.some(m => m.role === 'assistant') && (
+                    <CopilotChartChips
+                      context={copilotContext}
+                      onChipClick={(prompt) => {
+                        setChartChipsUsed(true);
+                        streamChat(prompt);
+                      }}
+                      disabled={isLoading}
+                    />
+                  )}
+
+                  {/* Typing indicator */}
+                  {isLoading && messages[messages.length - 1]?.role === "user" && (
+                    <div className="flex items-start">
+                      <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-1 ml-1 sr-only">Copilot</span>
+                      <div className="bg-muted rounded-[4px_12px_12px_12px] px-4 py-3 flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:300ms]" />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </ScrollArea>
 
           {/* Scroll down indicator */}
@@ -1330,46 +1323,50 @@ export function TradingCopilot({
                 const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
                 if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
               }}
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-0.5 p-2 rounded-lg bg-background/80 border border-border/50 text-muted-foreground shadow-lg backdrop-blur-sm hover:text-foreground hover:border-border transition-all cursor-pointer"
-              aria-label="Scroll down for more"
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-card border border-border/50 text-muted-foreground shadow-lg backdrop-blur-sm hover:text-foreground hover:border-border transition-all cursor-pointer"
+              aria-label="Scroll down"
             >
-              <ChevronDown className="h-5 w-5 animate-bounce" />
-              <span className="text-sm font-medium">{t('copilot.moreBelow')}</span>
+              <ChevronDown className="h-4 w-4" />
+              <span className="text-xs font-medium">{t('copilot.moreBelow')}</span>
             </button>
           )}
         </div>
 
-        {/* Input or Auth Gate */}
+        {/* ── INPUT BAR (fixed to bottom, ~52px) ── */}
         {guestLimitReached ? (
           <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
         ) : (
-          <div className="p-4 border-t bg-background">
+          <div className="shrink-0 border-t border-border/60 bg-card px-3 py-2">
             {!isAuthenticated && guestMsgCount > 0 && (
-              <div className="flex justify-center mb-2">
-                <Badge variant="secondary" className="text-sm font-normal">
+              <div className="flex justify-center mb-1.5">
+                <Badge variant="secondary" className="text-xs font-normal">
                   {t('activation.freeMessagesRemaining', '{{count}} of {{total}} free messages remaining', { count: GUEST_MSG_LIMIT - guestMsgCount, total: GUEST_MSG_LIMIT })}
                 </Badge>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <textarea ref={inputRef as any} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder={isAuthenticated && hasPlan ? t('copilot.panel.placeholderWithPlan', 'Ask Copilot anything, or give a command...') : isAuthenticated ? t('copilot.panel.placeholderNoPlan', 'e.g. Only take breakouts, max 3% risk, mornings only...') : t('copilot.panel.placeholderGuest', 'Ask Copilot anything — no sign up needed to try')} disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'} className="flex-1 min-h-[4rem] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" rows={2} />
-              <div className="flex flex-col gap-1 items-center justify-end">
-                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                        <Info className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[200px] text-xs">
-                      {t('copilot.disclaimer', 'For educational purposes only. Not financial advice.')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <input
+                ref={inputRef as any}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+                placeholder={t('copilot.panel.askAnything', 'Ask anything...')}
+                disabled={isLoading || mandateState.step === 'parsing' || mandateState.step === 'saving'}
+                className="flex-1 h-9 rounded-full border border-input bg-background px-4 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={isLoading || !input.trim()}
+                className="h-9 w-9 rounded-full bg-[#f97316] hover:bg-[#ea580c] text-white shrink-0"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
             </form>
           </div>
         )}
