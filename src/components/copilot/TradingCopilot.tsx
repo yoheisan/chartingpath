@@ -1048,34 +1048,30 @@ export function TradingCopilot({
                     ) : null;
                   })()}
 
-                  {/* Pending Copilot Alerts (interventions + pattern matches) */}
-                  {pendingAlerts.filter(a => a.alert_type !== 'morning_brief').length > 0 && (
-                    <div className="space-y-2">
-                      {pendingAlerts
-                        .filter(a => a.alert_type !== 'morning_brief')
-                        .sort((a, b) => {
-                          if (a.alert_type === 'intervention' && b.alert_type !== 'intervention') return -1;
-                          if (b.alert_type === 'intervention' && a.alert_type !== 'intervention') return 1;
-                          return 0;
-                        })
-                        .map((alert) => (
-                        <CopilotAlertBubble
-                          key={alert.id}
-                          alert={alert}
-                          onOpenTrade={handleAlertOpenTrade}
-                          onDismiss={handleAlertDismiss}
-                          onFollowUpMessage={(content) => {
-                            setMessages(prev => [...prev, {
-                              id: crypto.randomUUID(),
-                              role: "assistant" as const,
-                              content,
-                              timestamp: new Date(),
-                            }]);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  {/* Pending Copilot Alerts: interventions first (desc), then pattern matches (desc) */}
+                  {(() => {
+                    const nonBriefAlerts = pendingAlerts.filter(a => a.alert_type !== 'morning_brief');
+                    const interventions = nonBriefAlerts
+                      .filter(a => a.alert_type === 'intervention')
+                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    const patternMatches = nonBriefAlerts
+                      .filter(a => a.alert_type !== 'intervention')
+                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    const sorted = [...interventions, ...patternMatches];
+                    return sorted.length > 0 ? (
+                      <div className="space-y-3">
+                        {sorted.map((alert) => (
+                          <CopilotAlertBubble
+                            key={alert.id}
+                            alert={alert}
+                            onOpenTrade={handleAlertOpenTrade}
+                            onDismiss={handleAlertDismiss}
+                            onFollowUpMessage={(content) => persistAssistantMsg(content)}
+                          />
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
 
                   {/* Home screen chips — when no messages and no builder */}
                   {messages.length === 0 && (() => {
