@@ -2355,6 +2355,272 @@ ${sections.join('\n')}
 }
 
 // ============================================
+// CONTEXT LAYER 4: Per-Page DB Context
+// ============================================
+
+async function fetchPageDbContext(
+  supabase: any,
+  userId: string | null,
+  pageType: string | null,
+  liveContext: string | null
+): Promise<string> {
+  if (!pageType || pageType === 'other') return '';
+
+  try {
+    const sections: string[] = [];
+
+    switch (pageType) {
+      case 'edge-atlas': {
+        // Top patterns by annualized return for quick reference
+        const { data } = await supabase.rpc('get_edge_atlas_rankings_filtered', {
+          p_min_trades: 50,
+          p_sort_by: 'annualized',
+          p_limit: 5,
+        });
+        if (data?.length) {
+          const rows = data.map((r: any) =>
+            `  • ${r.pattern_name} (${r.timeframe}, ${r.direction}) — Win: ${r.win_rate_pct}%, Exp: ${r.expectancy_r}R, Ann: ${r.est_annualized_pct}%, n=${r.total_trades}`
+          ).join('\n');
+          sections.push(`**Top Edge Atlas Rankings (live):**\n${rows}`);
+        }
+        sections.push('The user is exploring pattern performance rankings. Help them understand which patterns have the best historical edge and why. Offer to drill into specific asset classes, timeframes, or patterns.');
+        break;
+      }
+
+      case 'screener': {
+        // Active pattern count and breakdown
+        const { data: patterns } = await supabase
+          .from('live_pattern_detections')
+          .select('quality_score, direction, asset_type')
+          .eq('status', 'active');
+        if (patterns?.length) {
+          const total = patterns.length;
+          const aCount = patterns.filter((p: any) => p.quality_score === 'A').length;
+          const bCount = patterns.filter((p: any) => p.quality_score === 'B').length;
+          const bullish = patterns.filter((p: any) => p.direction === 'bullish').length;
+          sections.push(`**Live Screener Snapshot:** ${total} active patterns (${aCount} A-grade, ${bCount} B-grade, ${bullish} bullish / ${total - bullish} bearish)`);
+        }
+        sections.push('Help the user filter and find the best setups. Suggest filters based on their trading plan if available.');
+        break;
+      }
+
+      case 'paper-trading': {
+        if (!userId) break;
+        const [portfolioRes, tradesRes] = await Promise.all([
+          supabase.from('paper_portfolios')
+            .select('initial_balance, current_balance, total_pnl')
+            .eq('user_id', userId)
+            .maybeSingle(),
+          supabase.from('paper_trades')
+            .select('symbol, trade_type, entry_price, pnl, status, r_multiple')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(10),
+        ]);
+        if (portfolioRes.data) {
+          const p = portfolioRes.data;
+          sections.push(`**Portfolio:** $${p.current_balance?.toFixed(0)} (P&L: $${p.total_pnl?.toFixed(0)})`);
+        }
+        const open = tradesRes.data?.filter((t: any) => t.status === 'open') || [];
+        const closed = tradesRes.data?.filter((t: any) => t.status === 'closed') || [];
+        if (open.length) sections.push(`**Open trades:** ${open.map((t: any) => `${t.symbol} ${t.trade_type}`).join(', ')}`);
+        if (closed.length) {
+          const totalR = closed.reduce((sum: number, t: any) => sum + (t.r_multiple || 0), 0);
+          sections.push(`**Recent closed (${closed.length}):** Net ${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`);
+        }
+        sections.push('The user is managing paper trades. Help with position sizing, trade management, and performance review.');
+        break;
+      }
+
+      case 'alerts': {
+        if (!userId) break;
+        const { data: alerts } = await supabase
+          .from('alerts')
+          .select('symbol, pattern, timeframe, status')
+          .eq('user_id', userId)
+          .limit(20);
+        if (alerts?.length) {
+          const active = alerts.filter((a: any) => a.status === 'active');
+          sections.push(`**Alerts:** ${alerts.length} total, ${active.length} active`);
+          if (active.length) {
+            sections.push(`Active: ${active.map((a: any) => `${a.symbol} (${a.pattern}, ${a.timeframe})`).join(', ')}`);
+          }
+        }
+        sections.push('Help the user manage their alerts — suggest new ones, review coverage gaps, or explain alert types.');
+        break;
+      }
+
+      case 'pattern-lab':
+      case 'backtest-results': {
+        if (!userId) break;
+        const { data: runs } = await supabase
+          .from('backtest_runs')
+          .select('strategy_name, instrument, timeframe, win_rate, expectancy, total_trades, profit_factor, max_drawdown, status')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        if (runs?.length) {
+          const rows = runs.map((r: any) =>
+            `  • ${r.strategy_name} on ${r.instrument} (${r.timeframe}) — WR: ${r.win_rate ? (r.win_rate * 100).toFixed(0) + '%' : '?'}, PF: ${r.profit_factor?.toFixed(1) || '?'}, n=${r.total_trades || 0}`
+          ).join('\n');
+          sections.push(`**Recent Backtests:**\n${rows}`);
+        }
+        // Check daily limit
+        const limitCheck = await supabase.rpc('check_backtest_limit', { p_user_id: userId });
+        if (limitCheck.data) {
+          sections.push(`**Usage:** ${limitCheck.data.current_usage}/${limitCheck.data.max_daily_runs} runs today (${limitCheck.data.plan} plan)`);
+        }
+        sections.push('Help the user interpret backtest results, suggest parameter improvements, or compare strategies.');
+        break;
+      }
+
+      case 'pricing': {
+        if (userId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('subscription_plan')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (profile) {
+            sections.push(`**Current plan:** ${profile.subscription_plan || 'starter'}`);
+          }
+        }
+        sections.push('The user is viewing pricing. Help them understand plan differences and which plan fits their trading style. Do NOT pressure — inform factually.');
+        break;
+      }
+
+      case 'dashboard': {
+        if (!userId) break;
+        const [portfolioRes, recentPatternsRes] = await Promise.all([
+          supabase.from('paper_portfolios')
+            .select('current_balance, total_pnl')
+            .eq('user_id', userId)
+            .maybeSingle(),
+          supabase.from('live_pattern_detections')
+            .select('instrument, pattern_name, direction, quality_score')
+            .eq('status', 'active')
+            .in('quality_score', ['A', 'B'])
+            .order('first_detected_at', { ascending: false })
+            .limit(3),
+        ]);
+        if (portfolioRes.data) {
+          sections.push(`**Portfolio:** $${portfolioRes.data.current_balance?.toFixed(0)} (P&L: $${portfolioRes.data.total_pnl?.toFixed(0)})`);
+        }
+        if (recentPatternsRes.data?.length) {
+          sections.push(`**Fresh A/B patterns:** ${recentPatternsRes.data.map((p: any) => `${p.instrument} ${p.pattern_name}`).join(', ')}`);
+        }
+        sections.push('User is on the dashboard overview. Proactively highlight actionable items: new patterns, open trade updates, upcoming economic events.');
+        break;
+      }
+
+      case 'blog-article':
+      case 'learn': {
+        // No heavy DB queries needed — the articleSlug is already in liveContext
+        sections.push('The user is reading educational content. Help them understand concepts, relate to their trading, and suggest actionable next steps (e.g., backtest the pattern, look for live examples).');
+        break;
+      }
+
+      case 'agent-scoring': {
+        if (!userId) break;
+        const { data: settings } = await supabase
+          .from('agent_scoring_settings')
+          .select('weights, take_cutoff, watch_cutoff, asset_class_filter, timeframe_filter')
+          .eq('user_id', userId)
+          .eq('is_default', true)
+          .maybeSingle();
+        if (settings) {
+          sections.push(`**Current Scoring Config:** Take≥${settings.take_cutoff}, Watch≥${settings.watch_cutoff}, Asset: ${settings.asset_class_filter}, TF: ${settings.timeframe_filter}`);
+          const w = settings.weights as any;
+          if (w) sections.push(`Weights: Analyst=${w.analyst || '?'}, Risk=${w.risk || '?'}, Timing=${w.timing || '?'}, Portfolio=${w.portfolio || '?'}`);
+        }
+        sections.push('Help the user tune their agent scoring weights and cutoffs. Explain the impact of each weight on signal quality.');
+        break;
+      }
+
+      case 'pattern-library': {
+        sections.push('The user is browsing the pattern library. Help them learn about specific patterns, compare patterns, or find which patterns work best for their preferred asset class/timeframe.');
+        break;
+      }
+
+      case 'settings': {
+        sections.push('The user is in account settings. Help with account management questions, plan details, or feature explanations.');
+        break;
+      }
+
+      case 'community': {
+        sections.push('The user is in the community feed. Help them engage with discussions, share strategies, or ask trading questions.');
+        break;
+      }
+
+      case 'faq':
+      case 'support': {
+        sections.push('The user is looking for help. Be extra helpful and guide them to the right resources. Answer support questions directly when possible.');
+        break;
+      }
+
+      case 'quiz': {
+        sections.push('The user is taking a trading knowledge quiz. Help them learn from their answers and explain concepts they may have gotten wrong.');
+        break;
+      }
+
+      case 'market-report': {
+        // Fetch latest report freshness
+        const { data: report } = await supabase
+          .from('cached_market_reports')
+          .select('generated_at, markets, time_span')
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (report) {
+          const hoursAgo = Math.round((Date.now() - new Date(report.generated_at).getTime()) / (1000 * 60 * 60));
+          sections.push(`**Latest report:** Generated ${hoursAgo}h ago covering ${report.markets?.join(', ') || 'all markets'}`);
+        }
+        sections.push('Help the user understand the market report and relate it to their trading plan or open positions.');
+        break;
+      }
+
+      case 'portfolio': {
+        if (!userId) break;
+        // Same as paper-trading context
+        const { data: portfolio } = await supabase
+          .from('paper_portfolios')
+          .select('initial_balance, current_balance, total_pnl')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (portfolio) {
+          const returnPct = portfolio.initial_balance > 0
+            ? ((portfolio.current_balance - portfolio.initial_balance) / portfolio.initial_balance * 100).toFixed(1)
+            : '0';
+          sections.push(`**Portfolio:** $${portfolio.current_balance?.toFixed(0)} (${Number(returnPct) >= 0 ? '+' : ''}${returnPct}%)`);
+        }
+        sections.push('Help the user review their portfolio performance, risk exposure, and suggest optimizations.');
+        break;
+      }
+
+      case 'calculator': {
+        sections.push('The user is using the trading calculator. Help with position sizing, risk calculations, or R-multiple explanations.');
+        break;
+      }
+
+      case 'scripts': {
+        sections.push('The user is viewing or generating trading scripts (Pine Script). Help them create, modify, or understand scripts.');
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    if (sections.length === 0) return '';
+
+    return `## Page-Specific Intelligence (${pageType})\n${sections.join('\n')}`;
+  } catch (err) {
+    console.error('[PageDbContext] Failed:', err);
+    return '';
+  }
+}
+
+// ============================================
 // RLVR TRAINING PAIR LOGGER
 // ============================================
 
