@@ -1672,7 +1672,7 @@ const PatternLabWizard = () => {
                   ) : isAuthenticated && estimate && !estimate.allowed ? (
                     <>
                       <Lock className="h-4 w-4 mr-2" />
-                      {estimate.errors?.[0] || estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
+                      {estimate.errors?.[0] ? translateEstimateError(estimate.errors[0]) : estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
                     </>
                   ) : hasNoPatterns ? (
                     <>
