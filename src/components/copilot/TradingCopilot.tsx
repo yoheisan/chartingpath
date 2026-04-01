@@ -756,6 +756,10 @@ export function TradingCopilot({
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
+      // Build live context from Zustand store
+      const liveCtxState = useCopilotContextStore.getState();
+      const liveContextPrompt = buildLiveContextPrompt(liveCtxState);
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers,
@@ -769,6 +773,7 @@ export function TradingCopilot({
             pageName: pageCtx.pageName,
             pageRoute: location.pathname,
             pageType,
+            liveContext: liveContextPrompt,
           },
           // Inject chart context as system-level context for the AI
           ...(chartContextPrompt && { chartContext: chartContextPrompt }),
