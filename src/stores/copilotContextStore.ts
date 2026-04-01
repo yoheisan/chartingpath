@@ -119,6 +119,7 @@ export const useCopilotContextStore = create<CopilotContextState>((set) => ({
   pageType: 'other',
   symbol: null,
   timeframe: null,
+  articleSlug: null,
   visiblePatterns: [],
   currentPrice: null,
   activeFilters: [],
