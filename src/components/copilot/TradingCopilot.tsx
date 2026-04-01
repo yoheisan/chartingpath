@@ -452,10 +452,10 @@ export function TradingCopilot({
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
-  // Check onboarding status on mount
+  // Check onboarding status on mount (only once via context flag)
   useEffect(() => {
-    if (!isAuthenticated || onboardingCheckedRef.current) return;
-    onboardingCheckedRef.current = true;
+    if (!isAuthenticated || copilotCtx.onboardingChecked) return;
+    copilotCtx.setOnboardingChecked(true);
     const checkOnboarding = async () => {
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -471,7 +471,7 @@ export function TradingCopilot({
       } catch { /* ignore */ }
     };
     checkOnboarding();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, copilotCtx]);
 
 
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
