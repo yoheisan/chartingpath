@@ -741,9 +741,23 @@ export function TradingCopilot({
     return (
       <div className={cn("fixed z-50 flex flex-col items-end gap-2", isMobile ? "bottom-20 right-4" : "bottom-[72px] right-6")}>
         {/* First-visit tooltip — disappears after first open */}
-        {typeof window !== 'undefined' && !sessionStorage.getItem('copilot_opened') && (
-          <div className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
+        {typeof window !== 'undefined' && !localStorage.getItem('copilot_tooltip_dismissed') && !sessionStorage.getItem('copilot_opened') && (
+          <div className="relative bg-foreground text-background text-xs font-medium pl-3 pr-7 py-1.5 rounded-lg shadow-lg animate-bounce max-w-[220px] text-center leading-snug">
             {t('copilot.tooltip', 'Ask anything about markets, patterns & trade setups ✨')}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                try { localStorage.setItem('copilot_tooltip_dismissed', '1'); } catch {}
+                // Force re-render by also setting sessionStorage
+                try { sessionStorage.setItem('copilot_opened', '1'); } catch {}
+                // Trigger re-render
+                (e.target as HTMLElement).closest('.flex.flex-col')?.querySelector('.animate-bounce')?.remove();
+              }}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded-full hover:bg-background/20 transition-colors"
+              aria-label="Dismiss tooltip"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </div>
         )}
         <Button
