@@ -194,7 +194,13 @@ const NOOP_CONTEXT: TradingCopilotContextValue = {
   consumePendingPlanBuilder: () => false,
   consumePendingNewPlan: () => false,
   setChartContext: () => {},
-  getChartContext: () => null
+  getChartContext: () => null,
+  messages: [],
+  setMessages: () => {},
+  activeConversationId: null,
+  setActiveConversationId: () => {},
+  onboardingChecked: false,
+  setOnboardingChecked: () => {},
 };
 
 export function useTradingCopilotContext() {
