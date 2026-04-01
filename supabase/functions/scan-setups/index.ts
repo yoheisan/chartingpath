@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { getSlippageBps, applyAdverseSlippage } from "../_shared/slippage-config.ts";
+import { getSlippageBps, getTotalSlippageBps, applyAdverseSlippage } from "../_shared/slippage-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
