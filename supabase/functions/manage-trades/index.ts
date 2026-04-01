@@ -125,6 +125,9 @@ Deno.serve(async (req) => {
       const isForex = trade.instrument_type === "forex" || isForexSymbol(trade.symbol);
       const forexLotSize = isForex ? Number(trade.forex_lot_size || 0.01) : 0;
 
+      // ── Per-trade slippage ──
+      const slippageBps = getSlippageBps(trade.asset_type, trade.symbol);
+
       // Calculate current PnL
       const priceMove = isLong
         ? currentPrice - entryPrice
