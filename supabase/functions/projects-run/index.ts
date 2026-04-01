@@ -2176,8 +2176,13 @@ serve(async (req) => {
               dateIndex[dateKey] = i;
             }
 
+            // Debug: log a sample dateIndex key and bars range
+            const sampleKeys = Object.keys(dateIndex).slice(0, 3);
+            console.log(`[PatternLab] dateIndex sample keys: ${sampleKeys.join(', ')}, total keys: ${Object.keys(dateIndex).length}, bars: ${bars.length}`);
+
             const instrumentSignals = signalsByInstrument[instrument];
             let lastTradeEndIndex = -1;
+            let debugSkipReasons: Record<string, number> = { noIndex: 0, outOfRange: 0, overlap: 0, invalidData: 0 };
 
             for (const signal of instrumentSignals) {
               const patternId = signal.pattern_id;
@@ -2188,24 +2193,26 @@ serve(async (req) => {
               const signalDate = signal.detected_at.split('T')[0];
               let entryIndex = dateIndex[signalDate];
 
-              // If exact date not found, find closest bar after signal date
-              if (entryIndex === undefined) {
+              // For intraday timeframes, try exact timestamp match first
+              if (entryIndex === undefined || ['1h', '4h', '8h'].includes(timeframe)) {
                 const signalTs = new Date(signal.detected_at).getTime();
                 let bestIdx = -1;
                 let bestDiff = Infinity;
                 for (let i = 0; i < bars.length; i++) {
                   const barTs = bars[i].timestamp;
-                  const diff = barTs - signalTs;
-                  if (diff >= 0 && diff < bestDiff) {
+                  const diff = Math.abs(barTs - signalTs);
+                  if (diff < bestDiff) {
                     bestDiff = diff;
                     bestIdx = i;
                   }
                 }
-                entryIndex = bestIdx;
+                if (bestIdx >= 0) {
+                  entryIndex = bestIdx;
+                }
               }
 
-              if (entryIndex < 0 || entryIndex >= bars.length - 5) {
-                // Signal date not found in price data — skip
+              if (entryIndex === undefined || entryIndex < 0 || entryIndex >= bars.length - 5) {
+                debugSkipReasons[entryIndex === undefined ? 'noIndex' : 'outOfRange']++;
                 continue;
               }
 
