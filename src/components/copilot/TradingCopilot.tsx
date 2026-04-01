@@ -404,7 +404,28 @@ export function TradingCopilot({
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
-  // Mandate handling — integrated into chat UI
+  // Check onboarding status on mount
+  useEffect(() => {
+    if (!isAuthenticated || onboardingCheckedRef.current) return;
+    onboardingCheckedRef.current = true;
+    const checkOnboarding = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) return;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+        if (profile && !(profile as any).onboarding_completed) {
+          setOnboardingMode(true);
+        }
+      } catch { /* ignore */ }
+    };
+    checkOnboarding();
+  }, [isAuthenticated]);
+
+
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
     onSaved: () => {
       setMessages(prev => [...prev, {
