@@ -182,7 +182,7 @@ export function buildLiveContextPrompt(state: CopilotContextState): string {
 
   if (state.symbol) lines.push(`- Symbol: ${state.symbol}${state.currentPrice ? ` @ ${state.currentPrice}` : ''}`);
   if (state.timeframe) lines.push(`- Timeframe: ${state.timeframe}`);
-
+  if (state.articleSlug) lines.push(`- User is reading: ${state.articleSlug}`);
   if (state.visiblePatterns.length > 0) {
     lines.push(`- Visible patterns: ${JSON.stringify(state.visiblePatterns)}`);
   }
