@@ -12,6 +12,7 @@ export function useCopilotStoreSync() {
   const setRoute = useCopilotContextStore(s => s.setRoute);
   const setSymbol = useCopilotContextStore(s => s.setSymbol);
   const setTimeframe = useCopilotContextStore(s => s.setTimeframe);
+  const setArticleSlug = useCopilotContextStore(s => s.setArticleSlug);
   const incrementTimeOnPage = useCopilotContextStore(s => s.incrementTimeOnPage);
   const setLastUserAction = useCopilotContextStore(s => s.setLastUserAction);
   const prevPathRef = useRef(location.pathname);
@@ -41,6 +42,15 @@ export function useCopilotStoreSync() {
     } else {
       setSymbol(null);
       setTimeframe(null);
+    }
+
+    // Extract article slug for blog/learn pages
+    if (pathname.startsWith('/blog/') || pathname.startsWith('/learn/')) {
+      const segments = pathname.split('/').filter(Boolean);
+      const slug = segments[segments.length - 1] || null;
+      setArticleSlug(slug);
+    } else {
+      setArticleSlug(null);
     }
 
     prevPathRef.current = pathname;

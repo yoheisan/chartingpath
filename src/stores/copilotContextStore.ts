@@ -65,6 +65,7 @@ export interface CopilotContextState {
   pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'other';
   symbol: string | null;
   timeframe: string | null;
+  articleSlug: string | null;
 
   // Chart-specific
   visiblePatterns: VisiblePattern[];
@@ -97,6 +98,7 @@ export interface CopilotContextState {
   setRoute: (route: string, pageType: CopilotContextState['pageType']) => void;
   setSymbol: (symbol: string | null) => void;
   setTimeframe: (timeframe: string | null) => void;
+  setArticleSlug: (slug: string | null) => void;
   setVisiblePatterns: (patterns: VisiblePattern[]) => void;
   setCurrentPrice: (price: number | null) => void;
   setActiveFilters: (filters: ActiveFilter[]) => void;
@@ -118,6 +120,7 @@ export const useCopilotContextStore = create<CopilotContextState>((set) => ({
   pageType: 'other',
   symbol: null,
   timeframe: null,
+  articleSlug: null,
   visiblePatterns: [],
   currentPrice: null,
   activeFilters: [],
@@ -139,6 +142,7 @@ export const useCopilotContextStore = create<CopilotContextState>((set) => ({
 
   setSymbol: (symbol) => set({ symbol }),
   setTimeframe: (timeframe) => set({ timeframe }),
+  setArticleSlug: (slug) => set({ articleSlug: slug }),
   setVisiblePatterns: (patterns) => set({ visiblePatterns: patterns }),
   setCurrentPrice: (price) => set({ currentPrice: price }),
   setActiveFilters: (filters) => set({ activeFilters: filters }),
@@ -178,7 +182,7 @@ export function buildLiveContextPrompt(state: CopilotContextState): string {
 
   if (state.symbol) lines.push(`- Symbol: ${state.symbol}${state.currentPrice ? ` @ ${state.currentPrice}` : ''}`);
   if (state.timeframe) lines.push(`- Timeframe: ${state.timeframe}`);
-
+  if (state.articleSlug) lines.push(`- User is reading: ${state.articleSlug}`);
   if (state.visiblePatterns.length > 0) {
     lines.push(`- Visible patterns: ${JSON.stringify(state.visiblePatterns)}`);
   }
