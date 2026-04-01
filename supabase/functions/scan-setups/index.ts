@@ -331,9 +331,13 @@ Deno.serve(async (req) => {
           .single();
 
         if (gateResult === "aligned" || gateResult === "partial") {
-          const entryPrice = Number(det.current_price) || 100;
+          const rawEntryPrice = Number(det.current_price) || 100;
           const positionPct = plan.max_position_pct ?? 3;
           const isLong = det.direction !== "short";
+
+          // ── Apply entry slippage (adverse: buys fill higher, sells fill lower) ──
+          const entrySlippageBps = getSlippageBps(det.asset_type, det.instrument);
+          const entryPrice = applyAdverseSlippage(rawEntryPrice, isLong, entrySlippageBps);
 
           // ── Detect instrument type ──
           const instrumentType = isForexSymbol(det.instrument) ? "forex" : (det.asset_type || null);
