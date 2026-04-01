@@ -1188,10 +1188,36 @@ export function TradingCopilot({
               />
             ) : (
               <div className="space-y-4">
-                {/* Pending Copilot Alerts */}
-                {pendingAlerts.length > 0 && (
+                {/* Morning Brief — highest priority, show latest only */}
+                {(() => {
+                  const morningBriefs = pendingAlerts.filter(a => a.alert_type === 'morning_brief');
+                  const latestBrief = morningBriefs[0];
+                  // Auto-dismiss older briefs
+                  if (morningBriefs.length > 1) {
+                    morningBriefs.slice(1).forEach(b => dismissAlert(b.id));
+                  }
+                  return latestBrief ? (
+                    <MorningBriefCard
+                      alert={latestBrief}
+                      onAutoEnterAll={handleBriefAutoEnter}
+                      onReviewOneByOne={handleBriefReviewOneByOne}
+                      onSkip={handleBriefSkip}
+                    />
+                  ) : null;
+                })()}
+
+                {/* Pending Copilot Alerts (interventions + pattern matches) */}
+                {pendingAlerts.filter(a => a.alert_type !== 'morning_brief').length > 0 && (
                   <div className="space-y-2">
-                    {pendingAlerts.map((alert) => (
+                    {pendingAlerts
+                      .filter(a => a.alert_type !== 'morning_brief')
+                      .sort((a, b) => {
+                        // Interventions first, then pattern matches
+                        if (a.alert_type === 'intervention' && b.alert_type !== 'intervention') return -1;
+                        if (b.alert_type === 'intervention' && a.alert_type !== 'intervention') return 1;
+                        return 0;
+                      })
+                      .map((alert) => (
                       <CopilotAlertBubble
                         key={alert.id}
                         alert={alert}
