@@ -2139,7 +2139,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "تم حفظ الخطة. جارٍ المسح الآن. سأعرض الإعدادات المطابقة لأسلوبك فور تأكيدها.",
+      "masterPlanSaved": "✅ تم حفظ الخطة الرئيسية. تفويضك نشط الآن عبر جميع واجهات Copilot."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

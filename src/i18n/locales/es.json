@@ -2102,7 +2102,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "Plan guardado. Escaneando ahora. Te mostraré las configuraciones que coincidan con tu estilo en cuanto se confirmen.",
+      "masterPlanSaved": "✅ Plan maestro guardado. Tu mandato está activo en todas las superficies de Copilot."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

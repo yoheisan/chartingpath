@@ -692,7 +692,7 @@ export function TradingCopilot({
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "✅ Master Plan saved. Your mandate is now active across all Copilot surfaces.",
+        content: t('copilot.panel.masterPlanSaved', "✅ Master Plan saved. Your mandate is now active across all Copilot surfaces."),
         timestamp: new Date(),
       }]);
       window.dispatchEvent(new CustomEvent("mandate-saved"));
@@ -1262,7 +1262,7 @@ export function TradingCopilot({
                     setMessages([{
                       id: crypto.randomUUID(),
                       role: "assistant" as const,
-                      content: "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
+                      content: t('copilot.panel.planSavedScanning', "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm."),
                       timestamp: new Date(),
                     }]);
                   }}

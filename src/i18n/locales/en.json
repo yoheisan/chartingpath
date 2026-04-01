@@ -5178,7 +5178,9 @@
       "setPlan": "Set your trading plan →",
       "placeholderWithPlan": "Ask Copilot anything, or give a command...",
       "placeholderNoPlan": "e.g. Only take breakouts, max 3% risk, mornings only...",
-      "placeholderGuest": "Ask Copilot anything — no sign up needed to try"
+      "placeholderGuest": "Ask Copilot anything — no sign up needed to try",
+      "planSavedScanning": "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
+      "masterPlanSaved": "✅ Master Plan saved. Your mandate is now active across all Copilot surfaces."
     }
   },
   "commandPalette": {

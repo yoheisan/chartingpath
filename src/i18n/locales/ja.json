@@ -3428,7 +3428,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "プランを保存しました。スキャン中です。あなたのスタイルに合うセットアップが確認され次第お知らせします。",
+      "masterPlanSaved": "✅ マスタープランを保存しました。あなたのマンデートはすべてのCopilot画面で有効です。"
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

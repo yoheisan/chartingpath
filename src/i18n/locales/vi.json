@@ -5221,7 +5221,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "Đã lưu kế hoạch. Đang quét. Tôi sẽ hiển thị các thiết lập phù hợp với phong cách của bạn ngay khi được xác nhận.",
+      "masterPlanSaved": "✅ Kế hoạch tổng thể đã lưu. Ủy quyền của bạn hiện đang hoạt động trên tất cả các giao diện Copilot."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

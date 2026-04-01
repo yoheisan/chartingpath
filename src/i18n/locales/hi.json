@@ -244,7 +244,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "योजना सहेजी गई। अभी स्कैन कर रहा हूँ। आपकी शैली से मेल खाने वाले सेटअप की पुष्टि होते ही दिखाऊंगा।",
+      "masterPlanSaved": "✅ मास्टर प्लान सहेजा गया। आपका जनादेश अब सभी Copilot सतहों पर सक्रिय है।"
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",
