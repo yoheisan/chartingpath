@@ -342,6 +342,36 @@ export function TradingCopilot({
     }
   }, [location.pathname, pageType, currentPageContext.pageName]);
 
+  // Sync chart-level visible patterns & plan into the Zustand store
+  const storeSetPatterns = useCopilotContextStore(s => s.setVisiblePatterns);
+  const storeSetUserPlan = useCopilotContextStore(s => s.setUserPlan);
+  const storeSetPatternStats = useCopilotContextStore(s => s.setUserPatternStats);
+  const storeSetPendingAlerts = useCopilotContextStore(s => s.setPendingAlerts);
+
+  useEffect(() => {
+    storeSetPatterns(copilotContext.visible_patterns);
+  }, [copilotContext.visible_patterns, storeSetPatterns]);
+
+  useEffect(() => {
+    if (copilotContext.user_trading_plan) {
+      storeSetUserPlan(copilotContext.user_trading_plan as any);
+    }
+  }, [copilotContext.user_trading_plan, storeSetUserPlan]);
+
+  useEffect(() => {
+    storeSetPatternStats(copilotContext.user_pattern_stats);
+  }, [copilotContext.user_pattern_stats, storeSetPatternStats]);
+
+  useEffect(() => {
+    storeSetPendingAlerts(pendingAlerts.map(a => ({
+      id: a.id,
+      symbol: a.symbol,
+      alert_type: a.alert_type,
+      pattern_type: a.pattern_type || undefined,
+      direction: a.direction || undefined,
+    })));
+  }, [pendingAlerts, storeSetPendingAlerts]);
+
   const {
     conversations,
     activeConversationId: _hookConvoId,
