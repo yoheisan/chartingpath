@@ -2997,6 +2997,7 @@ export type Database = {
           mtf_min_aligned: number | null
           mtf_required_timeframes: string[] | null
           name: string | null
+          override_constraints: Json | null
           plan_order: number | null
           preferred_patterns: Json | null
           raw_nl_input: string | null
@@ -3028,6 +3029,7 @@ export type Database = {
           mtf_min_aligned?: number | null
           mtf_required_timeframes?: string[] | null
           name?: string | null
+          override_constraints?: Json | null
           plan_order?: number | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
@@ -3059,6 +3061,7 @@ export type Database = {
           mtf_min_aligned?: number | null
           mtf_required_timeframes?: string[] | null
           name?: string | null
+          override_constraints?: Json | null
           plan_order?: number | null
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
@@ -6363,6 +6366,19 @@ export type Database = {
           email: string
           full_name: string
           user_id: string
+        }[]
+      }
+      get_override_comparison: {
+        Args: { p_days?: number; p_user_id: string }
+        Returns: {
+          copilot_r: number
+          copilot_trades: number
+          gap: number
+          override_r: number
+          override_trades: number
+          worst_override_pattern: string
+          worst_override_r: number
+          worst_override_symbol: string
         }[]
       }
       get_quiz_questions: {
