@@ -565,7 +565,7 @@ export function TradingCopilot({
     if (!isExpanded) autoOpenFiredRef.current = false;
   }, [isExpanded, chartSymbol, chartTimeframe]);
 
-
+  const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
