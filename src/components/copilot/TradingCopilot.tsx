@@ -1140,8 +1140,7 @@ export function TradingCopilot({
 
                   {/* Home screen chips — when no messages and no builder */}
                   {messages.length === 0 && (() => {
-                    const pageCtx = getPageContext(location.pathname);
-                    const tier2Chips = isAuthenticated ? pageCtx.chips : [];
+                    const tier2Chips = isAuthenticated ? currentPageContext.chips : [];
                     const redirectPath = typeof window !== 'undefined'
                       ? encodeURIComponent(window.location.pathname + window.location.search)
                       : '/';
