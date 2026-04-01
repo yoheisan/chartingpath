@@ -2998,7 +2998,14 @@ serve(async (req) => {
         if (parts.length > 0) {
           viewContextLayer = `## User's Current View\n${parts.join(' ')}\n\nWhen the user says "this pattern", "this setup", "score this", or asks vague questions, ALWAYS assume they are referring to the above context. Use the instrument, pattern, and timeframe from their current view without asking them to specify. If they ask to "score this trade", use the search_patterns tool with the instrument and pattern from their view.`;
         }
-        console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
+        console.log(`[trading-copilot] View context: page=${pageName || 'none'}, route=${pageRoute || 'none'}, pageType=${pageType || 'none'}, instrument=${viewContext.instrument || 'none'}, pattern=${viewContext.patternName || 'none'}`);
+      }
+
+      // Inject the live context prompt from the client-side Zustand store
+      let liveContextLayer = '';
+      if (liveContextRaw && typeof liveContextRaw === 'string' && liveContextRaw.length > 0) {
+        liveContextLayer = `## Live Page Context (Real-Time)\n${liveContextRaw}`;
+        console.log(`[trading-copilot] Live context injected (${liveContextRaw.length} chars)`);
       }
 
       // Inject chart context if provided (from useCopilotContext on chart page)
@@ -3009,13 +3016,13 @@ serve(async (req) => {
       }
 
       // Assemble enhanced system prompt with all context layers
-      const contextLayers = [temporalContext, platformContext, userBehavior, viewContextLayer, chartContextLayer].filter(Boolean).join('\n\n');
+      const contextLayers = [temporalContext, platformContext, userBehavior, pageDbContext, viewContextLayer, liveContextLayer, chartContextLayer].filter(Boolean).join('\n\n');
       const enhancedSystemPrompt = buildEnhancedSystemPrompt(systemPrompt, ragContext) 
         + (contextLayers ? '\n\n' + contextLayers : '')
         + langInstruction 
         + learnedRulesPrompt;
       console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
-      console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
+      console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, pageDb=${pageDbContext ? 'yes' : 'no'}, liveCtx=${liveContextRaw ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
 
       // Track tool calls/results for RLVR logging
       const allToolCalls: any[] = [];
