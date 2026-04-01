@@ -4,7 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+/** Redirect that preserves query string + hash */
+function NavigateWithSearch({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
+}
 import Layout from "./components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
