@@ -483,8 +483,91 @@ Deno.serve(async (req) => {
             totalTradesOpened++;
             console.log(`[scan-setups] Opened paper trade: ${det.instrument} ${det.direction} (${instrumentType || "standard"})`);
           }
+
+          // ── Insert copilot_alert for the user ──
+          const rrRatio = stopPrice && entryPrice && targetPrice
+            ? Math.abs(targetPrice - entryPrice) / Math.abs(entryPrice - stopPrice)
+            : null;
+
+          let alertMessage = `${det.instrument} ${det.pattern_name || "pattern"} confirmed on ${det.timeframe || "chart"}. R:R is ${rrRatio ? rrRatio.toFixed(1) : "N/A"}.`;
+          try {
+            const geminiKey = Deno.env.get("GEMINI_API_KEY");
+            if (geminiKey) {
+              const geminiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      parts: [{
+                        text: `Generate a 1-sentence trading alert. Symbol: ${det.instrument}, Pattern: ${det.pattern_name}, Timeframe: ${det.timeframe}, Direction: ${det.direction}, R:R: ${rrRatio?.toFixed(1) || "N/A"}, Gate: ${gateResult}. Format: direct, action-oriented, under 30 words. No markdown.`
+                      }]
+                    }],
+                    generationConfig: { maxOutputTokens: 80, temperature: 0.3 }
+                  }),
+                }
+              );
+              if (geminiRes.ok) {
+                const geminiData = await geminiRes.json();
+                const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) alertMessage = text.trim();
+              }
+            }
+          } catch (e) {
+            console.warn("[scan-setups] Gemini alert message error:", e);
+          }
+
+          await supabase.from("copilot_alerts").insert({
+            user_id: userId,
+            pattern_occurrence_id: det.id || null,
+            alert_type: "pattern_match",
+            symbol: det.instrument,
+            pattern_type: det.pattern_name || det.pattern_id,
+            timeframe: det.timeframe || null,
+            direction: det.direction || null,
+            entry_price: entryPrice,
+            target_price: targetPrice,
+            stop_price: stopPrice,
+            rr_ratio: rrRatio,
+            alert_message: alertMessage,
+            full_context: {
+              gate_result: gateResult,
+              gate_reason: gateReason,
+              agent_score: agentScore,
+              agent_verdict: agentVerdict,
+              reasoning,
+              instrument_type: instrumentType,
+            },
+            status: tradeErr ? "pending" : "acted",
+          }).then(({ error: alertErr }) => {
+            if (alertErr) console.warn("[scan-setups] copilot_alert insert error:", alertErr);
+            else console.log(`[scan-setups] Copilot alert inserted for ${det.instrument}`);
+          });
         } else {
-          console.log(`[scan-setups] Conflict skipped: ${det.instrument} — ${gateReason}`);
+          // Also insert alert for conflict/skipped setups so user can review
+          const rrConflict = det.current_price ? null : null;
+          await supabase.from("copilot_alerts").insert({
+            user_id: userId,
+            pattern_occurrence_id: det.id || null,
+            alert_type: "pattern_match",
+            symbol: det.instrument,
+            pattern_type: det.pattern_name || det.pattern_id,
+            timeframe: det.timeframe || null,
+            direction: det.direction || null,
+            entry_price: Number(det.current_price) || null,
+            alert_message: `${det.instrument} ${det.pattern_name || "setup"} detected but ${gateResult}: ${gateReason}`,
+            full_context: {
+              gate_result: gateResult,
+              gate_reason: gateReason,
+              agent_score: agentScore,
+              agent_verdict: agentVerdict,
+            },
+            status: "pending",
+          }).then(({ error: alertErr }) => {
+            if (alertErr) console.warn("[scan-setups] conflict alert insert error:", alertErr);
+          });
+          console.log(`[scan-setups] Conflict skipped + alerted: ${det.instrument} — ${gateReason}`);
         }
       }
     }

@@ -1298,6 +1298,63 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_alerts: {
+        Row: {
+          alert_message: string
+          alert_type: string
+          created_at: string | null
+          direction: string | null
+          entry_price: number | null
+          full_context: Json | null
+          id: string
+          pattern_occurrence_id: string | null
+          pattern_type: string | null
+          rr_ratio: number | null
+          status: string
+          stop_price: number | null
+          symbol: string
+          target_price: number | null
+          timeframe: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_message: string
+          alert_type?: string
+          created_at?: string | null
+          direction?: string | null
+          entry_price?: number | null
+          full_context?: Json | null
+          id?: string
+          pattern_occurrence_id?: string | null
+          pattern_type?: string | null
+          rr_ratio?: number | null
+          status?: string
+          stop_price?: number | null
+          symbol: string
+          target_price?: number | null
+          timeframe?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_message?: string
+          alert_type?: string
+          created_at?: string | null
+          direction?: string | null
+          entry_price?: number | null
+          full_context?: Json | null
+          id?: string
+          pattern_occurrence_id?: string | null
+          pattern_type?: string | null
+          rr_ratio?: number | null
+          status?: string
+          stop_price?: number | null
+          symbol?: string
+          target_price?: number | null
+          timeframe?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       copilot_conversations: {
         Row: {
           created_at: string

@@ -25,6 +25,9 @@ import { CopilotHistorySidebar } from "./CopilotHistorySidebar";
 import { CopilotAuthGate } from "./CopilotAuthGate";
 import { useCopilotConversations } from "@/hooks/useCopilotConversations";
 import { useCopilotFeedback } from "@/hooks/useCopilotFeedback";
+import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
+import { CopilotAlertBubble } from "./CopilotAlertBubble";
+import { usePaperTradeEntry } from "@/hooks/usePaperTradeEntry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
@@ -298,6 +301,43 @@ export function TradingCopilot({
     startNewChat,
     isAuthenticated,
   } = useCopilotConversations();
+
+  // Copilot alerts (Realtime)
+  const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
+  const { enterTrade } = usePaperTradeEntry();
+
+  const handleAlertOpenTrade = useCallback(async (alert: import("@/hooks/useCopilotAlerts").CopilotAlert) => {
+    const success = await enterTrade({
+      ticker: alert.symbol,
+      setup_type: alert.pattern_type || undefined,
+      timeframe: alert.timeframe || undefined,
+      direction: alert.direction || undefined,
+      entry_price: alert.entry_price ? Number(alert.entry_price) : undefined,
+      stop_price: alert.stop_price ? Number(alert.stop_price) : undefined,
+      target_price: alert.target_price ? Number(alert.target_price) : undefined,
+      gate_result: (alert.full_context?.gate_result as any) || "aligned",
+      gate_reason: alert.full_context?.gate_reason || undefined,
+    }, "ai_approved");
+    if (success) {
+      await actOnAlert(alert.id);
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: `✅ Paper trade opened for **${alert.symbol}**. Entry at ${Number(alert.entry_price).toFixed(4)}, R:R ${Number(alert.rr_ratio).toFixed(1)}. I'll track it for you.`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [enterTrade, actOnAlert]);
+
+  const handleAlertDismiss = useCallback(async (alertId: string) => {
+    await dismissAlert(alertId);
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: "assistant" as const,
+      content: "Got it — alert dismissed.",
+      timestamp: new Date(),
+    }]);
+  }, [dismissAlert]);
 
   const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
   const [activePatternCount, setActivePatternCount] = useState<number | null>(null);
@@ -990,6 +1030,19 @@ export function TradingCopilot({
               />
             ) : (
               <div className="space-y-4">
+                {/* Pending Copilot Alerts */}
+                {pendingAlerts.length > 0 && (
+                  <div className="space-y-2">
+                    {pendingAlerts.map((alert) => (
+                      <CopilotAlertBubble
+                        key={alert.id}
+                        alert={alert}
+                        onOpenTrade={handleAlertOpenTrade}
+                        onDismiss={handleAlertDismiss}
+                      />
+                    ))}
+                  </div>
+                )}
                 {messages.map((message, idx) => {
                   const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
                   return (
