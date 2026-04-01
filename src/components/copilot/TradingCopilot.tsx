@@ -291,6 +291,19 @@ export function TradingCopilot({
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
+  // Chart context awareness
+  const isChartPage = location.pathname.startsWith('/chart') || location.pathname.startsWith('/members/chart');
+  const chartSymbol = isChartPage ? new URLSearchParams(location.search).get('symbol') || undefined : undefined;
+  const chartTimeframe = isChartPage ? new URLSearchParams(location.search).get('timeframe') || undefined : undefined;
+  const copilotContext = useCopilotContext(
+    isChartPage ? 'chart' : 'other',
+    chartSymbol,
+    chartTimeframe
+  );
+  const chartContextPrompt = buildContextSystemPrompt(copilotContext);
+  const [chartChipsUsed, setChartChipsUsed] = useState(false);
+  const autoOpenFiredRef = useRef(false);
+
   const {
     conversations,
     activeConversationId,
