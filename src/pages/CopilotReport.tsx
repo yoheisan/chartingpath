@@ -40,12 +40,7 @@ const CopilotReport = () => {
             <p className="text-sm text-muted-foreground mt-1">
               {firstTradeDate
                 ? t('report.basedOnSince', { count: closedTrades.length, date: format(new Date(firstTradeDate), 'MMM d, yyyy') })
-                : t('report.basedOn', { count: closedTrades.length })}
-              {USE_MOCK && (
-                <span className="ml-2 px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-mono rounded">
-                  MOCK DATA
-                </span>
-              )}
+              }
             </p>
           </div>
           <div className="flex items-center gap-3">
