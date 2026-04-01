@@ -413,7 +413,7 @@ export function TradingCopilot({
   const prevPathnameRef = useRef(location.pathname);
 
   // Page type from the global store (27+ page types, synced by useCopilotStoreSync)
-  const pageType = currentPageType;
+  const pageType = useCopilotContextStore(s => s.pageType);
 
   // Log page context changes
   useEffect(() => {
