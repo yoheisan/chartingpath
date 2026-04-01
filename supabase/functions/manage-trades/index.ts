@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
         const rawFillPrice = isLong
           ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
           : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
-        const fillPrice = applyAdverseSlippage(rawFillPrice, false, slippageBps); // selling to exit long
+        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, slippageBps); // exiting: long sells (false), short buys (true)
 
         const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
