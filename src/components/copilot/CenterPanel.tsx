@@ -426,20 +426,28 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
             {pendingConflict?.reason}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 mt-2">
-            <Button variant="outline" onClick={dismissConflict}>
-              {t('copilotPage.skip', 'Skip')}
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={isSubmitting}
-              onClick={() => confirmConflictTrade()}
-              className="gap-1.5"
-            >
-              <Play className="h-3.5 w-3.5" />
-              {t('copilotPage.tradeAnyway', 'Trade Anyway')}
-            </Button>
-          </DialogFooter>
+          {frictionActive ? (
+            <OverrideFrictionGate
+              onConfirm={(reason) => confirmConflictTrade(reason)}
+              onCancel={dismissConflict}
+              isSubmitting={isSubmitting}
+            />
+          ) : (
+            <DialogFooter className="gap-2 sm:gap-0 mt-2">
+              <Button variant="outline" onClick={dismissConflict}>
+                {t('copilotPage.skip', 'Skip')}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={isSubmitting}
+                onClick={() => confirmConflictTrade()}
+                className="gap-1.5"
+              >
+                <Play className="h-3.5 w-3.5" />
+                {t('copilotPage.tradeAnyway', 'Trade Anyway')}
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
