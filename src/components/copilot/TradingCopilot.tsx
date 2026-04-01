@@ -650,7 +650,7 @@ export function TradingCopilot({
         const onboardingCompleted = (profile as any)?.onboarding_completed;
         const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
         
-        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', pageType: currentPageType });
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', pageType });
         
         // Skip onboarding if either flag is true, or if user already has a trading plan
         if (onboardingCompleted === true || hasTradingPlan) {
