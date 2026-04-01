@@ -402,6 +402,11 @@ export function TradingCopilot({
     }]);
   }, [saveMessage]);
 
+  // Keep ref in sync for interruption engine
+  useEffect(() => {
+    persistAssistantMsgRef.current = persistAssistantMsg;
+  }, [persistAssistantMsg]);
+
   const handleAlertOpenTrade = useCallback(async (alert: import("@/hooks/useCopilotAlerts").CopilotAlert) => {
     const success = await enterTrade({
       ticker: alert.symbol,
