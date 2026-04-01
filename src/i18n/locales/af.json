@@ -2202,7 +2202,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "Plan gestoor. Skandeer nou. Ek sal opstellings wat by jou styl pas, uitlig sodra hulle bevestig.",
+      "masterPlanSaved": "✅ Meesterplan gestoor. Jou mandaat is nou aktief oor alle Copilot-oppervlaktes."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

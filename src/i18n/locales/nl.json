@@ -174,7 +174,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "Plan opgeslagen. Nu aan het scannen. Ik laat setups zien die bij je stijl passen zodra ze bevestigd zijn.",
+      "masterPlanSaved": "✅ Masterplan opgeslagen. Je mandaat is nu actief op alle Copilot-oppervlakken."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",

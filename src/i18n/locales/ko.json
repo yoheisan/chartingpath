@@ -2146,7 +2146,9 @@
       "addNewPlan": "Add new trading plan",
       "chipWhyFlag": "Why did Copilot flag that?",
       "chipShowPaperTrades": "Show today's paper trades",
-      "chipWhatWatching": "What's Copilot watching?"
+      "chipWhatWatching": "What's Copilot watching?",
+      "planSavedScanning": "플랜이 저장되었습니다. 스캔 중입니다. 귀하의 스타일에 맞는 설정이 확인되면 바로 표시하겠습니다.",
+      "masterPlanSaved": "✅ 마스터 플랜이 저장되었습니다. 귀하의 위임 사항이 모든 Copilot 화면에서 활성화되었습니다."
     },
     "myAlerts": "My Alerts",
     "signInForAlerts": "Sign in to manage alerts",
