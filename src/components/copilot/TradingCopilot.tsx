@@ -36,6 +36,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCopilotContext, buildContextSystemPrompt } from "@/hooks/useCopilotContext";
 import { prewarmedContext as prewarmedCtx } from "@/hooks/useDashboardPrefetch";
 import { Badge } from "@/components/ui/badge";
+import { useCopilotContextStore, buildLiveContextPrompt } from "@/stores/copilotContextStore";
+import { useCopilotInterruptions } from "@/hooks/useCopilotInterruptions";
 import {
   Drawer,
   DrawerContent,
