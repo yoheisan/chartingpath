@@ -8,6 +8,15 @@ export interface ChartContextData {
   summary: string;
 }
 
+export interface CopilotChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  toolCalls?: { name: string; arguments: Record<string, any>; result?: any }[];
+  analysisData?: ChartAnalysisResult;
+}
+
 interface TradingCopilotContextValue {
   isOpen: boolean;
   toggle: () => void;
@@ -26,6 +35,13 @@ interface TradingCopilotContextValue {
   consumePendingNewPlan: () => boolean;
   setChartContext: (data: ChartContextData | null) => void;
   getChartContext: () => ChartContextData | null;
+  // Lifted chat state
+  messages: CopilotChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<CopilotChatMessage[]>>;
+  activeConversationId: string | null;
+  setActiveConversationId: (id: string | null) => void;
+  onboardingChecked: boolean;
+  setOnboardingChecked: (v: boolean) => void;
 }
 
 const TradingCopilotContext = createContext<TradingCopilotContextValue | null>(null);
