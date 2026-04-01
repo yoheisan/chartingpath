@@ -2029,8 +2029,19 @@ serve(async (req) => {
         // from historical_pattern_occurrences. This ensures 100% alignment between
         // the pre-check count shown in the UI and the actual backtest results.
         if (projectType === 'pattern_lab') {
-          const scannedPatternIds = [...new Set(patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p])))];
-
+          // Map pattern ID aliases (client/DB may use bull-flag, registry uses bullish-flag)
+          const PATTERN_ID_ALIASES: Record<string, string> = {
+            'bull-flag': 'bullish-flag',
+            'bear-flag': 'bearish-flag',
+          };
+          const REVERSE_ALIASES: Record<string, string> = {
+            'bullish-flag': 'bull-flag',
+            'bearish-flag': 'bear-flag',
+          };
+          const resolvedPatterns = patterns.map((p: string) => PATTERN_ID_ALIASES[p] || p);
+          const scannedPatternIds = [...new Set(resolvedPatterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p])))];
+          // DB pattern IDs use the original names (bull-flag, bear-flag)
+          const dbPatternIds = scannedPatternIds.map((p: string) => REVERSE_ALIASES[p] || p);
           console.log(`[PatternLab] Signal Replay: ${instruments.length} instruments, ${scannedPatternIds.length} patterns, grades=${gradeFilter.join(',')}, ${effectiveLookbackYears}y lookback`);
           
           const allTrades: BacktestTrade[] = [];
