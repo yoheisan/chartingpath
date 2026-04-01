@@ -372,6 +372,25 @@ export function TradingCopilot({
   const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
   const { enterTrade } = usePaperTradeEntry();
 
+  // Live context store — sync typing state
+  const storeSetIsTyping = useCopilotContextStore(s => s.setIsTyping);
+  useEffect(() => {
+    storeSetIsTyping(input.length > 0);
+  }, [input, storeSetIsTyping]);
+
+  // Interruption engine — inserts proactive Copilot messages
+  const handleInterruption = useCallback((event: import("@/hooks/useCopilotInterruptions").InterruptionEvent) => {
+    persistAssistantMsg(event.message);
+  }, []);
+
+  // persistAssistantMsg might not be defined yet at this point, so we use a ref
+  const persistAssistantMsgRef = useRef<(content: string) => void>(() => {});
+
+  useCopilotInterruptions({
+    enabled: isExpanded && !onboardingMode && isAuthenticated,
+    onInterrupt: (event) => persistAssistantMsgRef.current(event.message),
+  });
+
   const persistAssistantMsg = useCallback((content: string) => {
     const convoId = activeConvoRef.current;
     if (convoId) saveMessage(convoId, "assistant", content);
