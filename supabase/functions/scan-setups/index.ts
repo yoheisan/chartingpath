@@ -335,10 +335,10 @@ Deno.serve(async (req) => {
           const positionPct = plan.max_position_pct ?? 3;
           const isLong = det.direction !== "short";
 
-          // ── Entry slippage: base bps first, size impact added after quantity is known ──
+          // ── Entry slippage: base bps + size impact after sizing ──
           const baseSlippageBps = getSlippageBps(det.asset_type, det.instrument);
-          // Use base bps for initial price estimate (needed for sizing)
-          const entryPriceBase = applyAdverseSlippage(rawEntryPrice, isLong, baseSlippageBps);
+          // Use base bps for fill price; size impact added to stored total after quantity is known
+          const entryPrice = applyAdverseSlippage(rawEntryPrice, isLong, baseSlippageBps);
 
           // ── Detect instrument type ──
           const instrumentType = isForexSymbol(det.instrument) ? "forex" : (det.asset_type || null);
