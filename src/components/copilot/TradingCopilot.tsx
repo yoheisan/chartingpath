@@ -1320,8 +1320,8 @@ export function TradingCopilot({
           )}
         </div>
 
-        {/* ── INPUT BAR (fixed to bottom, ~52px) ── */}
-        {guestLimitReached ? (
+        {/* ── INPUT BAR — hidden during onboarding (OnboardingFlow has its own) ── */}
+        {onboardingMode ? null : guestLimitReached ? (
           <CopilotAuthGate messagesUsed={guestMsgCount} maxMessages={GUEST_MSG_LIMIT} />
         ) : (
           <div className="shrink-0 border-t border-border/60 bg-card px-3 py-2">
