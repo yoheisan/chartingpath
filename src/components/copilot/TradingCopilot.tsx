@@ -287,6 +287,8 @@ export function TradingCopilot({
   });
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [onboardingMode, setOnboardingMode] = useState(false);
+  const onboardingCheckedRef = useRef(false);
   
   const contextProcessedRef = useRef(false);
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
