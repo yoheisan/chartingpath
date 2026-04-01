@@ -58,11 +58,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
     const init = async () => {
       // Check for existing onboarding conversation
-      const { data: existing } = await supabase
-        .from("copilot_conversations")
+      const { data: existing } = await (supabase
+        .from("copilot_conversations") as any)
         .select("id, title")
         .eq("user_id", user.id)
-        .eq("flow_type" as any, "onboarding")
+        .eq("flow_type", "onboarding")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
