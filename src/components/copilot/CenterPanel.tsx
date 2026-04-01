@@ -194,6 +194,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
   const { candidates, totalScanned, loading, lastScanAt } = useScanningCandidates(plan);
   const { tradeWithGateCheck, isSubmitting, pendingConflict, confirmConflictTrade, dismissConflict } = usePaperTradeEntry();
   const [exitCandidate, setExitCandidate] = useState<ScanningCandidate | null>(null);
+  const { isActive: frictionActive } = useOverrideFriction();
 
   // Countdown to next scan (polls every 60s)
   const [countdown, setCountdown] = useState("1:00");
