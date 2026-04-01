@@ -919,8 +919,8 @@ const PatternLabWizard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Symbol Search — hidden in validate mode when instrument is locked */}
-                {!isValidate && (
+                {/* Symbol Search — hidden in validate mode only when instrument is already selected */}
+                {(!isValidate || selectedInstruments.length === 0) && (
                   <UniversalSymbolSearch
                     onSelect={(symbol, name, category) => {
                       const normalizedSymbol = normalizeSymbol(symbol);
