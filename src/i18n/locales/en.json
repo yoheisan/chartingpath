@@ -5928,8 +5928,6 @@
     "legendAvoid": "Avoid",
     "legendNoData": "No data",
     "noTrades": "No trades",
-    "bestTradingHour": "Best trading hour:",
-    "worstTradingHour": "Worst trading hour:",
     "considerRestricting": "Consider restricting your",
     "masterPlanLink": "Master Plan",
     "tradingWindowExclude": "trading window to exclude",
@@ -6233,5 +6231,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "Maximum {{max}} years lookback allowed on {{tier}} plan",
+    "maxInstruments": "Maximum {{max}} instruments allowed on {{tier}} plan",
+    "maxPatterns": "Maximum {{max}} patterns allowed on {{tier}} plan",
+    "timeframeNotAllowed": "{{timeframe}} timeframe not available on {{tier}} plan",
+    "notOnPlan": "This project is not available on your plan",
+    "projectNotAvailable": "Project type not available for your tier"
   }
 }

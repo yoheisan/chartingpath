@@ -6190,5 +6190,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "Tối đa {{max}} năm nhìn lại được phép trên gói {{tier}}",
+    "maxInstruments": "Tối đa {{max}} công cụ được phép trên gói {{tier}}",
+    "maxPatterns": "Tối đa {{max}} mẫu hình được phép trên gói {{tier}}",
+    "timeframeNotAllowed": "Khung thời gian {{timeframe}} không khả dụng trên gói {{tier}}",
+    "notOnPlan": "Dự án này không khả dụng trên gói của bạn",
+    "projectNotAvailable": "Loại dự án không khả dụng cho cấp của bạn"
   }
 }

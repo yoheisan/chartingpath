@@ -6234,5 +6234,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "{{tier}} planında en fazla {{max}} yıl geriye bakış izni var",
+    "maxInstruments": "{{tier}} planında en fazla {{max}} enstrüman izni var",
+    "maxPatterns": "{{tier}} planında en fazla {{max}} patern izni var",
+    "timeframeNotAllowed": "{{timeframe}} zaman dilimi {{tier}} planında mevcut değil",
+    "notOnPlan": "Bu proje planınızda mevcut değil",
+    "projectNotAvailable": "Proje türü seviyeniz için mevcut değil"
   }
 }

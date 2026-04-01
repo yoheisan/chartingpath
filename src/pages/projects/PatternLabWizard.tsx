@@ -216,11 +216,42 @@ interface EstimateResult {
 // Mode: validate = confirm a live signal; automate = full backtest → script
 type PatternLabMode = 'validate' | 'automate' | null;
 
+/** Translate known server-side validation errors using i18n keys */
+function useTranslateEstimateError() {
+  const { t } = useTranslation();
+  return (error: string): string => {
+    // "Maximum N years lookback allowed on TIER plan"
+    const lookbackMatch = error.match(/^Maximum (\d+) years? lookback allowed on (\w+) plan$/);
+    if (lookbackMatch) return t('planValidation.maxLookback', { max: lookbackMatch[1], tier: lookbackMatch[2] });
+
+    // "Maximum N instruments allowed on TIER plan"
+    const instrMatch = error.match(/^Maximum (\d+) instruments allowed on (\w+) plan$/);
+    if (instrMatch) return t('planValidation.maxInstruments', { max: instrMatch[1], tier: instrMatch[2] });
+
+    // "Maximum N patterns allowed on TIER plan"
+    const patMatch = error.match(/^Maximum (\d+) patterns allowed on (\w+) plan$/);
+    if (patMatch) return t('planValidation.maxPatterns', { max: patMatch[1], tier: patMatch[2] });
+
+    // "X timeframe not available on TIER plan"
+    const tfMatch = error.match(/^(.+) timeframe not available on (\w+) plan/);
+    if (tfMatch) return t('planValidation.timeframeNotAllowed', { timeframe: tfMatch[1], tier: tfMatch[2] });
+
+    // "This project is not available on your plan"
+    if (error.includes('not available on your plan')) return t('planValidation.notOnPlan');
+
+    // "Project type not available"
+    if (error.includes('not available for your tier')) return t('planValidation.projectNotAvailable');
+
+    return error; // fallback to raw string
+  };
+}
+
 const PatternLabWizard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
+  const translateEstimateError = useTranslateEstimateError();
   const isMobile = useIsMobile();
   
   // Check if we have prefilled state from a previous run
@@ -1461,7 +1492,7 @@ const PatternLabWizard = () => {
                       <Alert variant="destructive" className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          {estimate.errors?.[0] || estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
+                          {estimate.errors?.[0] ? translateEstimateError(estimate.errors[0]) : estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -1641,7 +1672,7 @@ const PatternLabWizard = () => {
                   ) : isAuthenticated && estimate && !estimate.allowed ? (
                     <>
                       <Lock className="h-4 w-4 mr-2" />
-                      {estimate.errors?.[0] || estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
+                      {estimate.errors?.[0] ? translateEstimateError(estimate.errors[0]) : estimate.reason || t('patternLabWizard.cannotRunConfig', 'Cannot run this configuration')}
                     </>
                   ) : hasNoPatterns ? (
                     <>

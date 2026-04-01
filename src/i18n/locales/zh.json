@@ -6237,5 +6237,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "{{tier}}计划最多允许{{max}}年回溯",
+    "maxInstruments": "{{tier}}计划最多允许{{max}}个标的",
+    "maxPatterns": "{{tier}}计划最多允许{{max}}个形态",
+    "timeframeNotAllowed": "{{timeframe}}时间框架在{{tier}}计划中不可用",
+    "notOnPlan": "此项目在您的计划中不可用",
+    "projectNotAvailable": "项目类型在您的等级中不可用"
   }
 }

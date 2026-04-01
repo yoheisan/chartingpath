@@ -6237,5 +6237,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "الحد الأقصى {{max}} سنوات مراجعة مسموح بها في خطة {{tier}}",
+    "maxInstruments": "الحد الأقصى {{max}} أدوات مسموح بها في خطة {{tier}}",
+    "maxPatterns": "الحد الأقصى {{max}} أنماط مسموح بها في خطة {{tier}}",
+    "timeframeNotAllowed": "الإطار الزمني {{timeframe}} غير متاح في خطة {{tier}}",
+    "notOnPlan": "هذا المشروع غير متاح في خطتك",
+    "projectNotAvailable": "نوع المشروع غير متاح لمستواك"
   }
 }

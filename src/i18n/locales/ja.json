@@ -7192,5 +7192,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "{{tier}}プランでは最大{{max}}年のルックバックが許可されています",
+    "maxInstruments": "{{tier}}プランでは最大{{max}}銘柄が許可されています",
+    "maxPatterns": "{{tier}}プランでは最大{{max}}パターンが許可されています",
+    "timeframeNotAllowed": "{{timeframe}}タイムフレームは{{tier}}プランでは利用できません",
+    "notOnPlan": "このプロジェクトはお使いのプランでは利用できません",
+    "projectNotAvailable": "プロジェクトタイプはお使いのティアでは利用できません"
   }
 }

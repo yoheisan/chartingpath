@@ -6237,5 +6237,13 @@
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades"
+  },
+  "planValidation": {
+    "maxLookback": "Максимум {{max}} лет ретроспективы на плане {{tier}}",
+    "maxInstruments": "Максимум {{max}} инструментов на плане {{tier}}",
+    "maxPatterns": "Максимум {{max}} паттернов на плане {{tier}}",
+    "timeframeNotAllowed": "Таймфрейм {{timeframe}} недоступен на плане {{tier}}",
+    "notOnPlan": "Этот проект недоступен в вашем плане",
+    "projectNotAvailable": "Тип проекта недоступен для вашего уровня"
   }
 }
