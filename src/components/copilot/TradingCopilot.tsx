@@ -358,6 +358,80 @@ export function TradingCopilot({
     }]);
   }, [dismissAlert]);
 
+  // Morning brief handlers
+  const handleBriefAutoEnter = useCallback(async (setups: any[], alertId: string) => {
+    let opened = 0;
+    for (const s of setups) {
+      const success = await enterTrade({
+        ticker: s.symbol,
+        setup_type: s.pattern_type || undefined,
+        timeframe: s.timeframe || undefined,
+        direction: s.direction || undefined,
+        entry_price: undefined,
+        stop_price: undefined,
+        target_price: undefined,
+        gate_result: "aligned",
+      }, "copilot");
+      if (success) opened++;
+    }
+    await actOnAlert(alertId);
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: "assistant" as const,
+      content: `Opened ${opened} trade${opened !== 1 ? 's' : ''} from today's setups.`,
+      timestamp: new Date(),
+    }]);
+  }, [enterTrade, actOnAlert]);
+
+  const handleBriefReviewOneByOne = useCallback(async (setups: any[], alertId: string) => {
+    await actOnAlert(alertId);
+    // Convert setups into individual pattern alert bubbles
+    for (const s of setups) {
+      const syntheticAlert = {
+        id: crypto.randomUUID(),
+        user_id: "",
+        pattern_occurrence_id: null,
+        alert_type: "pattern_match",
+        symbol: s.symbol,
+        pattern_type: s.pattern_type,
+        timeframe: s.timeframe,
+        direction: s.direction,
+        entry_price: null,
+        target_price: null,
+        stop_price: null,
+        rr_ratio: s.rr_ratio,
+        alert_message: `${s.pattern_type} on ${s.symbol} ${s.timeframe} — R:R ${s.rr_ratio.toFixed(1)}`,
+        full_context: null,
+        status: "pending",
+        created_at: new Date().toISOString(),
+      };
+      // These will appear as regular alert bubbles in the pending list
+      // We'll add them as messages for inline review
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: `📊 **${s.symbol}** — ${s.pattern_type} on ${s.timeframe}, ${s.direction}, R:R ${s.rr_ratio.toFixed(1)}. ${s.note || ''}\n\nReady to open this trade?`,
+        timestamp: new Date(),
+      }]);
+    }
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: "assistant" as const,
+      content: "All setups reviewed.",
+      timestamp: new Date(),
+    }]);
+  }, [actOnAlert]);
+
+  const handleBriefSkip = useCallback(async (alertId: string) => {
+    await dismissAlert(alertId);
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: "assistant" as const,
+      content: "Skipped. I'll keep monitoring your open positions.",
+      timestamp: new Date(),
+    }]);
+  }, [dismissAlert]);
+
   const [todayTradeCount, setTodayTradeCount] = useState<number | null>(null);
   const [activePatternCount, setActivePatternCount] = useState<number | null>(null);
 
