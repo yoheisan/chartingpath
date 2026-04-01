@@ -234,6 +234,91 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { label: "Which patterns suit my plan?", prompt: "Which patterns from this library suit my trading plan?" },
     ],
   },
+  '/projects/pricing': {
+    pageName: 'Pricing',
+    greeting: "You're viewing subscription plans. I can explain what each tier includes.",
+    chips: [
+      { label: "Compare plans", prompt: "Compare the subscription plans and what each includes" },
+      { label: "What plan suits me?", prompt: "Which plan is best for my trading style and needs?" },
+      { label: "What do I get with PRO?", prompt: "What features do I get with the PRO plan?" },
+    ],
+  },
+  '/pricing': {
+    pageName: 'Pricing',
+    greeting: "You're viewing subscription plans. I can explain what each tier includes.",
+    chips: [
+      { label: "Compare plans", prompt: "Compare the subscription plans and what each includes" },
+      { label: "What plan suits me?", prompt: "Which plan is best for my trading style and needs?" },
+    ],
+  },
+  '/blog': {
+    pageName: 'Blog Article',
+    greeting: "You're reading an article. Ask me to clarify anything or connect it to your trading.",
+    chips: [
+      { label: "Summarize this article", prompt: "Summarize the key points of the article I'm reading" },
+      { label: "How does this apply to my plan?", prompt: "How does this concept apply to my trading plan?" },
+    ],
+  },
+  '/faq': {
+    pageName: 'FAQ',
+    greeting: "You're on the FAQ page. I can help answer questions about the platform.",
+    chips: [
+      { label: "How does Copilot work?", prompt: "How does the Copilot system work?" },
+      { label: "What's Pattern Lab?", prompt: "What is Pattern Lab and how do I use it?" },
+    ],
+  },
+  '/support': {
+    pageName: 'Support',
+    greeting: "Need help? I can answer platform questions or connect you with support.",
+    chips: [
+      { label: "Report a bug", prompt: "I want to report a bug" },
+      { label: "How do I get started?", prompt: "How do I get started with the platform?" },
+    ],
+  },
+  '/community': {
+    pageName: 'Community',
+    greeting: "You're in the community. Ask me about trending discussions or share an idea.",
+    chips: [
+      { label: "What's trending?", prompt: "What are the trending discussions in the community?" },
+      { label: "Share my latest trade", prompt: "Help me share my latest trade setup with the community" },
+    ],
+  },
+  '/settings': {
+    pageName: 'Settings',
+    greeting: "You're in settings. I can help with account configuration.",
+    chips: [
+      { label: "Show my account info", prompt: "Show my account information" },
+      { label: "Update my preferences", prompt: "Help me update my trading preferences" },
+    ],
+  },
+  '/account': {
+    pageName: 'Account Settings',
+    greeting: "You're in account settings. Need help with anything?",
+    chips: [
+      { label: "Show my account info", prompt: "Show my account information" },
+    ],
+  },
+  '/terms': {
+    pageName: 'Terms of Service',
+    greeting: "You're viewing the Terms of Service. I can clarify any sections.",
+    chips: [
+      { label: "Summarize key terms", prompt: "Summarize the key terms and conditions" },
+    ],
+  },
+  '/privacy': {
+    pageName: 'Privacy Policy',
+    greeting: "You're viewing the Privacy Policy. I can explain how your data is handled.",
+    chips: [
+      { label: "How is my data used?", prompt: "How is my data collected and used on this platform?" },
+    ],
+  },
+  '/quiz': {
+    pageName: 'Quiz',
+    greeting: "You're taking a quiz. I can help explain any concepts you're unsure about.",
+    chips: [
+      { label: "Explain this concept", prompt: "Explain the trading concept from the current quiz question" },
+    ],
+  },
 };
 
 const DEFAULT_PAGE_CONTEXT: PageContext = {

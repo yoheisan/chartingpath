@@ -62,7 +62,7 @@ export type UserAction =
 export interface CopilotContextState {
   // Core page context
   route: string;
-  pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'other';
+  pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'pricing' | 'blog' | 'blog-article' | 'faq' | 'settings' | 'agent-scoring' | 'pattern-lab' | 'backtest-results' | 'portfolio' | 'market-report' | 'quiz' | 'learn' | 'calculator' | 'alerts' | 'scripts' | 'copilot' | 'edge-atlas' | 'pattern-library' | 'community' | 'support' | 'terms' | 'privacy' | 'other';
   symbol: string | null;
   timeframe: string | null;
   articleSlug: string | null;
@@ -174,10 +174,38 @@ export const useCopilotContextStore = create<CopilotContextState>((set) => ({
 /**
  * Build a system prompt from the live context store state.
  */
+const PAGE_DESCRIPTIONS: Partial<Record<CopilotContextState['pageType'], string>> = {
+  chart: 'User is viewing a chart',
+  dashboard: 'User is on the trading dashboard',
+  screener: 'User is browsing live pattern detections',
+  'paper-trading': 'User is managing paper trades',
+  pricing: 'User is viewing subscription plans',
+  'blog-article': 'User is reading an educational article',
+  learn: 'User is browsing the learning library',
+  faq: 'User is on the FAQ page',
+  settings: 'User is in account settings',
+  'agent-scoring': 'User is configuring agent scoring weights',
+  'pattern-lab': 'User is in Pattern Lab for backtesting',
+  'backtest-results': 'User is reviewing backtest results',
+  alerts: 'User is managing alerts',
+  scripts: 'User is viewing or generating scripts',
+  copilot: 'User is on the Copilot desk',
+  'edge-atlas': 'User is exploring the Edge Atlas',
+  'pattern-library': 'User is browsing the pattern library',
+  community: 'User is in the community feed',
+  support: 'User is on the support page',
+  quiz: 'User is taking a quiz',
+  'market-report': 'User is viewing a market report',
+  portfolio: 'User is reviewing portfolio',
+  terms: 'User is viewing Terms of Service',
+  privacy: 'User is viewing Privacy Policy',
+};
+
 export function buildLiveContextPrompt(state: CopilotContextState): string {
+  const pageDesc = PAGE_DESCRIPTIONS[state.pageType] || `User is on ${state.route}`;
   const lines: string[] = [
     'Current context:',
-    `- Page: ${state.route} (${state.pageType})`,
+    `- Page: ${state.route} (${state.pageType}) — ${pageDesc}`,
   ];
 
   if (state.symbol) lines.push(`- Symbol: ${state.symbol}${state.currentPrice ? ` @ ${state.currentPrice}` : ''}`);
