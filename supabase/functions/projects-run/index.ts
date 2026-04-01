@@ -2093,7 +2093,7 @@ serve(async (req) => {
                 .select('id, symbol, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_date, outcome_price, bars_to_outcome, timeframe')
                 .eq('symbol', instrument)
                 .eq('timeframe', timeframe)
-                .in('pattern_id', scannedPatternIds)
+                .in('pattern_id', dbPatternIds)
                 .gte('detected_at', startDate.toISOString())
                 .lte('detected_at', endDate.toISOString())
                 .order('detected_at', { ascending: true })
