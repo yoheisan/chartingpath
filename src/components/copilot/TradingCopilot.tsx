@@ -395,8 +395,8 @@ export function TradingCopilot({
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
   const isMobile = useIsMobile();
 
-  // Chart context awareness
-  const isChartPage = location.pathname.startsWith('/chart') || location.pathname.startsWith('/members/chart');
+  // Chart context awareness — use exact paths to avoid matching /chart-patterns/*
+  const isChartPage = location.pathname.startsWith('/chart/') || location.pathname === '/chart' || location.pathname.startsWith('/members/chart');
   const chartSymbol = isChartPage ? new URLSearchParams(location.search).get('symbol') || undefined : undefined;
   const chartTimeframe = isChartPage ? new URLSearchParams(location.search).get('timeframe') || undefined : undefined;
   const copilotContext = useCopilotContext(
@@ -412,12 +412,8 @@ export function TradingCopilot({
   const currentPageContext = getPageContext(location.pathname);
   const prevPathnameRef = useRef(location.pathname);
 
-  // Detect page type for AI context
-  const pageType = isChartPage ? 'chart'
-    : location.pathname.startsWith('/members/dashboard') ? 'dashboard'
-    : location.pathname.startsWith('/tools/paper-trading') ? 'paper-trading'
-    : location.pathname.startsWith('/patterns/live') || location.pathname.startsWith('/screener') ? 'screener'
-    : 'other';
+  // Page type from the global store (27+ page types, synced by useCopilotStoreSync)
+  const pageType = currentPageType;
 
   // Log page context changes
   useEffect(() => {
