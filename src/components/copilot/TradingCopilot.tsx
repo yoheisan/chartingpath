@@ -269,7 +269,9 @@ export function TradingCopilot({
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const copilotCtx = useTradingCopilotContext();
+  const messages = copilotCtx.messages;
+  const setMessages = copilotCtx.setMessages;
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -284,7 +286,6 @@ export function TradingCopilot({
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [onboardingMode, setOnboardingMode] = useState(false);
-  const onboardingCheckedRef = useRef(false);
   
   const contextProcessedRef = useRef(false);
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
@@ -305,16 +306,29 @@ export function TradingCopilot({
 
   const {
     conversations,
-    activeConversationId,
-    setActiveConversationId,
+    activeConversationId: _hookConvoId,
+    setActiveConversationId: _hookSetConvoId,
     isLoadingHistory,
     createConversation,
     loadMessages,
     saveMessage,
     deleteConversation,
-    startNewChat,
+    startNewChat: hookStartNewChat,
     isAuthenticated,
   } = useCopilotConversations();
+
+  // Use context-level activeConversationId instead of hook-level
+  const activeConversationId = copilotCtx.activeConversationId;
+  const setActiveConversationId = useCallback((id: string | null) => {
+    copilotCtx.setActiveConversationId(id);
+    _hookSetConvoId(id);
+  }, [copilotCtx, _hookSetConvoId]);
+
+  const startNewChat = useCallback(() => {
+    hookStartNewChat();
+    copilotCtx.setActiveConversationId(null);
+    setMessages([]);
+  }, [hookStartNewChat, copilotCtx, setMessages]);
 
   // Copilot alerts (Realtime)
   const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
