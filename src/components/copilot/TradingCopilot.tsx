@@ -1030,6 +1030,19 @@ export function TradingCopilot({
               />
             ) : (
               <div className="space-y-4">
+                {/* Pending Copilot Alerts */}
+                {pendingAlerts.length > 0 && (
+                  <div className="space-y-2">
+                    {pendingAlerts.map((alert) => (
+                      <CopilotAlertBubble
+                        key={alert.id}
+                        alert={alert}
+                        onOpenTrade={handleAlertOpenTrade}
+                        onDismiss={handleAlertDismiss}
+                      />
+                    ))}
+                  </div>
+                )}
                 {messages.map((message, idx) => {
                   const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
                   return (
