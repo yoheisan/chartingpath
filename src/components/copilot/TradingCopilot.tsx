@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTradingCopilotContext, type CopilotChatMessage } from "./TradingCopilotContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
@@ -42,14 +43,8 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  toolCalls?: ToolCall[];
-  analysisData?: ChartAnalysisResult;
-}
+// Message type alias — uses the context's shared type
+type Message = CopilotChatMessage;
 
 interface ToolCall {
   name: string;
@@ -274,7 +269,9 @@ export function TradingCopilot({
 }: TradingCopilotProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const copilotCtx = useTradingCopilotContext();
+  const messages = copilotCtx.messages;
+  const setMessages = copilotCtx.setMessages;
   const [currentAnalysis, setCurrentAnalysis] = useState<ChartAnalysisResult | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -289,7 +286,6 @@ export function TradingCopilot({
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [onboardingMode, setOnboardingMode] = useState(false);
-  const onboardingCheckedRef = useRef(false);
   
   const contextProcessedRef = useRef(false);
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
@@ -310,16 +306,29 @@ export function TradingCopilot({
 
   const {
     conversations,
-    activeConversationId,
-    setActiveConversationId,
+    activeConversationId: _hookConvoId,
+    setActiveConversationId: _hookSetConvoId,
     isLoadingHistory,
     createConversation,
     loadMessages,
     saveMessage,
     deleteConversation,
-    startNewChat,
+    startNewChat: hookStartNewChat,
     isAuthenticated,
   } = useCopilotConversations();
+
+  // Use context-level activeConversationId instead of hook-level
+  const activeConversationId = copilotCtx.activeConversationId;
+  const setActiveConversationId = useCallback((id: string | null) => {
+    copilotCtx.setActiveConversationId(id);
+    _hookSetConvoId(id);
+  }, [copilotCtx, _hookSetConvoId]);
+
+  const startNewChat = useCallback(() => {
+    hookStartNewChat();
+    copilotCtx.setActiveConversationId(null);
+    setMessages([]);
+  }, [hookStartNewChat, copilotCtx, setMessages]);
 
   // Copilot alerts (Realtime)
   const { pendingAlerts, dismissAlert, actOnAlert } = useCopilotAlerts();
@@ -443,10 +452,10 @@ export function TradingCopilot({
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
-  // Check onboarding status on mount
+  // Check onboarding status on mount (only once via context flag)
   useEffect(() => {
-    if (!isAuthenticated || onboardingCheckedRef.current) return;
-    onboardingCheckedRef.current = true;
+    if (!isAuthenticated || copilotCtx.onboardingChecked) return;
+    copilotCtx.setOnboardingChecked(true);
     const checkOnboarding = async () => {
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -462,7 +471,7 @@ export function TradingCopilot({
       } catch { /* ignore */ }
     };
     checkOnboarding();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, copilotCtx]);
 
 
   const { state: mandateState, submit: mandateSubmit, confirmSave: mandateConfirm, reset: mandateReset } = useMandateSubmit({
@@ -646,6 +655,7 @@ export function TradingCopilot({
     if (!convoId && isAuthenticated) {
       convoId = await createConversation(userMessage.slice(0, 60));
       activeConvoRef.current = convoId;
+      if (convoId) copilotCtx.setActiveConversationId(convoId);
     }
 
     // Persist user message
