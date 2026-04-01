@@ -547,6 +547,13 @@ export function TradingCopilot({
   }, [isAuthenticated]);
 
   // Check onboarding status on mount (only once via context flag)
+  // Track whether user needs onboarding (but don't auto-show on non-core pages)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const currentPageType = useCopilotContextStore(s => s.pageType);
+  
+  // Core pages where onboarding should auto-trigger
+  const isCorePage = ['chart', 'dashboard', 'screener', 'paper-trading'].includes(currentPageType);
+
   useEffect(() => {
     if (!isAuthenticated || copilotCtx.onboardingChecked) return;
     copilotCtx.setOnboardingChecked(true);
@@ -563,22 +570,20 @@ export function TradingCopilot({
         const onboardingCompleted = (profile as any)?.onboarding_completed;
         const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
         
-        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null' });
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', pageType: currentPageType });
         
         // Skip onboarding if either flag is true, or if user already has a trading plan
-        // Treat null as "completed" for existing users who have a plan
         if (onboardingCompleted === true || hasTradingPlan) {
-          // Existing user — skip onboarding
           return;
         }
         
-        // Only show onboarding when explicitly false (new user) and no plan
-        if (onboardingCompleted === false && !hasTradingPlan) {
-          setOnboardingMode(true);
-        }
-        // If onboardingCompleted is null and no plan, also show onboarding (truly new user)
-        if (onboardingCompleted === null && !hasTradingPlan) {
-          setOnboardingMode(true);
+        // Mark that onboarding is needed
+        if ((onboardingCompleted === false || onboardingCompleted === null) && !hasTradingPlan) {
+          setNeedsOnboarding(true);
+          // Only auto-show on core trading pages
+          if (isCorePage) {
+            setOnboardingMode(true);
+          }
         }
       } catch { /* ignore */ }
     };
