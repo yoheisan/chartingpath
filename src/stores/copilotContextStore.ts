@@ -62,7 +62,7 @@ export type UserAction =
 export interface CopilotContextState {
   // Core page context
   route: string;
-  pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'other';
+  pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'pricing' | 'blog' | 'blog-article' | 'faq' | 'settings' | 'agent-scoring' | 'pattern-lab' | 'backtest-results' | 'portfolio' | 'market-report' | 'quiz' | 'learn' | 'calculator' | 'alerts' | 'scripts' | 'copilot' | 'edge-atlas' | 'pattern-library' | 'community' | 'support' | 'terms' | 'privacy' | 'other';
   symbol: string | null;
   timeframe: string | null;
   articleSlug: string | null;
