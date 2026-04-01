@@ -3225,7 +3225,7 @@ export type Database = {
           price_crossed_at: string | null
           quantity: number
           setup_type: string | null
-          slippage_pct: number | null
+          slippage_bps: number | null
           source: string | null
           status: string
           stop_loss: number | null
@@ -3271,7 +3271,7 @@ export type Database = {
           price_crossed_at?: string | null
           quantity: number
           setup_type?: string | null
-          slippage_pct?: number | null
+          slippage_bps?: number | null
           source?: string | null
           status?: string
           stop_loss?: number | null
@@ -3317,7 +3317,7 @@ export type Database = {
           price_crossed_at?: string | null
           quantity?: number
           setup_type?: string | null
-          slippage_pct?: number | null
+          slippage_bps?: number | null
           source?: string | null
           status?: string
           stop_loss?: number | null

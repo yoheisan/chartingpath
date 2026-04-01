@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { getSlippageBps, applyAdverseSlippage } from "../_shared/slippage-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -330,9 +331,13 @@ Deno.serve(async (req) => {
           .single();
 
         if (gateResult === "aligned" || gateResult === "partial") {
-          const entryPrice = Number(det.current_price) || 100;
+          const rawEntryPrice = Number(det.current_price) || 100;
           const positionPct = plan.max_position_pct ?? 3;
           const isLong = det.direction !== "short";
+
+          // ── Apply entry slippage (adverse: buys fill higher, sells fill lower) ──
+          const entrySlippageBps = getSlippageBps(det.asset_type, det.instrument);
+          const entryPrice = applyAdverseSlippage(rawEntryPrice, isLong, entrySlippageBps);
 
           // ── Detect instrument type ──
           const instrumentType = isForexSymbol(det.instrument) ? "forex" : (det.asset_type || null);
@@ -455,6 +460,7 @@ Deno.serve(async (req) => {
             outcome: "open",
             notes: `[auto-scan] ${det.pattern_name || "pattern"} on ${det.timeframe || "unknown"}`,
             instrument_type: instrumentType,
+            slippage_bps: entrySlippageBps,
           };
 
           if (isForex) {
