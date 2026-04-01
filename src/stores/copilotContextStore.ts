@@ -65,6 +65,7 @@ export interface CopilotContextState {
   pageType: 'chart' | 'dashboard' | 'screener' | 'paper-trading' | 'other';
   symbol: string | null;
   timeframe: string | null;
+  articleSlug: string | null;
 
   // Chart-specific
   visiblePatterns: VisiblePattern[];
