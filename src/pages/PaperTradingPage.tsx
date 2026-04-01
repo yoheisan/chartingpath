@@ -28,6 +28,24 @@ export default function PaperTradingPage() {
   const [flattening, setFlattening] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const setOpenPositions = useCopilotContextStore(s => s.setOpenPositions);
+
+  // Sync open trades to CopilotContextStore
+  useEffect(() => {
+    if (openTrades) {
+      setOpenPositions(openTrades.map((t: any) => ({
+        id: t.id,
+        symbol: t.symbol,
+        pattern: t.setup_type || 'unknown',
+        pnl_r: t.outcome_r ? Number(t.outcome_r) : 0,
+        direction: t.trade_type || 'long',
+        entry_price: t.entry_price ? Number(t.entry_price) : undefined,
+        current_price: t.current_price ? Number(t.current_price) : undefined,
+        stop_price: t.stop_loss ? Number(t.stop_loss) : undefined,
+        target_price: t.take_profit ? Number(t.take_profit) : undefined,
+      })));
+    }
+  }, [openTrades, setOpenPositions]);
 
   const handleOverrideConfirm = async (trade: PaperTrade, reason: string, notes: string, manualPrice?: number) => {
     setOverrideSubmitting(true);
