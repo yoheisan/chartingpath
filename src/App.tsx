@@ -4,7 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+/** Redirect that preserves query string + hash */
+function NavigateWithSearch({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
+}
 import Layout from "./components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageCaptureButton } from "./components/dev/PageCaptureButton";
@@ -231,6 +237,7 @@ const App = () => (
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />
           <Route path="/patterns/stats/:patternSlug/:assetClass/:timeframe" element={withSuspense(<ProgrammaticPatternStatsPage />)} />
           <Route path="/instruments/:symbol" element={withSuspense(<InstrumentPage />)} />
+          <Route path="/members/copilot" element={<NavigateWithSearch to="/copilot" />} />
           <Route path="/copilot" element={withSuspense(<Copilot />)} />
           <Route path="/copilot/report" element={withSuspense(<CopilotReport />)} />
           <Route path="/features/trading-copilot" element={withSuspense(<TradingCopilotFeature />)} />

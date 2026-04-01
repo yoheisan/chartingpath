@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import { isForexSymbol, calcForexPnl } from "@/utils/forexUtils";
 import { ChevronLeft, LayoutDashboard, Bell, FileText, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +11,7 @@ import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import RightPanel from "@/components/copilot/RightPanel";
 import CenterPanel, { SelectedClosedTrade } from "@/components/copilot/CenterPanel";
 import { MobileCopilotLayout } from "@/components/copilot/MobileCopilotLayout";
+import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 
 import { useMasterPlan } from "@/hooks/useMasterPlan";
 import { useCopilotTrades } from "@/hooks/useCopilotTrades";
@@ -21,9 +23,22 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Copilot = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const copilotCtx = useTradingCopilotContext();
   const { rules, hasPlan, refreshPlan, plans, selectedPlanId, selectPlan, plan: activePlan } = useMasterPlan();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+
+  // Handle ?action=new-plan from email CTAs
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new-plan') {
+      copilotCtx.openNewPlanBuilder();
+      // Remove the query param so it doesn't re-trigger
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
   const { subscriptionPlan } = useUserProfile();
   const { openTrades, refetch: refetchTrades } = useCopilotTrades(user?.id);
 
