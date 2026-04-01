@@ -141,6 +141,7 @@ export const useCopilotContextStore = create<CopilotContextState>((set) => ({
 
   setSymbol: (symbol) => set({ symbol }),
   setTimeframe: (timeframe) => set({ timeframe }),
+  setArticleSlug: (slug) => set({ articleSlug: slug }),
   setVisiblePatterns: (patterns) => set({ visiblePatterns: patterns }),
   setCurrentPrice: (price) => set({ currentPrice: price }),
   setActiveFilters: (filters) => set({ activeFilters: filters }),
