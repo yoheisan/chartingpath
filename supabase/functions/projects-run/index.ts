@@ -2118,15 +2118,23 @@ serve(async (req) => {
 
           console.log(`[PatternLab] Signal Replay: ${allSignals.length} signals fetched from DB (matching grade filter)`);
 
-          // Initialize funnel tracking
+          // Initialize funnel tracking (use both registry IDs and DB IDs)
           for (const patId of scannedPatternIds) {
             detectionFunnel[patId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+          }
+          for (const patId of dbPatternIds) {
+            if (!detectionFunnel[patId]) {
+              detectionFunnel[patId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+            }
           }
 
           // Count total signals per pattern (before overlap filtering)
           for (const signal of allSignals) {
-            if (detectionFunnel[signal.pattern_id]) {
-              detectionFunnel[signal.pattern_id].detected++;
+            // Try both DB ID and registry ID
+            const registryId = PATTERN_ID_ALIASES[signal.pattern_id] || signal.pattern_id;
+            const funnel = detectionFunnel[signal.pattern_id] || detectionFunnel[registryId];
+            if (funnel) {
+              funnel.detected++;
             }
           }
 
