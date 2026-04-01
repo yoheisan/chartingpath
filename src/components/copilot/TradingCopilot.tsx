@@ -96,6 +96,15 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { label: "What's the market doing?", prompt: "What's the market doing?" },
     ],
   },
+  '/tools/paper-trading': {
+    pageName: 'Paper Trading',
+    greeting: "Paper Trading is open. I can see your open positions.",
+    chips: [
+      { label: "Summarize my open positions", prompt: "Summarize my open positions with current P&L" },
+      { label: "Which trades are near TP/SL?", prompt: "Which of my open trades are approaching TP or SL?" },
+      { label: "Show today's paper results", prompt: "Show today's paper trading results" },
+    ],
+  },
   '/screener': {
     pageName: 'Active Pattern Screener',
     greeting: "I can see the screener. Want me to find setups matching your mandate?",
@@ -213,6 +222,14 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
     chips: [
       { label: "Open Agent Scoring", prompt: "Open Agent Scoring" },
       { label: "Run a backtest", prompt: "Run a backtest" },
+    ],
+  },
+  '/learn': {
+    pageName: 'Learn',
+    greeting: "You're browsing learning content. Ask me about any trading concept.",
+    chips: [
+      { label: "Explain chart patterns", prompt: "Give me a quick overview of chart patterns" },
+      { label: "Which patterns suit my plan?", prompt: "Which patterns from this library suit my trading plan?" },
     ],
   },
 };
