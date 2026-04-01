@@ -40,7 +40,7 @@ const CopilotReport = () => {
             <p className="text-sm text-muted-foreground mt-1">
               {firstTradeDate
                 ? t('report.basedOnSince', { count: closedTrades.length, date: format(new Date(firstTradeDate), 'MMM d, yyyy') })
-              }
+                : t('report.basedOn', { count: closedTrades.length })}
             </p>
           </div>
           <div className="flex items-center gap-3">
