@@ -217,6 +217,9 @@ Deno.serve(async (req) => {
           ? calcForexPnl(trade.symbol, tpMove, forexLotSize)
           : tpMove * quantity;
 
+        const tpDetectedAt = new Date();
+        const tpPriceCrossedAt = lastConfirmed ? lastConfirmed.toISOString() : tpDetectedAt.toISOString();
+
         await supabase
           .from("paper_trades")
           .update({
@@ -224,13 +227,14 @@ Deno.serve(async (req) => {
             exit_price: Math.round(fillPrice * 1e8) / 1e8,
             pnl: Math.round(exitPnlDollars * 100) / 100,
             outcome_r: Math.round(exitPnlR * 100) / 100,
-            closed_at: new Date().toISOString(),
+            closed_at: tpDetectedAt.toISOString(),
             close_reason: "Take profit hit",
             hold_duration_mins: holdMins,
             outcome: "win",
             ideal_exit_price: takeProfit,
             slippage_pct: SLIPPAGE_PCT,
             detection_latency_ms: detectionLatencyMs,
+            price_crossed_at: tpPriceCrossedAt,
           })
           .eq("id", trade.id);
 
