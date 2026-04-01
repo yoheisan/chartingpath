@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
             hold_duration_mins: holdMins,
             outcome: "win",
             ideal_exit_price: takeProfit,
-            slippage_pct: SLIPPAGE_PCT,
+            slippage_bps: slippageBps,
             detection_latency_ms: detectionLatencyMs,
             price_crossed_at: tpPriceCrossedAt,
           })
