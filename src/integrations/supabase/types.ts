@@ -3222,6 +3222,7 @@ export type Database = {
           pnl: number | null
           portfolio_id: string
           position_size_pct: number | null
+          price_crossed_at: string | null
           quantity: number
           setup_type: string | null
           slippage_pct: number | null
@@ -3267,6 +3268,7 @@ export type Database = {
           pnl?: number | null
           portfolio_id: string
           position_size_pct?: number | null
+          price_crossed_at?: string | null
           quantity: number
           setup_type?: string | null
           slippage_pct?: number | null
@@ -3312,6 +3314,7 @@ export type Database = {
           pnl?: number | null
           portfolio_id?: string
           position_size_pct?: number | null
+          price_crossed_at?: string | null
           quantity?: number
           setup_type?: string | null
           slippage_pct?: number | null
