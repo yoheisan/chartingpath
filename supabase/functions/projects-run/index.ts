@@ -2029,8 +2029,19 @@ serve(async (req) => {
         // from historical_pattern_occurrences. This ensures 100% alignment between
         // the pre-check count shown in the UI and the actual backtest results.
         if (projectType === 'pattern_lab') {
-          const scannedPatternIds = [...new Set(patterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p])))];
-
+          // Map pattern ID aliases (client/DB may use bull-flag, registry uses bullish-flag)
+          const PATTERN_ID_ALIASES: Record<string, string> = {
+            'bull-flag': 'bullish-flag',
+            'bear-flag': 'bearish-flag',
+          };
+          const REVERSE_ALIASES: Record<string, string> = {
+            'bullish-flag': 'bull-flag',
+            'bearish-flag': 'bear-flag',
+          };
+          const resolvedPatterns = patterns.map((p: string) => PATTERN_ID_ALIASES[p] || p);
+          const scannedPatternIds = [...new Set(resolvedPatterns.filter((p: string) => Boolean(WEDGE_PATTERN_REGISTRY[p])))];
+          // DB pattern IDs use the original names (bull-flag, bear-flag)
+          const dbPatternIds = scannedPatternIds.map((p: string) => REVERSE_ALIASES[p] || p);
           console.log(`[PatternLab] Signal Replay: ${instruments.length} instruments, ${scannedPatternIds.length} patterns, grades=${gradeFilter.join(',')}, ${effectiveLookbackYears}y lookback`);
           
           const allTrades: BacktestTrade[] = [];
@@ -2082,7 +2093,7 @@ serve(async (req) => {
                 .select('id, symbol, pattern_id, pattern_name, direction, detected_at, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, outcome, outcome_date, outcome_price, bars_to_outcome, timeframe')
                 .eq('symbol', instrument)
                 .eq('timeframe', timeframe)
-                .in('pattern_id', scannedPatternIds)
+                .in('pattern_id', dbPatternIds)
                 .gte('detected_at', startDate.toISOString())
                 .lte('detected_at', endDate.toISOString())
                 .order('detected_at', { ascending: true })
@@ -2107,15 +2118,23 @@ serve(async (req) => {
 
           console.log(`[PatternLab] Signal Replay: ${allSignals.length} signals fetched from DB (matching grade filter)`);
 
-          // Initialize funnel tracking
+          // Initialize funnel tracking (use both registry IDs and DB IDs)
           for (const patId of scannedPatternIds) {
             detectionFunnel[patId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+          }
+          for (const patId of dbPatternIds) {
+            if (!detectionFunnel[patId]) {
+              detectionFunnel[patId] = { detected: 0, gradeFiltered: 0, overlapSkipped: 0, traded: 0 };
+            }
           }
 
           // Count total signals per pattern (before overlap filtering)
           for (const signal of allSignals) {
-            if (detectionFunnel[signal.pattern_id]) {
-              detectionFunnel[signal.pattern_id].detected++;
+            // Try both DB ID and registry ID
+            const registryId = PATTERN_ID_ALIASES[signal.pattern_id] || signal.pattern_id;
+            const funnel = detectionFunnel[signal.pattern_id] || detectionFunnel[registryId];
+            if (funnel) {
+              funnel.detected++;
             }
           }
 
@@ -2176,8 +2195,13 @@ serve(async (req) => {
               dateIndex[dateKey] = i;
             }
 
+            // Debug: log a sample dateIndex key and bars range
+            const sampleKeys = Object.keys(dateIndex).slice(0, 3);
+            console.log(`[PatternLab] dateIndex sample keys: ${sampleKeys.join(', ')}, total keys: ${Object.keys(dateIndex).length}, bars: ${bars.length}`);
+
             const instrumentSignals = signalsByInstrument[instrument];
             let lastTradeEndIndex = -1;
+            let debugSkipReasons: Record<string, number> = { noIndex: 0, outOfRange: 0, overlap: 0, invalidData: 0 };
 
             for (const signal of instrumentSignals) {
               const patternId = signal.pattern_id;
@@ -2188,24 +2212,26 @@ serve(async (req) => {
               const signalDate = signal.detected_at.split('T')[0];
               let entryIndex = dateIndex[signalDate];
 
-              // If exact date not found, find closest bar after signal date
-              if (entryIndex === undefined) {
+              // For intraday timeframes, try exact timestamp match first
+              if (entryIndex === undefined || ['1h', '4h', '8h'].includes(timeframe)) {
                 const signalTs = new Date(signal.detected_at).getTime();
                 let bestIdx = -1;
                 let bestDiff = Infinity;
                 for (let i = 0; i < bars.length; i++) {
                   const barTs = bars[i].timestamp;
-                  const diff = barTs - signalTs;
-                  if (diff >= 0 && diff < bestDiff) {
+                  const diff = Math.abs(barTs - signalTs);
+                  if (diff < bestDiff) {
                     bestDiff = diff;
                     bestIdx = i;
                   }
                 }
-                entryIndex = bestIdx;
+                if (bestIdx >= 0) {
+                  entryIndex = bestIdx;
+                }
               }
 
-              if (entryIndex < 0 || entryIndex >= bars.length - 5) {
-                // Signal date not found in price data — skip
+              if (entryIndex === undefined || entryIndex < 0 || entryIndex >= bars.length - 5) {
+                debugSkipReasons[entryIndex === undefined ? 'noIndex' : 'outOfRange']++;
                 continue;
               }
 
@@ -2218,7 +2244,9 @@ serve(async (req) => {
               // Use entry price from the DB signal (validated during seeding)
               const entryPrice = signal.entry_price;
               const stopLossPrice = signal.stop_loss_price;
-              const direction = signal.direction as 'long' | 'short';
+              // Map DB direction (bullish/bearish) to engine direction (long/short)
+              const rawDir = signal.direction?.toLowerCase();
+              const direction: 'long' | 'short' = (rawDir === 'bullish' || rawDir === 'long') ? 'long' : 'short';
               const isLong = direction === 'long';
               const stopDistance = Math.abs(entryPrice - stopLossPrice);
 
@@ -2270,6 +2298,7 @@ serve(async (req) => {
               if (funnel) funnel.traded++;
               lastTradeEndIndex = entryIndex + 5;
             }
+            console.log(`[PatternLab] ${instrument} signal matching: ${JSON.stringify(debugSkipReasons)}, traded: ${allTrades.length}`);
           }
           
           ensureBudget('result computation preflight');
