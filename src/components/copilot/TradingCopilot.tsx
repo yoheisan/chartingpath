@@ -536,7 +536,36 @@ export function TradingCopilot({
     }
   }, [pendingPlanBuilder, pendingNewPlan, isExpanded, onPlanBuilderConsumed]);
 
-  const streamChat = async (userMessage: string, analysisData?: ChartAnalysisResult | null) => {
+  // Auto-generate opening message on chart page when Copilot opens
+  useEffect(() => {
+    if (!isExpanded || !isChartPage || !isAuthenticated) return;
+    if (autoOpenFiredRef.current) return;
+    if (messages.length > 0 || isLoading || showBuilder) return;
+
+    autoOpenFiredRef.current = true;
+
+    if (copilotContext.visible_patterns.length > 0) {
+      // Fire an AI call to analyze the chart — user doesn't see the prompt
+      streamChat("Analyze what's on my chart right now and tell me what I should know.");
+    } else {
+      // Static fallback
+      const sym = chartSymbol || 'this chart';
+      const tf = chartTimeframe || '';
+      setMessages([{
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: `No confirmed patterns on **${sym}** ${tf} right now. I'll alert you when one forms.`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [isExpanded, isChartPage, isAuthenticated, copilotContext.visible_patterns.length]);
+
+  // Reset auto-open flag when panel closes or symbol changes
+  useEffect(() => {
+    if (!isExpanded) autoOpenFiredRef.current = false;
+  }, [isExpanded, chartSymbol, chartTimeframe]);
+
+
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
