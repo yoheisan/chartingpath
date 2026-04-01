@@ -671,7 +671,7 @@ export function TradingCopilot({
         
         // Mark that onboarding is needed — but only auto-show on core trading pages
         setNeedsOnboarding(true);
-        if (isCorePage) {
+        if (isCorePage && !onboardingDismissedRef.current) {
           setOnboardingMode(true);
         }
       } catch { /* ignore */ }
