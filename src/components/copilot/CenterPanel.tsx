@@ -430,7 +430,7 @@ const ScanningState = ({ plan }: { plan: MasterPlan | null }) => {
             <Button
               variant="destructive"
               disabled={isSubmitting}
-              onClick={confirmConflictTrade}
+              onClick={() => confirmConflictTrade()}
               className="gap-1.5"
             >
               <Play className="h-3.5 w-3.5" />
