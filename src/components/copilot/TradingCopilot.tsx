@@ -760,11 +760,6 @@ export function TradingCopilot({
             </button>
           </div>
         )}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        )}
         <Button
           onClick={() => {
             try { sessionStorage.setItem('copilot_opened', '1'); } catch {}
