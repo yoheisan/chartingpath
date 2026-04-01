@@ -630,6 +630,7 @@ export function TradingCopilot({
   // Check onboarding status on mount (only once via context flag)
   // Track whether user needs onboarding (but don't auto-show on non-core pages)
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const onboardingDismissedRef = useRef(false); // Once dismissed or completed, never auto-show again
   
   // Core pages where onboarding should auto-trigger (pageType already declared above)
   const isCorePage = ['chart', 'dashboard', 'screener', 'paper-trading'].includes(pageType);
@@ -641,29 +642,37 @@ export function TradingCopilot({
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) return;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("onboarding_completed, trading_plan_structured")
-          .eq("user_id", authUser.id)
-          .maybeSingle();
+
+        // Check both profile flags AND master_plans table
+        const [{ data: profile }, { count: planCount }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("onboarding_completed, trading_plan_structured")
+            .eq("user_id", authUser.id)
+            .maybeSingle(),
+          supabase
+            .from("master_plans")
+            .select("id", { count: 'exact', head: true })
+            .eq("user_id", authUser.id)
+            .limit(1),
+        ]);
         
         const onboardingCompleted = (profile as any)?.onboarding_completed;
         const hasTradingPlan = !!(profile as any)?.trading_plan_structured;
+        const hasMasterPlan = (planCount ?? 0) > 0;
         
-        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', pageType });
+        console.log('[Copilot] Onboarding check:', { onboarding_completed: onboardingCompleted, trading_plan_structured: hasTradingPlan ? 'set' : 'null', hasMasterPlan, pageType });
         
-        // Skip onboarding if either flag is true, or if user already has a trading plan
-        if (onboardingCompleted === true || hasTradingPlan) {
+        // Skip onboarding if ANY plan exists (profile flag, structured plan, or master_plans row)
+        if (onboardingCompleted === true || hasTradingPlan || hasMasterPlan) {
+          setNeedsOnboarding(false);
           return;
         }
         
-        // Mark that onboarding is needed
-        if ((onboardingCompleted === false || onboardingCompleted === null) && !hasTradingPlan) {
-          setNeedsOnboarding(true);
-          // Only auto-show on core trading pages
-          if (isCorePage) {
-            setOnboardingMode(true);
-          }
+        // Mark that onboarding is needed — but only auto-show on core trading pages
+        setNeedsOnboarding(true);
+        if (isCorePage && !onboardingDismissedRef.current) {
+          setOnboardingMode(true);
         }
       } catch { /* ignore */ }
     };
@@ -672,7 +681,7 @@ export function TradingCopilot({
 
   // Auto-show onboarding when navigating to a core page (if needed but deferred)
   useEffect(() => {
-    if (needsOnboarding && isCorePage && !onboardingMode) {
+    if (needsOnboarding && isCorePage && !onboardingMode && !onboardingDismissedRef.current) {
       setOnboardingMode(true);
     }
   }, [needsOnboarding, isCorePage, onboardingMode]);
@@ -1108,6 +1117,8 @@ export function TradingCopilot({
     activeConvoRef.current = null;
     setMessages([]);
     setShowBuilder(false);
+    setOnboardingMode(false);
+    onboardingDismissedRef.current = true; // Prevent re-triggering
   }, [startNewChat]);
 
   const handleSelectConversation = useCallback((id: string) => {
@@ -1245,6 +1256,8 @@ export function TradingCopilot({
                 <OnboardingFlow
                   onComplete={() => {
                     setOnboardingMode(false);
+                    onboardingDismissedRef.current = true;
+                    setNeedsOnboarding(false);
                     refreshPlan();
                     setMessages([{
                       id: crypto.randomUUID(),
