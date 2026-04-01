@@ -1262,7 +1262,7 @@ export function TradingCopilot({
                     setMessages([{
                       id: crypto.randomUUID(),
                       role: "assistant" as const,
-                      content: "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm.",
+                      content: t('copilot.panel.planSavedScanning', "Plan saved. Scanning now. I'll surface setups that match your style as soon as they confirm."),
                       timestamp: new Date(),
                     }]);
                   }}
