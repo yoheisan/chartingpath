@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTradingCopilotContext, type CopilotChatMessage } from "./TradingCopilotContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useMandateSubmit } from "@/hooks/useMandateSubmit";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
