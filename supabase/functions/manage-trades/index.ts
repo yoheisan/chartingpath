@@ -173,8 +173,10 @@ Deno.serve(async (req) => {
           ? calcForexPnl(trade.symbol, slMove, forexLotSize)
           : slMove * quantity;
 
-        const closedAtStr = new Date().toISOString();
+        const exitDetectedAt = new Date();
+        const closedAtStr = exitDetectedAt.toISOString();
         const cooldownUntilStr = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+        const priceCrossedAt = lastConfirmed ? lastConfirmed.toISOString() : closedAtStr;
 
         await supabase
           .from("paper_trades")
@@ -191,6 +193,7 @@ Deno.serve(async (req) => {
             ideal_exit_price: stopLoss,
             slippage_pct: SLIPPAGE_PCT,
             detection_latency_ms: detectionLatencyMs,
+            price_crossed_at: priceCrossedAt,
           })
           .eq("id", trade.id);
 
