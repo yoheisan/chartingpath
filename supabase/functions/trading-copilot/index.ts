@@ -334,6 +334,25 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_backtest_outcomes",
+      description: "Query the user's personal backtest pattern outcomes for aggregated performance data. Returns win rate, avg R-multiple, and sample size grouped by instrument/pattern/timeframe. Use when users ask about their edge, backtest results, which patterns work best for them, or historical performance from their own runs. Minimum 10 trades per group.",
+      parameters: {
+        type: "object",
+        properties: {
+          instrument: { type: "string", description: "Filter by instrument symbol, e.g. EURUSD, AAPL. Leave empty for all." },
+          pattern_name: { type: "string", description: "Filter by pattern name, e.g. 'Bull Flag'. Leave empty for all." },
+          timeframe: { type: "string", description: "Filter by timeframe, e.g. '1d', '4h'. Leave empty for all." },
+          direction: { type: "string", enum: ["long", "short"], description: "Filter by direction." },
+          min_samples: { type: "number", description: "Minimum sample size per group. Default 10." },
+          sort_by: { type: "string", enum: ["avg_r", "win_rate", "sample_size"], description: "Sort order. Default 'avg_r'." }
+        },
+        required: []
+      }
+    }
   }
 ];
 
@@ -520,6 +539,14 @@ When analyzing exotic FX pairs or illiquid instruments:
 - For multi-scenario analyses, use bullet points instead of long paragraphs to fit more content.
 - If listing items (top 10, etc.), always complete the full list. Use compact table format to save space.
 - Avoid duplicate entries in pattern lists — deduplicate by symbol+pattern.
+
+## Edge Analyst Cross-Link (IMPORTANT)
+When users ask about pattern edge, historical performance, win rates, backtest results, or questions like "which patterns work best?", "what's my edge on X?", "best timeframe for pattern Y?":
+1. Use query_backtest_outcomes to pull their personal backtest data and give a brief data-backed answer.
+2. ALWAYS append this contextual link at the end of your response:
+   "\n\n🔬 [See full analysis in Edge Analyst →](/projects/pattern-lab/new?edgeQuestion={URL_ENCODED_QUESTION})"
+   Replace {URL_ENCODED_QUESTION} with the user's original question, URL-encoded. This opens the Edge Analyst panel with the question pre-populated.
+3. If query_backtest_outcomes returns no data (user hasn't run backtests yet), skip the data answer but still suggest: "Run a backtest in [Pattern Lab](/projects/pattern-lab/new) first, then use Edge Analyst for deep analysis."
 
 ## Formatting Icons
 📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish | 📅 economic events | 📰 market report | 💼 portfolio
@@ -2905,14 +2932,92 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeGetAgentScoringSettings(supabase, userId);
     case 'adjust_agent_scoring':
       return await executeAdjustAgentScoring(supabase, args, userId);
+    // ===== BACKTEST OUTCOMES TOOL =====
+    case 'query_backtest_outcomes':
+      return await executeQueryBacktestOutcomes(supabase, args, userId);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
 }
 
 // ============================================
-// MAIN HANDLER
+// BACKTEST OUTCOMES QUERY
 // ============================================
+
+async function executeQueryBacktestOutcomes(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return { error: "You need to be logged in to query your backtest outcomes.", data: [] };
+  }
+
+  try {
+    // Get user's run IDs first
+    const { data: runs, error: runsError } = await supabase
+      .from('project_runs')
+      .select('id')
+      .eq('status', 'succeeded')
+      .limit(100);
+
+    if (runsError || !runs?.length) {
+      return { message: "No backtest runs found. Run a backtest in Pattern Lab first.", data: [] };
+    }
+
+    const runIds = runs.map((r: any) => r.id);
+
+    let query = supabase
+      .from('backtest_pattern_outcomes')
+      .select('instrument, timeframe, pattern_name, direction, outcome, r_multiple')
+      .in('run_id', runIds);
+
+    if (args.instrument) query = query.ilike('instrument', `%${args.instrument}%`);
+    if (args.pattern_name) query = query.ilike('pattern_name', `%${args.pattern_name}%`);
+    if (args.timeframe) query = query.eq('timeframe', args.timeframe);
+    if (args.direction) query = query.eq('direction', args.direction);
+
+    const { data: outcomes, error } = await query.limit(5000);
+    if (error) {
+      console.error('Backtest outcomes query error:', error);
+      return { error: "Failed to query backtest data.", data: [] };
+    }
+
+    // Aggregate
+    const groups: Record<string, { instrument: string; pattern: string; timeframe: string; direction: string; total: number; wins: number; total_r: number }> = {};
+    for (const row of (outcomes || [])) {
+      const key = `${row.instrument}|${row.pattern_name}|${row.timeframe}`;
+      if (!groups[key]) {
+        groups[key] = { instrument: row.instrument, pattern: row.pattern_name, timeframe: row.timeframe, direction: row.direction, total: 0, wins: 0, total_r: 0 };
+      }
+      const g = groups[key];
+      g.total++;
+      if (row.outcome === 'hit_tp') g.wins++;
+      g.total_r += row.r_multiple ?? 0;
+    }
+
+    const minSamples = args.min_samples || 10;
+    const sortBy = args.sort_by || 'avg_r';
+
+    const summary = Object.values(groups)
+      .filter(g => g.total >= minSamples)
+      .map(g => ({
+        instrument: g.instrument,
+        pattern: g.pattern,
+        timeframe: g.timeframe,
+        direction: g.direction,
+        win_rate: Math.round((g.wins / g.total) * 1000) / 10,
+        avg_r: Math.round((g.total_r / g.total) * 1000) / 1000,
+        sample_size: g.total,
+      }))
+      .sort((a, b) => sortBy === 'win_rate' ? b.win_rate - a.win_rate : sortBy === 'sample_size' ? b.sample_size - a.sample_size : b.avg_r - a.avg_r);
+
+    return {
+      total_outcomes: (outcomes || []).length,
+      groups_with_min_samples: summary.length,
+      data: summary.slice(0, 20),
+    };
+  } catch (err: any) {
+    console.error('executeQueryBacktestOutcomes error:', err);
+    return { error: err.message, data: [] };
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

@@ -40,8 +40,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import EdgeAnalyst from '@/components/projects/EdgeAnalyst';
 
-// Pattern options - matches screener's pattern registry
 const PATTERNS = [
   // Base Patterns
   { id: 'double-bottom', name: 'Double Bottom', direction: 'bullish' },
@@ -1723,6 +1723,13 @@ const PatternLabWizard = () => {
             </Card>
           </div>
         </div>
+
+        {/* Edge Analyst panel when navigated from Copilot with a question */}
+        {searchParams.get('edgeQuestion') && (
+          <div className="mt-8 max-w-4xl mx-auto">
+            <EdgeAnalyst initialQuestion={decodeURIComponent(searchParams.get('edgeQuestion')!)} />
+          </div>
+        )}
       </div>
       <AuthGateDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} featureLabel={t('patternLabWizard.backtesting', 'backtesting')} />
       </div>

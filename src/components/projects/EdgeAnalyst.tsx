@@ -21,6 +21,7 @@ interface SummaryRow {
 
 interface EdgeAnalystProps {
   runId?: string;
+  initialQuestion?: string;
 }
 
 const EXAMPLE_QUESTIONS = [
@@ -30,13 +31,22 @@ const EXAMPLE_QUESTIONS = [
   "Which instrument performs best?",
 ];
 
-const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId }) => {
+const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion }) => {
   const { t } = useTranslation();
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState(initialQuestion || '');
   const [answer, setAnswer] = useState('');
   const [summary, setSummary] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasQueried, setHasQueried] = useState(false);
+  const hasAutoSubmitted = React.useRef(false);
+
+  // Auto-submit initial question
+  React.useEffect(() => {
+    if (initialQuestion && !hasAutoSubmitted.current) {
+      hasAutoSubmitted.current = true;
+      handleSubmit(initialQuestion);
+    }
+  }, [initialQuestion]);
 
   const handleSubmit = async (q?: string) => {
     const queryText = q || question;
