@@ -1503,8 +1503,8 @@ async function fetchMarketData(
   const isIntraday = ['1h', '4h', '8h'].includes(timeframe);
   const resolvedAssetType = assetType || getAssetType(symbol);
   
-  // Step 1: Try reading from DB cache first
-  if (supabase && fromTimestamp) {
+  // Step 1: Try reading from DB cache first (skip if forced)
+  if (supabase && fromTimestamp && !skipDbCache) {
     const fromDate = new Date(fromTimestamp).toISOString().split('T')[0];
     const toDate = new Date().toISOString().split('T')[0];
     const cachedBars = await readBarsFromDB(supabase, symbol, timeframe, fromDate, toDate);
