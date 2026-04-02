@@ -6246,5 +6246,29 @@
     "timeframeNotAllowed": "El timeframe {{timeframe}} no está disponible en el plan {{tier}}",
     "notOnPlan": "Este proyecto no está disponible en su plan",
     "projectNotAvailable": "Tipo de proyecto no disponible para su nivel"
+  },
+  "edgeAnalyst": {
+    "title": "Analista de Edge",
+    "badgeAI": "IA",
+    "autoDescription": "Análisis autogenerado de tu backtest",
+    "defaultDescription": "Haz preguntas sobre el rendimiento de patrones en tus backtests.",
+    "analyzingResults": "Analizando resultados del backtest...",
+    "analyzing": "Analizando...",
+    "followUp": "Haz una pregunta de seguimiento",
+    "placeholder": "Ej. ¿Qué patrones tienen expectativa positiva en Oro?",
+    "ask": "Preguntar",
+    "failedToAnalyze": "Error al analizar",
+    "tableInstrument": "Instrumento",
+    "tablePattern": "Patrón",
+    "tableTF": "TF",
+    "tableWinRate": "Win Rate",
+    "tableAvgR": "R Prom",
+    "tableSamples": "Muestras",
+    "exampleQuestions": {
+      "positiveExpectancy": "¿Qué patrones tienen expectativa positiva?",
+      "bestTimeframe": "¿Cuál es el mejor marco temporal para este setup?",
+      "longVsShort": "Comparar rendimiento largo vs corto",
+      "bestInstrument": "¿Qué instrumento rinde mejor?"
+    }
   }
 }

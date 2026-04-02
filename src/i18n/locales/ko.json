@@ -6244,5 +6244,29 @@
     "timeframeNotAllowed": "{{timeframe}} 타임프레임은 {{tier}} 플랜에서 사용할 수 없습니다",
     "notOnPlan": "이 프로젝트는 귀하의 플랜에서 사용할 수 없습니다",
     "projectNotAvailable": "프로젝트 유형을 귀하의 등급에서 사용할 수 없습니다"
+  },
+  "edgeAnalyst": {
+    "title": "엣지 애널리스트",
+    "badgeAI": "AI",
+    "autoDescription": "백테스트 결과 자동 분석",
+    "defaultDescription": "패턴 성과에 대해 데이터 기반 질문을 하세요.",
+    "analyzingResults": "백테스트 결과 분석 중...",
+    "analyzing": "분석 중...",
+    "followUp": "후속 질문하기",
+    "placeholder": "예: 금에서 기대값이 양수인 패턴은?",
+    "ask": "질문",
+    "failedToAnalyze": "분석 실패",
+    "tableInstrument": "종목",
+    "tablePattern": "패턴",
+    "tableTF": "시간대",
+    "tableWinRate": "승률",
+    "tableAvgR": "평균 R",
+    "tableSamples": "샘플",
+    "exampleQuestions": {
+      "positiveExpectancy": "기대값이 양수인 패턴은?",
+      "bestTimeframe": "이 설정에 가장 좋은 시간대는?",
+      "longVsShort": "롱 vs 숏 성과 비교",
+      "bestInstrument": "가장 성과가 좋은 종목은?"
+    }
   }
 }

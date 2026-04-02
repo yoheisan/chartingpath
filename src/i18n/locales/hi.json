@@ -6248,5 +6248,29 @@
     "timeframeNotAllowed": "{{timeframe}} टाइमफ्रेम {{tier}} प्लान पर उपलब्ध नहीं",
     "notOnPlan": "यह प्रोजेक्ट आपके प्लान में उपलब्ध नहीं है",
     "projectNotAvailable": "प्रोजेक्ट प्रकार आपके स्तर के लिए उपलब्ध नहीं"
+  },
+  "edgeAnalyst": {
+    "title": "एज एनालिस्ट",
+    "badgeAI": "AI",
+    "autoDescription": "आपके बैकटेस्ट का स्वत: विश्लेषण",
+    "defaultDescription": "अपने बैकटेस्ट में पैटर्न प्रदर्शन के बारे में प्रश्न पूछें।",
+    "analyzingResults": "बैकटेस्ट परिणामों का विश्लेषण...",
+    "analyzing": "विश्लेषण जारी...",
+    "followUp": "एक अनुवर्ती प्रश्न पूछें",
+    "placeholder": "उदा. सोने पर किन पैटर्नों की सकारात्मक अपेक्षा है?",
+    "ask": "पूछें",
+    "failedToAnalyze": "विश्लेषण विफल",
+    "tableInstrument": "उपकरण",
+    "tablePattern": "पैटर्न",
+    "tableTF": "TF",
+    "tableWinRate": "जीत दर",
+    "tableAvgR": "औसत R",
+    "tableSamples": "नमूने",
+    "exampleQuestions": {
+      "positiveExpectancy": "किन पैटर्नों की सकारात्मक अपेक्षा है?",
+      "bestTimeframe": "इस सेटअप के लिए सबसे अच्छा टाइमफ्रेम?",
+      "longVsShort": "लॉन्ग बनाम शॉर्ट प्रदर्शन की तुलना",
+      "bestInstrument": "सबसे अच्छा प्रदर्शन करने वाला उपकरण?"
+    }
   }
 }
