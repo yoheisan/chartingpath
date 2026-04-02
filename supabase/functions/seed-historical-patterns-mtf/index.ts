@@ -1177,26 +1177,37 @@ async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?:
   
   const limits = TF_DATA_LIMITS[timeframe] || TF_DATA_LIMITS['1d'];
   const endDate = new Date();
+  const isIntraday = ['1h', '4h'].includes(timeframe);
   
   let startDate: Date;
   if (fromTimestamp) {
     startDate = new Date(fromTimestamp);
+    // Clamp intraday requests to provider limits (EODHD supports max ~120 days intraday)
+    if (isIntraday) {
+      const maxIntradayStart = new Date();
+      maxIntradayStart.setDate(maxIntradayStart.getDate() - limits.rangeDays);
+      if (startDate < maxIntradayStart) {
+        console.log(`[EODHD] Clamping intraday start from ${startDate.toISOString().split('T')[0]} to ${maxIntradayStart.toISOString().split('T')[0]} (provider limit: ${limits.rangeDays}d)`);
+        startDate = maxIntradayStart;
+      }
+    }
   } else {
     startDate = new Date();
     startDate.setDate(startDate.getDate() - limits.rangeDays);
   }
   
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
-  
   const eodhSymbol = toEODHDSymbol(symbol);
-  const isIntraday = ['1h', '4h'].includes(timeframe);
   const eodhInterval = timeframe === '4h' ? '1h' : TF_TO_EODHD_INTERVAL[timeframe];
   
   let url: string;
   if (isIntraday) {
-    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${startStr}&to=${endStr}&fmt=json`;
+    // EODHD intraday uses Unix timestamps
+    const fromUnix = Math.floor(startDate.getTime() / 1000);
+    const toUnix = Math.floor(endDate.getTime() / 1000);
+    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${fromUnix}&to=${toUnix}&fmt=json`;
   } else {
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
     url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startStr}&to=${endStr}&period=${eodhInterval}&fmt=json`;
   }
   
