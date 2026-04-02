@@ -713,7 +713,7 @@ const ProjectRun = () => {
 
             {/* Edge Analyst Panel */}
             <div className="mt-6">
-              <EdgeAnalyst runId={runId} />
+              <EdgeAnalyst runId={runId} autoAnalyze={run?.status === 'succeeded'} />
             </div>
 
             <DisclaimerBanner className="mt-8" />
