@@ -1130,7 +1130,7 @@ export default function LivePatternsPage() {
               <TooltipContent side="bottom" className="max-w-sm p-3">
                 <p className="font-medium mb-2">{t('livePatterns.howThisWorks')}</p>
                 <p className="text-sm mb-2">
-                  We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
+                  We analyze {totalInUniverse || instrumentsScanned} {assetType === 'all' ? '' : ASSET_TYPE_LABELS[assetType].toLowerCase() + ' '}instruments 
                   for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '8h' ? '8-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
                   {instrumentsScanned < (totalInUniverse || 0) && (
                     <span className="block mt-1 text-xs text-muted-foreground">
