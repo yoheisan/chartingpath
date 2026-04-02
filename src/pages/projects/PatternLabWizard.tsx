@@ -40,8 +40,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import EdgeAnalyst from '@/components/projects/EdgeAnalyst';
 
-// Pattern options - matches screener's pattern registry
 const PATTERNS = [
   // Base Patterns
   { id: 'double-bottom', name: 'Double Bottom', direction: 'bullish' },
