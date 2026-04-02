@@ -1886,7 +1886,9 @@ serve(async (req) => {
       offset = 0,
       incrementalMode = true,       // Default to incremental updates
       forceFullBackfill = false,    // Override to force full historical fetch
-      stockLetterFilter = null      // NEW: Filter stocks by first letter range { start: 'A', end: 'G' }
+      stockLetterFilter = null,     // Filter stocks by first letter range { start: 'A', end: 'G' }
+      symbolsFilter = null as string[] | null,  // Only process these specific symbols
+      barDataOnly = false           // When true, only fetch & persist bar data, skip pattern detection
     } = body;
 
     const useIncremental = incrementalMode && !forceFullBackfill;
