@@ -2941,8 +2941,83 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
 }
 
 // ============================================
-// MAIN HANDLER
+// BACKTEST OUTCOMES QUERY
 // ============================================
+
+async function executeQueryBacktestOutcomes(supabase: any, args: any, userId: string | null) {
+  if (!userId) {
+    return { error: "You need to be logged in to query your backtest outcomes.", data: [] };
+  }
+
+  try {
+    // Get user's run IDs first
+    const { data: runs, error: runsError } = await supabase
+      .from('project_runs')
+      .select('id')
+      .eq('status', 'succeeded')
+      .limit(100);
+
+    if (runsError || !runs?.length) {
+      return { message: "No backtest runs found. Run a backtest in Pattern Lab first.", data: [] };
+    }
+
+    const runIds = runs.map((r: any) => r.id);
+
+    let query = supabase
+      .from('backtest_pattern_outcomes')
+      .select('instrument, timeframe, pattern_name, direction, outcome, r_multiple')
+      .in('run_id', runIds);
+
+    if (args.instrument) query = query.ilike('instrument', `%${args.instrument}%`);
+    if (args.pattern_name) query = query.ilike('pattern_name', `%${args.pattern_name}%`);
+    if (args.timeframe) query = query.eq('timeframe', args.timeframe);
+    if (args.direction) query = query.eq('direction', args.direction);
+
+    const { data: outcomes, error } = await query.limit(5000);
+    if (error) {
+      console.error('Backtest outcomes query error:', error);
+      return { error: "Failed to query backtest data.", data: [] };
+    }
+
+    // Aggregate
+    const groups: Record<string, { instrument: string; pattern: string; timeframe: string; direction: string; total: number; wins: number; total_r: number }> = {};
+    for (const row of (outcomes || [])) {
+      const key = `${row.instrument}|${row.pattern_name}|${row.timeframe}`;
+      if (!groups[key]) {
+        groups[key] = { instrument: row.instrument, pattern: row.pattern_name, timeframe: row.timeframe, direction: row.direction, total: 0, wins: 0, total_r: 0 };
+      }
+      const g = groups[key];
+      g.total++;
+      if (row.outcome === 'hit_tp') g.wins++;
+      g.total_r += row.r_multiple ?? 0;
+    }
+
+    const minSamples = args.min_samples || 10;
+    const sortBy = args.sort_by || 'avg_r';
+
+    const summary = Object.values(groups)
+      .filter(g => g.total >= minSamples)
+      .map(g => ({
+        instrument: g.instrument,
+        pattern: g.pattern,
+        timeframe: g.timeframe,
+        direction: g.direction,
+        win_rate: Math.round((g.wins / g.total) * 1000) / 10,
+        avg_r: Math.round((g.total_r / g.total) * 1000) / 1000,
+        sample_size: g.total,
+      }))
+      .sort((a, b) => sortBy === 'win_rate' ? b.win_rate - a.win_rate : sortBy === 'sample_size' ? b.sample_size - a.sample_size : b.avg_r - a.avg_r);
+
+    return {
+      total_outcomes: (outcomes || []).length,
+      groups_with_min_samples: summary.length,
+      data: summary.slice(0, 20),
+    };
+  } catch (err: any) {
+    console.error('executeQueryBacktestOutcomes error:', err);
+    return { error: err.message, data: [] };
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
