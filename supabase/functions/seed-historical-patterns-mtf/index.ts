@@ -1413,22 +1413,34 @@ async function readBarsFromDB(
   minBarsRequired: number = 50
 ): Promise<OHLCBar[]> {
   try {
-    const { data, error } = await supabase
-      .from('historical_prices')
-      .select('date, open, high, low, close, volume')
-      .eq('symbol', symbol)
-      .eq('timeframe', timeframe)
-      .gte('date', fromDate)
-      .lte('date', toDate)
-      .order('date', { ascending: true })
-      .limit(15000);
+    // Paginate to bypass PostgREST default 1000-row limit
+    const PAGE_SIZE = 1000;
+    let allData: any[] = [];
+    let offset = 0;
     
-    if (error || !data || data.length < minBarsRequired) {
+    while (true) {
+      const { data, error } = await supabase
+        .from('historical_prices')
+        .select('date, open, high, low, close, volume')
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .gte('date', fromDate)
+        .lte('date', toDate)
+        .order('date', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
+      
+      if (error || !data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+    
+    if (allData.length < minBarsRequired) {
       return [];
     }
     
-    console.log(`[DB-Cache] Found ${data.length} cached bars for ${symbol}@${timeframe}`);
-    return data.map((row: any) => ({
+    console.log(`[DB-Cache] Found ${allData.length} cached bars for ${symbol}@${timeframe}`);
+    return allData.map((row: any) => ({
       date: row.date,
       open: Number(row.open),
       high: Number(row.high),
