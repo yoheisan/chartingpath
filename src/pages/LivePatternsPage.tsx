@@ -241,7 +241,7 @@ export default function LivePatternsPage() {
   const urlTimeframe = searchParams.get('timeframe') as '1h' | '4h' | '8h' | '1d' | '1wk' | null;
   
   // Detect initial asset type: prefer explicit URL param, then detect from highlight symbol, then default to 'fx'
-  const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
+  const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'all') : 'all');
   const navigate = useNavigate();
   
   const isMobile = useIsMobile();
