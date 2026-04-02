@@ -1977,6 +1977,14 @@ serve(async (req) => {
         console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (DB-first, then providers)...`);
         const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType);
         
+        if (barDataOnly) {
+          // In barDataOnly mode, we only care about fetching and persisting bars (already done inside fetchMarketData)
+          console.log(`[seed-mtf] barDataOnly: fetched ${bars.length} bars for ${symbol}@${timeframe} — skipping pattern detection`);
+          processedCount++;
+          await new Promise(resolve => setTimeout(resolve, 300));
+          continue;
+        }
+        
         if (bars.length < 50) {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
           continue;
