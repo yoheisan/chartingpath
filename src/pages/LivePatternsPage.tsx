@@ -1172,6 +1172,7 @@ export default function LivePatternsPage() {
               <SelectValue placeholder="Asset Class" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">🌐 {t('livePatterns.allAssets', 'All Assets')}</SelectItem>
               <SelectItem value="fx">🌍 Forex</SelectItem>
               <SelectItem value="crypto">₿ Crypto</SelectItem>
               <SelectItem value="stocks">📈 Stocks</SelectItem>
