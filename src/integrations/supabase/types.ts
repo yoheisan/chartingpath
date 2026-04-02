@@ -630,7 +630,7 @@ export type Database = {
             foreignKeyName: "backtest_pattern_outcomes_run_id_fkey"
             columns: ["run_id"]
             isOneToOne: false
-            referencedRelation: "backtest_runs"
+            referencedRelation: "project_runs"
             referencedColumns: ["id"]
           },
         ]
