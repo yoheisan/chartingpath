@@ -579,6 +579,62 @@ export type Database = {
           },
         ]
       }
+      backtest_pattern_outcomes: {
+        Row: {
+          bars_to_close: number | null
+          created_at: string
+          direction: string
+          entry_date: string
+          grade: string | null
+          id: string
+          instrument: string
+          outcome: string
+          pattern_name: string
+          r_multiple: number | null
+          rr_target: number | null
+          run_id: string
+          timeframe: string
+        }
+        Insert: {
+          bars_to_close?: number | null
+          created_at?: string
+          direction: string
+          entry_date: string
+          grade?: string | null
+          id?: string
+          instrument: string
+          outcome: string
+          pattern_name: string
+          r_multiple?: number | null
+          rr_target?: number | null
+          run_id: string
+          timeframe: string
+        }
+        Update: {
+          bars_to_close?: number | null
+          created_at?: string
+          direction?: string
+          entry_date?: string
+          grade?: string | null
+          id?: string
+          instrument?: string
+          outcome?: string
+          pattern_name?: string
+          r_multiple?: number | null
+          rr_target?: number | null
+          run_id?: string
+          timeframe?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backtest_pattern_outcomes_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "backtest_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backtest_presets: {
         Row: {
           created_at: string
