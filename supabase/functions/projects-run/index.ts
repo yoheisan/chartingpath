@@ -2283,6 +2283,7 @@ serve(async (req) => {
                 exitDate,
                 instrument,
                 patternId,
+                patternName: signal.pattern_name,
                 direction,
                 entryPrice,
                 exitPrice,
