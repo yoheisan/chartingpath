@@ -711,6 +711,11 @@ const ProjectRun = () => {
               );
             })()}
 
+            {/* Edge Analyst Panel */}
+            <div className="mt-6">
+              <EdgeAnalyst runId={runId} />
+            </div>
+
             <DisclaimerBanner className="mt-8" />
           </>
         )}
