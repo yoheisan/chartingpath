@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { getPrefetchedReport, clearPrefetchedReport } from "@/utils/marketReportPrefetch";
 import { useTranslation } from "react-i18next";
+import { usePaperTrading } from "@/hooks/usePaperTrading";
+import PortfolioSummaryCard from "@/components/report/PortfolioSummaryCard";
 
 const MarketBreadthReport = () => {
   const { t } = useTranslation();
