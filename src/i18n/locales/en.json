@@ -2582,6 +2582,7 @@
     "winRateTooltip": "Historical win rate for this pattern based on 5 years of backtested data. Click to sort.",
     "expectancyTooltip": "Projected expectancy (R-multiple) per trade based on historical win rate and your selected R:R ratio. Positive values indicate an edge.",
     "analyzing": "Analyzing {{count}} {{assetType}} instruments on {{timeframe}} • Showing {{active}} with active patterns",
+    "analyzingAll": "Analyzing {{count}} instruments across all assets on {{timeframe}} • Showing {{active}} with active patterns",
     "dataCoverageDesc": "Historical Win% is available for ~5,000 core instruments (S&P 500, Russell 2000, NASDAQ, major FX/Crypto). Extended pairs showing \"—\" can be analyzed on-demand via",
     "patternLab": "Pattern Lab",
     "chartTimeframeDesc": "Pattern detection uses the selected timeframe. Historical performance stats correspond to the same timeframe.",
