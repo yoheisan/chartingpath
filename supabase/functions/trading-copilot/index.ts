@@ -2932,6 +2932,9 @@ async function executeTool(toolName: string, args: any, supabase: any, userId: s
       return await executeGetAgentScoringSettings(supabase, userId);
     case 'adjust_agent_scoring':
       return await executeAdjustAgentScoring(supabase, args, userId);
+    // ===== BACKTEST OUTCOMES TOOL =====
+    case 'query_backtest_outcomes':
+      return await executeQueryBacktestOutcomes(supabase, args, userId);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
