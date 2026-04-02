@@ -1928,10 +1928,18 @@ serve(async (req) => {
       });
     }
 
+    // Apply symbolsFilter if provided — only keep matching symbols
+    let filteredInstruments = allInstruments;
+    if (symbolsFilter && Array.isArray(symbolsFilter) && symbolsFilter.length > 0) {
+      const filterSet = new Set(symbolsFilter.map(s => s.toUpperCase()));
+      filteredInstruments = allInstruments.filter(inst => filterSet.has(inst.symbol.toUpperCase()));
+      console.log(`[seed-mtf] symbolsFilter matched ${filteredInstruments.length} of ${allInstruments.length} instruments`);
+    }
+
     // Pagination
     const MAX_PER_RUN = 10; // Smaller batch for intraday (more data per instrument)
-    const instrumentsToProcess = allInstruments.slice(offset, offset + MAX_PER_RUN);
-    const hasMore = offset + MAX_PER_RUN < allInstruments.length;
+    const instrumentsToProcess = filteredInstruments.slice(offset, offset + MAX_PER_RUN);
+    const hasMore = offset + MAX_PER_RUN < filteredInstruments.length;
     const nextOffset = offset + MAX_PER_RUN;
 
     console.log(`[seed-mtf] Processing ${offset} to ${offset + instrumentsToProcess.length} of ${allInstruments.length}`);
