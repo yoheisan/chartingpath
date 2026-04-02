@@ -1565,11 +1565,54 @@ async function fetchMarketData(
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
     
+    // For 4h/8h: if providers failed, try aggregating from 1h DB bars
+    if (bars.length === 0 && ['4h', '8h'].includes(timeframe) && supabase) {
+      const fromDate = fromTimestamp ? new Date(fromTimestamp).toISOString().split('T')[0] : '2020-01-01';
+      const toDate = new Date().toISOString().split('T')[0];
+      console.log(`[Provider] Trying DB 1h aggregation for FX ${symbol}@${timeframe}`);
+      const hourlyBars = await readBarsFromDB(supabase, symbol, '1h', fromDate, toDate, 10);
+      if (hourlyBars.length > 0) {
+        const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
+        const hours = timeframe === '8h' ? 8 : 4;
+        // Aggregate using existing function for 4h; manual for 8h
+        if (timeframe === '4h') {
+          bars = aggregate1hTo4h(hourlyBars, is24h);
+        } else {
+          // 8h aggregation
+          const grouped = new Map<string, OHLCBar[]>();
+          for (const bar of hourlyBars) {
+            const d = new Date(bar.date);
+            const periodStart = Math.floor(d.getUTCHours() / hours) * hours;
+            const boundary = new Date(d);
+            boundary.setUTCHours(periodStart, 0, 0, 0);
+            const key = boundary.toISOString();
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(bar);
+          }
+          bars = [];
+          for (const [key, wBars] of grouped) {
+            if (wBars.length < 2) continue;
+            wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            bars.push({
+              date: key,
+              open: wBars[0].open,
+              high: Math.max(...wBars.map(b => b.high)),
+              low: Math.min(...wBars.map(b => b.low)),
+              close: wBars[wBars.length - 1].close,
+              volume: wBars.reduce((sum, b) => sum + (b.volume || 0), 0)
+            });
+          }
+          bars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        }
+        console.log(`[Provider] Aggregated ${hourlyBars.length} 1h bars → ${bars.length} ${timeframe} bars for ${symbol}`);
+      }
+    }
+    
     // Final fallback: use EODHD EOD (daily) bars to prevent data starvation
     if (bars.length === 0) {
-      console.log(`[Provider] Both EODHD intraday and Yahoo failed for FX ${symbol} — trying EODHD EOD as final fallback`);
+      console.log(`[Provider] All sources failed for FX ${symbol}@${timeframe} — trying EODHD EOD as final fallback`);
       bars = await fetchEODHDData(symbol, '1d', fromTimestamp);
-      // Note: this gives daily bars not hourly, but keeps the pattern detector from starving on zero data
+      // Note: this gives daily bars not the target timeframe, but prevents pattern detector from starving
     }
   } else {
     // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
