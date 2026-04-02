@@ -35,9 +35,16 @@ export const StalenessPrice = ({ price, lastConfirmedAt, className = '' }: Stale
   const age = getStalenessAge(lastConfirmedAt);
   const priceColor = colorMap[level];
 
+  /** Magnitude-aware decimals so sub-dollar prices aren't rounded to $0 */
+  const fmt = (v: number) => {
+    if (Math.abs(v) >= 1) return v.toFixed(2);
+    if (Math.abs(v) >= 0.01) return v.toFixed(4);
+    return v.toFixed(6);
+  };
+
   const priceEl = (
     <span className={`${priceColor} ${className}`}>
-      ${price.toFixed(2)}
+      ${fmt(price)}
     </span>
   );
 
