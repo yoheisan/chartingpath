@@ -1147,12 +1147,19 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          {t('screener.analyzing', { 
-            count: totalInUniverse || instrumentsScanned, 
-            assetType: ASSET_TYPE_LABELS[assetType].toLowerCase(),
-            timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
-            active: patterns.length
-          })}
+          {assetType === 'all' 
+            ? t('screener.analyzingAll', {
+                count: totalInUniverse || instrumentsScanned,
+                timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
+                active: patterns.length
+              })
+            : t('screener.analyzing', { 
+                count: totalInUniverse || instrumentsScanned, 
+                assetType: ASSET_TYPE_LABELS[assetType].toLowerCase(),
+                timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
+                active: patterns.length
+              })
+          }
         </p>
       </div>
 
