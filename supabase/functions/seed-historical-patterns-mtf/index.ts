@@ -1495,7 +1495,8 @@ async function fetchMarketData(
   timeframe: string, 
   fromTimestamp?: number,
   supabase?: any,
-  assetType?: string
+  assetType?: string,
+  skipDbCache: boolean = false
 ): Promise<OHLCBar[]> {
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
   const isFX = symbol.includes('=X');
