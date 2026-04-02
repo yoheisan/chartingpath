@@ -2027,6 +2027,21 @@ serve(async (req) => {
       console.log(`[seed-mtf] Skipped ${skippedDuplicates} already-seeded patterns`);
     }
 
+    // barDataOnly mode: return early with just bar fetch stats
+    if (barDataOnly) {
+      return new Response(JSON.stringify({
+        success: true,
+        timeframe,
+        mode: 'bar_data_only',
+        instrumentsProcessed: processedCount,
+        hasMore,
+        nextOffset: hasMore ? nextOffset : null,
+        errors: errors.slice(0, 10)
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (dryRun) {
       return new Response(JSON.stringify({
         dryRun: true,
