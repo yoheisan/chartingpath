@@ -3221,7 +3221,9 @@
     "noHistoricalData": "{{symbols}}の{{timeframe}}で過去データが見つかりません。クレジットは消費されませんがバックテストは失敗します。別のタイムフレームをお試しください。",
     "cannotRunConfig": "この構成では実行できません",
     "foundZeroPass": "件検出、0件合格",
-    "backtesting": "バックテスト"
+    "backtesting": "バックテスト",
+    "firstAnalysisTitle": "初めてですか？",
+    "firstAnalysisDesc": "下のクイックスタートを選んで、ワンクリックで最初のバックテストを実行しましょう。セットアップは不要です。"
   },
   "patternNames": {
     "Bull Flag": "ブルフラッグ",

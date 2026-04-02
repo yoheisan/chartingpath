@@ -2408,7 +2408,9 @@
     "noHistoricalData": "{{timeframe}} üzerinde {{symbols}} için geçmiş veri bulunamadı. Kredi düşülmeyecek ama backtest başarısız olacak. Farklı bir zaman dilimi deneyin.",
     "cannotRunConfig": "Bu yapılandırma çalıştırılamaz",
     "foundZeroPass": "bulundu, 0 geçti",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "İlk kez mi buradasınız?",
+    "firstAnalysisDesc": "İlk backtestinizi tek tıkla çalıştırmak için aşağıdan bir hızlı başlangıç seçin — kurulum gerekmez."
   },
   "patternNames": {
     "Bull Flag": "Boğa Bayrağı",

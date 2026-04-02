@@ -2401,7 +2401,9 @@
     "noHistoricalData": "未找到{{symbols}}在{{timeframe}}上的历史数据。不会消耗积分但回测将失败。请尝试其他时间框架。",
     "cannotRunConfig": "无法运行此配置",
     "foundZeroPass": "个检测到，0个通过",
-    "backtesting": "回测"
+    "backtesting": "回测",
+    "firstAnalysisTitle": "第一次来？",
+    "firstAnalysisDesc": "选择下方的快速开始，一键运行您的第一次回测——无需任何设置。"
   },
   "patternNames": {
     "Bull Flag": "看涨旗形",

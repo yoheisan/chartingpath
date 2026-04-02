@@ -2366,7 +2366,9 @@
     "noHistoricalData": "Tidak ada data historis untuk {{symbols}} pada {{timeframe}}. Kredit tidak akan dipotong tetapi backtest akan gagal. Coba timeframe lain.",
     "cannotRunConfig": "Tidak dapat menjalankan konfigurasi ini",
     "foundZeroPass": "ditemukan, 0 lolos",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "Pertama kali di sini?",
+    "firstAnalysisDesc": "Pilih Quick Start di bawah untuk menjalankan backtest pertama Anda dengan satu klik — tanpa perlu pengaturan."
   },
   "patternNames": {
     "Bull Flag": "Bull Flag",

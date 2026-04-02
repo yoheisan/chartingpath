@@ -2408,7 +2408,9 @@
     "noHistoricalData": "{{timeframe}}에서 {{symbols}}의 과거 데이터를 찾을 수 없습니다. 크레딧은 차감되지 않지만 백테스트가 실패합니다. 다른 타임프레임을 시도하세요.",
     "cannotRunConfig": "이 구성을 실행할 수 없습니다",
     "foundZeroPass": "개 발견, 0개 통과",
-    "backtesting": "백테스트"
+    "backtesting": "백테스트",
+    "firstAnalysisTitle": "처음이신가요?",
+    "firstAnalysisDesc": "아래 빠른 시작을 선택하여 클릭 한 번으로 첫 백테스트를 실행하세요 — 설정이 필요 없습니다."
   },
   "patternNames": {
     "Bull Flag": "상승 깃발",

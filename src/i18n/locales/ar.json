@@ -2401,7 +2401,9 @@
     "noHistoricalData": "لم يتم العثور على بيانات تاريخية لـ {{symbols}} على {{timeframe}}. لن يتم خصم الرصيد لكن الاختبار سيفشل. جرب إطاراً زمنياً مختلفاً.",
     "cannotRunConfig": "لا يمكن تشغيل هذا التكوين",
     "foundZeroPass": "موجود، 0 نجح",
-    "backtesting": "الاختبار الخلفي"
+    "backtesting": "الاختبار الخلفي",
+    "firstAnalysisTitle": "أول مرة هنا؟",
+    "firstAnalysisDesc": "اختر بداية سريعة أدناه لتشغيل أول اختبار خلفي بنقرة واحدة — لا حاجة لأي إعداد."
   },
   "patternNames": {
     "Bull Flag": "علم صاعد",
