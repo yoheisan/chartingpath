@@ -12,10 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { getPrefetchedReport, clearPrefetchedReport } from "@/utils/marketReportPrefetch";
 import { useTranslation } from "react-i18next";
+import { usePaperTrading } from "@/hooks/usePaperTrading";
+import PortfolioSummaryCard from "@/components/report/PortfolioSummaryCard";
 
 const MarketBreadthReport = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
   const [reportMetadata, setReportMetadata] = useState<{
@@ -46,6 +49,15 @@ const MarketBreadthReport = () => {
   const [isSendingTest, setIsSendingTest] = useState(false);
 
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+
+  // Fetch user ID for paper trading data
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
+
+  const { portfolio, openTrades, closedTrades, winRate, loading: portfolioLoading } = usePaperTrading(userId);
 
   // Map timezone to region for realtime matching
   const getRegion = (tz: string): string => {
@@ -411,6 +423,17 @@ const MarketBreadthReport = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Portfolio Summary - Real Paper Trading Data */}
+        {userId && (
+          <PortfolioSummaryCard
+            portfolio={portfolio}
+            openTrades={openTrades}
+            closedTrades={closedTrades}
+            winRate={winRate}
+            loading={portfolioLoading}
+          />
+        )}
 
         <div className="space-y-6">
           {/* Market Report Display */}

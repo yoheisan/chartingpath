@@ -3515,6 +3515,15 @@
     "toastSendFailed": "Send Failed",
     "toastSendFailedDesc": "Failed to send email. Please try again."
   },
+  "portfolioSummary": {
+    "title": "Your Portfolio",
+    "accountBalance": "Account Balance",
+    "totalPnl": "Total P&L",
+    "todayPnl": "Today's P&L",
+    "openPositions": "Open Positions",
+    "winRate": "Win Rate",
+    "trades": "trades"
+  },
   "sharedPattern": {
     "loading": "Loading pattern...",
     "notFound": "Pattern Not Found",
