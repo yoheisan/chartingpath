@@ -103,7 +103,7 @@ export function useCopilotTrades(userId?: string) {
   }, [userId, fetchTrades]);
 
   const stats = useMemo((): CopilotStats => {
-    const aiTrades = todayTrades.filter(t => t.attribution === 'ai_approved');
+    const aiTrades = todayTrades.filter(t => t.attribution === 'ai_approved' || t.attribution === 'ai_partial');
     const humanTrades = todayTrades.filter(t => t.attribution === 'human_overwrite');
 
     const closedAi = aiTrades.filter(t => t.status === 'closed');

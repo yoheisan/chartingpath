@@ -145,8 +145,8 @@ export function calcBestStreak(trades: PaperTrade[]): number {
 }
 
 export function splitByAttribution(trades: PaperTrade[]) {
-  const ai = trades.filter(t => t.attribution !== 'override' && t.user_action !== 'override');
-  const human = trades.filter(t => t.attribution === 'override' || t.user_action === 'override');
+  const ai = trades.filter(t => t.attribution === 'ai_approved' || t.attribution === 'ai_partial');
+  const human = trades.filter(t => t.attribution === 'human_overwrite' || t.attribution === 'override' || t.user_action === 'override');
   return { ai, human };
 }
 
