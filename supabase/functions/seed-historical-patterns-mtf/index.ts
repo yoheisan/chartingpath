@@ -1177,26 +1177,37 @@ async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?:
   
   const limits = TF_DATA_LIMITS[timeframe] || TF_DATA_LIMITS['1d'];
   const endDate = new Date();
+  const isIntraday = ['1h', '4h'].includes(timeframe);
   
   let startDate: Date;
   if (fromTimestamp) {
     startDate = new Date(fromTimestamp);
+    // Clamp intraday requests to provider limits (EODHD supports max ~120 days intraday)
+    if (isIntraday) {
+      const maxIntradayStart = new Date();
+      maxIntradayStart.setDate(maxIntradayStart.getDate() - limits.rangeDays);
+      if (startDate < maxIntradayStart) {
+        console.log(`[EODHD] Clamping intraday start from ${startDate.toISOString().split('T')[0]} to ${maxIntradayStart.toISOString().split('T')[0]} (provider limit: ${limits.rangeDays}d)`);
+        startDate = maxIntradayStart;
+      }
+    }
   } else {
     startDate = new Date();
     startDate.setDate(startDate.getDate() - limits.rangeDays);
   }
   
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
-  
   const eodhSymbol = toEODHDSymbol(symbol);
-  const isIntraday = ['1h', '4h'].includes(timeframe);
   const eodhInterval = timeframe === '4h' ? '1h' : TF_TO_EODHD_INTERVAL[timeframe];
   
   let url: string;
   if (isIntraday) {
-    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${startStr}&to=${endStr}&fmt=json`;
+    // EODHD intraday uses Unix timestamps
+    const fromUnix = Math.floor(startDate.getTime() / 1000);
+    const toUnix = Math.floor(endDate.getTime() / 1000);
+    url = `https://eodhd.com/api/intraday/${eodhSymbol}?api_token=${EODHD_API_KEY}&interval=${eodhInterval}&from=${fromUnix}&to=${toUnix}&fmt=json`;
   } else {
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
     url = `https://eodhd.com/api/eod/${eodhSymbol}?api_token=${EODHD_API_KEY}&from=${startStr}&to=${endStr}&period=${eodhInterval}&fmt=json`;
   }
   
@@ -1402,21 +1413,34 @@ async function readBarsFromDB(
   minBarsRequired: number = 50
 ): Promise<OHLCBar[]> {
   try {
-    const { data, error } = await supabase
-      .from('historical_prices')
-      .select('date, open, high, low, close, volume')
-      .eq('symbol', symbol)
-      .eq('timeframe', timeframe)
-      .gte('date', fromDate)
-      .lte('date', toDate)
-      .order('date', { ascending: true });
+    // Paginate to bypass PostgREST default 1000-row limit
+    const PAGE_SIZE = 1000;
+    let allData: any[] = [];
+    let offset = 0;
     
-    if (error || !data || data.length < minBarsRequired) {
+    while (true) {
+      const { data, error } = await supabase
+        .from('historical_prices')
+        .select('date, open, high, low, close, volume')
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .gte('date', fromDate)
+        .lte('date', toDate)
+        .order('date', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
+      
+      if (error || !data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+    
+    if (allData.length < minBarsRequired) {
       return [];
     }
     
-    console.log(`[DB-Cache] Found ${data.length} cached bars for ${symbol}@${timeframe}`);
-    return data.map((row: any) => ({
+    console.log(`[DB-Cache] Found ${allData.length} cached bars for ${symbol}@${timeframe}`);
+    return allData.map((row: any) => ({
       date: row.date,
       open: Number(row.open),
       high: Number(row.high),
@@ -1495,15 +1519,16 @@ async function fetchMarketData(
   timeframe: string, 
   fromTimestamp?: number,
   supabase?: any,
-  assetType?: string
+  assetType?: string,
+  skipDbCache: boolean = false
 ): Promise<OHLCBar[]> {
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
   const isFX = symbol.includes('=X');
   const isIntraday = ['1h', '4h', '8h'].includes(timeframe);
   const resolvedAssetType = assetType || getAssetType(symbol);
   
-  // Step 1: Try reading from DB cache first
-  if (supabase && fromTimestamp) {
+  // Step 1: Try reading from DB cache first (skip if forced)
+  if (supabase && fromTimestamp && !skipDbCache) {
     const fromDate = new Date(fromTimestamp).toISOString().split('T')[0];
     const toDate = new Date().toISOString().split('T')[0];
     const cachedBars = await readBarsFromDB(supabase, symbol, timeframe, fromDate, toDate);
@@ -1553,11 +1578,54 @@ async function fetchMarketData(
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
     
+    // For 4h/8h: if providers failed, try aggregating from 1h DB bars
+    if (bars.length === 0 && ['4h', '8h'].includes(timeframe) && supabase) {
+      const fromDate = fromTimestamp ? new Date(fromTimestamp).toISOString().split('T')[0] : '2020-01-01';
+      const toDate = new Date().toISOString().split('T')[0];
+      console.log(`[Provider] Trying DB 1h aggregation for FX ${symbol}@${timeframe}`);
+      const hourlyBars = await readBarsFromDB(supabase, symbol, '1h', fromDate, toDate, 10);
+      if (hourlyBars.length > 0) {
+        const is24h = symbol.includes('-USD') || symbol.includes('-USDT') || symbol.includes('=X');
+        const hours = timeframe === '8h' ? 8 : 4;
+        // Aggregate using existing function for 4h; manual for 8h
+        if (timeframe === '4h') {
+          bars = aggregate1hTo4h(hourlyBars, is24h);
+        } else {
+          // 8h aggregation
+          const grouped = new Map<string, OHLCBar[]>();
+          for (const bar of hourlyBars) {
+            const d = new Date(bar.date);
+            const periodStart = Math.floor(d.getUTCHours() / hours) * hours;
+            const boundary = new Date(d);
+            boundary.setUTCHours(periodStart, 0, 0, 0);
+            const key = boundary.toISOString();
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(bar);
+          }
+          bars = [];
+          for (const [key, wBars] of grouped) {
+            if (wBars.length < 2) continue;
+            wBars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            bars.push({
+              date: key,
+              open: wBars[0].open,
+              high: Math.max(...wBars.map(b => b.high)),
+              low: Math.min(...wBars.map(b => b.low)),
+              close: wBars[wBars.length - 1].close,
+              volume: wBars.reduce((sum, b) => sum + (b.volume || 0), 0)
+            });
+          }
+          bars.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        }
+        console.log(`[Provider] Aggregated ${hourlyBars.length} 1h bars → ${bars.length} ${timeframe} bars for ${symbol}`);
+      }
+    }
+    
     // Final fallback: use EODHD EOD (daily) bars to prevent data starvation
     if (bars.length === 0) {
-      console.log(`[Provider] Both EODHD intraday and Yahoo failed for FX ${symbol} — trying EODHD EOD as final fallback`);
+      console.log(`[Provider] All sources failed for FX ${symbol}@${timeframe} — trying EODHD EOD as final fallback`);
       bars = await fetchEODHDData(symbol, '1d', fromTimestamp);
-      // Note: this gives daily bars not hourly, but keeps the pattern detector from starving on zero data
+      // Note: this gives daily bars not the target timeframe, but prevents pattern detector from starving
     }
   } else {
     // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
@@ -1886,7 +1954,9 @@ serve(async (req) => {
       offset = 0,
       incrementalMode = true,       // Default to incremental updates
       forceFullBackfill = false,    // Override to force full historical fetch
-      stockLetterFilter = null      // NEW: Filter stocks by first letter range { start: 'A', end: 'G' }
+      stockLetterFilter = null,     // Filter stocks by first letter range { start: 'A', end: 'G' }
+      symbolsFilter = null as string[] | null,  // Only process these specific symbols
+      barDataOnly = false           // When true, only fetch & persist bar data, skip pattern detection
     } = body;
 
     const useIncremental = incrementalMode && !forceFullBackfill;
@@ -1894,6 +1964,12 @@ serve(async (req) => {
     console.log(`[seed-mtf] Starting ${timeframe} pattern seeding`);
     console.log(`[seed-mtf] Mode: ${useIncremental ? 'INCREMENTAL (only new data)' : 'FULL BACKFILL'}`);
     console.log(`[seed-mtf] Asset types: ${assetTypes.join(', ')}, offset=${offset}`);
+    if (symbolsFilter) {
+      console.log(`[seed-mtf] Symbol filter: ${symbolsFilter.join(', ')}`);
+    }
+    if (barDataOnly) {
+      console.log(`[seed-mtf] BAR DATA ONLY mode — skipping pattern detection`);
+    }
     if (stockLetterFilter) {
       console.log(`[seed-mtf] Stock letter filter: ${stockLetterFilter.start}-${stockLetterFilter.end}`);
     }
@@ -1920,10 +1996,18 @@ serve(async (req) => {
       });
     }
 
+    // Apply symbolsFilter if provided — only keep matching symbols
+    let filteredInstruments = allInstruments;
+    if (symbolsFilter && Array.isArray(symbolsFilter) && symbolsFilter.length > 0) {
+      const filterSet = new Set(symbolsFilter.map(s => s.toUpperCase()));
+      filteredInstruments = allInstruments.filter(inst => filterSet.has(inst.symbol.toUpperCase()));
+      console.log(`[seed-mtf] symbolsFilter matched ${filteredInstruments.length} of ${allInstruments.length} instruments`);
+    }
+
     // Pagination
     const MAX_PER_RUN = 10; // Smaller batch for intraday (more data per instrument)
-    const instrumentsToProcess = allInstruments.slice(offset, offset + MAX_PER_RUN);
-    const hasMore = offset + MAX_PER_RUN < allInstruments.length;
+    const instrumentsToProcess = filteredInstruments.slice(offset, offset + MAX_PER_RUN);
+    const hasMore = offset + MAX_PER_RUN < filteredInstruments.length;
     const nextOffset = offset + MAX_PER_RUN;
 
     console.log(`[seed-mtf] Processing ${offset} to ${offset + instrumentsToProcess.length} of ${allInstruments.length}`);
@@ -1959,7 +2043,15 @@ serve(async (req) => {
         }
         
         console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (DB-first, then providers)...`);
-        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType);
+        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType, forceFullBackfill);
+        
+        if (barDataOnly) {
+          // In barDataOnly mode, we only care about fetching and persisting bars (already done inside fetchMarketData)
+          console.log(`[seed-mtf] barDataOnly: fetched ${bars.length} bars for ${symbol}@${timeframe} — skipping pattern detection`);
+          processedCount++;
+          await new Promise(resolve => setTimeout(resolve, 300));
+          continue;
+        }
         
         if (bars.length < 50) {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
@@ -2001,6 +2093,21 @@ serve(async (req) => {
     console.log(`[seed-mtf] Detection complete: ${allOccurrences.length} patterns from ${processedCount} instruments`);
     if (skippedDuplicates > 0) {
       console.log(`[seed-mtf] Skipped ${skippedDuplicates} already-seeded patterns`);
+    }
+
+    // barDataOnly mode: return early with just bar fetch stats
+    if (barDataOnly) {
+      return new Response(JSON.stringify({
+        success: true,
+        timeframe,
+        mode: 'bar_data_only',
+        instrumentsProcessed: processedCount,
+        hasMore,
+        nextOffset: hasMore ? nextOffset : null,
+        errors: errors.slice(0, 10)
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (dryRun) {
