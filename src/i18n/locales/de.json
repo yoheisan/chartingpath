@@ -2402,7 +2402,9 @@
     "noHistoricalData": "Keine historischen Daten für {{symbols}} auf {{timeframe}} gefunden. Credits werden nicht belastet, aber der Backtest schlägt fehl. Probieren Sie einen anderen Zeitrahmen.",
     "cannotRunConfig": "Diese Konfiguration kann nicht ausgeführt werden",
     "foundZeroPass": "gefunden, 0 bestanden",
-    "backtesting": "Backtesting"
+    "backtesting": "Backtesting",
+    "firstAnalysisTitle": "Zum ersten Mal hier?",
+    "firstAnalysisDesc": "Wählen Sie unten einen Schnellstart, um Ihren ersten Backtest mit einem Klick auszuführen — kein Setup erforderlich."
   },
   "patternNames": {
     "Bull Flag": "Bullenflagge",

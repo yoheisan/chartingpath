@@ -194,7 +194,9 @@
     "noHistoricalData": "Không tìm thấy dữ liệu lịch sử cho {{symbols}} trên {{timeframe}}. Tín dụng sẽ không bị trừ nhưng backtest sẽ thất bại. Thử khung thời gian khác.",
     "cannotRunConfig": "Không thể chạy cấu hình này",
     "foundZeroPass": "tìm thấy, 0 đạt",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "Lần đầu ở đây?",
+    "firstAnalysisDesc": "Chọn một Khởi đầu nhanh bên dưới để chạy backtest đầu tiên chỉ với một cú nhấp — không cần thiết lập."
   },
   "capture": {
     "captureAndShare": "Chụp & Chia sẻ",

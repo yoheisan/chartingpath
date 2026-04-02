@@ -3289,7 +3289,9 @@
     "noHistoricalData": "No historical data found for {{symbols}} on {{timeframe}}. Credits will not be charged but the backtest will fail. Try a different timeframe.",
     "cannotRunConfig": "Cannot run this configuration",
     "foundZeroPass": "found, 0 pass",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "First time here?",
+    "firstAnalysisDesc": "Pick a Quick Start below to run your first backtest in one click — no setup needed."
   },
   "patternNames": {
     "Bull Flag": "Bull Flag",

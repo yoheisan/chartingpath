@@ -2400,7 +2400,9 @@
     "noHistoricalData": "Nessun dato storico trovato per {{symbols}} su {{timeframe}}. I crediti non saranno addebitati ma il backtest fallirà. Prova un altro timeframe.",
     "cannotRunConfig": "Impossibile eseguire questa configurazione",
     "foundZeroPass": "trovati, 0 superano",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "Prima volta qui?",
+    "firstAnalysisDesc": "Scegli un avvio rapido qui sotto per eseguire il tuo primo backtest con un clic — nessuna configurazione necessaria."
   },
   "patternNames": {
     "Bull Flag": "Bandiera Rialzista",

@@ -373,7 +373,9 @@
     "noHistoricalData": "Nie znaleziono danych historycznych dla {{symbols}} na {{timeframe}}. Kredyty nie zostaną pobrane ale backtest się nie powiedzie. Spróbuj innego timeframe'u.",
     "cannotRunConfig": "Nie można uruchomić tej konfiguracji",
     "foundZeroPass": "znaleziono, 0 przeszło",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "Pierwszy raz tutaj?",
+    "firstAnalysisDesc": "Wybierz poniżej szybki start, aby uruchomić swój pierwszy backtest jednym kliknięciem — bez konfiguracji."
   },
   "capture": {
     "captureAndShare": "Przechwytuj i Udostępniaj",

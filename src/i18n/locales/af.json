@@ -2402,7 +2402,9 @@
     "noHistoricalData": "Geen historiese data gevind vir {{symbols}} op {{timeframe}}. Krediete sal nie afgetrek word nie maar die terugtoets sal misluk. Probeer 'n ander tydraamwerk.",
     "cannotRunConfig": "Kan nie hierdie konfigurasie uitvoer nie",
     "foundZeroPass": "gevind, 0 geslaag",
-    "backtesting": "terugtoetsing"
+    "backtesting": "terugtoetsing",
+    "firstAnalysisTitle": "Eerste keer hier?",
+    "firstAnalysisDesc": "Kies 'n vinnige begin hieronder om jou eerste backtest met een klik te hardloop — geen opstelling nodig nie."
   },
   "patternNames": {
     "Bull Flag": "Bulvlag",

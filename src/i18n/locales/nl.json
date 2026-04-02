@@ -373,7 +373,9 @@
     "noHistoricalData": "Geen historische data gevonden voor {{symbols}} op {{timeframe}}. Credits worden niet afgeschreven maar de backtest zal falen. Probeer een ander tijdsframe.",
     "cannotRunConfig": "Kan deze configuratie niet uitvoeren",
     "foundZeroPass": "gevonden, 0 geslaagd",
-    "backtesting": "backtesting"
+    "backtesting": "backtesting",
+    "firstAnalysisTitle": "Eerste keer hier?",
+    "firstAnalysisDesc": "Kies hieronder een snelstart om je eerste backtest met één klik uit te voeren — geen setup nodig."
   },
   "capture": {
     "captureAndShare": "Vastleggen & Delen",
