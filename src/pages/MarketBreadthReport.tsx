@@ -50,6 +50,15 @@ const MarketBreadthReport = () => {
 
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
+  // Fetch user ID for paper trading data
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
+
+  const { portfolio, openTrades, closedTrades, winRate, loading: portfolioLoading } = usePaperTrading(userId);
+
   // Map timezone to region for realtime matching
   const getRegion = (tz: string): string => {
     if (tz.includes('Tokyo') || tz.includes('Hong_Kong') || tz.includes('Singapore') || tz.includes('Shanghai')) return 'Asia';
