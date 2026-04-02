@@ -186,9 +186,12 @@ import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
+type AssetType = 'all' | 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
+
+const INDIVIDUAL_ASSET_TYPES: Exclude<AssetType, 'all'>[] = ['fx', 'crypto', 'stocks', 'commodities', 'indices', 'etfs'];
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  all: 'All Assets',
   fx: 'Forex',
   crypto: 'Crypto',
   stocks: 'Stocks',
@@ -238,7 +241,7 @@ export default function LivePatternsPage() {
   const urlTimeframe = searchParams.get('timeframe') as '1h' | '4h' | '8h' | '1d' | '1wk' | null;
   
   // Detect initial asset type: prefer explicit URL param, then detect from highlight symbol, then default to 'fx'
-  const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'fx') : 'fx');
+  const initialAssetType: AssetType = urlAssetType || (highlightSymbol ? (detectAssetTypeFromSymbol(highlightSymbol) || 'all') : 'all');
   const navigate = useNavigate();
   
   const isMobile = useIsMobile();
@@ -346,23 +349,42 @@ export default function LivePatternsPage() {
     // Use the provided caps or fall back to effective caps
     const capsToUse = effectiveCaps;
     
-    const invokeScan = async (forceRefresh: boolean, timeoutMs: number, tfToFetch: string) => {
+    const invokeScanForType = async (singleAssetType: string, forceRefresh: boolean, timeoutMs: number, tf: string) => {
       return await withTimeout(
         supabase.functions.invoke<ScanResult>('scan-live-patterns', {
           body: {
-            assetType: typeToFetch,
-            timeframe: tfToFetch,
+            assetType: singleAssetType,
+            timeframe: tf,
             limit: 50,
             maxTickers: capsToUse.maxTickersPerClass,
             allowedPatterns: capsToUse.allowedPatterns,
-            forceRefresh, // only true when we explicitly want a full rescan
+            forceRefresh,
             includeDetails,
-            topNWithBars: 10, // Embed bars for first 10 patterns for instant chart loading
+            topNWithBars: typeToFetch === 'all' ? 3 : 10,
           },
         }),
         timeoutMs,
         'scan-live-patterns'
       );
+    };
+
+    const fetchSingleAssetType = async (singleType: string): Promise<ScanResult | null> => {
+      const attempts = [
+        { forceRefresh: false, timeout: 40_000 },
+        { forceRefresh: false, timeout: 50_000 },
+      ];
+      for (let i = 0; i < attempts.length; i++) {
+        const { forceRefresh: fr, timeout } = attempts[i];
+        try {
+          const res = await invokeScanForType(singleType, fr, timeout, tfToFetch);
+          const data = res.data ?? null;
+          if (data?.patterns) return data;
+        } catch (err: any) {
+          console.warn(`[LivePatternsPage] ${singleType} attempt ${i + 1} failed`, err.message);
+          if (i < attempts.length - 1) await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+      return null;
     };
 
     try {
@@ -375,60 +397,35 @@ export default function LivePatternsPage() {
         includeDetails,
       });
 
-      // Fast path returns quickly; forced refresh can be slower.
-      // If a forced refresh times out, we fall back to fetching cached results
-      // (often the scan completed and persisted, but the response didn't make it back in time).
-      let data: ScanResult | null = null;
-      let fnError: any = null;
-      let lastError: any = null;
+      if (typeToFetch === 'all') {
+        // Fetch all asset types in parallel
+        const results = await Promise.allSettled(
+          INDIVIDUAL_ASSET_TYPES.map(t => fetchSingleAssetType(t))
+        );
+        
+        const allPatterns: LiveSetup[] = [];
+        let totalScanned = 0;
+        let totalUniverse = 0;
+        let latestScan: string | null = null;
 
-      // Retry logic - ALWAYS use cached path for speed; forceRefresh disabled for UI
-      // Full scans happen via background cron only to prevent timeout issues
-      // Increased timeouts to handle edge function cold starts gracefully
-      // First attempt: 40s to handle worst-case cold starts
-      // Second attempt: 50s for additional buffer
-      const attempts = [
-        { forceRefresh: false, timeout: 40_000 },  // Fast path: read from DB cache (generous for cold start)
-        { forceRefresh: false, timeout: 50_000 },  // Retry with even longer timeout
-      ];
-
-      for (let i = 0; i < attempts.length; i++) {
-        const { forceRefresh: fr, timeout } = attempts[i];
-        try {
-          console.info(`[LivePatternsPage] Attempt ${i + 1}/${attempts.length}`, { forceRefresh: fr, timeout });
-          const res = await invokeScan(fr, timeout, tfToFetch);
-          data = res.data ?? null;
-          fnError = res.error ?? null;
-          if (data?.patterns) {
-            // Success - if this was a fallback, inform user
-            if (isRefresh && i > 0) {
-              setError('Refresh completed. Showing the latest results.');
+        results.forEach((r) => {
+          if (r.status === 'fulfilled' && r.value?.patterns) {
+            allPatterns.push(...r.value.patterns);
+            totalScanned += r.value.instrumentsScanned || 0;
+            totalUniverse += r.value.totalInUniverse || r.value.instrumentsScanned || 0;
+            if (!latestScan || (r.value.scannedAt && r.value.scannedAt > latestScan)) {
+              latestScan = r.value.scannedAt;
             }
-            break;
           }
-        } catch (err: any) {
-          lastError = err;
-          const isTimeout = typeof err?.message === 'string' && err.message.includes('timed out');
-          console.warn(`[LivePatternsPage] Attempt ${i + 1} failed`, { isTimeout, message: err.message });
-          // Continue to next attempt if we have more
-          if (i === attempts.length - 1) {
-            throw err; // Last attempt failed
-          }
-          // Small delay before retry to allow cold start to complete
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      }
-      
-      if (fnError) throw fnError;
-      
-      if (data?.patterns) {
-        setPatterns(data.patterns);
-        setLastScanned(data.scannedAt);
-        setInstrumentsScanned(data.instrumentsScanned);
-        setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
+        });
 
-        // Trigger batch gate evaluations for loaded patterns
-        const items = data.patterns.slice(0, 20).map((s: any) => ({
+        setPatterns(allPatterns);
+        setLastScanned(latestScan || new Date().toISOString());
+        setInstrumentsScanned(totalScanned);
+        setTotalInUniverse(totalUniverse);
+
+        // Trigger batch gate evaluations
+        const items = allPatterns.slice(0, 20).map((s: any) => ({
           ticker: s.instrument,
           setup_type: s.patternName,
           timeframe: tfToFetch,
@@ -436,9 +433,26 @@ export default function LivePatternsPage() {
         }));
         evaluateBatch(items).catch(console.error);
       } else {
-        // No patterns found but not an error - show empty state
-        setPatterns([]);
-        setLastScanned(new Date().toISOString());
+        // Single asset type fetch (existing logic)
+        const data = await fetchSingleAssetType(typeToFetch);
+
+        if (data?.patterns) {
+          setPatterns(data.patterns);
+          setLastScanned(data.scannedAt);
+          setInstrumentsScanned(data.instrumentsScanned);
+          setTotalInUniverse(data.totalInUniverse || data.instrumentsScanned);
+
+          const items = data.patterns.slice(0, 20).map((s: any) => ({
+            ticker: s.instrument,
+            setup_type: s.patternName,
+            timeframe: tfToFetch,
+            direction: s.direction,
+          }));
+          evaluateBatch(items).catch(console.error);
+        } else {
+          setPatterns([]);
+          setLastScanned(new Date().toISOString());
+        }
       }
     } catch (err: any) {
       console.error('[LivePatternsPage] Error:', err);
@@ -1116,7 +1130,7 @@ export default function LivePatternsPage() {
               <TooltipContent side="bottom" className="max-w-sm p-3">
                 <p className="font-medium mb-2">{t('livePatterns.howThisWorks')}</p>
                 <p className="text-sm mb-2">
-                  We analyze {totalInUniverse || instrumentsScanned} {ASSET_TYPE_LABELS[assetType].toLowerCase()} instruments 
+                  We analyze {totalInUniverse || instrumentsScanned} {assetType === 'all' ? '' : ASSET_TYPE_LABELS[assetType].toLowerCase() + ' '}instruments 
                   for chart patterns using {timeframe === '1h' ? '1-hour' : timeframe === '4h' ? '4-hour' : timeframe === '8h' ? '8-hour' : timeframe === '1wk' ? 'weekly' : 'daily'} timeframe data.
                   {instrumentsScanned < (totalInUniverse || 0) && (
                     <span className="block mt-1 text-xs text-muted-foreground">
@@ -1133,12 +1147,19 @@ export default function LivePatternsPage() {
           </TooltipProvider>
         </div>
         <p className="text-muted-foreground">
-          {t('screener.analyzing', { 
-            count: totalInUniverse || instrumentsScanned, 
-            assetType: ASSET_TYPE_LABELS[assetType].toLowerCase(),
-            timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
-            active: patterns.length
-          })}
+          {assetType === 'all' 
+            ? t('screener.analyzingAll', {
+                count: totalInUniverse || instrumentsScanned,
+                timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
+                active: patterns.length
+              })
+            : t('screener.analyzing', { 
+                count: totalInUniverse || instrumentsScanned, 
+                assetType: ASSET_TYPE_LABELS[assetType].toLowerCase(),
+                timeframe: timeframe === '1h' ? '1H' : timeframe === '4h' ? '4H' : timeframe === '8h' ? '8H' : timeframe === '1wk' ? t('screener.weekly') : t('screener.daily'),
+                active: patterns.length
+              })
+          }
         </p>
       </div>
 
@@ -1158,6 +1179,7 @@ export default function LivePatternsPage() {
               <SelectValue placeholder="Asset Class" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">🌐 {t('livePatterns.allAssets', 'All Assets')}</SelectItem>
               <SelectItem value="fx">🌍 Forex</SelectItem>
               <SelectItem value="crypto">₿ Crypto</SelectItem>
               <SelectItem value="stocks">📈 Stocks</SelectItem>
