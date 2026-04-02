@@ -18,6 +18,7 @@ import PortfolioSummaryCard from "@/components/report/PortfolioSummaryCard";
 const MarketBreadthReport = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState("");
   const [reportMetadata, setReportMetadata] = useState<{
