@@ -424,6 +424,17 @@ const MarketBreadthReport = () => {
           </Card>
         </div>
 
+        {/* Portfolio Summary - Real Paper Trading Data */}
+        {userId && (
+          <PortfolioSummaryCard
+            portfolio={portfolio}
+            openTrades={openTrades}
+            closedTrades={closedTrades}
+            winRate={winRate}
+            loading={portfolioLoading}
+          />
+        )}
+
         <div className="space-y-6">
           {/* Market Report Display */}
           <Card>
