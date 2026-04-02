@@ -186,9 +186,12 @@ import type { LiveSetup } from '@/types/screener';
 import { GRADE_ORDER as SHARED_GRADE_ORDER, getPatternGrade as sharedGetPatternGrade } from '@/types/screener';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type AssetType = 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
+type AssetType = 'all' | 'fx' | 'crypto' | 'stocks' | 'commodities' | 'indices' | 'etfs';
+
+const INDIVIDUAL_ASSET_TYPES: Exclude<AssetType, 'all'>[] = ['fx', 'crypto', 'stocks', 'commodities', 'indices', 'etfs'];
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  all: 'All Assets',
   fx: 'Forex',
   crypto: 'Crypto',
   stocks: 'Stocks',
