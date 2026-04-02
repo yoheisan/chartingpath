@@ -1420,7 +1420,8 @@ async function readBarsFromDB(
       .eq('timeframe', timeframe)
       .gte('date', fromDate)
       .lte('date', toDate)
-      .order('date', { ascending: true });
+      .order('date', { ascending: true })
+      .limit(15000);
     
     if (error || !data || data.length < minBarsRequired) {
       return [];
