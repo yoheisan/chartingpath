@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, Clock, AlertCircle, FlaskConical, Zap, Code2, Bell, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatternLabViewer from '@/components/projects/PatternLabViewer';
+import EdgeAnalyst from '@/components/projects/EdgeAnalyst';
 import RunHistory from '@/components/projects/RunHistory';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 import { GradeBadge, extractGrade } from '@/components/ui/GradeBadge';
@@ -709,6 +710,11 @@ const ProjectRun = () => {
                 </Card>
               );
             })()}
+
+            {/* Edge Analyst Panel */}
+            <div className="mt-6">
+              <EdgeAnalyst runId={runId} />
+            </div>
 
             <DisclaimerBanner className="mt-8" />
           </>
