@@ -2751,6 +2751,40 @@ serve(async (req) => {
           }
         }
         
+        // Write individual trade results to backtest_pattern_outcomes
+        if (allTrades && allTrades.length > 0) {
+          try {
+            const BATCH_SIZE = 500;
+            const outcomeRows = allTrades.map((t: any) => ({
+              run_id: run.id,
+              instrument: t.instrument,
+              timeframe: timeframe || '',
+              pattern_name: t.patternName || t.patternId || '',
+              direction: t.direction,
+              grade: t.grade || null,
+              entry_date: t.entryDate,
+              outcome: t.exitReason === 'tp' ? 'hit_tp' : t.exitReason === 'sl' ? 'hit_sl' : 'expired',
+              bars_to_close: t.rrOutcomes?.rr2?.bars ?? null,
+              r_multiple: t.rMultiple ?? null,
+              rr_target: t.rrOutcomes?.rr2 ? 2 : null,
+            }));
+
+            for (let i = 0; i < outcomeRows.length; i += BATCH_SIZE) {
+              const batch = outcomeRows.slice(i, i + BATCH_SIZE);
+              const { error: outErr } = await supabase
+                .from('backtest_pattern_outcomes')
+                .insert(batch);
+              if (outErr) {
+                console.error(`[PatternLab] backtest_pattern_outcomes insert error (batch ${Math.floor(i / BATCH_SIZE)}):`, outErr);
+              }
+            }
+            console.log(`[PatternLab] Wrote ${outcomeRows.length} trade outcomes to backtest_pattern_outcomes`);
+          } catch (outcomeError) {
+            console.error('[PatternLab] Failed to write pattern outcomes:', outcomeError);
+            // Non-fatal: don't fail the run
+          }
+        }
+        
         // Deduct credits (skip for admins)
         if (credits && !skipCreditCheck) {
           await supabase
