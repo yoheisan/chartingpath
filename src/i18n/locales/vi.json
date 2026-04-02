@@ -6200,5 +6200,29 @@
     "timeframeNotAllowed": "Khung thời gian {{timeframe}} không khả dụng trên gói {{tier}}",
     "notOnPlan": "Dự án này không khả dụng trên gói của bạn",
     "projectNotAvailable": "Loại dự án không khả dụng cho cấp của bạn"
+  },
+  "edgeAnalyst": {
+    "title": "Phân tích Edge",
+    "badgeAI": "AI",
+    "autoDescription": "Phân tích tự động kết quả backtest",
+    "defaultDescription": "Đặt câu hỏi dựa trên dữ liệu về hiệu suất mẫu hình.",
+    "analyzingResults": "Đang phân tích kết quả backtest...",
+    "analyzing": "Đang phân tích...",
+    "followUp": "Đặt câu hỏi tiếp theo",
+    "placeholder": "VD: Mẫu hình nào có kỳ vọng dương trên Vàng?",
+    "ask": "Hỏi",
+    "failedToAnalyze": "Phân tích thất bại",
+    "tableInstrument": "Công cụ",
+    "tablePattern": "Mẫu hình",
+    "tableTF": "KT",
+    "tableWinRate": "Tỷ lệ thắng",
+    "tableAvgR": "R TB",
+    "tableSamples": "Mẫu",
+    "exampleQuestions": {
+      "positiveExpectancy": "Mẫu hình nào có kỳ vọng dương?",
+      "bestTimeframe": "Khung thời gian tốt nhất cho setup này?",
+      "longVsShort": "So sánh hiệu suất long và short",
+      "bestInstrument": "Công cụ nào có hiệu suất tốt nhất?"
+    }
   }
 }

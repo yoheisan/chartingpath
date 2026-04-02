@@ -6244,5 +6244,29 @@
     "timeframeNotAllowed": "{{timeframe}} zaman dilimi {{tier}} planında mevcut değil",
     "notOnPlan": "Bu proje planınızda mevcut değil",
     "projectNotAvailable": "Proje türü seviyeniz için mevcut değil"
+  },
+  "edgeAnalyst": {
+    "title": "Edge Analist",
+    "badgeAI": "YZ",
+    "autoDescription": "Backtest sonuçlarınızın otomatik analizi",
+    "defaultDescription": "Backtest'lerinizdeki kalıp performansı hakkında sorular sorun.",
+    "analyzingResults": "Backtest sonuçları analiz ediliyor...",
+    "analyzing": "Analiz ediliyor...",
+    "followUp": "Takip sorusu sorun",
+    "placeholder": "Örn. Altında pozitif beklentisi olan kalıplar hangileri?",
+    "ask": "Sor",
+    "failedToAnalyze": "Analiz başarısız",
+    "tableInstrument": "Enstrüman",
+    "tablePattern": "Kalıp",
+    "tableTF": "ZD",
+    "tableWinRate": "Kazanma Oranı",
+    "tableAvgR": "Ort R",
+    "tableSamples": "Örneklem",
+    "exampleQuestions": {
+      "positiveExpectancy": "Pozitif beklentisi olan kalıplar hangileri?",
+      "bestTimeframe": "Bu kurulum için en iyi zaman dilimi?",
+      "longVsShort": "Long ve short performansını karşılaştır",
+      "bestInstrument": "En iyi performans gösteren enstrüman?"
+    }
   }
 }

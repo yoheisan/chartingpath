@@ -6247,5 +6247,29 @@
     "timeframeNotAllowed": "الإطار الزمني {{timeframe}} غير متاح في خطة {{tier}}",
     "notOnPlan": "هذا المشروع غير متاح في خطتك",
     "projectNotAvailable": "نوع المشروع غير متاح لمستواك"
+  },
+  "edgeAnalyst": {
+    "title": "محلل الحافة",
+    "badgeAI": "ذكاء",
+    "autoDescription": "تحليل تلقائي لنتائج الاختبار الخلفي",
+    "defaultDescription": "اطرح أسئلة مبنية على البيانات حول أداء الأنماط.",
+    "analyzingResults": "جاري تحليل نتائج الاختبار...",
+    "analyzing": "جاري التحليل...",
+    "followUp": "اطرح سؤال متابعة",
+    "placeholder": "مثال: ما الأنماط ذات التوقع الإيجابي على الذهب؟",
+    "ask": "اسأل",
+    "failedToAnalyze": "فشل التحليل",
+    "tableInstrument": "الأداة",
+    "tablePattern": "النمط",
+    "tableTF": "الإطار",
+    "tableWinRate": "نسبة الفوز",
+    "tableAvgR": "متوسط R",
+    "tableSamples": "العينات",
+    "exampleQuestions": {
+      "positiveExpectancy": "ما الأنماط ذات التوقع الإيجابي؟",
+      "bestTimeframe": "ما أفضل إطار زمني لهذا الإعداد؟",
+      "longVsShort": "مقارنة أداء الشراء مقابل البيع",
+      "bestInstrument": "ما الأداة الأفضل أداءً؟"
+    }
   }
 }

@@ -6247,5 +6247,29 @@
     "timeframeNotAllowed": "{{timeframe}}时间框架在{{tier}}计划中不可用",
     "notOnPlan": "此项目在您的计划中不可用",
     "projectNotAvailable": "项目类型在您的等级中不可用"
+  },
+  "edgeAnalyst": {
+    "title": "边际分析师",
+    "badgeAI": "AI",
+    "autoDescription": "回测结果自动分析",
+    "defaultDescription": "针对回测中的形态表现提出数据驱动的问题。",
+    "analyzingResults": "正在分析回测结果...",
+    "analyzing": "分析中...",
+    "followUp": "提出后续问题",
+    "placeholder": "例：哪些形态在黄金上有正期望值？",
+    "ask": "提问",
+    "failedToAnalyze": "分析失败",
+    "tableInstrument": "品种",
+    "tablePattern": "形态",
+    "tableTF": "周期",
+    "tableWinRate": "胜率",
+    "tableAvgR": "平均R",
+    "tableSamples": "样本",
+    "exampleQuestions": {
+      "positiveExpectancy": "哪些形态有正期望值？",
+      "bestTimeframe": "该策略的最佳时间周期是？",
+      "longVsShort": "比较多空表现",
+      "bestInstrument": "哪个品种表现最好？"
+    }
   }
 }

@@ -6248,5 +6248,29 @@
     "timeframeNotAllowed": "{{timeframe}} Zeitrahmen nicht verfügbar im {{tier}}-Plan",
     "notOnPlan": "Dieses Projekt ist in Ihrem Plan nicht verfügbar",
     "projectNotAvailable": "Projekttyp für Ihre Stufe nicht verfügbar"
+  },
+  "edgeAnalyst": {
+    "title": "Edge-Analyst",
+    "badgeAI": "KI",
+    "autoDescription": "Automatisch generierte Analyse Ihres Backtests",
+    "defaultDescription": "Stellen Sie datengestützte Fragen zur Pattern-Performance.",
+    "analyzingResults": "Backtest-Ergebnisse werden analysiert...",
+    "analyzing": "Analyse läuft...",
+    "followUp": "Stellen Sie eine Folgefrage",
+    "placeholder": "Z.B. Welche Patterns haben positive Erwartung bei Gold?",
+    "ask": "Fragen",
+    "failedToAnalyze": "Analyse fehlgeschlagen",
+    "tableInstrument": "Instrument",
+    "tablePattern": "Pattern",
+    "tableTF": "ZR",
+    "tableWinRate": "Gewinnrate",
+    "tableAvgR": "Ø R",
+    "tableSamples": "Stichproben",
+    "exampleQuestions": {
+      "positiveExpectancy": "Welche Patterns haben positive Erwartung?",
+      "bestTimeframe": "Was ist der beste Zeitrahmen für dieses Setup?",
+      "longVsShort": "Long- vs. Short-Performance vergleichen",
+      "bestInstrument": "Welches Instrument performt am besten?"
+    }
   }
 }

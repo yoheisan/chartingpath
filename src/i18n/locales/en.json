@@ -6241,5 +6241,29 @@
     "timeframeNotAllowed": "{{timeframe}} timeframe not available on {{tier}} plan",
     "notOnPlan": "This project is not available on your plan",
     "projectNotAvailable": "Project type not available for your tier"
+  },
+  "edgeAnalyst": {
+    "title": "Edge Analyst",
+    "badgeAI": "AI",
+    "autoDescription": "Auto-generated analysis of your backtest run",
+    "defaultDescription": "Ask data-driven questions about pattern performance from your backtests.",
+    "analyzingResults": "Analyzing backtest results...",
+    "analyzing": "Analyzing...",
+    "followUp": "Ask a follow-up question",
+    "placeholder": "e.g. Which patterns have positive expectancy on Gold?",
+    "ask": "Ask",
+    "failedToAnalyze": "Failed to analyze",
+    "tableInstrument": "Instrument",
+    "tablePattern": "Pattern",
+    "tableTF": "TF",
+    "tableWinRate": "Win Rate",
+    "tableAvgR": "Avg R",
+    "tableSamples": "Samples",
+    "exampleQuestions": {
+      "positiveExpectancy": "Which patterns have positive expectancy?",
+      "bestTimeframe": "What's the best timeframe for this setup?",
+      "longVsShort": "Compare long vs short performance",
+      "bestInstrument": "Which instrument performs best?"
+    }
   }
 }

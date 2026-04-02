@@ -6235,5 +6235,29 @@
     "timeframeNotAllowed": "Timeframe {{timeframe}} tidak tersedia di paket {{tier}}",
     "notOnPlan": "Proyek ini tidak tersedia di paket Anda",
     "projectNotAvailable": "Jenis proyek tidak tersedia untuk tingkat Anda"
+  },
+  "edgeAnalyst": {
+    "title": "Analis Edge",
+    "badgeAI": "AI",
+    "autoDescription": "Analisis otomatis hasil backtest Anda",
+    "defaultDescription": "Ajukan pertanyaan berbasis data tentang performa pola.",
+    "analyzingResults": "Menganalisis hasil backtest...",
+    "analyzing": "Menganalisis...",
+    "followUp": "Ajukan pertanyaan lanjutan",
+    "placeholder": "Cth. Pola mana yang memiliki ekspektasi positif pada Emas?",
+    "ask": "Tanya",
+    "failedToAnalyze": "Gagal menganalisis",
+    "tableInstrument": "Instrumen",
+    "tablePattern": "Pola",
+    "tableTF": "TF",
+    "tableWinRate": "Win Rate",
+    "tableAvgR": "R Rata2",
+    "tableSamples": "Sampel",
+    "exampleQuestions": {
+      "positiveExpectancy": "Pola mana yang memiliki ekspektasi positif?",
+      "bestTimeframe": "Timeframe terbaik untuk setup ini?",
+      "longVsShort": "Bandingkan performa long vs short",
+      "bestInstrument": "Instrumen mana yang paling baik?"
+    }
   }
 }

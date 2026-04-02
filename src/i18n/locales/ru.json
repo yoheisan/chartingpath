@@ -6247,5 +6247,29 @@
     "timeframeNotAllowed": "Таймфрейм {{timeframe}} недоступен на плане {{tier}}",
     "notOnPlan": "Этот проект недоступен в вашем плане",
     "projectNotAvailable": "Тип проекта недоступен для вашего уровня"
+  },
+  "edgeAnalyst": {
+    "title": "Аналитик Edge",
+    "badgeAI": "ИИ",
+    "autoDescription": "Автоматический анализ результатов бэктеста",
+    "defaultDescription": "Задавайте вопросы о результативности паттернов.",
+    "analyzingResults": "Анализ результатов бэктеста...",
+    "analyzing": "Анализ...",
+    "followUp": "Задайте уточняющий вопрос",
+    "placeholder": "Напр. Какие паттерны имеют положительное ожидание на золоте?",
+    "ask": "Спросить",
+    "failedToAnalyze": "Ошибка анализа",
+    "tableInstrument": "Инструмент",
+    "tablePattern": "Паттерн",
+    "tableTF": "ТФ",
+    "tableWinRate": "Винрейт",
+    "tableAvgR": "Сред. R",
+    "tableSamples": "Выборка",
+    "exampleQuestions": {
+      "positiveExpectancy": "Какие паттерны имеют положительное ожидание?",
+      "bestTimeframe": "Лучший таймфрейм для этого сетапа?",
+      "longVsShort": "Сравнить результаты лонг и шорт",
+      "bestInstrument": "Какой инструмент показывает лучшие результаты?"
+    }
   }
 }

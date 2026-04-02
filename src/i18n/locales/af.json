@@ -6248,5 +6248,29 @@
     "timeframeNotAllowed": "{{timeframe}} tydraamwerk nie beskikbaar op {{tier}} plan nie",
     "notOnPlan": "Hierdie projek is nie beskikbaar op jou plan nie",
     "projectNotAvailable": "Projektipe nie beskikbaar vir jou vlak nie"
+  },
+  "edgeAnalyst": {
+    "title": "Edge Analis",
+    "badgeAI": "KI",
+    "autoDescription": "Outomatiese ontleding van jou backtest",
+    "defaultDescription": "Vra datagedrewe vrae oor patroonprestasie.",
+    "analyzingResults": "Ontleed backtest-resultate...",
+    "analyzing": "Ontleed...",
+    "followUp": "Vra 'n opvolgvraag",
+    "placeholder": "Bv. Watter patrone het positiewe verwagting op Goud?",
+    "ask": "Vra",
+    "failedToAnalyze": "Ontleding het misluk",
+    "tableInstrument": "Instrument",
+    "tablePattern": "Patroon",
+    "tableTF": "TR",
+    "tableWinRate": "Wenkoers",
+    "tableAvgR": "Gem R",
+    "tableSamples": "Monsters",
+    "exampleQuestions": {
+      "positiveExpectancy": "Watter patrone het positiewe verwagting?",
+      "bestTimeframe": "Wat is die beste tydraamwerk vir hierdie opstelling?",
+      "longVsShort": "Vergelyk lang vs kort prestasie",
+      "bestInstrument": "Watter instrument presteer die beste?"
+    }
   }
 }

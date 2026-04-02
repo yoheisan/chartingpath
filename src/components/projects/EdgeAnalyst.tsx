@@ -32,16 +32,10 @@ interface EdgeAnalystProps {
   autoAnalyze?: boolean;
 }
 
-const EXAMPLE_QUESTIONS = [
-  "Which patterns have positive expectancy?",
-  "What's the best timeframe for this setup?",
-  "Compare long vs short performance",
-  "Which instrument performs best?",
-];
-
 const AUTO_SUMMARY_PROMPT = "Summarize the key performance findings from this backtest run. Highlight the best and worst patterns, overall win rate trends, and any actionable insights.";
 
 const SummaryTable: React.FC<{ summary: SummaryRow[] }> = ({ summary }) => {
+  const { t } = useTranslation();
   if (summary.length === 0) return null;
   return (
     <div className="rounded-lg border overflow-hidden mt-3">
@@ -49,12 +43,12 @@ const SummaryTable: React.FC<{ summary: SummaryRow[] }> = ({ summary }) => {
         <table className="w-full text-xs">
           <thead>
             <tr className="bg-muted/50 text-muted-foreground">
-              <th className="text-left px-3 py-2 font-medium">Instrument</th>
-              <th className="text-left px-3 py-2 font-medium">Pattern</th>
-              <th className="text-left px-3 py-2 font-medium">TF</th>
-              <th className="text-right px-3 py-2 font-medium">Win Rate</th>
-              <th className="text-right px-3 py-2 font-medium">Avg R</th>
-              <th className="text-right px-3 py-2 font-medium">Samples</th>
+              <th className="text-left px-3 py-2 font-medium">{t('edgeAnalyst.tableInstrument')}</th>
+              <th className="text-left px-3 py-2 font-medium">{t('edgeAnalyst.tablePattern')}</th>
+              <th className="text-left px-3 py-2 font-medium">{t('edgeAnalyst.tableTF')}</th>
+              <th className="text-right px-3 py-2 font-medium">{t('edgeAnalyst.tableWinRate')}</th>
+              <th className="text-right px-3 py-2 font-medium">{t('edgeAnalyst.tableAvgR')}</th>
+              <th className="text-right px-3 py-2 font-medium">{t('edgeAnalyst.tableSamples')}</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +80,13 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
   const [loading, setLoading] = useState(false);
   const hasAutoAnalyzed = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const EXAMPLE_QUESTIONS = [
+    t('edgeAnalyst.exampleQuestions.positiveExpectancy'),
+    t('edgeAnalyst.exampleQuestions.bestTimeframe'),
+    t('edgeAnalyst.exampleQuestions.longVsShort'),
+    t('edgeAnalyst.exampleQuestions.bestInstrument'),
+  ];
 
   // Auto-analyze on backtest completion
   useEffect(() => {
@@ -126,7 +127,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
       }]);
     } catch (err: any) {
       console.error('Edge Analyst error:', err);
-      toast.error(err.message || 'Failed to analyze');
+      toast.error(err.message || t('edgeAnalyst.failedToAnalyze'));
     } finally {
       setLoading(false);
     }
@@ -148,13 +149,13 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <FlaskConical className="h-4 w-4 text-amber-500" />
-          Edge Analyst
-          <Badge variant="secondary" className="text-[10px] font-normal">AI</Badge>
+          {t('edgeAnalyst.title')}
+          <Badge variant="secondary" className="text-[10px] font-normal">{t('edgeAnalyst.badgeAI')}</Badge>
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           {initialMessage
-            ? 'Auto-generated analysis of your backtest run'
-            : 'Ask data-driven questions about pattern performance from your backtests.'}
+            ? t('edgeAnalyst.autoDescription')
+            : t('edgeAnalyst.defaultDescription')}
         </p>
       </CardHeader>
 
@@ -163,7 +164,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
         {loading && messages.length === 0 && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
             <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-            Analyzing backtest results...
+            {t('edgeAnalyst.analyzingResults')}
           </div>
         )}
 
@@ -181,7 +182,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
           <div className="mt-5 border-t border-border/50 pt-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Ask a follow-up question</span>
+              <span className="text-xs font-medium text-muted-foreground">{t('edgeAnalyst.followUp')}</span>
             </div>
 
             {/* Example chips when no follow-ups yet */}
@@ -235,7 +236,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
             {loading && messages.length > 0 && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-3">
                 <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-                Analyzing...
+                {t('edgeAnalyst.analyzing')}
               </div>
             )}
 
@@ -245,7 +246,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. Which patterns have positive expectancy on Gold?"
+                placeholder={t('edgeAnalyst.placeholder')}
                 disabled={loading}
                 className="text-sm"
               />
@@ -260,7 +261,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
                 ) : (
                   <Send className="h-3.5 w-3.5" />
                 )}
-                Ask
+                {t('edgeAnalyst.ask')}
               </Button>
             </div>
           </div>
@@ -285,7 +286,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. Which patterns have positive expectancy on Gold?"
+                placeholder={t('edgeAnalyst.placeholder')}
                 disabled={loading}
                 className="text-sm"
               />
@@ -296,7 +297,7 @@ const EdgeAnalyst: React.FC<EdgeAnalystProps> = ({ runId, initialQuestion, autoA
                 className="shrink-0 gap-1.5"
               >
                 <Send className="h-3.5 w-3.5" />
-                Ask
+                {t('edgeAnalyst.ask')}
               </Button>
             </div>
           </>

@@ -7202,5 +7202,29 @@
     "timeframeNotAllowed": "{{timeframe}}タイムフレームは{{tier}}プランでは利用できません",
     "notOnPlan": "このプロジェクトはお使いのプランでは利用できません",
     "projectNotAvailable": "プロジェクトタイプはお使いのティアでは利用できません"
+  },
+  "edgeAnalyst": {
+    "title": "エッジアナリスト",
+    "badgeAI": "AI",
+    "autoDescription": "バックテスト結果の自動分析",
+    "defaultDescription": "パターンのパフォーマンスについてデータに基づく質問をしましょう。",
+    "analyzingResults": "バックテスト結果を分析中...",
+    "analyzing": "分析中...",
+    "followUp": "フォローアップの質問をする",
+    "placeholder": "例：ゴールドで期待値がプラスのパターンは？",
+    "ask": "質問",
+    "failedToAnalyze": "分析に失敗しました",
+    "tableInstrument": "銘柄",
+    "tablePattern": "パターン",
+    "tableTF": "時間足",
+    "tableWinRate": "勝率",
+    "tableAvgR": "平均R",
+    "tableSamples": "サンプル数",
+    "exampleQuestions": {
+      "positiveExpectancy": "期待値がプラスのパターンは？",
+      "bestTimeframe": "このセットアップに最適な時間足は？",
+      "longVsShort": "ロングとショートのパフォーマンスを比較",
+      "bestInstrument": "最もパフォーマンスの良い銘柄は？"
+    }
   }
 }

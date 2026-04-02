@@ -6200,5 +6200,29 @@
     "timeframeNotAllowed": "{{timeframe}} tijdsframe niet beschikbaar op {{tier}} plan",
     "notOnPlan": "Dit project is niet beschikbaar in uw plan",
     "projectNotAvailable": "Projecttype niet beschikbaar voor uw niveau"
+  },
+  "edgeAnalyst": {
+    "title": "Edge Analist",
+    "badgeAI": "AI",
+    "autoDescription": "Automatische analyse van je backtest",
+    "defaultDescription": "Stel datagerichte vragen over patroonprestaties.",
+    "analyzingResults": "Backtestresultaten analyseren...",
+    "analyzing": "Analyseren...",
+    "followUp": "Stel een vervolgvraag",
+    "placeholder": "Bijv. Welke patronen hebben positieve verwachting op Goud?",
+    "ask": "Vraag",
+    "failedToAnalyze": "Analyse mislukt",
+    "tableInstrument": "Instrument",
+    "tablePattern": "Patroon",
+    "tableTF": "TF",
+    "tableWinRate": "Winstpercentage",
+    "tableAvgR": "Gem R",
+    "tableSamples": "Steekproef",
+    "exampleQuestions": {
+      "positiveExpectancy": "Welke patronen hebben positieve verwachting?",
+      "bestTimeframe": "Wat is het beste tijdsbestek voor deze setup?",
+      "longVsShort": "Vergelijk long vs short prestaties",
+      "bestInstrument": "Welk instrument presteert het best?"
+    }
   }
 }
