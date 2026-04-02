@@ -1896,6 +1896,12 @@ serve(async (req) => {
     console.log(`[seed-mtf] Starting ${timeframe} pattern seeding`);
     console.log(`[seed-mtf] Mode: ${useIncremental ? 'INCREMENTAL (only new data)' : 'FULL BACKFILL'}`);
     console.log(`[seed-mtf] Asset types: ${assetTypes.join(', ')}, offset=${offset}`);
+    if (symbolsFilter) {
+      console.log(`[seed-mtf] Symbol filter: ${symbolsFilter.join(', ')}`);
+    }
+    if (barDataOnly) {
+      console.log(`[seed-mtf] BAR DATA ONLY mode — skipping pattern detection`);
+    }
     if (stockLetterFilter) {
       console.log(`[seed-mtf] Stock letter filter: ${stockLetterFilter.start}-${stockLetterFilter.end}`);
     }
