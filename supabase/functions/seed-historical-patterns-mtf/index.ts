@@ -1976,7 +1976,7 @@ serve(async (req) => {
         }
         
         console.log(`[seed-mtf] Fetching ${symbol} @ ${timeframe} (DB-first, then providers)...`);
-        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType);
+        const bars = await fetchMarketData(symbol, timeframe, fromTimestamp, supabase, assetType, forceFullBackfill);
         
         if (barDataOnly) {
           // In barDataOnly mode, we only care about fetching and persisting bars (already done inside fetchMarketData)
