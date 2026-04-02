@@ -334,6 +334,25 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_backtest_outcomes",
+      description: "Query the user's personal backtest pattern outcomes for aggregated performance data. Returns win rate, avg R-multiple, and sample size grouped by instrument/pattern/timeframe. Use when users ask about their edge, backtest results, which patterns work best for them, or historical performance from their own runs. Minimum 10 trades per group.",
+      parameters: {
+        type: "object",
+        properties: {
+          instrument: { type: "string", description: "Filter by instrument symbol, e.g. EURUSD, AAPL. Leave empty for all." },
+          pattern_name: { type: "string", description: "Filter by pattern name, e.g. 'Bull Flag'. Leave empty for all." },
+          timeframe: { type: "string", description: "Filter by timeframe, e.g. '1d', '4h'. Leave empty for all." },
+          direction: { type: "string", enum: ["long", "short"], description: "Filter by direction." },
+          min_samples: { type: "number", description: "Minimum sample size per group. Default 10." },
+          sort_by: { type: "string", enum: ["avg_r", "win_rate", "sample_size"], description: "Sort order. Default 'avg_r'." }
+        },
+        required: []
+      }
+    }
   }
 ];
 
