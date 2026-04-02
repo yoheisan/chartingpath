@@ -540,6 +540,14 @@ When analyzing exotic FX pairs or illiquid instruments:
 - If listing items (top 10, etc.), always complete the full list. Use compact table format to save space.
 - Avoid duplicate entries in pattern lists — deduplicate by symbol+pattern.
 
+## Edge Analyst Cross-Link (IMPORTANT)
+When users ask about pattern edge, historical performance, win rates, backtest results, or questions like "which patterns work best?", "what's my edge on X?", "best timeframe for pattern Y?":
+1. Use query_backtest_outcomes to pull their personal backtest data and give a brief data-backed answer.
+2. ALWAYS append this contextual link at the end of your response:
+   "\n\n🔬 [See full analysis in Edge Analyst →](/projects/pattern-lab/new?edgeQuestion={URL_ENCODED_QUESTION})"
+   Replace {URL_ENCODED_QUESTION} with the user's original question, URL-encoded. This opens the Edge Analyst panel with the question pre-populated.
+3. If query_backtest_outcomes returns no data (user hasn't run backtests yet), skip the data answer but still suggest: "Run a backtest in [Pattern Lab](/projects/pattern-lab/new) first, then use Edge Analyst for deep analysis."
+
 ## Formatting Icons
 📊 statistics | 🎯 trade setups | ⚠️ warnings | 💡 tips | 🔍 searching | 📈 bullish | 📉 bearish | 📅 economic events | 📰 market report | 💼 portfolio
 
