@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import {
   Bot, ArrowRight, Activity, Database, Eye, Code2, Brain, Link2,
-  Search, Bell, FileCode, FlaskConical, CheckCircle, X
+  Search, Bell, FileCode, FlaskConical, CheckCircle, X,
+  RefreshCw, MessageSquareText
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -132,14 +133,13 @@ const TradingCopilotFeature = () => {
                 {t('tradingCopilot.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.08] tracking-tight">
-                {t('tradingCopilot.headline')}{" "}
+                An AI trading assistant built on outcome data —{" "}
                 <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {t('tradingCopilot.headlineHighlight')}
-                </span>{" "}
-                {t('tradingCopilot.headlineEnd')}
+                  not just indicators
+                </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl leading-relaxed">
-                {t('tradingCopilot.subtitle')}
+                Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from 63,000+ real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" onClick={() => copilot.open()}>
@@ -166,6 +166,50 @@ const TradingCopilotFeature = () => {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 3 Differentiator Points */}
+      <section className="py-24 px-4 md:px-6 lg:px-8 border-t border-border/20">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              {
+                icon: Database,
+                label: "Outcome-aware analysis",
+                text: "Ask about any live pattern and Copilot surfaces historical win rates, average R-multiple, and best/worst conditions for that exact setup — from our own data.",
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+              },
+              {
+                icon: RefreshCw,
+                label: "Gets smarter over time",
+                text: "Every paper trade you run feeds the outcome database. Copilot's analysis improves as the dataset grows — it's the only trading AI with a feedback loop built in.",
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+              },
+              {
+                icon: MessageSquareText,
+                label: "Plain language trade plans",
+                text: "No jargon. Copilot explains the setup, suggests entry, stop, and target levels, and tells you what conditions would invalidate the trade.",
+                color: "text-violet-500",
+                bg: "bg-violet-500/10",
+              },
+            ].map((d) => (
+              <Card key={d.label} className="group hover:border-primary/30 transition-colors">
+                <CardContent className="p-6 space-y-4">
+                  <div className={`inline-flex p-2.5 rounded-xl ${d.bg}`}>
+                    <d.icon className={`h-6 w-6 ${d.color}`} />
+                  </div>
+                  <h3 className="text-lg font-semibold">{d.label}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{d.text}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Copilot is available on Pro and above. Paper trading simulation only — not financial advice.
+          </p>
         </div>
       </section>
 
