@@ -22,6 +22,7 @@ interface EdgeAtlasData {
 }
 
 const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
+  const { t } = useTranslation();
   const [count, setCount] = useState<number | null>(null);
   const [edgeData, setEdgeData] = useState<EdgeAtlasData | null>(null);
 
