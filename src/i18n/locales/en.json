@@ -328,7 +328,16 @@
     "readyToApplyDesc": "Test your skills with our interactive quizzes and pattern recognition tools",
     "subtitle": "Comprehensive guides and tutorials for mastering chart patterns, technical analysis, and trading strategies",
     "takeTradingQuiz": "Take Trading Quiz",
-    "title": "ChartingPath Learning Center"
+    "title": "ChartingPath Learning Center",
+    "liveSetupsCta": {
+      "heading": "Live {{pattern}} setups",
+      "detectedBadge": "{{count}} detected this week",
+      "body": "Our scanner monitors {{pattern}} formations across 200+ instruments in real time. See what's active right now.",
+      "button": "See live {{pattern}} setups",
+      "edgeAtlasTitle": "{{pattern}} in Edge Atlas",
+      "edgeAtlasStats": "{{winRate}}% win rate · {{expectancy}}R expectancy · +{{annual}}% est. annual · n={{n}}",
+      "viewRanking": "View ranking →"
+    }
   },
   "chartOverlays": {
     "patterns": "Patterns",
