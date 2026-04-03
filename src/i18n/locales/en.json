@@ -6319,7 +6319,7 @@
     "topWinRateThisMonth": "Top win rate this month",
     "topWinRateDetail": "Top win rate this month — {{pattern}} ({{timeframe}})",
     "mostDetectedPattern": "Most detected pattern",
-    "mostDetectedDetail": "Most detected pattern ({{count}} this week)",
+    "mostDetectedDetail": "Most detected pattern ({{num}} this week)",
     "instrumentsCovered": "Instruments covered",
     "dataSourceNote": "Data sourced from ChartingPath's live detection engine. All outcomes tracked to SL/TP based on pattern-specific ATR targets."
   },

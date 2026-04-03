@@ -22,11 +22,11 @@ export function HeroStatsBar() {
   const stats = [
     {
       icon: Activity,
-      value: t('landing.patternsDetectedThisWeek', '{{count}} patterns detected this week', { count: data.patterns_this_week.toLocaleString() }),
+      value: t('landing.patternsDetectedThisWeek', '{{num}} patterns detected this week', { num: data.patterns_this_week.toLocaleString() }),
     },
     {
       icon: Globe,
-      value: t('landing.instrumentsTracked', '{{count}} instruments tracked', { count: data.instruments_tracked.toLocaleString() }),
+      value: t('landing.instrumentsTracked', '{{num}} instruments tracked', { num: data.instruments_tracked.toLocaleString() }),
     },
     {
       icon: Trophy,

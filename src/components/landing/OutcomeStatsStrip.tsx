@@ -37,8 +37,8 @@ export function OutcomeStatsStrip() {
           icon: Layers,
           value: data.most_detected?.pattern_name ?? '—',
           label: data.most_detected
-            ? t('outcomeStats.mostDetectedDetail', 'Most detected pattern ({{count}} this week)', {
-                count: data.most_detected.count.toLocaleString(),
+            ? t('outcomeStats.mostDetectedDetail', 'Most detected pattern ({{num}} this week)', {
+                num: data.most_detected.count.toLocaleString(),
               })
             : t('outcomeStats.mostDetectedPattern', 'Most detected pattern'),
         },
