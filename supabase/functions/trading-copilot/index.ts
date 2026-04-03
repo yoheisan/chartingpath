@@ -3416,10 +3416,23 @@ serve(async (req) => {
         }
 
         // No tool calls — this is the final response.
-        // If we got content directly (non-streaming round), send it as tokens
         const directContent = assistantMessage?.content;
+        const latencyMs = Date.now() - routingStartTime;
+        
+        // Log model usage for cost tracking
+        supabase.from('copilot_model_usage').insert({
+          user_id: userId || null,
+          request_type: requestType,
+          model_used: selectedModel,
+          response_latency_ms: latencyMs,
+          input_tokens: result?.usage?.prompt_tokens || null,
+          output_tokens: result?.usage?.completion_tokens || null,
+          source: 'copilot',
+        }).then(({ error }) => {
+          if (error) console.error('[trading-copilot] Failed to log model usage:', error.message);
+        });
+
         if (directContent) {
-          // Send the already-received content as a single token burst
           writer.sendToken(directContent);
           writer.sendDone();
 
