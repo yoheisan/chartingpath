@@ -681,7 +681,7 @@ serve(async (req) => {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify(aiRequestBody),
-                signal: AbortSignal.timeout(25000),
+                signal: AbortSignal.timeout(scoringTimeout),
               })
             : GEMINI_API_KEY
               ? await fetch("https://generativelanguage.googleapis.com/v1beta/chat/completions", {
@@ -690,8 +690,8 @@ serve(async (req) => {
                     Authorization: `Bearer ${GEMINI_API_KEY}`,
                     "Content-Type": "application/json",
                   },
-                  body: JSON.stringify({ ...aiRequestBody, model: "gemini-2.5-flash" }),
-                  signal: AbortSignal.timeout(25000),
+                  body: JSON.stringify({ ...aiRequestBody, model: isHeavy ? "gemini-2.5-pro" : "gemini-2.5-flash" }),
+                  signal: AbortSignal.timeout(scoringTimeout),
                 })
               : (() => {
                   throw new Error("Neither LOVABLE_API_KEY nor GEMINI_API_KEY is configured");
