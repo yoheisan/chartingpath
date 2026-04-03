@@ -72,7 +72,7 @@ export const MetricStrip = () => {
     { value: 17, suffix: "", label: t("metrics.patterns", "Pattern Types Detected"), icon: Layers },
     { value: 320000, suffix: "+", label: t("metrics.trades", "Trades Backtested For You"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Live Data Refresh"), icon: Clock },
-    { value: 62, suffix: "%", label: t("metrics.avgWinRate", "Avg Win Rate — Grade A Signals"), icon: Target },
+    { value: 0.4, suffix: "R", label: t("metrics.avgExpectancy", "Avg Expectancy (A-Grade)"), icon: Target },
   ];
 
   return (

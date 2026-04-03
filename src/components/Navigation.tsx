@@ -194,9 +194,6 @@ const Navigation = () => {
               <Link to="/" className={`${dashboardMobileCompact ? 'text-base' : 'text-lg sm:text-xl'} font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent`}>
                 ChartingPath
               </Link>
-              <span className="ml-1.5 px-1.5 py-0.5 text-sm font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
-                Beta
-              </span>
             </div>
             
             
@@ -239,6 +236,15 @@ const Navigation = () => {
                   <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
                     <FlaskConical className="h-4 w-4 text-violet-500" />
                     {t('navigation.patternLab', 'Pattern Lab')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/edge-atlas" className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    <div className="flex flex-col">
+                      <span>{t('navigation.edgeAtlas', 'Edge Atlas')}</span>
+                      <span className="text-xs text-muted-foreground">{t('navigation.edgeAtlasDesc', 'Patterns ranked by proven annual return')}</span>
+                    </div>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -423,9 +429,6 @@ const Navigation = () => {
             <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               ChartingPath
             </Link>
-            <span className="ml-1.5 px-1.5 py-0.5 text-sm font-semibold uppercase tracking-wider rounded bg-primary/15 text-primary border border-primary/20 leading-none">
-              Beta
-            </span>
           </div>
           
           <nav className="hidden md:flex items-center gap-6 ml-8">

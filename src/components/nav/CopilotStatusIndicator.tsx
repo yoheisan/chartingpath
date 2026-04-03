@@ -12,6 +12,9 @@ export function CopilotStatusIndicator({ className }: CopilotStatusIndicatorProp
   const { connection } = useBrokerConnection(user?.id);
   const { todayTrades } = useCopilotTrades(user?.id);
 
+  // Hide entirely for logged-out users
+  if (!user) return null;
+
   const isLive = connection?.is_live ?? false;
   const isPaused = connection?.is_paused ?? false;
 
