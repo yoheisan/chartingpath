@@ -123,7 +123,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
                   </Tooltip>
                 </div>
                 <div className="text-2xl font-bold text-bullish">
-                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : 'Accumulating'}
+                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : t('patternLibrary.accumulatingShort', 'Accumulating')}
                 </div>
               </div>
               
