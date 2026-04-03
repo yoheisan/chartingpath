@@ -7,12 +7,11 @@ import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/services/analytics';
 import { trackEvent } from '@/lib/analytics';
-import HowItWorks from '@/components/landing/HowItWorks';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
-import { CopilotShowcase } from '@/components/landing/CopilotShowcase';
+import { FeatureBlocks } from '@/components/landing/FeatureBlocks';
 import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
@@ -32,7 +31,6 @@ const Index = () => {
 
   // Section tracking refs
   const heroRef = useSectionTracking('hero');
-  const howItWorksRef = useSectionTracking('how_it_works');
   const screenerRef = useSectionTracking('screener_teaser');
   const edgeAtlasRef = useSectionTracking('edge_atlas');
   const copilotRef = useSectionTracking('copilot');
@@ -155,14 +153,9 @@ const Index = () => {
         <SocialProof />
       </div>
 
-      {/* AI Copilot */}
+      {/* Feature Blocks — 2×2 grid */}
       <div ref={copilotRef} className="border-t border-border/20">
-        <CopilotShowcase />
-      </div>
-
-      {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
-      <div ref={howItWorksRef} className="border-t border-border/20">
-        <HowItWorks />
+        <FeatureBlocks />
       </div>
 
       {/* Mid-page Signup CTA */}
