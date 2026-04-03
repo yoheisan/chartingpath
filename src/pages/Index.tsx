@@ -31,7 +31,6 @@ const Index = () => {
 
   // Section tracking refs
   const heroRef = useSectionTracking('hero');
-  const howItWorksRef = useSectionTracking('how_it_works');
   const screenerRef = useSectionTracking('screener_teaser');
   const edgeAtlasRef = useSectionTracking('edge_atlas');
   const copilotRef = useSectionTracking('copilot');
