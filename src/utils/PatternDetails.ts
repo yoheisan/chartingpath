@@ -1467,7 +1467,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Large bullish candle completely engulfing previous bearish candle. Strong reversal signal.",
     accuracy: "73%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Bullish Engulfing is a two-candle pattern where a large bullish candle completely 'engulfs' (opens below and closes above) the body of the preceding bearish candle. It is one of the strongest single-event reversal signals in candlestick analysis. The pattern shows a decisive shift in power from sellers to buyers within a single session. The larger the engulfing candle relative to the first, and the higher the volume, the more reliable the signal.",
+
+    whyItHappens: "The Bullish Engulfing represents a dramatic intra-session sentiment reversal. The first candle closes bearish, reinforcing the downtrend. But the next session opens even lower (creating a gap on some markets) and then buyers overwhelm sellers so completely that price closes above the prior session's open. This complete reversal of the prior session's range signals that new demand has entered the market with conviction. It often occurs when price reaches a value area that attracts institutional buyers.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend or bearish move — the pattern signals reversal from bearish to bullish",
+      "STEP 2: Identify a bearish first candle",
+      "STEP 3: Verify the second candle is bullish and its body completely covers the first candle's body",
+      "STEP 4: Check volume — the engulfing candle should have above-average volume for strongest signals",
+      "STEP 5: The pattern is largely self-confirming, but a follow-through bullish candle adds confidence"
+    ],
+
+    realWorldExamples: [
+      "EUR/JPY Daily, March 2023: Bullish Engulfing at 140.80 with 2x average volume; price rallied 600 pips over the next month",
+      "Meta (META) Daily, November 2022: Bullish Engulfing near $90 after the 75% drawdown; stock tripled over the next 12 months"
+    ],
+
     characteristics: [
       "First candle: Bearish candle",
       "Second candle: Large bullish candle",
