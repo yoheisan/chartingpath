@@ -10,8 +10,19 @@ interface BlogCTAProps {
   patternSlug: string;
 }
 
+interface EdgeAtlasData {
+  pattern_type: string;
+  timeframe: string;
+  win_rate: number;
+  expectancy_r: number;
+  rot_per_bar: number | null;
+  est_annual_return: number | null;
+  sample_count: number;
+}
+
 const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
   const [count, setCount] = useState<number | null>(null);
+  const [edgeData, setEdgeData] = useState<EdgeAtlasData | null>(null);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -30,6 +41,25 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
     };
 
     fetchCount();
+  }, [patternSlug]);
+
+  useEffect(() => {
+    const fetchEdgeAtlas = async () => {
+      const { data, error } = await (supabase
+        .from('pattern_edge_stats' as any)
+        .select('pattern_type, timeframe, win_rate, expectancy_r, rot_per_bar, est_annual_return, sample_count')
+        .ilike('pattern_type', `%${patternSlug}%`)
+        .gte('sample_count', 20)
+        .order('est_annual_return', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle() as any);
+
+      if (!error && data) {
+        setEdgeData(data as EdgeAtlasData);
+      }
+    };
+
+    fetchEdgeAtlas();
   }, [patternSlug]);
 
   return (
@@ -58,6 +88,26 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
+
+          {edgeData && (
+            <div className="mt-4 pt-4 border-t border-border/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {patternName} in Edge Atlas
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {edgeData.win_rate}% win rate · {edgeData.expectancy_r}R expectancy · +{edgeData.est_annual_return}% est. annual · n={edgeData.sample_count}
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/#edge-atlas">
+                    View ranking →
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
