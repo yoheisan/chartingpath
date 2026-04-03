@@ -140,7 +140,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Timeframe</span>
+                  <span className="text-sm font-medium">{t('patternDetailModal.timeframe', 'Timeframe')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{patternDetail.timeframe}</p>
               </div>
