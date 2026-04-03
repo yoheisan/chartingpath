@@ -77,8 +77,8 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
   // Dynamic outcome snapshot line
   const outcomeSnapshotText = stats
     ? stats.totalDetections >= 20
-      ? `ChartingPath data: ${stats.winRate}% win rate · n=${stats.totalDetections.toLocaleString()} detections · Best on ${stats.bestTimeframe.toUpperCase()} · ${stats.bestAssetClass}`
-      : `Accumulating data — ${stats.totalDetections} detections so far`
+      ? t('patternLibrary.outcomeSnapshot', 'ChartingPath data: {{wr}}% win rate · n={{n}} detections · Best on {{tf}} · {{asset}}', { wr: stats.winRate, n: stats.totalDetections.toLocaleString(), tf: stats.bestTimeframe.toUpperCase(), asset: stats.bestAssetClass })
+      : t('patternLibrary.accumulatingData', 'Accumulating data — {{count}} detection(s) so far', { count: stats.totalDetections })
     : null;
 
   return (
@@ -113,11 +113,11 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                   </>
                 ) : isCandlestick ? (
                   <>
-                    <div className="text-sm text-muted-foreground italic">Educational only</div>
+                    <div className="text-sm text-muted-foreground italic">{t('patternLibrary.educationalOnly', 'Educational only')}</div>
                   </>
                 ) : (
                   <>
-                    <div className="text-sm text-muted-foreground italic">Accumulating data</div>
+                    <div className="text-sm text-muted-foreground italic">{t('patternLibrary.accumulatingShort', 'Accumulating data')}</div>
                   </>
                 )}
                 <div className="text-sm text-muted-foreground">{s('successRate')}</div>
@@ -140,7 +140,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             {outcomeSnapshotText && (
               <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-semibold mr-2">
-                  ChartingPath data
+                  {t('patternLibrary.chartingPathData', 'ChartingPath data')}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{outcomeSnapshotText}</span>
               </div>
@@ -397,7 +397,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                       {stats && stats.totalDetections >= 20 ? (
                         <p className="text-sm font-medium text-bullish">{stats.winRate}% (n={stats.totalDetections.toLocaleString()})</p>
                       ) : (
-                        <p className="text-sm font-medium text-muted-foreground italic">Data accumulating</p>
+                        <p className="text-sm font-medium text-muted-foreground italic">{t('patternLibrary.dataAccumulating', 'Data accumulating')}</p>
                       )}
                     </div>
                   </div>

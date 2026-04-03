@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { CANDLESTICK_PATTERNS } from "@/hooks/usePatternDetailStats";
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export const CandlestickEducationalNotice = ({ patternKey }: Props) => {
+  const { t } = useTranslation();
+
   if (!CANDLESTICK_PATTERNS.includes(patternKey)) return null;
 
   return (
@@ -17,12 +20,11 @@ export const CandlestickEducationalNotice = ({ patternKey }: Props) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-500">
-              Educational reference
+              {t('patternLibrary.educationalReference', 'Educational reference')}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            ChartingPath's live scanner detects classical chart patterns (triangles, flags, wedges, and more). 
-            Candlestick patterns are included here as educational background. They are not currently detected in the live scanner.
+            {t('patternLibrary.candlestickNotice', "ChartingPath's live scanner detects classical chart patterns (triangles, flags, wedges, and more). Candlestick patterns are included here as educational background. They are not currently detected in the live scanner.")}
           </p>
         </div>
       </div>

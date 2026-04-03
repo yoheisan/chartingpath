@@ -123,7 +123,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
                   </Tooltip>
                 </div>
                 <div className="text-2xl font-bold text-bullish">
-                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : 'Accumulating'}
+                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : t('patternLibrary.accumulatingShort', 'Accumulating')}
                 </div>
               </div>
               
@@ -140,7 +140,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Timeframe</span>
+                  <span className="text-sm font-medium">{t('patternDetailModal.timeframe', 'Timeframe')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{patternDetail.timeframe}</p>
               </div>

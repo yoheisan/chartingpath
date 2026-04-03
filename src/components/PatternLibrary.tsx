@@ -63,6 +63,7 @@ const PATTERN_LIBRARY: Pattern[] = [
 ];
 
 function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
+  const { t } = useTranslation();
   if (!stat) return null;
 
   const hasEnoughData = stat.total_detections >= 10;
@@ -72,7 +73,7 @@ function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
       <div className="flex items-center gap-1.5 mt-1">
         <Database className="h-3 w-3 text-muted-foreground" />
         <span className="text-[11px] text-muted-foreground italic">
-          Accumulating data — {stat.total_detections} detection{stat.total_detections !== 1 ? 's' : ''} so far
+          {t('patternLibrary.accumulatingData', 'Accumulating data — {{count}} detection(s) so far', { count: stat.total_detections })}
         </span>
       </div>
     );
@@ -82,21 +83,21 @@ function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
     <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 space-y-0.5">
       <div className="flex items-center gap-1.5">
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-semibold">
-          ChartingPath data
+          {t('patternLibrary.chartingPathData', 'ChartingPath data')}
         </Badge>
       </div>
       <div className="grid grid-cols-3 gap-2 text-[11px] mt-1">
         <div>
           <span className="font-semibold text-foreground">{stat.win_rate}%</span>
-          <span className="text-muted-foreground ml-1">win rate</span>
+          <span className="text-muted-foreground ml-1">{t('patternLibrary.winRateLabel', 'win rate')}</span>
           <div className="text-muted-foreground/70">(n={stat.total_detections.toLocaleString()})</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Best TF:</span>
+          <span className="text-muted-foreground">{t('patternLibrary.bestTf', 'Best TF:')}</span>
           <div className="font-medium text-foreground">{stat.best_timeframe}</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Best:</span>
+          <span className="text-muted-foreground">{t('patternLibrary.bestLabel', 'Best:')}</span>
           <div className="font-medium text-foreground truncate">{stat.best_instrument}</div>
         </div>
       </div>
@@ -192,7 +193,7 @@ export const PatternLibrary = () => {
                     <div className="absolute top-2 right-2 z-10 flex gap-1">
                       {CANDLESTICK_PATTERNS.includes(pattern.chartKey || '') && (
                         <Badge variant="outline" className="text-xs bg-muted/80 text-muted-foreground border-muted-foreground/30">
-                          Educational
+                          {t('patternLibrary.educational', 'Educational')}
                         </Badge>
                       )}
                       <Badge 
@@ -246,11 +247,11 @@ export const PatternLibrary = () => {
       {/* Bottom CTA */}
       <div className="rounded-2xl border border-border/40 bg-card/60 p-10 flex flex-col items-center text-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">
-          Want to see these patterns on live charts right now?
+          {t('patternLibrary.liveCta', 'Want to see these patterns on live charts right now?')}
         </h2>
         <Link to="/patterns/live">
           <Button size="lg" className="px-8 py-6 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-            Open live scanner
+            {t('patternLibrary.openScanner', 'Open live scanner')}
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </Link>
