@@ -743,6 +743,43 @@ const FAQ = () => {
               )
             }
           ]
+        },
+        {
+          category: t('faq.screener.catEdgeAtlas', 'Edge Atlas'),
+          questions: [
+            {
+              question: t('faq.screener.q_whatIsEdgeAtlas', 'What is Edge Atlas?'),
+              answer: (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">{t('faq.screener.a_edgeAtlasIntro', "Edge Atlas ranks every pattern × timeframe × asset class combination by estimated annualized return — calculated from ChartingPath's own live outcome database. It tells you not just which patterns form most often, but which ones have statistically proven edge.")}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_rotLabel', 'ROT (Return on Time):')}</span> {t('faq.screener.a_rotDesc', 'R-multiple earned per bar held. A pattern with 0.025R/bar held for 10 bars generates 0.25R — more efficient than a pattern with 0.04R held for 20 bars (0.04R total).')}</p>
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_expectancyLabel', 'Expectancy:')}</span> {t('faq.screener.a_expectancyDesc', 'Average R-multiple per trade: (Win rate × Avg win R) - (Loss rate × Avg loss R). Positive expectancy means the pattern is profitable in aggregate.')}</p>
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_estAnnualLabel', 'Est. Annual Return:')}</span> {t('faq.screener.a_estAnnualDesc', 'Projected return if you traded every instance of this pattern for a full year, using 1R position sizing. Based on historical frequency × expectancy × trades per year.')}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.screener.a_edgeAtlasWarning', '⚠️ Past performance does not guarantee future results. Filter by asset class for meaningful comparisons — equity and FX patterns behave differently.')}</p>
+                </div>
+              )
+            },
+            {
+              question: t('faq.screener.q_lowSampleWarning', 'What does the "low sample" warning mean?'),
+              answer: (
+                <p className="text-muted-foreground">{t('faq.screener.a_lowSampleWarning', "Patterns marked ⚠️ low sample have fewer than 100 tracked outcomes in ChartingPath's database. The statistics are directionally useful but not yet statistically robust. We recommend treating low-sample patterns as \"promising leads\" rather than confirmed edges until more data accumulates.")}</p>
+              )
+            },
+            {
+              question: t('faq.screener.q_howEdgeCalc', 'How is estimated annual return calculated?'),
+              answer: (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">{t('faq.screener.a_edgeCalcIntro', 'The formula is:')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg font-mono text-sm">
+                    Est. Annual Return = Expectancy × Trades/Year × 100%
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.screener.a_edgeCalcNote', 'This assumes 1R position sizing on every trade and does not account for compounding, transaction costs, or slippage. It is a comparative ranking metric, not a precise return forecast.')}</p>
+                </div>
+              )
+            }
+          ]
         }
       ]
     },
