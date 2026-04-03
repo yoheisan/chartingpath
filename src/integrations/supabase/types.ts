@@ -6553,6 +6553,16 @@ export type Database = {
           worst_override_symbol: string
         }[]
       }
+      get_pattern_library_stats: {
+        Args: never
+        Returns: {
+          best_instrument: string
+          best_timeframe: string
+          pattern_name: string
+          total_detections: number
+          win_rate: number
+        }[]
+      }
       get_quiz_questions: {
         Args: {
           p_category?: Database["public"]["Enums"]["quiz_category"]
