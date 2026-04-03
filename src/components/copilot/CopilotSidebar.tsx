@@ -268,6 +268,12 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             const parsed = JSON.parse(jsonStr);
 
             // New streaming protocol: type-based events
+            if (parsed.type === "meta") {
+              if (parsed.contextTokensUsed && parsed.contextTokenBudget) {
+                setContextTokens({ used: parsed.contextTokensUsed, budget: parsed.contextTokenBudget });
+              }
+              continue;
+            }
             if (parsed.type === "status") {
               // Show status as italic muted text in the bubble
               updateAssistantMsg(`_${parsed.text}_`);
