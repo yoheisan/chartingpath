@@ -1029,7 +1029,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bullish reversal candlestick with long lower shadow (2-3x body size) and small body at upper range.",
     accuracy: "70%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Hammer is a single-candle bullish reversal pattern that appears at the bottom of a downtrend. It features a small body near the top of the trading range and a long lower shadow that is at least two to three times the body's length. The name comes from its shape — it looks like a hammer with a handle pointing downward. The pattern signals that sellers drove price significantly lower during the session, but buyers stepped in and pushed price back up near the open, indicating a potential shift in momentum from bearish to bullish.",
+
+    whyItHappens: "The Hammer forms because of an intra-session tug of war between sellers and buyers. Early in the session, sellers are in full control, driving price sharply lower. But at some point, value buyers or short-covering traders step in aggressively, purchasing enough to push price back near the opening level. The long lower shadow is the footprint of that rejected sell-off. It signals that despite the prevailing downtrend, demand is emerging at these lower levels — the first sign that the trend may be exhausting itself.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend — the Hammer only has reversal significance after a decline",
+      "STEP 2: Look for a small real body (bullish or bearish) in the upper portion of the candle's range",
+      "STEP 3: Verify the lower shadow is at least 2x the body length — the longer the shadow, the stronger the signal",
+      "STEP 4: Check that there is little to no upper shadow (ideally none)",
+      "STEP 5: Wait for the next candle to close above the Hammer's high as confirmation before acting"
+    ],
+
+    realWorldExamples: [
+      "EUR/USD Daily, March 2023: Hammer formed at 1.0520 support after a 400-pip decline; next-day bullish confirmation led to a 300-pip rally over the following week",
+      "Apple (AAPL) Daily, October 2022: Hammer at $134 marked the exact bottom of the selloff; stock rallied 25% in the following two months"
+    ],
+
     characteristics: [
       "Small body at upper end of trading range",
       "Long lower shadow (2-3x body length)",
