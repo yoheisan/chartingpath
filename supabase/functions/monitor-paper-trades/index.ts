@@ -175,6 +175,60 @@ Deno.serve(async (req) => {
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const openedHoursAgo = (Date.now() - new Date(trade.created_at).getTime()) / 3600000;
 
+      // ── Proximity alert: warn if price is within 0.5 ATR of SL or TP ──
+      if (!trade.alerted_at) {
+        const atr = Math.abs(Number(trade.take_profit) - Number(trade.stop_loss)) / 3; // approximate ATR from trade range
+        const threshold = atr * 0.5;
+        const distToSl = Math.abs(currentPrice - Number(trade.stop_loss));
+        const distToTp = Math.abs(currentPrice - Number(trade.take_profit));
+        let approachingLevel: string | null = null;
+
+        if (distToSl <= threshold) {
+          approachingLevel = `stop_loss (${trade.stop_loss})`;
+        } else if (distToTp <= threshold) {
+          approachingLevel = `take_profit (${trade.take_profit})`;
+        }
+
+        if (approachingLevel) {
+          // Send proximity email
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email_notifications_enabled, email')
+            .eq('user_id', trade.user_id)
+            .maybeSingle();
+
+          if (profile?.email_notifications_enabled && profile?.email) {
+            try {
+              await supabase.functions.invoke('send-email', {
+                body: {
+                  to: profile.email,
+                  subject: `[ChartingPath] ⚠️ ${trade.symbol} approaching ${approachingLevel.split(' ')[0].replace('_', ' ')}`,
+                  template: 'approaching_level',
+                  data: {
+                    symbol: trade.symbol,
+                    current_price: currentPrice,
+                    approaching: approachingLevel,
+                    entry_price: trade.entry_price,
+                    stop_loss: trade.stop_loss,
+                    take_profit: trade.take_profit,
+                    trade_type: trade.trade_type,
+                  },
+                },
+              });
+            } catch (emailErr) {
+              console.warn('[monitor-paper-trades] Proximity email failed:', emailErr);
+            }
+          }
+
+          await supabase
+            .from('paper_trades')
+            .update({ alerted_at: new Date().toISOString() })
+            .eq('id', trade.id);
+
+          console.log(`[monitor-paper-trades] Proximity alert: ${trade.symbol} near ${approachingLevel}`);
+        }
+      }
+
       // Detect forex
       const isForex = trade.instrument_type === "forex" || isForexSymbol(trade.symbol);
       const forexLotSize = isForex ? Number(trade.forex_lot_size || 0.01) : 0;
