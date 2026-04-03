@@ -267,6 +267,25 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
           />
         </div>
 
+        {/* Morning Brief */}
+        <div className="flex items-center justify-between border-t pt-4">
+          <div className="space-y-1">
+            <Label htmlFor="morning-brief" className="flex items-center gap-2">
+              <Sun className="h-4 w-4" />
+              {t('alerts.notif.morningBrief')}
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              {t('alerts.notif.morningBriefDesc')}
+            </p>
+          </div>
+          <Switch
+            id="morning-brief"
+            checked={morningBriefEnabled}
+            onCheckedChange={handleMorningBriefToggle}
+            disabled={saving}
+          />
+        </div>
+
         {/* Notification Types Info */}
         <div className="rounded-lg bg-muted p-4 space-y-2 text-sm">
           <p className="font-medium">{t('alerts.notif.whatYoullReceive')}</p>
