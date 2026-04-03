@@ -63,6 +63,7 @@ const PATTERN_LIBRARY: Pattern[] = [
 ];
 
 function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
+  const { t } = useTranslation();
   if (!stat) return null;
 
   const hasEnoughData = stat.total_detections >= 10;
@@ -72,7 +73,7 @@ function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
       <div className="flex items-center gap-1.5 mt-1">
         <Database className="h-3 w-3 text-muted-foreground" />
         <span className="text-[11px] text-muted-foreground italic">
-          Accumulating data — {stat.total_detections} detection{stat.total_detections !== 1 ? 's' : ''} so far
+          {t('patternLibrary.accumulatingData', 'Accumulating data — {{count}} detection(s) so far', { count: stat.total_detections })}
         </span>
       </div>
     );
@@ -82,21 +83,21 @@ function PatternDataBadge({ stat }: { stat: PatternLibraryStat | undefined }) {
     <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 space-y-0.5">
       <div className="flex items-center gap-1.5">
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-semibold">
-          ChartingPath data
+          {t('patternLibrary.chartingPathData', 'ChartingPath data')}
         </Badge>
       </div>
       <div className="grid grid-cols-3 gap-2 text-[11px] mt-1">
         <div>
           <span className="font-semibold text-foreground">{stat.win_rate}%</span>
-          <span className="text-muted-foreground ml-1">win rate</span>
+          <span className="text-muted-foreground ml-1">{t('patternLibrary.winRateLabel', 'win rate')}</span>
           <div className="text-muted-foreground/70">(n={stat.total_detections.toLocaleString()})</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Best TF:</span>
+          <span className="text-muted-foreground">{t('patternLibrary.bestTf', 'Best TF:')}</span>
           <div className="font-medium text-foreground">{stat.best_timeframe}</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Best:</span>
+          <span className="text-muted-foreground">{t('patternLibrary.bestLabel', 'Best:')}</span>
           <div className="font-medium text-foreground truncate">{stat.best_instrument}</div>
         </div>
       </div>
