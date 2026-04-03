@@ -6526,6 +6526,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_homepage_stats: { Args: never; Returns: Json }
       get_override_comparison: {
         Args: { p_days?: number; p_user_id: string }
         Returns: {
