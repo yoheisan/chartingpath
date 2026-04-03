@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, last_brief_sent_at")
-        .eq("onboarding_completed", true);
+        .eq("onboarding_completed", true)
+        .neq("morning_brief_enabled", false);
 
       if (!profiles || profiles.length === 0) {
         return new Response(JSON.stringify({ success: true, processed: 0, reason: "no active profiles" }), {
