@@ -723,6 +723,22 @@ serve(async (req) => {
           }
 
           const content = assistantMessage?.content || "I couldn't process that request.";
+          
+          // Log model usage for cost tracking
+          const scoringLatencyMs = Date.now() - scoringStartTime;
+          const usageInfo = result?.usage;
+          supabase.from('copilot_model_usage').insert({
+            user_id: userId || null,
+            request_type: scoringRequestType,
+            model_used: scoringModel,
+            response_latency_ms: scoringLatencyMs,
+            input_tokens: usageInfo?.prompt_tokens || null,
+            output_tokens: usageInfo?.completion_tokens || null,
+            source: 'scoring-handler',
+          }).then(({ error }) => {
+            if (error) console.error('[copilot-scoring] Failed to log model usage:', error.message);
+          });
+
           writer.sendToken(content);
           writer.sendDone();
           writer.close();
