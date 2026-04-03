@@ -292,6 +292,8 @@
       "newPatternsWatchlist": "New patterns on your watchlist symbols",
       "scriptReadyAlerts": "Script-ready alerts with pre-built code",
       "sendTestNotification": "Send Test Notification",
+      "morningBrief": "Morning Brief",
+      "morningBriefDesc": "Receive a daily summary of your open positions, new setups matching your plan, and positions near TP/SL",
       "preferenceSaved": "Notification preference saved",
       "preferenceFailed": "Failed to save preference",
       "neverMiss": "Never miss a pattern signal",

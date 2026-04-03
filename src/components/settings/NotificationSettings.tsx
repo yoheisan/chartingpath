@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Mail, Smartphone, Loader2 } from 'lucide-react';
+import { Bell, Mail, Smartphone, Loader2, Sun } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
   const { t } = useTranslation();
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [pushDbEnabled, setPushDbEnabled] = useState(true);
+  const [morningBriefEnabled, setMorningBriefEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +42,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('email_notifications_enabled, push_notifications_enabled')
+          .select('email_notifications_enabled, push_notifications_enabled, morning_brief_enabled')
           .eq('id', userId)
           .single();
 
@@ -53,6 +54,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         if (data) {
           setEmailEnabled(data.email_notifications_enabled ?? true);
           setPushDbEnabled(data.push_notifications_enabled ?? true);
+          setMorningBriefEnabled((data as any).morning_brief_enabled ?? true);
         }
       } catch (err) {
         console.error('[NotificationSettings] Error:', err);
@@ -64,7 +66,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
     loadPreferences();
   }, [userId]);
 
-  const savePreference = async (field: 'email_notifications_enabled' | 'push_notifications_enabled', value: boolean) => {
+  const savePreference = async (field: 'email_notifications_enabled' | 'push_notifications_enabled' | 'morning_brief_enabled', value: boolean) => {
     if (!userId) return;
 
     setSaving(true);
@@ -82,8 +84,10 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       toast.error(t('alerts.notif.preferenceFailed'));
       if (field === 'email_notifications_enabled') {
         setEmailEnabled(!value);
-      } else {
+      } else if (field === 'push_notifications_enabled') {
         setPushDbEnabled(!value);
+      } else {
+        setMorningBriefEnabled(!value);
       }
     } finally {
       setSaving(false);
@@ -98,6 +102,11 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
   const handlePushDbToggle = async (enabled: boolean) => {
     setPushDbEnabled(enabled);
     await savePreference('push_notifications_enabled', enabled);
+  };
+
+  const handleMorningBriefToggle = async (enabled: boolean) => {
+    setMorningBriefEnabled(enabled);
+    await savePreference('morning_brief_enabled', enabled);
   };
 
   const handlePushSubscriptionToggle = async () => {
@@ -254,6 +263,25 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             id="email-notifications"
             checked={emailEnabled}
             onCheckedChange={handleEmailToggle}
+            disabled={saving}
+          />
+        </div>
+
+        {/* Morning Brief */}
+        <div className="flex items-center justify-between border-t pt-4">
+          <div className="space-y-1">
+            <Label htmlFor="morning-brief" className="flex items-center gap-2">
+              <Sun className="h-4 w-4" />
+              {t('alerts.notif.morningBrief')}
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              {t('alerts.notif.morningBriefDesc')}
+            </p>
+          </div>
+          <Switch
+            id="morning-brief"
+            checked={morningBriefEnabled}
+            onCheckedChange={handleMorningBriefToggle}
             disabled={saving}
           />
         </div>

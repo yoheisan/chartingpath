@@ -4098,6 +4098,7 @@ export type Database = {
           id: string
           last_brief_sent_at: string | null
           last_sign_in_at: string | null
+          morning_brief_enabled: boolean
           onboarding_completed: boolean | null
           push_notifications_enabled: boolean | null
           subscription_plan:
@@ -4118,6 +4119,7 @@ export type Database = {
           id?: string
           last_brief_sent_at?: string | null
           last_sign_in_at?: string | null
+          morning_brief_enabled?: boolean
           onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
@@ -4138,6 +4140,7 @@ export type Database = {
           id?: string
           last_brief_sent_at?: string | null
           last_sign_in_at?: string | null
+          morning_brief_enabled?: boolean
           onboarding_completed?: boolean | null
           push_notifications_enabled?: boolean | null
           subscription_plan?:
