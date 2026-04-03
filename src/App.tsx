@@ -66,6 +66,7 @@ const CommoditiesQuiz = lazy(() => import("./pages/CommoditiesQuiz"));
 
 const Projects = lazy(() => import("./pages/Projects"));
 const ProjectsPricing = lazy(() => import("./pages/ProjectsPricing"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"));
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
 
