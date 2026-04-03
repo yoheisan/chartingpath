@@ -1212,7 +1212,8 @@
     "instruments": "Instruments",
     "patterns": "Patterns",
     "trades": "Backtested Outcomes",
-    "avgWinRate": "Avg Win Rate (A-Grade)"
+    "avgWinRate": "Avg Win Rate (A-Grade)",
+    "avgExpectancy": "Avg Expectancy (A-Grade)"
   },
   "guestNudge": {
     "message": "You're on a guest preview — Create your free account to save results and get alerts.",
