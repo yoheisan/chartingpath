@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Zap, Star, Database, ArrowLeft, Mail } from "lucide-react";
+import { Check, Zap, TrendingUp, Star, Database, ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { track } from "@/services/analytics";
@@ -36,6 +36,25 @@ const Pricing = () => {
       variant: "outline" as const,
     },
     {
+      nameKey: 'pricingPage.liteName',
+      name: t('pricingPage.liteName', 'Lite'),
+      price: t('pricingPage.litePrice', '$12 / month'),
+      description: t('pricingPage.liteDescription', 'Full outcome history and more alert capacity.'),
+      icon: TrendingUp,
+      features: [
+        t('pricingPage.liteFeature1', 'Everything in Free'),
+        t('pricingPage.liteFeature2', 'Full 90-day outcome history'),
+        t('pricingPage.liteFeature3', 'Win rates by pattern & timeframe'),
+        t('pricingPage.liteFeature4', '5 active alerts'),
+        t('pricingPage.liteFeature5', '4H and above timeframes'),
+        t('pricingPage.liteFeature6', '2 trading plans'),
+      ],
+      cta: t('pricingPage.liteCta', 'Start Lite'),
+      ctaLink: "/auth?mode=signup&plan=lite",
+      popular: true,
+      variant: "default" as const,
+    },
+    {
       nameKey: 'pricingPage.proName',
       name: t('pricingPage.proName', 'Pro'),
       price: t('pricingPage.proPrice', '$79 / month'),
@@ -52,8 +71,8 @@ const Pricing = () => {
       ],
       cta: t('pricingPage.proCta', 'Start Pro'),
       ctaLink: "/auth?mode=signup&plan=pro",
-      popular: true,
-      variant: "default" as const,
+      popular: false,
+      variant: "outline" as const,
     },
     {
       nameKey: 'pricingPage.dataApiName',
@@ -118,7 +137,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto mb-20">
+        <div className="grid gap-6 md:grid-cols-4 max-w-6xl mx-auto mb-20">
           {tiers.map((tier) => {
             const Icon = tier.icon;
             return (
