@@ -397,7 +397,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                       {stats && stats.totalDetections >= 20 ? (
                         <p className="text-sm font-medium text-bullish">{stats.winRate}% (n={stats.totalDetections.toLocaleString()})</p>
                       ) : (
-                        <p className="text-sm font-medium text-muted-foreground italic">Data accumulating</p>
+                        <p className="text-sm font-medium text-muted-foreground italic">{t('patternLibrary.dataAccumulating', 'Data accumulating')}</p>
                       )}
                     </div>
                   </div>
