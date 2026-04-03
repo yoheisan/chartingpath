@@ -814,11 +814,11 @@ const MemberAlerts = () => {
             <div className="flex items-center justify-between rounded-lg border border-border/50 p-3 mb-4">
               <div className="space-y-0.5">
                 <label htmlFor="copilot-paper-toggle" className="text-sm font-medium cursor-pointer">
-                  Also send to Copilot paper when triggered
+                  {t('alerts.copilotPaperLabel', 'Also send to Copilot paper when triggered')}
                 </label>
                 {copilotPaperEnabled && (
                   <p className="text-sm text-muted-foreground">
-                    Copilot will evaluate this setup against your Master Plan when the alert fires.
+                    {t('alerts.copilotPaperDesc', 'Copilot will evaluate this setup against your Master Plan when the alert fires.')}
                   </p>
                 )}
               </div>
