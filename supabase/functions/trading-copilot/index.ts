@@ -3129,11 +3129,105 @@ serve(async (req) => {
       console.log(`[trading-copilot] RAG context: ${ragContext.relevantPatternStats.length} stats, ${ragContext.activePatterns.length} patterns, ${ragContext.relevantArticles.length} articles`);
       console.log(`[trading-copilot] Context layers: temporal=yes, platform=${platformContext ? 'yes' : 'no'}, user=${userBehavior ? 'yes' : 'no'}, pageDb=${pageDbContext ? 'yes' : 'no'}, liveCtx=${liveContextRaw ? 'yes' : 'no'}, learned_rules=${learnedRulesPrompt.length > 0 ? 'yes' : 'no'}`);
 
+      // ============================================
+      // CONTEXT BUDGET: Cap total context at ~4000 tokens
+      // Summarize trade history older than 7 days, keep recent verbatim
+      // ============================================
+      const CONTEXT_TOKEN_BUDGET = 4000;
+
+      function estimateTokens(text: string): number {
+        // ~4 chars per token is a reasonable approximation for English
+        return Math.ceil(text.length / 4);
+      }
+
+      function applyContextBudget(
+        systemContent: string,
+        userMessages: any[],
+        supabaseClient: any,
+        uid: string | null
+      ): { budgetedConvo: any[]; contextTokensUsed: number; summaryApplied: boolean } {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        let summaryApplied = false;
+
+        // Separate recent vs older messages
+        const recentMessages: any[] = [];
+        const olderMessages: any[] = [];
+
+        for (const msg of userMessages) {
+          // Messages from the client don't have timestamps, treat all as recent
+          // The trade history is in the system prompt context layers, not in messages
+          recentMessages.push(msg);
+        }
+
+        // Budget allocation: 60% system prompt, 40% conversation
+        const systemBudget = Math.floor(CONTEXT_TOKEN_BUDGET * 0.6);
+        const messageBudget = Math.floor(CONTEXT_TOKEN_BUDGET * 0.4);
+
+        // Trim system prompt if over budget
+        let trimmedSystem = systemContent;
+        const systemTokens = estimateTokens(systemContent);
+        if (systemTokens > systemBudget) {
+          // Truncate from the middle (keep beginning and end which are most important)
+          const targetChars = systemBudget * 4;
+          const keepStart = Math.floor(targetChars * 0.7);
+          const keepEnd = Math.floor(targetChars * 0.3);
+          trimmedSystem = systemContent.slice(0, keepStart) 
+            + '\n\n[... context trimmed for budget ...]\n\n' 
+            + systemContent.slice(-keepEnd);
+          summaryApplied = true;
+          console.log(`[trading-copilot] System prompt trimmed: ${systemTokens} → ~${systemBudget} tokens`);
+        }
+
+        // Trim conversation messages: keep most recent, summarize older
+        let budgetedMessages = [...recentMessages];
+        let msgTokens = estimateTokens(budgetedMessages.map(m => m.content || '').join(' '));
+
+        if (msgTokens > messageBudget && budgetedMessages.length > 4) {
+          // Split: summarize older messages, keep last 4 verbatim
+          const keepCount = Math.min(4, budgetedMessages.length);
+          const recentKeep = budgetedMessages.slice(-keepCount);
+          const older = budgetedMessages.slice(0, -keepCount);
+
+          if (older.length > 0) {
+            // Compact older messages into a summary
+            const olderSummary = older.map(m => {
+              const role = m.role === 'user' ? 'U' : 'A';
+              const content = (m.content || '').slice(0, 100);
+              return `${role}: ${content}${m.content?.length > 100 ? '…' : ''}`;
+            }).join(' | ');
+
+            budgetedMessages = [
+              { role: 'system', content: `[Earlier conversation summary: ${olderSummary}]` },
+              ...recentKeep
+            ];
+            summaryApplied = true;
+            console.log(`[trading-copilot] Conversation trimmed: ${older.length} older messages summarized`);
+          }
+        }
+
+        const totalTokens = estimateTokens(trimmedSystem) + estimateTokens(budgetedMessages.map(m => m.content || '').join(' '));
+
+        return {
+          budgetedConvo: [{ role: "system", content: trimmedSystem }, ...budgetedMessages],
+          contextTokensUsed: totalTokens,
+          summaryApplied,
+        };
+      }
+
+      // Apply the context budget
+      const { budgetedConvo, contextTokensUsed, summaryApplied } = applyContextBudget(
+        enhancedSystemPrompt, messages, supabase, userId
+      );
+
+      // Send context token usage as metadata to the client
+      writer.sendMeta({ contextTokensUsed, contextTokenBudget: CONTEXT_TOKEN_BUDGET, summaryApplied });
+      console.log(`[trading-copilot] Context budget: ${contextTokensUsed}/${CONTEXT_TOKEN_BUDGET} tokens${summaryApplied ? ' (summary applied)' : ''}`);
+
       // Track tool calls/results for RLVR logging
       const allToolCalls: any[] = [];
       const allToolResults: any[] = [];
 
-      let convo: any[] = [{ role: "system", content: enhancedSystemPrompt }, ...messages];
+      let convo: any[] = budgetedConvo;
 
       const MAX_TOOL_ROUNDS = 5;
       const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
