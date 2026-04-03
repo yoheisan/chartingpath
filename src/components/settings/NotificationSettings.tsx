@@ -104,6 +104,11 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
     await savePreference('push_notifications_enabled', enabled);
   };
 
+  const handleMorningBriefToggle = async (enabled: boolean) => {
+    setMorningBriefEnabled(enabled);
+    await savePreference('morning_brief_enabled', enabled);
+  };
+
   const handlePushSubscriptionToggle = async () => {
     if (isSubscribed) {
       await unsubscribe();
