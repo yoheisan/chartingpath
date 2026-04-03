@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, TrendingUp, Shield } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, FlaskConical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ import MarketPulseChart from '@/components/landing/MarketPulseChart';
 import { SocialProof } from '@/components/landing/SocialProof';
 import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
 import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
+import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
