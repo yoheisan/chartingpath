@@ -1394,7 +1394,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small candle inside previous large bullish candle. Potential bearish reversal signal.",
     accuracy: "69%",
     difficulty: "Intermediate",
-    
+
+    whatIsIt: "The Bearish Harami is the mirror image of the Bullish Harami — a large bullish candle followed by a small candle contained within the first candle's body. Appearing after an uptrend, it signals that the buying momentum has stalled. The small second candle represents indecision where the previous bullish conviction has evaporated. This is an early warning that the uptrend may be exhausting itself, and a bearish reversal could follow.",
+
+    whyItHappens: "After a strong bullish candle pushes price higher, market participants expect continuation. When the next session opens inside the prior body and trades in a narrow range without making new highs, it reveals that bulls have lost their urgency. The dramatic shrinkage in range from the large first candle to the small second candle reflects a loss of momentum. Smart money may be distributing (selling into strength), leaving retail buyers holding positions that may soon decline.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern requires bullish context for bearish reversal meaning",
+      "STEP 2: Identify a large bullish first candle",
+      "STEP 3: Verify the second candle's body is entirely contained within the first candle's body",
+      "STEP 4: Note that the second candle's color is secondary to its position and size",
+      "STEP 5: Wait for a third candle to close below the harami low for bearish confirmation"
+    ],
+
+    realWorldExamples: [
+      "USD/CHF Daily, May 2023: Bearish Harami at 0.9080 after a 5-day rally; confirmed next day, price fell 250 pips over two weeks",
+      "Nvidia (NVDA) Daily, March 2024: Bearish Harami near $950 preceded a 15% pullback over the following three weeks"
+    ],
+
     characteristics: [
       "First candle: Large bullish candle",
       "Second candle: Small candle contained within first",
