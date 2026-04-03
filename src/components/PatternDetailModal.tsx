@@ -140,7 +140,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
             {outcomeSnapshotText && (
               <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-semibold mr-2">
-                  ChartingPath data
+                  {t('patternLibrary.chartingPathData', 'ChartingPath data')}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{outcomeSnapshotText}</span>
               </div>
