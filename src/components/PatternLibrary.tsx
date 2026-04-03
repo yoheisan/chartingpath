@@ -247,11 +247,11 @@ export const PatternLibrary = () => {
       {/* Bottom CTA */}
       <div className="rounded-2xl border border-border/40 bg-card/60 p-10 flex flex-col items-center text-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">
-          Want to see these patterns on live charts right now?
+          {t('patternLibrary.liveCta', 'Want to see these patterns on live charts right now?')}
         </h2>
         <Link to="/patterns/live">
           <Button size="lg" className="px-8 py-6 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-            Open live scanner
+            {t('patternLibrary.openScanner', 'Open live scanner')}
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </Link>
