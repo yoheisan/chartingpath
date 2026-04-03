@@ -132,14 +132,13 @@ const TradingCopilotFeature = () => {
                 {t('tradingCopilot.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.08] tracking-tight">
-                {t('tradingCopilot.headline')}{" "}
+                An AI trading assistant built on outcome data —{" "}
                 <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {t('tradingCopilot.headlineHighlight')}
-                </span>{" "}
-                {t('tradingCopilot.headlineEnd')}
+                  not just indicators
+                </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl leading-relaxed">
-                {t('tradingCopilot.subtitle')}
+                Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from 63,000+ real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" onClick={() => copilot.open()}>

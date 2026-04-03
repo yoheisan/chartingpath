@@ -162,6 +162,9 @@ const Index = () => {
         <FeatureBlocks />
       </div>
 
+      {/* Copilot Value Prop — after features grid */}
+      <CopilotValueProp />
+
       {/* Mid-page Signup CTA */}
       {!isAuthenticated && (
         <section className="py-20 px-4 md:px-6 lg:px-8 border-t border-border/20">
