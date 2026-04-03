@@ -2252,8 +2252,10 @@ async function fetchUserBehavior(supabase: any, userId: string | null): Promise<
   if (!userId) return '';
 
   try {
-    // Fetch behavior, watchlist, and portfolio in parallel
-    const [feedbackResult, watchlistResult, portfolioResult, alertsResult] = await Promise.all([
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Fetch behavior, watchlist, portfolio, open trades, recent closed, and older closed summary in parallel
+    const [feedbackResult, watchlistResult, portfolioResult, alertsResult, recentClosedResult, olderClosedResult] = await Promise.all([
       supabase
         .from('copilot_feedback')
         .select('question, topics, intent_category')
@@ -2276,6 +2278,23 @@ async function fetchUserBehavior(supabase: any, userId: string | null): Promise<
         .eq('user_id', userId)
         .eq('status', 'open')
         .limit(10),
+      // Recent closed trades (last 7 days) — keep verbatim
+      supabase
+        .from('paper_trades')
+        .select('symbol, trade_type, entry_price, pnl, r_multiple, closed_at')
+        .eq('user_id', userId)
+        .eq('status', 'closed')
+        .gte('closed_at', sevenDaysAgo)
+        .order('closed_at', { ascending: false })
+        .limit(20),
+      // Older closed trades (>7 days) — will be summarized
+      supabase
+        .from('paper_trades')
+        .select('symbol, trade_type, pnl, r_multiple')
+        .eq('user_id', userId)
+        .eq('status', 'closed')
+        .lt('closed_at', sevenDaysAgo)
+        .limit(200),
     ]);
 
     const sections: string[] = [];
