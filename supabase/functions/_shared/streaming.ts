@@ -7,6 +7,7 @@
 export interface StreamWriter {
   sendStatus(text: string): void;
   sendToken(text: string): void;
+  sendMeta(meta: Record<string, any>): void;
   sendDone(): void;
   sendError(text: string): void;
   close(): void;
