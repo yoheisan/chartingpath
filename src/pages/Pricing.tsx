@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Zap, Star, Database, ArrowLeft, Mail } from "lucide-react";
+import { Check, Zap, TrendingUp, Star, Database, ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { track } from "@/services/analytics";
