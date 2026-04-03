@@ -103,8 +103,9 @@ export const PricingTeaser = () => {
               </ul>
               {/* CTA for each plan */}
               <Button asChild size="sm" variant={planIdx === 0 ? 'default' : 'outline'} className="mt-4 w-full" onClick={() => {
-                track(`pricing_start_${plan.name.toLowerCase()}`, { source: 'landing_pricing_teaser' });
-                trackEvent('landing.cta_click', { button: `pricing_start_${plan.name.toLowerCase()}` });
+                const eventName = planIdx === 0 ? 'pricing_start_free' : planIdx === 1 ? 'pricing_start_lite' : 'pricing_start_pro';
+                track(eventName, { source: 'landing_pricing_teaser' });
+                trackEvent('landing.cta_click', { button: eventName });
               }}>
                 <Link to="/auth?mode=signup">
                   {plan.cta}
