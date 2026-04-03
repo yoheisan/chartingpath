@@ -970,6 +970,12 @@ export function TradingCopilot({
             const parsed = JSON.parse(jsonStr);
 
             // Current streaming protocol
+            if (parsed.type === "meta") {
+              if (parsed.contextTokensUsed && parsed.contextTokenBudget) {
+                setContextTokens({ used: parsed.contextTokensUsed, budget: parsed.contextTokenBudget });
+              }
+              continue;
+            }
             if (parsed.type === "status") {
               updateAssistantMsg(`_${parsed.text}_`);
               continue;
