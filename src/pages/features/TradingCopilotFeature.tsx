@@ -169,6 +169,50 @@ const TradingCopilotFeature = () => {
         </div>
       </section>
 
+      {/* 3 Differentiator Points */}
+      <section className="py-24 px-4 md:px-6 lg:px-8 border-t border-border/20">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              {
+                icon: Database,
+                label: "Outcome-aware analysis",
+                text: "Ask about any live pattern and Copilot surfaces historical win rates, average R-multiple, and best/worst conditions for that exact setup — from our own data.",
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+              },
+              {
+                icon: RefreshCw,
+                label: "Gets smarter over time",
+                text: "Every paper trade you run feeds the outcome database. Copilot's analysis improves as the dataset grows — it's the only trading AI with a feedback loop built in.",
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+              },
+              {
+                icon: MessageSquareText,
+                label: "Plain language trade plans",
+                text: "No jargon. Copilot explains the setup, suggests entry, stop, and target levels, and tells you what conditions would invalidate the trade.",
+                color: "text-violet-500",
+                bg: "bg-violet-500/10",
+              },
+            ].map((d) => (
+              <Card key={d.label} className="group hover:border-primary/30 transition-colors">
+                <CardContent className="p-6 space-y-4">
+                  <div className={`inline-flex p-2.5 rounded-xl ${d.bg}`}>
+                    <d.icon className={`h-6 w-6 ${d.color}`} />
+                  </div>
+                  <h3 className="text-lg font-semibold">{d.label}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{d.text}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Copilot is available on Pro and above. Paper trading simulation only — not financial advice.
+          </p>
+        </div>
+      </section>
+
       {/* "Try This With ChatGPT" Challenge */}
       <section id="challenge" className="py-24 px-4 md:px-6 lg:px-8 bg-muted/30 border-t border-border/20">
         <div className="container mx-auto">
