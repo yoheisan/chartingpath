@@ -155,14 +155,9 @@ const Index = () => {
         <SocialProof />
       </div>
 
-      {/* AI Copilot */}
+      {/* Feature Blocks — 2×2 grid */}
       <div ref={copilotRef} className="border-t border-border/20">
-        <CopilotShowcase />
-      </div>
-
-      {/* Use-Case Showcase (replaces How It Works + Action Cards) */}
-      <div ref={howItWorksRef} className="border-t border-border/20">
-        <HowItWorks />
+        <FeatureBlocks />
       </div>
 
       {/* Mid-page Signup CTA */}
