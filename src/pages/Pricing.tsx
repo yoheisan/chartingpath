@@ -71,8 +71,8 @@ const Pricing = () => {
       ],
       cta: t('pricingPage.proCta', 'Start Pro'),
       ctaLink: "/auth?mode=signup&plan=pro",
-      popular: true,
-      variant: "default" as const,
+      popular: false,
+      variant: "outline" as const,
     },
     {
       nameKey: 'pricingPage.dataApiName',
