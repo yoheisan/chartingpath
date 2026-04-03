@@ -22,6 +22,7 @@ import { SocialProof } from '@/components/landing/SocialProof';
 import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
 import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
+import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -152,6 +153,9 @@ const Index = () => {
       <div className="border-t border-border/20">
         <SocialProof />
       </div>
+
+      {/* Outcome Stats Strip — live data between hero area and features */}
+      <OutcomeStatsStrip />
 
       {/* Feature Blocks — 2×2 grid */}
       <div ref={copilotRef} className="border-t border-border/20">
