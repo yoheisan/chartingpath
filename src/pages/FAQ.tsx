@@ -743,6 +743,43 @@ const FAQ = () => {
               )
             }
           ]
+        },
+        {
+          category: t('faq.screener.catEdgeAtlas', 'Edge Atlas'),
+          questions: [
+            {
+              question: t('faq.screener.q_whatIsEdgeAtlas', 'What is Edge Atlas?'),
+              answer: (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">{t('faq.screener.a_edgeAtlasIntro', "Edge Atlas ranks every pattern × timeframe × asset class combination by estimated annualized return — calculated from ChartingPath's own live outcome database. It tells you not just which patterns form most often, but which ones have statistically proven edge.")}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_rotLabel', 'ROT (Return on Time):')}</span> {t('faq.screener.a_rotDesc', 'R-multiple earned per bar held. A pattern with 0.025R/bar held for 10 bars generates 0.25R — more efficient than a pattern with 0.04R held for 20 bars (0.04R total).')}</p>
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_expectancyLabel', 'Expectancy:')}</span> {t('faq.screener.a_expectancyDesc', 'Average R-multiple per trade: (Win rate × Avg win R) - (Loss rate × Avg loss R). Positive expectancy means the pattern is profitable in aggregate.')}</p>
+                    <p className="text-sm"><span className="font-semibold">{t('faq.screener.a_estAnnualLabel', 'Est. Annual Return:')}</span> {t('faq.screener.a_estAnnualDesc', 'Projected return if you traded every instance of this pattern for a full year, using 1R position sizing. Based on historical frequency × expectancy × trades per year.')}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.screener.a_edgeAtlasWarning', '⚠️ Past performance does not guarantee future results. Filter by asset class for meaningful comparisons — equity and FX patterns behave differently.')}</p>
+                </div>
+              )
+            },
+            {
+              question: t('faq.screener.q_lowSampleWarning', 'What does the "low sample" warning mean?'),
+              answer: (
+                <p className="text-muted-foreground">{t('faq.screener.a_lowSampleWarning', "Patterns marked ⚠️ low sample have fewer than 100 tracked outcomes in ChartingPath's database. The statistics are directionally useful but not yet statistically robust. We recommend treating low-sample patterns as \"promising leads\" rather than confirmed edges until more data accumulates.")}</p>
+              )
+            },
+            {
+              question: t('faq.screener.q_howEdgeCalc', 'How is estimated annual return calculated?'),
+              answer: (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">{t('faq.screener.a_edgeCalcIntro', 'The formula is:')}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg font-mono text-sm">
+                    Est. Annual Return = Expectancy × Trades/Year × 100%
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.screener.a_edgeCalcNote', 'This assumes 1R position sizing on every trade and does not account for compounding, transaction costs, or slippage. It is a comparative ranking metric, not a precise return forecast.')}</p>
+                </div>
+              )
+            }
+          ]
         }
       ]
     },
@@ -1108,6 +1145,32 @@ const FAQ = () => {
                 <div className="text-muted-foreground">
                   <p>{ac('a_upgradesDesc')}</p>
                 </div>
+              )
+            }
+          ]
+        },
+        {
+          category: t('faq.account.catDataApi', 'Data API & Research Access'),
+          questions: [
+            {
+              question: t('faq.account.q_whatIsDataApi', 'What is the Data API tier?'),
+              answer: (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">{t('faq.account.a_dataApiIntro', "The Data API provides programmatic access to ChartingPath's full pattern outcome dataset — the same data that powers Edge Atlas, Pattern Lab, and Copilot. It is designed for quantitative researchers, prop trading firms, and institutional investors who want to query pattern outcomes directly.")}</p>
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-1">
+                    <p className="text-sm">• {t('faq.account.a_dataApiFeature1', 'REST API: query outcomes by pattern × instrument × timeframe × date range')}</p>
+                    <p className="text-sm">• {t('faq.account.a_dataApiFeature2', '424K+ labeled outcome records and growing daily')}</p>
+                    <p className="text-sm">• {t('faq.account.a_dataApiFeature3', 'JSON format with win/loss label, R-multiple, hold duration, and market regime tags')}</p>
+                    <p className="text-sm">• {t('faq.account.a_dataApiFeature4', 'Custom data exports available')}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('faq.account.a_dataApiContact', 'Pricing is custom based on usage volume and data scope. Contact')} <a href="mailto:contact@chartingpath.com" className="text-primary hover:underline">contact@chartingpath.com</a> {t('faq.account.a_dataApiContactEnd', 'to discuss.')}</p>
+                </div>
+              )
+            },
+            {
+              question: t('faq.account.q_dataApiVsCompetitors', 'How is this different from Bloomberg or Refinitiv pattern data?'),
+              answer: (
+                <p className="text-muted-foreground">{t('faq.account.a_dataApiVsCompetitors', "Bloomberg and Refinitiv provide price data and some technical signal flags, but they do not provide labeled pattern outcome data — whether a specific detected pattern actually hit its take profit or stop loss target. ChartingPath's dataset is unique because it combines detection (when the pattern formed) with verified outcome (what happened after), across a consistent ATR-based SL/TP methodology, on a live rolling basis.")}</p>
               )
             }
           ]
