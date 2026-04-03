@@ -6307,8 +6307,8 @@
     "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.",
     "seeLivePatterns": "See live patterns",
     "exploreOutcomeData": "Explore outcome data",
-    "patternsDetectedThisWeek": "{{count}} patterns detected this week",
-    "instrumentsTracked": "{{count}} instruments tracked",
+    "patternsDetectedThisWeek": "{{num}} patterns detected this week",
+    "instrumentsTracked": "{{num}} instruments tracked",
     "topPatternThisWeek": "Top pattern this week: {{pattern}} on {{instrument}} — {{winRate}}% win rate",
     "disclaimer": "ChartingPath provides educational tools and backtesting software. Past performance does not guarantee future results. Trading involves substantial risk of loss. Alerts and signals are for informational purposes only and do not constitute financial advice.",
     "platformBadge": "Chart Pattern Backtesting Platform"
