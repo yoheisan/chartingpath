@@ -113,11 +113,11 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                   </>
                 ) : isCandlestick ? (
                   <>
-                    <div className="text-sm text-muted-foreground italic">Educational only</div>
+                    <div className="text-sm text-muted-foreground italic">{t('patternLibrary.educationalOnly', 'Educational only')}</div>
                   </>
                 ) : (
                   <>
-                    <div className="text-sm text-muted-foreground italic">Accumulating data</div>
+                    <div className="text-sm text-muted-foreground italic">{t('patternLibrary.accumulatingShort', 'Accumulating data')}</div>
                   </>
                 )}
                 <div className="text-sm text-muted-foreground">{s('successRate')}</div>
