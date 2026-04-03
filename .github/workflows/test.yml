@@ -9,9 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
         backtester-flag: ['false', 'true']
     
     steps:
@@ -47,14 +49,15 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
     - uses: actions/checkout@v4
     
-    - name: Use Node.js 18.x
+    - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 22.x
         cache: 'npm'
     
     - name: Install dependencies
@@ -68,14 +71,15 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
-    
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
     - uses: actions/checkout@v4
     
-    - name: Use Node.js 18.x
+    - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 22.x
         cache: 'npm'
     
     - name: Install dependencies
@@ -97,10 +101,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Use Node.js 18.x
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 22.x
         cache: 'npm'
     
     - name: Install dependencies
@@ -128,10 +137,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Use Node.js 18.x
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 22.x
         cache: 'npm'
     
     - name: Install dependencies
