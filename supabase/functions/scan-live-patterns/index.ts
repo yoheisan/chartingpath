@@ -14,6 +14,11 @@ import {
   getDbSymbol,
 } from "../_shared/patternDetectors.ts";
 import {
+  verifyPattern,
+  logVerificationFailures,
+  type VerificationInput,
+} from "../_shared/patternVerification.ts";
+import {
   calculatePatternQualityScore,
   type PatternQualityScorerInput,
 } from "../_shared/patternQualityScorer.ts";
