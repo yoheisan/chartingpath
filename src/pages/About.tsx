@@ -58,7 +58,6 @@ const About = () => {
 
         </section>
       </div>
-    </>
   );
 };
 
