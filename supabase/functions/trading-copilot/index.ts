@@ -2384,6 +2384,36 @@ async function fetchUserBehavior(supabase: any, userId: string | null): Promise<
       }
     }
 
+    // Recent closed trades (last 7 days) — verbatim
+    const recentClosed = recentClosedResult.data;
+    if (recentClosed?.length) {
+      const tradesText = recentClosed.map((t: any) =>
+        `  • ${t.symbol} ${t.trade_type} — P&L: $${t.pnl?.toFixed(2) || '?'}, ${t.r_multiple?.toFixed(1) || '?'}R (${new Date(t.closed_at).toLocaleDateString()})`
+      ).join('\n');
+      sections.push(`**Recent closed trades (last 7d, ${recentClosed.length}):**\n${tradesText}`);
+    }
+
+    // Older closed trades (>7 days) — compact JSON summary
+    const olderClosed = olderClosedResult.data;
+    if (olderClosed?.length) {
+      const totalTrades = olderClosed.length;
+      const totalPnl = olderClosed.reduce((s: number, t: any) => s + (t.pnl || 0), 0);
+      const totalR = olderClosed.reduce((s: number, t: any) => s + (t.r_multiple || 0), 0);
+      const wins = olderClosed.filter((t: any) => (t.pnl || 0) > 0).length;
+      const symbolBreakdown: Record<string, { count: number; pnl: number }> = {};
+      for (const t of olderClosed) {
+        if (!symbolBreakdown[t.symbol]) symbolBreakdown[t.symbol] = { count: 0, pnl: 0 };
+        symbolBreakdown[t.symbol].count++;
+        symbolBreakdown[t.symbol].pnl += t.pnl || 0;
+      }
+      const topSymbols = Object.entries(symbolBreakdown)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5)
+        .map(([s, d]) => `${s}(${d.count}, $${d.pnl.toFixed(0)})`);
+      
+      sections.push(`**Older trade history (>7d, summarized):** ${totalTrades} trades, ${wins} wins (${(wins/totalTrades*100).toFixed(0)}%), Net: $${totalPnl.toFixed(0)}, ${totalR.toFixed(1)}R total. Top: ${topSymbols.join(', ')}`);
+    }
+
     if (sections.length === 0) return '';
 
     return `## User Context (Personalization & Portfolio Awareness)
