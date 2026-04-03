@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet-async";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
