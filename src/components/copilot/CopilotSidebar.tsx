@@ -99,6 +99,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
+  const [contextTokens, setContextTokens] = useState<{ used: number; budget: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
