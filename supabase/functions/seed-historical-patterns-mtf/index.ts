@@ -2131,13 +2131,36 @@ serve(async (req) => {
       });
     }
 
-    // Insert into database in chunks (use upsert to avoid duplicates)
+    // Post-detection verification — filter out invalid patterns
+    const verifiedOccurrences: typeof allOccurrences = [];
+    const failedVerifications: Array<{ input: VerificationInput; failures: string[]; source: string }> = [];
+    for (const occ of allOccurrences) {
+      const vi: VerificationInput = {
+        symbol: occ.symbol, pattern_id: occ.pattern_id, pattern_name: occ.pattern_name,
+        timeframe: occ.timeframe, direction: occ.direction, asset_type: occ.asset_type,
+        entry_price: occ.entry_price, stop_loss_price: occ.stop_loss_price, take_profit_price: occ.take_profit_price,
+        risk_reward_ratio: occ.risk_reward_ratio, quality_score: occ.quality_score,
+        detected_at: occ.detected_at, bars: occ.bars,
+      };
+      const result = verifyPattern(vi);
+      if (result.passed) {
+        verifiedOccurrences.push(occ);
+      } else {
+        failedVerifications.push({ input: vi, failures: result.failures, source: 'seed-historical-patterns-mtf' });
+      }
+    }
+    if (failedVerifications.length > 0) {
+      console.warn(`[seed-mtf] ${failedVerifications.length}/${allOccurrences.length} patterns failed verification`);
+      await logVerificationFailures(supabase, failedVerifications.slice(0, 200)); // cap log volume
+    }
+
+    // Insert verified patterns into database in chunks (use upsert to avoid duplicates)
     const CHUNK_SIZE = 50;
     let insertedCount = 0;
     const allInsertedIds: string[] = [];
     
-    for (let i = 0; i < allOccurrences.length; i += CHUNK_SIZE) {
-      const chunk = allOccurrences.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < verifiedOccurrences.length; i += CHUNK_SIZE) {
+      const chunk = verifiedOccurrences.slice(i, i + CHUNK_SIZE);
       
       const { data: upsertedData, error: insertError } = await supabase
         .from('historical_pattern_occurrences')
