@@ -1631,9 +1631,11 @@ export type Database = {
           id: string
           intent_classification: string | null
           is_preferred: boolean | null
+          last_rescored_at: string | null
           outcome_signals: Json | null
           parameters_used: Json | null
           prompt: string
+          quality_weight: number
           response: string
           reward_score: number | null
           session_id: string | null
@@ -1648,9 +1650,11 @@ export type Database = {
           id?: string
           intent_classification?: string | null
           is_preferred?: boolean | null
+          last_rescored_at?: string | null
           outcome_signals?: Json | null
           parameters_used?: Json | null
           prompt: string
+          quality_weight?: number
           response: string
           reward_score?: number | null
           session_id?: string | null
@@ -1665,9 +1669,11 @@ export type Database = {
           id?: string
           intent_classification?: string | null
           is_preferred?: boolean | null
+          last_rescored_at?: string | null
           outcome_signals?: Json | null
           parameters_used?: Json | null
           prompt?: string
+          quality_weight?: number
           response?: string
           reward_score?: number | null
           session_id?: string | null
@@ -6591,6 +6597,7 @@ export type Database = {
         Args: { p_jobid: number; p_schedule: string }
         Returns: undefined
       }
+      rescore_copilot_training_pairs: { Args: never; Returns: Json }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
       run_database_maintenance: { Args: never; Returns: Json }
       set_user_language: {
