@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
 const About = () => {
-  return (
-    <>
-      <Helmet>
-        <title>About ChartingPath — Built by a Trader</title>
-        <meta name="description" content="ChartingPath is a solo-built pattern intelligence platform tracking 63K+ real chart pattern outcomes across FX and US equities." />
-      </Helmet>
+  useEffect(() => {
+    document.title = "About ChartingPath — Built by a Trader";
+  }, []);
 
-      <div className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20 max-w-3xl">
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20 max-w-3xl">
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-foreground mb-10">
             Built by a trader who couldn't find the data.
