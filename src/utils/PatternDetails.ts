@@ -1613,7 +1613,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small body with long upper and lower shadows indicating indecision and potential reversal.",
     accuracy: "62%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Spinning Top is a single-candle pattern characterized by a small body with long upper and lower shadows of roughly equal length. Unlike the Doji (which has virtually no body), the Spinning Top has a visible but small body, showing that while the session did close slightly higher or lower than it opened, neither side could maintain control. It represents indecision and is most significant at trend extremes, where it warns that the prevailing trend may be losing steam.",
+
+    whyItHappens: "During the session, both buyers and sellers had periods of control — price moved significantly higher AND significantly lower — but by the close, the net result was minimal change. The long shadows on both sides show that both groups were active and aggressive, but neither prevailed. In an uptrend, a Spinning Top signals that sellers are beginning to challenge buyers successfully. In a downtrend, it signals that buyers are starting to resist further declines. Either way, the trend's conviction is weakening.",
+
+    howToIdentify: [
+      "STEP 1: Look for a candle with a small body — the color (bullish or bearish) is secondary",
+      "STEP 2: Verify long shadows on both sides, roughly symmetrical in length",
+      "STEP 3: Place the pattern in context — at a trend extreme or key level, it's most meaningful",
+      "STEP 4: Compare to recent candles — if prior candles had large bodies, the sudden indecision is more significant",
+      "STEP 5: Wait for the next candle to break above or below the Spinning Top's range for directional confirmation"
+    ],
+
+    realWorldExamples: [
+      "USD/CAD Daily, October 2022: Spinning Top at 1.3850 resistance after a 6-week rally; bearish candle next day confirmed reversal, leading to a 400-pip decline",
+      "Google (GOOGL) Weekly, November 2021: Spinning Top near all-time highs at $150; marked the beginning of the 2022 correction that saw stock fall 40%"
+    ],
+
     characteristics: [
       "Small body relative to shadows",
       "Long upper and lower shadows",
