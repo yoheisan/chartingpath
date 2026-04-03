@@ -150,7 +150,7 @@ export const PatternLibrary = () => {
         {/* Data provenance header */}
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-5 py-4">
           <p className="text-sm text-foreground leading-relaxed">
-            {t('patternLibrary2.dataProvenanceNote', "Win rates below are from ChartingPath's live detection engine — real outcomes from real pattern detections, not historical studies. Data grows daily.")}
+            {t('patternLibrary2.dataProvenanceNote', "Win rates and statistics on this page are from ChartingPath's live detection engine — real outcomes tracked across FX and US equities. Data updates daily. Historical textbook statistics are not used.")}
           </p>
         </div>
 
