@@ -77,8 +77,8 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
   // Dynamic outcome snapshot line
   const outcomeSnapshotText = stats
     ? stats.totalDetections >= 20
-      ? `ChartingPath data: ${stats.winRate}% win rate · n=${stats.totalDetections.toLocaleString()} detections · Best on ${stats.bestTimeframe.toUpperCase()} · ${stats.bestAssetClass}`
-      : `Accumulating data — ${stats.totalDetections} detections so far`
+      ? t('patternLibrary.outcomeSnapshot', 'ChartingPath data: {{wr}}% win rate · n={{n}} detections · Best on {{tf}} · {{asset}}', { wr: stats.winRate, n: stats.totalDetections.toLocaleString(), tf: stats.bestTimeframe.toUpperCase(), asset: stats.bestAssetClass })
+      : t('patternLibrary.accumulatingData', 'Accumulating data — {{count}} detection(s) so far', { count: stats.totalDetections })
     : null;
 
   return (
