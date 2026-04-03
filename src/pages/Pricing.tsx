@@ -137,7 +137,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto mb-20">
+        <div className="grid gap-6 md:grid-cols-4 max-w-6xl mx-auto mb-20">
           {tiers.map((tier) => {
             const Icon = tier.icon;
             return (
