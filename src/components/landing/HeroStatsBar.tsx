@@ -1,9 +1,11 @@
 import { useHomepageStats } from '@/hooks/useHomepageStats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Activity, Globe, Trophy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function HeroStatsBar() {
   const { data, isLoading } = useHomepageStats();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -20,15 +22,19 @@ export function HeroStatsBar() {
   const stats = [
     {
       icon: Activity,
-      value: `${data.patterns_this_week.toLocaleString()} patterns detected this week`,
+      value: t('landing.patternsDetectedThisWeek', '{{count}} patterns detected this week', { count: data.patterns_this_week.toLocaleString() }),
     },
     {
       icon: Globe,
-      value: `${data.instruments_tracked.toLocaleString()} instruments tracked`,
+      value: t('landing.instrumentsTracked', '{{count}} instruments tracked', { count: data.instruments_tracked.toLocaleString() }),
     },
     {
       icon: Trophy,
-      value: `Top pattern this week: ${data.top_pattern} on ${data.top_instrument} — ${data.top_win_rate}% win rate`,
+      value: t('landing.topPatternThisWeek', 'Top pattern this week: {{pattern}} on {{instrument}} — {{winRate}}% win rate', {
+        pattern: data.top_pattern,
+        instrument: data.top_instrument,
+        winRate: data.top_win_rate,
+      }),
     },
   ];
 

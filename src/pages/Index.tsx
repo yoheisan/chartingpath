@@ -31,14 +31,12 @@ const Index = () => {
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
 
-  // Section tracking refs
   const heroRef = useSectionTracking('hero');
   const screenerRef = useSectionTracking('screener_teaser');
   const edgeAtlasRef = useSectionTracking('edge_atlas');
   const copilotRef = useSectionTracking('copilot');
   const pricingRef = useSectionTracking('pricing');
 
-  // Track landing page view for KPI funnel (fires into product_events + analytics_events)
   useEffect(() => {
     track('landing_view', { path: '/' });
     trackEvent('landing_view', { path: '/' });
@@ -53,13 +51,10 @@ const Index = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
     };
-    
     checkAuth();
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -74,7 +69,6 @@ const Index = () => {
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-[60vh] flex items-center overflow-hidden">
-        {/* Background — subtle grid + glow */}
         <div className="absolute inset-0 bg-background">
           <div className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -85,7 +79,6 @@ const Index = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07] blur-[100px] bg-primary pointer-events-none" />
         </div>
         
-        {/* Content — single column, copy-focused */}
         <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-6 text-xs tracking-wide animate-fade-in">
@@ -93,11 +86,11 @@ const Index = () => {
             </Badge>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.08] animate-fade-in tracking-tight text-foreground">
-              Know what happens after the pattern forms.
+              {t('landing.heroHeadline', 'Know what happens after the pattern forms.')}
             </h1>
             
             <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-10 max-w-xl animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-              ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.
+              {t('landing.heroSubheadline', 'ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -112,7 +105,7 @@ const Index = () => {
                 className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
               >
                 <TrendingUp className="h-6 w-6 mr-3" />
-                See live patterns
+                {t('landing.seeLivePatterns', 'See live patterns')}
                 <ArrowRight className="h-6 w-6 ml-3" />
               </Button>
 
@@ -127,46 +120,36 @@ const Index = () => {
                 className="px-10 py-7 text-xl font-bold border-border/60 hover:bg-accent/10 transition-colors"
               >
                 <FlaskConical className="h-6 w-6 mr-3" />
-                Explore outcome data
+                {t('landing.exploreOutcomeData', 'Explore outcome data')}
               </Button>
             </div>
 
-            {/* Live Stats Bar */}
             <HeroStatsBar />
           </div>
         </div>
       </section>
 
-      {/* Metric Strip — proof bar below hero */}
       <div className="border-t border-border/20 bg-card/30">
         <div className="container mx-auto">
           <MetricStrip />
         </div>
       </div>
 
-      {/* Live Pattern Preview — visual proof above the fold */}
       <LivePatternPreview />
-
-      {/* Market Pulse — Long vs Short detection chart */}
       <MarketPulseChart />
 
-      {/* Social Proof */}
       <div className="border-t border-border/20">
         <SocialProof />
       </div>
 
-      {/* Outcome Stats Strip — live data between hero area and features */}
       <OutcomeStatsStrip />
 
-      {/* Feature Blocks — 2×2 grid */}
       <div ref={copilotRef} className="border-t border-border/20">
         <FeatureBlocks />
       </div>
 
-      {/* Copilot Value Prop — after features grid */}
       <CopilotValueProp />
 
-      {/* Mid-page Signup CTA */}
       {!isAuthenticated && (
         <section className="py-20 px-4 md:px-6 lg:px-8 border-t border-border/20">
           <div className="container mx-auto">
@@ -197,28 +180,22 @@ const Index = () => {
         </section>
       )}
 
-      {/* Pattern Screener Table */}
       <div ref={screenerRef}>
         <PatternScreenerTeaser />
       </div>
 
-      {/* Edge Atlas */}
       <div ref={edgeAtlasRef}>
         <EdgeAtlasSection />
       </div>
 
-      {/* Email Lead Capture */}
       <EmailLeadCapture />
 
-      {/* Pricing Teaser */}
       <div ref={pricingRef}>
         <PricingTeaser />
       </div>
 
-      {/* Scroll-triggered signup modal for engaged guests */}
       <ScrollSignupModal />
 
-      {/* Disclaimer */}
       <section className="py-8 px-6 border-t">
         <div className="container mx-auto">
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
