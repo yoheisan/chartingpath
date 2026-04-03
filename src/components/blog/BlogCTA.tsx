@@ -45,14 +45,14 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
 
   useEffect(() => {
     const fetchEdgeAtlas = async () => {
-      const { data, error } = await supabase
-        .from('pattern_edge_stats')
+      const { data, error } = await (supabase
+        .from('pattern_edge_stats' as any)
         .select('pattern_type, timeframe, win_rate, expectancy_r, rot_per_bar, est_annual_return, sample_count')
         .ilike('pattern_type', `%${patternSlug}%`)
         .gte('sample_count', 20)
         .order('est_annual_return', { ascending: false, nullsFirst: false })
         .limit(1)
-        .maybeSingle();
+        .maybeSingle() as any);
 
       if (!error && data) {
         setEdgeData(data as EdgeAtlasData);
