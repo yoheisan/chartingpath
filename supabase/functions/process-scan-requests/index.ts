@@ -8,6 +8,11 @@ import {
 import {
   analyzePatternTrend,
 } from "../_shared/trendIndicators.ts";
+import {
+  verifyPattern,
+  logVerificationFailures,
+  type VerificationInput,
+} from "../_shared/patternVerification.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
