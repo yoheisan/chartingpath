@@ -239,7 +239,7 @@ export default function LivePatternPreview() {
               className="px-8 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
             >
               <Zap className="h-5 w-5 mr-2" />
-              See all live patterns — free signup
+              {t('livePatternPreview.ctaButton', 'See all live patterns — free signup')}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
