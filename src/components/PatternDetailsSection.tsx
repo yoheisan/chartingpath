@@ -17,6 +17,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
   const { t } = useTranslation();
   const s = (key: string) => t(`patternDetailModal.${key}`);
   const patternDetail = getPatternDetails(patternKey);
+  const { data: stats } = usePatternDetailStats(patternKey);
 
   if (!patternDetail) {
     return null;
