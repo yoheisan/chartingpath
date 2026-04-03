@@ -122,7 +122,9 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
+                <div className="text-2xl font-bold text-bullish">
+                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : 'Accumulating'}
+                </div>
               </div>
               
               <div className="space-y-2">
