@@ -3796,6 +3796,51 @@ export type Database = {
         }
         Relationships: []
       }
+      pattern_verification_failures: {
+        Row: {
+          asset_type: string | null
+          created_at: string
+          detected_at: string | null
+          detection_data: Json | null
+          detection_source: string
+          direction: string | null
+          failure_reason: string
+          id: string
+          pattern_id: string
+          pattern_name: string | null
+          symbol: string
+          timeframe: string
+        }
+        Insert: {
+          asset_type?: string | null
+          created_at?: string
+          detected_at?: string | null
+          detection_data?: Json | null
+          detection_source: string
+          direction?: string | null
+          failure_reason: string
+          id?: string
+          pattern_id: string
+          pattern_name?: string | null
+          symbol: string
+          timeframe: string
+        }
+        Update: {
+          asset_type?: string | null
+          created_at?: string
+          detected_at?: string | null
+          detection_data?: Json | null
+          detection_source?: string
+          direction?: string | null
+          failure_reason?: string
+          id?: string
+          pattern_id?: string
+          pattern_name?: string | null
+          symbol?: string
+          timeframe?: string
+        }
+        Relationships: []
+      }
       pending_copilot_actions: {
         Row: {
           action_type: string

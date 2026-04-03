@@ -14,6 +14,11 @@ import {
   getDbSymbol,
 } from "../_shared/patternDetectors.ts";
 import {
+  verifyPattern,
+  logVerificationFailures,
+  type VerificationInput,
+} from "../_shared/patternVerification.ts";
+import {
   calculatePatternQualityScore,
   type PatternQualityScorerInput,
 } from "../_shared/patternQualityScorer.ts";
@@ -1070,12 +1075,37 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
   const newlyInsertedIds: string[] = [];
   
   if (toInsert.length) {
-    const insertData = toInsert.map(({ _key, ...d }) => d);
-    const { data: inserted } = await supabase.from('live_pattern_detections').insert(insertData).select('id, instrument, pattern_id, first_detected_at');
-    if (inserted) {
-      for (const ins of inserted) {
-        patternKeys.set(`${ins.instrument}|${ins.pattern_id}|${timeframe}`, new Date(ins.first_detected_at));
-        newlyInsertedIds.push(ins.id);
+    // Post-detection verification gate
+    const verifiedInserts: typeof toInsert = [];
+    const failedInserts: Array<{ input: VerificationInput; failures: string[]; source: string }> = [];
+    for (const item of toInsert) {
+      const vi: VerificationInput = {
+        symbol: item.instrument, pattern_id: item.pattern_id, pattern_name: item.pattern_name,
+        timeframe: item.timeframe || timeframe, direction: item.direction, asset_type: item.asset_type,
+        entry_price: item.entry_price, stop_loss_price: item.stop_loss_price, take_profit_price: item.take_profit_price,
+        risk_reward_ratio: item.risk_reward_ratio, quality_score: item.quality_score,
+        detected_at: item.first_detected_at, bars: item.bars, current_price: item.current_price,
+      };
+      const result = verifyPattern(vi);
+      if (result.passed) {
+        verifiedInserts.push(item);
+      } else {
+        failedInserts.push({ input: vi, failures: result.failures, source: 'scan-live-patterns' });
+      }
+    }
+    if (failedInserts.length > 0) {
+      console.warn(`[scan-live-patterns] ${failedInserts.length} patterns failed verification`);
+      logVerificationFailures(supabase, failedInserts); // fire-and-forget
+    }
+
+    if (verifiedInserts.length) {
+      const insertData = verifiedInserts.map(({ _key, ...d }) => d);
+      const { data: inserted } = await supabase.from('live_pattern_detections').insert(insertData).select('id, instrument, pattern_id, first_detected_at');
+      if (inserted) {
+        for (const ins of inserted) {
+          patternKeys.set(`${ins.instrument}|${ins.pattern_id}|${timeframe}`, new Date(ins.first_detected_at));
+          newlyInsertedIds.push(ins.id);
+        }
       }
     }
   }
