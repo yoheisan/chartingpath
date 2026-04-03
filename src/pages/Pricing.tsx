@@ -8,60 +8,66 @@ import { useEffect } from "react";
 import { track } from "@/services/analytics";
 import { trackEvent } from "@/lib/analytics";
 import { PageMeta } from "@/components/PageMeta";
+import { useTranslation } from "react-i18next";
 
 const Pricing = () => {
+  const { t } = useTranslation();
+
   useEffect(() => {
     track("pricing_viewed");
   }, []);
 
   const tiers = [
     {
-      name: "Free",
-      price: "$0 / month",
-      description: "Get started with live pattern scanning.",
+      nameKey: 'pricingPage.freeName',
+      name: t('pricingPage.freeName', 'Free'),
+      price: t('pricingPage.freePrice', '$0 / month'),
+      description: t('pricingPage.freeDescription', 'Get started with live pattern scanning.'),
       icon: Zap,
       features: [
-        "Live pattern scanner (20+ instruments)",
-        "3 pattern alerts per day",
-        "7-day outcome history",
-        "Community access",
+        t('pricingPage.freeFeature1', 'Live pattern scanner (20+ instruments)'),
+        t('pricingPage.freeFeature2', '3 pattern alerts per day'),
+        t('pricingPage.freeFeature3', '7-day outcome history'),
+        t('pricingPage.freeFeature4', 'Community access'),
       ],
-      cta: "Start free",
+      cta: t('pricingPage.freeCta', 'Start free'),
       ctaLink: "/auth?mode=signup",
       popular: false,
       variant: "outline" as const,
     },
     {
-      name: "Pro",
-      price: "$79 / month",
-      description: "Full outcome data and AI Copilot access.",
+      nameKey: 'pricingPage.proName',
+      name: t('pricingPage.proName', 'Pro'),
+      price: t('pricingPage.proPrice', '$79 / month'),
+      description: t('pricingPage.proDescription', 'Full outcome data and AI Copilot access.'),
       icon: Star,
       features: [
-        "Everything in Free",
-        "Full outcome database (63K+ detections)",
-        "Win rates by pattern, timeframe, instrument",
-        "Unlimited pattern alerts",
-        "ChartingPath Copilot (AI trading assistant)",
-        "Pattern Lab backtester",
-        "Paper trading simulator",
+        t('pricingPage.proFeature1', 'Everything in Free'),
+        t('pricingPage.proFeature2', 'Full outcome database (63K+ detections)'),
+        t('pricingPage.proFeature3', 'Win rates by pattern, timeframe, instrument'),
+        t('pricingPage.proFeature4', 'Unlimited pattern alerts'),
+        t('pricingPage.proFeature5', 'ChartingPath Copilot (AI trading assistant)'),
+        t('pricingPage.proFeature6', 'Pattern Lab backtester'),
+        t('pricingPage.proFeature7', 'Paper trading simulator'),
       ],
-      cta: "Start Pro",
+      cta: t('pricingPage.proCta', 'Start Pro'),
       ctaLink: "/auth?mode=signup&plan=pro",
       popular: true,
       variant: "default" as const,
     },
     {
-      name: "Data API",
-      price: "Contact us",
-      description: "Institutional access to ChartingPath's outcome dataset.",
+      nameKey: 'pricingPage.dataApiName',
+      name: t('pricingPage.dataApiName', 'Data API'),
+      price: t('pricingPage.dataApiPrice', 'Contact us'),
+      description: t('pricingPage.dataApiDescription', "Institutional access to ChartingPath's outcome dataset."),
       icon: Database,
       features: [
-        "REST API access to full outcome database",
-        "Pattern outcomes by instrument × timeframe × regime",
-        "Custom data exports",
-        "Priority support",
+        t('pricingPage.dataApiFeature1', 'REST API access to full outcome database'),
+        t('pricingPage.dataApiFeature2', 'Pattern outcomes by instrument × timeframe × regime'),
+        t('pricingPage.dataApiFeature3', 'Custom data exports'),
+        t('pricingPage.dataApiFeature4', 'Priority support'),
       ],
-      cta: "Get in touch",
+      cta: t('pricingPage.dataApiCta', 'Get in touch'),
       ctaLink: "mailto:yohei@chartingpath.com",
       popular: false,
       variant: "outline" as const,
@@ -71,16 +77,16 @@ const Pricing = () => {
 
   const faqs = [
     {
-      q: "What counts as a pattern outcome?",
-      a: "Every pattern ChartingPath detects is tracked through to its stop loss or take profit target based on ATR-derived levels. We record whether price hit TP or SL first, plus the R-multiple achieved.",
+      q: t('pricingPage.faqQ1', 'What counts as a pattern outcome?'),
+      a: t('pricingPage.faqA1', 'Every pattern ChartingPath detects is tracked through to its stop loss or take profit target based on ATR-derived levels. We record whether price hit TP or SL first, plus the R-multiple achieved.'),
     },
     {
-      q: "Is this financial advice?",
-      a: "No. ChartingPath is a data and research platform. Pattern outcomes are historical statistics, not predictions or recommendations.",
+      q: t('pricingPage.faqQ2', 'Is this financial advice?'),
+      a: t('pricingPage.faqA2', 'No. ChartingPath is a data and research platform. Pattern outcomes are historical statistics, not predictions or recommendations.'),
     },
     {
-      q: "What instruments are covered?",
-      a: "FX majors (EURUSD, GBPUSD, USDJPY and others) and US equities. Coverage expands regularly.",
+      q: t('pricingPage.faqQ3', 'What instruments are covered?'),
+      a: t('pricingPage.faqA3', 'FX majors (EURUSD, GBPUSD, USDJPY and others) and US equities. Coverage expands regularly.'),
     },
   ];
 
@@ -93,34 +99,31 @@ const Pricing = () => {
       />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
-        {/* Back */}
         <div className="mb-6">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to home
+            {t('pricingPage.backToHome', 'Back to home')}
           </Link>
         </div>
 
-        {/* Header */}
         <div className="text-center mb-14">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Simple pricing. Serious data.
+            {t('pricingPage.headline', 'Simple pricing. Serious data.')}
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Start free. Upgrade when you want deeper outcomes and Copilot access.
+            {t('pricingPage.subheadline', 'Start free. Upgrade when you want deeper outcomes and Copilot access.')}
           </p>
         </div>
 
-        {/* Tier Cards */}
         <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto mb-20">
           {tiers.map((tier) => {
             const Icon = tier.icon;
             return (
               <Card
-                key={tier.name}
+                key={tier.nameKey}
                 className={`relative flex flex-col ${
                   tier.popular
                     ? "border-primary shadow-lg ring-1 ring-primary/20 scale-[1.02]"
@@ -130,7 +133,7 @@ const Pricing = () => {
                 {tier.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                      Most popular
+                      {t('pricingPage.mostPopular', 'Most popular')}
                     </Badge>
                   </div>
                 )}
@@ -190,10 +193,9 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* FAQ */}
         <div className="max-w-3xl mx-auto mb-20">
           <h2 className="text-2xl font-bold text-center mb-8">
-            Frequently asked questions
+            {t('pricingPage.faqTitle', 'Frequently asked questions')}
           </h2>
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, i) => (

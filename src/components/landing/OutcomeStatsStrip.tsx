@@ -1,9 +1,11 @@
 import { useOutcomeStats } from '@/hooks/useOutcomeStats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Trophy, Layers, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function OutcomeStatsStrip() {
   const { data, isLoading } = useOutcomeStats();
+  const { t } = useTranslation();
 
   const cards = isLoading || !data
     ? Array.from({ length: 4 }, (_, i) => ({ key: i, loading: true as const }))
@@ -13,7 +15,7 @@ export function OutcomeStatsStrip() {
           loading: false as const,
           icon: BarChart3,
           value: data.total_patterns.toLocaleString(),
-          label: 'Total patterns tracked',
+          label: t('outcomeStats.totalPatternsTracked', 'Total patterns tracked'),
         },
         {
           key: 'winrate',
@@ -23,8 +25,11 @@ export function OutcomeStatsStrip() {
             ? `${data.top_win_rate.win_rate}%`
             : '—',
           label: data.top_win_rate
-            ? `Top win rate this month — ${data.top_win_rate.pattern_name} (${data.top_win_rate.timeframe})`
-            : 'Top win rate this month',
+            ? t('outcomeStats.topWinRateDetail', 'Top win rate this month — {{pattern}} ({{timeframe}})', {
+                pattern: data.top_win_rate.pattern_name,
+                timeframe: data.top_win_rate.timeframe,
+              })
+            : t('outcomeStats.topWinRateThisMonth', 'Top win rate this month'),
         },
         {
           key: 'most',
@@ -32,15 +37,17 @@ export function OutcomeStatsStrip() {
           icon: Layers,
           value: data.most_detected?.pattern_name ?? '—',
           label: data.most_detected
-            ? `Most detected pattern (${data.most_detected.count.toLocaleString()} this week)`
-            : 'Most detected pattern',
+            ? t('outcomeStats.mostDetectedDetail', 'Most detected pattern ({{num}} this week)', {
+                num: data.most_detected.count.toLocaleString(),
+              })
+            : t('outcomeStats.mostDetectedPattern', 'Most detected pattern'),
         },
         {
           key: 'instruments',
           loading: false as const,
           icon: Globe,
           value: data.instruments_covered.toLocaleString(),
-          label: 'Instruments covered',
+          label: t('outcomeStats.instrumentsCovered', 'Instruments covered'),
         },
       ];
 
@@ -48,7 +55,7 @@ export function OutcomeStatsStrip() {
     <section className="py-12 px-4 md:px-6 lg:px-8 border-t border-border/20 bg-card/30">
       <div className="container mx-auto">
         <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-6">
-          Live outcome data — updated daily
+          {t('outcomeStats.sectionLabel', 'Live outcome data — updated daily')}
         </p>
 
         <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
@@ -81,8 +88,7 @@ export function OutcomeStatsStrip() {
         </div>
 
         <p className="mt-5 text-[11px] text-muted-foreground/70">
-          Data sourced from ChartingPath's live detection engine. All outcomes
-          tracked to SL/TP based on pattern-specific ATR targets.
+          {t('outcomeStats.dataSourceNote', "Data sourced from ChartingPath's live detection engine. All outcomes tracked to SL/TP based on pattern-specific ATR targets.")}
         </p>
       </div>
     </section>
