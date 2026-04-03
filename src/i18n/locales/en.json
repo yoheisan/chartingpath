@@ -847,7 +847,18 @@
       "a_payment2": "PayPal",
       "a_payment3": "Apple Pay and Google Pay",
       "q_upgrades": "How do plan upgrades work?",
-      "a_upgradesDesc": "When you upgrade, we calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly."
+      "a_upgradesDesc": "When you upgrade, we calculate the prorated difference and apply your remaining subscription value to the new plan. Your billing cycle adjusts accordingly.",
+      "catDataApi": "Data API & Research Access",
+      "q_whatIsDataApi": "What is the Data API tier?",
+      "a_dataApiIntro": "The Data API provides programmatic access to ChartingPath's full pattern outcome dataset — the same data that powers Edge Atlas, Pattern Lab, and Copilot. It is designed for quantitative researchers, prop trading firms, and institutional investors who want to query pattern outcomes directly.",
+      "a_dataApiFeature1": "REST API: query outcomes by pattern × instrument × timeframe × date range",
+      "a_dataApiFeature2": "424K+ labeled outcome records and growing daily",
+      "a_dataApiFeature3": "JSON format with win/loss label, R-multiple, hold duration, and market regime tags",
+      "a_dataApiFeature4": "Custom data exports available",
+      "a_dataApiContact": "Pricing is custom based on usage volume and data scope. Contact",
+      "a_dataApiContactEnd": "to discuss.",
+      "q_dataApiVsCompetitors": "How is this different from Bloomberg or Refinitiv pattern data?",
+      "a_dataApiVsCompetitors": "Bloomberg and Refinitiv provide price data and some technical signal flags, but they do not provide labeled pattern outcome data — whether a specific detected pattern actually hit its take profit or stop loss target. ChartingPath's dataset is unique because it combines detection (when the pattern formed) with verified outcome (what happened after), across a consistent ATR-based SL/TP methodology, on a live rolling basis."
     },
     "automation": {
       "catAutoPaper": "Auto Paper Trading",
