@@ -23,8 +23,8 @@ const EdgeAtlasIndexPage = () => {
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10">
       <PageMeta
-        title="Best Chart Patterns by Win Rate — Backtested Rankings | ChartingPath"
-        description="Ranked chart patterns by annualised return and win rate. Real backtest data from 320,000+ historical trades across forex, crypto, stocks and commodities."
+        title="Chart Pattern Win Rates — Live Outcome Data | ChartingPath"
+        description="Real outcome data from 63K+ detected patterns. Head & Shoulders, triangles, flags and more — with actual win rates from ChartingPath's live detection engine, not textbook estimates."
         canonicalPath="/edge-atlas"
       />
       {/* Header */}

@@ -1070,7 +1070,7 @@ export default function LivePatternsPage() {
     <div className="min-h-screen bg-background">
       <WelcomeBackBanner />
       <PageMeta
-        title="Live Chart Pattern Signals — Real-Time Detections | ChartingPath"
+        title="Live Chart Pattern Scanner — FX, Stocks, Crypto | ChartingPath"
         description="Browse live chart pattern detections across 800+ instruments. Bull flags, ascending triangles, head and shoulders and 14 more patterns updated every hour."
         canonicalPath="/patterns/live"
       />
