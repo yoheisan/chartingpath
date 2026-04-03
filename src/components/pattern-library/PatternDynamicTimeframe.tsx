@@ -18,7 +18,7 @@ export const PatternDynamicTimeframe = ({ patternKey, textbookTimeframe }: Props
 
   return (
     <span>
-      {t('patternTimeframe.textbook', 'Textbook: {{tf}}', { tf: cleanedTextbook })} · {t('patternTimeframe.bestOn', 'ChartingPath data: Best on {{tf}} (n={{n}}, {{wr}}% win rate)', { tf: stats.bestTimeframe.toUpperCase(), n: stats.bestTimeframeN.toLocaleString(), wr: stats.bestTimeframeWinRate })}
+      {t('patternLibrary.textbookTimeframe', 'Textbook: {{tf}}', { tf: cleanedTextbook })} · {t('patternLibrary.dataTimeframe', 'ChartingPath data: Best on {{tf}} (n={{n}}, {{wr}}% win rate)', { tf: stats.bestTimeframe.toUpperCase(), n: stats.bestTimeframeN.toLocaleString(), wr: stats.bestTimeframeWinRate })}
     </span>
   );
 };

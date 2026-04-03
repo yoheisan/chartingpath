@@ -20,7 +20,7 @@ export const CandlestickEducationalNotice = ({ patternKey }: Props) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-500">
-              {t('patternLibrary.educationalReference', 'Educational reference')}
+              {t('patternLibrary.educationalRef', 'Educational reference')}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
