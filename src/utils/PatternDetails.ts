@@ -1175,7 +1175,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bearish reversal candlestick with long upper shadow and small body at lower range.",
     accuracy: "72%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Shooting Star is the inverse of the Hammer — it has a small body at the lower end of the trading range and a long upper shadow that is at least two to three times the body's length. Appearing after an uptrend, it signals that buyers pushed price to new highs during the session but were overwhelmed by sellers, who drove price back down near the open. The long upper shadow represents rejected higher prices, making this a bearish reversal warning.",
+
+    whyItHappens: "The Shooting Star reveals a failed breakout attempt. During the session, bulls push price aggressively higher, often to new highs. But at those elevated levels, profit-taking and new short-sellers overwhelm the buyers. Price collapses back to near the open, leaving a long wick above. This rejection of higher prices — especially after an extended uptrend — signals that the market is rejecting further advances and a pullback or reversal may follow.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the Shooting Star signals reversal only after a bullish move",
+      "STEP 2: Look for a small real body near the bottom of the candle's range",
+      "STEP 3: Verify the upper shadow is at least 2x the body length",
+      "STEP 4: Check that there is little to no lower shadow",
+      "STEP 5: Wait for bearish confirmation — next candle should close below the Shooting Star's low"
+    ],
+
+    realWorldExamples: [
+      "USD/JPY Daily, November 2022: Shooting Star at 151.95 marked the exact top; yen reversed sharply, falling 15% in the following months",
+      "Tesla (TSLA) Daily, January 2021: Shooting Star at $890 (pre-split) preceded a 35% correction over the next 6 weeks"
+    ],
+
     characteristics: [
       "Small body at lower end of trading range",
       "Long upper shadow (2-3x body length)",
