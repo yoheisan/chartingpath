@@ -3341,6 +3341,7 @@ serve(async (req) => {
               messages: convo,
               stream: false,
             }),
+            signal: AbortSignal.timeout(selectedTimeout),
           });
 
           if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
