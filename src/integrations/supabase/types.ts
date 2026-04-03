@@ -3352,6 +3352,7 @@ export type Database = {
       }
       paper_trades: {
         Row: {
+          alerted_at: string | null
           asset_type: string | null
           attribution: string | null
           close_reason: string | null
@@ -3398,6 +3399,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alerted_at?: string | null
           asset_type?: string | null
           attribution?: string | null
           close_reason?: string | null
@@ -3444,6 +3446,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alerted_at?: string | null
           asset_type?: string | null
           attribution?: string | null
           close_reason?: string | null
