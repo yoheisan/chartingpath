@@ -18,6 +18,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
   const { t } = useTranslation();
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [pushDbEnabled, setPushDbEnabled] = useState(true);
+  const [morningBriefEnabled, setMorningBriefEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
