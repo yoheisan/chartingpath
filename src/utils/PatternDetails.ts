@@ -1540,7 +1540,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Large bearish candle completely engulfing previous bullish candle. Strong reversal signal.",
     accuracy: "73%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Bearish Engulfing is the mirror of the Bullish Engulfing — a large bearish candle completely engulfs the body of the preceding bullish candle. Appearing at the top of an uptrend or rally, it signals that sellers have seized control in a single, decisive session. The pattern represents one of the clearest demonstrations of a power shift from buyers to sellers. The larger the engulfing candle and the higher the volume, the more bearish the implication.",
+
+    whyItHappens: "The Bearish Engulfing shows that bullish sentiment reversed within a single session. The first candle closes bullish, suggesting continuation. But the next session opens at or above the prior high and then sells off hard, closing below the prior open. This complete reversal of the prior session's range demonstrates that heavy selling — often institutional distribution — has overwhelmed all remaining buyers. It frequently marks the exhaustion of a rally, especially near resistance or after an extended move.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern is a bearish reversal signal and requires bullish context",
+      "STEP 2: Identify a bullish first candle",
+      "STEP 3: Verify the second candle is bearish and its body completely covers the first candle's body",
+      "STEP 4: Check volume — above-average volume on the engulfing candle strengthens the signal significantly",
+      "STEP 5: Self-confirming pattern, but a follow-through bearish candle provides additional confidence"
+    ],
+
+    realWorldExamples: [
+      "GBP/JPY Daily, August 2023: Bearish Engulfing at 186.70 resistance with massive volume; price dropped 800 pips over the next 6 weeks",
+      "Netflix (NFLX) Daily, April 2022: Bearish Engulfing at $390 preceded the crash to $170; one of the most dramatic reversal candles of 2022"
+    ],
+
     characteristics: [
       "First candle: Bullish candle",
       "Second candle: Large bearish candle",
