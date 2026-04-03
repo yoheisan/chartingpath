@@ -1102,7 +1102,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bearish reversal candlestick with long lower shadow appearing at top of uptrend.",
     accuracy: "68%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Hanging Man looks identical to a Hammer — small body near the top, long lower shadow — but appears at the top of an uptrend instead of the bottom. This context changes the meaning entirely: the Hanging Man is a bearish reversal signal. Despite the bullish close near the high, the fact that sellers were able to push price so far down during the session is a warning sign. It suggests that selling pressure is building and the uptrend may be nearing its end.",
+
+    whyItHappens: "During an uptrend, the Hanging Man forms when sellers test the bulls' conviction. Intra-session, sellers push price sharply lower, but buyers manage to recover most of the losses by the close. While the recovery looks bullish on the surface, the deep intra-day sell-off reveals that significant supply exists at these levels. If the next session fails to continue higher and instead breaks below the Hanging Man's low, it confirms that sellers are gaining the upper hand.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern must appear after a sustained advance",
+      "STEP 2: Identify a small real body near the top of the candle's range",
+      "STEP 3: Verify the lower shadow is at least 2x the body length",
+      "STEP 4: Check for minimal upper shadow",
+      "STEP 5: Wait for bearish confirmation — the next candle must close below the Hanging Man's low"
+    ],
+
+    realWorldExamples: [
+      "GBP/USD Daily, July 2023: Hanging Man at 1.3140 after a 6-week rally; bearish confirmation the next day preceded a 350-pip decline",
+      "Microsoft (MSFT) Daily, July 2021: Hanging Man at $305 near all-time highs; stock corrected 8% in the following three weeks"
+    ],
+
     characteristics: [
       "Small body at upper end of trading range",
       "Long lower shadow (2-3x body length)",
