@@ -9,6 +9,7 @@ import { PatternDetailModal } from "@/components/PatternDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { usePatternLibraryStats, type PatternLibraryStat } from "@/hooks/usePatternLibraryStats";
+import { CANDLESTICK_PATTERNS } from "@/hooks/usePatternDetailStats";
 
 const DynamicPatternChart = lazy(() => 
   import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
