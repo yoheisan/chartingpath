@@ -66,7 +66,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
     loadPreferences();
   }, [userId]);
 
-  const savePreference = async (field: 'email_notifications_enabled' | 'push_notifications_enabled', value: boolean) => {
+  const savePreference = async (field: 'email_notifications_enabled' | 'push_notifications_enabled' | 'morning_brief_enabled', value: boolean) => {
     if (!userId) return;
 
     setSaving(true);
