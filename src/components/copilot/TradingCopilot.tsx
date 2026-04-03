@@ -390,6 +390,7 @@ export function TradingCopilot({
   const [builderIsNewPlan, setBuilderIsNewPlan] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [onboardingMode, setOnboardingMode] = useState(false);
+  const [contextTokens, setContextTokens] = useState<{ used: number; budget: number } | null>(null);
   
   const contextProcessedRef = useRef(false);
   const { plan, plans, hasPlan, refreshPlan, selectedPlanId, selectPlan } = useMasterPlan();
@@ -969,6 +970,12 @@ export function TradingCopilot({
             const parsed = JSON.parse(jsonStr);
 
             // Current streaming protocol
+            if (parsed.type === "meta") {
+              if (parsed.contextTokensUsed && parsed.contextTokenBudget) {
+                setContextTokens({ used: parsed.contextTokensUsed, budget: parsed.contextTokenBudget });
+              }
+              continue;
+            }
             if (parsed.type === "status") {
               updateAssistantMsg(`_${parsed.text}_`);
               continue;
@@ -1539,6 +1546,25 @@ export function TradingCopilot({
                 <Badge variant="secondary" className="text-xs font-normal">
                   {t('activation.freeMessagesRemaining', '{{count}} of {{total}} free messages remaining', { count: GUEST_MSG_LIMIT - guestMsgCount, total: GUEST_MSG_LIMIT })}
                 </Badge>
+              </div>
+            )}
+            {contextTokens && (
+              <div className="flex items-center justify-end gap-1.5 px-1 mb-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-300",
+                          contextTokens.used / contextTokens.budget > 0.85 ? "bg-destructive" :
+                          contextTokens.used / contextTokens.budget > 0.6 ? "bg-amber-500" : "bg-primary"
+                        )}
+                        style={{ width: `${Math.min(100, (contextTokens.used / contextTokens.budget) * 100)}%` }}
+                      />
+                    </div>
+                    <span>{contextTokens.used.toLocaleString()}/{contextTokens.budget.toLocaleString()} ctx</span>
+                  </div>
+                </div>
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex items-center gap-2">

@@ -99,6 +99,7 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [guestMsgCount, setGuestMsgCount] = useState(getGuestMsgCount);
+  const [contextTokens, setContextTokens] = useState<{ used: number; budget: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -267,6 +268,12 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
             const parsed = JSON.parse(jsonStr);
 
             // New streaming protocol: type-based events
+            if (parsed.type === "meta") {
+              if (parsed.contextTokensUsed && parsed.contextTokenBudget) {
+                setContextTokens({ used: parsed.contextTokensUsed, budget: parsed.contextTokenBudget });
+              }
+              continue;
+            }
             if (parsed.type === "status") {
               // Show status as italic muted text in the bubble
               updateAssistantMsg(`_${parsed.text}_`);
@@ -596,6 +603,23 @@ export function CopilotSidebar({ onClose, context }: CopilotSidebarProps) {
                   {prompt}
                 </button>
               ))}
+            </div>
+          )}
+          {contextTokens && (
+            <div className="flex items-center justify-end gap-1.5 px-1 mb-1">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      contextTokens.used / contextTokens.budget > 0.85 ? "bg-destructive" :
+                      contextTokens.used / contextTokens.budget > 0.6 ? "bg-amber-500" : "bg-primary"
+                    )}
+                    style={{ width: `${Math.min(100, (contextTokens.used / contextTokens.budget) * 100)}%` }}
+                  />
+                </div>
+                <span>{contextTokens.used.toLocaleString()}/{contextTokens.budget.toLocaleString()} ctx</span>
+              </div>
             </div>
           )}
           <form onSubmit={handleSubmit} className="flex gap-1.5">

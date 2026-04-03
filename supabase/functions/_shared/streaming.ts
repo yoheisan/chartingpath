@@ -7,6 +7,7 @@
 export interface StreamWriter {
   sendStatus(text: string): void;
   sendToken(text: string): void;
+  sendMeta(meta: Record<string, any>): void;
   sendDone(): void;
   sendError(text: string): void;
   close(): void;
@@ -39,6 +40,9 @@ export function createSSEStream(): { readable: ReadableStream; writer: StreamWri
     },
     sendToken(text: string) {
       send(JSON.stringify({ type: "token", text }));
+    },
+    sendMeta(meta: Record<string, any>) {
+      send(JSON.stringify({ type: "meta", ...meta }));
     },
     sendDone() {
       send(JSON.stringify({ type: "done" }));
