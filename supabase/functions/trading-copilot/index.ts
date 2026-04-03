@@ -3366,10 +3366,12 @@ serve(async (req) => {
 
         const responseText = await aiResp.text();
         let assistantMessage: any = null;
+        let usageData: any = null;
 
         try {
           const result = JSON.parse(responseText);
           assistantMessage = result.choices?.[0]?.message;
+          usageData = result.usage || null;
         } catch {
           const lines = responseText.split("\n");
           for (const line of lines) {
