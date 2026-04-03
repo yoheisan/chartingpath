@@ -773,7 +773,7 @@ const FAQ = () => {
                 <div className="space-y-3">
                   <p className="text-muted-foreground">{t('faq.screener.a_edgeCalcIntro', 'The formula is:')}</p>
                   <div className="bg-muted/50 p-4 rounded-lg font-mono text-sm">
-                    Est. Annual Return = Expectancy × Trades/Year × 100%
+                    {t('faq.screener.a_edgeCalcFormula', 'Est. Annual Return = Expectancy × Trades/Year × 100%')}
                   </div>
                   <p className="text-sm text-muted-foreground">{t('faq.screener.a_edgeCalcNote', 'This assumes 1R position sizing on every trade and does not account for compounding, transaction costs, or slippage. It is a comparative ranking metric, not a precise return forecast.')}</p>
                 </div>
