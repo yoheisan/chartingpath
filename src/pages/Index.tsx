@@ -154,6 +154,9 @@ const Index = () => {
         <SocialProof />
       </div>
 
+      {/* Outcome Stats Strip — live data between hero area and features */}
+      <OutcomeStatsStrip />
+
       {/* Feature Blocks — 2×2 grid */}
       <div ref={copilotRef} className="border-t border-border/20">
         <FeatureBlocks />
