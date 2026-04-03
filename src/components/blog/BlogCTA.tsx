@@ -73,20 +73,20 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
         <div className="flex-1 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-xl font-bold text-foreground">
-              Live {patternName} setups
+              {t('blog.liveSetupsCta.heading', 'Live {{pattern}} setups', { pattern: patternName })}
             </h3>
             {count !== null && count > 0 && (
               <Badge variant="secondary" className="text-sm font-semibold">
-                {count} detected this week
+                {t('blog.liveSetupsCta.detectedBadge', '{{count}} detected this week', { count })}
               </Badge>
             )}
           </div>
           <p className="text-muted-foreground">
-            Our scanner monitors {patternName} formations across 200+ instruments in real time. See what's active right now.
+            {t('blog.liveSetupsCta.body', "Our scanner monitors {{pattern}} formations across 200+ instruments in real time. See what's active right now.", { pattern: patternName })}
           </p>
           <Button asChild className="gap-2">
             <Link to={`/patterns/live?filter=${patternSlug}`}>
-              See live {patternName} setups
+              {t('blog.liveSetupsCta.button', 'See live {{pattern}} setups', { pattern: patternName })}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
