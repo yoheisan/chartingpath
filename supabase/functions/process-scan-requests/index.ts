@@ -372,9 +372,32 @@ async function processSingleSymbol(supabase: any, symbol: string, userId?: strin
     allOccs.push(...runHistoricalBacktest(bars, symbol, pid, pdef));
   }
 
+  // Post-detection verification
+  const verified: any[] = [];
+  const failed: Array<{ input: VerificationInput; failures: string[]; source: string }> = [];
+  for (const occ of allOccs) {
+    const vi: VerificationInput = {
+      symbol: occ.symbol, pattern_id: occ.pattern_id, pattern_name: occ.pattern_name,
+      timeframe: occ.timeframe || '1d', direction: occ.direction, asset_type: occ.asset_type,
+      entry_price: occ.entry_price, stop_loss_price: occ.stop_loss_price, take_profit_price: occ.take_profit_price,
+      risk_reward_ratio: occ.risk_reward_ratio, quality_score: occ.quality_score,
+      detected_at: occ.detected_at, bars: occ.bars,
+    };
+    const result = verifyPattern(vi);
+    if (result.passed) {
+      verified.push(occ);
+    } else {
+      failed.push({ input: vi, failures: result.failures, source: 'process-scan-requests-single' });
+    }
+  }
+  if (failed.length > 0) {
+    console.warn(`[process-scan-requests] ${failed.length} patterns failed verification for ${symbol}`);
+    await logVerificationFailures(supabase, failed);
+  }
+
   let inserted = 0;
-  for (let i = 0; i < allOccs.length; i += 50) {
-    const chunk = allOccs.slice(i, i + 50);
+  for (let i = 0; i < verified.length; i += 50) {
+    const chunk = verified.slice(i, i + 50);
     const { error } = await supabase.from('historical_pattern_occurrences').insert(chunk);
     if (!error) inserted += chunk.length;
   }
