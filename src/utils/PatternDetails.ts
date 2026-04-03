@@ -1321,7 +1321,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small candle inside previous large bearish candle. Potential bullish reversal signal.",
     accuracy: "69%",
     difficulty: "Intermediate",
-    
+
+    whatIsIt: "The Bullish Harami is a two-candle pattern where a large bearish candle is followed by a small candle whose body is entirely contained within the body of the first. 'Harami' is Japanese for 'pregnant' — the small candle sits inside the larger one like a child in the womb. This pattern signals that the selling momentum from the first candle has stalled. The small second candle shows indecision, suggesting sellers are losing control and a bullish reversal may be developing.",
+
+    whyItHappens: "After a strong bearish candle, the expectation is continued selling. When the next session opens within the prior body and trades in a narrow range that stays inside the prior candle, it signals that the aggressive selling has stopped. Sellers couldn't push prices to new lows, and buyers are tentatively stepping in. This shift in dynamics — from aggressive selling to indecision — often precedes a reversal, especially when it occurs at support levels or after an extended decline.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend — the pattern requires bearish context for bullish reversal meaning",
+      "STEP 2: Identify a large bearish first candle (the 'mother' candle)",
+      "STEP 3: Check that the second candle's body is entirely within the first candle's body",
+      "STEP 4: The second candle's color is less important than its contained position",
+      "STEP 5: Wait for a third candle to close above the harami high for confirmation"
+    ],
+
+    realWorldExamples: [
+      "AUD/USD Daily, September 2022: Bullish Harami at 0.6370 after a 3-week decline; confirmed with a strong bullish candle, leading to a 450-pip rally",
+      "Amazon (AMZN) Weekly, December 2022: Bullish Harami near $84 support marked the trend reversal; stock rallied 40% in the following quarter"
+    ],
+
     characteristics: [
       "First candle: Large bearish candle",
       "Second candle: Small candle contained within first",
