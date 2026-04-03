@@ -3427,8 +3427,8 @@ serve(async (req) => {
           request_type: requestType,
           model_used: selectedModel,
           response_latency_ms: latencyMs,
-          input_tokens: result?.usage?.prompt_tokens || null,
-          output_tokens: result?.usage?.completion_tokens || null,
+          input_tokens: usageData?.prompt_tokens || null,
+          output_tokens: usageData?.completion_tokens || null,
           source: 'copilot',
         }).then(({ error }) => {
           if (error) console.error('[trading-copilot] Failed to log model usage:', error.message);
