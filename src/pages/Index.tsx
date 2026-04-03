@@ -26,7 +26,6 @@ import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [instrumentCount, setInstrumentCount] = useState<number | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
@@ -50,17 +49,6 @@ const Index = () => {
   }, [prefetchArticles]);
 
   useEffect(() => {
-    const fetchCount = async () => {
-      const { count } = await supabase
-        .from('instruments')
-        .select('symbol', { count: 'exact', head: true })
-        .eq('is_active', true);
-      if (count != null) setInstrumentCount(count);
-    };
-    fetchCount();
-  }, []);
-
-  useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
@@ -74,12 +62,6 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleScreenerClick = () => {
-    track('pricing_clicked', { source: 'landing_cta_screener' });
-    trackEvent('landing.cta_click', { button: 'hero_see_setups' });
-    navigate('/patterns/live');
-  };
 
   return (
     <div className="min-h-screen bg-background">
