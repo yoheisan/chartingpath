@@ -42,7 +42,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('email_notifications_enabled, push_notifications_enabled')
+          .select('email_notifications_enabled, push_notifications_enabled, morning_brief_enabled')
           .eq('id', userId)
           .single();
 
@@ -54,6 +54,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         if (data) {
           setEmailEnabled(data.email_notifications_enabled ?? true);
           setPushDbEnabled(data.push_notifications_enabled ?? true);
+          setMorningBriefEnabled((data as any).morning_brief_enabled ?? true);
         }
       } catch (err) {
         console.error('[NotificationSettings] Error:', err);
