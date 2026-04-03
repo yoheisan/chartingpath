@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import {
   Bot, ArrowRight, Activity, Database, Eye, Code2, Brain, Link2,
-  Search, Bell, FileCode, FlaskConical, CheckCircle, X
+  Search, Bell, FileCode, FlaskConical, CheckCircle, X,
+  RefreshCw, MessageSquareText
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
