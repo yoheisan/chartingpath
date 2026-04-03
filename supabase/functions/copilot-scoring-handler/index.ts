@@ -646,17 +646,31 @@ serve(async (req) => {
       }, HARD_TIMEOUT_MS);
 
       try {
+        // ═══ MODEL ROUTING ═══
+        const lastUserMsg = (messages || []).filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
+        const HEAVY_PATTERNS = /backtest|multi[\s-]*timeframe|mtf|trading\s*plan|build.*strategy/i;
+        const isHeavy = HEAVY_PATTERNS.test(lastUserMsg);
+        const scoringModel = isHeavy ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
+        const scoringMaxTokens = isHeavy ? 8000 : 4096;
+        const scoringTimeout = isHeavy ? 60000 : 25000;
+        const scoringRequestType = isHeavy
+          ? (/backtest/i.test(lastUserMsg) ? 'backtest' : /multi[\s-]*timeframe|mtf/i.test(lastUserMsg) ? 'multi_timeframe_analysis' : 'trading_plan_build')
+          : (/quick|scan|signal/i.test(lastUserMsg) ? 'quick_scan' : 'single_pattern_query');
+        
+        console.log(`[copilot-scoring] Model routing: type=${scoringRequestType} model=${scoringModel} timeout=${scoringTimeout}ms`);
+        const scoringStartTime = Date.now();
+
         for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
           console.log(`[copilot-scoring] AI round ${round}`);
           writer.sendStatus(getStatusMessage(round));
 
           const aiRequestBody = {
-            model: "google/gemini-2.5-flash",
+            model: scoringModel,
             messages: convoMessages,
             tools,
             tool_choice: "auto",
             stream: false,
-            max_tokens: 4096,
+            max_tokens: scoringMaxTokens,
           };
 
           const aiResp = LOVABLE_API_KEY
