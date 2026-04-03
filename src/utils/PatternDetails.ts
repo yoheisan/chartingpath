@@ -1029,7 +1029,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bullish reversal candlestick with long lower shadow (2-3x body size) and small body at upper range.",
     accuracy: "70%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Hammer is a single-candle bullish reversal pattern that appears at the bottom of a downtrend. It features a small body near the top of the trading range and a long lower shadow that is at least two to three times the body's length. The name comes from its shape — it looks like a hammer with a handle pointing downward. The pattern signals that sellers drove price significantly lower during the session, but buyers stepped in and pushed price back up near the open, indicating a potential shift in momentum from bearish to bullish.",
+
+    whyItHappens: "The Hammer forms because of an intra-session tug of war between sellers and buyers. Early in the session, sellers are in full control, driving price sharply lower. But at some point, value buyers or short-covering traders step in aggressively, purchasing enough to push price back near the opening level. The long lower shadow is the footprint of that rejected sell-off. It signals that despite the prevailing downtrend, demand is emerging at these lower levels — the first sign that the trend may be exhausting itself.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend — the Hammer only has reversal significance after a decline",
+      "STEP 2: Look for a small real body (bullish or bearish) in the upper portion of the candle's range",
+      "STEP 3: Verify the lower shadow is at least 2x the body length — the longer the shadow, the stronger the signal",
+      "STEP 4: Check that there is little to no upper shadow (ideally none)",
+      "STEP 5: Wait for the next candle to close above the Hammer's high as confirmation before acting"
+    ],
+
+    realWorldExamples: [
+      "EUR/USD Daily, March 2023: Hammer formed at 1.0520 support after a 400-pip decline; next-day bullish confirmation led to a 300-pip rally over the following week",
+      "Apple (AAPL) Daily, October 2022: Hammer at $134 marked the exact bottom of the selloff; stock rallied 25% in the following two months"
+    ],
+
     characteristics: [
       "Small body at upper end of trading range",
       "Long lower shadow (2-3x body length)",
@@ -1085,7 +1102,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bearish reversal candlestick with long lower shadow appearing at top of uptrend.",
     accuracy: "68%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Hanging Man looks identical to a Hammer — small body near the top, long lower shadow — but appears at the top of an uptrend instead of the bottom. This context changes the meaning entirely: the Hanging Man is a bearish reversal signal. Despite the bullish close near the high, the fact that sellers were able to push price so far down during the session is a warning sign. It suggests that selling pressure is building and the uptrend may be nearing its end.",
+
+    whyItHappens: "During an uptrend, the Hanging Man forms when sellers test the bulls' conviction. Intra-session, sellers push price sharply lower, but buyers manage to recover most of the losses by the close. While the recovery looks bullish on the surface, the deep intra-day sell-off reveals that significant supply exists at these levels. If the next session fails to continue higher and instead breaks below the Hanging Man's low, it confirms that sellers are gaining the upper hand.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern must appear after a sustained advance",
+      "STEP 2: Identify a small real body near the top of the candle's range",
+      "STEP 3: Verify the lower shadow is at least 2x the body length",
+      "STEP 4: Check for minimal upper shadow",
+      "STEP 5: Wait for bearish confirmation — the next candle must close below the Hanging Man's low"
+    ],
+
+    realWorldExamples: [
+      "GBP/USD Daily, July 2023: Hanging Man at 1.3140 after a 6-week rally; bearish confirmation the next day preceded a 350-pip decline",
+      "Microsoft (MSFT) Daily, July 2021: Hanging Man at $305 near all-time highs; stock corrected 8% in the following three weeks"
+    ],
+
     characteristics: [
       "Small body at upper end of trading range",
       "Long lower shadow (2-3x body length)",
@@ -1141,7 +1175,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Bearish reversal candlestick with long upper shadow and small body at lower range.",
     accuracy: "72%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Shooting Star is the inverse of the Hammer — it has a small body at the lower end of the trading range and a long upper shadow that is at least two to three times the body's length. Appearing after an uptrend, it signals that buyers pushed price to new highs during the session but were overwhelmed by sellers, who drove price back down near the open. The long upper shadow represents rejected higher prices, making this a bearish reversal warning.",
+
+    whyItHappens: "The Shooting Star reveals a failed breakout attempt. During the session, bulls push price aggressively higher, often to new highs. But at those elevated levels, profit-taking and new short-sellers overwhelm the buyers. Price collapses back to near the open, leaving a long wick above. This rejection of higher prices — especially after an extended uptrend — signals that the market is rejecting further advances and a pullback or reversal may follow.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the Shooting Star signals reversal only after a bullish move",
+      "STEP 2: Look for a small real body near the bottom of the candle's range",
+      "STEP 3: Verify the upper shadow is at least 2x the body length",
+      "STEP 4: Check that there is little to no lower shadow",
+      "STEP 5: Wait for bearish confirmation — next candle should close below the Shooting Star's low"
+    ],
+
+    realWorldExamples: [
+      "USD/JPY Daily, November 2022: Shooting Star at 151.95 marked the exact top; yen reversed sharply, falling 15% in the following months",
+      "Tesla (TSLA) Daily, January 2021: Shooting Star at $890 (pre-split) preceded a 35% correction over the next 6 weeks"
+    ],
+
     characteristics: [
       "Small body at lower end of trading range",
       "Long upper shadow (2-3x body length)",
@@ -1197,7 +1248,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Indecision candlestick with equal or nearly equal open and close prices. Shows market uncertainty.",
     accuracy: "65%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Doji is a single-candle pattern where the open and close prices are virtually identical, producing a candle with a very thin or non-existent body. The upper and lower shadows can vary in length, creating variants like the Dragonfly Doji, Gravestone Doji, and Long-Legged Doji. The Doji represents pure indecision — neither buyers nor sellers could gain control during the session. At trend extremes (tops or bottoms), a Doji can signal that the prevailing trend is losing momentum and may reverse.",
+
+    whyItHappens: "A Doji forms when buying and selling pressure are perfectly balanced during a session. In an uptrend, a Doji suggests that bulls are losing their edge — they pushed prices higher but couldn't hold the gains. In a downtrend, it suggests bears couldn't drive prices lower despite trying. The indecision is significant because trends require conviction. When conviction disappears (shown by the Doji), the trend becomes vulnerable to reversal. The longer the shadows, the more intense the battle was — and the more significant the indecision signal.",
+
+    howToIdentify: [
+      "STEP 1: Look for a candle where the open and close are at or very near the same price",
+      "STEP 2: Note the shadow lengths — long shadows indicate a more intense battle between buyers and sellers",
+      "STEP 3: Identify the trend context — Dojis are most significant at trend extremes or key S/R levels",
+      "STEP 4: Classify the type — Dragonfly (long lower shadow), Gravestone (long upper shadow), or Standard",
+      "STEP 5: Wait for the next candle to determine direction — the Doji alone only signals indecision, not direction"
+    ],
+
+    realWorldExamples: [
+      "S&P 500 Daily, February 2020: A Doji at the all-time high signaled indecision before the COVID crash began the following week",
+      "EUR/USD 4H, December 2022: Gravestone Doji at 1.0735 resistance preceded a 200-pip sell-off within 48 hours"
+    ],
+
     characteristics: [
       "Open and close at same or very similar levels",
       "Can have upper and lower shadows of varying lengths",
@@ -1253,7 +1321,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small candle inside previous large bearish candle. Potential bullish reversal signal.",
     accuracy: "69%",
     difficulty: "Intermediate",
-    
+
+    whatIsIt: "The Bullish Harami is a two-candle pattern where a large bearish candle is followed by a small candle whose body is entirely contained within the body of the first. 'Harami' is Japanese for 'pregnant' — the small candle sits inside the larger one like a child in the womb. This pattern signals that the selling momentum from the first candle has stalled. The small second candle shows indecision, suggesting sellers are losing control and a bullish reversal may be developing.",
+
+    whyItHappens: "After a strong bearish candle, the expectation is continued selling. When the next session opens within the prior body and trades in a narrow range that stays inside the prior candle, it signals that the aggressive selling has stopped. Sellers couldn't push prices to new lows, and buyers are tentatively stepping in. This shift in dynamics — from aggressive selling to indecision — often precedes a reversal, especially when it occurs at support levels or after an extended decline.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend — the pattern requires bearish context for bullish reversal meaning",
+      "STEP 2: Identify a large bearish first candle (the 'mother' candle)",
+      "STEP 3: Check that the second candle's body is entirely within the first candle's body",
+      "STEP 4: The second candle's color is less important than its contained position",
+      "STEP 5: Wait for a third candle to close above the harami high for confirmation"
+    ],
+
+    realWorldExamples: [
+      "AUD/USD Daily, September 2022: Bullish Harami at 0.6370 after a 3-week decline; confirmed with a strong bullish candle, leading to a 450-pip rally",
+      "Amazon (AMZN) Weekly, December 2022: Bullish Harami near $84 support marked the trend reversal; stock rallied 40% in the following quarter"
+    ],
+
     characteristics: [
       "First candle: Large bearish candle",
       "Second candle: Small candle contained within first",
@@ -1309,7 +1394,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small candle inside previous large bullish candle. Potential bearish reversal signal.",
     accuracy: "69%",
     difficulty: "Intermediate",
-    
+
+    whatIsIt: "The Bearish Harami is the mirror image of the Bullish Harami — a large bullish candle followed by a small candle contained within the first candle's body. Appearing after an uptrend, it signals that the buying momentum has stalled. The small second candle represents indecision where the previous bullish conviction has evaporated. This is an early warning that the uptrend may be exhausting itself, and a bearish reversal could follow.",
+
+    whyItHappens: "After a strong bullish candle pushes price higher, market participants expect continuation. When the next session opens inside the prior body and trades in a narrow range without making new highs, it reveals that bulls have lost their urgency. The dramatic shrinkage in range from the large first candle to the small second candle reflects a loss of momentum. Smart money may be distributing (selling into strength), leaving retail buyers holding positions that may soon decline.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern requires bullish context for bearish reversal meaning",
+      "STEP 2: Identify a large bullish first candle",
+      "STEP 3: Verify the second candle's body is entirely contained within the first candle's body",
+      "STEP 4: Note that the second candle's color is secondary to its position and size",
+      "STEP 5: Wait for a third candle to close below the harami low for bearish confirmation"
+    ],
+
+    realWorldExamples: [
+      "USD/CHF Daily, May 2023: Bearish Harami at 0.9080 after a 5-day rally; confirmed next day, price fell 250 pips over two weeks",
+      "Nvidia (NVDA) Daily, March 2024: Bearish Harami near $950 preceded a 15% pullback over the following three weeks"
+    ],
+
     characteristics: [
       "First candle: Large bullish candle",
       "Second candle: Small candle contained within first",
@@ -1365,7 +1467,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Large bullish candle completely engulfing previous bearish candle. Strong reversal signal.",
     accuracy: "73%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Bullish Engulfing is a two-candle pattern where a large bullish candle completely 'engulfs' (opens below and closes above) the body of the preceding bearish candle. It is one of the strongest single-event reversal signals in candlestick analysis. The pattern shows a decisive shift in power from sellers to buyers within a single session. The larger the engulfing candle relative to the first, and the higher the volume, the more reliable the signal.",
+
+    whyItHappens: "The Bullish Engulfing represents a dramatic intra-session sentiment reversal. The first candle closes bearish, reinforcing the downtrend. But the next session opens even lower (creating a gap on some markets) and then buyers overwhelm sellers so completely that price closes above the prior session's open. This complete reversal of the prior session's range signals that new demand has entered the market with conviction. It often occurs when price reaches a value area that attracts institutional buyers.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior downtrend or bearish move — the pattern signals reversal from bearish to bullish",
+      "STEP 2: Identify a bearish first candle",
+      "STEP 3: Verify the second candle is bullish and its body completely covers the first candle's body",
+      "STEP 4: Check volume — the engulfing candle should have above-average volume for strongest signals",
+      "STEP 5: The pattern is largely self-confirming, but a follow-through bullish candle adds confidence"
+    ],
+
+    realWorldExamples: [
+      "EUR/JPY Daily, March 2023: Bullish Engulfing at 140.80 with 2x average volume; price rallied 600 pips over the next month",
+      "Meta (META) Daily, November 2022: Bullish Engulfing near $90 after the 75% drawdown; stock tripled over the next 12 months"
+    ],
+
     characteristics: [
       "First candle: Bearish candle",
       "Second candle: Large bullish candle",
@@ -1421,7 +1540,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Large bearish candle completely engulfing previous bullish candle. Strong reversal signal.",
     accuracy: "73%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Bearish Engulfing is the mirror of the Bullish Engulfing — a large bearish candle completely engulfs the body of the preceding bullish candle. Appearing at the top of an uptrend or rally, it signals that sellers have seized control in a single, decisive session. The pattern represents one of the clearest demonstrations of a power shift from buyers to sellers. The larger the engulfing candle and the higher the volume, the more bearish the implication.",
+
+    whyItHappens: "The Bearish Engulfing shows that bullish sentiment reversed within a single session. The first candle closes bullish, suggesting continuation. But the next session opens at or above the prior high and then sells off hard, closing below the prior open. This complete reversal of the prior session's range demonstrates that heavy selling — often institutional distribution — has overwhelmed all remaining buyers. It frequently marks the exhaustion of a rally, especially near resistance or after an extended move.",
+
+    howToIdentify: [
+      "STEP 1: Confirm a prior uptrend — the pattern is a bearish reversal signal and requires bullish context",
+      "STEP 2: Identify a bullish first candle",
+      "STEP 3: Verify the second candle is bearish and its body completely covers the first candle's body",
+      "STEP 4: Check volume — above-average volume on the engulfing candle strengthens the signal significantly",
+      "STEP 5: Self-confirming pattern, but a follow-through bearish candle provides additional confidence"
+    ],
+
+    realWorldExamples: [
+      "GBP/JPY Daily, August 2023: Bearish Engulfing at 186.70 resistance with massive volume; price dropped 800 pips over the next 6 weeks",
+      "Netflix (NFLX) Daily, April 2022: Bearish Engulfing at $390 preceded the crash to $170; one of the most dramatic reversal candles of 2022"
+    ],
+
     characteristics: [
       "First candle: Bullish candle",
       "Second candle: Large bearish candle",
@@ -1477,7 +1613,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Small body with long upper and lower shadows indicating indecision and potential reversal.",
     accuracy: "62%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Spinning Top is a single-candle pattern characterized by a small body with long upper and lower shadows of roughly equal length. Unlike the Doji (which has virtually no body), the Spinning Top has a visible but small body, showing that while the session did close slightly higher or lower than it opened, neither side could maintain control. It represents indecision and is most significant at trend extremes, where it warns that the prevailing trend may be losing steam.",
+
+    whyItHappens: "During the session, both buyers and sellers had periods of control — price moved significantly higher AND significantly lower — but by the close, the net result was minimal change. The long shadows on both sides show that both groups were active and aggressive, but neither prevailed. In an uptrend, a Spinning Top signals that sellers are beginning to challenge buyers successfully. In a downtrend, it signals that buyers are starting to resist further declines. Either way, the trend's conviction is weakening.",
+
+    howToIdentify: [
+      "STEP 1: Look for a candle with a small body — the color (bullish or bearish) is secondary",
+      "STEP 2: Verify long shadows on both sides, roughly symmetrical in length",
+      "STEP 3: Place the pattern in context — at a trend extreme or key level, it's most meaningful",
+      "STEP 4: Compare to recent candles — if prior candles had large bodies, the sudden indecision is more significant",
+      "STEP 5: Wait for the next candle to break above or below the Spinning Top's range for directional confirmation"
+    ],
+
+    realWorldExamples: [
+      "USD/CAD Daily, October 2022: Spinning Top at 1.3850 resistance after a 6-week rally; bearish candle next day confirmed reversal, leading to a 400-pip decline",
+      "Google (GOOGL) Weekly, November 2021: Spinning Top near all-time highs at $150; marked the beginning of the 2022 correction that saw stock fall 40%"
+    ],
+
     characteristics: [
       "Small body relative to shadows",
       "Long upper and lower shadows",

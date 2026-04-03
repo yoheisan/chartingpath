@@ -9,6 +9,7 @@ import { PatternDetailModal } from "@/components/PatternDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { usePatternLibraryStats, type PatternLibraryStat } from "@/hooks/usePatternLibraryStats";
+import { CANDLESTICK_PATTERNS } from "@/hooks/usePatternDetailStats";
 
 const DynamicPatternChart = lazy(() => 
   import('@/components/DynamicPatternChart').then(mod => ({ default: mod.DynamicPatternChart }))
@@ -149,7 +150,7 @@ export const PatternLibrary = () => {
         {/* Data provenance header */}
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-5 py-4">
           <p className="text-sm text-foreground leading-relaxed">
-            {t('patternLibrary2.dataProvenanceNote', "Win rates below are from ChartingPath's live detection engine — real outcomes from real pattern detections, not historical studies. Data grows daily.")}
+            {t('patternLibrary2.dataProvenanceNote', "Win rates and statistics on this page are from ChartingPath's live detection engine — real outcomes tracked across FX and US equities. Data updates daily. Historical textbook statistics are not used.")}
           </p>
         </div>
 
@@ -188,12 +189,19 @@ export const PatternLibrary = () => {
                         </div>
                       </Suspense>
                     )}
-                    <Badge 
-                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="absolute top-2 right-2 text-xs z-10"
-                    >
-                      {t(`patternLibrary.types.${pattern.type}`)}
-                    </Badge>
+                    <div className="absolute top-2 right-2 z-10 flex gap-1">
+                      {CANDLESTICK_PATTERNS.includes(pattern.chartKey || '') && (
+                        <Badge variant="outline" className="text-xs bg-muted/80 text-muted-foreground border-muted-foreground/30">
+                          Educational
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {t(`patternLibrary.types.${pattern.type}`)}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="p-4 space-y-3">

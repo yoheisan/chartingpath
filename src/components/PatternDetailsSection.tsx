@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, Al
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { useTranslation } from "react-i18next";
 import { translatePatternName } from "@/utils/translatePatternName";
+import { usePatternDetailStats } from "@/hooks/usePatternDetailStats";
 
 interface PatternDetailsSectionProps {
   patternKey: string;
@@ -16,6 +17,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
   const { t } = useTranslation();
   const s = (key: string) => t(`patternDetailModal.${key}`);
   const patternDetail = getPatternDetails(patternKey);
+  const { data: stats } = usePatternDetailStats(patternKey);
 
   if (!patternDetail) {
     return null;
@@ -120,7 +122,9 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
+                <div className="text-2xl font-bold text-bullish">
+                  {stats && stats.totalDetections >= 20 ? `${stats.winRate}%` : 'Accumulating'}
+                </div>
               </div>
               
               <div className="space-y-2">

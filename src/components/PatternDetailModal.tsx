@@ -9,6 +9,11 @@ import { DynamicPatternChart } from "@/components/DynamicPatternChart";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { translatePatternName } from "@/utils/translatePatternName";
+import { PatternPerformanceSnapshot } from "@/components/pattern-library/PatternPerformanceSnapshot";
+import { PatternLiveSetupsCTA } from "@/components/pattern-library/PatternLiveSetupsCTA";
+import { CandlestickEducationalNotice } from "@/components/pattern-library/CandlestickEducationalNotice";
+import { PatternDynamicTimeframe } from "@/components/pattern-library/PatternDynamicTimeframe";
+import { usePatternDetailStats, CANDLESTICK_PATTERNS } from "@/hooks/usePatternDetailStats";
 
 interface PatternDetailModalProps {
   isOpen: boolean;
@@ -20,15 +25,14 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
   const { t } = useTranslation();
   const s = (key: string) => t(`patternDetailModal.${key}`);
   const patternDetail = getPatternDetails(patternKey);
+  const { data: stats } = usePatternDetailStats(patternKey);
+  const isCandlestick = CANDLESTICK_PATTERNS.includes(patternKey);
 
-  // Helper: translate pattern content fields with English fallback
   const pc = (field: string, fallback: string) => t(`patternContent.${patternKey}.${field}`, fallback);
   const pcArr = (field: string, items: string[]) =>
     items.map((item, i) => t(`patternContent.${patternKey}.${field}_${i}`, item));
 
-  if (!patternDetail) {
-    return null;
-  }
+  if (!patternDetail) return null;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -57,7 +61,6 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
     }
   };
 
-  // Pre-translate arrays
   const translatedCharacteristics = pcArr('characteristics', patternDetail.characteristics);
   const translatedKeyFactors = pcArr('keyFactors', patternDetail.keyFactors);
   const translatedCommonMistakes = pcArr('commonMistakes', patternDetail.commonMistakes);
@@ -66,6 +69,17 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
   const translatedTradeTargets = patternDetail.howToTrade ? pcArr('tradeTargets', patternDetail.howToTrade.targets) : [];
   const translatedRealWorldExamples = patternDetail.realWorldExamples ? pcArr('realWorldExamples', patternDetail.realWorldExamples) : [];
   const translatedBestConditions = patternDetail.bestMarketConditions ? pcArr('bestConditions', patternDetail.bestMarketConditions) : [];
+
+  // Determine whether to show standalone entry/stopLoss fields:
+  // Hide them if howToTrade exists (to avoid duplication)
+  const hasHowToTrade = !!patternDetail.howToTrade;
+
+  // Dynamic outcome snapshot line
+  const outcomeSnapshotText = stats
+    ? stats.totalDetections >= 20
+      ? `ChartingPath data: ${stats.winRate}% win rate · n=${stats.totalDetections.toLocaleString()} detections · Best on ${stats.bestTimeframe.toUpperCase()} · ${stats.bestAssetClass}`
+      : `Accumulating data — ${stats.totalDetections} detections so far`
+    : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -85,20 +99,27 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
 
         <ScrollArea className="h-full pr-4">
           <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Candlestick educational notice */}
+            <CandlestickEducationalNotice patternKey={patternKey} />
+
+            {/* Quick Stats — replace static accuracy with dynamic outcome data */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Dynamic win rate replaces static accuracy */}
               <div className="text-center p-3 border rounded-lg">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <div className="text-2xl font-bold text-bullish">{patternDetail.accuracy}</div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-sm">{s('successRateTooltip')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                {stats && stats.totalDetections >= 20 ? (
+                  <>
+                    <div className="text-2xl font-bold text-bullish">{stats.winRate}%</div>
+                    <div className="text-xs text-muted-foreground">n={stats.totalDetections.toLocaleString()}</div>
+                  </>
+                ) : isCandlestick ? (
+                  <>
+                    <div className="text-sm text-muted-foreground italic">Educational only</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm text-muted-foreground italic">Accumulating data</div>
+                  </>
+                )}
                 <div className="text-sm text-muted-foreground">{s('successRate')}</div>
               </div>
               <div className="text-center p-3 border rounded-lg">
@@ -109,9 +130,21 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </div>
               <div className="text-center p-3 border rounded-lg">
                 <Clock className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-                <div className="text-sm text-muted-foreground">{pc('timeframe', patternDetail.timeframe)}</div>
+                <div className="text-sm text-muted-foreground">
+                  <PatternDynamicTimeframe patternKey={patternKey} textbookTimeframe={patternDetail.timeframe} />
+                </div>
               </div>
             </div>
+
+            {/* Dynamic outcome snapshot line */}
+            {outcomeSnapshotText && (
+              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-semibold mr-2">
+                  ChartingPath data
+                </Badge>
+                <span className="text-xs text-muted-foreground">{outcomeSnapshotText}</span>
+              </div>
+            )}
 
             <Separator />
 
@@ -146,6 +179,9 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                 </div>
               </>
             )}
+
+            {/* Performance Snapshot — between Description and Key Characteristics */}
+            <PatternPerformanceSnapshot patternKey={patternKey} />
 
             {/* Why It Happens */}
             {patternDetail.whyItHappens && (
@@ -188,7 +224,7 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </>
             )}
 
-            {/* How to Trade */}
+            {/* How to Trade — only show if exists */}
             {patternDetail.howToTrade && (
               <>
                 <Separator />
@@ -358,7 +394,11 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-muted-foreground">{s('patternSuccessRate')}</h5>
-                      <p className="text-sm font-medium text-bullish">{patternDetail.accuracy}</p>
+                      {stats && stats.totalDetections >= 20 ? (
+                        <p className="text-sm font-medium text-bullish">{stats.winRate}% (n={stats.totalDetections.toLocaleString()})</p>
+                      ) : (
+                        <p className="text-sm font-medium text-muted-foreground italic">Data accumulating</p>
+                      )}
                     </div>
                   </div>
 
@@ -370,44 +410,47 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
               </div>
             </div>
 
-            <Separator />
-
-            {/* Trading Information */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  {s('entryAndTargets')}
-                </h3>
-                <div className="space-y-3">
-                  <div className="border-l-4 border-bullish pl-3">
-                    <h4 className="font-medium text-sm text-bullish">{s('entrySignal')}</h4>
-                    <p className="text-sm text-muted-foreground">{pc('entry', patternDetail.entry)}</p>
+            {/* Trading Information — only show standalone entry/SL if no howToTrade (to avoid duplication) */}
+            {!hasHowToTrade && (
+              <>
+                <Separator />
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      {s('entryAndTargets')}
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="border-l-4 border-bullish pl-3">
+                        <h4 className="font-medium text-sm text-bullish">{s('entrySignal')}</h4>
+                        <p className="text-sm text-muted-foreground">{pc('entry', patternDetail.entry)}</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-3">
+                        <h4 className="font-medium text-sm">{s('targetMethodology')}</h4>
+                        <p className="text-sm text-muted-foreground">{pc('targetMethodology', patternDetail.targetMethodology)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm">{s('targetMethodology')}</h4>
-                    <p className="text-sm text-muted-foreground">{pc('targetMethodology', patternDetail.targetMethodology)}</p>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      {s('riskManagement')}
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="border-l-4 border-bearish pl-3">
+                        <h4 className="font-medium text-sm text-bearish">{s('stopLoss')}</h4>
+                        <p className="text-sm text-muted-foreground">{pc('stopLoss', patternDetail.stopLoss)}</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-3">
+                        <h4 className="font-medium text-sm">{s('confirmation')}</h4>
+                        <p className="text-sm text-muted-foreground">{pc('confirmation', patternDetail.confirmation)}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  {s('riskManagement')}
-                </h3>
-                <div className="space-y-3">
-                  <div className="border-l-4 border-bearish pl-3">
-                    <h4 className="font-medium text-sm text-bearish">{s('stopLoss')}</h4>
-                    <p className="text-sm text-muted-foreground">{pc('stopLoss', patternDetail.stopLoss)}</p>
-                  </div>
-                  <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm">{s('confirmation')}</h4>
-                    <p className="text-sm text-muted-foreground">{pc('confirmation', patternDetail.confirmation)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
 
             <Separator />
 
@@ -439,6 +482,14 @@ export const PatternDetailModal = ({ isOpen, onClose, patternKey }: PatternDetai
                 ))}
               </ul>
             </div>
+
+            {/* Live setups CTA — after key success factors, before common mistakes */}
+            {!isCandlestick && (
+              <>
+                <Separator />
+                <PatternLiveSetupsCTA patternKey={patternKey} patternName={patternDetail.name} />
+              </>
+            )}
 
             <Separator />
 
