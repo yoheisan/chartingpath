@@ -189,12 +189,19 @@ export const PatternLibrary = () => {
                         </div>
                       </Suspense>
                     )}
-                    <Badge 
-                      variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
-                      className="absolute top-2 right-2 text-xs z-10"
-                    >
-                      {t(`patternLibrary.types.${pattern.type}`)}
-                    </Badge>
+                    <div className="absolute top-2 right-2 z-10 flex gap-1">
+                      {CANDLESTICK_PATTERNS.includes(pattern.chartKey || '') && (
+                        <Badge variant="outline" className="text-xs bg-muted/80 text-muted-foreground border-muted-foreground/30">
+                          Educational
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant={pattern.type === "reversal" ? "destructive" : pattern.type === "continuation" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {t(`patternLibrary.types.${pattern.type}`)}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="p-4 space-y-3">
