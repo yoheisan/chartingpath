@@ -685,7 +685,7 @@ const PatternLabWizard = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="Backtest Any Chart Pattern in 60 Seconds — No Code | ChartingPath"
+        title="Chart Pattern Backtester — Test by Instrument & Timeframe | ChartingPath"
         description="Run a backtest on any chart pattern across any instrument and timeframe. See win rate, expectancy, and R:R from years of historical data. Free to try."
         canonicalPath="/projects/pattern-lab/new"
       />

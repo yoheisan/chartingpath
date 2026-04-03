@@ -83,8 +83,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="ChartingPath — Chart Pattern Scanner & Backtester | 320K+ Trades"
-        description={`Find high-probability chart patterns before they break. AI-powered detection across ${instrumentCount ? instrumentCount.toLocaleString() + '+' : '800+'} instruments, backtested against 320,000+ historical trades. Free to start.`}
+        title="ChartingPath — Pattern Detection with Proven Outcomes"
+        description="The only chart pattern platform that tracks what actually happens after the pattern forms. 63K+ labeled outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily."
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
