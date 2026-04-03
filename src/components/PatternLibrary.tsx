@@ -193,7 +193,7 @@ export const PatternLibrary = () => {
                     <div className="absolute top-2 right-2 z-10 flex gap-1">
                       {CANDLESTICK_PATTERNS.includes(pattern.chartKey || '') && (
                         <Badge variant="outline" className="text-xs bg-muted/80 text-muted-foreground border-muted-foreground/30">
-                          Educational
+                          {t('patternLibrary.educational', 'Educational')}
                         </Badge>
                       )}
                       <Badge 
