@@ -12,6 +12,7 @@ import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTease
 import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 import { FeatureBlocks } from '@/components/landing/FeatureBlocks';
+import { CopilotValueProp } from '@/components/landing/CopilotValueProp';
 import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
