@@ -94,7 +94,7 @@ export function OutcomeStatsStrip() {
         {/* Institutional access line */}
         <p className="mt-3 text-[13px] text-muted-foreground text-center">
           {t('outcomeStats.institutionalAccess', 'Institutional and research access available — query our full outcome dataset via API.')}{' '}
-          <a href="mailto:yohei@chartingpath.com" className="text-primary hover:underline">
+          <a href="mailto:contact@chartingpath.com" className="text-primary hover:underline">
             {t('outcomeStats.contactForAccess', 'Contact for access →')}
           </a>
         </p>

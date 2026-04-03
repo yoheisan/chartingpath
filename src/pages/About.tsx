@@ -36,7 +36,7 @@ const About = () => {
               {t('aboutPage2.ctaText', 'Want to explore the data or discuss research access?')}
             </p>
             <Button asChild size="lg" className="gap-2">
-              <a href="mailto:yohei@chartingpath.com">
+              <a href="mailto:contact@chartingpath.com">
                 <Mail className="h-4 w-4" />
                 {t('aboutPage2.ctaButton', 'Get in touch')}
               </a>
