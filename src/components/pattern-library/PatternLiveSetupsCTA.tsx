@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { EDGE_ATLAS_PATTERNS } from "@/hooks/usePatternDetailStats";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const PatternLiveSetupsCTA = ({ patternKey, patternName }: Props) => {
+  const { t } = useTranslation();
   const isInEdgeAtlas = EDGE_ATLAS_PATTERNS.includes(patternKey);
 
   return (
@@ -16,7 +18,7 @@ export const PatternLiveSetupsCTA = ({ patternKey, patternName }: Props) => {
         to={`/patterns/live?pattern=${patternKey}`}
         className="text-primary hover:underline flex items-center gap-1"
       >
-        See live {patternName} setups
+        {t('patternLibrary.seeLiveSetups', 'See live {{name}} setups', { name: patternName })}
         <ArrowRight className="h-3 w-3" />
       </Link>
       {isInEdgeAtlas && (
@@ -24,7 +26,7 @@ export const PatternLiveSetupsCTA = ({ patternKey, patternName }: Props) => {
           to="/#edge-atlas"
           className="text-primary hover:underline flex items-center gap-1"
         >
-          View in Edge Atlas
+          {t('patternLibrary.viewInEdgeAtlas', 'View in Edge Atlas')}
           <ArrowRight className="h-3 w-3" />
         </Link>
       )}
