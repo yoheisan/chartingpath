@@ -6461,6 +6461,12 @@ export type Database = {
           status: string
         }[]
       }
+      get_distinct_instrument_count: {
+        Args: never
+        Returns: {
+          cnt: number
+        }[]
+      }
       get_edge_atlas_rankings: {
         Args: { p_asset_type: string; p_limit?: number; p_min_trades?: number }
         Returns: {
@@ -6527,6 +6533,13 @@ export type Database = {
         }[]
       }
       get_homepage_stats: { Args: never; Returns: Json }
+      get_most_detected_pattern: {
+        Args: { p_since: string }
+        Returns: {
+          cnt: number
+          pattern_name: string
+        }[]
+      }
       get_override_comparison: {
         Args: { p_days?: number; p_user_id: string }
         Returns: {
@@ -6560,6 +6573,15 @@ export type Database = {
           question_code: string
           question_text: string
           tags: string[]
+        }[]
+      }
+      get_top_win_rate_this_month: {
+        Args: { p_min_samples?: number; p_since: string }
+        Returns: {
+          pattern_name: string
+          sample_count: number
+          timeframe: string
+          win_rate: number
         }[]
       }
       get_translations: {
