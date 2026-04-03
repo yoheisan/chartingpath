@@ -84,8 +84,10 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       toast.error(t('alerts.notif.preferenceFailed'));
       if (field === 'email_notifications_enabled') {
         setEmailEnabled(!value);
-      } else {
+      } else if (field === 'push_notifications_enabled') {
         setPushDbEnabled(!value);
+      } else {
+        setMorningBriefEnabled(!value);
       }
     } finally {
       setSaving(false);
