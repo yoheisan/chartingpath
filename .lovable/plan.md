@@ -38,3 +38,79 @@ You are correct: the Market Breadth Report currently does **not** use any real p
 - Layer the user's real portfolio data on top as a separate UI section
 - This avoids breaking the caching/budget system while giving each user their real P&L context
 
+---
+
+## PERMANENT RULE — i18n / Internationalisation (MUST FOLLOW ON EVERY CHANGE)
+
+> This rule applies to ALL code changes in this repository without
+> exception. ChartingPath serves users in 18 languages. Every visible
+> string MUST be translatable.
+
+### The Rule
+
+EVERY user-visible string in JSX must be wrapped with
+`t('namespace.key', 'English fallback')`.
+
+No exceptions for:
+- Labels, headings, descriptions, tooltips
+- Button text, link text, badge text
+- Error messages, empty states, loading states
+- Metric labels ("Win rate", "Total detections", etc.)
+- Dynamic strings with interpolation:
+  t('key', 'text {{var}}', { var: value })
+- PageMeta title and description props
+- document.title assignments
+
+### How to do it correctly
+
+Step 1 — Namespace keys by component:
+- Landing components → landing.keyName
+- Pattern library → patternLibrary.keyName
+- FAQ → faq.tabName.keyName
+- Blog → blog.keyName
+- Pricing → pricingPage.keyName or pricingTeaser.keyName
+- Outcome stats → outcomeStats.keyName
+- About → aboutPage2.keyName
+- Shared → common.keyName
+
+Step 2 — Use t() in JSX:
+```tsx
+// WRONG:
+<div>Win rate</div>
+
+// CORRECT:
+<div>{t('patternLibrary.winRate', 'Win rate')}</div>
+```
+
+Step 3 — Add every new key to src/i18n/locales/en.json.
+The auto-translation system handles all other 17 languages
+automatically, but only if the key exists in en.json first.
+
+Step 4 — Import useTranslation in every component:
+```tsx
+import { useTranslation } from 'react-i18next';
+const { t } = useTranslation();
+```
+
+### PageMeta special case
+
+```tsx
+// WRONG:
+<PageMeta title="Simple Pricing." description="Start free..." />
+
+// CORRECT:
+<PageMeta
+  title={t('pricingPage.metaTitle', 'Simple Pricing. | ChartingPath')}
+  description={t('pricingPage.metaDescription', 'Start free...')}
+/>
+```
+
+### Checklist before completing any task
+
+- [ ] Every visible string uses t('namespace.key', 'fallback')
+- [ ] Every new key is added to src/i18n/locales/en.json
+- [ ] useTranslation imported in every component with text
+- [ ] Dynamic strings use interpolation: t('k', 'text {{v}}', {v})
+- [ ] PageMeta title and description use t()
+- [ ] No raw string literals in JSX (no >SomeText< patterns)
+

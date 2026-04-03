@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ interface EdgeAtlasData {
 }
 
 const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
+  const { t } = useTranslation();
   const [count, setCount] = useState<number | null>(null);
   const [edgeData, setEdgeData] = useState<EdgeAtlasData | null>(null);
 
@@ -71,20 +73,20 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
         <div className="flex-1 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-xl font-bold text-foreground">
-              Live {patternName} setups
+              {t('blog.liveSetupsCta.heading', 'Live {{pattern}} setups', { pattern: patternName })}
             </h3>
             {count !== null && count > 0 && (
               <Badge variant="secondary" className="text-sm font-semibold">
-                {count} detected this week
+                {t('blog.liveSetupsCta.detectedBadge', '{{count}} detected this week', { count })}
               </Badge>
             )}
           </div>
           <p className="text-muted-foreground">
-            Our scanner monitors {patternName} formations across 200+ instruments in real time. See what's active right now.
+            {t('blog.liveSetupsCta.body', "Our scanner monitors {{pattern}} formations across 200+ instruments in real time. See what's active right now.", { pattern: patternName })}
           </p>
           <Button asChild className="gap-2">
             <Link to={`/patterns/live?filter=${patternSlug}`}>
-              See live {patternName} setups
+              {t('blog.liveSetupsCta.button', 'See live {{pattern}} setups', { pattern: patternName })}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -92,17 +94,17 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
           {edgeData && (
             <div className="mt-4 pt-4 border-t border-border/30">
               <div className="flex items-center justify-between">
-                <div>
+              <div>
                   <p className="text-sm font-medium text-foreground">
-                    {patternName} in Edge Atlas
+                    {t('blog.liveSetupsCta.edgeAtlasTitle', '{{pattern}} in Edge Atlas', { pattern: patternName })}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {edgeData.win_rate}% win rate · {edgeData.expectancy_r}R expectancy · +{edgeData.est_annual_return}% est. annual · n={edgeData.sample_count}
+                    {t('blog.liveSetupsCta.edgeAtlasStats', '{{winRate}}% win rate · {{expectancy}}R expectancy · +{{annual}}% est. annual · n={{n}}', { winRate: edgeData.win_rate, expectancy: edgeData.expectancy_r, annual: edgeData.est_annual_return, n: edgeData.sample_count })}
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
                   <Link to="/#edge-atlas">
-                    View ranking →
+                    {t('blog.liveSetupsCta.viewRanking', 'View ranking →')}
                   </Link>
                 </Button>
               </div>

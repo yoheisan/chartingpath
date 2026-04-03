@@ -18,7 +18,7 @@ export const PatternLiveSetupsCTA = ({ patternKey, patternName }: Props) => {
         to={`/patterns/live?pattern=${patternKey}`}
         className="text-primary hover:underline flex items-center gap-1"
       >
-        {t('patternLibrary.seeLiveSetups', 'See live {{name}} setups', { name: patternName })}
+        {t('patternLibrary.seeLiveSetups', 'See live {{pattern}} setups', { pattern: patternName })}
         <ArrowRight className="h-3 w-3" />
       </Link>
       {isInEdgeAtlas && (

@@ -29,25 +29,25 @@ export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
     <div className="space-y-3">
       <h3 className="text-lg font-semibold flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
-        {t('patternPerformance.title', 'How this pattern performs on ChartingPath')}
+        {t('patternLibrary.howPerforms', 'How this pattern performs on ChartingPath')}
       </h3>
       <Card className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 rounded-lg bg-background/50 border">
             <div className="text-2xl font-bold text-primary">{stats.winRate}%</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('patternPerformance.winRate', 'Win rate')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t('patternLibrary.winRate', 'Win rate')}</div>
           </div>
           <div className="text-center p-3 rounded-lg bg-background/50 border">
             <div className="text-2xl font-bold text-bullish">{stats.avgRR}R</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('patternPerformance.avgRMultiple', 'Avg R-multiple to TP')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t('patternLibrary.avgRMultiple', 'Avg R-multiple to TP')}</div>
           </div>
           <div className="text-center p-3 rounded-lg bg-background/50 border">
             <div className="text-2xl font-bold text-foreground">{stats.avgBars}</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('patternPerformance.avgBars', 'Avg bars to resolution')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t('patternLibrary.avgBarsToResolution', 'Avg bars to resolution')}</div>
           </div>
           <div className="text-center p-3 rounded-lg bg-background/50 border">
             <div className="text-2xl font-bold text-foreground">{stats.totalDetections.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('patternPerformance.totalDetections', 'Total detections')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t('patternLibrary.totalDetections', 'Total detections')}</div>
           </div>
         </div>
         {stats.liveSetupsCount > 0 && (
@@ -56,7 +56,7 @@ export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
               to={`/patterns/live?pattern=${patternKey}`}
               className="text-primary hover:underline flex items-center gap-1"
             >
-              {t('patternPerformance.liveSetups', 'Live setups right now: {{count}}', { count: stats.liveSetupsCount })}
+              {t('patternLibrary.liveSetupsNow', 'Live setups right now: {{count}}', { count: stats.liveSetupsCount })}
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
