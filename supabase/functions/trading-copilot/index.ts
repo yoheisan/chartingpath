@@ -3284,11 +3284,45 @@ serve(async (req) => {
         "Authorization": `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       };
+
+      // ═══ MODEL ROUTING ═══
+      // Classify request type from the last user message
+      const lastUserMsg = (messages || []).filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
+      const pageType = context?.pageType || viewContext?.currentPage || '';
+      
+      function classifyRequestType(msg: string, page: string): string {
+        // Heavy tasks → strong model
+        if (/backtest|back\s*test|historical\s*(performance|analysis)|equity\s*curve|monte\s*carlo/i.test(msg)) return 'backtest';
+        if (/multi[\s-]*timeframe|mtf|cross[\s-]*timeframe|all\s*timeframes/i.test(msg)) return 'multi_timeframe_analysis';
+        if (/trading\s*plan|master\s*plan|mandate|build.*strategy|create.*plan/i.test(msg)) return 'trading_plan_build';
+        // Light tasks → fast model
+        if (/quick\s*scan|scan.*market|what.*patterns|show.*signals|any.*setups/i.test(msg)) return 'quick_scan';
+        if (/^(what|how|explain|tell|show).{0,30}(pattern|flag|triangle|wedge|channel)/i.test(msg)) return 'single_pattern_query';
+        // Page-based inference
+        if (/backtest/i.test(page)) return 'backtest';
+        if (/screener|scanner/i.test(page)) return 'quick_scan';
+        // Default
+        return 'general';
+      }
+
+      const requestType = classifyRequestType(lastUserMsg, pageType);
+      
+      // Model selection based on request type
+      const HEAVY_TYPES = new Set(['backtest', 'multi_timeframe_analysis', 'trading_plan_build']);
+      const isHeavy = HEAVY_TYPES.has(requestType);
+      const selectedModel = isHeavy ? 'gemini-2.5-pro' : 'gemini-2.0-flash';
+      const selectedMaxTokens = isHeavy ? 8000 : 8192;
+      const selectedTimeout = isHeavy ? 60000 : 30000;
+      
+      console.log(`[trading-copilot] Model routing: type=${requestType} model=${selectedModel} maxTokens=${selectedMaxTokens} timeout=${selectedTimeout}ms`);
+      
+      const routingStartTime = Date.now();
+
       const baseBody = {
-        model: "gemini-2.0-flash",
+        model: selectedModel,
         tools,
         tool_choice: "auto",
-        max_tokens: 8192,
+        max_tokens: selectedMaxTokens,
       };
 
       for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
