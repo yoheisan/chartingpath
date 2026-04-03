@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, RotateCcw, Target, Shield, Volume2, Brain, Al
 import { getPatternDetails } from "@/utils/PatternDetails";
 import { useTranslation } from "react-i18next";
 import { translatePatternName } from "@/utils/translatePatternName";
+import { usePatternDetailStats } from "@/hooks/usePatternDetailStats";
 
 interface PatternDetailsSectionProps {
   patternKey: string;
