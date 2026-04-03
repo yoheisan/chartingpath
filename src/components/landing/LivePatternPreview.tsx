@@ -41,19 +41,38 @@ export default function LivePatternPreview() {
   const [rows, setRows] = useState<SnapshotRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showingBestAvailable, setShowingBestAvailable] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRows = async () => {
     try {
-      const { data, error: dbErr } = await supabase
+      // First try to get Grade A and B patterns
+      const { data: abData, error: abErr } = await supabase
         .from('live_pattern_detections')
         .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance')
         .eq('status', 'active')
+        .in('quality_score', ['A', 'B'])
         .order('first_detected_at', { ascending: false })
         .limit(3);
 
-      if (dbErr) throw dbErr;
-      setRows(data || []);
+      if (abErr) throw abErr;
+
+      if (abData && abData.length >= 3) {
+        setRows(abData);
+        setShowingBestAvailable(false);
+      } else {
+        // Fallback: get highest-grade available
+        const { data: fallbackData, error: fbErr } = await supabase
+          .from('live_pattern_detections')
+          .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance')
+          .eq('status', 'active')
+          .order('first_detected_at', { ascending: false })
+          .limit(3);
+
+        if (fbErr) throw fbErr;
+        setRows(fallbackData || []);
+        setShowingBestAvailable((abData?.length ?? 0) < 3);
+      }
       setError(null);
     } catch (err: any) {
       console.error('[LivePatternPreview]', err);
@@ -130,6 +149,12 @@ export default function LivePatternPreview() {
             {t('livePatternPreview.autoRefresh', 'Auto-refreshes every 60s')}
           </span>
         </div>
+
+        {showingBestAvailable && (
+          <p className="text-xs text-muted-foreground mb-3 italic">
+            {t('livePatternPreview.bestAvailable', 'Showing best available — Grade A patterns appear when detected.')}
+          </p>
+        )}
 
         {/* Read-only screener snapshot */}
         <Card className="overflow-hidden">
@@ -221,7 +246,7 @@ export default function LivePatternPreview() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-3">
-          {t('livePatternPreview.disclaimer', 'Pattern detections are for research purposes only. Not financial advice.')}
+          {t('livePatternPreview.signupLine', 'Showing highest-graded active patterns. Sign up free to see all signals with full outcome data.')}
         </p>
       </div>
     </section>

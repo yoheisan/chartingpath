@@ -239,6 +239,15 @@ const Navigation = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/edge-atlas" className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    <div className="flex flex-col">
+                      <span>{t('navigation.edgeAtlas', 'Edge Atlas')}</span>
+                      <span className="text-xs text-muted-foreground">{t('navigation.edgeAtlasDesc', 'Patterns ranked by proven annual return')}</span>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/members/alerts" className="flex items-center gap-2">
                     <WithNotificationBadge count={alertCount} size="sm">
                       <Bell className="h-4 w-4 text-emerald-500" />

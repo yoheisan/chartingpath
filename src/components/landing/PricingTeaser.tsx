@@ -10,38 +10,51 @@ export const PricingTeaser = () => {
 
   const plans = [
     {
-      name: t('pricingTeaser.free'),
-      tagline: t('pricingTeaser.freeTagline'),
+      name: t('pricingTeaser.free', 'Free'),
+      tagline: t('pricingTeaser.freeTagline', 'Explore'),
+      description: t('pricingTeaser.freeDescription', 'See live pattern signals and explore the outcome database.'),
       features: [
-        t('pricingTeaser.creditsPerMonth', { count: 50 }),
-        t('pricingTeaser.tradingPlans', { count: 1 }),
-        t('pricingTeaser.activeAlerts', { count: 3 }),
-        t('pricingTeaser.basicPatterns'),
+        t('pricingTeaser.freeFeature1', 'Live pattern scanner (all asset classes)'),
+        t('pricingTeaser.freeFeature2', 'Basic outcome data (last 7 days)'),
+        t('pricingTeaser.freeFeature3', '3 active alerts'),
+        t('pricingTeaser.freeFeature4', 'Grade C & B patterns'),
+        t('pricingTeaser.freeFeature5', '1 trading plan'),
       ],
+      cta: t('pricingTeaser.startFree', 'Start Free →'),
     },
     {
-      name: t('pricingTeaser.lite'),
-      tagline: t('pricingTeaser.liteTagline'),
+      name: t('pricingTeaser.lite', 'Lite'),
+      tagline: t('pricingTeaser.liteTagline', 'Getting Started'),
+      description: t('pricingTeaser.liteDescription', 'Full outcome history and more alert capacity.'),
       features: [
-        t('pricingTeaser.creditsPerMonth', { count: 100 }),
-        t('pricingTeaser.tradingPlans', { count: 2 }),
-        t('pricingTeaser.activeAlerts', { count: 5 }),
-        t('pricingTeaser.timeframe4h'),
+        t('pricingTeaser.liteFeature1', 'Everything in Free'),
+        t('pricingTeaser.liteFeature2', 'Full 90-day outcome history'),
+        t('pricingTeaser.liteFeature3', 'Win rates by pattern & timeframe'),
+        t('pricingTeaser.liteFeature4', '5 active alerts'),
+        t('pricingTeaser.liteFeature5', '4H and above timeframes'),
+        t('pricingTeaser.liteFeature6', '2 trading plans'),
       ],
       price: "$12",
       popular: true,
+      cta: t('pricingTeaser.startLite', 'Start Lite'),
     },
     {
-      name: t('pricingTeaser.pro'),
-      tagline: t('pricingTeaser.proTagline'),
+      name: t('pricingTeaser.pro', 'Pro'),
+      tagline: t('pricingTeaser.proTagline', 'Serious Trading'),
+      description: t('pricingTeaser.proDescription', 'Complete outcome database, Edge Atlas, and Copilot access.'),
       features: [
-        t('pricingTeaser.creditsPerMonth', { count: 900 }),
-        t('pricingTeaser.tradingPlans', { count: 10 }),
-        t('pricingTeaser.activeAlerts', { count: 100 }),
-        t('pricingTeaser.allTimeframes'),
+        t('pricingTeaser.proFeature1', 'Everything in Lite'),
+        t('pricingTeaser.proFeature2', 'Full outcome database (424K+ detections)'),
+        t('pricingTeaser.proFeature3', 'Edge Atlas — patterns ranked by annualized return'),
+        t('pricingTeaser.proFeature4', 'ChartingPath Copilot (AI assistant)'),
+        t('pricingTeaser.proFeature5', 'All timeframes including 1H'),
+        t('pricingTeaser.proFeature6', '100 active alerts'),
+        t('pricingTeaser.proFeature7', '10 trading plans'),
+        t('pricingTeaser.proFeature8', 'Paper trading simulator'),
       ],
       highlighted: true,
       price: "$79",
+      cta: t('pricingTeaser.startPro', 'Start Pro'),
     },
   ];
 
@@ -55,9 +68,9 @@ export const PricingTeaser = () => {
       <div className="container mx-auto">
         <div className="text-center mb-14">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">{t('pricingTeaser.sectionLabel', 'Pricing')}</p>
-          <h2 className="text-3xl lg:text-4xl font-bold mb-3">{t('pricingTeaser.title')}</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold mb-3">{t('pricingTeaser.title', 'Simple pricing. Serious data.')}</h2>
           <p className="text-base text-muted-foreground">
-            {t('pricingTeaser.subtitle')}
+            {t('pricingTeaser.subtitle', 'Start free. Upgrade when you want deeper outcomes and Copilot access.')}
           </p>
         </div>
 
@@ -78,7 +91,8 @@ export const PricingTeaser = () => {
                   <span className="text-sm font-mono text-muted-foreground">{plan.price}<span className="text-xs">/{t('pricingTeaser.perMonth', 'mo')}</span></span>
                 )}
               </div>
-              <div className="text-xs text-primary font-medium mb-4">{plan.tagline}</div>
+              <div className="text-xs text-primary font-medium mb-1">{plan.tagline}</div>
+              <p className="text-xs text-muted-foreground mb-4">{plan.description}</p>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-2">
@@ -87,17 +101,15 @@ export const PricingTeaser = () => {
                   </li>
                 ))}
               </ul>
-              {/* Free plan CTA */}
-              {planIdx === 0 && (
-                <Button asChild size="sm" className="mt-4 w-full" onClick={() => {
-                  track('pricing_start_free', { source: 'landing_pricing_teaser' });
-                  trackEvent('landing.cta_click', { button: 'pricing_start_free' });
-                }}>
-                  <Link to="/auth?mode=signup">
-                    {t('pricingTeaser.startFree', 'Start Free →')}
-                  </Link>
-                </Button>
-              )}
+              {/* CTA for each plan */}
+              <Button asChild size="sm" variant={planIdx === 0 ? 'default' : 'outline'} className="mt-4 w-full" onClick={() => {
+                track(`pricing_start_${plan.name.toLowerCase()}`, { source: 'landing_pricing_teaser' });
+                trackEvent('landing.cta_click', { button: `pricing_start_${plan.name.toLowerCase()}` });
+              }}>
+                <Link to="/auth?mode=signup">
+                  {plan.cta}
+                </Link>
+              </Button>
             </div>
           ))}
         </div>
@@ -105,7 +117,7 @@ export const PricingTeaser = () => {
         <div className="text-center">
           <Button asChild variant="outline" size="sm" onClick={handlePricingClick} className="gap-2">
             <Link to="/pricing">
-              {t('pricingTeaser.seeFullPricing')}
+              {t('pricingTeaser.seeFullPricing', 'See Full Pricing')}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>

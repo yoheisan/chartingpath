@@ -90,6 +90,14 @@ export function OutcomeStatsStrip() {
         <p className="mt-5 text-[11px] text-muted-foreground/70">
           {t('outcomeStats.dataSourceNote', "Data sourced from ChartingPath's live detection engine. All outcomes tracked to SL/TP based on pattern-specific ATR targets.")}
         </p>
+
+        {/* Institutional access line */}
+        <p className="mt-3 text-[13px] text-muted-foreground text-center">
+          {t('outcomeStats.institutionalAccess', 'Institutional and research access available — query our full outcome dataset via API.')}{' '}
+          <a href="mailto:yohei@chartingpath.com" className="text-primary hover:underline">
+            {t('outcomeStats.contactForAccess', 'Contact for access →')}
+          </a>
+        </p>
       </div>
     </section>
   );
