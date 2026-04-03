@@ -192,7 +192,14 @@
       "last30Days": "Последние 30 дней",
       "peakDay": "Самый активный день"
     },
-    "platformBadge": "Chart Pattern Backtesting Platform"
+    "platformBadge": "Chart Pattern Backtesting Platform",
+    "heroHeadline": "Know what happens after the pattern forms.",
+    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.",
+    "seeLivePatterns": "See live patterns",
+    "exploreOutcomeData": "Explore outcome data",
+    "patternsDetectedThisWeek": "{{num}} patterns detected this week",
+    "instrumentsTracked": "{{num}} instruments tracked",
+    "topPatternThisWeek": "Top pattern this week: {{pattern}} on {{instrument}} — {{winRate}}% win rate"
   },
   "tradingCopilot": {
     "moat": {
@@ -606,7 +613,40 @@
     "disclaimerEducational": "Ежемесячные планы не подлежат возврату. Возврат средств за годовые планы осуществляется за неиспользованные полные месяцы. Возврат средств за пожизненные планы осуществляется в течение 1 месяца с момента покупки. Подробности см. в Условиях и Политике конфиденциальности.",
     "disclaimer": "Только в образовательных целях. Не является финансовым советом. Прошлые результаты не гарантируют будущих результатов. Торговля сопряжена со значительным риском убытков. Все скрипты и стратегии должны быть тщательно протестированы перед реальной торговлей.",
     "paymentsComingSoonTitle": "💙 Payments coming very soon!",
-    "paymentsComingSoonDesc": "We're finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation."
+    "paymentsComingSoonDesc": "We're finalizing our payment integration and appreciate your patience! In the meantime, enjoy free access to pattern scanning, backtesting, alerts, and Pine Script generation.",
+    "freeName": "Free",
+    "freePrice": "$0 / month",
+    "freeDescription": "Get started with live pattern scanning.",
+    "freeFeature1": "Live pattern scanner (20+ instruments)",
+    "freeFeature2": "3 pattern alerts per day",
+    "freeFeature3": "7-day outcome history",
+    "freeFeature4": "Community access",
+    "freeCta": "Start free",
+    "proName": "Pro",
+    "proPrice": "$79 / month",
+    "proDescription": "Full outcome data and AI Copilot access.",
+    "proFeature1": "Everything in Free",
+    "proFeature2": "Full outcome database (63K+ detections)",
+    "proFeature3": "Win rates by pattern, timeframe, instrument",
+    "proFeature4": "Unlimited pattern alerts",
+    "proFeature5": "ChartingPath Copilot (AI trading assistant)",
+    "proFeature6": "Pattern Lab backtester",
+    "proFeature7": "Paper trading simulator",
+    "proCta": "Start Pro",
+    "dataApiName": "Data API",
+    "dataApiPrice": "Contact us",
+    "dataApiDescription": "Institutional access to ChartingPath's outcome dataset.",
+    "dataApiFeature1": "REST API access to full outcome database",
+    "dataApiFeature2": "Pattern outcomes by instrument × timeframe × regime",
+    "dataApiFeature3": "Custom data exports",
+    "dataApiFeature4": "Priority support",
+    "dataApiCta": "Get in touch",
+    "faqQ1": "What counts as a pattern outcome?",
+    "faqA1": "Every pattern ChartingPath detects is tracked through to its stop loss or take profit target based on ATR-derived levels. We record whether price hit TP or SL first, plus the R-multiple achieved.",
+    "faqQ2": "Is this financial advice?",
+    "faqA2": "No. ChartingPath is a data and research platform. Pattern outcomes are historical statistics, not predictions or recommendations.",
+    "faqQ3": "What instruments are covered?",
+    "faqA3": "FX majors (EURUSD, GBPUSD, USDJPY and others) and US equities. Coverage expands regularly."
   },
   "faq": {
     "noResults": "Ничего не найдено",
@@ -1166,7 +1206,8 @@
     "viewFullScreener": "View full screener",
     "educationalDisclaimer": "For educational purposes only. Past patterns don't guarantee future results.",
     "activePatternScreener": "Active Pattern Screener",
-    "winRate": "Процент побед"
+    "winRate": "Процент побед",
+    "analyzingAll": "Analyzing {{count}} instruments across all assets on {{timeframe}} • Showing {{active}} with active patterns"
   },
   "alerts": {
     "symbol": "Символ",
@@ -1565,7 +1606,8 @@
     "deeperAnalysisDesc": "Запустите Pattern Lab для бэктестинга исторических результатов, оптимизируйте целевые показатели R:R и сравните кривые доходности.",
     "tryAgain": "Повторить",
     "calculateTrendData": "Рассчитать данные тренда",
-    "updatedAt": "Updated {{time}}"
+    "updatedAt": "Updated {{time}}",
+    "allAssets": "All Assets"
   },
   "memberDownloads": {
     "availablePacks": "Доступные пакеты",
@@ -2469,7 +2511,41 @@
     "Inverted Head and Shoulders": "Inverted Head and Shoulders",
     "Wedge": "Wedge",
     "Triangle": "Triangle",
-    "Flag": "Flag"
+    "Flag": "Flag",
+    "bull_flag": "Bull Flag",
+    "bear_flag": "Bear Flag",
+    "falling_wedge": "Falling Wedge",
+    "rising_wedge": "Rising Wedge",
+    "triple_bottom": "Triple Bottom",
+    "triple_top": "Triple Top",
+    "double_bottom": "Double Bottom",
+    "double_top": "Double Top",
+    "cup_and_handle": "Cup & Handle",
+    "inverse_cup_and_handle": "Inverse Cup & Handle",
+    "symmetrical_triangle": "Symmetrical Triangle",
+    "ascending_triangle": "Ascending Triangle",
+    "descending_triangle": "Descending Triangle",
+    "head_and_shoulders": "Head & Shoulders",
+    "inverse_head_and_shoulders": "Inverse Head & Shoulders",
+    "donchian_breakout_long": "Donchian Breakout (Long)",
+    "donchian_breakout_short": "Donchian Breakout (Short)",
+    "channel_up": "Channel Up",
+    "channel_down": "Channel Down",
+    "channel_breakout": "Channel Breakout",
+    "pennant": "Pennant",
+    "bump_and_run_reversal": "Bump-and-Run Reversal",
+    "island_reversal": "Island Reversal",
+    "rectangle": "Rectangle",
+    "hammer": "Hammer",
+    "hanging_man": "Hanging Man",
+    "shooting_star": "Shooting Star",
+    "doji": "Doji",
+    "bullish_harami": "Bullish Harami",
+    "bearish_harami": "Bearish Harami",
+    "bullish_engulfing": "Bullish Engulfing",
+    "bearish_engulfing": "Bearish Engulfing",
+    "spinning_top": "Spinning Top",
+    "wedge": "Wedge"
   },
   "timeframes": {
     "1H": "1Ч",
@@ -6053,7 +6129,17 @@
     "noActiveDetections": "No active pattern detections matching your plan.",
     "viewOnDashboard": "View on Dashboard",
     "noPriceWarning": "No live price available. Trade will use market price at execution.",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "sideLong": "Long",
+    "sideShort": "Short",
+    "sideBuy": "Buy",
+    "sideSell": "Sell",
+    "gateAlignedValue": "Aligned",
+    "gatePartialValue": "Partial",
+    "gateConflictValue": "Conflict",
+    "sourceAiScan": "AI Scan",
+    "sourceManual": "Manual",
+    "sourceAlert": "Alert"
   },
   "report": {
     "backToCopilot": "Back to Copilot desk",
@@ -6296,5 +6382,65 @@
       "longVsShort": "Сравнить результаты лонг и шорт",
       "bestInstrument": "Какой инструмент показывает лучшие результаты?"
     }
+  },
+  "portfolioSummary": {
+    "title": "Your Portfolio",
+    "accountBalance": "Account Balance",
+    "totalPnl": "Total P&L",
+    "todayPnl": "Today's P&L",
+    "openPositions": "Open Positions",
+    "winRate": "Win Rate",
+    "trades": "trades"
+  },
+  "outcomeStats": {
+    "sectionLabel": "Live outcome data — updated daily",
+    "totalPatternsTracked": "Total patterns tracked",
+    "topWinRateThisMonth": "Top win rate this month",
+    "topWinRateDetail": "Top win rate this month — {{pattern}} ({{timeframe}})",
+    "mostDetectedPattern": "Most detected pattern",
+    "mostDetectedDetail": "Most detected pattern ({{num}} this week)",
+    "instrumentsCovered": "Instruments covered",
+    "dataSourceNote": "Data sourced from ChartingPath's live detection engine. All outcomes tracked to SL/TP based on pattern-specific ATR targets."
+  },
+  "featureBlocks": {
+    "learnMore": "Learn more",
+    "scannerHeadline": "Live pattern detection across 20+ instruments",
+    "scannerDescription": "ChartingPath scans FX majors and US equities in real time, detecting 15+ classical patterns as they form. Get alerted the moment a head & shoulders or triangle completes — before the breakout.",
+    "outcomeDbHeadline": "The only pattern outcome database of its kind",
+    "outcomeDbDescription": "Every pattern we detect gets tracked through to its SL or TP. We accumulate real win rates by pattern type, timeframe, and instrument — data that doesn't exist anywhere else.",
+    "copilotHeadline": "An AI trading assistant that learns from outcomes",
+    "copilotDescription": "ChartingPath Copilot doesn't just read indicators — it reasons from 63K+ real pattern outcomes to give you context-aware trade analysis. The more patterns tracked, the smarter it gets.",
+    "paperTradingHeadline": "Simulate trades. Build the outcome record.",
+    "paperTradingDescription": "Paper trade any detected pattern with one click. Every simulated trade feeds the outcome database — your trading improves and the platform's signal accuracy grows with it."
+  },
+  "copilotValueProp": {
+    "sectionLabel": "ChartingPath Copilot",
+    "headline": "An AI trading assistant built on outcome data — not just indicators",
+    "subheadline": "Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from 63,000+ real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.",
+    "outcomeAwareLabel": "Outcome-aware analysis",
+    "outcomeAwareText": "Ask about any live pattern and Copilot surfaces historical win rates, average R-multiple, and best/worst conditions for that exact setup — from our own data.",
+    "smarterLabel": "Gets smarter over time",
+    "smarterText": "Every paper trade you run feeds the outcome database. Copilot's analysis improves as the dataset grows — it's the only trading AI with a feedback loop built in.",
+    "plainLanguageLabel": "Plain language trade plans",
+    "plainLanguageText": "No jargon. Copilot explains the setup, suggests entry, stop, and target levels, and tells you what conditions would invalidate the trade.",
+    "tryCopilot": "Try Copilot",
+    "learnMore": "Learn more",
+    "disclaimer": "Copilot is available on Pro and above. Paper trading simulation only — not financial advice."
+  },
+  "aboutPage2": {
+    "title": "About ChartingPath — Built by a Trader",
+    "headline": "Built by a trader who couldn't find the data.",
+    "p1": "ChartingPath started with a simple frustration: every pattern scanner shows you when a head and shoulders forms. Nobody tracks what actually happens next.",
+    "p2": "Does it work? At what timeframe? On which instruments? Under what market conditions?",
+    "p3": "I built ChartingPath to answer those questions — and to make that answer get sharper every day as more patterns are detected and tracked through to outcome.",
+    "p4": "What started as a pattern scanner is now becoming something more: the largest labeled dataset of chart pattern outcomes in existence. That data doesn't just help individual traders — it's the foundation for systematic pattern research that's never been possible before.",
+    "p5": "ChartingPath is a solo-built platform. Every line of code, every edge function, every pattern detection is built and maintained by me. That means decisions happen fast, the product improves weekly, and the data stays honest.",
+    "founderName": "Yohei",
+    "founderLocation": "Tokyo, Japan",
+    "ctaText": "Want to explore the data or discuss research access?",
+    "ctaButton": "Get in touch"
+  },
+  "patternLibrary2": {
+    "dataProvenanceNote": "Win rates below are from ChartingPath's live detection engine — real outcomes from real pattern detections, not historical studies. Data grows daily."
   }
 }
