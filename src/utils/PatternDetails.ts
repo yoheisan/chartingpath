@@ -1248,7 +1248,24 @@ export const PATTERN_DETAILS: Record<string, PatternDetail> = {
     description: "Indecision candlestick with equal or nearly equal open and close prices. Shows market uncertainty.",
     accuracy: "65%",
     difficulty: "Beginner",
-    
+
+    whatIsIt: "The Doji is a single-candle pattern where the open and close prices are virtually identical, producing a candle with a very thin or non-existent body. The upper and lower shadows can vary in length, creating variants like the Dragonfly Doji, Gravestone Doji, and Long-Legged Doji. The Doji represents pure indecision — neither buyers nor sellers could gain control during the session. At trend extremes (tops or bottoms), a Doji can signal that the prevailing trend is losing momentum and may reverse.",
+
+    whyItHappens: "A Doji forms when buying and selling pressure are perfectly balanced during a session. In an uptrend, a Doji suggests that bulls are losing their edge — they pushed prices higher but couldn't hold the gains. In a downtrend, it suggests bears couldn't drive prices lower despite trying. The indecision is significant because trends require conviction. When conviction disappears (shown by the Doji), the trend becomes vulnerable to reversal. The longer the shadows, the more intense the battle was — and the more significant the indecision signal.",
+
+    howToIdentify: [
+      "STEP 1: Look for a candle where the open and close are at or very near the same price",
+      "STEP 2: Note the shadow lengths — long shadows indicate a more intense battle between buyers and sellers",
+      "STEP 3: Identify the trend context — Dojis are most significant at trend extremes or key S/R levels",
+      "STEP 4: Classify the type — Dragonfly (long lower shadow), Gravestone (long upper shadow), or Standard",
+      "STEP 5: Wait for the next candle to determine direction — the Doji alone only signals indecision, not direction"
+    ],
+
+    realWorldExamples: [
+      "S&P 500 Daily, February 2020: A Doji at the all-time high signaled indecision before the COVID crash began the following week",
+      "EUR/USD 4H, December 2022: Gravestone Doji at 1.0735 resistance preceded a 200-pip sell-off within 48 hours"
+    ],
+
     characteristics: [
       "Open and close at same or very similar levels",
       "Can have upper and lower shadows of varying lengths",
