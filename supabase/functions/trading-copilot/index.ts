@@ -3284,11 +3284,45 @@ serve(async (req) => {
         "Authorization": `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       };
+
+      // ═══ MODEL ROUTING ═══
+      // Classify request type from the last user message
+      const lastUserMsg = (messages || []).filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
+      const pageType = context?.pageType || viewContext?.currentPage || '';
+      
+      function classifyRequestType(msg: string, page: string): string {
+        // Heavy tasks → strong model
+        if (/backtest|back\s*test|historical\s*(performance|analysis)|equity\s*curve|monte\s*carlo/i.test(msg)) return 'backtest';
+        if (/multi[\s-]*timeframe|mtf|cross[\s-]*timeframe|all\s*timeframes/i.test(msg)) return 'multi_timeframe_analysis';
+        if (/trading\s*plan|master\s*plan|mandate|build.*strategy|create.*plan/i.test(msg)) return 'trading_plan_build';
+        // Light tasks → fast model
+        if (/quick\s*scan|scan.*market|what.*patterns|show.*signals|any.*setups/i.test(msg)) return 'quick_scan';
+        if (/^(what|how|explain|tell|show).{0,30}(pattern|flag|triangle|wedge|channel)/i.test(msg)) return 'single_pattern_query';
+        // Page-based inference
+        if (/backtest/i.test(page)) return 'backtest';
+        if (/screener|scanner/i.test(page)) return 'quick_scan';
+        // Default
+        return 'general';
+      }
+
+      const requestType = classifyRequestType(lastUserMsg, pageType);
+      
+      // Model selection based on request type
+      const HEAVY_TYPES = new Set(['backtest', 'multi_timeframe_analysis', 'trading_plan_build']);
+      const isHeavy = HEAVY_TYPES.has(requestType);
+      const selectedModel = isHeavy ? 'gemini-2.5-pro' : 'gemini-2.0-flash';
+      const selectedMaxTokens = isHeavy ? 8000 : 8192;
+      const selectedTimeout = isHeavy ? 60000 : 30000;
+      
+      console.log(`[trading-copilot] Model routing: type=${requestType} model=${selectedModel} maxTokens=${selectedMaxTokens} timeout=${selectedTimeout}ms`);
+      
+      const routingStartTime = Date.now();
+
       const baseBody = {
-        model: "gemini-2.0-flash",
+        model: selectedModel,
         tools,
         tool_choice: "auto",
-        max_tokens: 8192,
+        max_tokens: selectedMaxTokens,
       };
 
       for (let round = 1; round <= MAX_TOOL_ROUNDS; round++) {
@@ -3307,6 +3341,7 @@ serve(async (req) => {
               messages: convo,
               stream: false,
             }),
+            signal: AbortSignal.timeout(selectedTimeout),
           });
 
           if (aiResp.status === 429 && attempt < MAX_RETRY_ATTEMPTS) {
@@ -3332,10 +3367,12 @@ serve(async (req) => {
 
         const responseText = await aiResp.text();
         let assistantMessage: any = null;
+        let usageData: any = null;
 
         try {
           const result = JSON.parse(responseText);
           assistantMessage = result.choices?.[0]?.message;
+          usageData = result.usage || null;
         } catch {
           const lines = responseText.split("\n");
           for (const line of lines) {
@@ -3382,10 +3419,23 @@ serve(async (req) => {
         }
 
         // No tool calls — this is the final response.
-        // If we got content directly (non-streaming round), send it as tokens
         const directContent = assistantMessage?.content;
+        const latencyMs = Date.now() - routingStartTime;
+        
+        // Log model usage for cost tracking
+        supabase.from('copilot_model_usage').insert({
+          user_id: userId || null,
+          request_type: requestType,
+          model_used: selectedModel,
+          response_latency_ms: latencyMs,
+          input_tokens: usageData?.prompt_tokens || null,
+          output_tokens: usageData?.completion_tokens || null,
+          source: 'copilot',
+        }).then(({ error }) => {
+          if (error) console.error('[trading-copilot] Failed to log model usage:', error.message);
+        });
+
         if (directContent) {
-          // Send the already-received content as a single token burst
           writer.sendToken(directContent);
           writer.sendDone();
 

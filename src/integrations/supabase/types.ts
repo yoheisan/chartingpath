@@ -1566,6 +1566,42 @@ export type Database = {
           },
         ]
       }
+      copilot_model_usage: {
+        Row: {
+          created_at: string
+          id: string
+          input_tokens: number | null
+          model_used: string
+          output_tokens: number | null
+          request_type: string
+          response_latency_ms: number | null
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          model_used: string
+          output_tokens?: number | null
+          request_type: string
+          response_latency_ms?: number | null
+          source?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          model_used?: string
+          output_tokens?: number | null
+          request_type?: string
+          response_latency_ms?: number | null
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       copilot_model_versions: {
         Row: {
           accuracy_metrics: Json | null
