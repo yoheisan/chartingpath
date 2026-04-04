@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
