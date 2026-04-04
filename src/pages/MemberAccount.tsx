@@ -285,6 +285,10 @@ const MemberAccount = () => {
           </TabsContent>
 
 
+          <TabsContent value="data-providers">
+            <DataProviderSettings userId={profile?.user_id} />
+          </TabsContent>
+
           <TabsContent value="preferences">
             <NotificationSettings userId={profile?.id} />
           </TabsContent>

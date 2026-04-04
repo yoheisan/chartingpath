@@ -335,3 +335,6 @@ verify_jwt = false
 
 [functions.get-live-price]
 verify_jwt = false
+
+[functions.verify-data-provider]
+verify_jwt = false
