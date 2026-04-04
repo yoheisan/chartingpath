@@ -33,6 +33,14 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
     setNotes('');
     setLivePriceUnavailable(false);
     setManualExitPrice(String(trade.entry_price));
+
+    // If forcePriceEntry is set, skip the price check
+    if (forcePriceEntry) {
+      setLivePriceUnavailable(true);
+      setCheckingPrice(false);
+      return;
+    }
+
     setCheckingPrice(true);
 
     const checkPrice = async () => {
@@ -59,7 +67,7 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
       }
     };
     checkPrice();
-  }, [open, trade]);
+  }, [open, trade, forcePriceEntry]);
 
   const handleConfirm = () => {
     if (!trade || !selectedReason) return;
