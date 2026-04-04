@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 
 const Pricing = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   useEffect(() => {
     track("pricing_viewed");
