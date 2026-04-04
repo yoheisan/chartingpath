@@ -19,6 +19,7 @@ import {
 } from '@/config/patternStatsConstants';
 
 export default function PatternStatsIndexPage() {
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeAsset, setActiveAsset] = useState<string>('all');
