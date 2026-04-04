@@ -81,24 +81,30 @@ const Auth = () => {
 
         navigate('/patterns/live', { replace: true });
       } else {
-        // Check if user has active master plan or open trades → send to Copilot
+        // Route Copilot ACS users to /copilot if they have
+        // an active master plan or open paper trades
         (async () => {
-          const { data: activePlan } = await supabase
-            .from('master_plans')
-            .select('id')
-            .eq('user_id', authUser.id)
-            .eq('is_active', true)
-            .maybeSingle();
+          try {
+            const [{ data: activePlan }, { count: openTrades }] = await Promise.all([
+              supabase
+                .from('master_plans')
+                .select('id')
+                .eq('user_id', authUser.id)
+                .eq('is_active', true)
+                .maybeSingle(),
+              supabase
+                .from('paper_trades')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', authUser.id)
+                .eq('status', 'open'),
+            ]);
 
-          const { count: openTrades } = await supabase
-            .from('paper_trades')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', authUser.id)
-            .eq('status', 'open');
-
-          if (activePlan || (openTrades && openTrades > 0)) {
-            navigate('/copilot', { replace: true });
-          } else {
+            if (activePlan || (openTrades && openTrades > 0)) {
+              navigate('/copilot', { replace: true });
+            } else {
+              navigate(redirectPath, { replace: true });
+            }
+          } catch {
             navigate(redirectPath, { replace: true });
           }
         })();
@@ -301,8 +307,8 @@ const Auth = () => {
 
         setTimeout(() => {
           void ensureProfileForUser(user).finally(() => {
-            // New OAuth users → dashboard; returning users → redirect path
-            const dest = isNewUser ? '/members/dashboard' : redirectPath;
+            // New OAuth users → live screener; returning users → redirect path
+            const dest = isNewUser ? '/patterns/live' : redirectPath;
             navigate(dest);
           });
         }, 0);
