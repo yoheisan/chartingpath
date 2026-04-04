@@ -7,6 +7,7 @@ import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { Button } from "@/components/ui/button";
 
 export const HowItWorks = () => {
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { t } = useTranslation();
 
   const useCases = [
