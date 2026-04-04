@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Radar, Database, Sparkles, Play, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 export function FeatureBlocks() {
   const { t } = useTranslation();
