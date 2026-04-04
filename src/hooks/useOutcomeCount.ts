@@ -18,7 +18,7 @@ export function useOutcomeCount() {
     ? count >= 1_000_000
       ? `${(count / 1_000_000).toFixed(1)}M+`
       : `${Math.floor(count / 1_000)}K+`
-    : '460K+';
+    : '465K+';
 
   return { count, formatted };
 }

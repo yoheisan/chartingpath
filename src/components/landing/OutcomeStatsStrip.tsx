@@ -15,7 +15,7 @@ export function OutcomeStatsStrip() {
           loading: false as const,
           icon: BarChart3,
           value: data.total_patterns.toLocaleString(),
-          label: t('outcomeStats.totalPatternsTracked', 'Total patterns tracked'),
+          label: t('outcomeStats.totalPatternsTracked', 'Total labeled outcomes'),
         },
         {
           key: 'winrate',
