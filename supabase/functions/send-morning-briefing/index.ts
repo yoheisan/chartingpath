@@ -295,6 +295,13 @@ serve(async (req) => {
 
     if (isWeekend) {
       console.log("[morning-briefing] Skipping — weekend (UTC day:", dayOfWeek, ")");
+      const supabaseForLog = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      await supabaseForLog.from("email_send_log").insert({
+        email_type: "morning_brief",
+        recipient_email: "all",
+        status: "skipped",
+        brief_mode: "weekend",
+      });
       return new Response(JSON.stringify({ success: true, sent: 0, message: "Skipped — weekend" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
