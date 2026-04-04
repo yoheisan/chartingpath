@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import {
   STAT_PATTERNS,
   STAT_ASSET_CLASSES,
