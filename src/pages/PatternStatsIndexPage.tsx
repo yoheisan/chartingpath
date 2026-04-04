@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import {
   STAT_PATTERNS,
   STAT_ASSET_CLASSES,
@@ -18,6 +19,7 @@ import {
 } from '@/config/patternStatsConstants';
 
 export default function PatternStatsIndexPage() {
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeAsset, setActiveAsset] = useState<string>('all');
@@ -50,7 +52,7 @@ export default function PatternStatsIndexPage() {
             {t('patternStats.indexTitle')}
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            {t('patternStats.indexSubtitle')}
+            {(t as any)('patternStats.indexSubtitle', { count: outcomeCount })}
           </p>
           <div className="h-0.5 w-20 bg-orange-500 mt-4" />
         </header>
@@ -142,7 +144,7 @@ export default function PatternStatsIndexPage() {
         <section className="mt-16 max-w-3xl">
           <h2 className="text-lg font-bold text-foreground mb-3">{t('patternStats.aboutTitle')}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {t('patternStats.aboutText')}
+            {(t as any)('patternStats.aboutText', { count: outcomeCount })}
           </p>
         </section>
       </div>

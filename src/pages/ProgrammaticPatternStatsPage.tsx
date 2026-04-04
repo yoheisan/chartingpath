@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { PageMeta } from '@/components/PageMeta';
 import { usePatternStats } from '@/hooks/usePatternStats';
 import { useTranslation } from 'react-i18next';
@@ -130,6 +131,7 @@ function PatternDiagram({ slug }: { slug: string }) {
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ProgrammaticPatternStatsPage() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { patternSlug = '', assetClass = '', timeframe = '' } = useParams<{
     patternSlug: string;
     assetClass: string;
@@ -497,10 +499,11 @@ export default function ProgrammaticPatternStatsPage() {
                       {t('patternStats.faqSampleQuestion')}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      {t('patternStats.faqSampleAnswer', {
+                      {(t as any)('patternStats.faqSampleAnswer', {
                         trades: data.totalTrades.toLocaleString(),
                         from: data.earliestDate?.split('T')[0] || '—',
                         to: data.lastUpdated.split('T')[0],
+                        count: outcomeCount,
                       })}
                     </AccordionContent>
                   </AccordionItem>

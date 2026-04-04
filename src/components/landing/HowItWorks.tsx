@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
 import { Button } from "@/components/ui/button";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 
 export const HowItWorks = () => {
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { t } = useTranslation();
 
   const useCases = [
@@ -25,7 +27,7 @@ export const HowItWorks = () => {
       title: t('howItWorks.validateTitle'),
       description: t('howItWorks.validateDesc'),
       bullets: [
-        t('howItWorks.validateBullet1'),
+        (t as any)('howItWorks.validateBullet1', { count: outcomeCount }),
         t('howItWorks.validateBullet2'),
         t('howItWorks.validateBullet3'),
       ],

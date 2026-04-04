@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { OnboardingStep } from './OnboardingStep';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { Sparkles, Radar, FlaskConical, LayoutDashboard, Trophy } from 'lucide-react';
 
 const STEPS = [
@@ -19,7 +20,7 @@ const STEPS = [
     titleKey: 'onboarding.welcomeTitle',
     descKey: 'onboarding.welcomeDesc',
     titleFallback: 'Welcome to ChartingPath',
-    descFallback: 'ChartingPath validates chart patterns against 320,000+ historical outcomes so you can trade with real statistical edges — not guesswork.',
+    descFallback: 'ChartingPath validates chart patterns against {{count}}+ historical outcomes so you can trade with real statistical edges — not guesswork.',
   },
   {
     icon: <Radar className="h-8 w-8 text-primary" />,
@@ -57,6 +58,7 @@ const STEPS = [
 
 export function OnboardingTour() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { isCompleted, complete } = useOnboardingState();
   const navigate = useNavigate();
@@ -102,7 +104,7 @@ export function OnboardingTour() {
         <OnboardingStep
           icon={current.icon}
           title={t(current.titleKey, { defaultValue: current.titleFallback })}
-          description={t(current.descKey, { defaultValue: current.descFallback })}
+          description={(t as any)(current.descKey, { defaultValue: current.descFallback, count: outcomeCount })}
           stepIndex={step}
           totalSteps={STEPS.length}
           action={

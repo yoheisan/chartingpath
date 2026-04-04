@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const trackLoginAttempt = (payload: {
 
 const Auth = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeFormatted } = useOutcomeCount();
   const [searchParams] = useSearchParams();
 
   const rawRedirect = searchParams.get("redirect");
@@ -568,7 +570,7 @@ const Auth = () => {
             )}
             
             <div>
-              <h2 className="text-2xl font-bold mb-2">{t('auth.headline')}</h2>
+              <h2 className="text-2xl font-bold mb-2">{(t as any)('auth.headline', { count: outcomeFormatted })}</h2>
               <p className="text-muted-foreground">
                 {t('auth.subheadline')}
               </p>

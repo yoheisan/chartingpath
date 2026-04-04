@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Zap, FlaskConical, Bell } from 'lucide-react';
 import { buildPatternLabUrl } from '@/utils/patternLabUrl';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 interface PatternStatsCTAProps {
   patternId: string;
@@ -14,6 +15,7 @@ interface PatternStatsCTAProps {
 export function PatternStatsCTA({ patternId, patternName, instrument }: PatternStatsCTAProps) {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   if (isAuthLoading) return null;
 
@@ -35,7 +37,7 @@ export function PatternStatsCTA({ patternId, patternName, instrument }: PatternS
               {t('patternCTA.anonHeadline', "You're looking at data most traders never see.")}
             </h3>
             <p className="text-muted-foreground text-sm sm:text-base">
-              {t('patternCTA.anonSubheadline', '320,000+ backtested outcomes. Free account to unlock backtesting, alerts, and more.')}
+              {(t as any)('patternCTA.anonSubheadline', { defaultValue: '{{count}}+ backtested outcomes. Free account to unlock backtesting, alerts, and more.', count: outcomeCount })}
             </p>
           </div>
 
