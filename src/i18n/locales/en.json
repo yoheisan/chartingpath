@@ -1322,7 +1322,7 @@
   "metrics": {
     "instruments": "Instruments",
     "patterns": "Patterns",
-    "trades": "Backtested Outcomes",
+    "trades": "Labeled Outcomes",
     "avgWinRate": "Avg Win Rate (A-Grade)",
     "avgExpectancy": "Avg Expectancy (A-Grade)"
   },
@@ -6460,7 +6460,7 @@
   },
   "outcomeStats": {
     "sectionLabel": "Live outcome data — updated daily",
-    "totalPatternsTracked": "Total patterns tracked",
+    "totalPatternsTracked": "Total labeled outcomes",
     "topWinRateThisMonth": "Top win rate this month",
     "topWinRateDetail": "Top win rate this month — {{pattern}} ({{timeframe}})",
     "mostDetectedPattern": "Most detected pattern",
