@@ -248,6 +248,18 @@ serve(async (req) => {
   }
 
   try {
+    // Weekend guard — skip on Saturday/Sunday (markets closed)
+    const now = new Date();
+    const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    if (isWeekend) {
+      console.log("[morning-briefing] Skipping — weekend (UTC day:", dayOfWeek, ")");
+      return new Response(JSON.stringify({ success: true, sent: 0, message: "Skipped — weekend" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Get users who have opted into morning briefing emails
