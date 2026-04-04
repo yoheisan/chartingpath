@@ -91,16 +91,54 @@ export function usePaperTrading(userId?: string) {
     setClosingTradeId(tradeId);
     try {
       let exitPrice: number | null = overrideData?.manualPrice ?? null;
+      let priceSource = 'manual';
 
       if (exitPrice == null) {
-        const { data: latest } = await supabase
+        // Layer 1: live_pattern_detections (must be <4h old)
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+        const { data: liveDetection } = await supabase
           .from('live_pattern_detections')
-          .select('current_price')
+          .select('current_price, updated_at')
           .eq('instrument', symbol)
+          .gte('updated_at', fourHoursAgo)
           .order('first_detected_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        exitPrice = latest?.current_price ? Number(latest.current_price) : null;
+
+        if (liveDetection?.current_price) {
+          exitPrice = Number(liveDetection.current_price);
+          priceSource = 'live_detections';
+        }
+      }
+
+      if (exitPrice == null) {
+        // Layer 2: latest_price cached on the trade row (must be <30min old)
+        const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+        const { data: tradeCache } = await supabase
+          .from('paper_trades')
+          .select('latest_price, latest_price_at')
+          .eq('id', tradeId)
+          .maybeSingle();
+
+        if (tradeCache?.latest_price && tradeCache?.latest_price_at && tradeCache.latest_price_at > thirtyMinAgo) {
+          exitPrice = Number(tradeCache.latest_price);
+          priceSource = 'trade_cache';
+        }
+      }
+
+      if (exitPrice == null) {
+        // Layer 3: fresh API call to get-live-price
+        try {
+          const { data: liveQuote, error: quoteError } = await supabase.functions.invoke('get-live-price', {
+            body: { symbol }
+          });
+          if (!quoteError && liveQuote?.price) {
+            exitPrice = Number(liveQuote.price);
+            priceSource = 'live_api';
+          }
+        } catch (e) {
+          console.warn('[PaperTrading] get-live-price failed:', e);
+        }
       }
 
       const { data: trade } = await supabase
@@ -109,7 +147,13 @@ export function usePaperTrading(userId?: string) {
         .eq('id', tradeId)
         .single();
 
-      if (!trade || exitPrice == null) { toast.error('Could not fetch current price'); return; }
+      if (!trade) { toast.error('Could not load trade data'); return; }
+
+      // Layer 4: if all automated layers failed, signal UI for manual price input
+      if (exitPrice == null) {
+        setNeedManualPrice(tradeId);
+        return;
+      }
 
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const isForex = trade.instrument_type === 'forex' || isForexSymbol(symbol);
