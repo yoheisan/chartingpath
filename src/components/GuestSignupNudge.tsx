@@ -10,6 +10,8 @@ const DISMISSED_KEY = 'guest_nudge_dismissed';
 export function GuestSignupNudge() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { t } = useTranslation();
+  const location = useLocation();
+  const redirectParam = encodeURIComponent(location.pathname + location.search);
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISSED_KEY) === '1';
