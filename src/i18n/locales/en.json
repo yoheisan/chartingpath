@@ -111,7 +111,7 @@
     "problemP2": "We searched for a tool that could tell us — with real data — whether a Descending Triangle on EURUSD at the 4H timeframe had a positive expectancy over the last 5 years. It didn't exist. So we built it.",
     "sectionBelieve": "What We Believe",
     "beliefDataTitle": "Data over dogma",
-    "beliefDataDesc": "Every pattern claim on ChartingPath is backed by real historical outcomes — not textbook theory, not YouTube heuristics. 320,000+ trades don't lie.",
+    "beliefDataDesc": "Every pattern claim on ChartingPath is backed by real historical outcomes — not textbook theory, not YouTube heuristics. {{count}}+ trades don't lie.",
     "beliefEdgeTitle": "Edge is earned, not sold",
     "beliefEdgeDesc": "We don't sell signals. We don't promise returns. We give you the statistical foundation to develop your own edge — and the tools to validate it before risking a dollar.",
     "beliefTransparencyTitle": "Transparency builds trust",
