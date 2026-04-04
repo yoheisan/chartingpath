@@ -55,6 +55,7 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
 
 export const MetricStrip = () => {
   const { t } = useTranslation();
+  const { count: outcomeCount } = useOutcomeCount();
   const [tickerCount, setTickerCount] = useState(800);
 
   useEffect(() => {
