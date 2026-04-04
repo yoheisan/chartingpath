@@ -40,35 +40,62 @@ function languageName(code: string): string {
   return map[code] || "English";
 }
 
-async function fetchYahooQuote(symbol: string): Promise<number | null> {
+async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
-    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const url = `https://eodhd.com/api/real-time/${eodhSymbol}?api_token=${EODHD_API_KEY}&fmt=json`;
+    const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    const result = data?.chart?.result?.[0];
-    return result?.meta?.regularMarketPrice || result?.meta?.previousClose || null;
+    return data.close || data.previousClose || null;
   } catch { return null; }
 }
 
-async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string }> {
-  const [adv, dec, vix] = await Promise.all([
-    fetchYahooQuote("^ADV"),
-    fetchYahooQuote("^DECL"),
-    fetchYahooQuote("^VIX"),
+async function fetchBreadthFromEODHDBulk(): Promise<{ advances: number; declines: number; unchanged: number } | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
+  try {
+    const url = `https://eodhd.com/api/eod-bulk-last-day/US?api_token=${EODHD_API_KEY}&fmt=json&filter=extended`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length < 100) return null;
+
+    let advances = 0, declines = 0, unchanged = 0;
+    for (const item of data) {
+      const change = item.change_p ?? item.change ?? 0;
+      if (change > 0) advances++;
+      else if (change < 0) declines++;
+      else unchanged++;
+    }
+    console.log(`[morning-briefing] EODHD bulk breadth: ${advances} adv / ${declines} dec / ${unchanged} unch`);
+    return { advances, declines, unchanged };
+  } catch (err) {
+    console.error("[morning-briefing] EODHD bulk fetch error:", err);
+    return null;
+  }
+}
+
+async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean }> {
+  const [bulkBreadth, vix] = await Promise.all([
+    fetchBreadthFromEODHDBulk(),
+    fetchEODHDQuote("VIX.INDX"),
   ]);
 
-  const advances = adv || 1650;
-  const declines = dec || 1350;
-  const ratio = declines > 0 ? advances / declines : 1;
+  if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
+    const ratio = bulkBreadth.declines > 0 ? bulkBreadth.advances / bulkBreadth.declines : 1;
+    let sentiment = "neutral";
+    if (ratio >= 1.5) sentiment = "bullish";
+    else if (ratio >= 1.0) sentiment = "neutral-bullish";
+    else if (ratio >= 0.67) sentiment = "neutral-bearish";
+    else sentiment = "bearish";
+    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true };
+  }
 
-  let sentiment = "neutral";
-  if (ratio >= 1.5) sentiment = "bullish";
-  else if (ratio >= 1.0) sentiment = "neutral-bullish";
-  else if (ratio >= 0.67) sentiment = "neutral-bearish";
-  else sentiment = "bearish";
-
-  return { advances, declines, vix, sentiment };
+  // No real data available — return honest "unavailable" instead of fake numbers
+  console.warn("[morning-briefing] Market breadth data unavailable — no fallback used");
+  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false };
 }
 
 async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
