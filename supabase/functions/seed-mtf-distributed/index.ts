@@ -197,6 +197,7 @@ serve(async (req) => {
     console.log(`[seed-distributed] Starting distributed seeding`);
     console.log(`[seed-distributed] Partitions: ${partitionsToProcess.join(', ')}`);
     console.log(`[seed-distributed] Timeframes: ${targetTimeframes.join(', ')}`);
+    console.log(`[seed-distributed] forceFullBackfill: ${forceFullBackfill}`);
 
     const results: Array<{
       partition: string;
