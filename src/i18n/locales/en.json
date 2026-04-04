@@ -1127,7 +1127,8 @@
     "stockMarket": "Stock Market",
     "strategyWorkspace": "Strategy Workspace",
     "terms": "Terms",
-    "tools": "Tools"
+    "tools": "Tools",
+    "operatedBy": "ChartingPath is operated by Yohei Nishiyama, Tokyo, Japan."
   },
   "hero": {
     "cta": "See Today's Setups",

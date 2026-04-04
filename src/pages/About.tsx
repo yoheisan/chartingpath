@@ -43,6 +43,8 @@ const About = () => {
             </Button>
           </div>
 
+          <p className="text-xs text-muted-foreground mt-12">{t('footer.operatedBy', 'ChartingPath is operated by Yohei Nishiyama, Tokyo, Japan.')}</p>
+
         </section>
       </div>
   );
