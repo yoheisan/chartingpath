@@ -170,7 +170,7 @@
     "chooseActionSubtitle": "Select an activity based on your current goal",
     "platformBadge": "Chart Pattern Backtesting Platform",
     "heroHeadline": "Know what happens after the pattern forms.",
-    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.",
+    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from {{count}} pattern detections. Not textbook stats — real data from our engine.",
     "seeLivePatterns": "See live patterns",
     "exploreOutcomeData": "Explore outcome data",
     "patternsDetectedThisWeek": "{{num}} patterns detected this week",
@@ -6416,7 +6416,7 @@
   "copilotValueProp": {
     "sectionLabel": "ChartingPath Copilot",
     "headline": "An AI trading assistant built on outcome data — not just indicators",
-    "subheadline": "Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from 63,000+ real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.",
+    "subheadline": "Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from {{count}} real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.",
     "outcomeAwareLabel": "Outcome-aware analysis",
     "outcomeAwareText": "Ask about any live pattern and Copilot surfaces historical win rates, average R-multiple, and best/worst conditions for that exact setup — from our own data.",
     "smarterLabel": "Gets smarter over time",
