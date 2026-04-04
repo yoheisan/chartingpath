@@ -96,7 +96,7 @@ const AuthButton = () => {
     return (
       <div className="flex items-center gap-2">
         <Link
-          to="/auth"
+          to={authSignInUrl}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {t('accountMenu.login', 'Sign In')}
