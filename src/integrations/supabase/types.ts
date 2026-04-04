@@ -2063,6 +2063,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_send_log: {
+        Row: {
+          brief_mode: string | null
+          created_at: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          resend_message_id: string | null
+          status: string
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          brief_mode?: string | null
+          created_at?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          resend_message_id?: string | null
+          status: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          brief_mode?: string | null
+          created_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          resend_message_id?: string | null
+          status?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       extracted_strings: {
         Row: {
           context_element: string | null
