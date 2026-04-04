@@ -15,6 +15,7 @@ interface OverrideDialogProps {
   trade: PaperTrade | null;
   onConfirm: (trade: PaperTrade, reason: string, notes: string, manualPrice?: number) => void;
   submitting: boolean;
+  forcePriceEntry?: boolean;
 }
 
 export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting }: OverrideDialogProps) {
