@@ -223,7 +223,8 @@ serve(async (req) => {
           supabaseKey,
           partitionName,
           config,
-          timeframe
+          timeframe,
+          forceFullBackfill
         );
 
         results.push({
