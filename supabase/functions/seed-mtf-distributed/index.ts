@@ -103,8 +103,8 @@ async function runPartitionSeeding(
         maxInstrumentsPerType: config.isPremium ? config.maxInstruments : config.batchSize,
         offset,
         dryRun: false,
-        incrementalMode: true,
-        forceFullBackfill: false,
+        incrementalMode: !forceFullBackfill,
+        forceFullBackfill: forceFullBackfill,
         premiumOnly: config.isPremium || false
       };
 
@@ -178,12 +178,14 @@ serve(async (req) => {
     // Parse request parameters
     let partition = 'all';
     let targetTimeframes = TIMEFRAMES;
+    let forceFullBackfill = false;
 
     if (req.method === 'POST') {
       try {
         const body = await req.json();
         if (body.partition) partition = body.partition;
         if (body.timeframes?.length) targetTimeframes = body.timeframes;
+        if (body.forceFullBackfill === true) forceFullBackfill = true;
       } catch {}
     }
 
@@ -195,6 +197,7 @@ serve(async (req) => {
     console.log(`[seed-distributed] Starting distributed seeding`);
     console.log(`[seed-distributed] Partitions: ${partitionsToProcess.join(', ')}`);
     console.log(`[seed-distributed] Timeframes: ${targetTimeframes.join(', ')}`);
+    console.log(`[seed-distributed] forceFullBackfill: ${forceFullBackfill}`);
 
     const results: Array<{
       partition: string;
