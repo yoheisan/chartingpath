@@ -6425,5 +6425,32 @@
   },
   "patternLibrary2": {
     "dataProvenanceNote": "Win rates below are from ChartingPath's live detection engine — real outcomes from real pattern detections, not historical studies. Data grows daily."
+  },
+  "account": {
+    "dataProviders": "Data Providers",
+    "dataProvidersDesc": "Connect your own data provider to unlock intraday (1H/4H/8H) pattern scanning at no cost to ChartingPath.",
+    "eodhdTitle": "EODHD — Intraday FX & Stocks",
+    "eodhdDesc": "Connect your EODHD account to unlock 1H, 4H, and 8H pattern scanning across FX and global stocks. Get your API key at eodhd.com (All-In-One plan from $83/mo).",
+    "alpacaTitle": "Alpaca — US Stocks Real-Time",
+    "alpacaDesc": "Connect your free Alpaca account for real-time US stock data and live trading. Alpaca accounts are free at alpaca.markets.",
+    "apiKey": "API Key",
+    "secretKey": "Secret Key",
+    "enterApiKey": "Enter your EODHD API key",
+    "enterAlpacaKey": "Enter your Alpaca API key",
+    "enterAlpacaSecret": "Enter your Alpaca secret key",
+    "connectEodhd": "Connect EODHD",
+    "connectAlpaca": "Connect Alpaca",
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "verifiedAt": "Verified",
+    "providerVerifyFailed": "Verification failed",
+    "providerConnectError": "Connection error",
+    "providerDisconnected": "Provider disconnected",
+    "providerDisconnectError": "Failed to disconnect"
+  },
+  "screener": {
+    "intradayGateTitle": "Intraday data provider required",
+    "intradayGateDesc": "Intraday patterns (1H/4H/8H) require a connected data provider. Connect your own EODHD or Alpaca account — free for you, no cost to ChartingPath.",
+    "connectProvider": "Connect a data provider →"
   }
 }

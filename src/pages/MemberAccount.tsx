@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import MemberNavigation from "@/components/MemberNavigation";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
-import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle } from "lucide-react";
+import { DataProviderSettings } from "@/components/settings/DataProviderSettings";
+import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle, Database } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,11 +179,12 @@ const MemberAccount = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-           <TabsList className="grid w-full grid-cols-3">
-             <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
-             <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
-             <TabsTrigger value="preferences">{t('memberAccount.preferences')}</TabsTrigger>
-           </TabsList>
+           <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
+              <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
+              <TabsTrigger value="data-providers">{t('account.dataProviders', 'Data Providers')}</TabsTrigger>
+              <TabsTrigger value="preferences">{t('memberAccount.preferences')}</TabsTrigger>
+            </TabsList>
 
           <TabsContent value="profile">
             <Card>
@@ -282,6 +284,10 @@ const MemberAccount = () => {
             <SubscriptionManager />
           </TabsContent>
 
+
+          <TabsContent value="data-providers">
+            <DataProviderSettings userId={profile?.user_id} />
+          </TabsContent>
 
           <TabsContent value="preferences">
             <NotificationSettings userId={profile?.id} />
