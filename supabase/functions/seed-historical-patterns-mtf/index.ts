@@ -1756,7 +1756,7 @@ function runHistoricalBacktest(
     const stopDistance = atr * 2;
     const tpDistance = atr * 4; // 2R
     
-    const isLong = pattern.direction === 'long';
+    const isLong = (detectionResult.direction || pattern.direction) === 'long';
     const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
     const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
     const riskReward = tpDistance / stopDistance;
