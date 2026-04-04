@@ -212,7 +212,9 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     return {
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
-      briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`,
+      briefingHtml: breadth.dataAvailable
+        ? `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`
+        : `<p>Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>`,
       labels: defaultLabels,
     };
   }
