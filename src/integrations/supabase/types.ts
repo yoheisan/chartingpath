@@ -5874,6 +5874,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_data_providers: {
+        Row: {
+          api_key_encrypted: string
+          api_secret_encrypted: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          api_key_encrypted: string
+          api_secret_encrypted?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string
+          api_secret_encrypted?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       user_email_preferences: {
         Row: {
           alert_emails: boolean | null
