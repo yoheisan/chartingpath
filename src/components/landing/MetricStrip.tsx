@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3, Layers, Database, Clock, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 
 interface MetricProps {
   value: number;
