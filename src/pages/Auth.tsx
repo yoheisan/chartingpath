@@ -31,6 +31,7 @@ const trackLoginAttempt = (payload: {
 
 const Auth = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeFormatted } = useOutcomeCount();
   const [searchParams] = useSearchParams();
 
   const rawRedirect = searchParams.get("redirect");
