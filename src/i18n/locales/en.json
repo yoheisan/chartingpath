@@ -6449,7 +6449,7 @@
   },
   "landing": {
     "heroHeadline": "Know what happens after the pattern forms.",
-    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.",
+    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and outcome data from {{count}} pattern detections. Not textbook stats — real data from our engine.",
     "seeLivePatterns": "See live patterns",
     "exploreOutcomeData": "Explore outcome data",
     "patternsDetectedThisWeek": "{{num}} patterns detected this week",
