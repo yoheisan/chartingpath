@@ -86,7 +86,8 @@ async function runPartitionSeeding(
   supabaseKey: string,
   partition: string,
   config: PartitionConfig,
-  timeframe: string
+  timeframe: string,
+  forceFullBackfill = false
 ): Promise<{ success: boolean; inserted: number; errors: string[] }> {
   const allErrors: string[] = [];
   let totalInserted = 0;
