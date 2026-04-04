@@ -147,7 +147,7 @@
     "profilePatternTitle": "The Pattern Trader",
     "profilePatternDesc": "You've been trading Bull Flags and Double Bottoms for years — mostly on gut feel. ChartingPath tells you which ones actually worked, on which instruments, at which timeframes. Finally: proof.",
     "profilePropTitle": "The Prop Trader",
-    "profilePropDesc": "You're paying for challenge accounts hoping your strategy survives the drawdown rules. ChartingPath lets you validate your pattern strategy against 320,000+ historical outcomes before you spend another dollar on a challenge fee.",
+    "profilePropDesc": "You're paying for challenge accounts hoping your strategy survives the drawdown rules. ChartingPath lets you validate your pattern strategy against {{count}}+ historical outcomes before you spend another dollar on a challenge fee.",
     "visionHeadline1": "From signal discovery to",
     "visionHeadline2": "pattern intelligence.",
     "visionDesc": "The future we're building is one where any trader — regardless of experience — can answer the question \"does my strategy actually work?\" in under 60 seconds. Where pattern outcomes are transparent, verifiable, and continuously improving. Where the gap between retail traders and institutional desks narrows — not because retail traders got more capital, but because they finally got the same quality of information.",
