@@ -36,12 +36,12 @@ const Auth = () => {
 
   const rawRedirect = searchParams.get("redirect");
   const redirectPath = (() => {
-    if (!rawRedirect) return "/members/trading";
+    if (!rawRedirect) return "/patterns/live";
     try {
       const decoded = decodeURIComponent(rawRedirect);
-      return decoded.startsWith("/") ? decoded : "/members/trading";
+      return decoded.startsWith("/") ? decoded : "/patterns/live";
     } catch {
-      return "/members/trading";
+      return "/patterns/live";
     }
   })();
 
