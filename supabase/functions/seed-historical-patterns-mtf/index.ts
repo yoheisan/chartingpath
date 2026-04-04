@@ -986,16 +986,26 @@ const PATTERN_REGISTRY: Record<string, {
 
       const projectedResistance = lastPeaks[1].value + highSlope * (window.length - 1 - lastPeaks[1].index);
       const lastClose = closes[closes.length - 1];
-      const detected = lastClose > projectedResistance * 1.002;
+
+      // Upside breakout
+      const upsideBreak = lastClose > projectedResistance * 1.002;
+
+      // Downside breakout: project support line
+      const projectedSupport = lastTroughs[1].value + lowSlope * (window.length - 1 - lastTroughs[1].index);
+      const downsideBreak = lastClose < projectedSupport * 0.998;
+
+      const detected = upsideBreak || downsideBreak;
+      const breakoutDirection: 'long' | 'short' = upsideBreak ? 'long' : 'short';
 
       return {
         detected,
+        direction: breakoutDirection,
         pivots: detected ? [
           { index: lastPeaks[0].index, price: lastPeaks[0].value, type: 'high', label: 'R1' },
           { index: lastPeaks[1].index, price: lastPeaks[1].value, type: 'high', label: 'R2' },
           { index: lastTroughs[0].index, price: lastTroughs[0].value, type: 'low', label: 'S1' },
           { index: lastTroughs[1].index, price: lastTroughs[1].value, type: 'low', label: 'S2' },
-          { index: window.length - 1, price: lastClose, type: 'high', label: 'Breakout' }
+          { index: window.length - 1, price: lastClose, type: breakoutDirection === 'long' ? 'high' : 'low', label: `${breakoutDirection === 'long' ? 'Upside' : 'Downside'} Breakout` }
         ] : []
       };
     }
