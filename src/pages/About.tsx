@@ -27,7 +27,8 @@ const About = () => {
           </div>
 
           <div className="mt-16 pt-8 border-t border-border">
-            <p className="text-foreground font-semibold text-lg">{t('aboutPage2.founderName', 'Yohei')}</p>
+            <p className="text-foreground font-semibold text-lg">{t('aboutPage2.founderName', 'Yohei Nishiyama')}</p>
+            <p className="text-muted-foreground text-sm">{t('aboutPage2.founderRole', 'Ex-TradingView Japan (first hire)')}</p>
             <p className="text-muted-foreground text-sm">{t('aboutPage2.founderLocation', 'Tokyo, Japan')}</p>
           </div>
 
