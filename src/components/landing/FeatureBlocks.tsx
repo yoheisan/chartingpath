@@ -5,6 +5,7 @@ import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 export function FeatureBlocks() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   const FEATURES = [
     {
