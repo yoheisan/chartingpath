@@ -166,7 +166,7 @@ const ProjectRun = () => {
       
       if (!response.ok) {
         if (response.status === 401) {
-          navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
+          navigate(`/auth?redirect=${encodeURIComponent(`/projects/runs/${runId}`)}`);
           return;
         }
         throw new Error(data.error || 'Failed to fetch run');
