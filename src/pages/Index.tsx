@@ -92,7 +92,7 @@ const Index = () => {
             </h1>
             
             <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-10 max-w-xl animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-              {t('landing.heroSubheadline', `ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and outcome data from ${outcomeCount} pattern detections. Not textbook stats — real data from our engine.`)}
+              {t('landing.heroSubheadline', `ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and outcome data from ${outcomeCount} pattern detections. Not textbook stats — real data from our engine.`, { count: outcomeCount })}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
