@@ -9,6 +9,7 @@ import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 
 export function CopilotValueProp() {
   const copilot = useTradingCopilotContext();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { t } = useTranslation();
 
   const differentiators = [
