@@ -453,7 +453,7 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(
-              "/members/trading"
+              "/patterns/live"
             )}`,
           }
         });
