@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Zap, FlaskConical, Bell } from 'lucide-react';
 import { buildPatternLabUrl } from '@/utils/patternLabUrl';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 interface PatternStatsCTAProps {
   patternId: string;
