@@ -196,7 +196,6 @@ const Footer = () => {
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy', 'Privacy')}</Link>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground text-center mt-4">{t('footer.operatedBy', 'ChartingPath is operated by Yohei Nishiyama, Tokyo, Japan.')}</p>
       </div>
     </footer>
   );
