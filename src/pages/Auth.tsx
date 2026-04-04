@@ -81,7 +81,27 @@ const Auth = () => {
 
         navigate('/patterns/live', { replace: true });
       } else {
-        navigate(redirectPath, { replace: true });
+        // Check if user has active master plan or open trades → send to Copilot
+        (async () => {
+          const { data: activePlan } = await supabase
+            .from('master_plans')
+            .select('id')
+            .eq('user_id', authUser.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          const { count: openTrades } = await supabase
+            .from('paper_trades')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authUser.id)
+            .eq('status', 'open');
+
+          if (activePlan || (openTrades && openTrades > 0)) {
+            navigate('/copilot', { replace: true });
+          } else {
+            navigate(redirectPath, { replace: true });
+          }
+        })();
       }
     }
   }, [isAuthLoading, authUser, isResetPassword, navigate, redirectPath]);
