@@ -53,7 +53,7 @@ export function CopilotValueProp() {
             {t('copilotValueProp.headline', 'An AI trading assistant built on outcome data — not just indicators')}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-            {t('copilotValueProp.subheadline', `Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from ${outcomeCount} real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.`)}
+            {(t as Function)('copilotValueProp.subheadline', { defaultValue: 'Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from {{count}} real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.', count: outcomeCount })}
           </p>
         </div>
 
