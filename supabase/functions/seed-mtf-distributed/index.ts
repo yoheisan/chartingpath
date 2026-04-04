@@ -178,12 +178,14 @@ serve(async (req) => {
     // Parse request parameters
     let partition = 'all';
     let targetTimeframes = TIMEFRAMES;
+    let forceFullBackfill = false;
 
     if (req.method === 'POST') {
       try {
         const body = await req.json();
         if (body.partition) partition = body.partition;
         if (body.timeframes?.length) targetTimeframes = body.timeframes;
+        if (body.forceFullBackfill === true) forceFullBackfill = true;
       } catch {}
     }
 
