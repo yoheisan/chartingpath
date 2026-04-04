@@ -141,7 +141,7 @@ const TradingCopilotFeature = () => {
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl leading-relaxed">
-                Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from 63,000+ real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.
+                Every other AI trading tool reads RSI and MACD. ChartingPath Copilot reasons from {outcomeCount} real pattern outcomes to give you analysis grounded in what actually happened — not what the textbooks say should happen.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8 py-6 text-lg" onClick={() => copilot.open()}>

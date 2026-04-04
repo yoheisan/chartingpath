@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { track } from "@/services/analytics";
 import { trackEvent } from "@/lib/analytics";
 import { PageMeta } from "@/components/PageMeta";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 
 const Pricing = () => {
