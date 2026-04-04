@@ -31,6 +31,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   const heroRef = useSectionTracking('hero');
   const screenerRef = useSectionTracking('screener_teaser');
