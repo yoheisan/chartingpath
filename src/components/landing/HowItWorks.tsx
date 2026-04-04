@@ -27,7 +27,7 @@ export const HowItWorks = () => {
       title: t('howItWorks.validateTitle'),
       description: t('howItWorks.validateDesc'),
       bullets: [
-        t('howItWorks.validateBullet1', { count: outcomeCount }),
+        (t as any)('howItWorks.validateBullet1', { count: outcomeCount }),
         t('howItWorks.validateBullet2'),
         t('howItWorks.validateBullet3'),
       ],

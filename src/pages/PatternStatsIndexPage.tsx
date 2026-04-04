@@ -144,7 +144,7 @@ export default function PatternStatsIndexPage() {
         <section className="mt-16 max-w-3xl">
           <h2 className="text-lg font-bold text-foreground mb-3">{t('patternStats.aboutTitle')}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {t('patternStats.aboutText', { count: outcomeCount })}
+            {(t as any)('patternStats.aboutText', { count: outcomeCount })}
           </p>
         </section>
       </div>

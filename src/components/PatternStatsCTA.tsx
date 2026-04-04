@@ -37,7 +37,7 @@ export function PatternStatsCTA({ patternId, patternName, instrument }: PatternS
               {t('patternCTA.anonHeadline', "You're looking at data most traders never see.")}
             </h3>
             <p className="text-muted-foreground text-sm sm:text-base">
-              {t('patternCTA.anonSubheadline', { defaultValue: '{{count}}+ backtested outcomes. Free account to unlock backtesting, alerts, and more.', count: outcomeCount })}
+              {(t as any)('patternCTA.anonSubheadline', { defaultValue: '{{count}}+ backtested outcomes. Free account to unlock backtesting, alerts, and more.', count: outcomeCount })}
             </p>
           </div>
 

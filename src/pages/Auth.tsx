@@ -570,7 +570,7 @@ const Auth = () => {
             )}
             
             <div>
-              <h2 className="text-2xl font-bold mb-2">{t('auth.headline', { count: outcomeFormatted })}</h2>
+              <h2 className="text-2xl font-bold mb-2">{(t as any)('auth.headline', { count: outcomeFormatted })}</h2>
               <p className="text-muted-foreground">
                 {t('auth.subheadline')}
               </p>
