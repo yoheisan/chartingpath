@@ -499,10 +499,11 @@ export default function ProgrammaticPatternStatsPage() {
                       {t('patternStats.faqSampleQuestion')}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm">
-                      {t('patternStats.faqSampleAnswer', {
+                      {(t as any)('patternStats.faqSampleAnswer', {
                         trades: data.totalTrades.toLocaleString(),
                         from: data.earliestDate?.split('T')[0] || '—',
                         to: data.lastUpdated.split('T')[0],
+                        count: outcomeCount,
                       })}
                     </AccordionContent>
                   </AccordionItem>

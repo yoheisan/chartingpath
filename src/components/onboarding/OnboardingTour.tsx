@@ -58,6 +58,7 @@ const STEPS = [
 
 export function OnboardingTour() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { isCompleted, complete } = useOnboardingState();
   const navigate = useNavigate();
