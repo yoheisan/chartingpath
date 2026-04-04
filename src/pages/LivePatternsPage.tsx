@@ -256,7 +256,7 @@ export default function LivePatternsPage() {
   // Filters - use detected type from highlight or default to 'fx'
   // Initialize pattern filter and timeframe from Edge Atlas URL params when present
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType);
-  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '8h' | '1d' | '1wk'>(urlTimeframe || '1h');
+  const [timeframe, setTimeframe] = useState<'1h' | '4h' | '8h' | '1d' | '1wk'>(urlTimeframe || '1d');
   const [filters, setFilters] = useState<ScreenerFiltersState>(() => ({
     ...DEFAULT_SCREENER_FILTERS,
     ...(urlPattern ? { pattern: urlPattern } : {}),
