@@ -1942,8 +1942,8 @@ function getFullBackfillDays(timeframe: string): number {
   switch (timeframe) {
     case '1h': return 730;    // 2 years (Yahoo limit for hourly)
     case '4h': return 730;    // 2 years (aggregated from 1h)
-    case '1d': return 3650;   // 10 years (matches EODHD limit)
-    case '1wk': return 3650;  // 10 years (matches EODHD limit)
+    case '1d': return 7300;   // 20 years
+    case '1wk': return 7300;  // 20 years
     default: return 1825;
   }
 }
