@@ -234,10 +234,8 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     const parsed = JSON.parse(text);
     const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
-    const briefingHtml = `
-      <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
+    const breadthHtml = breadth.dataAvailable
+      ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
             <span style="font-size:13px;color:#16a34a;font-weight:600;">▲ ${breadth.advances}</span>
             <span style="font-size:13px;color:#dc2626;font-weight:600;">▼ ${breadth.declines}</span>
@@ -245,7 +243,16 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
             <span style="font-size:13px;font-weight:700;color:${breadth.sentiment.includes("bull") ? "#16a34a" : breadth.sentiment.includes("bear") ? "#dc2626" : "#6b7280"};">${breadth.sentiment.toUpperCase()}</span>
           </div>
           <p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary || ""}</p>
-        </div>
+        </div>`
+      : `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:14px;margin-bottom:8px;">
+          <p style="margin:0;font-size:13px;color:#92400e;">Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>
+          ${parsed.market_breadth_summary ? `<p style="margin:4px 0 0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary}</p>` : ""}
+        </div>`;
+
+    const briefingHtml = `
+      <div style="margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
+        ${breadthHtml}
       </div>
       <div style="margin-bottom:20px;">
         <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${labels.key_levels_label}</p>
