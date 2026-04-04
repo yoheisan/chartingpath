@@ -15,7 +15,7 @@ const About = () => {
       <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20 max-w-3xl">
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-foreground mb-10">
-            {t('aboutPage2.headline', "Built by a trader who couldn't find the data.")}
+            {t('aboutPage2.headline', "I was TradingView's first hire in Japan.")}
           </h1>
 
           <div className="space-y-6 text-muted-foreground leading-relaxed text-base md:text-lg">
