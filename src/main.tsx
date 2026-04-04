@@ -12,6 +12,34 @@ import Bootstrap from "./Bootstrap";
 import "./index.css";
 import "./i18n/config";
 
+const METAMASK_EXTENSION_ID = "nkbihfbeogaeaoehlefnkodbefgpgknn";
+
+const getUnhandledRejectionText = (reason: unknown) => {
+  if (typeof reason === "string") return reason;
+  if (reason instanceof Error) return `${reason.message}\n${reason.stack ?? ""}`;
+  if (reason && typeof reason === "object") {
+    const candidate = reason as { message?: unknown; stack?: unknown };
+    return [candidate.message, candidate.stack]
+      .filter((value): value is string => typeof value === "string")
+      .join("\n");
+  }
+  return "";
+};
+
+const isIgnoredExtensionRejection = (reason: unknown) => {
+  const text = getUnhandledRejectionText(reason);
+  return (
+    text.includes("Failed to connect to MetaMask") ||
+    text.includes(`chrome-extension://${METAMASK_EXTENSION_ID}`)
+  );
+};
+
+window.addEventListener("unhandledrejection", (event) => {
+  if (isIgnoredExtensionRejection(event.reason)) {
+    event.preventDefault();
+  }
+});
+
 // Some environments incorrectly resolve auth callback URLs without the trailing slash
 // (e.g. "/auth?code=..."), which can cause React Router to treat the query as part of the path.
 // Normalize early before the router mounts.
