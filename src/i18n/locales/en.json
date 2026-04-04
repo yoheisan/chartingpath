@@ -5691,7 +5691,7 @@
   "patternCTA": {
     "exclusiveData": "Exclusive Data",
     "anonHeadline": "You're looking at data most traders never see.",
-    "anonSubheadline": "320,000+ backtested outcomes. Free account to unlock backtesting, alerts, and more.",
+    "anonSubheadline": "{{count}}+ backtested outcomes. Free account to unlock backtesting, alerts, and more.",
     "signUpFree": "Sign Up Free — No Credit Card",
     "takeAction": "Take Action",
     "authHeadline": "Backtest this exact setup on your own ticker.",
