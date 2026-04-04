@@ -103,8 +103,8 @@ async function runPartitionSeeding(
         maxInstrumentsPerType: config.isPremium ? config.maxInstruments : config.batchSize,
         offset,
         dryRun: false,
-        incrementalMode: true,
-        forceFullBackfill: false,
+        incrementalMode: !forceFullBackfill,
+        forceFullBackfill: forceFullBackfill,
         premiumOnly: config.isPremium || false
       };
 
