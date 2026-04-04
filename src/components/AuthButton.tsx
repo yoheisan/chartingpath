@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
@@ -18,10 +19,16 @@ type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
 
 const AuthButton = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole>(null);
   const navigate = useNavigate();
+
+  // Build auth URL that preserves the current page as a redirect
+  const currentPath = location.pathname + location.search;
+  const authSignInUrl = `/auth?redirect=${encodeURIComponent(currentPath)}`;
+  const authSignUpUrl = `/auth?mode=signup&redirect=${encodeURIComponent(currentPath)}`;
 
   const fetchUserRole = async (userId: string) => {
     const { data } = await supabase
@@ -89,7 +96,7 @@ const AuthButton = () => {
     return (
       <div className="flex items-center gap-2">
         <Link
-          to="/auth"
+          to={authSignInUrl}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {t('accountMenu.login', 'Sign In')}

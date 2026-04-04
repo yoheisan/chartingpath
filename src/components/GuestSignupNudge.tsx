@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { X, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const DISMISSED_KEY = 'guest_nudge_dismissed';
@@ -10,6 +10,8 @@ const DISMISSED_KEY = 'guest_nudge_dismissed';
 export function GuestSignupNudge() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { t } = useTranslation();
+  const location = useLocation();
+  const redirectParam = encodeURIComponent(location.pathname + location.search);
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISSED_KEY) === '1';
@@ -39,7 +41,7 @@ export function GuestSignupNudge() {
         </Link>
       </div>
       <Button asChild size="sm" className="shrink-0 ml-3 h-7 text-xs">
-        <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
+        <Link to={`/auth?mode=signup&redirect=${redirectParam}`}>{t('auth.signUpFree', 'Sign Up Free')}</Link>
       </Button>
     </div>
   );

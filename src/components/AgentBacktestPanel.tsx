@@ -674,7 +674,7 @@ export const AgentBacktestPanel: React.FC<{ onSendToBacktest?: (setup: TradeSetu
           <AlertDialogFooter>
             <AlertDialogCancel className="text-muted-foreground">{t('common.cancel', 'Cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => navigate('/auth', { state: { returnTo: '/tools/agent-scoring' } })}
+              onClick={() => navigate('/auth?redirect=' + encodeURIComponent('/tools/agent-scoring'))}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('agentScoring.authGateCta', 'Sign up free')}

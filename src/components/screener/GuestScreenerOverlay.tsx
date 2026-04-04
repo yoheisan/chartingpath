@@ -39,12 +39,12 @@ export function GuestScreenerOverlay({ totalCount, visibleCount }: GuestScreener
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">
-              <Link to="/auth?mode=signup&context=screener">
+              <Link to="/auth?mode=signup&context=screener&redirect=%2Fpatterns%2Flive">
                 {t('guestScreenerOverlay.createFreeAccount')}
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/auth?mode=login">
+              <Link to="/auth?mode=login&redirect=%2Fpatterns%2Flive">
                 <LogIn className="h-4 w-4" />
                 {t('guestScreenerOverlay.signIn')}
               </Link>
