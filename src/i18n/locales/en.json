@@ -3165,7 +3165,7 @@
     "indexTitle": "Chart Pattern Statistics",
     "indexSubtitle": "Backtested win rates, expectancy data, and risk/reward ratios for every pattern across every asset class and timeframe. Powered by {{count}}+ historical trades from ChartingPath's Edge Atlas.",
     "aboutTitle": "About These Statistics",
-    "aboutText": "Every statistic on this page is derived from real historical pattern detections across 800+ instruments. ChartingPath's scanner detects 15 chart patterns on forex, crypto, stocks, commodities, and index instruments every hour. Each detection is validated against actual price movement to determine if the pattern's take profit or stop loss was hit first. This creates a growing database of pattern outcomes — currently over 320,000 trades — that powers the win rates, expectancy scores, and risk/reward ratios shown here.",
+    "aboutText": "Every statistic on this page is derived from real historical pattern detections across 800+ instruments. ChartingPath's scanner detects 15 chart patterns on forex, crypto, stocks, commodities, and index instruments every hour. Each detection is validated against actual price movement to determine if the pattern's take profit or stop loss was hit first. This creates a growing database of pattern outcomes — currently over {{count}} trades — that powers the win rates, expectancy scores, and risk/reward ratios shown here.",
     "searchPatterns": "Search patterns...",
     "allPatterns": "All Patterns",
     "viewStatistics": "View Statistics",
