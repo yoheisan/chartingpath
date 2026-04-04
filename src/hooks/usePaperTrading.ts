@@ -214,8 +214,30 @@ export function usePaperTrading(userId?: string) {
   const flattenAll = useCallback(async () => {
     if (!userId || openTrades.length === 0) return;
     try {
+      // Batch-fetch prices for all open trade symbols via get-live-price
+      const uniqueSymbols = [...new Set(openTrades.map(t => t.symbol))];
+      const priceResults = await Promise.allSettled(
+        uniqueSymbols.map(async (sym) => {
+          const { data, error } = await supabase.functions.invoke('get-live-price', { body: { symbol: sym } });
+          return { symbol: sym, price: !error && data?.price ? Number(data.price) : null };
+        })
+      );
+      const priceMap = new Map<string, number>();
+      for (const result of priceResults) {
+        if (result.status === 'fulfilled' && result.value.price) {
+          priceMap.set(result.value.symbol, result.value.price);
+        }
+      }
+
+      let skipped = 0;
       for (const trade of openTrades) {
-        await handleCloseTrade(trade.id, trade.symbol);
+        const batchPrice = priceMap.get(trade.symbol);
+        if (batchPrice) {
+          await handleCloseTrade(trade.id, trade.symbol, { reason: 'Flatten all', notes: '', manualPrice: batchPrice });
+        } else {
+          // Fall through to the normal 4-layer chain
+          await handleCloseTrade(trade.id, trade.symbol);
+        }
       }
     } catch (err) {
       console.error('[PaperTrading] flatten error', err);
