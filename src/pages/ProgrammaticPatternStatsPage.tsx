@@ -131,6 +131,7 @@ function PatternDiagram({ slug }: { slug: string }) {
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ProgrammaticPatternStatsPage() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const { patternSlug = '', assetClass = '', timeframe = '' } = useParams<{
     patternSlug: string;
     assetClass: string;
