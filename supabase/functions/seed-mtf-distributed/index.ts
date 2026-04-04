@@ -98,10 +98,15 @@ async function runPartitionSeeding(
     console.log(`[seed-distributed] Starting ${partition} @ ${timeframe}`);
 
     while (hasMore) {
+  // Reduce batch size for full backfill on daily/weekly to avoid WORKER_LIMIT
+      const effectiveBatchSize = (forceFullBackfill && (timeframe === '1d' || timeframe === '1wk'))
+        ? Math.min(config.batchSize, 15)
+        : config.batchSize;
+
       const body: Record<string, unknown> = {
         timeframe,
         assetTypes: config.assetTypes,
-        maxInstrumentsPerType: config.isPremium ? config.maxInstruments : config.batchSize,
+        maxInstrumentsPerType: config.isPremium ? config.maxInstruments : effectiveBatchSize,
         offset,
         dryRun: false,
         incrementalMode: !forceFullBackfill,
