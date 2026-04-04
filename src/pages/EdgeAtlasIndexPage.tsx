@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { PageMeta } from '@/components/PageMeta';
 import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 const BULLISH_PATTERNS = new Set([
   "donchian-breakout-long",
@@ -20,11 +21,12 @@ const BULLISH_PATTERNS = new Set([
 
 const EdgeAtlasIndexPage = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10">
       <PageMeta
         title="Chart Pattern Win Rates — Live Outcome Data | ChartingPath"
-        description="Real outcome data from 63K+ detected patterns. Head & Shoulders, triangles, flags and more — with actual win rates from ChartingPath's live detection engine, not textbook estimates."
+        description={`Real outcome data from ${outcomeCount} detected patterns. Head & Shoulders, triangles, flags and more — with actual win rates from ChartingPath's live detection engine, not textbook estimates.`}
         canonicalPath="/edge-atlas"
       />
       {/* Header */}

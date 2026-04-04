@@ -17,6 +17,7 @@ import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
 import MarketPulseChart from '@/components/landing/MarketPulseChart';
 import { SocialProof } from '@/components/landing/SocialProof';
@@ -30,6 +31,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { prefetchArticles } = usePrefetchArticles();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   const heroRef = useSectionTracking('hero');
   const screenerRef = useSectionTracking('screener_teaser');
@@ -62,7 +64,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <PageMeta
         title="ChartingPath — Pattern Detection with Proven Outcomes"
-        description="The only chart pattern platform that tracks what actually happens after the pattern forms. 63K+ labeled outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily."
+        description={`The only chart pattern platform that tracks what actually happens after the pattern forms. ${outcomeCount} labeled outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily.`}
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
@@ -90,7 +92,7 @@ const Index = () => {
             </h1>
             
             <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-10 max-w-xl animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-              {t('landing.heroSubheadline', 'ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from 63,000+ labeled detections. Not theory. Not Bulkowski. Our data.')}
+              {t('landing.heroSubheadline', `ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and real results from ${outcomeCount} labeled detections. Not theory. Not Bulkowski. Our data.`)}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>

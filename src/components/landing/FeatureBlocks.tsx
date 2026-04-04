@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Radar, Database, Sparkles, Play, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 export function FeatureBlocks() {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   const FEATURES = [
     {
@@ -27,7 +29,7 @@ export function FeatureBlocks() {
       headlineKey: 'featureBlocks.copilotHeadline',
       headlineFallback: 'An AI trading assistant that learns from outcomes',
       descKey: 'featureBlocks.copilotDescription',
-      descFallback: "ChartingPath Copilot doesn't just read indicators — it reasons from 63K+ real pattern outcomes to give you context-aware trade analysis. The more patterns tracked, the smarter it gets.",
+      descFallback: `ChartingPath Copilot doesn't just read indicators — it reasons from ${outcomeCount} real pattern outcomes to give you context-aware trade analysis. The more patterns tracked, the smarter it gets.`,
       link: '/copilot',
     },
     {

@@ -8,10 +8,12 @@ import { useEffect } from "react";
 import { track } from "@/services/analytics";
 import { trackEvent } from "@/lib/analytics";
 import { PageMeta } from "@/components/PageMeta";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 
 const Pricing = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   useEffect(() => {
     track("pricing_viewed");
@@ -62,7 +64,7 @@ const Pricing = () => {
       icon: Star,
       features: [
         t('pricingPage.proFeature1', 'Everything in Free'),
-        t('pricingPage.proFeature2', 'Full outcome database (63K+ detections)'),
+        t('pricingPage.proFeature2', `Full outcome database (${outcomeCount} detections)`),
         t('pricingPage.proFeature3', 'Win rates by pattern, timeframe, instrument'),
         t('pricingPage.proFeature4', 'Unlimited pattern alerts'),
         t('pricingPage.proFeature5', 'ChartingPath Copilot (AI trading assistant)'),
