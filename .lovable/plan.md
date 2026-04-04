@@ -1,30 +1,40 @@
 
 
-## Plan: Rewrite About page with TradingView origin story
+## Plan: Upgrade outcome count marketing copy
 
-### New narrative
+### Current state
+- `useOutcomeCount` fetches total from `historical_pattern_occurrences` → currently returns 465,342 → displays as **"465K+"**
+- Various components reference "labeled detections" or "backtested outcomes" inconsistently
+- The number will keep growing as backfills continue — it may cross 500K or 1M soon
 
-Rewrite the headline and 5 body paragraphs to tell an enthusiastic, personal story:
+### Changes
 
-**Headline**: "I was TradingView's first hire in Japan."
+**1. Round up the fallback in `useOutcomeCount.ts`**
+- Change fallback from `'460K+'` to `'465K+'` (closer to real number while loading)
 
-**p1**: The excitement of joining TradingView early — watching individual traders finally get access to institutional-grade charting tools. Growing the Japan user base from 50,000 to 200,000. The energy of being part of something that was genuinely democratizing trading.
+**2. Improve hero subheadline in `Index.tsx`**
+- Current: "...real results from {outcomeCount} labeled detections. Not theory. Not Bulkowski. Our data."
+- Proposed: "...win rates, R-multiples, and outcome data from {outcomeCount} pattern detections across FX and US equities. Not textbook stats — real data from our engine."
 
-**p2**: But working that close to traders every day, one question kept coming up: "I can see the pattern — but does it actually work?" TradingView gave traders the best charts in the world. But nobody was tracking what happened *after* a pattern formed.
+**3. Update MetricStrip label**
+- Current label: "Backtested Outcomes"
+- Proposed: "Labeled Outcomes" (more accurate — these are detected + tracked, not just backtested)
 
-**p3**: That question wouldn't leave. Does a head and shoulders on EUR/USD on the 4H chart actually break down? How often? With what risk-reward? No platform had the answer — not even TradingView.
+**4. Update `PageMeta` description in `Index.tsx`**
+- Include the dynamic count with stronger phrasing: "{outcomeCount} labeled pattern outcomes across FX and US equities"
 
-**p4**: So I built ChartingPath. Every pattern detected, every outcome tracked — win or loss, how far it ran, how long it took. What started as a personal obsession is now the largest labeled dataset of chart pattern outcomes in existence.
-
-**p5**: ChartingPath is solo-built, just like the early days at TradingView taught me — move fast, stay close to users, and let the data speak for itself.
-
-**Founder block**: "Yohei Nishiyama" + new subtitle "Ex-TradingView Japan (first hire)"
+**5. Update OutcomeStatsStrip label**
+- "Total patterns tracked" → "Total labeled outcomes" for consistency
 
 ### Files to edit
+- `src/hooks/useOutcomeCount.ts` — update fallback
+- `src/pages/Index.tsx` — hero copy and PageMeta
+- `src/components/landing/MetricStrip.tsx` — label tweak
+- `src/components/landing/OutcomeStatsStrip.tsx` — label tweak
+- `src/i18n/locales/en.json` — update any affected i18n keys
 
-1. **`src/pages/About.tsx`** — update fallback strings for headline, p1–p5, founderName, add founderRole subtitle
-2. **`src/i18n/locales/en.json`** — update `aboutPage2.headline`, `aboutPage2.p1`–`p5`, `aboutPage2.founderName`, add `aboutPage2.founderRole`
-
-### No structural changes
-Same page layout, same CTA, same footer line. Only text content changes.
+### What stays the same
+- The hook logic and query remain unchanged
+- The formatting logic (K+/M+) stays as-is
+- All other components already consuming `useOutcomeCount` will automatically reflect the live number
 
