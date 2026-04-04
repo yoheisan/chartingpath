@@ -36,12 +36,12 @@ const Auth = () => {
 
   const rawRedirect = searchParams.get("redirect");
   const redirectPath = (() => {
-    if (!rawRedirect) return "/members/trading";
+    if (!rawRedirect) return "/patterns/live";
     try {
       const decoded = decodeURIComponent(rawRedirect);
-      return decoded.startsWith("/") ? decoded : "/members/trading";
+      return decoded.startsWith("/") ? decoded : "/patterns/live";
     } catch {
-      return "/members/trading";
+      return "/patterns/live";
     }
   })();
 
@@ -81,7 +81,27 @@ const Auth = () => {
 
         navigate('/patterns/live', { replace: true });
       } else {
-        navigate(redirectPath, { replace: true });
+        // Check if user has active master plan or open trades → send to Copilot
+        (async () => {
+          const { data: activePlan } = await supabase
+            .from('master_plans')
+            .select('id')
+            .eq('user_id', authUser.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          const { count: openTrades } = await supabase
+            .from('paper_trades')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authUser.id)
+            .eq('status', 'open');
+
+          if (activePlan || (openTrades && openTrades > 0)) {
+            navigate('/copilot', { replace: true });
+          } else {
+            navigate(redirectPath, { replace: true });
+          }
+        })();
       }
     }
   }, [isAuthLoading, authUser, isResetPassword, navigate, redirectPath]);
@@ -433,7 +453,7 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(
-              "/members/trading"
+              "/patterns/live"
             )}`,
           }
         });
