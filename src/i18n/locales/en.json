@@ -5624,7 +5624,7 @@
   },
   "onboarding": {
     "welcomeTitle": "Welcome to ChartingPath",
-    "welcomeDesc": "ChartingPath validates chart patterns against 320,000+ historical outcomes so you can trade with real statistical edges — not guesswork.",
+    "welcomeDesc": "ChartingPath validates chart patterns against {{count}}+ historical outcomes so you can trade with real statistical edges — not guesswork.",
     "screenerTitle": "Live Pattern Screener",
     "screenerDesc": "Real-time signals across 1,200+ instruments. Each pattern is graded by quality and backed by historical win rates. Filter by asset class, timeframe, and grade.",
     "patternLabTitle": "Pattern Lab — Backtest Any Pattern",
