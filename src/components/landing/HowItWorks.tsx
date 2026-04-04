@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from '@/lib/analytics';
 import { Button } from "@/components/ui/button";
+import { useOutcomeCount } from "@/hooks/useOutcomeCount";
+import { Button } from "@/components/ui/button";
 
 export const HowItWorks = () => {
   const { t } = useTranslation();
