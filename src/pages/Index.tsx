@@ -17,6 +17,7 @@ import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
 import MarketPulseChart from '@/components/landing/MarketPulseChart';
 import { SocialProof } from '@/components/landing/SocialProof';
