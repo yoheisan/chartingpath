@@ -15,6 +15,7 @@ interface PatternStatsCTAProps {
 export function PatternStatsCTA({ patternId, patternName, instrument }: PatternStatsCTAProps) {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
 
   if (isAuthLoading) return null;
 
