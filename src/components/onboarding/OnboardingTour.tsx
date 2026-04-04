@@ -104,7 +104,7 @@ export function OnboardingTour() {
         <OnboardingStep
           icon={current.icon}
           title={t(current.titleKey, { defaultValue: current.titleFallback })}
-          description={t(current.descKey, { defaultValue: current.descFallback })}
+          description={(t as any)(current.descKey, { defaultValue: current.descFallback, count: outcomeCount })}
           stepIndex={step}
           totalSteps={STEPS.length}
           action={
