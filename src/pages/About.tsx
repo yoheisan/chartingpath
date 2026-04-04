@@ -19,11 +19,11 @@ const About = () => {
           </h1>
 
           <div className="space-y-6 text-muted-foreground leading-relaxed text-base md:text-lg">
-            <p>{t('aboutPage2.p1', 'ChartingPath started with a simple frustration: every pattern scanner shows you when a head and shoulders forms. Nobody tracks what actually happens next.')}</p>
-            <p>{t('aboutPage2.p2', 'Does it work? At what timeframe? On which instruments? Under what market conditions?')}</p>
-            <p>{t('aboutPage2.p3', 'I built ChartingPath to answer those questions — and to make that answer get sharper every day as more patterns are detected and tracked through to outcome.')}</p>
-            <p>{t('aboutPage2.p4', "What started as a pattern scanner is now becoming something more: the largest labeled dataset of chart pattern outcomes in existence. That data doesn't just help individual traders — it's the foundation for systematic pattern research that's never been possible before.")}</p>
-            <p>{t('aboutPage2.p5', 'ChartingPath is a solo-built platform. Every line of code, every edge function, every pattern detection is built and maintained by me. That means decisions happen fast, the product improves weekly, and the data stays honest.')}</p>
+            <p>{t('aboutPage2.p1', 'The excitement of joining TradingView early — watching individual traders finally get access to institutional-grade charting tools. Growing the Japan user base from 50,000 to 200,000. The energy of being part of something that was genuinely democratizing trading.')}</p>
+            <p>{t('aboutPage2.p2', 'But working that close to traders every day, one question kept coming up: "I can see the pattern — but does it actually work?" TradingView gave traders the best charts in the world. But nobody was tracking what happened after a pattern formed.')}</p>
+            <p>{t('aboutPage2.p3', "That question wouldn't leave. Does a head and shoulders on EUR/USD on the 4H chart actually break down? How often? With what risk-reward? No platform had the answer — not even TradingView.")}</p>
+            <p>{t('aboutPage2.p4', 'So I built ChartingPath. Every pattern detected, every outcome tracked — win or loss, how far it ran, how long it took. What started as a personal obsession is now the largest labeled dataset of chart pattern outcomes in existence.')}</p>
+            <p>{t('aboutPage2.p5', 'ChartingPath is solo-built, just like the early days at TradingView taught me — move fast, stay close to users, and let the data speak for itself.')}</p>
           </div>
 
           <div className="mt-16 pt-8 border-t border-border">
