@@ -179,11 +179,12 @@ const MemberAccount = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-           <TabsList className="grid w-full grid-cols-3">
-             <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
-             <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
-             <TabsTrigger value="preferences">{t('memberAccount.preferences')}</TabsTrigger>
-           </TabsList>
+           <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
+              <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
+              <TabsTrigger value="data-providers">{t('account.dataProviders', 'Data Providers')}</TabsTrigger>
+              <TabsTrigger value="preferences">{t('memberAccount.preferences')}</TabsTrigger>
+            </TabsList>
 
           <TabsContent value="profile">
             <Card>
