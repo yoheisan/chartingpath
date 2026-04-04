@@ -44,7 +44,7 @@ export function GuestScreenerOverlay({ totalCount, visibleCount }: GuestScreener
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/auth?mode=login">
+              <Link to="/auth?mode=login&redirect=%2Fpatterns%2Flive">
                 <LogIn className="h-4 w-4" />
                 {t('guestScreenerOverlay.signIn')}
               </Link>
