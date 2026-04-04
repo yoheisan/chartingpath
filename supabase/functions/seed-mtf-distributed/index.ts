@@ -100,7 +100,7 @@ async function runPartitionSeeding(
     while (hasMore) {
   // Reduce batch size for full backfill on daily/weekly to avoid WORKER_LIMIT
       const effectiveBatchSize = (forceFullBackfill && (timeframe === '1d' || timeframe === '1wk'))
-        ? Math.min(config.batchSize, 15)
+        ? Math.min(config.batchSize, 5)
         : config.batchSize;
 
       const body: Record<string, unknown> = {
