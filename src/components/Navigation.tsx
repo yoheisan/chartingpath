@@ -87,8 +87,14 @@ const Navigation = () => {
   // Mobile nav content - journey-aligned structure (Discover → Research → Execute → Automate)
   const MobileNavContent = () => (
     <div className="flex flex-col gap-4 pt-6">
+      {/* 1. Screener - Primary destination */}
+      <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
+        <Activity className="h-5 w-5 text-amber-500" />
+        {t('navigation.screener', 'Screener')}
+      </Link>
+      
       {/* 0. Dashboard - Command Center */}
-      <Link to="/members/dashboard" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
+      <Link to="/members/dashboard" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <BarChart3 className="h-5 w-5 text-blue-500" />
         {t('navigation.dashboard', 'Dashboard')}
       </Link>
@@ -96,23 +102,17 @@ const Navigation = () => {
       {/* 0b. Copilot - Auto Trading */}
       <Link to="/copilot" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2">
         <Bot className="h-5 w-5 text-blue-400" />
-        Copilot ✦
-      </Link>
-      
-      {/* 1. Screener - Discover signals */}
-      <Link to="/patterns/live" onClick={closeMobileMenu} className="flex items-center gap-2 text-foreground font-medium py-2 border-t pt-4 mt-2">
-        <Activity className="h-5 w-5 text-amber-500" />
-        {t('navigation.screener', 'Screener')}
+        {t('navigation.copilot', 'Copilot')} ✦
       </Link>
       
       {/* 1b. Agent Scoring - Score signals */}
-      <Link to="/tools/agent-scoring" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
+      <Link to="/tools/agent-scoring" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
         <Bot className="h-5 w-5 text-amber-500" />
         {t('navigation.agentScoring', 'Agent Scoring')}
       </Link>
       
       {/* 2. Pattern Lab */}
-      <Link to="/projects/pattern-lab/new" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+      <Link to="/projects/pattern-lab/new" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <FlaskConical className="h-5 w-5 text-violet-500" />
         {t('navigation.patternLab', 'Pattern Lab')}
       </Link>
@@ -126,7 +126,7 @@ const Navigation = () => {
       </Link>
       
       {/* 4. Scripts - Automate */}
-      <Link to="/members/scripts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2 border-t pt-4 mt-2">
+      <Link to="/members/scripts" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <FileCode className="h-5 w-5 text-cyan-500" />
         {t('navigation.scripts', 'Scripts')}
       </Link>
