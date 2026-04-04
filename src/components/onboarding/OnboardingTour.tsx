@@ -20,7 +20,7 @@ const STEPS = [
     titleKey: 'onboarding.welcomeTitle',
     descKey: 'onboarding.welcomeDesc',
     titleFallback: 'Welcome to ChartingPath',
-    descFallback: 'ChartingPath validates chart patterns against 320,000+ historical outcomes so you can trade with real statistical edges — not guesswork.',
+    descFallback: 'ChartingPath validates chart patterns against {{count}}+ historical outcomes so you can trade with real statistical edges — not guesswork.',
   },
   {
     icon: <Radar className="h-8 w-8 text-primary" />,
