@@ -64,7 +64,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <PageMeta
         title="ChartingPath — Pattern Detection with Proven Outcomes"
-        description={`The only chart pattern platform that tracks what actually happens after the pattern forms. ${outcomeCount} labeled outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily.`}
+        description={`The only chart pattern platform that tracks what actually happens after the pattern forms. ${outcomeCount} labeled pattern outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily.`}
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
