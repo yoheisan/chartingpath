@@ -949,7 +949,7 @@ const PATTERN_REGISTRY: Record<string, {
     }
   },
   'symmetrical-triangle': {
-    direction: 'long' as const,
+    direction: 'long' as const, // default, overridden per detection
     displayName: 'Symmetrical Triangle',
     detector: (window: OHLCBar[]): PatternDetectionResult => {
       if (window.length < 20) return { detected: false, pivots: [] };
