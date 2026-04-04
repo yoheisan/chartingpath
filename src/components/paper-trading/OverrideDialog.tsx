@@ -15,9 +15,10 @@ interface OverrideDialogProps {
   trade: PaperTrade | null;
   onConfirm: (trade: PaperTrade, reason: string, notes: string, manualPrice?: number) => void;
   submitting: boolean;
+  forcePriceEntry?: boolean;
 }
 
-export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting }: OverrideDialogProps) {
+export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting, forcePriceEntry }: OverrideDialogProps) {
   const { t } = useTranslation();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -32,6 +33,14 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
     setNotes('');
     setLivePriceUnavailable(false);
     setManualExitPrice(String(trade.entry_price));
+
+    // If forcePriceEntry is set, skip the price check
+    if (forcePriceEntry) {
+      setLivePriceUnavailable(true);
+      setCheckingPrice(false);
+      return;
+    }
+
     setCheckingPrice(true);
 
     const checkPrice = async () => {
@@ -58,7 +67,7 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
       }
     };
     checkPrice();
-  }, [open, trade]);
+  }, [open, trade, forcePriceEntry]);
 
   const handleConfirm = () => {
     if (!trade || !selectedReason) return;
@@ -106,10 +115,14 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
               <div className="space-y-2">
                 <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
                   <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-400">Live price unavailable — enter exit price manually.</p>
+                  <p className="text-xs text-amber-400">
+                    {t('paperTrading.priceUnavailable', 'Live price unavailable — please enter the current market price manually.')}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
+                  <Label className="text-xs text-muted-foreground mb-1 block">
+                    {t('paperTrading.exitPriceLabel', 'Exit Price ($)')}
+                  </Label>
                   <Input
                     type="number"
                     step="0.01"

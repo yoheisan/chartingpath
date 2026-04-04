@@ -5906,7 +5906,9 @@
     "resetting": "Resetting…",
     "capitalReset": "Paper portfolio reset to $100,000",
     "resetError": "Failed to reset portfolio",
-    "resetDisabledLive": "Cannot reset while live trading is active"
+    "resetDisabledLive": "Cannot reset while live trading is active",
+    "priceUnavailable": "Live price unavailable — please enter the current market price manually.",
+    "exitPriceLabel": "Exit Price ($)"
   },
   "grades": {
     "gradeA": "Grade A",

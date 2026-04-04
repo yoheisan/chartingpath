@@ -172,6 +172,16 @@ Deno.serve(async (req) => {
       if (!latestPrice?.current_price) continue;
 
       const currentPrice = Number(latestPrice.current_price);
+
+      // Cache latest price on the trade row for exit fallback
+      await supabase
+        .from('paper_trades')
+        .update({ 
+          latest_price: currentPrice, 
+          latest_price_at: new Date().toISOString() 
+        })
+        .eq('id', trade.id);
+
       const isLong = trade.trade_type === 'long' || trade.trade_type === 'buy';
       const openedHoursAgo = (Date.now() - new Date(trade.created_at).getTime()) / 3600000;
 

@@ -3411,6 +3411,8 @@ export type Database = {
           id: string
           ideal_exit_price: number | null
           instrument_type: string | null
+          latest_price: number | null
+          latest_price_at: string | null
           master_plan_id: string | null
           monitoring_paused: boolean
           notes: string | null
@@ -3458,6 +3460,8 @@ export type Database = {
           id?: string
           ideal_exit_price?: number | null
           instrument_type?: string | null
+          latest_price?: number | null
+          latest_price_at?: string | null
           master_plan_id?: string | null
           monitoring_paused?: boolean
           notes?: string | null
@@ -3505,6 +3509,8 @@ export type Database = {
           id?: string
           ideal_exit_price?: number | null
           instrument_type?: string | null
+          latest_price?: number | null
+          latest_price_at?: string | null
           master_plan_id?: string | null
           monitoring_paused?: boolean
           notes?: string | null

@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 export default function PaperTradingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
+  const { portfolio, openTrades, closedTrades, loading, closingTradeId, needManualPrice, setNeedManualPrice, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
   const { connection } = useBrokerConnection(user?.id);
   const isLive = connection?.is_live === true;
   const [overrideTrade, setOverrideTrade] = useState<PaperTrade | null>(null);
@@ -195,11 +195,17 @@ export default function PaperTradingPage() {
       </Tabs>
 
       <OverrideDialog
-        open={!!overrideTrade}
-        onOpenChange={(open) => { if (!open) setOverrideTrade(null); }}
-        trade={overrideTrade}
+        open={!!overrideTrade || !!needManualPrice}
+        onOpenChange={(open) => { 
+          if (!open) { 
+            setOverrideTrade(null); 
+            setNeedManualPrice(null); 
+          } 
+        }}
+        trade={overrideTrade || (needManualPrice ? openTrades.find(t => t.id === needManualPrice) ?? null : null)}
         onConfirm={handleOverrideConfirm}
         submitting={overrideSubmitting}
+        forcePriceEntry={!!needManualPrice}
       />
 
       {/* Flatten All Dialog */}
