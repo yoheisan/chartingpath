@@ -3213,7 +3213,7 @@
     "faqBestTfAnswer": "Based on our data, the {{timeframe}} timeframe shows the highest expectancy for {{pattern}} on {{asset}}. See the timeframe comparison table above for full details.",
     "faqBestTfNoData": "We're still gathering data across timeframes for this combination.",
     "faqSampleQuestion": "How many trades is this based on?",
-    "faqSampleAnswer": "{{trades}} historical trades between {{from}} and {{to}}, sourced from ChartingPath's Edge Atlas database of 320,000+ pattern outcomes.",
+    "faqSampleAnswer": "{{trades}} historical trades between {{from}} and {{to}}, sourced from ChartingPath's Edge Atlas database of {{count}}+ pattern outcomes.",
     "faqCalcQuestion": "How is the win rate calculated?",
     "faqCalcAnswer": "A trade is counted as a win when price reaches the take profit level before the stop loss level. Timeouts — trades where neither level is hit — are excluded from win rate calculations but included in expectancy calculations.",
     "faqAlertQuestion": "Can I get alerted when a {{pattern}} appears on {{asset}}?",
