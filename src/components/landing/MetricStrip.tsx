@@ -46,7 +46,7 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
     <div ref={ref} className="flex flex-col items-center gap-1 px-6 py-3">
       <Icon className="h-4 w-4 text-muted-foreground/60 mb-0.5" />
       <div className="text-2xl font-bold font-mono text-foreground tracking-tight">
-        {display.toLocaleString()}{suffix}
+        {value === 0 && suffix === 'R' ? '—' : `${display.toLocaleString()}${suffix}`}
       </div>
       <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
     </div>
@@ -63,7 +63,7 @@ export const MetricStrip = () => {
     { value: stats?.patternCount ?? 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
     { value: outcomeCount ?? 460000, suffix: "+", label: t("metrics.trades", "Backtested Outcomes"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Live Data Refresh"), icon: Clock },
-    { value: stats?.avgExpectancy ?? 0.4, suffix: "R", label: t("metrics.avgExpectancy", "Avg Expectancy (A-Grade)"), icon: Target },
+    { value: stats?.avgExpectancy && stats.avgExpectancy > 0 ? stats.avgExpectancy : 0.4, suffix: "R", label: t("metrics.avgExpectancy", "Avg Expectancy (A-Grade)"), icon: Target },
   ];
 
   return (
