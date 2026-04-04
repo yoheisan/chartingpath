@@ -41,7 +41,7 @@ export function GuestSignupNudge() {
         </Link>
       </div>
       <Button asChild size="sm" className="shrink-0 ml-3 h-7 text-xs">
-        <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
+        <Link to={`/auth?mode=signup&redirect=${redirectParam}`}>{t('auth.signUpFree', 'Sign Up Free')}</Link>
       </Button>
     </div>
   );
