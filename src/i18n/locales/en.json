@@ -1149,7 +1149,7 @@
     "socialProof": "{{count}}+ pattern outcomes analyzed. Free to start — works alongside TradingView.",
     "subtext": "Historical backtests + alerts. Built for crypto swing traders.",
     "subtitle": "Find pattern-based setups, validate with historical data, and export trading scripts—all in one platform.",
-    "subtitleMain": "Every pattern backtested against 320,000+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.",
+    "subtitleMain": "Every pattern backtested against {{count}}+ real market outcomes. Win rates, expectancy, and quality grades — not guesswork.",
     "trustAssumptions": "Win rates shown upfront",
     "trustRepeatability": "No black-box indicators",
     "trustSignals": "Every signal backtested",
