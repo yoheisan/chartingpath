@@ -3094,7 +3094,7 @@
     "findCta": "Open Screener",
     "validateTitle": "Validate with Data",
     "validateDesc": "Check win rates and expectancy before you take the trade.",
-    "validateBullet1": "320,000+ backtested outcomes",
+    "validateBullet1": "{{count}}+ backtested outcomes",
     "validateBullet2": "Win rate & expectancy stats",
     "validateBullet3": "Visual Proof charts",
     "validateCta": "Try a Backtest",
