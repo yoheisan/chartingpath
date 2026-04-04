@@ -1322,7 +1322,7 @@
   "metrics": {
     "instruments": "Instruments",
     "patterns": "Patterns",
-    "trades": "Backtested Outcomes",
+    "trades": "Labeled Outcomes",
     "avgWinRate": "Avg Win Rate (A-Grade)",
     "avgExpectancy": "Avg Expectancy (A-Grade)"
   },
