@@ -99,25 +99,27 @@ async function fetchMarketBreadth(): Promise<{ advances: number; declines: numbe
 }
 
 async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
   const symbols = [
-    { key: "SPY", sym: "SPY" },
-    { key: "QQQ", sym: "QQQ" },
-    { key: "BTC", sym: "BTC-USD" },
-    { key: "ETH", sym: "ETH-USD" },
-    { key: "EUR/USD", sym: "EURUSD=X" },
-    { key: "Gold", sym: "GC=F" },
+    { key: "SPY", eod: "SPY.US" },
+    { key: "QQQ", eod: "QQQ.US" },
+    { key: "BTC", eod: "BTC-USD.CC" },
+    { key: "ETH", eod: "ETH-USD.CC" },
+    { key: "EUR/USD", eod: "EURUSD.FOREX" },
+    { key: "Gold", eod: "GC.COMEX" },
   ];
 
   const results: Record<string, { price: number; change: string }> = {};
-  await Promise.all(symbols.map(async ({ key, sym }) => {
+  if (!EODHD_API_KEY) return results;
+
+  await Promise.all(symbols.map(async ({ key, eod }) => {
     try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
-      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+      const url = `https://eodhd.com/api/real-time/${eod}?api_token=${EODHD_API_KEY}&fmt=json`;
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
-      const meta = data?.chart?.result?.[0]?.meta;
-      const current = meta?.regularMarketPrice || 0;
-      const prev = meta?.previousClose || meta?.chartPreviousClose || current;
+      const current = data.close || data.previousClose || 0;
+      const prev = data.previousClose || data.open || current;
       const pct = prev > 0 ? ((current - prev) / prev * 100).toFixed(2) : "0.00";
       results[key] = { price: current, change: `${Number(pct) >= 0 ? "+" : ""}${pct}%` };
     } catch { /* skip */ }
