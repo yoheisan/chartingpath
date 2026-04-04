@@ -195,11 +195,17 @@ export default function PaperTradingPage() {
       </Tabs>
 
       <OverrideDialog
-        open={!!overrideTrade}
-        onOpenChange={(open) => { if (!open) setOverrideTrade(null); }}
-        trade={overrideTrade}
+        open={!!overrideTrade || !!needManualPrice}
+        onOpenChange={(open) => { 
+          if (!open) { 
+            setOverrideTrade(null); 
+            setNeedManualPrice(null); 
+          } 
+        }}
+        trade={overrideTrade || (needManualPrice ? openTrades.find(t => t.id === needManualPrice) ?? null : null)}
         onConfirm={handleOverrideConfirm}
         submitting={overrideSubmitting}
+        forcePriceEntry={!!needManualPrice}
       />
 
       {/* Flatten All Dialog */}

@@ -115,10 +115,14 @@ export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submittin
               <div className="space-y-2">
                 <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
                   <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-400">Live price unavailable — enter exit price manually.</p>
+                  <p className="text-xs text-amber-400">
+                    {t('paperTrading.priceUnavailable', 'Live price unavailable — please enter the current market price manually.')}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">Exit Price ($)</Label>
+                  <Label className="text-xs text-muted-foreground mb-1 block">
+                    {t('paperTrading.exitPriceLabel', 'Exit Price ($)')}
+                  </Label>
                   <Input
                     type="number"
                     step="0.01"

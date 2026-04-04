@@ -281,6 +281,8 @@ export function usePaperTrading(userId?: string) {
     closedTrades,
     loading,
     closingTradeId,
+    needManualPrice,
+    setNeedManualPrice,
     handleCloseTrade,
     flattenAll,
     resetPortfolio,
