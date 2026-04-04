@@ -199,139 +199,98 @@ const Navigation = () => {
             
             
             <nav className="hidden md:flex items-center gap-4 ml-4">
-            {/* Products dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${
-                  isActive('/members/dashboard') || isActive('/patterns/live') || isActive('/tools/agent-scoring') || isActive('/projects/pattern-lab') || isActive('/members/alerts') || isActive('/members/scripts')
-                    ? 'text-foreground font-medium' 
+              {/* 1. Screener — top-level */}
+              <Link to="/patterns/live" className={navLinkClass('/patterns/live')}>
+                <Activity className="h-4 w-4 text-amber-500" />
+                {t('navigation.screener', 'Screener')}
+              </Link>
+
+              {/* 2. Edge Atlas — top-level */}
+              <Link to="/edge-atlas" className={navLinkClass('/edge-atlas')}>
+                <Trophy className="h-4 w-4 text-amber-400" />
+                {t('navigation.edgeAtlas', 'Edge Atlas')}
+              </Link>
+
+              {/* 3. Pattern Lab — top-level */}
+              <Link
+                to="/projects/pattern-lab/new"
+                className={`flex items-center gap-1.5 text-base whitespace-nowrap transition-colors ${
+                  isActive('/projects/pattern-lab')
+                    ? 'text-foreground font-medium'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <FolderKanban className="h-4 w-4" />
-                {t('navigation.products', 'Products')}
-                <ChevronDown className="h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-popover z-50">
-                <DropdownMenuItem asChild>
-                  <Link to="/members/dashboard" className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-blue-500" />
-                    {t('navigation.dashboard', 'Dashboard')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/patterns/live" className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-amber-500" />
-                    {t('navigation.screener', 'Screener')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/tools/agent-scoring" className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-amber-500" />
-                    {t('navigation.agentScoring', 'Agent Scoring')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/projects/pattern-lab/new" className="flex items-center gap-2">
-                    <FlaskConical className="h-4 w-4 text-violet-500" />
-                    {t('navigation.patternLab', 'Pattern Lab')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/edge-atlas" className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-amber-500" />
-                    <div className="flex flex-col">
-                      <span>{t('navigation.edgeAtlas', 'Edge Atlas')}</span>
-                      <span className="text-xs text-muted-foreground">{t('navigation.edgeAtlasDesc', 'Patterns ranked by proven annual return')}</span>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/members/alerts" className="flex items-center gap-2">
-                    <WithNotificationBadge count={alertCount} size="sm">
-                      <Bell className="h-4 w-4 text-emerald-500" />
-                    </WithNotificationBadge>
-                    {t('navigation.alerts', 'Alerts')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/members/scripts" className="flex items-center gap-2">
-                    <FileCode className="h-4 w-4 text-cyan-500" />
-                    {t('navigation.scripts', 'Scripts')}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Zap className="h-4 w-4 text-amber-500" />
+                {t('navigation.patternLab', 'Pattern Lab')}
+              </Link>
 
-            {/* Pattern Lab — top-level */}
-            <Link
-              to="/projects/pattern-lab/new"
-              className={`flex items-center gap-1.5 text-base whitespace-nowrap transition-colors ${
-                isActive('/projects/pattern-lab')
-                  ? 'text-foreground font-medium'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Zap className="h-4 w-4 text-amber-500" />
-              {t('navigation.patternLab', 'Pattern Lab')}
-            </Link>
-            
-            {/* 5. Learning - Pattern Library, Blog & Articles */}
-            <DropdownMenu>
-              <DropdownMenuTrigger 
-                className={`flex items-center gap-1 text-base whitespace-nowrap ${isActive('/learn') || isActive('/chart-patterns') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors`}
-                onMouseEnter={prefetchArticles}
-              >
-                <div className="p-1 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <GraduationCap className="h-3.5 w-3.5 text-white" />
-                </div>
-                {t('navigation.learning', 'Learning')}
-                <ChevronDown className="h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-popover z-50">
-                <DropdownMenuItem asChild>
-                  <Link to="/edge-atlas" className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-amber-500" />
-                    {t('navigation.edgeAtlas', 'Edge Atlas')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/library" className="flex items-center gap-2">
-                    <Database className="h-4 w-4 text-blue-500" />
-                    {t('navigation.patternLibrary', 'Pattern Library')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/learn" className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-green-500" />
-                    {t('navigation.blogArticles', 'Blog & Articles')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-purple-500" />
-                    {t('navigation.patternQuiz', 'Pattern Quizzes')}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            {/* 6. Pricing */}
-            <Link to="/projects/pricing" className={navLinkClass('/projects/pricing')}>
-              <DollarSign className="h-4 w-4" />
-              {t('navigation.pricing', 'Pricing')}
-            </Link>
-              
-              {/* 6. More - Tools & Company */}
+              {/* 4. More — consolidated dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-base whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                   {t('navigation.more', 'More')}
+                  <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 bg-popover z-50">
-                  {/* Tools Section */}
+                <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                  {/* Workspace */}
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.workspace', 'Workspace')}</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/members/dashboard" className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-blue-500" />
+                        {t('navigation.dashboard', 'Dashboard')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/tools/agent-scoring" className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-amber-500" />
+                        {t('navigation.agentScoring', 'Agent Scoring')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/members/alerts" className="flex items-center gap-2">
+                        <WithNotificationBadge count={alertCount} size="sm">
+                          <Bell className="h-4 w-4 text-emerald-500" />
+                        </WithNotificationBadge>
+                        {t('navigation.alerts', 'Alerts')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/members/scripts" className="flex items-center gap-2">
+                        <FileCode className="h-4 w-4 text-cyan-500" />
+                        {t('navigation.scripts', 'Scripts')}
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Research */}
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.research', 'Research')}</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/chart-patterns/library" className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-blue-500" />
+                        {t('navigation.patternLibrary', 'Pattern Library')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/learn" className="flex items-center gap-2" onMouseEnter={prefetchArticles}>
+                        <BookOpen className="h-4 w-4 text-green-500" />
+                        {t('navigation.blogArticles', 'Blog & Articles')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/chart-patterns/quiz" className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-purple-500" />
+                        {t('navigation.patternQuiz', 'Pattern Quizzes')}
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Tools */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.tools', 'Tools')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
@@ -359,12 +318,18 @@ const Navigation = () => {
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
-                  
+
                   <DropdownMenuSeparator />
 
-                  {/* Company Section */}
+                  {/* Company */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.company', 'Company')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link to="/projects/pricing" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        {t('navigation.pricing', 'Pricing')}
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/faq" className="flex items-center gap-2">
                         <HelpCircle className="h-4 w-4" />
@@ -380,13 +345,16 @@ const Navigation = () => {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              {/* Copilot nav link */}
-              <Link to="/copilot" className={`flex items-center gap-1 text-base whitespace-nowrap transition-colors ${isActive('/copilot') ? 'text-blue-400 font-medium' : 'text-blue-400/70 hover:text-blue-400 hover:underline hover:underline-offset-4 hover:decoration-blue-400/50'}`}>
-                <Bot className="h-4 w-4" />
-                Copilot ✦
+
+              {/* Copilot CTA button */}
+              <Link 
+                to="/copilot"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                <Bot className="h-3.5 w-3.5" />
+                {t('navigation.copilot', 'Copilot')} ✦
               </Link>
-              
+
               <CopilotStatusIndicator />
               <AuthButton />
             </nav>
