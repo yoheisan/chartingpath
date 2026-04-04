@@ -64,7 +64,7 @@ const Pricing = () => {
       icon: Star,
       features: [
         t('pricingPage.proFeature1', 'Everything in Free'),
-        t('pricingPage.proFeature2', 'Full outcome database (63K+ detections)'),
+        t('pricingPage.proFeature2', `Full outcome database (${outcomeCount} detections)`),
         t('pricingPage.proFeature3', 'Win rates by pattern, timeframe, instrument'),
         t('pricingPage.proFeature4', 'Unlimited pattern alerts'),
         t('pricingPage.proFeature5', 'ChartingPath Copilot (AI trading assistant)'),
