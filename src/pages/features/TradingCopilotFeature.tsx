@@ -14,6 +14,7 @@ import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 
 const TradingCopilotFeature = () => {
   const { t } = useTranslation();
+  const { formatted: outcomeCount } = useOutcomeCount();
   const copilot = useTradingCopilotContext();
 
   // Moat features — expanded for the feature page
