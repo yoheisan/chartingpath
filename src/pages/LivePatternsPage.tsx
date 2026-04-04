@@ -319,6 +319,31 @@ export default function LivePatternsPage() {
   
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
+
+  // BYOK intraday gate: check if user has a connected data provider for intraday TFs
+  const [hasDataProvider, setHasDataProvider] = useState<boolean | null>(null);
+  const isIntradayTf = timeframe === '1h' || timeframe === '4h' || timeframe === '8h';
+
+  useEffect(() => {
+    if (!isIntradayTf) {
+      setHasDataProvider(null);
+      return;
+    }
+    (async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        setHasDataProvider(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('user_data_providers')
+        .select('id')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      setHasDataProvider(!!data);
+    })();
+  }, [timeframe]);
   
   // Get tier-based screener caps - but don't block on loading
   const screenerCapsResult = useScreenerCaps();
