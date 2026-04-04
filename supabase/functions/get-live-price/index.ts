@@ -3,18 +3,54 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function toEODHDSymbol(symbol: string): string {
-  // FX pairs: EURUSD=X → EURUSD.FOREX
-  if (symbol.endsWith('=X')) {
-    return symbol.replace('=X', '.FOREX');
+function toBinanceSymbol(symbol: string): string {
+  // BTC-USD → BTCUSDT, ETH-USD → ETHUSDT
+  return symbol.replace('-USD', 'USDT').replace('-USDT', 'USDT');
+}
+
+function isCrypto(symbol: string): boolean {
+  return symbol.includes('-USD') || symbol.includes('-USDT');
+}
+
+function isFx(symbol: string): boolean {
+  return symbol.endsWith('=X');
+}
+
+async function fetchBinancePrice(symbol: string): Promise<{ price: number; source: string }> {
+  const binanceSymbol = toBinanceSymbol(symbol);
+  const url = `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`Binance ${res.status}`);
+  const data = await res.json();
+  const price = Number(data.price);
+  if (!price || isNaN(price)) throw new Error('Binance returned no price');
+  return { price, source: 'binance' };
+}
+
+async function fetchYahooPrice(symbol: string): Promise<{ price: number; source: string }> {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`;
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(8000),
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  if (!res.ok) throw new Error(`Yahoo ${res.status}`);
+  const data = await res.json();
+  const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+  if (!price || isNaN(Number(price))) throw new Error('Yahoo returned no price');
+  return { price: Number(price), source: 'yahoo' };
+}
+
+async function fetchWithFallback(symbol: string): Promise<{ price: number; source: string }> {
+  if (isCrypto(symbol)) {
+    // Crypto: Binance first, Yahoo fallback
+    try { return await fetchBinancePrice(symbol); } catch (e) {
+      console.warn(`[get-live-price] Binance failed for ${symbol}:`, e.message);
+    }
+    return await fetchYahooPrice(symbol);
   }
-  // Crypto: BTC-USD → BTC-USD (EODHD uses CC exchange)
-  if (symbol.includes('-USD') || symbol.includes('-USDT')) {
-    const base = symbol.split('-')[0];
-    return `${base}-USD.CC`;
-  }
-  // Default: assume US exchange
-  return `${symbol}.US`;
+
+  // FX and everything else: Yahoo
+  return await fetchYahooPrice(symbol);
 }
 
 Deno.serve(async (req) => {
@@ -31,50 +67,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get('EODHD_API_KEY');
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'EODHD_API_KEY not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const { price, source } = await fetchWithFallback(symbol);
 
-    const eodhSymbol = toEODHDSymbol(symbol);
-    const url = `https://eodhd.com/api/real-time/${eodhSymbol}?api_token=${apiKey}&fmt=json`;
-
-    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!response.ok) {
-      console.error(`[get-live-price] EODHD error: ${response.status} for ${eodhSymbol}`);
-      return new Response(JSON.stringify({ error: `EODHD returned ${response.status}` }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const data = await response.json();
-    const price = Number(data.close || data.previousClose || data.open);
-
-    if (!price || isNaN(price) || price <= 0) {
-      console.error(`[get-live-price] No valid price for ${eodhSymbol}:`, data);
-      return new Response(JSON.stringify({ error: 'No valid price returned' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`[get-live-price] ${symbol} → ${eodhSymbol} = ${price}`);
+    console.log(`[get-live-price] ${symbol} = ${price} via ${source}`);
 
     return new Response(JSON.stringify({
       price,
       symbol,
+      source,
       timestamp: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
     console.error('[get-live-price] Error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: err.message || 'Failed to fetch price' }), {
+      status: 502,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
