@@ -48,6 +48,7 @@ export function usePaperTrading(userId?: string) {
   const [closedTrades, setClosedTrades] = useState<PaperTrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [closingTradeId, setClosingTradeId] = useState<string | null>(null);
+  const [needManualPrice, setNeedManualPrice] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
