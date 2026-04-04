@@ -332,3 +332,6 @@ verify_jwt = false
 
 [functions.alpaca-broker]
 verify_jwt = false
+
+[functions.get-live-price]
+verify_jwt = false
