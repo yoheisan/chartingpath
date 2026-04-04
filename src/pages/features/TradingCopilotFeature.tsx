@@ -29,8 +29,8 @@ const TradingCopilotFeature = () => {
     },
     {
       icon: Database,
-      title: t('tradingCopilot.moat.backtestAtlas'),
-      description: t('tradingCopilot.moat.backtestAtlasDesc'),
+      title: t('tradingCopilot.moat.backtestAtlas', { count: outcomeCount }),
+      description: t('tradingCopilot.moat.backtestAtlasDesc', { count: outcomeCount }),
       whyCant: t('tradingCopilot.moat.backtestAtlasCant'),
       color: "text-violet-500",
       bgColor: "bg-violet-500/10",

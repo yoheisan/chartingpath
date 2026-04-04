@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { OnboardingStep } from './OnboardingStep';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { Sparkles, Radar, FlaskConical, LayoutDashboard, Trophy } from 'lucide-react';
 
 const STEPS = [

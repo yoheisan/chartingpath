@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { PageMeta } from '@/components/PageMeta';
 import { usePatternStats } from '@/hooks/usePatternStats';
 import { useTranslation } from 'react-i18next';
