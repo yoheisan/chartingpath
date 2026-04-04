@@ -140,7 +140,7 @@ const ProjectRun = () => {
       const { data: { session } } = await Promise.race([sessionPromise, sessionTimeout]);
       
       if (!session?.access_token) {
-        navigate('/auth', { state: { returnTo: `/projects/runs/${runId}` } });
+        navigate(`/auth?redirect=${encodeURIComponent(`/projects/runs/${runId}`)}`);
         return;
       }
       
