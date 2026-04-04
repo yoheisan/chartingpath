@@ -18,7 +18,7 @@ interface OverrideDialogProps {
   forcePriceEntry?: boolean;
 }
 
-export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting }: OverrideDialogProps) {
+export function OverrideDialog({ open, onOpenChange, trade, onConfirm, submitting, forcePriceEntry }: OverrideDialogProps) {
   const { t } = useTranslation();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
