@@ -38,6 +38,7 @@ interface PatternDetectionResult {
   pivots: PatternPivot[];
   patternStartIndex?: number;
   patternEndIndex?: number;
+  direction?: 'long' | 'short';
 }
 
 // All detectable patterns (copied from seed-historical-patterns for bundle independence)
