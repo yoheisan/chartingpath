@@ -430,15 +430,38 @@ serve(async (req) => {
           labels,
         });
 
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: [email],
-          subject,
-          html,
-        });
+        try {
+          const emailRes = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [email],
+            subject,
+            html,
+          });
 
-        sentCount++;
-        console.log(`[morning-briefing] ✓ Sent to ${email} (${language}, ${region})`);
+          await supabase.from("email_send_log").insert({
+            user_id,
+            email_type: "morning_brief",
+            recipient_email: email,
+            subject,
+            status: "sent",
+            resend_message_id: emailRes?.data?.id || null,
+            brief_mode: "weekday",
+          });
+
+          sentCount++;
+          console.log(`[morning-briefing] ✓ Sent to ${email} (${language}, ${region})`);
+        } catch (sendErr: any) {
+          await supabase.from("email_send_log").insert({
+            user_id,
+            email_type: "morning_brief",
+            recipient_email: email,
+            subject,
+            status: "failed",
+            error_message: sendErr?.message || String(sendErr),
+            brief_mode: "weekday",
+          });
+          throw sendErr;
+        }
       } catch (userErr: any) {
         console.error(`[morning-briefing] Error for user ${user_id}:`, userErr);
         errorCount++;
