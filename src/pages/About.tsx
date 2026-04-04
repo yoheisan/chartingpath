@@ -7,7 +7,7 @@ const About = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    document.title = t('aboutPage2.title', 'About ChartingPath — Built by a Trader');
+    document.title = t('aboutPage2.title', "About ChartingPath — Built by TradingView's First Hire in Japan");
   }, [t]);
 
   return (
