@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 export default function PaperTradingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { portfolio, openTrades, closedTrades, loading, closingTradeId, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
+  const { portfolio, openTrades, closedTrades, loading, closingTradeId, needManualPrice, setNeedManualPrice, handleCloseTrade, flattenAll, resetPortfolio, winRate } = usePaperTrading(user?.id);
   const { connection } = useBrokerConnection(user?.id);
   const isLive = connection?.is_live === true;
   const [overrideTrade, setOverrideTrade] = useState<PaperTrade | null>(null);
