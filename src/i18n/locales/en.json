@@ -1267,7 +1267,12 @@
     "tools": "Tools",
     "tradingStrategies": "Trading Strategies",
     "agentScoring": "Agent Scoring",
-    "seeLiveSignals": "See Live Signals Free →"
+    "seeLiveSignals": "See Live Signals Free →",
+    "copilot": "Copilot",
+    "edgeAtlas": "Edge Atlas",
+    "workspace": "Workspace",
+    "research": "Research",
+    "preferences": "Preferences"
   },
   "metrics": {
     "instruments": "Instruments",
