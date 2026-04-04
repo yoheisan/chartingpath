@@ -307,8 +307,8 @@ const Auth = () => {
 
         setTimeout(() => {
           void ensureProfileForUser(user).finally(() => {
-            // New OAuth users → dashboard; returning users → redirect path
-            const dest = isNewUser ? '/members/dashboard' : redirectPath;
+            // New OAuth users → live screener; returning users → redirect path
+            const dest = isNewUser ? '/patterns/live' : redirectPath;
             navigate(dest);
           });
         }, 0);
