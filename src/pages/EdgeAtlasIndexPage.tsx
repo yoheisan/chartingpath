@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { PageMeta } from '@/components/PageMeta';
 import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
+import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 
 const BULLISH_PATTERNS = new Set([
   "donchian-breakout-long",
