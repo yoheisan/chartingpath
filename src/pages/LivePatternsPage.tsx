@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
-  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
+  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText, Database
 } from 'lucide-react';
 import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
 import { cn } from '@/lib/utils';
