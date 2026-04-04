@@ -156,10 +156,12 @@ Context:
 - Local time: ${userTime}
 
 MARKET BREADTH DATA:
-- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
+${breadth.dataAvailable ? `- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
 - Advance/Decline Ratio: ${(breadth.advances / Math.max(breadth.declines, 1)).toFixed(2)}
 - VIX: ${breadth.vix ?? "N/A"}
-- Overall Sentiment: ${breadth.sentiment}
+- Overall Sentiment: ${breadth.sentiment}` : "- Market breadth data is unavailable today. Do NOT make up breadth numbers. Mention that breadth data was not available."}
+
+IMPORTANT: This is a weekday briefing. Do NOT say "as the trading day unfolds" if the local time suggests markets may be closed. Be factual about market hours.
 
 MARKET PRICES:
 ${pricesSummary}
