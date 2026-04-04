@@ -97,9 +97,10 @@ const Footer = () => {
             <p>{t('footer.copyright', '© {{year}} ChartingPath. Market Leap Partners Inc. All rights reserved.', { year: new Date().getFullYear() })}</p>
             <div className="flex items-center gap-4">
               <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms', 'Terms')}</Link>
-              <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy', 'Privacy')}</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy', 'Privacy')}</Link>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">{t('footer.operatedBy', 'ChartingPath is operated by Yohei Nishiyama, Tokyo, Japan.')}</p>
         </div>
       </footer>
     );
