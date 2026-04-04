@@ -40,57 +40,86 @@ function languageName(code: string): string {
   return map[code] || "English";
 }
 
-async function fetchYahooQuote(symbol: string): Promise<number | null> {
+async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
-    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const url = `https://eodhd.com/api/real-time/${eodhSymbol}?api_token=${EODHD_API_KEY}&fmt=json`;
+    const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    const result = data?.chart?.result?.[0];
-    return result?.meta?.regularMarketPrice || result?.meta?.previousClose || null;
+    return data.close || data.previousClose || null;
   } catch { return null; }
 }
 
-async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string }> {
-  const [adv, dec, vix] = await Promise.all([
-    fetchYahooQuote("^ADV"),
-    fetchYahooQuote("^DECL"),
-    fetchYahooQuote("^VIX"),
+async function fetchBreadthFromEODHDBulk(): Promise<{ advances: number; declines: number; unchanged: number } | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
+  try {
+    const url = `https://eodhd.com/api/eod-bulk-last-day/US?api_token=${EODHD_API_KEY}&fmt=json&filter=extended`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length < 100) return null;
+
+    let advances = 0, declines = 0, unchanged = 0;
+    for (const item of data) {
+      const change = item.change_p ?? item.change ?? 0;
+      if (change > 0) advances++;
+      else if (change < 0) declines++;
+      else unchanged++;
+    }
+    console.log(`[morning-briefing] EODHD bulk breadth: ${advances} adv / ${declines} dec / ${unchanged} unch`);
+    return { advances, declines, unchanged };
+  } catch (err) {
+    console.error("[morning-briefing] EODHD bulk fetch error:", err);
+    return null;
+  }
+}
+
+async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean }> {
+  const [bulkBreadth, vix] = await Promise.all([
+    fetchBreadthFromEODHDBulk(),
+    fetchEODHDQuote("VIX.INDX"),
   ]);
 
-  const advances = adv || 1650;
-  const declines = dec || 1350;
-  const ratio = declines > 0 ? advances / declines : 1;
+  if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
+    const ratio = bulkBreadth.declines > 0 ? bulkBreadth.advances / bulkBreadth.declines : 1;
+    let sentiment = "neutral";
+    if (ratio >= 1.5) sentiment = "bullish";
+    else if (ratio >= 1.0) sentiment = "neutral-bullish";
+    else if (ratio >= 0.67) sentiment = "neutral-bearish";
+    else sentiment = "bearish";
+    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true };
+  }
 
-  let sentiment = "neutral";
-  if (ratio >= 1.5) sentiment = "bullish";
-  else if (ratio >= 1.0) sentiment = "neutral-bullish";
-  else if (ratio >= 0.67) sentiment = "neutral-bearish";
-  else sentiment = "bearish";
-
-  return { advances, declines, vix, sentiment };
+  // No real data available — return honest "unavailable" instead of fake numbers
+  console.warn("[morning-briefing] Market breadth data unavailable — no fallback used");
+  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false };
 }
 
 async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
   const symbols = [
-    { key: "SPY", sym: "SPY" },
-    { key: "QQQ", sym: "QQQ" },
-    { key: "BTC", sym: "BTC-USD" },
-    { key: "ETH", sym: "ETH-USD" },
-    { key: "EUR/USD", sym: "EURUSD=X" },
-    { key: "Gold", sym: "GC=F" },
+    { key: "SPY", eod: "SPY.US" },
+    { key: "QQQ", eod: "QQQ.US" },
+    { key: "BTC", eod: "BTC-USD.CC" },
+    { key: "ETH", eod: "ETH-USD.CC" },
+    { key: "EUR/USD", eod: "EURUSD.FOREX" },
+    { key: "Gold", eod: "GC.COMEX" },
   ];
 
   const results: Record<string, { price: number; change: string }> = {};
-  await Promise.all(symbols.map(async ({ key, sym }) => {
+  if (!EODHD_API_KEY) return results;
+
+  await Promise.all(symbols.map(async ({ key, eod }) => {
     try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
-      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+      const url = `https://eodhd.com/api/real-time/${eod}?api_token=${EODHD_API_KEY}&fmt=json`;
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
-      const meta = data?.chart?.result?.[0]?.meta;
-      const current = meta?.regularMarketPrice || 0;
-      const prev = meta?.previousClose || meta?.chartPreviousClose || current;
+      const current = data.close || data.previousClose || 0;
+      const prev = data.previousClose || data.open || current;
       const pct = prev > 0 ? ((current - prev) / prev * 100).toFixed(2) : "0.00";
       results[key] = { price: current, change: `${Number(pct) >= 0 ? "+" : ""}${pct}%` };
     } catch { /* skip */ }
@@ -102,7 +131,7 @@ async function generateTranslatedBriefing(params: {
   language: string;
   region: string;
   userName: string;
-  breadth: { advances: number; declines: number; vix: number | null; sentiment: string };
+  breadth: { advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean };
   prices: Record<string, { price: number; change: string }>;
   watchlistSignals: any[];
   portfolio: any;
@@ -127,10 +156,12 @@ Context:
 - Local time: ${userTime}
 
 MARKET BREADTH DATA:
-- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
+${breadth.dataAvailable ? `- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
 - Advance/Decline Ratio: ${(breadth.advances / Math.max(breadth.declines, 1)).toFixed(2)}
 - VIX: ${breadth.vix ?? "N/A"}
-- Overall Sentiment: ${breadth.sentiment}
+- Overall Sentiment: ${breadth.sentiment}` : "- Market breadth data is unavailable today. Do NOT make up breadth numbers. Mention that breadth data was not available."}
+
+IMPORTANT: This is a weekday briefing. Do NOT say "as the trading day unfolds" if the local time suggests markets may be closed. Be factual about market hours.
 
 MARKET PRICES:
 ${pricesSummary}
@@ -181,7 +212,9 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     return {
       subject: `☀️ Morning Briefing — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
       greeting: `Good morning, ${userName}`,
-      briefingHtml: `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`,
+      briefingHtml: breadth.dataAvailable
+        ? `<p>Market breadth: ${breadth.advances} advances vs ${breadth.declines} declines (${breadth.sentiment}). VIX: ${breadth.vix ?? "N/A"}</p>`
+        : `<p>Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>`,
       labels: defaultLabels,
     };
   }
@@ -203,10 +236,8 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     const parsed = JSON.parse(text);
     const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
-    const briefingHtml = `
-      <div style="margin-bottom:20px;">
-        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
+    const breadthHtml = breadth.dataAvailable
+      ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
             <span style="font-size:13px;color:#16a34a;font-weight:600;">▲ ${breadth.advances}</span>
             <span style="font-size:13px;color:#dc2626;font-weight:600;">▼ ${breadth.declines}</span>
@@ -214,7 +245,16 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
             <span style="font-size:13px;font-weight:700;color:${breadth.sentiment.includes("bull") ? "#16a34a" : breadth.sentiment.includes("bear") ? "#dc2626" : "#6b7280"};">${breadth.sentiment.toUpperCase()}</span>
           </div>
           <p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary || ""}</p>
-        </div>
+        </div>`
+      : `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:14px;margin-bottom:8px;">
+          <p style="margin:0;font-size:13px;color:#92400e;">Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>
+          ${parsed.market_breadth_summary ? `<p style="margin:4px 0 0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary}</p>` : ""}
+        </div>`;
+
+    const briefingHtml = `
+      <div style="margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📊 ${labels.market_breadth}</p>
+        ${breadthHtml}
       </div>
       <div style="margin-bottom:20px;">
         <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:600;">📈 ${labels.key_levels_label}</p>

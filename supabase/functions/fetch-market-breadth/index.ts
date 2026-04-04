@@ -25,22 +25,6 @@ interface SentimentData {
   fearGreedScore: number;
 }
 
-// Yahoo is kept ONLY for breadth symbols (^ADV, ^DECL, ^UNCH) that EODHD does not cover
-async function fetchYahooQuote(symbol: string): Promise<number | null> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
-    const response = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    const result = data?.chart?.result?.[0];
-    return result?.meta?.regularMarketPrice || result?.meta?.previousClose || null;
-  } catch {
-    return null;
-  }
-}
-
 // EODHD quote fetcher (primary source for VIX and standard indices)
 async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
   const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
@@ -52,6 +36,48 @@ async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
     const data = await response.json();
     return data.close || data.previousClose || null;
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Calculate market breadth from EODHD bulk S&P 500 quotes.
+ * Counts symbols with positive change as advances, negative as declines, zero as unchanged.
+ */
+async function fetchBreadthFromEODHDBulk(): Promise<{ advances: number; declines: number; unchanged: number } | null> {
+  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+  if (!EODHD_API_KEY) return null;
+
+  try {
+    // Bulk quotes for all US exchange symbols — returns change_p (percent change)
+    const url = `https://eodhd.com/api/eod-bulk-last-day/US?api_token=${EODHD_API_KEY}&fmt=json&filter=extended`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`[fetch-market-breadth] EODHD bulk API returned ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length < 100) {
+      console.warn(`[fetch-market-breadth] EODHD bulk returned only ${data?.length ?? 0} symbols — too few`);
+      return null;
+    }
+
+    let advances = 0;
+    let declines = 0;
+    let unchanged = 0;
+
+    for (const item of data) {
+      const change = item.change_p ?? item.change ?? 0;
+      if (change > 0) advances++;
+      else if (change < 0) declines++;
+      else unchanged++;
+    }
+
+    console.log(`[fetch-market-breadth] EODHD bulk breadth: ${advances} adv / ${declines} dec / ${unchanged} unch (${data.length} total)`);
+    return { advances, declines, unchanged };
+  } catch (err) {
+    console.error("[fetch-market-breadth] EODHD bulk fetch error:", err);
     return null;
   }
 }
@@ -74,20 +100,17 @@ function computeSentiment(vix: number | null, putCallRatio: number | null, adRat
   }
 
   let score = 50;
-  let signals = 0;
 
   if (vix !== null) {
     if (vix >= 30) score += -25;
     else if (vix >= 20) score += -10;
     else if (vix < 15) score += 15;
-    signals++;
   }
 
   if (putCallRatio !== null) {
     if (putCallRatio >= 1.2) score += -20;
     else if (putCallRatio >= 0.9) score += -10;
     else if (putCallRatio < 0.7) score += 15;
-    signals++;
   }
 
   if (adRatio > 0) {
@@ -95,7 +118,6 @@ function computeSentiment(vix: number | null, putCallRatio: number | null, adRat
     else if (adRatio >= 1.5) score += 10;
     else if (adRatio < 0.67) score += -15;
     else if (adRatio < 1.0) score += -5;
-    signals++;
   }
 
   score = Math.max(0, Math.min(100, score));
@@ -144,6 +166,13 @@ async function loadCachedBreadth(): Promise<{
       .limit(1)
       .single();
     if (error || !data) return null;
+
+    // Reject cached data if it's the old hardcoded fallback
+    if (Number(data.advancing) === 1650 && Number(data.declining) === 1350) {
+      console.warn("[fetch-market-breadth] Cached data is stale fallback (1650/1350) — ignoring");
+      return null;
+    }
+
     return {
       advances: Number(data.advancing),
       declines: Number(data.declining),
@@ -158,8 +187,18 @@ async function loadCachedBreadth(): Promise<{
   }
 }
 
-/** Cache successful breadth fetch */
+/** Cache successful breadth fetch — only real data, never fallbacks */
 async function cacheBreadth(b: BreadthData) {
+  // Guard: never cache the old hardcoded fallback values
+  if (b.advances === 1650 && b.declines === 1350) {
+    console.warn("[fetch-market-breadth] Breadth fallback detected — skipping cache write");
+    return;
+  }
+  if (b.advances === 1800 && b.declines === 1200) {
+    console.warn("[fetch-market-breadth] Finnhub hardcoded fallback detected — skipping cache write");
+    return;
+  }
+
   try {
     const sb = getSupabaseServiceClient();
     // Delete old cache rows (keep last 10)
@@ -193,106 +232,71 @@ serve(async (req) => {
   try {
     console.log("[fetch-market-breadth] Starting breadth + sentiment data fetch...");
 
-    // Fetch A/D data (Yahoo — EODHD doesn't cover ^ADV/^DECL/^UNCH breadth indicators)
-    // Fetch VIX from EODHD (primary), Put/Call from Yahoo (only source)
-    const [advResult, declResult, unchResult, vixValue, pcRatioValue] = await Promise.all([
-      fetchYahooQuote("^ADV"),
-      fetchYahooQuote("^DECL"),
-      fetchYahooQuote("^UNCH"),
-      (async () => {
-        const eodhVix = await fetchEODHDQuote("VIX.INDX");
-        if (eodhVix !== null) return eodhVix;
-        return fetchYahooQuote("^VIX");
-      })(),
-      (async () => {
-        for (const sym of ["^CPCE", "^CPC", "^PCSP"]) {
-          const val = await fetchYahooQuote(sym);
-          if (val !== null) return val;
-        }
-        return null;
-      })(),
-    ]);
+    // Step 1: Try EODHD bulk quotes for real breadth calculation
+    const bulkBreadth = await fetchBreadthFromEODHDBulk();
 
-    let advances = advResult || 0;
-    let declines = declResult || 0;
-    let unchanged = unchResult || 0;
-    let dataSource: 'yahoo' | 'finnhub' | 'fallback' | 'unavailable' = 'yahoo';
+    // Step 2: Fetch VIX from EODHD
+    const vixValue = await fetchEODHDQuote("VIX.INDX");
+
+    let advances = 0;
+    let declines = 0;
+    let unchanged = 0;
+    let dataSource: 'eodhd_bulk' | 'cache' | 'unavailable' = 'unavailable';
     let dataAvailable = true;
     let breadthError: string | undefined;
 
-    // Check if Yahoo returned valid data
-    const yahooFailed = advances === 0 && declines === 0;
-
-    if (yahooFailed) {
-      console.log("[fetch-market-breadth] Yahoo A/D data unavailable, trying Finnhub fallback...");
-      const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
-      let finnhubWorked = false;
-
-      if (FINNHUB_API_KEY) {
-        try {
-          const response = await fetch(
-            `https://finnhub.io/api/v1/stock/market-status?exchange=US&token=${FINNHUB_API_KEY}`
-          );
-          const statusData = await response.json();
-          if (statusData.isOpen) {
-            advances = 1800; declines = 1200; unchanged = 100;
-          } else {
-            advances = 1650; declines = 1350; unchanged = 100;
-          }
-          dataSource = 'finnhub';
-          finnhubWorked = true;
-        } catch (err) {
-          console.error("[fetch-market-breadth] Finnhub fallback error:", err);
-        }
-      }
-
-      // If Finnhub also failed, try Supabase cache
-      if (!finnhubWorked) {
-        console.log("[fetch-market-breadth] Finnhub unavailable, trying cached breadth...");
-        const cached = await loadCachedBreadth();
-        if (cached) {
-          advances = cached.advances;
-          declines = cached.declines;
-          unchanged = cached.unchanged;
-          dataSource = 'fallback';
-          dataAvailable = true;
-          breadthError = 'Live data unavailable — showing cached data';
-          console.log(`[fetch-market-breadth] Using cached breadth from ${cached.created_at}`);
-        } else {
-          // No cache — return neutral defaults
-          dataSource = 'unavailable';
-          dataAvailable = false;
-          breadthError = 'Market breadth data temporarily unavailable';
-          console.log("[fetch-market-breadth] No cached breadth available, returning unavailable");
-        }
+    if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
+      // Real data from EODHD bulk
+      advances = bulkBreadth.advances;
+      declines = bulkBreadth.declines;
+      unchanged = bulkBreadth.unchanged;
+      dataSource = 'eodhd_bulk';
+    } else {
+      // EODHD bulk failed — try cache
+      console.log("[fetch-market-breadth] EODHD bulk unavailable, trying cached breadth...");
+      const cached = await loadCachedBreadth();
+      if (cached) {
+        advances = cached.advances;
+        declines = cached.declines;
+        unchanged = cached.unchanged;
+        dataSource = 'cache';
+        breadthError = 'Live data unavailable — showing cached data';
+        console.log(`[fetch-market-breadth] Using cached breadth from ${cached.created_at}`);
+      } else {
+        // No real data available at all
+        dataSource = 'unavailable';
+        dataAvailable = false;
+        breadthError = 'Market breadth data temporarily unavailable';
+        console.log("[fetch-market-breadth] No cached breadth available, returning unavailable");
       }
     }
 
     const total = advances + declines + unchanged;
-    const advanceDeclineRatio = declines > 0 ? advances / declines : (dataAvailable ? 1 : 1);
+    const advanceDeclineRatio = declines > 0 ? Math.round((advances / declines) * 100) / 100 : (dataAvailable ? 1 : 0);
     const advanceDeclineLine = advances - declines;
 
     const breadthData: BreadthData = {
       advances,
       declines,
       unchanged,
-      advanceDeclineRatio: Math.round(advanceDeclineRatio * 100) / 100,
+      advanceDeclineRatio,
       advanceDeclineLine,
       timestamp: new Date().toISOString(),
       exchange: "NYSE",
     };
 
-    // Cache successful live fetches (yahoo or finnhub)
-    if (dataSource === 'yahoo' || dataSource === 'finnhub') {
+    // Only cache real data (eodhd_bulk)
+    if (dataSource === 'eodhd_bulk') {
       cacheBreadth(breadthData); // fire-and-forget
     }
 
-    const sentimentData = computeSentiment(vixValue, pcRatioValue, advanceDeclineRatio);
+    const sentimentData = computeSentiment(vixValue, null, advanceDeclineRatio);
 
     console.log("[fetch-market-breadth] Breadth:", breadthData, "source:", dataSource);
     console.log("[fetch-market-breadth] Sentiment:", sentimentData);
 
-    const baseSentiment = advanceDeclineRatio >= 1.5 ? "bullish" :
+    const baseSentiment = !dataAvailable ? "unavailable" :
+                          advanceDeclineRatio >= 1.5 ? "bullish" :
                           advanceDeclineRatio >= 1.0 ? "neutral-bullish" :
                           advanceDeclineRatio >= 0.67 ? "neutral-bearish" : "bearish";
 
@@ -342,7 +346,7 @@ serve(async (req) => {
             sentiment: baseSentiment,
           },
           dataAvailable: true,
-          dataSource: 'fallback' as const,
+          dataSource: 'cache' as const,
           breadthError: 'Live data unavailable — showing cached data',
         };
       }
