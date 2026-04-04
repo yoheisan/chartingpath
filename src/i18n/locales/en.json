@@ -2966,7 +2966,7 @@
       "actionBridging": "Action Bridging",
       "actionBridgingCant": "External AI cannot link into ChartingPath's integrated tool ecosystem.",
       "actionBridgingDesc": "Every response includes deep links to Pattern Lab validation, Edge Atlas stats, alert creation, and script export — turning insights into executable actions in one click.",
-      "backtestAtlas": "320k+ Backtested Edge Atlas",
+      "backtestAtlas": "{{count}}+ Backtested Edge Atlas",
       "backtestAtlasCant": "Public AI has no access to this proprietary dataset. Generic AI can only quote textbook estimates.",
       "backtestAtlasDesc": "Ask \"What actually works?\" and get real statistics from our proprietary dataset of 320,000+ historically validated pattern trades with win rates, expectancy, and R multiples.",
       "chartContext": "Chart Context Analysis",
