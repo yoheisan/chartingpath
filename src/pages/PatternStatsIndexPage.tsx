@@ -52,7 +52,7 @@ export default function PatternStatsIndexPage() {
             {t('patternStats.indexTitle')}
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            {t('patternStats.indexSubtitle')}
+            {t('patternStats.indexSubtitle', { count: outcomeCount })}
           </p>
           <div className="h-0.5 w-20 bg-orange-500 mt-4" />
         </header>
