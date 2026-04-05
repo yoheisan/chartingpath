@@ -63,14 +63,13 @@ export async function fetchFinazonData(
         if (!Number.isFinite(r.c) || r.c <= 0) continue;
         allBars.push({
           date: new Date(r.t * 1000).toISOString(),
-          open: r.o,
-          high: r.h,
-          low: r.l,
-          close: r.c,
-          volume: r.v ?? 0,
+          open: Number(r.o), high: Number(r.h), low: Number(r.l),
+          close: Number(r.c), volume: Number(r.v ?? 0),
         });
       }
+      if (rows.length < 1000) break;
       page++;
+      await new Promise(res => setTimeout(res, 150));
     }
   } catch (err) {
     console.warn(`[Finazon] fetch error for ${symbol}@${interval}:`, err);
