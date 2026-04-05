@@ -1460,6 +1460,7 @@ serve(async (req) => {
     let includeDetails = true;
     let topNWithBars = 0; // Embed bars for first N patterns for instant chart loading
     let rrTier: RRTier = DEFAULT_RR_TIER; // R:R tier for stats aggregation
+    let userEodhdKey: string | undefined;
     
     if (req.method === 'POST') {
       try {
