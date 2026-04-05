@@ -6753,6 +6753,15 @@ export type Database = {
       rescore_copilot_training_pairs: { Args: never; Returns: Json }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
       run_database_maintenance: { Args: never; Returns: Json }
+      schedule_backfill_page: {
+        Args: {
+          p_body: string
+          p_delay_minutes?: number
+          p_headers: string
+          p_url: string
+        }
+        Returns: undefined
+      }
       set_user_language: {
         Args: {
           p_detected_country?: string
