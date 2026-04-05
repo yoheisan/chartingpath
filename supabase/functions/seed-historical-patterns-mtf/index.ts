@@ -1368,8 +1368,8 @@ async function fetchYahooData(symbol: string, timeframe: string, fromTimestamp?:
   const yahooLimits: Record<string, { rangeDays: number }> = {
     '1h': { rangeDays: 729 },   // Yahoo supports up to 730 days for hourly
     '4h': { rangeDays: 729 },   // Aggregated from 1h, same limit
-    '1d': { rangeDays: 365 * 5 },
-    '1wk': { rangeDays: 365 * 5 }
+    '1d': { rangeDays: 365 * 25 },  // Yahoo supports back to 1970
+    '1wk': { rangeDays: 365 * 25 }  // Yahoo supports back to 1970
   };
   
   const limits = yahooLimits[timeframe] || yahooLimits['1d'];
