@@ -1082,6 +1082,32 @@ function calculateATR(bars: OHLCBar[], period = 14): number {
   return atrSum / period;
 }
 
+/**
+ * Convert Yahoo FX symbol to Dukascopy format: EURUSD=X → EURUSD
+ */
+function toDukascopySymbol(symbol: string): string {
+  if (symbol.includes('=X')) {
+    return symbol.replace('=X', '');
+  }
+  return symbol;
+}
+
+/**
+ * Ensure symbol is always stored in Yahoo format for DB integrity.
+ */
+function ensureYahooFormat(symbol: string): string {
+  // Bare FX pair → add =X suffix
+  if (/^[A-Z]{6}$/.test(symbol)) {
+    return symbol + '=X';
+  }
+  // BTCUSDT → BTC-USD
+  if (symbol.endsWith('USDT') && !symbol.includes('-')) {
+    return symbol.replace('USDT', '-USD');
+  }
+  // Already in Yahoo format
+  return symbol;
+}
+
 function getAssetType(symbol: string): string {
   if (symbol.includes('-USD')) return 'crypto';
   if (symbol.includes('=X')) return 'fx';
