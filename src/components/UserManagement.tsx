@@ -375,7 +375,9 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                   <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Last Login</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Actions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
