@@ -1302,6 +1302,65 @@ async function fetchEODHDData(symbol: string, timeframe: string, fromTimestamp?:
 }
 
 /**
+ * Fetch FX data from Dukascopy (free, 15+ years of daily data for major FX pairs)
+ * Only supports daily/weekly for FX pairs. Returns bars tagged with ORIGINAL Yahoo symbol.
+ */
+async function fetchDukascopyData(symbol: string, timeframe: string, fromTimestamp?: number): Promise<OHLCBar[]> {
+  // Only support daily/weekly FX
+  if (!['1d', '1wk'].includes(timeframe)) return [];
+  if (!symbol.includes('=X')) return [];
+
+  const dukaPair = toDukascopySymbol(symbol); // EURUSD=X → EURUSD
+  const yahooSymbol = ensureYahooFormat(symbol); // Ensure we tag bars with Yahoo format
+
+  const endDate = new Date();
+  const startDate = fromTimestamp ? new Date(fromTimestamp) : new Date(endDate.getTime() - 7300 * 24 * 60 * 60 * 1000);
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Dukascopy CSV endpoint for daily OHLC
+  // Format: https://freeserv.dukascopy.com/2.0/index.php?path=chart/json&instrument=EURUSD&offer_side=A&interval=1D&from=YYYY-MM-DD&to=YYYY-MM-DD
+  const dukaInterval = timeframe === '1wk' ? '1W' : '1D';
+  const url = `https://freeserv.dukascopy.com/2.0/index.php?path=chart/json&instrument=${dukaPair}&offer_side=A&interval=${dukaInterval}&splits=true&from=${startStr}&to=${endStr}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+
+    if (!response.ok) {
+      console.log(`[Dukascopy] Error for ${dukaPair}: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      console.log(`[Dukascopy] No data returned for ${dukaPair}`);
+      return [];
+    }
+
+    // Dukascopy JSON format: [[timestamp_ms, open, close, low, high, volume], ...]
+    const bars: OHLCBar[] = data
+      .filter((row: any) => Array.isArray(row) && row.length >= 5 && Number.isFinite(row[1]))
+      .map((row: any) => ({
+        date: new Date(row[0]).toISOString(),
+        open: Number(row[1]),
+        close: Number(row[2]),
+        low: Number(row[3]),
+        high: Number(row[4]),
+        volume: Number(row[5] || 0),
+      }))
+      .filter((b: OHLCBar) => b.close > 0);
+
+    console.log(`[Dukascopy] Fetched ${bars.length} bars for ${dukaPair}@${timeframe} (stored as ${yahooSymbol})`);
+    return bars;
+  } catch (error) {
+    console.error(`[Dukascopy] Error fetching ${dukaPair}:`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch data from Yahoo Finance (fallback provider)
  * FIXED: 1h/4h limits corrected to 729 days (Yahoo supports up to 730 days for hourly)
  */
