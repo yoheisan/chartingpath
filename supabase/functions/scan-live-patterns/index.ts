@@ -1746,7 +1746,7 @@ serve(async (req) => {
     // Enrich missing trend data
     const needTrend = [...new Set(detectedPatterns.filter(p => !p.trendAlignment).map(p => p.instrument))];
     if (needTrend.length) {
-      const trendBars = await fetchDataBatchWithDbFallback(supabase, needTrend, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 6, 200);
+      const trendBars = await fetchDataBatchWithDbFallback(supabase, needTrend, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 6, 200, userEodhdKey);
       for (const p of detectedPatterns) {
         if (p.trendAlignment) continue;
         const fullBars = trendBars.get(p.instrument);
