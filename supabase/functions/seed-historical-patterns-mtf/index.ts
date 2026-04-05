@@ -2274,7 +2274,7 @@ serve(async (req) => {
       const { data: upsertedData, error: insertError } = await supabase
         .from('historical_pattern_occurrences')
         .upsert(chunk.map(occ => ({
-          symbol: occ.symbol,
+          symbol: ensureYahooFormat(occ.symbol),
           asset_type: occ.asset_type,
           pattern_id: occ.pattern_id,
           pattern_name: occ.pattern_name,
