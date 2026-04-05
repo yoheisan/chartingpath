@@ -703,9 +703,14 @@ function toEODHDSymbol(symbol: string): string {
 /**
  * EODHD-first data fetch with Yahoo as last-resort fallback
  */
-async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
-  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d', overrideApiKey?: string): Promise<any[]> {
+  const EODHD_API_KEY = overrideApiKey || Deno.env.get('EODHD_API_KEY');
+  
+  // For intraday requests: only proceed if the caller provided their own key.
+  // ChartingPath's platform key is reserved for daily/weekly seeding only.
+  const isIntraday = ['1h', '4h', '8h', '15m'].includes(interval);
   if (!EODHD_API_KEY) return [];
+  if (isIntraday && !overrideApiKey) return [];
   
   try {
     const eodhSymbol = toEODHDSymbol(symbol);
