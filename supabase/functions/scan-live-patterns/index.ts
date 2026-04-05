@@ -1564,7 +1564,7 @@ serve(async (req) => {
           : 400;
     startDate.setDate(startDate.getDate() - lookbackDays);
     console.log(`[scan-live-patterns] Slow path: fetching data for ${instruments.length} instruments, timeframe=${timeframe}`);
-    const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
+    const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25, 20, userEodhdKey);
     
     console.log(`[scan-live-patterns] Data fetched for ${instrumentDataMap.size} instruments`);
     const instrumentsWithData = [...instrumentDataMap.entries()].filter(([, bars]) => bars.length >= 20);
