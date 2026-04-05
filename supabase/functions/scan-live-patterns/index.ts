@@ -853,7 +853,7 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
 }
 
 async function fetchDataBatchWithDbFallback(
-  supabase: any, symbols: string[], startDate: string, endDate: string, interval: string = '1d', concurrency: number = 10, minBarsRequired: number = 20
+  supabase: any, symbols: string[], startDate: string, endDate: string, interval: string = '1d', concurrency: number = 10, minBarsRequired: number = 20, overrideApiKey?: string
 ): Promise<Map<string, any[]>> {
   const results = new Map<string, any[]>();
   const now = Date.now();
