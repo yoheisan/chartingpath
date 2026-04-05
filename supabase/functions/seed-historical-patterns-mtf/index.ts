@@ -1728,8 +1728,21 @@ async function fetchMarketData(
       bars = await fetchEODHDData(symbol, '1d', fromTimestamp);
       // Note: this gives daily bars not the target timeframe, but prevents pattern detector from starving
     }
+  } else if (isFX && !isIntraday) {
+    // FX Daily/Weekly: Dukascopy first (free, 15+ years), then EODHD, then Yahoo
+    bars = await fetchDukascopyData(symbol, timeframe, fromTimestamp);
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] Dukascopy failed for FX ${symbol}, trying EODHD`);
+      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    }
+    
+    if (bars.length === 0) {
+      console.log(`[Provider] EODHD failed for FX ${symbol}, trying Yahoo fallback`);
+      bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
+    }
   } else {
-    // Non-crypto daily/weekly: EODHD first (deep history, adjusted close)
+    // Non-crypto, non-FX daily/weekly: EODHD first (deep history, adjusted close)
     bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
     
     if (bars.length === 0) {
