@@ -101,6 +101,21 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
         }
       }
 
+      // Fetch activity summary from the DB function
+      let activityMap: Record<string, { last_active_at: string | null; active_days_7d: number; active_days_30d: number; total_page_views: number; top_features: Array<{ name: string; count: number }> }> = {};
+      const { data: activityData } = await supabase.rpc('get_user_activity_summary');
+      if (activityData) {
+        for (const a of activityData as any[]) {
+          activityMap[a.user_id] = {
+            last_active_at: a.last_active_at,
+            active_days_7d: a.active_days_7d || 0,
+            active_days_30d: a.active_days_30d || 0,
+            total_page_views: Number(a.total_page_views) || 0,
+            top_features: a.top_features || [],
+          };
+        }
+      }
+
       // Combine the data
       const usersWithRoles = profiles?.map(profile => ({
         ...profile,
@@ -108,6 +123,11 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
         last_login_ip: loginMap[profile.user_id]?.ip ?? null,
         last_login_location: loginMap[profile.user_id]?.location ?? null,
         last_sign_in_at: loginMap[profile.user_id]?.at ?? profile.last_sign_in_at ?? null,
+        last_active_at: activityMap[profile.user_id]?.last_active_at ?? null,
+        active_days_7d: activityMap[profile.user_id]?.active_days_7d ?? 0,
+        active_days_30d: activityMap[profile.user_id]?.active_days_30d ?? 0,
+        total_page_views: activityMap[profile.user_id]?.total_page_views ?? 0,
+        top_features: activityMap[profile.user_id]?.top_features ?? [],
       })) || [];
 
       setUsers(usersWithRoles);
