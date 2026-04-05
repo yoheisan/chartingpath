@@ -391,6 +391,7 @@ export default function LivePatternsPage() {
             forceRefresh,
             includeDetails,
             topNWithBars: typeToFetch === 'all' ? 3 : 10,
+            ...(userEodhdKey ? { userEodhdKey } : {}),
           },
         }),
         timeoutMs,
