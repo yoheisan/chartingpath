@@ -253,8 +253,8 @@ serve(async (req) => {
     // Step 1: Try EODHD bulk quotes for real breadth calculation
     const bulkBreadth = await fetchBreadthFromEODHDBulk();
 
-    // Step 2: Fetch VIX from EODHD
-    const vixValue = await fetchEODHDQuote("VIX.INDX");
+    // Step 2: Fetch VIX from Yahoo Finance (free, no API key needed)
+    const vixValue = await fetchVIXFromYahoo();
 
     let advances = 0;
     let declines = 0;
