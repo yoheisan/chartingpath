@@ -410,6 +410,25 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                         <span className="text-muted-foreground">User</span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {user.last_sign_in_at ? (
+                        <div className="text-sm">
+                          <p>{new Date(user.last_sign_in_at).toLocaleDateString()}{' '}
+                            <span className="text-muted-foreground">
+                              {new Date(user.last_sign_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </p>
+                          {user.last_login_location && (
+                            <p className="text-xs text-muted-foreground">{user.last_login_location}</p>
+                          )}
+                          {user.last_login_ip && (
+                            <p className="text-xs text-muted-foreground font-mono">{user.last_login_ip}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Never</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
