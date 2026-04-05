@@ -836,7 +836,7 @@ async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: 
 /**
  * EODHD-first external data fetch. Crypto uses Yahoo directly (Binance is primary via different path).
  */
-async function fetchExternalDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+async function fetchExternalDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d', overrideApiKey?: string): Promise<any[]> {
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
   
   if (isCrypto) {
@@ -845,7 +845,7 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
   }
   
   // Non-crypto: EODHD first, Yahoo last-resort
-  const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval);
+  const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval, overrideApiKey);
   if (eodhBars.length > 0) return eodhBars;
   
   console.log(`[scan-live-patterns] EODHD empty for ${symbol}, falling back to Yahoo`);
