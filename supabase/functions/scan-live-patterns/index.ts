@@ -703,9 +703,14 @@ function toEODHDSymbol(symbol: string): string {
 /**
  * EODHD-first data fetch with Yahoo as last-resort fallback
  */
-async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
-  const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
+async function fetchEODHDDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d', overrideApiKey?: string): Promise<any[]> {
+  const EODHD_API_KEY = overrideApiKey || Deno.env.get('EODHD_API_KEY');
+  
+  // For intraday requests: only proceed if the caller provided their own key.
+  // ChartingPath's platform key is reserved for daily/weekly seeding only.
+  const isIntraday = ['1h', '4h', '8h', '15m'].includes(interval);
   if (!EODHD_API_KEY) return [];
+  if (isIntraday && !overrideApiKey) return [];
   
   try {
     const eodhSymbol = toEODHDSymbol(symbol);
@@ -831,7 +836,7 @@ async function fetchYahooDataSingle(symbol: string, startDate: string, endDate: 
 /**
  * EODHD-first external data fetch. Crypto uses Yahoo directly (Binance is primary via different path).
  */
-async function fetchExternalDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d'): Promise<any[]> {
+async function fetchExternalDataSingle(symbol: string, startDate: string, endDate: string, interval: string = '1d', overrideApiKey?: string): Promise<any[]> {
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
   
   if (isCrypto) {
@@ -840,7 +845,7 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
   }
   
   // Non-crypto: EODHD first, Yahoo last-resort
-  const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval);
+  const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval, overrideApiKey);
   if (eodhBars.length > 0) return eodhBars;
   
   console.log(`[scan-live-patterns] EODHD empty for ${symbol}, falling back to Yahoo`);
@@ -848,7 +853,7 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
 }
 
 async function fetchDataBatchWithDbFallback(
-  supabase: any, symbols: string[], startDate: string, endDate: string, interval: string = '1d', concurrency: number = 10, minBarsRequired: number = 20
+  supabase: any, symbols: string[], startDate: string, endDate: string, interval: string = '1d', concurrency: number = 10, minBarsRequired: number = 20, overrideApiKey?: string
 ): Promise<Map<string, any[]>> {
   const results = new Map<string, any[]>();
   const now = Date.now();
@@ -876,7 +881,7 @@ async function fetchDataBatchWithDbFallback(
   
   for (let i = 0; i < symbolsNeedingExternal.length; i += concurrency) {
     const batch = symbolsNeedingExternal.slice(i, i + concurrency);
-    const batchResults = await Promise.allSettled(batch.map(s => fetchExternalDataSingle(s, startDate, endDate, interval)));
+    const batchResults = await Promise.allSettled(batch.map(s => fetchExternalDataSingle(s, startDate, endDate, interval, overrideApiKey)));
     const barsToUpsert: Array<{ symbol: string; date: string; open: number; high: number; low: number; close: number; volume: number; timeframe: string; instrument_type: string; source: string }> = [];
     batchResults.forEach((r, idx) => {
       const symbol = batch[idx];
@@ -1455,6 +1460,7 @@ serve(async (req) => {
     let includeDetails = true;
     let topNWithBars = 0; // Embed bars for first N patterns for instant chart loading
     let rrTier: RRTier = DEFAULT_RR_TIER; // R:R tier for stats aggregation
+    let userEodhdKey: string | undefined;
     
     if (req.method === 'POST') {
       try {
@@ -1468,6 +1474,7 @@ serve(async (req) => {
         if (typeof body.includeDetails === 'boolean') includeDetails = body.includeDetails;
         if (typeof body.topNWithBars === 'number') topNWithBars = Math.min(body.topNWithBars, 15);
         if (body.rrTier && [2, 3, 4, 5].includes(body.rrTier)) rrTier = body.rrTier as RRTier;
+        if (body.userEodhdKey) userEodhdKey = body.userEodhdKey;
       } catch {}
     }
     // Also check query params for rrTier
@@ -1557,7 +1564,7 @@ serve(async (req) => {
           : 400;
     startDate.setDate(startDate.getDate() - lookbackDays);
     console.log(`[scan-live-patterns] Slow path: fetching data for ${instruments.length} instruments, timeframe=${timeframe}`);
-    const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25);
+    const instrumentDataMap = await fetchDataBatchWithDbFallback(supabase, instruments, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 25, 20, userEodhdKey);
     
     console.log(`[scan-live-patterns] Data fetched for ${instrumentDataMap.size} instruments`);
     const instrumentsWithData = [...instrumentDataMap.entries()].filter(([, bars]) => bars.length >= 20);
@@ -1739,7 +1746,7 @@ serve(async (req) => {
     // Enrich missing trend data
     const needTrend = [...new Set(detectedPatterns.filter(p => !p.trendAlignment).map(p => p.instrument))];
     if (needTrend.length) {
-      const trendBars = await fetchDataBatchWithDbFallback(supabase, needTrend, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 6, 200);
+      const trendBars = await fetchDataBatchWithDbFallback(supabase, needTrend, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], timeframe, 6, 200, userEodhdKey);
       for (const p of detectedPatterns) {
         if (p.trendAlignment) continue;
         const fullBars = trendBars.get(p.instrument);
