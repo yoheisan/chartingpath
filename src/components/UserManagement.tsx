@@ -23,6 +23,11 @@ interface User {
   last_sign_in_at?: string | null;
   last_login_ip?: string | null;
   last_login_location?: string | null;
+  last_active_at?: string | null;
+  active_days_7d?: number;
+  active_days_30d?: number;
+  total_page_views?: number;
+  top_features?: Array<{ name: string; count: number }>;
 }
 
 interface UserManagementProps {
