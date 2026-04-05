@@ -31,6 +31,12 @@ const PARTITION_CONFIG: Record<string, PartitionConfig> = {
   'etfs': { assetTypes: ['etfs'] },
 };
 
+// Instruments per page by timeframe — intraday fetches much more data per symbol
+function getBatchSize(timeframe: string): number {
+  if (['1h', '4h', '8h'].includes(timeframe)) return 3;
+  return 10;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -67,10 +73,11 @@ serve(async (req) => {
     for (const timeframe of timeframes) {
       console.log(`[backfill-orchestrator] ${partition}@${timeframe} offset=${offset}`);
 
+      const batchSize = getBatchSize(timeframe);
       const body: Record<string, unknown> = {
         timeframe,
         assetTypes: config.assetTypes,
-        maxInstrumentsPerType: 10,
+        maxInstrumentsPerType: batchSize,
         offset,
         dryRun: false,
         incrementalMode: false,
