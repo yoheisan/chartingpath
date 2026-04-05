@@ -40,6 +40,24 @@ async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
   }
 }
 
+async function fetchVIXFromYahoo(): Promise<number | null> {
+  try {
+    const url = 'https://query1.finance.yahoo.com'
+      + '/v8/finance/chart/%5EVIX'
+      + '?interval=1d&range=1d';
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const price = data?.chart?.result?.[0]
+      ?.meta?.regularMarketPrice;
+    return price ? Number(price) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Calculate market breadth from EODHD bulk S&P 500 quotes.
  * Counts symbols with positive change as advances, negative as declines, zero as unchanged.
@@ -235,8 +253,8 @@ serve(async (req) => {
     // Step 1: Try EODHD bulk quotes for real breadth calculation
     const bulkBreadth = await fetchBreadthFromEODHDBulk();
 
-    // Step 2: Fetch VIX from EODHD
-    const vixValue = await fetchEODHDQuote("VIX.INDX");
+    // Step 2: Fetch VIX from Yahoo Finance (free, no API key needed)
+    const vixValue = await fetchVIXFromYahoo();
 
     let advances = 0;
     let declines = 0;
