@@ -475,6 +475,8 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    </TableCell>
+                    <TableCell>
                       {user.last_sign_in_at ? (
                         <div className="text-sm">
                           <p>{new Date(user.last_sign_in_at).toLocaleDateString()}{' '}
