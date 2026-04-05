@@ -29,6 +29,7 @@ import {
   BAYESIAN_VIRTUAL_SAMPLE,
   type StatsSource,
 } from "../_shared/statsEnrichment.ts";
+import { fetchFinazonData } from '../_shared/finazonFetch.ts';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -844,11 +845,11 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
     return fetchYahooDataSingle(symbol, startDate, endDate, interval);
   }
   
-  // Non-crypto: EODHD first, Yahoo last-resort
+  // Non-crypto: Finazon first, then EODHD, then Yahoo
+  const finazonBars = await fetchFinazonData(symbol, interval, new Date(startDate).getTime());
+  if (finazonBars.length > 0) return finazonBars;
   const eodhBars = await fetchEODHDDataSingle(symbol, startDate, endDate, interval, overrideApiKey);
   if (eodhBars.length > 0) return eodhBars;
-  
-  console.log(`[scan-live-patterns] EODHD empty for ${symbol}, falling back to Yahoo`);
   return fetchYahooDataSingle(symbol, startDate, endDate, interval);
 }
 
