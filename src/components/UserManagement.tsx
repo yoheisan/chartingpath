@@ -64,14 +64,44 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
         .from('user_roles')
         .select('user_id, role');
 
-      if (rolesError && rolesError.code !== 'PGRST116') { // Ignore "no rows" error
+      if (rolesError && rolesError.code !== 'PGRST116') {
         console.error('Error loading user roles:', rolesError);
+      }
+
+      // Get last successful login per user from login_attempts
+      const userIds = profiles?.map(p => p.user_id) || [];
+      let loginMap: Record<string, { ip: string | null; location: string | null; at: string | null }> = {};
+
+      if (userIds.length > 0) {
+        const { data: logins } = await supabase
+          .from('login_attempts')
+          .select('user_id, ip_address, city, country, created_at')
+          .eq('success', true)
+          .in('user_id', userIds)
+          .order('created_at', { ascending: false })
+          .limit(1000);
+
+        if (logins) {
+          for (const l of logins) {
+            if (l.user_id && !loginMap[l.user_id]) {
+              const parts = [l.city, l.country].filter(Boolean);
+              loginMap[l.user_id] = {
+                ip: l.ip_address,
+                location: parts.length > 0 ? parts.join(', ') : null,
+                at: l.created_at,
+              };
+            }
+          }
+        }
       }
 
       // Combine the data
       const usersWithRoles = profiles?.map(profile => ({
         ...profile,
-        role: userRoles?.find(role => role.user_id === profile.user_id)?.role
+        role: userRoles?.find(role => role.user_id === profile.user_id)?.role,
+        last_login_ip: loginMap[profile.user_id]?.ip ?? null,
+        last_login_location: loginMap[profile.user_id]?.location ?? null,
+        last_sign_in_at: loginMap[profile.user_id]?.at ?? profile.last_sign_in_at ?? null,
       })) || [];
 
       setUsers(usersWithRoles);
