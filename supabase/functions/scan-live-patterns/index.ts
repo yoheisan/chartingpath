@@ -1473,6 +1473,7 @@ serve(async (req) => {
         if (typeof body.includeDetails === 'boolean') includeDetails = body.includeDetails;
         if (typeof body.topNWithBars === 'number') topNWithBars = Math.min(body.topNWithBars, 15);
         if (body.rrTier && [2, 3, 4, 5].includes(body.rrTier)) rrTier = body.rrTier as RRTier;
+        if (body.userEodhdKey) userEodhdKey = body.userEodhdKey;
       } catch {}
     }
     // Also check query params for rrTier
