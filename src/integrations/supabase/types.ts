@@ -6682,6 +6682,17 @@ export type Database = {
           value: string
         }[]
       }
+      get_user_activity_summary: {
+        Args: never
+        Returns: {
+          active_days_30d: number
+          active_days_7d: number
+          last_active_at: string
+          top_features: Json
+          total_page_views: number
+          user_id: string
+        }[]
+      }
       get_user_language: { Args: { p_user_id?: string }; Returns: string }
       get_user_org_ids: {
         Args: never

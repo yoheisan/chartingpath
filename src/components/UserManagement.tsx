@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, UserPlus, Shield, Search, Trash2, Loader2, Copy, Check } from "lucide-react";
+import { Users, UserPlus, Shield, Search, Trash2, Loader2, Copy, Check, Activity } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,11 @@ interface User {
   last_sign_in_at?: string | null;
   last_login_ip?: string | null;
   last_login_location?: string | null;
+  last_active_at?: string | null;
+  active_days_7d?: number;
+  active_days_30d?: number;
+  total_page_views?: number;
+  top_features?: Array<{ name: string; count: number }>;
 }
 
 interface UserManagementProps {
@@ -95,6 +101,21 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
         }
       }
 
+      // Fetch activity summary from the DB function
+      let activityMap: Record<string, { last_active_at: string | null; active_days_7d: number; active_days_30d: number; total_page_views: number; top_features: Array<{ name: string; count: number }> }> = {};
+      const { data: activityData } = await supabase.rpc('get_user_activity_summary');
+      if (activityData) {
+        for (const a of activityData as any[]) {
+          activityMap[a.user_id] = {
+            last_active_at: a.last_active_at,
+            active_days_7d: a.active_days_7d || 0,
+            active_days_30d: a.active_days_30d || 0,
+            total_page_views: Number(a.total_page_views) || 0,
+            top_features: a.top_features || [],
+          };
+        }
+      }
+
       // Combine the data
       const usersWithRoles = profiles?.map(profile => ({
         ...profile,
@@ -102,6 +123,11 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
         last_login_ip: loginMap[profile.user_id]?.ip ?? null,
         last_login_location: loginMap[profile.user_id]?.location ?? null,
         last_sign_in_at: loginMap[profile.user_id]?.at ?? profile.last_sign_in_at ?? null,
+        last_active_at: activityMap[profile.user_id]?.last_active_at ?? null,
+        active_days_7d: activityMap[profile.user_id]?.active_days_7d ?? 0,
+        active_days_30d: activityMap[profile.user_id]?.active_days_30d ?? 0,
+        total_page_views: activityMap[profile.user_id]?.total_page_views ?? 0,
+        top_features: activityMap[profile.user_id]?.top_features ?? [],
       })) || [];
 
       setUsers(usersWithRoles);
@@ -375,9 +401,9 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                   <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Activity</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -409,6 +435,46 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                       ) : (
                         <span className="text-muted-foreground">User</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-sm space-y-0.5 cursor-default">
+                              {user.last_active_at ? (
+                                <>
+                                  <p className="font-medium flex items-center gap-1">
+                                    <Activity className="h-3 w-3 text-primary" />
+                                    {new Date(user.last_active_at).toLocaleDateString()}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {user.active_days_7d}d / 7d · {user.active_days_30d}d / 30d
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(user.total_page_views ?? 0).toLocaleString()} views
+                                  </p>
+                                </>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No activity</span>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">Top Features</p>
+                              {user.top_features && user.top_features.length > 0 ? (
+                                user.top_features.map((f, i) => (
+                                  <p key={i} className="text-xs">
+                                    {f.name.replace(/\./g, ' › ')} — {f.count}×
+                                  </p>
+                                ))
+                              ) : (
+                                <p className="text-xs text-muted-foreground">No feature usage</p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>
                       {user.last_sign_in_at ? (
