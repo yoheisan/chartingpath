@@ -99,9 +99,18 @@ serve(async (req) => {
           body: JSON.stringify(body),
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          const msg = `seed returned non-JSON (status ${response.status}): ${text.slice(0, 200)}`;
+          errors.push(`${timeframe}: ${msg}`);
+          console.error(`[orchestrator] ${msg}`);
+          continue;
+        }
 
-        if (data.success) {
+        if (data?.success) {
           const inserted = data.summary?.insertedCount || 0;
           totalInserted += inserted;
           console.log(`[backfill-orchestrator] ${partition}@${timeframe} offset=${offset} — inserted ${inserted}`);
