@@ -437,6 +437,44 @@ const UserManagement = ({ userRole }: UserManagementProps) => {
                       )}
                     </TableCell>
                     <TableCell>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-sm space-y-0.5 cursor-default">
+                              {user.last_active_at ? (
+                                <>
+                                  <p className="font-medium flex items-center gap-1">
+                                    <Activity className="h-3 w-3 text-primary" />
+                                    {new Date(user.last_active_at).toLocaleDateString()}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {user.active_days_7d}d / 7d · {user.active_days_30d}d / 30d
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(user.total_page_views ?? 0).toLocaleString()} views
+                                  </p>
+                                </>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No activity</span>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">Top Features</p>
+                              {user.top_features && user.top_features.length > 0 ? (
+                                user.top_features.map((f, i) => (
+                                  <p key={i} className="text-xs">
+                                    {f.name.replace(/\./g, ' › ')} — {f.count}×
+                                  </p>
+                                ))
+                              ) : (
+                                <p className="text-xs text-muted-foreground">No feature usage</p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       {user.last_sign_in_at ? (
                         <div className="text-sm">
                           <p>{new Date(user.last_sign_in_at).toLocaleDateString()}{' '}
