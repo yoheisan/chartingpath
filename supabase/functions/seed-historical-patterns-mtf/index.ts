@@ -18,6 +18,7 @@ import {
   logVerificationFailures,
   type VerificationInput,
 } from "../_shared/patternVerification.ts";
+import { fetchFinazonData } from '../_shared/finazonFetch.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1671,9 +1672,12 @@ async function fetchMarketData(
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
   } else if (isFX && isIntraday) {
-    // FX Intraday: EODHD first (primary source), Yahoo as last-resort fallback
-    bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
-    
+    // FX Intraday: Finazon first (native 4H/8H), then EODHD, then Yahoo
+    bars = await fetchFinazonData(symbol, timeframe, fromTimestamp);
+    if (bars.length === 0) {
+      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    }
+
     if (bars.length === 0) {
       console.log(`[Provider] EODHD returned no data for FX ${symbol}, trying Yahoo fallback`);
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
@@ -1742,11 +1746,12 @@ async function fetchMarketData(
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
   } else {
-    // Non-crypto, non-FX daily/weekly: EODHD first (deep history, adjusted close)
-    bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
-    
+    // Non-crypto, non-FX: Finazon first, then EODHD, then Yahoo
+    bars = await fetchFinazonData(symbol, timeframe, fromTimestamp);
     if (bars.length === 0) {
-      console.log(`[Provider] EODHD failed for ${symbol}, trying Yahoo fallback`);
+      bars = await fetchEODHDData(symbol, timeframe, fromTimestamp);
+    }
+    if (bars.length === 0) {
       bars = await fetchYahooData(symbol, timeframe, fromTimestamp);
     }
   }
