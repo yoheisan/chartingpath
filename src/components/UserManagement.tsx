@@ -19,6 +19,9 @@ interface User {
   subscription_plan: string;
   subscription_status: string;
   role?: string;
+  last_sign_in_at?: string | null;
+  last_login_ip?: string | null;
+  last_login_location?: string | null;
 }
 
 interface UserManagementProps {
