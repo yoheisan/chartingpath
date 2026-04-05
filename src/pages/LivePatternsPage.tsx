@@ -322,6 +322,7 @@ export default function LivePatternsPage() {
 
   // BYOK intraday gate: check if user has a connected data provider for intraday TFs
   const [hasDataProvider, setHasDataProvider] = useState<boolean | null>(null);
+  const [userEodhdKey, setUserEodhdKey] = useState<string | null>(null);
   const isIntradayTf = timeframe === '1h' || timeframe === '4h' || timeframe === '8h';
 
   useEffect(() => {
