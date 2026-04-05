@@ -328,21 +328,25 @@ export default function LivePatternsPage() {
   useEffect(() => {
     if (!isIntradayTf) {
       setHasDataProvider(null);
+      setUserEodhdKey(null);
       return;
     }
     (async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
         setHasDataProvider(false);
+        setUserEodhdKey(null);
         return;
       }
       const { data } = await supabase
         .from('user_data_providers')
-        .select('id')
+        .select('id, provider, api_key_encrypted')
         .eq('is_active', true)
+        .eq('provider', 'eodhd')
         .limit(1)
         .maybeSingle();
       setHasDataProvider(!!data);
+      setUserEodhdKey((data as any)?.api_key_encrypted ?? null);
     })();
   }, [timeframe]);
   
