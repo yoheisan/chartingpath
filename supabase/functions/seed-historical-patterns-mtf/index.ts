@@ -1855,14 +1855,217 @@ function runHistoricalBacktest(
     
     if (atr <= 0) continue;
     
-    // Calculate SL/TP using ATR-based brackets
-    const stopDistance = atr * 2;
-    const tpDistance = atr * 4; // 2R
-    
     const isLong = (detectionResult.direction || pattern.direction) === 'long';
-    const stopLoss = isLong ? entryPrice - stopDistance : entryPrice + stopDistance;
-    const takeProfit = isLong ? entryPrice + tpDistance : entryPrice - tpDistance;
-    const riskReward = tpDistance / stopDistance;
+
+    // Pattern-native SL/TP using structural pivots
+    function calcPatternSLTP(
+      patternId: string,
+      pivots: typeof detectionResult.pivots,
+      entry: number,
+      atr: number,
+      isLong: boolean
+    ): { stopLoss: number; takeProfit: number } {
+      const ATR_FLOOR_MULT = 1.0; // minimum stop = 1 ATR
+      const atrFloor = atr * ATR_FLOOR_MULT;
+      const getPrice = (label: string) =>
+        pivots.find(p => p.label === label)?.price ?? null;
+
+      let sl: number | null = null;
+      let tp: number | null = null;
+
+      switch (patternId) {
+        case 'double-top': {
+          const top1 = getPrice('Top 1');
+          const top2 = getPrice('Top 2');
+          const neckline = getPrice('Neckline');
+          if (top1 && top2 && neckline) {
+            sl = Math.max(top1, top2) * 1.005;
+            tp = neckline - (Math.max(top1, top2) - neckline);
+          }
+          break;
+        }
+        case 'double-bottom': {
+          const bot1 = getPrice('Bottom 1');
+          const bot2 = getPrice('Bottom 2');
+          const neckline = getPrice('Neckline');
+          if (bot1 && bot2 && neckline) {
+            sl = Math.min(bot1, bot2) * 0.995;
+            tp = neckline + (neckline - Math.min(bot1, bot2));
+          }
+          break;
+        }
+        case 'triple-top': {
+          const tops = [getPrice('Top 1'), getPrice('Top 2'), getPrice('Top 3')].filter(Boolean) as number[];
+          const neckline = getPrice('Neckline');
+          if (tops.length === 3 && neckline) {
+            const peak = Math.max(...tops);
+            sl = peak * 1.005;
+            tp = neckline - (peak - neckline);
+          }
+          break;
+        }
+        case 'triple-bottom': {
+          const bots = [getPrice('Bottom 1'), getPrice('Bottom 2'), getPrice('Bottom 3')].filter(Boolean) as number[];
+          const neckline = getPrice('Neckline');
+          if (bots.length === 3 && neckline) {
+            const trough = Math.min(...bots);
+            sl = trough * 0.995;
+            tp = neckline + (neckline - trough);
+          }
+          break;
+        }
+        case 'head-and-shoulders': {
+          const rightShoulder = getPrice('Right Shoulder');
+          const head = getPrice('Head');
+          const neckline = getPrice('Neckline');
+          if (rightShoulder && head && neckline) {
+            sl = rightShoulder * 1.005;
+            tp = neckline - (head - neckline);
+          }
+          break;
+        }
+        case 'inverse-head-and-shoulders': {
+          const rightShoulder = getPrice('Right Shoulder');
+          const head = getPrice('Head');
+          const neckline = getPrice('Neckline');
+          if (rightShoulder && head && neckline) {
+            sl = rightShoulder * 0.995;
+            tp = neckline + (neckline - head);
+          }
+          break;
+        }
+        case 'bull-flag': {
+          const flagHigh = getPrice('Flag High');
+          const poleStart = getPrice('Pole Start');
+          const poleEnd = getPrice('Pole End');
+          if (flagHigh && poleStart && poleEnd) {
+            const poleHeight = poleEnd - poleStart;
+            sl = flagHigh * 0.995;
+            tp = entry + poleHeight;
+          }
+          break;
+        }
+        case 'bear-flag': {
+          const flagLow = getPrice('Flag Low');
+          const poleStart = getPrice('Pole Start');
+          const poleEnd = getPrice('Pole End');
+          if (flagLow && poleStart && poleEnd) {
+            const poleHeight = poleStart - poleEnd;
+            sl = flagLow * 1.005;
+            tp = entry - poleHeight;
+          }
+          break;
+        }
+        case 'ascending-triangle': {
+          const resistance = getPrice('Resistance');
+          const support = getPrice('Rising Support');
+          if (resistance && support) {
+            const height = resistance - support;
+            sl = support * 0.995;
+            tp = entry + height;
+          }
+          break;
+        }
+        case 'descending-triangle': {
+          const support = getPrice('Support');
+          const resistance = getPrice('Falling Resistance');
+          if (support && resistance) {
+            const height = resistance - support;
+            sl = resistance * 1.005;
+            tp = entry - height;
+          }
+          break;
+        }
+        case 'rising-wedge': {
+          const upperStart = getPrice('Upper Trend Start');
+          const upperEnd = getPrice('Upper Trend End');
+          const lowerStart = getPrice('Lower Trend Start');
+          if (upperStart && upperEnd && lowerStart) {
+            const wedgeHeight = upperEnd - lowerStart;
+            sl = upperEnd * 1.005;
+            tp = entry - wedgeHeight;
+          }
+          break;
+        }
+        case 'falling-wedge': {
+          const upperStart = getPrice('Upper Trend Start');
+          const lowerStart = getPrice('Lower Trend Start');
+          const lowerEnd = getPrice('Lower Trend End');
+          if (upperStart && lowerStart && lowerEnd) {
+            const wedgeHeight = upperStart - lowerEnd;
+            sl = lowerEnd * 0.995;
+            tp = entry + wedgeHeight;
+          }
+          break;
+        }
+        case 'cup-and-handle': {
+          const leftRim = getPrice('Left Rim');
+          const cupBottom = getPrice('Cup Bottom');
+          const handle = getPrice('Handle') ?? getPrice('Right Rim');
+          if (leftRim && cupBottom && handle) {
+            const cupDepth = leftRim - cupBottom;
+            sl = handle * 0.995;
+            tp = entry + cupDepth;
+          }
+          break;
+        }
+        case 'inverse-cup-and-handle': {
+          const cupTop = getPrice('Cup Top');
+          const rightRim = getPrice('Right Rim');
+          const handle = getPrice('Handle');
+          if (cupTop && rightRim && handle) {
+            const cupHeight = cupTop - rightRim;
+            sl = handle * 1.005;
+            tp = entry - cupHeight;
+          }
+          break;
+        }
+        case 'symmetrical-triangle': {
+          const r1 = getPrice('R1');
+          const s1 = getPrice('S1');
+          if (r1 && s1) {
+            const height = r1 - s1;
+            sl = isLong ? s1 * 0.995 : r1 * 1.005;
+            tp = isLong ? entry + height : entry - height;
+          }
+          break;
+        }
+        // Donchian — keep ATR-based, no geometric anchor
+        default:
+          break;
+      }
+
+      // Apply ATR floor and validate
+      if (sl !== null && tp !== null) {
+        const rawStopDist = Math.abs(entry - sl);
+        if (rawStopDist < atrFloor) {
+          // Widen stop to ATR floor, scale TP proportionally
+          const scale = atrFloor / rawStopDist;
+          sl = isLong ? entry - atrFloor : entry + atrFloor;
+          tp = isLong ? entry + (tp - entry) * scale : entry - (entry - tp) * scale;
+        }
+        // Sanity check — TP must be in correct direction
+        if (isLong && tp <= entry) tp = entry + atrFloor * 2;
+        if (!isLong && tp >= entry) tp = entry - atrFloor * 2;
+        return { stopLoss: sl, takeProfit: tp };
+      }
+
+      // Fallback to ATR if pivots insufficient
+      const stopDist = atr * 2;
+      return {
+        stopLoss: isLong ? entry - stopDist : entry + stopDist,
+        takeProfit: isLong ? entry + stopDist * 2 : entry - stopDist * 2,
+      };
+    }
+
+    const { stopLoss, takeProfit } = calcPatternSLTP(
+      patternId,
+      detectionResult.pivots,
+      entryPrice,
+      atr,
+      isLong
+    );
+    const riskReward = Math.abs(takeProfit - entryPrice) / Math.abs(stopLoss - entryPrice);
     
     // Simulate trade outcome
     let outcome: 'hit_tp' | 'hit_sl' | 'timeout' | 'pending' | null = null;
