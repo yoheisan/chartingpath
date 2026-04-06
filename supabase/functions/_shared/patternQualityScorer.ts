@@ -980,7 +980,7 @@ export function calculatePatternQualityScore(
   factors.push({
     name: 'Historical Win Rate',
     score: histAnalysis.score,
-    weight: 0.10,
+    weight: 0.07,
     description: histAnalysis.description,
     passed: histAnalysis.passed
   });
