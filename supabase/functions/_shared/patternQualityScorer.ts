@@ -491,7 +491,7 @@ function analyzeADXStrength(
   direction?: 'long' | 'short'
 ): { score: number; description: string; passed: boolean } {
   if (!trendIndicators?.adx_strength) {
-    return { score: 5, description: 'ADX data unavailable', passed: false };
+    return { score: 3.0, description: 'ADX data unavailable', passed: false };
   }
   
   const { adx_strength, adx_value, adx_direction } = trendIndicators;
