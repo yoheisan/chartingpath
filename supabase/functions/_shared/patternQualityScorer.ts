@@ -900,9 +900,9 @@ export function calculatePatternQualityScore(
   const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
   weightedScore += handleBonus;
   
-  // MTF Confirmation bonus — additive, does not affect factor weights
-  const MTF_BONUS = mtfConfirmed ? 0.8 : 0;
-  weightedScore += MTF_BONUS;
+  // MTF Confirmation bonus/penalty — additive, does not affect factor weights
+  if (mtfConfirmed) weightedScore += 0.8;
+  else weightedScore -= 0.5;
   
   const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
