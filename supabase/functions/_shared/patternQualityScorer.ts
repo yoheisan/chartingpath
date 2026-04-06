@@ -39,6 +39,7 @@ export interface PatternQualityResult {
   score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   confidence: number;
+  gradeConfidence: number;
   factors: QualityFactor[];
   pivots: ZigZagPivot[];
   summary: string;
