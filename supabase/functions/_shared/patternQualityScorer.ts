@@ -864,6 +864,8 @@ interface PatternQualityScorerInput {
   leftShoulderPrice?: number;
   rightShoulderPrice?: number;
   headPrice?: number;
+  timeframe?: string;
+  assetType?: string;
 }
 
 export function calculatePatternQualityScore(
