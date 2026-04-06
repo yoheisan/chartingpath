@@ -1819,7 +1819,7 @@ function getPatternLookback(patternId: string, timeframe: string): number {
   return 25; // Default for all other patterns
 }
 
-function runHistoricalBacktest(
+async function runHistoricalBacktest(
   bars: OHLCBar[],
   symbol: string,
   patternId: string,
@@ -1827,8 +1827,9 @@ function runHistoricalBacktest(
   timeframe: string,
   assetType?: string,
   lookback?: number,
-  maxBarsInTrade: number = 100
-): HistoricalOccurrence[] {
+  maxBarsInTrade: number = 100,
+  supabase?: any
+): Promise<HistoricalOccurrence[]> {
   // Use adaptive lookback if not explicitly provided
   if (!lookback) lookback = getPatternLookback(patternId, timeframe);
   const occurrences: HistoricalOccurrence[] = [];
@@ -1990,6 +1991,33 @@ function runHistoricalBacktest(
     const patternStartIdx = detectionResult.patternStartIndex ?? 0;
     const patternEndIdx = detectionResult.patternEndIndex ?? window.length - 1;
     
+    // Query repeatability stats for this pattern+symbol+timeframe
+    let repeatabilityProof: { sampleSize: number; winRate: number; expectancyR: number } | undefined;
+    let historicalPerformance: { winRate: number; avgRMultiple: number; sampleSize: number } | undefined;
+
+    if (supabase) {
+      const { data: statsData } = await supabase
+        .from('historical_pattern_occurrences')
+        .select('outcome, outcome_pnl_percent, risk_reward_ratio')
+        .eq('pattern_id', patternId)
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .in('outcome', ['hit_tp', 'hit_sl'])
+        .limit(200);
+
+      const statsRows = statsData ?? [];
+      const totalTrades = statsRows.length;
+      const wins = statsRows.filter((r: any) => r.outcome === 'hit_tp').length;
+      const winRatePct = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+      const avgRR = totalTrades > 0 ? statsRows.reduce((s: number, r: any) => s + (r.risk_reward_ratio ?? 1), 0) / totalTrades : 1;
+      const expectancyR = (winRatePct / 100) * avgRR - ((100 - winRatePct) / 100);
+
+      if (totalTrades >= 5) {
+        repeatabilityProof = { sampleSize: totalTrades, winRate: winRatePct, expectancyR };
+        historicalPerformance = { winRate: winRatePct, avgRMultiple: expectancyR, sampleSize: totalTrades };
+      }
+    }
+
     const qualityInput: PatternQualityScorerInput = {
       bars: window,
       patternType: patternId,
@@ -1999,7 +2027,11 @@ function runHistoricalBacktest(
       entryPrice,
       stopLoss,
       takeProfit,
-      atr
+      atr,
+      repeatabilityProof,
+      historicalPerformance,
+      timeframe,
+      assetType: resolvedAssetType,
     };
     
     const qualityResult = calculatePatternQualityScore(qualityInput);
@@ -2247,7 +2279,7 @@ serve(async (req) => {
           const patternDef = PATTERN_REGISTRY[patternId];
           if (!patternDef) continue;
           
-          const occurrences = runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType);
+          const occurrences = await runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType, undefined, 100, supabase);
           
           // In incremental mode, filter out patterns we already have
           if (useIncremental) {
