@@ -900,29 +900,29 @@ export function calculatePatternQualityScore(
   
   // ============= ORIGINAL FACTORS (Adjusted weights for Phase 1) =============
   
-  // Factor 1: Volume Confirmation (15% - reduced from 20%)
+  // Factor 1: Volume Confirmation (12% - reduced from 15%)
   const volumeAnalysis = analyzeVolumeConfirmation(bars, patternStartIndex, patternEndIndex);
   factors.push({
     name: 'Volume Confirmation',
     score: volumeAnalysis.score,
-    weight: 0.15,
+    weight: 0.12,
     description: volumeAnalysis.description,
     passed: volumeAnalysis.confirmed
   });
   if (volumeAnalysis.score < 5) warnings.push('Low volume confirmation');
   
-  // Factor 2: Trend Alignment (20% - reduced from 25%)
+  // Factor 2: Trend Alignment (18% - reduced from 20%)
   const trendAnalysis = analyzeTrendRegime(bars, direction);
   factors.push({
     name: 'Trend Alignment',
     score: trendAnalysis.score,
-    weight: 0.20,
+    weight: 0.18,
     description: trendAnalysis.description,
     passed: trendAnalysis.aligned
   });
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
-  // Factor 3: Pattern Symmetry (10% - reduced from 15%)
+  // Factor 3: Pattern Symmetry (10%)
   const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice, handleDepth);
   factors.push({
     name: 'Pattern Symmetry',
@@ -932,7 +932,7 @@ export function calculatePatternQualityScore(
     passed: symmetryAnalysis.score >= 6
   });
   
-  // Factor 4: Price Action Clarity (10% - reduced from 15%)
+  // Factor 4: Price Action Clarity (10%)
   const clarityAnalysis = analyzePriceActionClarity(bars, patternStartIndex, patternEndIndex);
   factors.push({
     name: 'Price Action Clarity',
@@ -942,12 +942,12 @@ export function calculatePatternQualityScore(
     passed: clarityAnalysis.score >= 6
   });
   
-  // Factor 5: Target Structure (15% - reduced from 25%)
+  // Factor 5: Target Structure (12% - reduced from 15%)
   const targetAnalysis = analyzeTargetValidity(atr, entryPrice, stopLoss, takeProfit);
   factors.push({
     name: 'Target Structure',
     score: targetAnalysis.score,
-    weight: 0.15,
+    weight: 0.12,
     description: targetAnalysis.description,
     passed: targetAnalysis.score >= 6
   });
