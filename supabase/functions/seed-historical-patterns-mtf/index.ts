@@ -2279,7 +2279,7 @@ serve(async (req) => {
           const patternDef = PATTERN_REGISTRY[patternId];
           if (!patternDef) continue;
           
-          const occurrences = runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType);
+          const occurrences = await runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType, undefined, 100, supabase);
           
           // In incremental mode, filter out patterns we already have
           if (useIncremental) {
