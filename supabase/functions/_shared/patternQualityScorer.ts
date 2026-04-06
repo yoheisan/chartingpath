@@ -959,7 +959,7 @@ export function calculatePatternQualityScore(
   factors.push({
     name: 'ADX Trend Strength',
     score: adxAnalysis.score,
-    weight: 0.10,
+    weight: 0.08,
     description: adxAnalysis.description,
     passed: adxAnalysis.passed
   });
