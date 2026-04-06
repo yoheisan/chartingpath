@@ -39,6 +39,7 @@ export interface PatternQualityResult {
   score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   confidence: number;
+  gradeConfidence: number;
   factors: QualityFactor[];
   pivots: ZigZagPivot[];
   summary: string;
@@ -152,14 +153,14 @@ function analyzeVolumeConfirmation(
   patternEndIndex: number
 ): { score: number; description: string; confirmed: boolean } {
   if (!bars[0]?.volume || bars.every(b => !b.volume || b.volume === 0)) {
-    return { score: 5, description: 'Volume data unavailable', confirmed: false };
+    return { score: 3.5, description: 'Volume data unavailable', confirmed: false };
   }
   
   const patternBars = bars.slice(patternStartIndex, patternEndIndex + 1);
   const priorBars = bars.slice(Math.max(0, patternStartIndex - 20), patternStartIndex);
   
   if (patternBars.length < 3 || priorBars.length < 5) {
-    return { score: 5, description: 'Insufficient bars', confirmed: false };
+    return { score: 3.5, description: 'Insufficient bars', confirmed: false };
   }
   
   const patternAvgVolume = patternBars.reduce((s, b) => s + (b.volume || 0), 0) / patternBars.length;
@@ -491,7 +492,7 @@ function analyzeADXStrength(
   direction?: 'long' | 'short'
 ): { score: number; description: string; passed: boolean } {
   if (!trendIndicators?.adx_strength) {
-    return { score: 5, description: 'ADX data unavailable', passed: false };
+    return { score: 3.0, description: 'ADX data unavailable', passed: false };
   }
   
   const { adx_strength, adx_value, adx_direction } = trendIndicators;
@@ -541,7 +542,7 @@ function analyzeRelativeVolume(
   patternEndIndex: number
 ): { score: number; description: string; passed: boolean } {
   if (!bars[0]?.volume || bars.every(b => !b.volume || b.volume === 0)) {
-    return { score: 5, description: 'Volume data unavailable', passed: false };
+    return { score: 3.5, description: 'Volume data unavailable', passed: false };
   }
   
   // Calculate 20-day average volume (excluding the pattern end bar)
@@ -549,7 +550,7 @@ function analyzeRelativeVolume(
   const avg20Volume = calculateAverageVolume(lookbackBars, 20);
   
   if (avg20Volume <= 0) {
-    return { score: 5, description: 'No volume history', passed: false };
+    return { score: 3.5, description: 'No volume history', passed: false };
   }
   
   const currentVolume = bars[patternEndIndex]?.volume || 0;
@@ -592,7 +593,7 @@ function analyzeHistoricalWinRate(
   historicalPerformance?: HistoricalPerformanceInput
 ): { score: number; description: string; passed: boolean } {
   if (!historicalPerformance?.winRate || !historicalPerformance?.sampleSize) {
-    return { score: 5, description: 'No historical data', passed: false };
+    return { score: 2.0, description: 'No historical data', passed: false };
   }
   
   const { winRate, avgRMultiple, sampleSize } = historicalPerformance;
@@ -712,6 +713,57 @@ function analyzeVolatilityRegime(
   };
 }
 
+// ============= TREND REGIME ANALYSIS =============
+
+function calcEMA(bars: OHLCBar[], period: number): number {
+  if (bars.length < period) return bars[bars.length - 1].close;
+  const k = 2 / (period + 1);
+  let ema = bars.slice(0, period).reduce((s, b) => s + b.close, 0) / period;
+  for (let i = period; i < bars.length; i++) ema = bars[i].close * k + ema * (1 - k);
+  return ema;
+}
+
+function analyzeTrendRegime(bars: OHLCBar[], direction: 'long' | 'short'): { score: number; description: string; aligned: boolean } {
+  if (bars.length < 21) return { score: 4, description: 'Insufficient data for trend regime', aligned: false };
+  const price = bars[bars.length - 1].close;
+  const ema21 = calcEMA(bars, 21);
+  const ema55 = bars.length >= 55 ? calcEMA(bars, 55) : null;
+  const ema200 = bars.length >= 200 ? calcEMA(bars, 200) : null;
+  let regime = 'mixed';
+  if (ema200 && ema55 && price > ema21 && ema21 > ema55 && ema55 > ema200) regime = 'full_bull';
+  else if (ema55 && price > ema21 && ema21 > ema55) regime = 'bull';
+  else if (price > ema21) regime = 'weak_bull';
+  else if (ema200 && ema55 && price < ema21 && ema21 < ema55 && ema55 < ema200) regime = 'full_bear';
+  else if (ema55 && price < ema21 && ema21 < ema55) regime = 'bear';
+  else if (price < ema21) regime = 'weak_bear';
+  const map: Record<string, { long: number; short: number; label: string }> = {
+    full_bull: { long: 9.5, short: 2.0, label: 'Full bull regime (EMA21>55>200)' },
+    bull:      { long: 8.0, short: 3.0, label: 'Bull regime (EMA21>55)' },
+    weak_bull: { long: 6.5, short: 4.5, label: 'Weak bull (price>EMA21)' },
+    mixed:     { long: 5.0, short: 5.0, label: 'Mixed regime' },
+    weak_bear: { long: 4.5, short: 6.5, label: 'Weak bear (price<EMA21)' },
+    bear:      { long: 3.0, short: 8.0, label: 'Bear regime (EMA21<55)' },
+    full_bear: { long: 2.0, short: 9.5, label: 'Full bear regime (EMA21<55<200)' },
+  };
+  const rs = map[regime] || { long: 5, short: 5, label: 'Unknown regime' };
+  const score = direction === 'long' ? rs.long : rs.short;
+  const aligned = direction === 'long' ? ['full_bull','bull'].includes(regime) : ['full_bear','bear'].includes(regime);
+  return { score, description: rs.label, aligned };
+}
+
+// ============= GRADE CONFIDENCE =============
+
+function calcGradeConfidence(sampleSize?: number): number {
+  if (!sampleSize) return 20;
+  if (sampleSize >= 200) return 98;
+  if (sampleSize >= 100) return 92;
+  if (sampleSize >= 50) return 82;
+  if (sampleSize >= 30) return 72;
+  if (sampleSize >= 15) return 60;
+  if (sampleSize >= 5) return 40;
+  return 25;
+}
+
 // ============= MAIN SCORING FUNCTION =============
 
 /**
@@ -798,7 +850,7 @@ export function calculatePatternQualityScore(
   if (volumeAnalysis.score < 5) warnings.push('Low volume confirmation');
   
   // Factor 2: Trend Alignment (20% - reduced from 25%)
-  const trendAnalysis = analyzeTrendAlignment(bars, direction);
+  const trendAnalysis = analyzeTrendRegime(bars, direction);
   factors.push({
     name: 'Trend Alignment',
     score: trendAnalysis.score,
@@ -900,9 +952,9 @@ export function calculatePatternQualityScore(
   const handleBonus = getCupHandleHandleBonus(patternType, handleDepth);
   weightedScore += handleBonus;
   
-  // MTF Confirmation bonus — additive, does not affect factor weights
-  const MTF_BONUS = mtfConfirmed ? 0.8 : 0;
-  weightedScore += MTF_BONUS;
+  // MTF Confirmation bonus/penalty — additive, does not affect factor weights
+  if (mtfConfirmed) weightedScore += 0.8;
+  else weightedScore -= 0.5;
   
   const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
@@ -982,10 +1034,13 @@ export function calculatePatternQualityScore(
     warnings.push('Volume data unavailable — score based on non-volume factors only');
   }
 
+  const gradeConfidence = calcGradeConfidence(historicalPerformance?.sampleSize ?? repeatabilityProof?.sampleSize);
+
   return {
     score: finalScore,
     grade,
     confidence,
+    gradeConfidence,
     factors,
     pivots,
     summary,
@@ -1001,6 +1056,7 @@ export function toArtifactQuality(result: PatternQualityResult): {
   score: number;
   grade: string;
   confidence: number;
+  gradeConfidence: number;
   reasons: string[];
   warnings: string[];
   tradeable: boolean;
@@ -1010,6 +1066,7 @@ export function toArtifactQuality(result: PatternQualityResult): {
     score: result.score,
     grade: result.grade,
     confidence: result.confidence,
+    gradeConfidence: result.gradeConfidence,
     reasons: result.factors.filter(f => f.passed).map(f => f.description),
     warnings: result.warnings,
     tradeable: result.tradeable,
