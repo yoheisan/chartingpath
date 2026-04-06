@@ -2225,7 +2225,7 @@ serve(async (req) => {
     }
 
     // Pagination
-    const MAX_PER_RUN = 10; // Smaller batch for intraday (more data per instrument)
+    const MAX_PER_RUN = 3; // Smaller batch for intraday (more data per instrument)
     const instrumentsToProcess = filteredInstruments.slice(offset, offset + MAX_PER_RUN);
     const hasMore = offset + MAX_PER_RUN < filteredInstruments.length;
     const nextOffset = offset + MAX_PER_RUN;
