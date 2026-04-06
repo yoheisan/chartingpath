@@ -541,7 +541,7 @@ function analyzeRelativeVolume(
   patternEndIndex: number
 ): { score: number; description: string; passed: boolean } {
   if (!bars[0]?.volume || bars.every(b => !b.volume || b.volume === 0)) {
-    return { score: 5, description: 'Volume data unavailable', passed: false };
+    return { score: 3.5, description: 'Volume data unavailable', passed: false };
   }
   
   // Calculate 20-day average volume (excluding the pattern end bar)
@@ -549,7 +549,7 @@ function analyzeRelativeVolume(
   const avg20Volume = calculateAverageVolume(lookbackBars, 20);
   
   if (avg20Volume <= 0) {
-    return { score: 5, description: 'No volume history', passed: false };
+    return { score: 3.5, description: 'No volume history', passed: false };
   }
   
   const currentVolume = bars[patternEndIndex]?.volume || 0;
