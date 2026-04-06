@@ -1819,7 +1819,7 @@ function getPatternLookback(patternId: string, timeframe: string): number {
   return 25; // Default for all other patterns
 }
 
-function runHistoricalBacktest(
+async function runHistoricalBacktest(
   bars: OHLCBar[],
   symbol: string,
   patternId: string,
@@ -1827,8 +1827,9 @@ function runHistoricalBacktest(
   timeframe: string,
   assetType?: string,
   lookback?: number,
-  maxBarsInTrade: number = 100
-): HistoricalOccurrence[] {
+  maxBarsInTrade: number = 100,
+  supabase?: any
+): Promise<HistoricalOccurrence[]> {
   // Use adaptive lookback if not explicitly provided
   if (!lookback) lookback = getPatternLookback(patternId, timeframe);
   const occurrences: HistoricalOccurrence[] = [];
