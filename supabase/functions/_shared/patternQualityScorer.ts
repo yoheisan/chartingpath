@@ -152,14 +152,14 @@ function analyzeVolumeConfirmation(
   patternEndIndex: number
 ): { score: number; description: string; confirmed: boolean } {
   if (!bars[0]?.volume || bars.every(b => !b.volume || b.volume === 0)) {
-    return { score: 5, description: 'Volume data unavailable', confirmed: false };
+    return { score: 3.5, description: 'Volume data unavailable', confirmed: false };
   }
   
   const patternBars = bars.slice(patternStartIndex, patternEndIndex + 1);
   const priorBars = bars.slice(Math.max(0, patternStartIndex - 20), patternStartIndex);
   
   if (patternBars.length < 3 || priorBars.length < 5) {
-    return { score: 5, description: 'Insufficient bars', confirmed: false };
+    return { score: 3.5, description: 'Insufficient bars', confirmed: false };
   }
   
   const patternAvgVolume = patternBars.reduce((s, b) => s + (b.volume || 0), 0) / patternBars.length;
