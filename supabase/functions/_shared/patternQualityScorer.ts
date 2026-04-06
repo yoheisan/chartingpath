@@ -592,7 +592,7 @@ function analyzeHistoricalWinRate(
   historicalPerformance?: HistoricalPerformanceInput
 ): { score: number; description: string; passed: boolean } {
   if (!historicalPerformance?.winRate || !historicalPerformance?.sampleSize) {
-    return { score: 5, description: 'No historical data', passed: false };
+    return { score: 2.0, description: 'No historical data', passed: false };
   }
   
   const { winRate, avgRMultiple, sampleSize } = historicalPerformance;
