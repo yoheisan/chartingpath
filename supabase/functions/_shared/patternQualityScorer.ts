@@ -1047,42 +1047,27 @@ export function calculatePatternQualityScore(
   // Unproven patterns cap at C-grade regardless of form score.
   
   let repeatabilityWarning: string | null = null;
-  
+  const assetThresholds = ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks'] ?? ASSET_CLASS_THRESHOLDS['stocks'];
+
   if (repeatabilityProof) {
     const { sampleSize, winRate, expectancyR } = repeatabilityProof;
-    
     if (grade === 'A') {
-      const meetsAGate = sampleSize >= 30 && winRate >= 50 && expectancyR > 0;
-      if (!meetsAGate) {
-        grade = 'B'; // Downgrade to B
-        repeatabilityWarning = sampleSize < 30
-          ? `Insufficient proof for A-grade (n=${sampleSize}, need ≥30)`
-          : winRate < 50
-            ? `Win rate too low for A-grade (${winRate.toFixed(1)}%, need ≥50%)`
-            : `Negative expectancy blocks A-grade (${expectancyR.toFixed(2)}R)`;
-        
-        // Re-check if it meets B-grade gate
-        const meetsBGate = sampleSize >= 15 && expectancyR > 0;
-        if (!meetsBGate) {
+      if (!(sampleSize >= assetThresholds.aMinSample && winRate >= assetThresholds.aWinRate && expectancyR > 0)) {
+        grade = 'B';
+        repeatabilityWarning = `Downgraded to B: win rate ${winRate.toFixed(1)}% (need ≥${assetThresholds.aWinRate}%), n=${sampleSize}`;
+        if (!(sampleSize >= assetThresholds.bMinSample && winRate >= assetThresholds.bWinRate)) {
           grade = 'C';
-          repeatabilityWarning = `Unproven pattern capped at C-grade (n=${sampleSize}, exp=${expectancyR.toFixed(2)}R)`;
+          repeatabilityWarning = `Unproven — capped at C (n=${sampleSize}, win=${winRate.toFixed(1)}%)`;
         }
       }
     } else if (grade === 'B') {
-      const meetsBGate = sampleSize >= 15 && expectancyR > 0;
-      if (!meetsBGate) {
+      if (!(sampleSize >= assetThresholds.bMinSample && winRate >= assetThresholds.bWinRate)) {
         grade = 'C';
-        repeatabilityWarning = sampleSize < 15
-          ? `Insufficient proof for B-grade (n=${sampleSize}, need ≥15)`
-          : `Negative expectancy blocks B-grade (${expectancyR.toFixed(2)}R)`;
+        repeatabilityWarning = `Insufficient proof for B-grade (n=${sampleSize}, need ≥${assetThresholds.bMinSample})`;
       }
     }
   } else {
-    // No repeatability data provided — cap at C-grade
-    if (grade === 'A' || grade === 'B') {
-      grade = 'C';
-      repeatabilityWarning = 'No historical proof — capped at C-grade (Unproven)';
-    }
+    if (grade === 'A' || grade === 'B') { grade = 'C'; repeatabilityWarning = 'No historical proof — capped at C (Unproven)'; }
   }
   
   if (repeatabilityWarning) {
