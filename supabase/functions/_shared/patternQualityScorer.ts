@@ -65,6 +65,15 @@ export interface HistoricalPerformanceInput {
   sampleSize?: number;
 }
 
+const ASSET_CLASS_THRESHOLDS: Record<string, { aWinRate: number; bWinRate: number; aMinSample: number; bMinSample: number }> = {
+  stocks:      { aWinRate: 55, bWinRate: 48, aMinSample: 20, bMinSample: 12 },
+  fx:          { aWinRate: 50, bWinRate: 43, aMinSample: 25, bMinSample: 15 },
+  crypto:      { aWinRate: 52, bWinRate: 45, aMinSample: 30, bMinSample: 18 },
+  etfs:        { aWinRate: 53, bWinRate: 46, aMinSample: 15, bMinSample: 10 },
+  commodities: { aWinRate: 51, bWinRate: 44, aMinSample: 20, bMinSample: 12 },
+  indices:     { aWinRate: 53, bWinRate: 46, aMinSample: 20, bMinSample: 12 },
+};
+
 // ============= ZIGZAG PIVOT DETECTION =============
 
 export function calculateZigZagPivots(
@@ -764,6 +773,57 @@ function calcGradeConfidence(sampleSize?: number): number {
   return 25;
 }
 
+// ============= SESSION / MATURITY / BREAKOUT FACTORS =============
+
+function analyzeSessionQuality(bars: OHLCBar[], timeframe: string, assetType?: string): { score: number; description: string; sessionLabel: string } {
+  const is24h = assetType === 'fx' || assetType === 'crypto';
+  if (is24h || !['1h', '4h'].includes(timeframe)) return { score: 6.5, description: '24h market — session exempt', sessionLabel: 'exempt' };
+  if (bars.length === 0) return { score: 5, description: 'No bars', sessionLabel: 'unknown' };
+  const d = new Date(bars[bars.length - 1].date);
+  const utcMin = d.getUTCHours() * 60 + d.getUTCMinutes();
+  if (utcMin >= 810 && utcMin < 870) return { score: 8.5, description: 'Power hour (9:30–10:30 ET)', sessionLabel: 'power_hour' };
+  if (utcMin >= 870 && utcMin < 960) return { score: 7.0, description: 'Late morning — good liquidity', sessionLabel: 'late_morning' };
+  if (utcMin >= 960 && utcMin < 1020) return { score: 4.5, description: 'Lunch hour — reduced volume', sessionLabel: 'lunch' };
+  if (utcMin >= 1020 && utcMin < 1170) return { score: 6.5, description: 'Afternoon session', sessionLabel: 'afternoon' };
+  if (utcMin >= 1170 && utcMin < 1200) return { score: 3.5, description: 'Last 30 min — window dressing risk', sessionLabel: 'late_day' };
+  return { score: 2.0, description: 'Pre/post market — low liquidity', sessionLabel: 'off_hours' };
+}
+
+function analyzePatternMaturity(bars: OHLCBar[], patternEndIndex: number, direction: 'long' | 'short', entryPrice: number): { score: number; description: string } {
+  const confirmationBars = bars.slice(patternEndIndex + 1);
+  if (confirmationBars.length === 0) return { score: 4.0, description: 'Freshly broken — no confirmation yet' };
+  const retest = confirmationBars.find(b => direction === 'long' ? b.low <= entryPrice * 1.005 && b.close > entryPrice : b.high >= entryPrice * 0.995 && b.close < entryPrice);
+  if (retest) return { score: 9.0, description: 'Retested breakout level — highest conviction' };
+  let holdingBars = 0;
+  for (const bar of confirmationBars.slice(0, 5)) {
+    if (direction === 'long' && bar.close > entryPrice) holdingBars++;
+    if (direction === 'short' && bar.close < entryPrice) holdingBars++;
+  }
+  if (holdingBars >= 3) return { score: 7.5, description: `${holdingBars} bars holding breakout — strong` };
+  if (holdingBars >= 2) return { score: 6.5, description: `${holdingBars} bars confirming — moderate` };
+  if (holdingBars === 1) return { score: 5.5, description: '1 bar confirming — early' };
+  return { score: 4.0, description: 'Breakout not yet confirmed' };
+}
+
+function analyzeBreakoutQuality(bars: OHLCBar[], patternEndIndex: number, direction: 'long' | 'short'): { score: number; description: string } {
+  const bar = bars[patternEndIndex];
+  if (!bar) return { score: 5, description: 'No breakout bar' };
+  const range = bar.high - bar.low;
+  if (range <= 0) return { score: 5, description: 'Zero-range bar' };
+  const pos = (bar.close - bar.low) / range;
+  if (direction === 'long') {
+    if (pos >= 0.75) return { score: 9, description: 'Strong close (top 25% of bar)' };
+    if (pos >= 0.5) return { score: 7, description: 'Good close (top half)' };
+    if (pos >= 0.25) return { score: 4.5, description: 'Weak close (lower half)' };
+    return { score: 2.5, description: 'Poor close — potential reversal bar' };
+  } else {
+    if (pos <= 0.25) return { score: 9, description: 'Strong close (bottom 25% of bar)' };
+    if (pos <= 0.5) return { score: 7, description: 'Good close (bottom half)' };
+    if (pos <= 0.75) return { score: 4.5, description: 'Weak close (upper half)' };
+    return { score: 2.5, description: 'Poor close — potential reversal bar' };
+  }
+}
+
 // ============= MAIN SCORING FUNCTION =============
 
 /**
@@ -804,6 +864,8 @@ interface PatternQualityScorerInput {
   leftShoulderPrice?: number;
   rightShoulderPrice?: number;
   headPrice?: number;
+  timeframe?: string;
+  assetType?: string;
 }
 
 export function calculatePatternQualityScore(
@@ -838,29 +900,29 @@ export function calculatePatternQualityScore(
   
   // ============= ORIGINAL FACTORS (Adjusted weights for Phase 1) =============
   
-  // Factor 1: Volume Confirmation (15% - reduced from 20%)
+  // Factor 1: Volume Confirmation (12% - reduced from 15%)
   const volumeAnalysis = analyzeVolumeConfirmation(bars, patternStartIndex, patternEndIndex);
   factors.push({
     name: 'Volume Confirmation',
     score: volumeAnalysis.score,
-    weight: 0.15,
+    weight: 0.12,
     description: volumeAnalysis.description,
     passed: volumeAnalysis.confirmed
   });
   if (volumeAnalysis.score < 5) warnings.push('Low volume confirmation');
   
-  // Factor 2: Trend Alignment (20% - reduced from 25%)
+  // Factor 2: Trend Alignment (18% - reduced from 20%)
   const trendAnalysis = analyzeTrendRegime(bars, direction);
   factors.push({
     name: 'Trend Alignment',
     score: trendAnalysis.score,
-    weight: 0.20,
+    weight: 0.18,
     description: trendAnalysis.description,
     passed: trendAnalysis.aligned
   });
   if (trendAnalysis.score < 5) warnings.push('Counter-trend signal');
   
-  // Factor 3: Pattern Symmetry (10% - reduced from 15%)
+  // Factor 3: Pattern Symmetry (10%)
   const symmetryAnalysis = analyzePatternSymmetry(pivots, patternType, touchCount, leftShoulderPrice, rightShoulderPrice, headPrice, handleDepth);
   factors.push({
     name: 'Pattern Symmetry',
@@ -870,7 +932,7 @@ export function calculatePatternQualityScore(
     passed: symmetryAnalysis.score >= 6
   });
   
-  // Factor 4: Price Action Clarity (10% - reduced from 15%)
+  // Factor 4: Price Action Clarity (10%)
   const clarityAnalysis = analyzePriceActionClarity(bars, patternStartIndex, patternEndIndex);
   factors.push({
     name: 'Price Action Clarity',
@@ -880,12 +942,12 @@ export function calculatePatternQualityScore(
     passed: clarityAnalysis.score >= 6
   });
   
-  // Factor 5: Target Structure (15% - reduced from 25%)
+  // Factor 5: Target Structure (12% - reduced from 15%)
   const targetAnalysis = analyzeTargetValidity(atr, entryPrice, stopLoss, takeProfit);
   factors.push({
     name: 'Target Structure',
     score: targetAnalysis.score,
-    weight: 0.15,
+    weight: 0.12,
     description: targetAnalysis.description,
     passed: targetAnalysis.score >= 6
   });
@@ -897,7 +959,7 @@ export function calculatePatternQualityScore(
   factors.push({
     name: 'ADX Trend Strength',
     score: adxAnalysis.score,
-    weight: 0.10,
+    weight: 0.08,
     description: adxAnalysis.description,
     passed: adxAnalysis.passed
   });
@@ -918,7 +980,7 @@ export function calculatePatternQualityScore(
   factors.push({
     name: 'Historical Win Rate',
     score: histAnalysis.score,
-    weight: 0.10,
+    weight: 0.07,
     description: histAnalysis.description,
     passed: histAnalysis.passed
   });
@@ -934,6 +996,18 @@ export function calculatePatternQualityScore(
     passed: volRegimeAnalysis.passed
   });
   
+  // Factor 10: Session Quality (5%)
+  const session = analyzeSessionQuality(bars, input.timeframe ?? '1d', input.assetType);
+  factors.push({ name: 'Session Quality', score: session.score, weight: 0.05, description: session.description, passed: session.score >= 6 });
+
+  // Factor 11: Pattern Maturity (4%)
+  const maturity = analyzePatternMaturity(bars, patternEndIndex, direction, entryPrice);
+  factors.push({ name: 'Pattern Maturity', score: maturity.score, weight: 0.04, description: maturity.description, passed: maturity.score >= 6 });
+
+  // Factor 12: Breakout Quality (4%)
+  const breakoutQ = analyzeBreakoutQuality(bars, patternEndIndex, direction);
+  factors.push({ name: 'Breakout Quality', score: breakoutQ.score, weight: 0.04, description: breakoutQ.description, passed: breakoutQ.score >= 6 });
+
   // ============= CALCULATE FINAL SCORE =============
   // No weight redistribution — unavailable factors keep their neutral 5.0 score
   // and original weights. This prevents FX patterns from being artificially
@@ -973,42 +1047,27 @@ export function calculatePatternQualityScore(
   // Unproven patterns cap at C-grade regardless of form score.
   
   let repeatabilityWarning: string | null = null;
-  
+  const assetThresholds = ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks'] ?? ASSET_CLASS_THRESHOLDS['stocks'];
+
   if (repeatabilityProof) {
     const { sampleSize, winRate, expectancyR } = repeatabilityProof;
-    
     if (grade === 'A') {
-      const meetsAGate = sampleSize >= 30 && winRate >= 50 && expectancyR > 0;
-      if (!meetsAGate) {
-        grade = 'B'; // Downgrade to B
-        repeatabilityWarning = sampleSize < 30
-          ? `Insufficient proof for A-grade (n=${sampleSize}, need ≥30)`
-          : winRate < 50
-            ? `Win rate too low for A-grade (${winRate.toFixed(1)}%, need ≥50%)`
-            : `Negative expectancy blocks A-grade (${expectancyR.toFixed(2)}R)`;
-        
-        // Re-check if it meets B-grade gate
-        const meetsBGate = sampleSize >= 15 && expectancyR > 0;
-        if (!meetsBGate) {
+      if (!(sampleSize >= assetThresholds.aMinSample && winRate >= assetThresholds.aWinRate && expectancyR > 0)) {
+        grade = 'B';
+        repeatabilityWarning = `Downgraded to B: win rate ${winRate.toFixed(1)}% (need ≥${assetThresholds.aWinRate}%), n=${sampleSize}`;
+        if (!(sampleSize >= assetThresholds.bMinSample && winRate >= assetThresholds.bWinRate)) {
           grade = 'C';
-          repeatabilityWarning = `Unproven pattern capped at C-grade (n=${sampleSize}, exp=${expectancyR.toFixed(2)}R)`;
+          repeatabilityWarning = `Unproven — capped at C (n=${sampleSize}, win=${winRate.toFixed(1)}%)`;
         }
       }
     } else if (grade === 'B') {
-      const meetsBGate = sampleSize >= 15 && expectancyR > 0;
-      if (!meetsBGate) {
+      if (!(sampleSize >= assetThresholds.bMinSample && winRate >= assetThresholds.bWinRate)) {
         grade = 'C';
-        repeatabilityWarning = sampleSize < 15
-          ? `Insufficient proof for B-grade (n=${sampleSize}, need ≥15)`
-          : `Negative expectancy blocks B-grade (${expectancyR.toFixed(2)}R)`;
+        repeatabilityWarning = `Insufficient proof for B-grade (n=${sampleSize}, need ≥${assetThresholds.bMinSample})`;
       }
     }
   } else {
-    // No repeatability data provided — cap at C-grade
-    if (grade === 'A' || grade === 'B') {
-      grade = 'C';
-      repeatabilityWarning = 'No historical proof — capped at C-grade (Unproven)';
-    }
+    if (grade === 'A' || grade === 'B') { grade = 'C'; repeatabilityWarning = 'No historical proof — capped at C (Unproven)'; }
   }
   
   if (repeatabilityWarning) {
