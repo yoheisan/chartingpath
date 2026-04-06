@@ -1034,10 +1034,13 @@ export function calculatePatternQualityScore(
     warnings.push('Volume data unavailable — score based on non-volume factors only');
   }
 
+  const gradeConfidence = calcGradeConfidence(historicalPerformance?.sampleSize ?? repeatabilityProof?.sampleSize);
+
   return {
     score: finalScore,
     grade,
     confidence,
+    gradeConfidence,
     factors,
     pivots,
     summary,
