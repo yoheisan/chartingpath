@@ -2366,7 +2366,11 @@ serve(async (req) => {
     }
     if (failedVerifications.length > 0) {
       console.warn(`[seed-mtf] ${failedVerifications.length}/${allOccurrences.length} patterns failed verification`);
-      await logVerificationFailures(supabase, failedVerifications.slice(0, 200)); // cap log volume
+      try {
+        await logVerificationFailures(supabase, failedVerifications.slice(0, 200));
+      } catch (e) {
+        console.warn('[verification] logVerificationFailures failed:', e);
+      }
     }
 
     // Insert verified patterns into database in chunks (use upsert to avoid duplicates)
