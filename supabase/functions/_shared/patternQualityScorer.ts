@@ -65,6 +65,15 @@ export interface HistoricalPerformanceInput {
   sampleSize?: number;
 }
 
+const ASSET_CLASS_THRESHOLDS: Record<string, { aWinRate: number; bWinRate: number; aMinSample: number; bMinSample: number }> = {
+  stocks:      { aWinRate: 55, bWinRate: 48, aMinSample: 20, bMinSample: 12 },
+  fx:          { aWinRate: 50, bWinRate: 43, aMinSample: 25, bMinSample: 15 },
+  crypto:      { aWinRate: 52, bWinRate: 45, aMinSample: 30, bMinSample: 18 },
+  etfs:        { aWinRate: 53, bWinRate: 46, aMinSample: 15, bMinSample: 10 },
+  commodities: { aWinRate: 51, bWinRate: 44, aMinSample: 20, bMinSample: 12 },
+  indices:     { aWinRate: 53, bWinRate: 46, aMinSample: 20, bMinSample: 12 },
+};
+
 // ============= ZIGZAG PIVOT DETECTION =============
 
 export function calculateZigZagPivots(
