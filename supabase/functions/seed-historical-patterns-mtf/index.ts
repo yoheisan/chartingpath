@@ -1,4 +1,4 @@
-// Last deployed: 2026-03-31
+// Last deployed: 2026-04-06
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ALL_INSTRUMENTS, type Instrument } from "../_shared/screenerInstruments.ts";
