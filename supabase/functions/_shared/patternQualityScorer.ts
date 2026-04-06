@@ -996,6 +996,18 @@ export function calculatePatternQualityScore(
     passed: volRegimeAnalysis.passed
   });
   
+  // Factor 10: Session Quality (5%)
+  const session = analyzeSessionQuality(bars, input.timeframe ?? '1d', input.assetType);
+  factors.push({ name: 'Session Quality', score: session.score, weight: 0.05, description: session.description, passed: session.score >= 6 });
+
+  // Factor 11: Pattern Maturity (4%)
+  const maturity = analyzePatternMaturity(bars, patternEndIndex, direction, entryPrice);
+  factors.push({ name: 'Pattern Maturity', score: maturity.score, weight: 0.04, description: maturity.description, passed: maturity.score >= 6 });
+
+  // Factor 12: Breakout Quality (4%)
+  const breakoutQ = analyzeBreakoutQuality(bars, patternEndIndex, direction);
+  factors.push({ name: 'Breakout Quality', score: breakoutQ.score, weight: 0.04, description: breakoutQ.description, passed: breakoutQ.score >= 6 });
+
   // ============= CALCULATE FINAL SCORE =============
   // No weight redistribution — unavailable factors keep their neutral 5.0 score
   // and original weights. This prevents FX patterns from being artificially
