@@ -712,6 +712,57 @@ function analyzeVolatilityRegime(
   };
 }
 
+// ============= TREND REGIME ANALYSIS =============
+
+function calcEMA(bars: OHLCBar[], period: number): number {
+  if (bars.length < period) return bars[bars.length - 1].close;
+  const k = 2 / (period + 1);
+  let ema = bars.slice(0, period).reduce((s, b) => s + b.close, 0) / period;
+  for (let i = period; i < bars.length; i++) ema = bars[i].close * k + ema * (1 - k);
+  return ema;
+}
+
+function analyzeTrendRegime(bars: OHLCBar[], direction: 'long' | 'short'): { score: number; description: string; aligned: boolean } {
+  if (bars.length < 21) return { score: 4, description: 'Insufficient data for trend regime', aligned: false };
+  const price = bars[bars.length - 1].close;
+  const ema21 = calcEMA(bars, 21);
+  const ema55 = bars.length >= 55 ? calcEMA(bars, 55) : null;
+  const ema200 = bars.length >= 200 ? calcEMA(bars, 200) : null;
+  let regime = 'mixed';
+  if (ema200 && ema55 && price > ema21 && ema21 > ema55 && ema55 > ema200) regime = 'full_bull';
+  else if (ema55 && price > ema21 && ema21 > ema55) regime = 'bull';
+  else if (price > ema21) regime = 'weak_bull';
+  else if (ema200 && ema55 && price < ema21 && ema21 < ema55 && ema55 < ema200) regime = 'full_bear';
+  else if (ema55 && price < ema21 && ema21 < ema55) regime = 'bear';
+  else if (price < ema21) regime = 'weak_bear';
+  const map: Record<string, { long: number; short: number; label: string }> = {
+    full_bull: { long: 9.5, short: 2.0, label: 'Full bull regime (EMA21>55>200)' },
+    bull:      { long: 8.0, short: 3.0, label: 'Bull regime (EMA21>55)' },
+    weak_bull: { long: 6.5, short: 4.5, label: 'Weak bull (price>EMA21)' },
+    mixed:     { long: 5.0, short: 5.0, label: 'Mixed regime' },
+    weak_bear: { long: 4.5, short: 6.5, label: 'Weak bear (price<EMA21)' },
+    bear:      { long: 3.0, short: 8.0, label: 'Bear regime (EMA21<55)' },
+    full_bear: { long: 2.0, short: 9.5, label: 'Full bear regime (EMA21<55<200)' },
+  };
+  const rs = map[regime] || { long: 5, short: 5, label: 'Unknown regime' };
+  const score = direction === 'long' ? rs.long : rs.short;
+  const aligned = direction === 'long' ? ['full_bull','bull'].includes(regime) : ['full_bear','bear'].includes(regime);
+  return { score, description: rs.label, aligned };
+}
+
+// ============= GRADE CONFIDENCE =============
+
+function calcGradeConfidence(sampleSize?: number): number {
+  if (!sampleSize) return 20;
+  if (sampleSize >= 200) return 98;
+  if (sampleSize >= 100) return 92;
+  if (sampleSize >= 50) return 82;
+  if (sampleSize >= 30) return 72;
+  if (sampleSize >= 15) return 60;
+  if (sampleSize >= 5) return 40;
+  return 25;
+}
+
 // ============= MAIN SCORING FUNCTION =============
 
 /**
