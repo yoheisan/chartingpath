@@ -798,7 +798,7 @@ export function calculatePatternQualityScore(
   if (volumeAnalysis.score < 5) warnings.push('Low volume confirmation');
   
   // Factor 2: Trend Alignment (20% - reduced from 25%)
-  const trendAnalysis = analyzeTrendAlignment(bars, direction);
+  const trendAnalysis = analyzeTrendRegime(bars, direction);
   factors.push({
     name: 'Trend Alignment',
     score: trendAnalysis.score,
