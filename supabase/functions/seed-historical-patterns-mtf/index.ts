@@ -1843,7 +1843,38 @@ async function runHistoricalBacktest(
     '1wk': 52   // 1 year
   };
   maxBarsInTrade = tfMaxBars[timeframe as keyof typeof tfMaxBars] || maxBarsInTrade;
-  
+
+  // Cache repeatability stats ONCE per pattern+symbol+timeframe (not per bar)
+  let cachedRepeatabilityProof: { sampleSize: number; winRate: number; expectancyR: number } | undefined;
+  let cachedHistoricalPerformance: { winRate: number; avgRMultiple: number; sampleSize: number } | undefined;
+
+  if (supabase) {
+    try {
+      const { data: statsData } = await supabase
+        .from('historical_pattern_occurrences')
+        .select('outcome, risk_reward_ratio')
+        .eq('pattern_id', patternId)
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe)
+        .in('outcome', ['hit_tp', 'hit_sl'])
+        .limit(200);
+
+      const statsRows = statsData ?? [];
+      const totalTrades = statsRows.length;
+      const wins = statsRows.filter((r: any) => r.outcome === 'hit_tp').length;
+      const winRatePct = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+      const avgRR = totalTrades > 0 ? statsRows.reduce((s: number, r: any) => s + (r.risk_reward_ratio ?? 1), 0) / totalTrades : 1;
+      const expectancyR = (winRatePct / 100) * avgRR - ((100 - winRatePct) / 100);
+
+      if (totalTrades >= 5) {
+        cachedRepeatabilityProof = { sampleSize: totalTrades, winRate: winRatePct, expectancyR };
+        cachedHistoricalPerformance = { winRate: winRatePct, avgRMultiple: expectancyR, sampleSize: totalTrades };
+      }
+    } catch (e) {
+      console.warn('[stats] Query failed, continuing without repeatability proof:', e);
+    }
+  }
+
   for (let i = lookback; i < bars.length - maxBarsInTrade; i++) {
     const window = bars.slice(i - lookback, i + 1);
     const detectionResult = pattern.detector(window, resolvedAssetType);
