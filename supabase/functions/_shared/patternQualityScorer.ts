@@ -773,6 +773,57 @@ function calcGradeConfidence(sampleSize?: number): number {
   return 25;
 }
 
+// ============= SESSION / MATURITY / BREAKOUT FACTORS =============
+
+function analyzeSessionQuality(bars: OHLCBar[], timeframe: string, assetType?: string): { score: number; description: string; sessionLabel: string } {
+  const is24h = assetType === 'fx' || assetType === 'crypto';
+  if (is24h || !['1h', '4h'].includes(timeframe)) return { score: 6.5, description: '24h market — session exempt', sessionLabel: 'exempt' };
+  if (bars.length === 0) return { score: 5, description: 'No bars', sessionLabel: 'unknown' };
+  const d = new Date(bars[bars.length - 1].date);
+  const utcMin = d.getUTCHours() * 60 + d.getUTCMinutes();
+  if (utcMin >= 810 && utcMin < 870) return { score: 8.5, description: 'Power hour (9:30–10:30 ET)', sessionLabel: 'power_hour' };
+  if (utcMin >= 870 && utcMin < 960) return { score: 7.0, description: 'Late morning — good liquidity', sessionLabel: 'late_morning' };
+  if (utcMin >= 960 && utcMin < 1020) return { score: 4.5, description: 'Lunch hour — reduced volume', sessionLabel: 'lunch' };
+  if (utcMin >= 1020 && utcMin < 1170) return { score: 6.5, description: 'Afternoon session', sessionLabel: 'afternoon' };
+  if (utcMin >= 1170 && utcMin < 1200) return { score: 3.5, description: 'Last 30 min — window dressing risk', sessionLabel: 'late_day' };
+  return { score: 2.0, description: 'Pre/post market — low liquidity', sessionLabel: 'off_hours' };
+}
+
+function analyzePatternMaturity(bars: OHLCBar[], patternEndIndex: number, direction: 'long' | 'short', entryPrice: number): { score: number; description: string } {
+  const confirmationBars = bars.slice(patternEndIndex + 1);
+  if (confirmationBars.length === 0) return { score: 4.0, description: 'Freshly broken — no confirmation yet' };
+  const retest = confirmationBars.find(b => direction === 'long' ? b.low <= entryPrice * 1.005 && b.close > entryPrice : b.high >= entryPrice * 0.995 && b.close < entryPrice);
+  if (retest) return { score: 9.0, description: 'Retested breakout level — highest conviction' };
+  let holdingBars = 0;
+  for (const bar of confirmationBars.slice(0, 5)) {
+    if (direction === 'long' && bar.close > entryPrice) holdingBars++;
+    if (direction === 'short' && bar.close < entryPrice) holdingBars++;
+  }
+  if (holdingBars >= 3) return { score: 7.5, description: `${holdingBars} bars holding breakout — strong` };
+  if (holdingBars >= 2) return { score: 6.5, description: `${holdingBars} bars confirming — moderate` };
+  if (holdingBars === 1) return { score: 5.5, description: '1 bar confirming — early' };
+  return { score: 4.0, description: 'Breakout not yet confirmed' };
+}
+
+function analyzeBreakoutQuality(bars: OHLCBar[], patternEndIndex: number, direction: 'long' | 'short'): { score: number; description: string } {
+  const bar = bars[patternEndIndex];
+  if (!bar) return { score: 5, description: 'No breakout bar' };
+  const range = bar.high - bar.low;
+  if (range <= 0) return { score: 5, description: 'Zero-range bar' };
+  const pos = (bar.close - bar.low) / range;
+  if (direction === 'long') {
+    if (pos >= 0.75) return { score: 9, description: 'Strong close (top 25% of bar)' };
+    if (pos >= 0.5) return { score: 7, description: 'Good close (top half)' };
+    if (pos >= 0.25) return { score: 4.5, description: 'Weak close (lower half)' };
+    return { score: 2.5, description: 'Poor close — potential reversal bar' };
+  } else {
+    if (pos <= 0.25) return { score: 9, description: 'Strong close (bottom 25% of bar)' };
+    if (pos <= 0.5) return { score: 7, description: 'Good close (bottom half)' };
+    if (pos <= 0.75) return { score: 4.5, description: 'Weak close (upper half)' };
+    return { score: 2.5, description: 'Poor close — potential reversal bar' };
+  }
+}
+
 // ============= MAIN SCORING FUNCTION =============
 
 /**
