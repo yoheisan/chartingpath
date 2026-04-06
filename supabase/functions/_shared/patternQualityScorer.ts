@@ -1056,6 +1056,7 @@ export function toArtifactQuality(result: PatternQualityResult): {
   score: number;
   grade: string;
   confidence: number;
+  gradeConfidence: number;
   reasons: string[];
   warnings: string[];
   tradeable: boolean;
@@ -1065,6 +1066,7 @@ export function toArtifactQuality(result: PatternQualityResult): {
     score: result.score,
     grade: result.grade,
     confidence: result.confidence,
+    gradeConfidence: result.gradeConfidence,
     reasons: result.factors.filter(f => f.passed).map(f => f.description),
     warnings: result.warnings,
     tradeable: result.tradeable,
