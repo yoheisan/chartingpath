@@ -1916,9 +1916,15 @@ function runHistoricalBacktest(
     if (Math.abs(entryPrice - sl) < atrFloor) {
       sl = isLong ? entryPrice - atrFloor : entryPrice + atrFloor;
     }
-    // Sanity check TP direction
-    if (isLong && tp <= entryPrice) tp = entryPrice + atrFloor * 2;
-    if (!isLong && tp >= entryPrice) tp = entryPrice - atrFloor * 2;
+    // Sanity check TP direction — use neckline as fallback for reversal patterns
+    if (isLong && tp <= entryPrice) {
+      const nkFallback = getP('Neckline');
+      tp = (nkFallback && nkFallback > entryPrice) ? nkFallback : entryPrice + atrFloor * 2;
+    }
+    if (!isLong && tp >= entryPrice) {
+      const nkFallback = getP('Neckline');
+      tp = (nkFallback && nkFallback < entryPrice) ? nkFallback : entryPrice - atrFloor * 2;
+    }
     stopLoss = sl;
     takeProfit = tp;
     const riskReward = Math.abs(takeProfit - entryPrice) / Math.abs(stopLoss - entryPrice);
