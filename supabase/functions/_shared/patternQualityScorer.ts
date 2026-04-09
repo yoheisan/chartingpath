@@ -1072,17 +1072,17 @@ export function calculatePatternQualityScore(
   
   // PERFORMANCE FLOOR: Strong historical proof overrides poor form score
   // If a pattern has proven statistical edge, it should never grade below B
-  const thresholdsForFloor = ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks'] ?? ASSET_CLASS_THRESHOLDS['stocks'];
+  // PERFORMANCE FLOOR (v3.1): proven winners must not be buried at D/F by poor form score
   if (repeatabilityProof) {
-    const { sampleSize, winRate, expectancyR } = repeatabilityProof;
-    const meetsAGate = sampleSize >= thresholdsForFloor.aMinSample && winRate >= thresholdsForFloor.aWinRate && expectancyR > 0;
-    const meetsBGate = sampleSize >= thresholdsForFloor.bMinSample && winRate >= thresholdsForFloor.bWinRate;
+    const { sampleSize: rpSize, winRate: rpWin, expectancyR: rpExp } = repeatabilityProof;
+    const meetsAGate = rpSize >= assetThresholds.aMinSample && rpWin >= assetThresholds.aWinRate && rpExp > 0;
+    const meetsBGate = rpSize >= assetThresholds.bMinSample && rpWin >= assetThresholds.bWinRate;
     if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
       grade = 'B';
-      warnings.push(`Grade floored to B: strong historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
+      warnings.push(`Grade floored to B: strong proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
     } else if (meetsBGate && (grade === 'D' || grade === 'F')) {
       grade = 'C';
-      warnings.push(`Grade floored to C: sufficient historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
+      warnings.push(`Grade floored to C: sufficient proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
     }
   }
 
