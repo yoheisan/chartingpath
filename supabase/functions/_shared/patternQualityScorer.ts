@@ -1070,6 +1070,22 @@ export function calculatePatternQualityScore(
     if (grade === 'A' || grade === 'B') { grade = 'C'; repeatabilityWarning = 'No historical proof — capped at C (Unproven)'; }
   }
   
+  // PERFORMANCE FLOOR: Strong historical proof overrides poor form score
+  // If a pattern has proven statistical edge, it should never grade below B
+  const thresholdsForFloor = ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks'] ?? ASSET_CLASS_THRESHOLDS['stocks'];
+  if (repeatabilityProof) {
+    const { sampleSize, winRate, expectancyR } = repeatabilityProof;
+    const meetsAGate = sampleSize >= thresholdsForFloor.aMinSample && winRate >= thresholdsForFloor.aWinRate && expectancyR > 0;
+    const meetsBGate = sampleSize >= thresholdsForFloor.bMinSample && winRate >= thresholdsForFloor.bWinRate;
+    if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
+      grade = 'B';
+      warnings.push(`Grade floored to B: strong historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
+    } else if (meetsBGate && (grade === 'D' || grade === 'F')) {
+      grade = 'C';
+      warnings.push(`Grade floored to C: sufficient historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
+    }
+  }
+
   if (repeatabilityWarning) {
     warnings.push(repeatabilityWarning);
   }
