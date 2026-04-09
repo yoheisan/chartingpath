@@ -1075,8 +1075,8 @@ export function calculatePatternQualityScore(
   // PERFORMANCE FLOOR (v3.1): proven winners must not be buried at D/F by poor form score
   if (repeatabilityProof) {
     const { sampleSize: rpSize, winRate: rpWin, expectancyR: rpExp } = repeatabilityProof;
-    const meetsAGate = rpSize >= thresholds.aMinSample && rpWin >= thresholds.aWinRate && rpExp > 0;
-    const meetsBGate = rpSize >= thresholds.bMinSample && rpWin >= thresholds.bWinRate;
+    const meetsAGate = rpSize >= assetThresholds.aMinSample && rpWin >= assetThresholds.aWinRate && rpExp > 0;
+    const meetsBGate = rpSize >= assetThresholds.bMinSample && rpWin >= assetThresholds.bWinRate;
     if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
       grade = 'B';
       warnings.push(`Grade floored to B: strong proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
