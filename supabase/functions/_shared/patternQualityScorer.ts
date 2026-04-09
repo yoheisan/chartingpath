@@ -1,5 +1,5 @@
 /**
- * Pattern Quality Scorer v2.0.0 (Edge Function Version)
+ // Pattern Quality Scorer v3.1.0
  * 
  * A production-grade quality scoring system for chart patterns.
  * This is the server-side implementation for use in edge functions.
