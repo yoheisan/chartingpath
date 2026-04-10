@@ -1,0 +1,31 @@
+name: Auto Seed 1h Patterns
+
+on:
+  schedule:
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Select batch
+        id: batch
+        run: |
+          SYMBOLS=("AAPL" "MSFT" "NVDA" "GOOGL" "AMZN" "META" "TSLA" "JPM" "SPY" "QQQ" "AMD" "INTC" "QCOM" "CRM" "ORCL" "ADBE" "NFLX" "V" "WMT" "JNJ" "XOM" "BAC" "WFC" "COST" "HD" "LOW" "GS" "MS" "BTC-USD" "ETH-USD" "SOL-USD" "EURUSD=X" "GBPUSD=X" "GLD" "NKE" "DIS" "MCD" "PG" "KO" "LLY")
+          TOTAL=${#SYMBOLS[@]}
+          IDX=$(( ($(date +%s) / 720) % TOTAL ))
+          S1=${SYMBOLS[$IDX]}
+          S2=${SYMBOLS[$(( (IDX+1) % TOTAL ))]}
+          S3=${SYMBOLS[$(( (IDX+2) % TOTAL ))]}
+          echo "batch=$S1,$S2,$S3" >> $GITHUB_OUTPUT
+          echo "Seeding: $S1 $S2 $S3"
+
+      - name: Invoke seeder
+        run: |
+          SYMBOLS_JSON=$(echo "${{ steps.batch.outputs.batch }}" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().split(',')))")
+          curl -s -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/seed-historical-patterns-mtf" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"timeframe\":\"1h\",\"symbolsFilter\":$SYMBOLS_JSON,\"maxInstrumentsPerType\":999,\"forceFullBackfill\":true,\"incrementalMode\":false,\"skipDbCache\":true,\"dryRun\":false}" | python3 -m json.tool
