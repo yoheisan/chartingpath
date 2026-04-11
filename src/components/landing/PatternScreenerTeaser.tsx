@@ -154,6 +154,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 export function PatternScreenerTeaser() {
   const { t } = useTranslation();
+  const { isGuest, guestPatternLimit } = usePlanGate();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<TeaserAssetType, LiveSetup[]>>({
     stocks: [], fx: [], crypto: [], commodities: [],
   });
