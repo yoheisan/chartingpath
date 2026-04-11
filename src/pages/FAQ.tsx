@@ -1373,12 +1373,13 @@ const FAQ = () => {
               answer: (
                 <div className="space-y-3">
                   <p>{cp('a_availabilityIntro')}</p>
-                  <div className="border rounded-lg p-4">
+                   <div className="border rounded-lg p-4">
                     <div className="text-sm space-y-2">
-                      <div className="flex justify-between"><span>{cp('a_freeTier')}</span><span>{cp('a_freeLimit')}</span></div>
-                      <div className="flex justify-between"><span>{cp('a_starterTier')}</span><span>{cp('a_starterLimit')}</span></div>
-                      <div className="flex justify-between"><span>{cp('a_proTier')}</span><span>{cp('a_proLimit')}</span></div>
-                      <div className="flex justify-between"><span>{cp('a_eliteTier')}</span><span>{cp('a_eliteLimit')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.copilot.a_guestTier', 'Guest')}</span><span>{t('faq.copilot.a_guestLimit', 'Not available')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.copilot.a_freeTier', 'Free')}</span><span className="text-muted-foreground">{t('faq.copilot.a_freeLimit', 'Not available (upgrade to Pro)')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.copilot.a_liteTier', 'Lite')}</span><span className="text-muted-foreground">{t('faq.copilot.a_liteLimit', 'Not available (upgrade to Pro)')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.copilot.a_proTier', 'Pro')}</span><span>{t('faq.copilot.a_proLimit', 'Full Copilot access')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.copilot.a_eliteTier', 'Elite')}</span><span>{t('faq.copilot.a_eliteLimit', 'Full Copilot access + ACS')}</span></div>
                     </div>
                   </div>
                 </div>
