@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Zap, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,7 @@ import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import type { SetupWithVisuals, PatternQuality, VisualSpec } from '@/types/VisualSpec';
 import { toast } from 'sonner';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
