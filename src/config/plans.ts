@@ -13,7 +13,7 @@
  * BETA v3.0: Simplified to credits-only constraint (no daily run caps)
  */
 
-export type PlanTier = 'FREE' | 'LITE' | 'PLUS' | 'PRO' | 'ELITE';
+export type PlanTier = 'FREE' | 'LITE' | 'PRO' | 'ELITE';
 export type ProjectType = 'pattern_lab' | 'setup_finder' | 'portfolio_checkup' | 'portfolio_sim'; // legacy types kept for DB compat
 
 export interface SetupFinderCaps {
@@ -122,28 +122,6 @@ export const PLANS_CONFIG: PlansConfig = {
         pattern_lab: { enabled: true, maxInstruments: 8, maxLookbackYears: 2, maxPatterns: 4, maxSweeps: 1, allowedTimeframes: ['1d'] },
         portfolio_checkup: { maxHoldings: 20, maxLookbackYears: 2, allowedTimeframes: ['1d'] },
         portfolio_sim: { maxHoldings: 15, maxLookbackYears: 5, rebalanceOptions: ['quarterly', 'yearly'], allowedTimeframes: ['1d'] }
-      }
-    },
-    PLUS: {
-      monthlyCredits: 300,
-      monthlyScripts: 30,
-      maxConcurrentRuns: 1,
-      maxActiveAlerts: 25,
-      maxPlanAlerts: 10, // 10 per plan × 5 plans = 50 max
-      maxWatchlistSlots: 100,
-      maxActivePlans: 5,
-      screener: {
-        maxTickersPerClass: 100,
-        allowedPatterns: ['donchian-breakout-long', 'donchian-breakout-short', 'double-top', 'double-bottom', 'ascending-triangle', 'descending-triangle', 'head-and-shoulders', 'inverse-head-and-shoulders', 'rising-wedge', 'falling-wedge']
-      },
-      study: {
-        allowedTimeframes: ['15m', '1h', '4h', '8h', '1d', '1wk']
-      },
-      projects: {
-        setup_finder: { maxInstruments: 30, maxLookbackYears: 3, maxPatterns: 6, allowedTimeframes: ['4h', '1d'] },
-        pattern_lab: { enabled: true, maxInstruments: 10, maxLookbackYears: 5, maxPatterns: 6, maxSweeps: 2, allowedTimeframes: ['1d'] },
-        portfolio_checkup: { maxHoldings: 50, maxLookbackYears: 3, allowedTimeframes: ['1d', '4h'] },
-        portfolio_sim: { maxHoldings: 20, maxLookbackYears: 10, rebalanceOptions: ['monthly', 'quarterly', 'yearly'], allowedTimeframes: ['1d'] }
       }
     },
     PRO: {
@@ -344,17 +322,6 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
     bestFor: 'Hobbyist traders starting out',
     color: 'text-emerald-500'
   },
-  PLUS: {
-    name: 'Plus',
-    monthlyPrice: 29,
-    annualPrice: 290,
-    monthlyCredits: 300,
-    monthlyScripts: 30,
-    maxActiveAlerts: 25,
-    maxPlanAlerts: 10, // per plan
-    bestFor: 'Active traders testing ideas',
-    color: 'text-blue-500'
-  },
   PRO: {
     name: 'Pro',
     monthlyPrice: 79,
@@ -368,8 +335,8 @@ export const TIER_DISPLAY: Record<PlanTier, TierDisplayInfo> = {
   },
   ELITE: {
     name: 'Elite',
-    monthlyPrice: 199,
-    annualPrice: 1990,
+    monthlyPrice: 149,
+    annualPrice: 999,
     monthlyCredits: 3000,
     monthlyScripts: -1,
     maxActiveAlerts: 500,
