@@ -73,11 +73,6 @@ const ProjectsPricing = () => {
       cta: p('cta.lite'), bestFor: p('bestFor.lite'),
     },
     {
-      key: 'PLUS', name: 'Plus', monthlyPrice: 39, annualMonthlyPrice: annualMonthlyPrices.PLUS, annualYearlyPrice: 421,
-      config: PLANS_CONFIG.tiers.PLUS, popular: false,
-      cta: p('cta.plus'), bestFor: p('bestFor.plus'),
-    },
-    {
       key: 'PRO', name: 'Pro', monthlyPrice: 79, annualMonthlyPrice: annualMonthlyPrices.PRO, annualYearlyPrice: 853,
       config: PLANS_CONFIG.tiers.PRO, popular: true,
       cta: p('cta.pro'), bestFor: p('bestFor.pro'),
