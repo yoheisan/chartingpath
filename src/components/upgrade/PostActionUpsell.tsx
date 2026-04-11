@@ -105,7 +105,7 @@ export function PostActionUpsell({ open, onOpenChange, trigger, currentTier, com
 }
 
 function getNextTier(current: PlanTier): PlanTier {
-  const ladder: PlanTier[] = ['FREE', 'LITE', 'PLUS', 'PRO', 'ELITE'];
+  const ladder: PlanTier[] = ['FREE', 'LITE', 'PRO', 'ELITE'];
   const idx = ladder.indexOf(current);
   return ladder[Math.min(idx + 1, ladder.length - 1)];
 }

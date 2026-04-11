@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { PLANS_CONFIG, PlanTier, ScreenerCaps } from '@/config/plans';
-import { useUserProfile } from './useUserProfile';
+import { PLANS_CONFIG } from '@/config/plans';
+import { usePlanGate } from './usePlanGate';
 
 /**
  * All possible patterns for display purposes
@@ -10,7 +10,7 @@ export const ALL_PATTERN_IDS = [
   'donchian-breakout-long', 'donchian-breakout-short',
   'double-top', 'double-bottom',
   'ascending-triangle', 'descending-triangle', 'symmetrical-triangle',
-  // Extended (PLUS+)
+  // Extended (LITE+)
   'head-and-shoulders', 'inverse-head-and-shoulders',
   'rising-wedge', 'falling-wedge',
   // Premium (PRO/ELITE)
@@ -39,51 +39,35 @@ export const PATTERN_DISPLAY_NAMES: Record<string, string> = {
   'triple-bottom': 'Triple Bottom'
 };
 
-/**
- * Full access screener caps - all patterns unlocked for all users
- */
-const FULL_ACCESS_SCREENER_CAPS: ScreenerCaps = {
-  maxTickersPerClass: 100,
-  allowedPatterns: ALL_PATTERN_IDS
-};
-
-/**
- * Hook to get screener caps based on user's subscription tier
- * NOTE: Currently all patterns are unlocked for all users (free tier included)
- */
 export function useScreenerCaps() {
-  const { profile, loading: profileLoading } = useUserProfile();
-  
-  // All users get full access to all patterns
-  const caps = FULL_ACCESS_SCREENER_CAPS;
-  
-  const tier = useMemo(() => {
-    if (!profile?.subscription_plan) return 'FREE' as PlanTier;
-    
-    const planMapping: Record<string, PlanTier> = {
-      'starter': 'FREE',
-      'free': 'FREE',
-      'plus': 'PLUS',
-      'pro': 'PRO',
-      'elite': 'ELITE',
-      'team': 'ELITE'
-    };
-    
-    return planMapping[profile.subscription_plan.toLowerCase()] || 'FREE';
-  }, [profile?.subscription_plan]);
-  
-  // No locked patterns - everything is available to all users
-  const lockedPatterns: string[] = [];
-  
-  // No upgrade incentive needed since everything is unlocked
-  const upgradeIncentive = null;
-  
+  const { tier, isGuest, guestPatternLimit } = usePlanGate();
+
+  const planTier = isGuest ? 'FREE' : tier as any;
+  const caps = PLANS_CONFIG.tiers[planTier]?.screener ?? PLANS_CONFIG.tiers.FREE.screener;
+
+  // Guests see only 5 patterns max (blur gate handled in UI)
+  const effectiveCaps = isGuest
+    ? { ...PLANS_CONFIG.tiers.FREE.screener, maxTickersPerClass: guestPatternLimit }
+    : caps;
+
+  const lockedPatterns = useMemo(
+    () => ALL_PATTERN_IDS.filter(id => !effectiveCaps.allowedPatterns.includes(id)),
+    [effectiveCaps.allowedPatterns]
+  );
+
+  const upgradeIncentive = useMemo(() => {
+    if (lockedPatterns.length === 0) return null;
+    const nextTier = isGuest || tier === 'FREE' ? 'Lite' : tier === 'LITE' ? 'Pro' : null;
+    if (!nextTier) return null;
+    return `Upgrade to ${nextTier} to unlock ${lockedPatterns.slice(0, 2).map(id => PATTERN_DISPLAY_NAMES[id]).join(', ')} and more`;
+  }, [lockedPatterns, tier, isGuest]);
+
   return {
-    caps,
+    caps: effectiveCaps,
     tier,
-    loading: profileLoading,
+    loading: false,
     lockedPatterns,
     upgradeIncentive,
-    isPatternLocked: () => false // Nothing is locked
+    isPatternLocked: (patternId: string) => !effectiveCaps.allowedPatterns.includes(patternId),
   };
 }

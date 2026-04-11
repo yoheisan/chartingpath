@@ -890,7 +890,7 @@ const MemberAlerts = () => {
             {/* Master Plan auto-alert card */}
             {(() => {
               const planMapping: Record<string, PlanTier> = {
-                free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'PLUS',
+                free: 'FREE', starter: 'FREE', lite: 'LITE', plus: 'LITE',
                 pro: 'PRO', pro_plus: 'PRO', elite: 'ELITE', team: 'ELITE',
               };
               const tier = planMapping[profile?.subscription_plan?.toLowerCase() ?? 'free'] || 'FREE';

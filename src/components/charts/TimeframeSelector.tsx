@@ -41,7 +41,7 @@ interface TimeframeSelectorProps {
 function getPlanTier(subscriptionPlan: string): PlanTier {
   const planMapping: Record<string, PlanTier> = {
     'free': 'FREE',
-    'starter': 'PLUS',
+    'starter': 'LITE',
     'pro': 'PRO',
     'pro_plus': 'PRO',
     'elite': 'ELITE',
