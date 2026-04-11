@@ -152,8 +152,8 @@ const ProjectsPricing = () => {
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm">
               <ShieldCheck className="h-4 w-4 text-primary" />
-              <span className="text-foreground font-medium">14-day money-back guarantee</span>
-              <span className="text-muted-foreground">· No questions asked</span>
+              <span className="text-foreground font-medium">{p('moneyBackGuarantee')}</span>
+              <span className="text-muted-foreground">· {p('noQuestionsAsked')}</span>
             </div>
           </div>
         </div>
@@ -326,7 +326,7 @@ const ProjectsPricing = () => {
         <div className="text-center mb-16">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            All paid plans include a <strong className="text-foreground">14-day money-back guarantee</strong>. Cancel anytime, no questions asked.
+            {p('allPlansGuarantee')} <strong className="text-foreground">{p('moneyBackGuarantee')}</strong>. {p('cancelAnytime')}
           </p>
         </div>
         <Card className="mb-16 border-border/50 bg-card/50">
