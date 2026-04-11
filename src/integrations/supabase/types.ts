@@ -6415,6 +6415,7 @@ export type Database = {
     Functions: {
       acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }
       activate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
+      apply_grade_floor: { Args: never; Returns: undefined }
       backfill_exchange_historical_patterns: { Args: never; Returns: undefined }
       backfill_exchange_live_patterns: { Args: never; Returns: undefined }
       calculate_prorata_amount: {
