@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Zap, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,7 @@ import { filterActiveTradesOnly } from '@/utils/tradeOutcomeFilter';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import type { SetupWithVisuals, PatternQuality, VisualSpec } from '@/types/VisualSpec';
 import { toast } from 'sonner';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 type TeaserAssetType = 'stocks' | 'fx' | 'crypto' | 'commodities';
 
@@ -153,6 +154,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 export function PatternScreenerTeaser() {
   const { t } = useTranslation();
+  const { isGuest, guestPatternLimit } = usePlanGate();
   const [patternsByAsset, setPatternsByAsset] = useState<Record<TeaserAssetType, LiveSetup[]>>({
     stocks: [], fx: [], crypto: [], commodities: [],
   });
@@ -380,16 +382,57 @@ export function PatternScreenerTeaser() {
             })}
           </TabsList>
 
-          {ASSET_TAB_KEYS.map(tab => (
+          {ASSET_TAB_KEYS.map(tab => {
+            const allPatterns = patternsByAsset[tab.value];
+            const visiblePatterns = isGuest ? allPatterns.slice(0, guestPatternLimit) : allPatterns;
+            const hasMore = isGuest && allPatterns.length > guestPatternLimit;
+
+            return (
             <TabsContent key={tab.value} value={tab.value} className="mt-4">
               {loading[tab.value] ? (
                 <LoadingSkeleton />
-              ) : patternsByAsset[tab.value].length > 0 ? (
-                <div className="rounded-lg border bg-card overflow-hidden">
-                  <TeaserSignalsTable
-                    patterns={patternsByAsset[tab.value]}
-                    onOpenChart={handleOpenChart}
-                  />
+              ) : allPatterns.length > 0 ? (
+                <div className="relative">
+                  <div className="rounded-lg border bg-card overflow-hidden">
+                    <TeaserSignalsTable
+                      patterns={visiblePatterns}
+                      onOpenChart={handleOpenChart}
+                    />
+                  </div>
+
+                  {/* Guest blur gate */}
+                  {isGuest && hasMore && (
+                    <div className="relative mt-0">
+                      <div className="pointer-events-none select-none blur-sm opacity-50">
+                        <div className="space-y-2 px-4 py-3">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-4 py-2">
+                              <Skeleton className="h-5 w-16" />
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-5 w-12 rounded-full ml-auto" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 rounded-lg">
+                        <Lock className="h-5 w-5 text-primary mb-2" />
+                        <p className="text-sm font-medium mb-1">
+                          {t('patternScreenerTeaser.guestGateTitle', 'Sign up free to see all patterns')}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {t('patternScreenerTeaser.guestGateSubtitle', 'No credit card required')}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button asChild size="sm">
+                            <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
+                          </Button>
+                          <Button asChild size="sm" variant="ghost">
+                            <Link to="/auth?mode=signin">{t('auth.signIn', 'Sign In')}</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-lg border bg-card p-8 text-center">
@@ -397,7 +440,8 @@ export function PatternScreenerTeaser() {
                 </div>
               )}
             </TabsContent>
-          ))}
+            );
+          })}
         </Tabs>
 
         {/* CTA */}

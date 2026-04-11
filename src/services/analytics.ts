@@ -56,6 +56,8 @@ export type AnalyticsEvent =
   | 'pricing_start_free'
   | 'pricing_start_lite'
   | 'pricing_start_pro'
+  | 'pricing_start_elite'
+  | 'pricing_start_data_api'
   | 'email_lead_captured'
   | 'deploy_as_alert_clicked';
 
