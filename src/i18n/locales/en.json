@@ -2377,6 +2377,11 @@
         "pro": "Serious traders scanning daily",
         "elite": "Power traders & portfolio managers"
       },
+      "moneyBackGuarantee": "14-day money-back guarantee",
+      "noQuestionsAsked": "No questions asked",
+      "allPlansGuarantee": "All paid plans include a",
+      "cancelAnytime": "Cancel anytime, no questions asked.",
+      },
       "creditsExplained": "Credits scale with symbols × history × patterns × timeframe",
       "cta": {
         "free": "Start Free",
