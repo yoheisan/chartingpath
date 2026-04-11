@@ -887,11 +887,11 @@ const FAQ = () => {
                   <div className="border rounded-lg p-4">
                     <h4 className="font-semibold mb-2">{al('a_alertLimitsTitle')}</h4>
                     <div className="text-sm space-y-2">
-                      <div className="flex justify-between"><span>{al('a_free')}</span><span>{al('a_freeAlerts')}</span></div>
-                      <div className="flex justify-between"><span>{al('a_starter')}</span><span>{al('a_starterAlerts')}</span></div>
-                      <div className="flex justify-between"><span>{al('a_pro')}</span><span>{al('a_proAlerts')}</span></div>
-                      <div className="flex justify-between"><span>{al('a_proPlus')}</span><span>{al('a_proPlusAlerts')}</span></div>
-                      <div className="flex justify-between"><span>{al('a_elite')}</span><span>{al('a_eliteAlerts')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.alerts.a_guest', 'Guest (not signed in)')}</span><span>{t('faq.alerts.a_guestAlerts', '0 alerts')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.alerts.a_free', 'Free')}</span><span>{t('faq.alerts.a_freeAlerts', '3 alerts per day')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.alerts.a_lite', 'Lite')}</span><span>{t('faq.alerts.a_liteAlerts', '10 alerts per day')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.alerts.a_pro', 'Pro')}</span><span>{t('faq.alerts.a_proAlerts', 'Unlimited')}</span></div>
+                      <div className="flex justify-between"><span>{t('faq.alerts.a_elite', 'Elite')}</span><span>{t('faq.alerts.a_eliteAlerts', 'Unlimited (real-time priority delivery)')}</span></div>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{al('a_alertDelivery')}</p>
@@ -1084,34 +1084,37 @@ const FAQ = () => {
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline">FREE</Badge>
-                        <span className="font-semibold">{ac('a_freeLabel')}</span>
+                        <span className="font-semibold">{t('faq.account.a_freeLabel', '$0 / month')}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">{ac('a_freeDesc')}</div>
+                      <div className="text-sm text-muted-foreground">{t('faq.account.a_freeDesc', '20 instruments, 1h timeframe, Grade B & C patterns, 3 alerts/day, 7-day history, 1 trading plan')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary">STARTER</Badge>
-                        <span className="font-semibold">{ac('a_starterLabel')}</span>
+                        <Badge variant="secondary">LITE</Badge>
+                        <span className="font-semibold">{t('faq.account.a_liteLabel', '$12 / month ($99 / year)')}</span>
+                        <Badge variant="outline" className="text-xs">{t('faq.account.a_liteSavings', 'Save 31%')}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">{ac('a_starterDesc')}</div>
+                      <div className="text-sm text-muted-foreground">{t('faq.account.a_liteDesc', 'All asset classes, 4h + daily timeframes, 90-day history, 10 alerts/day, 2 trading plans')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge>PRO</Badge>
-                        <span className="font-semibold">{ac('a_proLabel')}</span>
+                        <span className="font-semibold">{t('faq.account.a_proLabel', '$79 / month ($599 / year)')}</span>
+                        <Badge variant="outline" className="text-xs">{t('faq.account.a_proSavings', 'Save 37%')}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">{ac('a_proDesc')}</div>
+                      <div className="text-sm text-muted-foreground">{t('faq.account.a_proDesc', 'All timeframes incl. 1h, Grade A/B/C, full outcome database, Edge Atlas, Copilot, Pattern Lab, unlimited alerts, 10 plans')}</div>
                     </div>
                     <div className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge className="bg-purple-600">ELITE</Badge>
-                        <span className="font-semibold">{ac('a_eliteLabel')}</span>
+                        <span className="font-semibold">{t('faq.account.a_eliteLabel', '$149 / month ($999 / year)')}</span>
+                        <Badge variant="outline" className="text-xs">{t('faq.account.a_eliteSavings', 'Save 44%')}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">{ac('a_eliteDesc')}</div>
+                      <div className="text-sm text-muted-foreground">{t('faq.account.a_eliteDesc', 'Everything in Pro + Copilot ACS, real-time priority alerts, unlimited watchlists, API access, priority support')}</div>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    <Link to="/projects/pricing" className="text-primary underline">{ac('a_viewPricing')}</Link>
+                    <Link to="/pricing" className="text-primary underline">{ac('a_viewPricing')}</Link>
                   </p>
                 </div>
               )
@@ -1119,23 +1122,27 @@ const FAQ = () => {
             {
               question: ac('q_refund'),
               answer: (
-                <div className="space-y-2 text-muted-foreground">
-                  <p>{ac('a_refund1')}</p>
-                  <p>{ac('a_refund2')}</p>
-                  <p className="font-medium text-foreground">{ac('a_refund3')}</p>
+                <div className="space-y-3 text-muted-foreground">
+                  <p>{t('faq.account.a_refundIntro', 'We offer a 7-day free trial on Pro and Elite — you are not charged if you cancel within the trial period. For paid subscriptions after the trial:')}</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>{t('faq.account.a_refundMonthly', 'Monthly plans: no refunds for the current period, cancellation stops future charges')}</li>
+                    <li>{t('faq.account.a_refundAnnual', 'Annual plans: contact support within 30 days of payment for a prorated refund')}</li>
+                  </ul>
+                  <p className="text-sm">{t('faq.account.a_refundContact', 'Contact yohei@chartingpath.com for any billing questions.')}</p>
                 </div>
               )
             },
             {
               question: ac('q_payment'),
               answer: (
-                <div className="space-y-2 text-muted-foreground">
-                  <p>{ac('a_paymentIntro')}</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>{ac('a_payment1')}</li>
-                    <li>{ac('a_payment2')}</li>
-                    <li>{ac('a_payment3')}</li>
+                <div className="space-y-3 text-muted-foreground">
+                  <p>{t('faq.account.a_paymentIntro', 'ChartingPath payments are processed by Dodo Payments, our Merchant of Record. Accepted payment methods include:')}</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>{t('faq.account.a_payment1', 'Credit and debit cards (Visa, Mastercard, Amex)')}</li>
+                    <li>{t('faq.account.a_payment2', 'Apple Pay and Google Pay')}</li>
+                    <li>{t('faq.account.a_payment3', 'Local payment methods based on your country (shown at checkout)')}</li>
                   </ul>
+                  <p className="text-sm">{t('faq.account.a_paymentTax', 'All prices shown exclude local taxes. Dodo Payments handles tax calculation and compliance automatically based on your location.')}</p>
                 </div>
               )
             },
@@ -1144,6 +1151,34 @@ const FAQ = () => {
               answer: (
                 <div className="text-muted-foreground">
                   <p>{ac('a_upgradesDesc')}</p>
+                </div>
+              )
+            },
+            {
+              question: t('faq.account.q_downgrade', 'What happens to my account if I downgrade or cancel?'),
+              answer: (
+                <div className="space-y-3 text-muted-foreground">
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>{t('faq.account.a_downgrade1', 'Downgrading takes effect at the end of the current billing period')}</li>
+                    <li>{t('faq.account.a_downgrade2', 'Your data, backtests, and trading plans are preserved')}</li>
+                    <li>{t('faq.account.a_downgrade3', 'Features above your new tier become read-only (you can view but not create new ones)')}</li>
+                    <li>{t('faq.account.a_downgrade4', 'Alerts above your new tier limit are paused automatically')}</li>
+                    <li>{t('faq.account.a_downgrade5', 'You can reactivate at any time to restore full access')}</li>
+                  </ul>
+                </div>
+              )
+            },
+            {
+              question: t('faq.account.q_freeTrial', 'Is there a free trial on paid plans?'),
+              answer: (
+                <div className="space-y-3 text-muted-foreground">
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>{t('faq.account.a_trial1', 'Pro and Elite both offer a 7-day free trial')}</li>
+                    <li>{t('faq.account.a_trial2', 'No credit card required to start the trial')}</li>
+                    <li>{t('faq.account.a_trial3', 'If you cancel within 7 days, you are not charged')}</li>
+                    <li>{t('faq.account.a_trial4', 'After the trial, billing begins on your chosen cycle (monthly or annual)')}</li>
+                    <li>{t('faq.account.a_trial5', 'Free and Lite plans do not require a trial — they activate immediately')}</li>
+                  </ul>
                 </div>
               )
             }
