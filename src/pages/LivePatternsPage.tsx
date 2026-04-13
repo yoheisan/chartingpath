@@ -1392,7 +1392,7 @@ export default function LivePatternsPage() {
 
 
       {/* Empty state */}
-      {!error && !showSkeletonCards && sortedPatterns.length === 0 && !(isIntradayTf && hasDataProvider === false) && (
+      {!error && !showSkeletonCards && sortedPatterns.length === 0 && (
         <Card className="p-12 text-center">
           <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">{t('livePatterns.noPatternsFound')}</h3>
