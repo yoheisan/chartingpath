@@ -30,6 +30,7 @@ import {
   type StatsSource,
 } from "../_shared/statsEnrichment.ts";
 import { fetchFinazonData } from '../_shared/finazonFetch.ts';
+import { fetchBinanceData, isBinanceCrypto } from '../_shared/binanceFetch.ts';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -841,7 +842,10 @@ async function fetchExternalDataSingle(symbol: string, startDate: string, endDat
   const isCrypto = symbol.includes('-USD') && !symbol.includes('=');
   
   if (isCrypto) {
-    // Crypto: Yahoo fallback only (Binance is primary via different path)
+    // Crypto: Binance first (free, no key, reliable intraday), Yahoo fallback
+    const binanceBars = await fetchBinanceData(symbol, interval, new Date(startDate).getTime());
+    if (binanceBars.length > 0) return binanceBars;
+    console.warn(`[scan-live-patterns] Binance returned 0 bars for ${symbol}@${interval}, falling back to Yahoo`);
     return fetchYahooDataSingle(symbol, startDate, endDate, interval);
   }
   
