@@ -320,24 +320,18 @@ export default function LivePatternsPage() {
   // Trend indicator configuration
   const [trendConfig, setTrendConfig] = useState<TrendIndicatorConfig>(() => loadTrendConfig());
 
-  // BYOK intraday gate: check if user has a connected data provider for intraday TFs
-  const [hasDataProvider, setHasDataProvider] = useState<boolean | null>(null);
+  // Optional BYOK: if user has a connected EODHD provider, pass their key for enhanced data
   const [userEodhdKey, setUserEodhdKey] = useState<string | null>(null);
   const isIntradayTf = timeframe === '1h' || timeframe === '4h' || timeframe === '8h';
 
   useEffect(() => {
     if (!isIntradayTf) {
-      setHasDataProvider(null);
       setUserEodhdKey(null);
       return;
     }
     (async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        setHasDataProvider(false);
-        setUserEodhdKey(null);
-        return;
-      }
+      if (!authUser) { setUserEodhdKey(null); return; }
       const { data } = await supabase
         .from('user_data_providers')
         .select('id, provider, api_key_encrypted')
@@ -345,7 +339,6 @@ export default function LivePatternsPage() {
         .eq('provider', 'eodhd')
         .limit(1)
         .maybeSingle();
-      setHasDataProvider(!!data);
       setUserEodhdKey((data as any)?.api_key_encrypted ?? null);
     })();
   }, [timeframe]);
@@ -1397,19 +1390,6 @@ export default function LivePatternsPage() {
         </div>
       )}
 
-      {/* Intraday BYOK gate */}
-      {isIntradayTf && hasDataProvider === false && !loading && (
-        <Card className="p-8 text-center border-dashed border-2 border-primary/30 bg-primary/5">
-          <Database className="h-10 w-10 mx-auto text-primary mb-3" />
-          <h3 className="text-lg font-semibold mb-2">{t('screener.intradayGateTitle', 'Intraday data provider required')}</h3>
-          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-            {t('screener.intradayGateDesc', 'Intraday patterns (1H/4H/8H) require a connected data provider. Connect your own EODHD or Alpaca account — free for you, no cost to ChartingPath.')}
-          </p>
-          <Button onClick={() => navigate('/members/account?tab=data-providers')}>
-            {t('screener.connectProvider', 'Connect a data provider →')}
-          </Button>
-        </Card>
-      )}
 
       {/* Empty state */}
       {!error && !showSkeletonCards && sortedPatterns.length === 0 && !(isIntradayTf && hasDataProvider === false) && (
