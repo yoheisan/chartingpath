@@ -11,7 +11,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { DataProviderSettings } from "@/components/settings/DataProviderSettings";
 import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle, Database } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { trackCheckoutCompleted } from "@/services/analytics";
@@ -41,6 +41,7 @@ const MemberAccount = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -178,7 +179,7 @@ const MemberAccount = () => {
            <p className="text-muted-foreground">{t('memberAccount.subtitle')}</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue={(location.state as { tab?: string })?.tab || "profile"} className="space-y-6">
            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
               <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>

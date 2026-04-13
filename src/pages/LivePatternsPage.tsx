@@ -7,7 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Zap, RefreshCw, TrendingUp, TrendingDown, ArrowRight, 
   Filter, Clock, BarChart3, Target, Shield, Lock, Crown, Info, ChevronUp, ChevronDown,
-  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText
+  ArrowUpDown, Search, ArrowUpRight, ArrowDownRight, Minus, Settings2, Activity, FlaskConical, FileText,
+  Database, CheckCircle
 } from 'lucide-react';
 import { DataVersionBadge } from '@/components/platform/DataVersionBadge';
 import { cn } from '@/lib/utils';
@@ -1140,10 +1141,30 @@ export default function LivePatternsPage() {
             trigger={
               <Button variant="outline" size="sm" className="gap-2">
                <Search className="h-4 w-4" />
-                {t('livePatterns.studyTicker')}
+                 {t('livePatterns.studyTicker')}
               </Button>
             }
           />
+          {isAuthed && (
+            <Button
+              variant={userEodhdKey ? "outline" : "secondary"}
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/members/account', { state: { tab: 'data-providers' } })}
+            >
+              {userEodhdKey ? (
+                <>
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                  {t('screener.dataConnected', 'Data Connected')}
+                </>
+              ) : (
+                <>
+                  <Database className="h-3.5 w-3.5" />
+                  {t('screener.connectData', 'Connect Your Data')}
+                </>
+              )}
+            </Button>
+          )}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
