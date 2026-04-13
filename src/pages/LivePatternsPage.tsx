@@ -1145,7 +1145,7 @@ export default function LivePatternsPage() {
               </Button>
             }
           />
-          {session && (
+          {isAuthed && (
             <Button
               variant={userEodhdKey ? "outline" : "secondary"}
               size="sm"
