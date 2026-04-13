@@ -41,6 +41,7 @@ const MemberAccount = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
