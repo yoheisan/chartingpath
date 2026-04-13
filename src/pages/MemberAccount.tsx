@@ -179,7 +179,7 @@ const MemberAccount = () => {
            <p className="text-muted-foreground">{t('memberAccount.subtitle')}</p>
         </div>
 
-        <Tabs defaultValue={(location.state as any)?.tab || "profile"} className="space-y-6">
+        <Tabs defaultValue={(location.state as { tab?: string })?.tab || "profile"} className="space-y-6">
            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">{t('memberAccount.profile')}</TabsTrigger>
               <TabsTrigger value="subscription">{t('memberAccount.subscription')}</TabsTrigger>
