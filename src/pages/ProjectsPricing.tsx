@@ -143,11 +143,11 @@ const ProjectsPricing = () => {
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-primary" />
-                <strong className="text-foreground">2,400+</strong> traders using ChartingPath
+                <strong className="text-foreground">2,400+</strong> {p('tradersUsing')}
               </span>
               <span className="hidden sm:flex items-center gap-1.5">
                 <Star className="h-4 w-4 text-amber-500" />
-                <strong className="text-foreground">4.8/5</strong> avg. rating
+                <strong className="text-foreground">4.8/5</strong> {p('avgRating')}
               </span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm">
