@@ -76,7 +76,7 @@ export const PricingTeaser = () => {
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-2">
                     <Check className="h-3 w-3 text-primary shrink-0" />
-                    {feature}
+                    {t(`pricingTeaser.${plan.key}Feature${idx + 1}`, feature)}
                   </li>
                 ))}
               </ul>
