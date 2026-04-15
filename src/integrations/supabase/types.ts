@@ -6635,6 +6635,19 @@ export type Database = {
           worst_override_symbol: string
         }[]
       }
+      get_pattern_concentration: {
+        Args: never
+        Returns: {
+          asset_type: string
+          avg_grade_score: number
+          grade_a: number
+          grade_b: number
+          grade_c: number
+          grade_d: number
+          pattern_count: number
+          timeframe: string
+        }[]
+      }
       get_pattern_library_stats: {
         Args: never
         Returns: {
