@@ -1218,6 +1218,7 @@ function MetricCard({
   suffix,
   decimal,
   bad,
+  highlight,
 }: {
   label: string;
   value: number;
@@ -1225,15 +1226,16 @@ function MetricCard({
   suffix?: string;
   decimal?: boolean;
   bad?: boolean;
+  highlight?: boolean;
 }) {
   return (
-    <Card>
+    <Card className={highlight ? "border-primary/50 bg-primary/5" : ""}>
       <CardContent className="pt-4 pb-3 px-4">
         <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
           {icon}
           {label}
         </div>
-        <p className={`text-xl font-bold ${bad ? "text-destructive" : ""}`}>
+        <p className={`text-xl font-bold ${bad ? "text-destructive" : highlight ? "text-primary" : ""}`}>
           {decimal ? value : value.toLocaleString()}{suffix || ""}
         </p>
       </CardContent>
