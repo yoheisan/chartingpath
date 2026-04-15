@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { PageMeta } from '@/components/PageMeta';
-import { JsonLd } from '@/components/JsonLd';
+import { JsonLd, BreadcrumbJsonLd } from '@/components/JsonLd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +115,12 @@ export default function InstrumentPatternStatsPage() {
         canonicalPath={`/patterns/${patternId}/${instrument}/statistics`}
       />
 
-      {/* Article JSON-LD */}
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://chartingpath.com/' },
+        { name: 'Pattern Statistics', url: 'https://chartingpath.com/patterns/stats' },
+        { name: displayPatternName, url: `https://chartingpath.com/patterns/${patternId}/statistics` },
+        { name: displayInstrument, url: `https://chartingpath.com/patterns/${patternId}/${instrument}/statistics` },
+      ]} />
       <JsonLd data={{
         '@type': 'Article',
         headline: `${displayPatternName} on ${displayInstrument} — Performance Statistics`,

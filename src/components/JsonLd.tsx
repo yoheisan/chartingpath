@@ -17,7 +17,6 @@ export function JsonLd({ data }: JsonLdProps) {
     const jsonLd = { '@context': 'https://schema.org', ...data };
     const id = `${SCRIPT_ID_PREFIX}${(data['@type'] as string || 'default').toLowerCase()}`;
 
-    // Remove existing script with same id to avoid duplicates
     const existing = document.getElementById(id);
     if (existing) existing.remove();
 
@@ -69,8 +68,57 @@ export function WebApplicationJsonLd() {
         url: 'https://chartingpath.com',
         logo: 'https://chartingpath.com/lovable-uploads/580e72d2-457e-4e16-8d46-2a0bd9299238.png',
         sameAs: ['https://x.com/ChartingPath'],
+        founder: {
+          '@type': 'Person',
+          name: 'Yohei',
+          jobTitle: 'Founder',
+        },
+        description: 'Chart pattern detection platform with proven outcome data. Real win rates from live pattern tracking across FX and US equities.',
+      }} />
+      <JsonLd data={{
+        '@type': 'WebSite',
+        name: 'ChartingPath',
+        url: 'https://chartingpath.com',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://chartingpath.com/patterns/live?search={search_term_string}',
+          },
+          'query-input': 'required name=search_term_string',
+        },
       }} />
     </>
+  );
+}
+
+export function FAQJsonLd({ faqs }: { faqs: { question: string; answer: string }[] }) {
+  return (
+    <JsonLd data={{
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(faq => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    }} />
+  );
+}
+
+export function BreadcrumbJsonLd({ items }: { items: { name: string; url: string }[] }) {
+  return (
+    <JsonLd data={{
+      '@type': 'BreadcrumbList',
+      itemListElement: items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: item.url,
+      })),
+    }} />
   );
 }
 
