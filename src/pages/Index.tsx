@@ -27,6 +27,7 @@ import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
 import { PatternConcentrationHeatmap } from '@/components/landing/PatternConcentrationHeatmap';
+import AnimatedCandlestickPattern from '@/components/landing/AnimatedCandlestickPattern';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -102,6 +103,10 @@ const Index = () => {
               backgroundSize: '80px 80px',
             }}
           />
+          {/* Animated candlestick pattern formation */}
+          <div className="absolute inset-0 opacity-[0.12] pointer-events-none">
+            <AnimatedCandlestickPattern />
+          </div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07] blur-[100px] bg-primary pointer-events-none" />
         </div>
         
