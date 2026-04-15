@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Lock, LogIn } from 'lucide-react';
+import { Lock, LogIn, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
@@ -50,6 +50,17 @@ export function GuestScreenerOverlay({ totalCount, visibleCount }: GuestScreener
               </Link>
             </Button>
           </div>
+
+          {/* Pattern Lab free CTA */}
+          <div className="mt-4 pt-4 border-t border-border/40">
+            <Button asChild variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary/80">
+              <Link to="/projects/pattern-lab/new">
+                <FlaskConical className="h-4 w-4" />
+                {t('guestScreenerOverlay.tryPatternLab', 'Or try Pattern Lab free — no account needed')}
+              </Link>
+            </Button>
+          </div>
+
           <p className="text-xs text-muted-foreground mt-3">
             {t('guestScreenerOverlay.noCreditCard')}
           </p>
