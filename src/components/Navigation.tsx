@@ -231,7 +231,7 @@ const Navigation = () => {
                   {t('navigation.more', 'More')}
                   <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                <DropdownMenuContent align="end" className="w-56 bg-popover z-50 max-h-[80vh] overflow-y-auto">
                   {/* Workspace */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.workspace', 'Workspace')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
