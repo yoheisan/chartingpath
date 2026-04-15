@@ -3305,7 +3305,7 @@ serve(async (req) => {
         return 'general';
       }
 
-      const requestType = classifyRequestType(lastUserMsg, pageType);
+      const requestType = classifyRequestType(lastUserMsg, routingPageType);
       
       // Model selection based on request type
       const HEAVY_TYPES = new Set(['backtest', 'multi_timeframe_analysis', 'trading_plan_build']);
