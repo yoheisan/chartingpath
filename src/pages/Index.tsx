@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, TrendingUp, Shield, FlaskConical } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -126,6 +127,12 @@ const Index = () => {
                 {t('landing.exploreOutcomeData', 'Explore outcome data')}
               </Button>
             </div>
+
+            <p className="text-sm text-muted-foreground mt-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <Link to="/patterns/live" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                {t('landing.noAccountNeeded', 'No account needed — browse live patterns now →')}
+              </Link>
+            </p>
 
             <HeroStatsBar />
           </div>

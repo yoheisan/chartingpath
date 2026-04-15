@@ -103,6 +103,8 @@ interface ReportData {
   insights: Insight[];
 
   // Engagement extras
+  engagedVisitors: number;
+  botSuspectCount: number;
   backtestRuns: number;
   communityMessages: number;
   totalEvents: number;
@@ -495,6 +497,14 @@ export function DailyReportPanel() {
         });
       }
 
+      // Engaged visitors (session.engaged events)
+      const engagedSessions = new Set(
+        events
+          .filter(e => e.event_name === 'session.engaged')
+          .map(e => e.session_id)
+          .filter(Boolean)
+      );
+
       setReport({
         totalVisitors: allSessions.size,
         totalPageViews: pageViews.length,
@@ -522,6 +532,8 @@ export function DailyReportPanel() {
         emailFailures,
         trafficSources,
         insights,
+        engagedVisitors: engagedSessions.size,
+        botSuspectCount: botCount,
         backtestRuns: backtestRuns.length,
         communityMessages: communityMsgs.length,
         totalEvents: events.length,
@@ -641,12 +653,13 @@ export function DailyReportPanel() {
       )}
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <MetricCard label="Engaged Visitors" value={report.engagedVisitors} icon={<MousePointerClick className="h-4 w-4" />} highlight />
         <MetricCard label="Sessions" value={report.totalVisitors} icon={<Users className="h-4 w-4" />} />
+        <MetricCard label="Bots Filtered" value={report.botSuspectCount} icon={<Bot className="h-4 w-4" />} />
         <MetricCard label="Page Views" value={report.totalPageViews} icon={<Eye className="h-4 w-4" />} />
         <MetricCard label="Sign-ups" value={report.newSignups} icon={<Users className="h-4 w-4" />} />
         <MetricCard label="Pages/Session" value={report.pagesPerSession} icon={<BarChart3 className="h-4 w-4" />} decimal />
-        <MetricCard label="Avg Duration" value={report.avgSessionDurationSec} icon={<TrendingUp className="h-4 w-4" />} suffix="s" />
         <MetricCard label="Bounce Rate" value={report.bounceRate} icon={<ArrowDown className="h-4 w-4" />} suffix="%" bad={report.bounceRate > 70} />
       </div>
 
@@ -1205,6 +1218,7 @@ function MetricCard({
   suffix,
   decimal,
   bad,
+  highlight,
 }: {
   label: string;
   value: number;
@@ -1212,15 +1226,16 @@ function MetricCard({
   suffix?: string;
   decimal?: boolean;
   bad?: boolean;
+  highlight?: boolean;
 }) {
   return (
-    <Card>
+    <Card className={highlight ? "border-primary/50 bg-primary/5" : ""}>
       <CardContent className="pt-4 pb-3 px-4">
         <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
           {icon}
           {label}
         </div>
-        <p className={`text-xl font-bold ${bad ? "text-destructive" : ""}`}>
+        <p className={`text-xl font-bold ${bad ? "text-destructive" : highlight ? "text-primary" : ""}`}>
           {decimal ? value : value.toLocaleString()}{suffix || ""}
         </p>
       </CardContent>

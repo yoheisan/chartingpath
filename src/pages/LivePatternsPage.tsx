@@ -784,7 +784,7 @@ export default function LivePatternsPage() {
   // Guest preview: show first 5 rows clearly, blur rest
   const { isAuthenticated: isAuthed } = useAuth();
   const totalRowCount = sortedPatterns.length;
-  const GUEST_VISIBLE = 5;
+  const GUEST_VISIBLE = 10;
   const guestLimited = !isAuthed && totalRowCount > GUEST_VISIBLE;
 
   // For guests, show ALL groups (no truncation) — blur is applied per-row in the table
