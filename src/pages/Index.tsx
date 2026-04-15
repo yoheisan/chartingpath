@@ -142,6 +142,10 @@ const Index = () => {
       <MarketPulseChart />
 
       <div className="border-t border-border/20">
+        <PatternConcentrationHeatmap />
+      </div>
+
+      <div className="border-t border-border/20">
         <SocialProof />
       </div>
 
