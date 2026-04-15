@@ -223,6 +223,11 @@ export default function PatternStatisticsPage() {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta title={pageTitle} description={pageDesc} canonicalPath={`/patterns/${patternId}/statistics`} />
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://chartingpath.com/' },
+        { name: 'Pattern Statistics', url: 'https://chartingpath.com/patterns/stats' },
+        { name: patternName, url: `https://chartingpath.com/patterns/${patternId}/statistics` },
+      ]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
 
