@@ -1,35 +1,63 @@
 
 
-# Add Performance Floor to Repeatability Gate
+## Diagnosis: Why Zero A-Grade Patterns Have Ever Been Detected
 
-## Summary
-Add a "performance floor" block in the repeatability gate section that prevents patterns with strong historical proof from being graded too low. This ensures statistically proven patterns never fall below B (strong proof) or C (sufficient proof).
+### Root Causes (3 compounding barriers)
 
-## File
-`supabase/functions/_shared/patternQualityScorer.ts`
+**1. The Weighted Score Ceiling Is Too Low**
 
-## Change
-Insert the following block at **line 1072** (immediately before `if (repeatabilityWarning)`):
+The 12-factor model produces a weighted sum where each factor scores 0–10 and carries a weight (totaling ~100%). The theoretical maximum is 10.0, but in practice:
 
-```typescript
-  // PERFORMANCE FLOOR: Strong historical proof overrides poor form score
-  // If a pattern has proven statistical edge, it should never grade below B
-  const thresholdsForFloor = ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks'] ?? ASSET_CLASS_THRESHOLDS['stocks'];
-  if (repeatabilityProof) {
-    const { sampleSize, winRate, expectancyR } = repeatabilityProof;
-    const meetsAGate = sampleSize >= thresholdsForFloor.aMinSample && winRate >= thresholdsForFloor.aWinRate && expectancyR > 0;
-    const meetsBGate = sampleSize >= thresholdsForFloor.bMinSample && winRate >= thresholdsForFloor.bWinRate;
-    if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
-      grade = 'B';
-      warnings.push(`Grade floored to B: strong historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
-    } else if (meetsBGate && (grade === 'D' || grade === 'F')) {
-      grade = 'C';
-      warnings.push(`Grade floored to C: sufficient historical proof (n=${sampleSize}, win=${winRate.toFixed(1)}%)`);
-    }
-  }
+- **MTF Confirmation** is almost always missing (−0.5 penalty), because the multi-timeframe check rarely fires for live scans.
+- **Volume data** is unavailable for FX/Crypto (2 factors stuck at ~5.0 neutral, contributing ~17% of weight at mediocre scores).
+- **Session Quality** returns 6.5 ("exempt") for 24h markets and rarely exceeds 7.0 for stocks.
+- **Pattern Maturity** gives 4.0 ("freshly broken") for most new detections.
+
+In practice, even a perfect-looking pattern maxes out around **6.5–7.2** on `finalScore`. The A-grade threshold is **7.5**.
+
+**2. The Repeatability Gate Is a Double Lock**
+
+Even if a pattern somehow scored ≥7.5, line 1054–1057 requires:
+- Historical sample size ≥ 20–30 (depending on asset class)
+- Win rate ≥ 50–55%
+- Positive expectancy (R > 0)
+
+If ANY of these conditions fail, the grade is **forcibly downgraded to B**. And line 1070 adds: if NO historical proof data is passed at all, grades A and B are **capped at C**.
+
+So a pattern needs to both (a) score ≥7.5 on form AND (b) have strong historical proof — two independent high bars.
+
+**3. Historical Performance Data Often Missing at Scoring Time**
+
+The `historicalPerformance` input relies on `pattern_hit_rates` data being available for the exact pattern+instrument combination. For many instruments (especially newly scanned ones), this data doesn't exist yet, triggering the "No historical proof — capped at C" rule (line 1070).
+
+### Summary: It's a Triple Gate
+
+```text
+Raw Score ≥ 7.5?  ──NO──> Max B (or lower)
+       │ YES
+Has proof data?   ──NO──> Capped at C
+       │ YES  
+Proof strong enough? ─NO─> Downgraded to B
+       │ YES
+       └── A grade ✅
 ```
 
-**Note**: The user's code references `getAssetThresholds(assetType)` but no such function exists. I'll use the existing pattern: `ASSET_CLASS_THRESHOLDS[input.assetType ?? 'stocks']` — identical to how `assetThresholds` is already computed on line 1050.
+Each gate alone would be hard to pass. Together, they make A-grade statistically impossible with current calibration.
 
-No SQL migrations. Single file edit.
+---
+
+### Proposed Fix: Recalibrate to Make A-Grade Rare but Achievable (~3–5%)
+
+1. **Lower A-grade threshold from 7.5 → 7.0** on `finalScore` — this alone would promote ~100–200 of the current 2,121 B-grade patterns to A.
+
+2. **Soften the MTF penalty**: Change the "no MTF" penalty from −0.5 → −0.2 (most patterns lack MTF data through no fault of their own).
+
+3. **Relax Repeatability Gate for A**: Lower `aWinRate` thresholds by 3–5% per asset class (e.g., stocks from 55% → 50%), and reduce `aMinSample` (e.g., 20 → 15 for stocks). The gate should filter bad patterns, not block all of them.
+
+4. **Ensure historical data is passed**: Verify the scan pipeline always queries `pattern_hit_rates` before scoring, so the "no proof = cap at C" rule doesn't trigger unnecessarily.
+
+### Files to Modify
+
+- `supabase/functions/_shared/patternQualityScorer.ts` — Threshold adjustments (lines 1037, 1030–1031, 68–75)
+- Redeploy all edge functions that import this shared scorer (`scan-live-patterns`, `score-pattern-quality`, etc.)
 
