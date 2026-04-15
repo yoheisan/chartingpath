@@ -15,7 +15,7 @@ import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
 import { FeatureBlocks } from '@/components/landing/FeatureBlocks';
 import { CopilotValueProp } from '@/components/landing/CopilotValueProp';
 import { PageMeta } from '@/components/PageMeta';
-import { WebApplicationJsonLd } from '@/components/JsonLd';
+import { WebApplicationJsonLd, FAQJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import { useOutcomeCount } from '@/hooks/useOutcomeCount';
