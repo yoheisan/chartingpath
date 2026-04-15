@@ -66,12 +66,12 @@ export interface HistoricalPerformanceInput {
 }
 
 const ASSET_CLASS_THRESHOLDS: Record<string, { aWinRate: number; bWinRate: number; aMinSample: number; bMinSample: number }> = {
-  stocks:      { aWinRate: 55, bWinRate: 48, aMinSample: 20, bMinSample: 12 },
-  fx:          { aWinRate: 50, bWinRate: 43, aMinSample: 25, bMinSample: 15 },
-  crypto:      { aWinRate: 52, bWinRate: 45, aMinSample: 30, bMinSample: 18 },
-  etfs:        { aWinRate: 53, bWinRate: 46, aMinSample: 15, bMinSample: 10 },
-  commodities: { aWinRate: 51, bWinRate: 44, aMinSample: 20, bMinSample: 12 },
-  indices:     { aWinRate: 53, bWinRate: 46, aMinSample: 20, bMinSample: 12 },
+  stocks:      { aWinRate: 50, bWinRate: 45, aMinSample: 15, bMinSample: 10 },
+  fx:          { aWinRate: 47, bWinRate: 40, aMinSample: 20, bMinSample: 12 },
+  crypto:      { aWinRate: 48, bWinRate: 42, aMinSample: 25, bMinSample: 15 },
+  etfs:        { aWinRate: 49, bWinRate: 43, aMinSample: 12, bMinSample: 8 },
+  commodities: { aWinRate: 48, bWinRate: 41, aMinSample: 15, bMinSample: 10 },
+  indices:     { aWinRate: 49, bWinRate: 43, aMinSample: 15, bMinSample: 10 },
 };
 
 // ============= ZIGZAG PIVOT DETECTION =============
@@ -1028,13 +1028,13 @@ export function calculatePatternQualityScore(
   
   // MTF Confirmation bonus/penalty — additive, does not affect factor weights
   if (mtfConfirmed) weightedScore += 0.8;
-  else weightedScore -= 0.5;
+  else weightedScore -= 0.2;
   
   const finalScore = Math.max(0, Math.min(10, Math.round(weightedScore * 10) / 10));
   
   // Grade — recalibrated thresholds so A-grade is rare but achievable (~5-10%)
   let grade: 'A' | 'B' | 'C' | 'D' | 'F';
-  if (finalScore >= 7.5) grade = 'A';
+  if (finalScore >= 7.0) grade = 'A';
   else if (finalScore >= 6.0) grade = 'B';
   else if (finalScore >= 4.5) grade = 'C';
   else if (finalScore >= 3.0) grade = 'D';
