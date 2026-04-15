@@ -27,7 +27,7 @@ import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
 import { PatternConcentrationHeatmap } from '@/components/landing/PatternConcentrationHeatmap';
-import AnimatedCandlestickPattern from '@/components/landing/AnimatedCandlestickPattern';
+import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -96,19 +96,7 @@ const Index = () => {
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-[60vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-background">
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
-              backgroundSize: '80px 80px',
-            }}
-          />
-          {/* Animated candlestick pattern formation */}
-          <div className="absolute inset-0 opacity-[0.12] pointer-events-none">
-            <AnimatedCandlestickPattern />
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07] blur-[100px] bg-primary pointer-events-none" />
-        </div>
+        <HeroVideoBackground />
         
         <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
