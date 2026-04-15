@@ -3288,7 +3288,7 @@ serve(async (req) => {
       // ═══ MODEL ROUTING ═══
       // Classify request type from the last user message
       const lastUserMsg = (messages || []).filter((m: any) => m.role === 'user').pop()?.content?.toLowerCase() || '';
-      const pageType = context?.pageType || viewContext?.currentPage || '';
+      const routingPageType = context?.pageType || viewContext?.currentPage || '';
       
       function classifyRequestType(msg: string, page: string): string {
         // Heavy tasks → strong model
@@ -3305,7 +3305,7 @@ serve(async (req) => {
         return 'general';
       }
 
-      const requestType = classifyRequestType(lastUserMsg, pageType);
+      const requestType = classifyRequestType(lastUserMsg, routingPageType);
       
       // Model selection based on request type
       const HEAVY_TYPES = new Set(['backtest', 'multi_timeframe_analysis', 'trading_plan_build']);
