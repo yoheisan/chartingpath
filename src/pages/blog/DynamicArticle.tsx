@@ -1244,6 +1244,7 @@ const DynamicArticle = () => {
         headline={article.seo_title || article.title}
         description={article.seo_description || article.excerpt}
         datePublished={article.published_at}
+        dateModified={article.updated_at || undefined}
         slug={article.slug}
         imageUrl={article.featured_image_url || undefined}
       />
