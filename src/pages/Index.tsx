@@ -70,6 +70,28 @@ const Index = () => {
         canonicalPath="/"
       />
       <WebApplicationJsonLd />
+      <FAQJsonLd faqs={[
+        {
+          question: 'What is ChartingPath?',
+          answer: 'ChartingPath is a chart pattern detection platform that scans 1,100+ instruments across FX and US equities in real time. Unlike textbook statistics, it tracks every detected pattern to its actual outcome, providing real win rates and expectancy data.',
+        },
+        {
+          question: 'How many chart patterns does ChartingPath track?',
+          answer: 'ChartingPath tracks 17 chart patterns including head and shoulders, triangles, flags, wedges, double tops/bottoms, and cup and handle formations across multiple timeframes from 1-hour to weekly.',
+        },
+        {
+          question: 'Is ChartingPath free to use?',
+          answer: 'Yes, ChartingPath offers a free tier with live pattern scanning, access to the pattern screener, and basic outcome data. Premium plans unlock full historical data, AI Copilot, and advanced backtesting.',
+        },
+        {
+          question: 'What makes ChartingPath different from other pattern scanners?',
+          answer: 'ChartingPath is the only platform that labels every detected pattern with its actual outcome (win/loss at specific R:R targets). This means every win rate and expectancy figure is backed by real, auditable data — not theoretical estimates.',
+        },
+        {
+          question: 'Can I backtest chart patterns on ChartingPath?',
+          answer: 'Yes. Pattern Lab lets you backtest any of the 17 supported patterns on any instrument and timeframe. Results include win rate, expectancy, R-multiple distribution, and equity curves based on historical pattern occurrences.',
+        },
+      ]} />
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-[60vh] flex items-center overflow-hidden">

@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { PageMeta } from '@/components/PageMeta';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { usePatternStats } from '@/hooks/usePatternStats';
 import { useTranslation } from 'react-i18next';
 import {
@@ -175,6 +176,13 @@ export default function ProgrammaticPatternStatsPage() {
         description={pageDesc}
         canonicalPath={`/patterns/stats/${patternSlug}/${assetClass}/${timeframe}`}
       />
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://chartingpath.com/' },
+        { name: 'Pattern Statistics', url: 'https://chartingpath.com/patterns/stats' },
+        { name: pName, url: `https://chartingpath.com/patterns/${patternSlug}/statistics` },
+        { name: acLabel, url: `https://chartingpath.com/patterns/stats/${patternSlug}/${assetClass}/${timeframe}` },
+        { name: tfLabel, url: `https://chartingpath.com/patterns/stats/${patternSlug}/${assetClass}/${timeframe}` },
+      ]} />
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 space-y-12">
         {/* Breadcrumb */}
