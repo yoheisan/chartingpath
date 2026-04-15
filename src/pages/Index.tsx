@@ -25,6 +25,7 @@ import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
 import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
+import { PatternConcentrationHeatmap } from '@/components/landing/PatternConcentrationHeatmap';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
