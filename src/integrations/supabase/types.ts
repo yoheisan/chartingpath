@@ -6470,6 +6470,16 @@ export type Database = {
         Args: { keep_days?: number }
         Returns: Json
       }
+      compute_market_breadth_from_history: {
+        Args: { p_lookback_hours?: number }
+        Returns: {
+          advances: number
+          declines: number
+          latest_bar: string
+          symbols_used: number
+          unchanged: number
+        }[]
+      }
       deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
       estimate_project_credits: {
         Args: {
