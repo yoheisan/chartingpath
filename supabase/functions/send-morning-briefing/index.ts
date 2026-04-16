@@ -206,14 +206,39 @@ async function fetchBreadthFromHistoricalPrices(supabase: any): Promise<{ advanc
   }
 }
 
-async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; source?: string }> {
+// Per-asset-class breadth: stocks, crypto, fx, commodities, indices in one round-trip.
+type AssetClassBreadth = { asset_class: string; advances: number; declines: number; symbols_used: number };
+async function fetchBreadthByAssetClass(supabase: any): Promise<AssetClassBreadth[]> {
+  try {
+    const { data, error } = await supabase.rpc('compute_market_breadth_by_asset_class', { p_lookback_hours: 72 });
+    if (error) {
+      console.error("[morning-briefing] by-asset-class breadth RPC error:", error.message);
+      return [];
+    }
+    const rows = (Array.isArray(data) ? data : []).map((r: any) => ({
+      asset_class: String(r.asset_class),
+      advances: Number(r.advances) || 0,
+      declines: Number(r.declines) || 0,
+      symbols_used: Number(r.symbols_used) || 0,
+    })).filter((r: AssetClassBreadth) => r.symbols_used >= 5 && (r.advances + r.declines) >= 5);
+    console.log(`[morning-briefing] per-class breadth: ${rows.map((r: AssetClassBreadth) => `${r.asset_class}=${r.advances}/${r.declines}`).join(", ")}`);
+    return rows;
+  } catch (err) {
+    console.error("[morning-briefing] by-asset-class breadth fetch error:", err);
+    return [];
+  }
+}
+
+async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; source?: string; byAssetClass?: AssetClassBreadth[] }> {
   // VIX runs in parallel with all breadth tiers (independent endpoint)
   const vixPromise = fetchEODHDQuote("VIX.INDX");
+  // Per-class breakdown runs in parallel — used regardless of which headline tier wins
+  const byAssetClassPromise = fetchBreadthByAssetClass(supabase);
 
   // Tier 1 (preferred): our own historical_prices table — reuses Finazon-seeded daily bars
   const localBreadth = await fetchBreadthFromHistoricalPrices(supabase);
   if (localBreadth) {
-    const vix = await vixPromise;
+    const [vix, byAssetClass] = await Promise.all([vixPromise, byAssetClassPromise]);
     const sentiment = computeSentiment(localBreadth.advances, localBreadth.declines);
     try {
       await supabase.from('market_breadth_cache').insert({
@@ -222,13 +247,13 @@ async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; de
         advance_decline_ratio: localBreadth.declines > 0 ? localBreadth.advances / localBreadth.declines : null,
       });
     } catch { /* non-fatal */ }
-    return { advances: localBreadth.advances, declines: localBreadth.declines, vix, sentiment, dataAvailable: true, source: `historical_prices (n=${localBreadth.symbolsUsed})` };
+    return { advances: localBreadth.advances, declines: localBreadth.declines, vix, sentiment, dataAvailable: true, source: `historical_prices (n=${localBreadth.symbolsUsed})`, byAssetClass };
   }
 
   // Tier 2: EODHD bulk (legacy primary)
   const bulkBreadth = await fetchBreadthFromEODHDBulk();
   if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
-    const vix = await vixPromise;
+    const [vix, byAssetClass] = await Promise.all([vixPromise, byAssetClassPromise]);
     const sentiment = computeSentiment(bulkBreadth.advances, bulkBreadth.declines);
     try {
       await supabase.from('market_breadth_cache').insert({
@@ -237,21 +262,21 @@ async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; de
         advance_decline_ratio: bulkBreadth.declines > 0 ? bulkBreadth.advances / bulkBreadth.declines : null,
       });
     } catch { /* non-fatal */ }
-    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true, source: "eodhd_bulk" };
+    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true, source: "eodhd_bulk", byAssetClass };
   }
 
   // Tier 3: cache (≤ 48h old)
   const cached = await fetchBreadthFromCache(supabase);
   if (cached) {
-    const vix = await vixPromise;
+    const [vix, byAssetClass] = await Promise.all([vixPromise, byAssetClassPromise]);
     const sentiment = computeSentiment(cached.advances, cached.declines);
-    return { advances: cached.advances, declines: cached.declines, vix, sentiment: `${sentiment} (cached, ${cached.ageHours.toFixed(0)}h old)`, dataAvailable: true, source: "cache" };
+    return { advances: cached.advances, declines: cached.declines, vix, sentiment: `${sentiment} (cached, ${cached.ageHours.toFixed(0)}h old)`, dataAvailable: true, source: "cache", byAssetClass };
   }
 
   // Tier 4: Finazon sampling (last resort — subject to rate limits)
   const sampled = await fetchBreadthFromFinazonSample();
   if (sampled) {
-    const vix = await vixPromise;
+    const [vix, byAssetClass] = await Promise.all([vixPromise, byAssetClassPromise]);
     const sentiment = computeSentiment(sampled.advances, sampled.declines);
     try {
       await supabase.from('market_breadth_cache').insert({
@@ -260,13 +285,21 @@ async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; de
         advance_decline_ratio: sampled.declines > 0 ? sampled.advances / sampled.declines : null,
       });
     } catch { /* non-fatal */ }
-    return { advances: sampled.advances, declines: sampled.declines, vix, sentiment: `${sentiment} (sampled n=${sampled.sampleSize})`, dataAvailable: true, source: "finazon_sample" };
+    return { advances: sampled.advances, declines: sampled.declines, vix, sentiment: `${sentiment} (sampled n=${sampled.sampleSize})`, dataAvailable: true, source: "finazon_sample", byAssetClass };
   }
 
-  // All tiers failed
-  const vix = await vixPromise;
-  console.warn("[morning-briefing] Market breadth unavailable — all 4 tiers failed");
-  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false, source: "none" };
+  // All headline tiers failed — but per-class breadth may still have data
+  const [vix, byAssetClass] = await Promise.all([vixPromise, byAssetClassPromise]);
+  if (byAssetClass.length > 0) {
+    // Aggregate across classes as a fallback headline
+    const totAdv = byAssetClass.reduce((s, r) => s + r.advances, 0);
+    const totDec = byAssetClass.reduce((s, r) => s + r.declines, 0);
+    const sentiment = computeSentiment(totAdv, totDec);
+    console.log(`[morning-briefing] using per-class aggregate as headline: ${totAdv}/${totDec}`);
+    return { advances: totAdv, declines: totDec, vix, sentiment: `${sentiment} (cross-asset aggregate)`, dataAvailable: true, source: "per_class_aggregate", byAssetClass };
+  }
+  console.warn("[morning-briefing] Market breadth unavailable — all tiers failed");
+  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false, source: "none", byAssetClass: [] };
 }
 
 async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
@@ -302,7 +335,7 @@ async function generateTranslatedBriefing(params: {
   language: string;
   region: string;
   userName: string;
-  breadth: { advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean };
+  breadth: { advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; byAssetClass?: AssetClassBreadth[] };
   prices: Record<string, { price: number; change: string }>;
   watchlistSignals: any[];
   portfolio: any;
@@ -327,10 +360,11 @@ Context:
 - Local time: ${userTime}
 
 MARKET BREADTH DATA:
-${breadth.dataAvailable ? `- NYSE Advances: ${breadth.advances}, Declines: ${breadth.declines}
+${breadth.dataAvailable ? `- Headline Advances: ${breadth.advances}, Declines: ${breadth.declines}
 - Advance/Decline Ratio: ${(breadth.advances / Math.max(breadth.declines, 1)).toFixed(2)}
 - VIX: ${breadth.vix ?? "N/A"}
-- Overall Sentiment: ${breadth.sentiment}` : "- Market breadth data is unavailable today. Do NOT make up breadth numbers. Mention that breadth data was not available."}
+- Overall Sentiment: ${breadth.sentiment}
+${breadth.byAssetClass && breadth.byAssetClass.length > 0 ? `- Per-asset-class breadth (last 72h close-to-close):\n${breadth.byAssetClass.map(r => `  • ${r.asset_class}: ${r.advances} up / ${r.declines} down (n=${r.symbols_used})`).join("\n")}` : ""}` : "- Market breadth data is unavailable today. Do NOT make up breadth numbers. Mention that breadth data was not available."}
 
 IMPORTANT: This is a weekday briefing. Do NOT say "as the trading day unfolds" if the local time suggests markets may be closed. Be factual about market hours.
 
@@ -407,6 +441,28 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     const parsed = JSON.parse(text);
     const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
+    const classEmoji: Record<string, string> = {
+      stocks: "📈", crypto: "₿", fx: "💱", commodities: "🛢️", indices: "📊",
+    };
+    const classLabel: Record<string, string> = {
+      stocks: "Stocks", crypto: "Crypto", fx: "FX", commodities: "Commodities", indices: "Indices",
+    };
+    const perClassHtml = (breadth.byAssetClass && breadth.byAssetClass.length > 0)
+      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:8px;">
+          ${breadth.byAssetClass.map(r => {
+            const ratio = r.declines > 0 ? r.advances / r.declines : (r.advances > 0 ? 2 : 1);
+            const tone = ratio >= 1.2 ? "#16a34a" : ratio <= 0.83 ? "#dc2626" : "#6b7280";
+            const bg = ratio >= 1.2 ? "#f0fdf4" : ratio <= 0.83 ? "#fef2f2" : "#f9fafb";
+            const border = ratio >= 1.2 ? "#bbf7d0" : ratio <= 0.83 ? "#fecaca" : "#e5e7eb";
+            return `<div style="background:${bg};border:1px solid ${border};border-radius:6px;padding:6px 8px;font-size:11px;">
+                <div style="color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;font-size:10px;">${classEmoji[r.asset_class] || "•"} ${classLabel[r.asset_class] || r.asset_class}</div>
+                <div style="color:${tone};font-weight:700;margin-top:2px;">▲${r.advances} ▼${r.declines}</div>
+                <div style="color:#9ca3af;font-size:10px;">n=${r.symbols_used}</div>
+              </div>`;
+          }).join("")}
+        </div>`
+      : "";
+
     const breadthHtml = breadth.dataAvailable
       ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
@@ -416,10 +472,12 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
             <span style="font-size:13px;font-weight:700;color:${breadth.sentiment.includes("bull") ? "#16a34a" : breadth.sentiment.includes("bear") ? "#dc2626" : "#6b7280"};">${breadth.sentiment.toUpperCase()}</span>
           </div>
           <p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary || ""}</p>
+          ${perClassHtml}
         </div>`
       : `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:14px;margin-bottom:8px;">
           <p style="margin:0;font-size:13px;color:#92400e;">Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>
           ${parsed.market_breadth_summary ? `<p style="margin:4px 0 0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary}</p>` : ""}
+          ${perClassHtml}
         </div>`;
 
     const briefingHtml = `
