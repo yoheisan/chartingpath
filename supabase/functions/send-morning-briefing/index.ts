@@ -178,16 +178,58 @@ function computeSentiment(advances: number, declines: number): string {
   return "bearish";
 }
 
-async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; source?: string }> {
-  const [bulkBreadth, vix] = await Promise.all([
-    fetchBreadthFromEODHDBulk(),
-    fetchEODHDQuote("VIX.INDX"),
-  ]);
+// Tier 1 (preferred): compute breadth from our own historical_prices table.
+// This reuses Finazon-seeded daily bars — no extra API calls, no rate limits.
+async function fetchBreadthFromHistoricalPrices(supabase: any): Promise<{ advances: number; declines: number; symbolsUsed: number } | null> {
+  try {
+    const { data, error } = await supabase.rpc('compute_market_breadth_from_history', { p_lookback_hours: 72 });
+    if (error) {
+      console.error("[morning-briefing] historical_prices breadth RPC error:", error.message);
+      return null;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || !row.symbols_used || row.symbols_used < 50) {
+      console.warn(`[morning-briefing] historical_prices breadth: insufficient symbols (${row?.symbols_used ?? 0})`);
+      return null;
+    }
+    const advances = Number(row.advances) || 0;
+    const declines = Number(row.declines) || 0;
+    if ((advances + declines) < 50) {
+      console.warn(`[morning-briefing] historical_prices breadth: too few directional bars (${advances}/${declines})`);
+      return null;
+    }
+    console.log(`[morning-briefing] historical_prices breadth: ${advances} adv / ${declines} dec (n=${row.symbols_used}, latest=${row.latest_bar})`);
+    return { advances, declines, symbolsUsed: Number(row.symbols_used) };
+  } catch (err) {
+    console.error("[morning-briefing] historical_prices breadth fetch error:", err);
+    return null;
+  }
+}
 
-  // Tier 1: EODHD bulk
+async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; source?: string }> {
+  // VIX runs in parallel with all breadth tiers (independent endpoint)
+  const vixPromise = fetchEODHDQuote("VIX.INDX");
+
+  // Tier 1 (preferred): our own historical_prices table — reuses Finazon-seeded daily bars
+  const localBreadth = await fetchBreadthFromHistoricalPrices(supabase);
+  if (localBreadth) {
+    const vix = await vixPromise;
+    const sentiment = computeSentiment(localBreadth.advances, localBreadth.declines);
+    try {
+      await supabase.from('market_breadth_cache').insert({
+        advancing: localBreadth.advances,
+        declining: localBreadth.declines,
+        advance_decline_ratio: localBreadth.declines > 0 ? localBreadth.advances / localBreadth.declines : null,
+      });
+    } catch { /* non-fatal */ }
+    return { advances: localBreadth.advances, declines: localBreadth.declines, vix, sentiment, dataAvailable: true, source: `historical_prices (n=${localBreadth.symbolsUsed})` };
+  }
+
+  // Tier 2: EODHD bulk (legacy primary)
+  const bulkBreadth = await fetchBreadthFromEODHDBulk();
   if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
+    const vix = await vixPromise;
     const sentiment = computeSentiment(bulkBreadth.advances, bulkBreadth.declines);
-    // Refresh cache for downstream consumers
     try {
       await supabase.from('market_breadth_cache').insert({
         advancing: bulkBreadth.advances,
@@ -198,16 +240,18 @@ async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; de
     return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true, source: "eodhd_bulk" };
   }
 
-  // Tier 2: cache (≤ 48h old)
+  // Tier 3: cache (≤ 48h old)
   const cached = await fetchBreadthFromCache(supabase);
   if (cached) {
+    const vix = await vixPromise;
     const sentiment = computeSentiment(cached.advances, cached.declines);
     return { advances: cached.advances, declines: cached.declines, vix, sentiment: `${sentiment} (cached, ${cached.ageHours.toFixed(0)}h old)`, dataAvailable: true, source: "cache" };
   }
 
-  // Tier 3: Finazon sampling
+  // Tier 4: Finazon sampling (last resort — subject to rate limits)
   const sampled = await fetchBreadthFromFinazonSample();
   if (sampled) {
+    const vix = await vixPromise;
     const sentiment = computeSentiment(sampled.advances, sampled.declines);
     try {
       await supabase.from('market_breadth_cache').insert({
@@ -220,7 +264,8 @@ async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; de
   }
 
   // All tiers failed
-  console.warn("[morning-briefing] Market breadth unavailable — all 3 fallbacks failed");
+  const vix = await vixPromise;
+  console.warn("[morning-briefing] Market breadth unavailable — all 4 tiers failed");
   return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false, source: "none" };
 }
 
