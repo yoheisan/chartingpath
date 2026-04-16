@@ -502,10 +502,10 @@ serve(async (req) => {
         ]);
 
         const authUser = authUserRes.data;
-        if (!authUser?.user?.email) continue;
+        if (!authUser?.user?.email && !testEmail) continue;
 
-        const email = authUser.user.email;
-        const name = authUser.user.user_metadata?.full_name || "Trader";
+        const email = testEmail || authUser!.user!.email!;
+        const name = authUser?.user?.user_metadata?.full_name || "Trader";
         const language = langRes.data?.language_code || "en";
         const { region } = getRelevantMarkets(tz);
 
