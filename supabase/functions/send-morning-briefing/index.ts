@@ -335,7 +335,7 @@ async function generateTranslatedBriefing(params: {
   language: string;
   region: string;
   userName: string;
-  breadth: { advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean };
+  breadth: { advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; byAssetClass?: AssetClassBreadth[] };
   prices: Record<string, { price: number; change: string }>;
   watchlistSignals: any[];
   portfolio: any;
