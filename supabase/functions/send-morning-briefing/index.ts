@@ -54,13 +54,23 @@ async function fetchEODHDQuote(eodhSymbol: string): Promise<number | null> {
 
 async function fetchBreadthFromEODHDBulk(): Promise<{ advances: number; declines: number; unchanged: number } | null> {
   const EODHD_API_KEY = Deno.env.get('EODHD_API_KEY');
-  if (!EODHD_API_KEY) return null;
+  if (!EODHD_API_KEY) {
+    console.warn("[morning-briefing] EODHD bulk: no API key configured");
+    return null;
+  }
   try {
     const url = `https://eodhd.com/api/eod-bulk-last-day/US?api_token=${EODHD_API_KEY}&fmt=json&filter=extended`;
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[morning-briefing] EODHD bulk HTTP ${res.status} ${res.statusText} — body preview: ${body.slice(0, 200)}`);
+      return null;
+    }
     const data = await res.json();
-    if (!Array.isArray(data) || data.length < 100) return null;
+    if (!Array.isArray(data) || data.length < 100) {
+      console.warn(`[morning-briefing] EODHD bulk returned insufficient rows: ${Array.isArray(data) ? data.length : 'not-array'}`);
+      return null;
+    }
 
     let advances = 0, declines = 0, unchanged = 0;
     for (const item of data) {
@@ -77,25 +87,141 @@ async function fetchBreadthFromEODHDBulk(): Promise<{ advances: number; declines
   }
 }
 
-async function fetchMarketBreadth(): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean }> {
+// Fallback #2: read most recent market_breadth_cache row if ≤ 48h old
+async function fetchBreadthFromCache(supabase: any): Promise<{ advances: number; declines: number; ageHours: number } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('market_breadth_cache')
+      .select('advancing, declining, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) {
+      console.warn("[morning-briefing] breadth cache: no row or error", error?.message);
+      return null;
+    }
+    const ageMs = Date.now() - new Date(data.created_at).getTime();
+    const ageHours = ageMs / (1000 * 60 * 60);
+    if (ageHours > 48) {
+      console.warn(`[morning-briefing] breadth cache too stale: ${ageHours.toFixed(1)}h old`);
+      return null;
+    }
+    if (!data.advancing || !data.declining) return null;
+    console.log(`[morning-briefing] breadth from cache: ${data.advancing}/${data.declining} (${ageHours.toFixed(1)}h old)`);
+    return { advances: Number(data.advancing), declines: Number(data.declining), ageHours };
+  } catch (err) {
+    console.error("[morning-briefing] breadth cache error:", err);
+    return null;
+  }
+}
+
+// Fallback #3: sample ~30 large-cap US tickers via Finazon and compute breadth
+const BREADTH_SAMPLE_TICKERS = [
+  "SPY", "QQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "JPM",
+  "XOM", "UNH", "V", "MA", "HD", "PG", "KO", "PEP", "WMT", "DIS",
+  "NFLX", "AMD", "INTC", "CRM", "ORCL", "ADBE", "CSCO", "BAC", "WFC", "GS",
+];
+
+async function fetchBreadthFromFinazonSample(): Promise<{ advances: number; declines: number; sampleSize: number } | null> {
+  const FINAZON_API_KEY = Deno.env.get("FINAZON_API_KEY");
+  if (!FINAZON_API_KEY) {
+    console.warn("[morning-briefing] Finazon sampling: no API key");
+    return null;
+  }
+  try {
+    const results = await Promise.all(BREADTH_SAMPLE_TICKERS.map(async (ticker) => {
+      try {
+        const params = new URLSearchParams({
+          dataset: "us_stocks_essential",
+          ticker,
+          interval: "1d",
+          page: "0",
+          page_size: "2",
+          order: "desc",
+        });
+        const res = await fetch(`https://api.finazon.io/latest/time_series?${params}`, {
+          headers: { Authorization: `apikey ${FINAZON_API_KEY}` },
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const rows: any[] = json?.data ?? [];
+        if (rows.length < 2) return null;
+        const [latest, prior] = rows;
+        if (!Number.isFinite(latest.c) || !Number.isFinite(prior.c) || prior.c <= 0) return null;
+        return latest.c > prior.c ? "up" : latest.c < prior.c ? "down" : "flat";
+      } catch { return null; }
+    }));
+
+    let advances = 0, declines = 0, valid = 0;
+    for (const r of results) {
+      if (r === "up") { advances++; valid++; }
+      else if (r === "down") { declines++; valid++; }
+      else if (r === "flat") { valid++; }
+    }
+    if (valid < 10) {
+      console.warn(`[morning-briefing] Finazon sample too small: ${valid}/${BREADTH_SAMPLE_TICKERS.length} valid`);
+      return null;
+    }
+    console.log(`[morning-briefing] Finazon sample breadth: ${advances} adv / ${declines} dec (n=${valid})`);
+    return { advances, declines, sampleSize: valid };
+  } catch (err) {
+    console.error("[morning-briefing] Finazon sampling error:", err);
+    return null;
+  }
+}
+
+function computeSentiment(advances: number, declines: number): string {
+  const ratio = declines > 0 ? advances / declines : (advances > 0 ? 2 : 1);
+  if (ratio >= 1.5) return "bullish";
+  if (ratio >= 1.0) return "neutral-bullish";
+  if (ratio >= 0.67) return "neutral-bearish";
+  return "bearish";
+}
+
+async function fetchMarketBreadth(supabase: any): Promise<{ advances: number; declines: number; vix: number | null; sentiment: string; dataAvailable: boolean; source?: string }> {
   const [bulkBreadth, vix] = await Promise.all([
     fetchBreadthFromEODHDBulk(),
     fetchEODHDQuote("VIX.INDX"),
   ]);
 
+  // Tier 1: EODHD bulk
   if (bulkBreadth && (bulkBreadth.advances + bulkBreadth.declines) > 100) {
-    const ratio = bulkBreadth.declines > 0 ? bulkBreadth.advances / bulkBreadth.declines : 1;
-    let sentiment = "neutral";
-    if (ratio >= 1.5) sentiment = "bullish";
-    else if (ratio >= 1.0) sentiment = "neutral-bullish";
-    else if (ratio >= 0.67) sentiment = "neutral-bearish";
-    else sentiment = "bearish";
-    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true };
+    const sentiment = computeSentiment(bulkBreadth.advances, bulkBreadth.declines);
+    // Refresh cache for downstream consumers
+    try {
+      await supabase.from('market_breadth_cache').insert({
+        advancing: bulkBreadth.advances,
+        declining: bulkBreadth.declines,
+        advance_decline_ratio: bulkBreadth.declines > 0 ? bulkBreadth.advances / bulkBreadth.declines : null,
+      });
+    } catch { /* non-fatal */ }
+    return { advances: bulkBreadth.advances, declines: bulkBreadth.declines, vix, sentiment, dataAvailable: true, source: "eodhd_bulk" };
   }
 
-  // No real data available — return honest "unavailable" instead of fake numbers
-  console.warn("[morning-briefing] Market breadth data unavailable — no fallback used");
-  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false };
+  // Tier 2: cache (≤ 48h old)
+  const cached = await fetchBreadthFromCache(supabase);
+  if (cached) {
+    const sentiment = computeSentiment(cached.advances, cached.declines);
+    return { advances: cached.advances, declines: cached.declines, vix, sentiment: `${sentiment} (cached, ${cached.ageHours.toFixed(0)}h old)`, dataAvailable: true, source: "cache" };
+  }
+
+  // Tier 3: Finazon sampling
+  const sampled = await fetchBreadthFromFinazonSample();
+  if (sampled) {
+    const sentiment = computeSentiment(sampled.advances, sampled.declines);
+    try {
+      await supabase.from('market_breadth_cache').insert({
+        advancing: sampled.advances,
+        declining: sampled.declines,
+        advance_decline_ratio: sampled.declines > 0 ? sampled.advances / sampled.declines : null,
+      });
+    } catch { /* non-fatal */ }
+    return { advances: sampled.advances, declines: sampled.declines, vix, sentiment: `${sentiment} (sampled n=${sampled.sampleSize})`, dataAvailable: true, source: "finazon_sample" };
+  }
+
+  // All tiers failed
+  console.warn("[morning-briefing] Market breadth unavailable — all 3 fallbacks failed");
+  return { advances: 0, declines: 0, vix, sentiment: "unavailable", dataAvailable: false, source: "none" };
 }
 
 async function fetchMarketPrices(): Promise<Record<string, { price: number; change: string }>> {
