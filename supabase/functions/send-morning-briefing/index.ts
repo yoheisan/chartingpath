@@ -441,6 +441,28 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
     const parsed = JSON.parse(text);
     const labels = { ...defaultLabels, ...(parsed.labels || {}) };
 
+    const classEmoji: Record<string, string> = {
+      stocks: "📈", crypto: "₿", fx: "💱", commodities: "🛢️", indices: "📊",
+    };
+    const classLabel: Record<string, string> = {
+      stocks: "Stocks", crypto: "Crypto", fx: "FX", commodities: "Commodities", indices: "Indices",
+    };
+    const perClassHtml = (breadth.byAssetClass && breadth.byAssetClass.length > 0)
+      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:8px;">
+          ${breadth.byAssetClass.map(r => {
+            const ratio = r.declines > 0 ? r.advances / r.declines : (r.advances > 0 ? 2 : 1);
+            const tone = ratio >= 1.2 ? "#16a34a" : ratio <= 0.83 ? "#dc2626" : "#6b7280";
+            const bg = ratio >= 1.2 ? "#f0fdf4" : ratio <= 0.83 ? "#fef2f2" : "#f9fafb";
+            const border = ratio >= 1.2 ? "#bbf7d0" : ratio <= 0.83 ? "#fecaca" : "#e5e7eb";
+            return `<div style="background:${bg};border:1px solid ${border};border-radius:6px;padding:6px 8px;font-size:11px;">
+                <div style="color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;font-size:10px;">${classEmoji[r.asset_class] || "•"} ${classLabel[r.asset_class] || r.asset_class}</div>
+                <div style="color:${tone};font-weight:700;margin-top:2px;">▲${r.advances} ▼${r.declines}</div>
+                <div style="color:#9ca3af;font-size:10px;">n=${r.symbols_used}</div>
+              </div>`;
+          }).join("")}
+        </div>`
+      : "";
+
     const breadthHtml = breadth.dataAvailable
       ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
@@ -450,10 +472,12 @@ Keep total content under 250 words (excluding labels). Be factual and reference 
             <span style="font-size:13px;font-weight:700;color:${breadth.sentiment.includes("bull") ? "#16a34a" : breadth.sentiment.includes("bear") ? "#dc2626" : "#6b7280"};">${breadth.sentiment.toUpperCase()}</span>
           </div>
           <p style="margin:0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary || ""}</p>
+          ${perClassHtml}
         </div>`
       : `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:14px;margin-bottom:8px;">
           <p style="margin:0;font-size:13px;color:#92400e;">Market breadth data is currently unavailable.${breadth.vix ? ` VIX: ${breadth.vix.toFixed(1)}` : ""}</p>
           ${parsed.market_breadth_summary ? `<p style="margin:4px 0 0;font-size:13px;color:#374151;line-height:1.5;">${parsed.market_breadth_summary}</p>` : ""}
+          ${perClassHtml}
         </div>`;
 
     const briefingHtml = `
