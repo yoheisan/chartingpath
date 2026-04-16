@@ -780,16 +780,33 @@ function buildFinalEmail(params: {
       `).join("")
     : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">—</td></tr>`;
 
+  // Mirror ChartingPath GRADE_CONFIG (src/index.css --grade-*) for email-safe hex colors
+  const gradeFromScore = (s: number): { letter: string; color: string; bg: string } => {
+    if (s >= 80) return { letter: "A", color: "#1fbf75", bg: "#e8f9f1" }; // emerald
+    if (s >= 65) return { letter: "B", color: "#16a34a", bg: "#e7f7ec" }; // green
+    if (s >= 50) return { letter: "C", color: "#eab308", bg: "#fef6dc" }; // yellow
+    if (s >= 35) return { letter: "D", color: "#ff6a00", bg: "#ffe9d6" }; // orange
+    return { letter: "F", color: "#ef4444", bg: "#fde8e8" };              // red
+  };
+
   const verdictsHtml = topVerdicts.length > 0
-    ? topVerdicts.map((v: any) => `
+    ? topVerdicts.map((v: any) => {
+        const score = Number(v.composite) || 0;
+        const g = gradeFromScore(score);
+        return `
         <tr>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:600;">${v.instrument}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.patternName}</td>
-          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;color:#f97316;">${v.composite}</td>
+          <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">
+            <span style="display:inline-block;padding:2px 8px;border-radius:6px;background:${g.bg};color:${g.color};font-weight:700;border:1px solid ${g.color}33;">
+              ${score} <span style="font-size:11px;opacity:0.85;">· ${g.letter}</span>
+            </span>
+          </td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.winRate ? v.winRate + "%" : "—"}</td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;">${v.expectancyR ? v.expectancyR + "R" : "—"}</td>
         </tr>
-      `).join("")
+      `;
+      }).join("")
     : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;font-size:13px;">—</td></tr>`;
 
   const openTradesHtml = openTrades.length > 0
