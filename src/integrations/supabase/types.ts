@@ -6470,6 +6470,17 @@ export type Database = {
         Args: { keep_days?: number }
         Returns: Json
       }
+      compute_market_breadth_by_asset_class: {
+        Args: { p_lookback_hours?: number }
+        Returns: {
+          advances: number
+          asset_class: string
+          declines: number
+          latest_bar: string
+          symbols_used: number
+          unchanged: number
+        }[]
+      }
       compute_market_breadth_from_history: {
         Args: { p_lookback_hours?: number }
         Returns: {
