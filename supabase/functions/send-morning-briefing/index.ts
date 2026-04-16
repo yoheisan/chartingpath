@@ -414,12 +414,25 @@ serve(async (req) => {
   }
 
   try {
+    // Optional test-mode body: { testUserId, testEmail, skipWeekendGuard }
+    let testUserId: string | null = null;
+    let testEmail: string | null = null;
+    let skipWeekendGuard = false;
+    try {
+      if (req.method === "POST") {
+        const body = await req.json();
+        testUserId = body?.testUserId || null;
+        testEmail = body?.testEmail || null;
+        skipWeekendGuard = !!body?.skipWeekendGuard || !!testUserId;
+      }
+    } catch { /* no body */ }
+
     // Weekend guard — skip on Saturday/Sunday (markets closed)
     const now = new Date();
     const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-    if (isWeekend) {
+    if (isWeekend && !skipWeekendGuard) {
       console.log("[morning-briefing] Skipping — weekend (UTC day:", dayOfWeek, ")");
       const supabaseForLog = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       await supabaseForLog.from("email_send_log").insert({
@@ -435,12 +448,30 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get users who have opted into morning briefing emails
-    const { data: users, error: usersErr } = await supabase
-      .from("user_email_preferences")
-      .select("user_id, timezone, morning_briefing_enabled")
-      .eq("unsubscribed", false)
-      .eq("morning_briefing_enabled", true);
+    // Test mode: synthesize a single-user list from the requested user
+    let users: Array<{ user_id: string; timezone: string | null; morning_briefing_enabled: boolean }> = [];
+    if (testUserId) {
+      const { data: prefRow } = await supabase
+        .from("user_email_preferences")
+        .select("user_id, timezone, morning_briefing_enabled")
+        .eq("user_id", testUserId)
+        .maybeSingle();
+      users = [{
+        user_id: testUserId,
+        timezone: prefRow?.timezone || "America/New_York",
+        morning_briefing_enabled: true,
+      }];
+      console.log(`[morning-briefing] TEST MODE — sending to user ${testUserId}${testEmail ? ` (override: ${testEmail})` : ""}`);
+    } else {
+      // Get users who have opted into morning briefing emails
+      const { data: subscribers, error: usersErr } = await supabase
+        .from("user_email_preferences")
+        .select("user_id, timezone, morning_briefing_enabled")
+        .eq("unsubscribed", false)
+        .eq("morning_briefing_enabled", true);
+      if (usersErr) throw usersErr;
+      users = subscribers || [];
+    }
 
     if (usersErr) throw usersErr;
     if (!users || users.length === 0) {
@@ -471,10 +502,10 @@ serve(async (req) => {
         ]);
 
         const authUser = authUserRes.data;
-        if (!authUser?.user?.email) continue;
+        if (!authUser?.user?.email && !testEmail) continue;
 
-        const email = authUser.user.email;
-        const name = authUser.user.user_metadata?.full_name || "Trader";
+        const email = testEmail || authUser!.user!.email!;
+        const name = authUser?.user?.user_metadata?.full_name || "Trader";
         const language = langRes.data?.language_code || "en";
         const { region } = getRelevantMarkets(tz);
 
