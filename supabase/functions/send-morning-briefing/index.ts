@@ -451,11 +451,11 @@ serve(async (req) => {
 
     // Fetch market data once for all users
     const [breadth, prices] = await Promise.all([
-      fetchMarketBreadth(),
+      fetchMarketBreadth(supabase),
       fetchMarketPrices(),
     ]);
 
-    console.log(`[morning-briefing] Processing ${users.length} subscribers. Breadth: ${breadth.sentiment}`);
+    console.log(`[morning-briefing] Processing ${users.length} subscribers. Breadth: ${breadth.sentiment} (source: ${breadth.source})`);
 
     let sentCount = 0;
     let errorCount = 0;
