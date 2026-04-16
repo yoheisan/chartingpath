@@ -473,7 +473,6 @@ serve(async (req) => {
       users = subscribers || [];
     }
 
-    if (usersErr) throw usersErr;
     if (!users || users.length === 0) {
       return new Response(JSON.stringify({ success: true, sent: 0, message: "No subscribers" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
