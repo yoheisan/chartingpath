@@ -24,22 +24,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Optional auth — if a valid user session is present, use their email/id.
+    // If not, allow anonymous checkout (Dodo will collect email at checkout).
+    let user: { id: string; email: string; name?: string } | null = null;
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user: authUser } } = await supabase.auth.getUser(token);
+      if (authUser?.email) {
+        user = {
+          id: authUser.id,
+          email: authUser.email,
+          name: authUser.user_metadata?.full_name,
+        };
+      }
     }
 
-    const { planKey } = await req.json();
+    const { planKey, email: bodyEmail } = await req.json();
     const plan = PRODUCT_MAP[planKey];
     if (!plan) {
       return new Response(JSON.stringify({ error: 'Invalid plan' }), {
@@ -51,12 +52,21 @@ serve(async (req) => {
     const DODO_SECRET_KEY = Deno.env.get('DODO_SECRET_KEY')!;
     const DODO_BASE = 'https://test.dodopayments.com';
 
+    const checkoutEmail = user?.email || bodyEmail || undefined;
+
     const body: any = {
       product_cart: [{ product_id: plan.productId, quantity: 1 }],
-      customer: { email: user.email, name: user.user_metadata?.full_name || user.email },
       return_url: 'https://chartingpath.com/dashboard',
-      metadata: { user_id: user.id, plan_key: planKey },
+      metadata: { plan_key: planKey },
     };
+
+    if (checkoutEmail) {
+      body.customer = { email: checkoutEmail, name: user?.name || checkoutEmail };
+    }
+
+    if (user?.id) {
+      body.metadata.user_id = user.id;
+    }
 
     if (plan.trialDays > 0) {
       body.subscription_data = { trial_period_days: plan.trialDays };
