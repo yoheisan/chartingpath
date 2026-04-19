@@ -5,37 +5,44 @@ import { Check, Zap, TrendingUp, Shield, Target, ArrowRight, Star, Users, Shield
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useCheckout, type PlanKey } from "@/hooks/useCheckout";
 
 const ProjectsPricing = () => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const { startCheckout, loading, error } = useCheckout();
   const p = (key: string) => t(`projects.pricing.${key}`);
 
-  const planNameToDbPlan: Record<string, string> = {
-    FREE: 'free',
-    LITE: 'starter',
-    PLUS: 'pro',
-    PRO: 'pro_plus',
-    ELITE: 'elite',
+  // Map tier + billing cycle to Dodo plan keys used by useCheckout
+  const tierToPlanKey: Record<string, { monthly: PlanKey; annual: PlanKey } | null> = {
+    FREE: null,
+    LITE: { monthly: 'lite_monthly', annual: 'lite_annual' },
+    PRO: { monthly: 'pro_monthly', annual: 'pro_annual' },
+    ELITE: { monthly: 'elite_monthly', annual: 'elite_annual' },
   };
 
   const handlePlanSelect = async (tierKey: string) => {
-    const dbPlan = planNameToDbPlan[tierKey];
-    
-    if (dbPlan === 'free') {
-      window.location.href = '/auth';
+    if (tierKey === 'FREE') {
+      window.location.href = '/auth?mode=signup';
       return;
     }
+    const mapping = tierToPlanKey[tierKey];
+    if (!mapping) return;
+    const planKey = billingCycle === 'annual' ? mapping.annual : mapping.monthly;
+    await startCheckout(planKey);
+  };
 
-    // Paid plans are coming soon - show toast instead of Stripe checkout
-    toast(t('pricing.paymentsComingSoonTitle'), {
-      description: t('pricing.paymentsComingSoonDesc'),
-      duration: 8000,
-    });
+  // Surface checkout errors via toast
+  if (error) {
+    toast.error(error);
+  }
+
+  const currentPlanKeyFor = (tierKey: string): PlanKey | null => {
+    const mapping = tierToPlanKey[tierKey];
+    if (!mapping) return null;
+    return billingCycle === 'annual' ? mapping.annual : mapping.monthly;
   };
 
   // Annual prices (yearly / 12, rounded)
