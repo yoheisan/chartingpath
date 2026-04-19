@@ -13,6 +13,16 @@ import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckou
 export const PricingTeaser = () => {
   const { t } = useTranslation();
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
+
+  useEffect(() => {
+    if (checkoutError) toast.error(checkoutError);
+  }, [checkoutError]);
+
+  const getPlanCheckoutKey = (planKey: string): CheckoutPlanKey | null => {
+    if (planKey === 'free' || planKey === 'data_api') return null;
+    return `${planKey}_${billing}` as CheckoutPlanKey;
+  };
 
   const handlePricingClick = () => {
     track('pricing_viewed', { source: 'landing_pricing_teaser' });
