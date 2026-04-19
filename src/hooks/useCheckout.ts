@@ -10,18 +10,15 @@ export function useCheckout() {
   const [loading, setLoading] = useState<PlanKey | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const startCheckout = async (planKey: PlanKey) => {
+  const startCheckout = async (planKey: PlanKey, email?: string) => {
     setLoading(planKey);
     setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/auth?mode=signup&plan=' + planKey;
-        return;
-      }
-
+      // Always call the edge function — it accepts both authenticated
+      // and anonymous requests. Supabase JS automatically attaches the
+      // user's session token if logged in, otherwise the anon key.
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { planKey },
+        body: { planKey, email },
       });
 
       if (fnError || !data?.checkout_url) {
