@@ -27,10 +27,20 @@ const Pricing = () => {
   const { t } = useTranslation();
   const { formatted: outcomeCount } = useOutcomeCount();
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
 
   useEffect(() => {
     track("pricing_viewed");
   }, []);
+
+  useEffect(() => {
+    if (checkoutError) toast.error(checkoutError);
+  }, [checkoutError]);
+
+  const getPlanCheckoutKey = (planKey: string): CheckoutPlanKey | null => {
+    if (planKey === 'free' || planKey === 'data_api') return null;
+    return `${planKey}_${billing}` as CheckoutPlanKey;
+  };
 
   const mainPlans = PRICING_PLANS.filter(p => p.key !== 'data_api');
   const dataApiPlan = PRICING_PLANS.find(p => p.key === 'data_api');
