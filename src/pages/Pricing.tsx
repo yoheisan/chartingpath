@@ -175,15 +175,37 @@ const Pricing = () => {
                     ))}
                   </ul>
 
-                  <Button
-                    className="w-full"
-                    variant={plan.highlighted || plan.popular ? "default" : "outline"}
-                    size="lg"
-                    asChild
-                    onClick={() => trackEvent("pricing.cta_click", { tier: plan.name })}
-                  >
-                    <Link to={plan.ctaLink}>{t(`pricingPage.${plan.key}Cta`, plan.cta)}</Link>
-                  </Button>
+                  {(() => {
+                    const checkoutKey = getPlanCheckoutKey(plan.key);
+                    const isLoading = checkoutKey && checkoutLoading === checkoutKey;
+                    if (checkoutKey) {
+                      return (
+                        <Button
+                          className="w-full"
+                          variant={plan.highlighted || plan.popular ? "default" : "outline"}
+                          size="lg"
+                          disabled={!!isLoading}
+                          onClick={() => {
+                            trackEvent("pricing.cta_click", { tier: plan.name });
+                            startCheckout(checkoutKey);
+                          }}
+                        >
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t(`pricingPage.${plan.key}Cta`, plan.cta)}
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button
+                        className="w-full"
+                        variant={plan.highlighted || plan.popular ? "default" : "outline"}
+                        size="lg"
+                        asChild
+                        onClick={() => trackEvent("pricing.cta_click", { tier: plan.name })}
+                      >
+                        <Link to={plan.ctaLink}>{t(`pricingPage.${plan.key}Cta`, plan.cta)}</Link>
+                      </Button>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
