@@ -312,16 +312,22 @@ const ProjectsPricing = () => {
 
                 {/* CTA */}
                 <div className="mt-auto">
-                  <Button 
-                    variant={tier.popular ? "default" : "outline"} 
-                    className="w-full"
-                    size="sm"
-                    disabled={loading === tier.key}
-                    onClick={() => handlePlanSelect(tier.key)}
-                  >
-                    {loading === tier.key ? p('loading') : tier.cta}
-                    {loading !== tier.key && <ArrowRight className="h-4 w-4 ml-2" />}
-                  </Button>
+                  {(() => {
+                    const planKey = currentPlanKeyFor(tier.key);
+                    const isLoading = planKey !== null && loading === planKey;
+                    return (
+                      <Button
+                        variant={tier.popular ? "default" : "outline"}
+                        className="w-full"
+                        size="sm"
+                        disabled={isLoading}
+                        onClick={() => handlePlanSelect(tier.key)}
+                      >
+                        {isLoading ? p('loading') : tier.cta}
+                        {!isLoading && <ArrowRight className="h-4 w-4 ml-2" />}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
