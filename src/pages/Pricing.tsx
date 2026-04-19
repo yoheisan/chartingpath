@@ -4,14 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Check, Zap, TrendingUp, Star, Shield, Database, ArrowLeft, Mail, ChevronDown } from "lucide-react";
+import { Check, Zap, TrendingUp, Star, Shield, Database, ArrowLeft, Mail, ChevronDown, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { track } from "@/services/analytics";
 import { trackEvent } from "@/lib/analytics";
 import { PageMeta } from "@/components/PageMeta";
 import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 import { PRICING_PLANS } from "@/constants/pricingPlans";
+import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckout";
 
 const TIER_ICONS: Record<string, any> = {
   free: Zap,
