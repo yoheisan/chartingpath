@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { track } from "@/services/analytics";
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from "react-i18next";
 import { PRICING_TEASER_PLANS } from "@/constants/pricingPlans";
+import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckout";
 
 export const PricingTeaser = () => {
   const { t } = useTranslation();
