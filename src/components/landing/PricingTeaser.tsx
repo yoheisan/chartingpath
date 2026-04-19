@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { track } from "@/services/analytics";
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from "react-i18next";
 import { PRICING_TEASER_PLANS } from "@/constants/pricingPlans";
+import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckout";
 
 export const PricingTeaser = () => {
   const { t } = useTranslation();
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
+
+  useEffect(() => {
+    if (checkoutError) toast.error(checkoutError);
+  }, [checkoutError]);
+
+  const getPlanCheckoutKey = (planKey: string): CheckoutPlanKey | null => {
+    if (planKey === 'free' || planKey === 'data_api') return null;
+    return `${planKey}_${billing}` as CheckoutPlanKey;
+  };
 
   const handlePricingClick = () => {
     track('pricing_viewed', { source: 'landing_pricing_teaser' });
@@ -80,20 +92,43 @@ export const PricingTeaser = () => {
                   </li>
                 ))}
               </ul>
-              <Button
-                asChild
-                size="sm"
-                variant={plan.highlighted || plan.popular ? 'default' : 'outline'}
-                className="mt-4 w-full"
-                onClick={() => {
-                  track(`pricing_start_${plan.key}`, { source: 'landing_pricing_teaser' });
-                  trackEvent('landing.cta_click', { button: `pricing_start_${plan.key}` });
-                }}
-              >
-                <Link to={plan.ctaLink}>
-                  {t(`pricingTeaser.${plan.key}Cta`, plan.cta)}
-                </Link>
-              </Button>
+              {(() => {
+                const checkoutKey = getPlanCheckoutKey(plan.key);
+                const isLoading = checkoutKey && checkoutLoading === checkoutKey;
+                if (checkoutKey) {
+                  return (
+                    <Button
+                      size="sm"
+                      variant={plan.highlighted || plan.popular ? 'default' : 'outline'}
+                      className="mt-4 w-full"
+                      disabled={!!isLoading}
+                      onClick={() => {
+                        track(`pricing_start_${plan.key}`, { source: 'landing_pricing_teaser' });
+                        trackEvent('landing.cta_click', { button: `pricing_start_${plan.key}` });
+                        startCheckout(checkoutKey);
+                      }}
+                    >
+                      {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t(`pricingTeaser.${plan.key}Cta`, plan.cta)}
+                    </Button>
+                  );
+                }
+                return (
+                  <Button
+                    asChild
+                    size="sm"
+                    variant={plan.highlighted || plan.popular ? 'default' : 'outline'}
+                    className="mt-4 w-full"
+                    onClick={() => {
+                      track(`pricing_start_${plan.key}`, { source: 'landing_pricing_teaser' });
+                      trackEvent('landing.cta_click', { button: `pricing_start_${plan.key}` });
+                    }}
+                  >
+                    <Link to={plan.ctaLink}>
+                      {t(`pricingTeaser.${plan.key}Cta`, plan.cta)}
+                    </Link>
+                  </Button>
+                );
+              })()}
             </div>
           ))}
         </div>

@@ -4,14 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Check, Zap, TrendingUp, Star, Shield, Database, ArrowLeft, Mail, ChevronDown } from "lucide-react";
+import { Check, Zap, TrendingUp, Star, Shield, Database, ArrowLeft, Mail, ChevronDown, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { track } from "@/services/analytics";
 import { trackEvent } from "@/lib/analytics";
 import { PageMeta } from "@/components/PageMeta";
 import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 import { PRICING_PLANS } from "@/constants/pricingPlans";
+import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckout";
 
 const TIER_ICONS: Record<string, any> = {
   free: Zap,
@@ -25,10 +27,20 @@ const Pricing = () => {
   const { t } = useTranslation();
   const { formatted: outcomeCount } = useOutcomeCount();
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
 
   useEffect(() => {
     track("pricing_viewed");
   }, []);
+
+  useEffect(() => {
+    if (checkoutError) toast.error(checkoutError);
+  }, [checkoutError]);
+
+  const getPlanCheckoutKey = (planKey: string): CheckoutPlanKey | null => {
+    if (planKey === 'free' || planKey === 'data_api') return null;
+    return `${planKey}_${billing}` as CheckoutPlanKey;
+  };
 
   const mainPlans = PRICING_PLANS.filter(p => p.key !== 'data_api');
   const dataApiPlan = PRICING_PLANS.find(p => p.key === 'data_api');
@@ -163,15 +175,37 @@ const Pricing = () => {
                     ))}
                   </ul>
 
-                  <Button
-                    className="w-full"
-                    variant={plan.highlighted || plan.popular ? "default" : "outline"}
-                    size="lg"
-                    asChild
-                    onClick={() => trackEvent("pricing.cta_click", { tier: plan.name })}
-                  >
-                    <Link to={plan.ctaLink}>{t(`pricingPage.${plan.key}Cta`, plan.cta)}</Link>
-                  </Button>
+                  {(() => {
+                    const checkoutKey = getPlanCheckoutKey(plan.key);
+                    const isLoading = checkoutKey && checkoutLoading === checkoutKey;
+                    if (checkoutKey) {
+                      return (
+                        <Button
+                          className="w-full"
+                          variant={plan.highlighted || plan.popular ? "default" : "outline"}
+                          size="lg"
+                          disabled={!!isLoading}
+                          onClick={() => {
+                            trackEvent("pricing.cta_click", { tier: plan.name });
+                            startCheckout(checkoutKey);
+                          }}
+                        >
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t(`pricingPage.${plan.key}Cta`, plan.cta)}
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button
+                        className="w-full"
+                        variant={plan.highlighted || plan.popular ? "default" : "outline"}
+                        size="lg"
+                        asChild
+                        onClick={() => trackEvent("pricing.cta_click", { tier: plan.name })}
+                      >
+                        <Link to={plan.ctaLink}>{t(`pricingPage.${plan.key}Cta`, plan.cta)}</Link>
+                      </Button>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
