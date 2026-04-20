@@ -9,9 +9,9 @@ const corsHeaders = {
 const PRODUCT_MAP: Record<string, { productId: string; trialDays: number }> = {
   lite_monthly:   { productId: 'pdt_0Nbw1TfS9k9QciWvtEDul', trialDays: 0 },
   lite_annual:    { productId: 'pdt_0Nci20cdaF4NVVxpL7QuN', trialDays: 0 },
-  pro_monthly:    { productId: 'pdt_0Nbw2MO14rFVG1F2iZZeG', trialDays: 7 },
+  pro_monthly:    { productId: 'pdt_0Nbw2MO14rFVG1F2iZZeG', trialDays: 0 },
   pro_annual:     { productId: 'pdt_0Nci2DtFPMDY7ktqZ5Eob', trialDays: 7 },
-  elite_monthly:  { productId: 'pdt_0Nbw2hFVLIRWJlaYWl4Hp', trialDays: 7 },
+  elite_monthly:  { productId: 'pdt_0Nbw2hFVLIRWJlaYWl4Hp', trialDays: 0 },
   elite_annual:   { productId: 'pdt_0Nci1W1HiJ3Cn5fww0Zxi', trialDays: 7 },
 };
 
