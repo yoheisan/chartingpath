@@ -56,7 +56,7 @@ serve(async (req) => {
 
     const body: any = {
       product_cart: [{ product_id: plan.productId, quantity: 1 }],
-      return_url: 'https://chartingpath.com/dashboard',
+      return_url: 'https://chartingpath.com/members/account?checkout=success',
       metadata: { plan_key: planKey },
     };
 
