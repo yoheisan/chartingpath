@@ -33,7 +33,7 @@ import { useTranslation } from "react-i18next";
 
 interface UserProfile {
   id: string;
-  subscription_plan: 'free' | 'starter' | 'pro' | 'pro_plus' | 'elite';
+  subscription_plan: 'free' | 'starter' | 'lite' | 'pro' | 'pro_plus' | 'elite';
   subscription_status: string;
 }
 
