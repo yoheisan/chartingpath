@@ -1,188 +1,251 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, webhook-id, webhook-timestamp, webhook-signature',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, webhook-id, webhook-signature, webhook-timestamp',
 };
 
-const PRODUCT_TO_PLAN: Record<string, string> = {
-  'pdt_0Nbw1TfS9k9QciWvtEDul': 'lite',
-  'pdt_0Nci20cdaF4NVVxpL7QuN': 'lite',
-  'pdt_0Nbw2MO14rFVG1F2iZZeG': 'pro',
-  'pdt_0Nci2DtFPMDY7ktqZ5Eob': 'pro',
-  'pdt_0Nbw2hFVLIRWJlaYWl4Hp': 'elite',
-  'pdt_0Nci1W1HiJ3Cn5fww0Zxi': 'elite',
+// Map Dodo product IDs back to internal plan tiers + billing cycles
+const PRODUCT_ID_TO_PLAN: Record<string, { plan: string; cycle: 'monthly' | 'annual' }> = {
+  'pdt_0Nbw1TfS9k9QciWvtEDul': { plan: 'lite',  cycle: 'monthly' },
+  'pdt_0Nci20cdaF4NVVxpL7QuN': { plan: 'lite',  cycle: 'annual'  },
+  'pdt_0Nbw2MO14rFVG1F2iZZeG': { plan: 'pro',   cycle: 'monthly' },
+  'pdt_0Nci2DtFPMDY7ktqZ5Eob': { plan: 'pro',   cycle: 'annual'  },
+  'pdt_0Nbw2hFVLIRWJlaYWl4Hp': { plan: 'elite', cycle: 'monthly' },
+  'pdt_0Nci1W1HiJ3Cn5fww0Zxi': { plan: 'elite', cycle: 'annual'  },
 };
 
-const PLAN_KEY_TO_PLAN: Record<string, string> = {
-  lite_monthly: 'lite', lite_annual: 'lite',
-  pro_monthly: 'pro', pro_annual: 'pro',
-  elite_monthly: 'elite', elite_annual: 'elite',
-};
-
-async function verifyWebhookSignature(req: Request, body: string): Promise<boolean> {
-  const secret = Deno.env.get('DODO_WEBHOOK_SECRET');
-  if (!secret) return false;
-  const webhookId = req.headers.get('webhook-id');
-  const webhookTimestamp = req.headers.get('webhook-timestamp');
-  const webhookSignature = req.headers.get('webhook-signature');
-  if (!webhookId || !webhookTimestamp || !webhookSignature) return false;
-
-  try {
-    const signedContent = `${webhookId}.${webhookTimestamp}.${body}`;
-    const secretBytes = Uint8Array.from(atob(secret.replace('whsec_', '')), c => c.charCodeAt(0));
-    const key = await crypto.subtle.importKey('raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(signedContent));
-    const computedSig = 'v1,' + btoa(String.fromCharCode(...new Uint8Array(signature)));
-    return webhookSignature.split(' ').some(sig => sig === computedSig);
-  } catch {
-    return false;
-  }
+function planFromProductId(productId?: string | null): { plan: string; cycle: string } | null {
+  if (!productId) return null;
+  return PRODUCT_ID_TO_PLAN[productId] ?? null;
 }
 
-async function resolveUserId(
-  supabase: ReturnType<typeof createClient>,
-  userIdFromMetadata: string | null,
-  email: string | null,
-): Promise<{ userId: string | null; isNew: boolean }> {
-  if (userIdFromMetadata) return { userId: userIdFromMetadata, isNew: false };
-  if (!email) return { userId: null, isNew: false };
-
-  // Try to find existing auth user by email via listUsers (small page).
-  // Note: Supabase admin API does not provide direct email lookup, so we paginate.
-  // For projects with many users, a custom RPC is recommended; here we scan first 1000.
-  const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const existing = list?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-  if (existing) return { userId: existing.id, isNew: false };
-
-  // Provision a new user
-  const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-    email,
-    email_confirm: true,
-  });
-  if (createErr || !created?.user) {
-    console.error('[dodo-webhook] Failed to create user for', email, createErr?.message);
-    return { userId: null, isNew: false };
-  }
-
-  // Send a recovery (password setup) link so buyer can claim the account
-  try {
-    await supabase.auth.admin.generateLink({ type: 'recovery', email });
-  } catch (e) {
-    console.warn('[dodo-webhook] Could not generate recovery link:', (e as any)?.message);
-  }
-
-  return { userId: created.user.id, isNew: true };
+function planFromMetadata(meta: any): { plan: string; cycle: string } | null {
+  const k: string | undefined = meta?.plan_key;
+  if (!k) return null;
+  const [plan, cycle] = k.split('_');
+  if (!plan || !cycle) return null;
+  return { plan, cycle };
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const WEBHOOK_SECRET = Deno.env.get('DODO_WEBHOOK_SECRET');
+  const SITE_URL = Deno.env.get('SITE_URL') || 'https://chartingpath.com';
+
+  if (!WEBHOOK_SECRET) {
+    console.error('[dodo-webhook] DODO_WEBHOOK_SECRET not configured');
+    return new Response(JSON.stringify({ error: 'Server not configured' }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  // Verify signature (Dodo uses Standard Webhooks spec)
+  const rawBody = await req.text();
+  const headers = {
+    'webhook-id': req.headers.get('webhook-id') ?? '',
+    'webhook-signature': req.headers.get('webhook-signature') ?? '',
+    'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
+  };
+
+  let event: any;
   try {
-    const body = await req.text();
+    const wh = new Webhook(WEBHOOK_SECRET);
+    event = wh.verify(rawBody, headers);
+  } catch (err: any) {
+    console.error('[dodo-webhook] Signature verification failed:', err.message);
+    return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
-    const isValid = await verifyWebhookSignature(req, body);
-    if (!isValid) {
-      console.warn('[dodo-webhook] Invalid signature');
-      return new Response('Invalid signature', { status: 401 });
+  console.log('[dodo-webhook] Event received:', event.type);
+
+  try {
+    const payload = event.data ?? event;
+    const meta = payload.metadata ?? {};
+    const customerEmail: string | undefined =
+      payload.customer?.email ?? payload.email ?? meta.email;
+    const customerName: string | undefined =
+      payload.customer?.name ?? meta.name;
+    const subscriptionId: string | undefined =
+      payload.subscription_id ?? payload.id;
+    const productId: string | undefined =
+      payload.product_id ?? payload.product_cart?.[0]?.product_id;
+
+    const planInfo =
+      planFromMetadata(meta) ?? planFromProductId(productId);
+
+    // Resolve user_id: prefer metadata, fallback to email lookup, else create
+    let userId: string | undefined = meta.user_id;
+
+    if (!userId && customerEmail) {
+      // Try to find existing auth user by email
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .ilike('email', customerEmail)
+        .maybeSingle();
+
+      if (existing?.user_id) {
+        userId = existing.user_id;
+      } else {
+        // Anonymous payer — auto-create account + send magic link
+        const { data: created, error: createErr } =
+          await supabase.auth.admin.createUser({
+            email: customerEmail,
+            email_confirm: true,
+            user_metadata: { full_name: customerName, source: 'dodo_anonymous_checkout' },
+          });
+
+        if (createErr) {
+          console.error('[dodo-webhook] Failed to create user:', createErr.message);
+        } else if (created.user) {
+          userId = created.user.id;
+
+          // Send magic link so they can access the account
+          const { error: linkErr } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: customerEmail,
+            options: {
+              redirectTo: `${SITE_URL}/members/account?welcome=true`,
+            },
+          });
+          if (linkErr) console.error('[dodo-webhook] Magic link error:', linkErr.message);
+          console.log('[dodo-webhook] Created account for anonymous payer:', customerEmail);
+        }
+      }
     }
 
-    const event = JSON.parse(body);
-    const { type, data } = event;
-
-    console.info(`[dodo-webhook] Event: ${type}`);
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    const userIdFromMetadata: string | null =
-      data?.metadata?.user_id || data?.customer?.metadata?.user_id || null;
-    const planKeyFromMetadata: string | null =
-      data?.metadata?.plan_key || data?.customer?.metadata?.plan_key || null;
-    const email: string | null =
-      data?.customer?.email || data?.email || null;
-    const productId = data?.product_id || data?.items?.[0]?.product_id;
-    const plan =
-      (productId ? PRODUCT_TO_PLAN[productId] : null) ||
-      (planKeyFromMetadata ? PLAN_KEY_TO_PLAN[planKeyFromMetadata] : null);
-
-    // Resolve user — either from metadata (logged-in flow) or by email (anonymous flow)
-    const { userId, isNew } = await resolveUserId(supabase, userIdFromMetadata, email);
-
-    if (!userId) {
-      console.warn('[dodo-webhook] Could not resolve user (no metadata, no email match). Skipping.');
-      return new Response(JSON.stringify({ received: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (isNew) {
-      console.info(`[dodo-webhook] Provisioned new account for ${email} (user ${userId})`);
-    }
-
-    switch (type) {
+    // Handle event types
+    switch (event.type) {
       case 'subscription.active':
+      case 'subscription.created':
       case 'subscription.renewed':
-        if (plan) {
-          await supabase.from('user_profiles').upsert({
-            id: userId,
-            subscription_plan: plan,
-            subscription_status: 'active',
-            subscription_id: data.subscription_id,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'id' });
-          console.info(`[dodo-webhook] Activated ${plan} for user ${userId}`);
+      case 'payment.succeeded': {
+        if (!userId || !planInfo) {
+          console.warn('[dodo-webhook] Missing userId or planInfo, skipping activation', {
+            userId, planInfo, productId, customerEmail,
+          });
+          break;
         }
-        break;
 
-      case 'subscription.on_hold':
-        await supabase.from('user_profiles').update({
-          subscription_status: 'on_hold',
+        // Upsert subscription record
+        const subPayload: any = {
+          user_id: userId,
+          stripe_subscription_id: subscriptionId, // reused column for Dodo sub id
+          current_plan: planInfo.plan,
+          status: 'active',
           updated_at: new Date().toISOString(),
-        }).eq('id', userId);
-        break;
+        };
+        if (payload.previous_billing_date) subPayload.current_period_start = payload.previous_billing_date;
+        if (payload.next_billing_date) subPayload.current_period_end = payload.next_billing_date;
 
-      case 'subscription.failed':
-        await supabase.from('user_profiles').update({
-          subscription_plan: 'free',
-          subscription_status: 'failed',
-          updated_at: new Date().toISOString(),
-        }).eq('id', userId);
-        break;
+        // Try update existing, else insert
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-      case 'subscription.updated':
-        if (plan) {
-          await supabase.from('user_profiles').update({
-            subscription_plan: plan,
+        if (existingSub) {
+          await supabase.from('subscriptions').update(subPayload).eq('id', existingSub.id);
+        } else {
+          await supabase.from('subscriptions').insert(subPayload);
+        }
+
+        // Update profile tier
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_plan: planInfo.plan,
             subscription_status: 'active',
             updated_at: new Date().toISOString(),
-          }).eq('id', userId);
-        }
-        break;
+          })
+          .eq('user_id', userId);
 
-      case 'payment.succeeded':
-        console.info(`[dodo-webhook] Payment succeeded for user ${userId}`);
-        break;
+        // Log billing event
+        await supabase.from('billing_events').insert({
+          user_id: userId,
+          event_type: event.type,
+          to_plan: planInfo.plan,
+          full_amount_cents: payload.total_amount ?? null,
+          metadata: { dodo_event: event.type, billing_cycle: planInfo.cycle, raw: payload },
+        });
 
-      case 'payment.failed':
-        console.warn(`[dodo-webhook] Payment failed for user ${userId}`);
+        console.log('[dodo-webhook] Activated', planInfo.plan, 'for', userId);
         break;
+      }
+
+      case 'subscription.cancelled':
+      case 'subscription.canceled':
+      case 'subscription.expired': {
+        if (!userId) break;
+        await supabase
+          .from('subscriptions')
+          .update({ status: 'cancelled', cancel_at_period_end: true, updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+        await supabase
+          .from('profiles')
+          .update({ subscription_status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+        await supabase.from('billing_events').insert({
+          user_id: userId,
+          event_type: event.type,
+          metadata: { raw: payload },
+        });
+        console.log('[dodo-webhook] Cancelled subscription for', userId);
+        break;
+      }
+
+      case 'payment.failed': {
+        if (!userId) break;
+        await supabase
+          .from('subscriptions')
+          .update({ status: 'past_due', updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+        await supabase.from('billing_events').insert({
+          user_id: userId,
+          event_type: event.type,
+          metadata: { raw: payload },
+        });
+        break;
+      }
+
+      case 'refund.succeeded':
+      case 'refund.created': {
+        if (!userId) break;
+        await supabase.from('billing_events').insert({
+          user_id: userId,
+          event_type: event.type,
+          full_amount_cents: payload.amount ?? null,
+          metadata: { raw: payload },
+        });
+        await supabase
+          .from('profiles')
+          .update({ subscription_plan: 'free', subscription_status: 'refunded', updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+        break;
+      }
 
       default:
-        console.info(`[dodo-webhook] Unhandled event type: ${type}`);
+        console.log('[dodo-webhook] Unhandled event:', event.type);
     }
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
-    console.error('[dodo-webhook]', err.message);
+    console.error('[dodo-webhook] Handler error:', err.message, err.stack);
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

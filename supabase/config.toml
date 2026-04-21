@@ -3,6 +3,9 @@ project_id = "dgznlsckoamseqcpzfqm"
 [functions.pattern-confidence-scorer]
 verify_jwt = false
 
+[functions.dodo-webhook]
+verify_jwt = false
+
 [functions.backtest-strategy]
 verify_jwt = false
 
