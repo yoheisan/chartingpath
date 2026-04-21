@@ -3233,7 +3233,7 @@
     "subtitle": "Start free. Upgrade when you want deeper outcomes and Copilot access.",
     "free": "Free",
     "freeTagline": "Explore",
-    "freeDescription": "See live pattern signals and explore the outcome database.",
+    "freeDescription": "Discover live pattern signals across 20 instruments.",
     "freeFeature1": "Live pattern scanner — 20 instruments (stocks)",
     "freeFeature2": "1h timeframe only",
     "freeFeature3": "Grade B & C patterns",
@@ -3243,8 +3243,6 @@
     "freeFeature7": "Community access",
     "freeName": "Free",
     "freeCta": "Start Free",
-    "freeTagline": "Explore",
-    "freeDescription": "Discover live pattern signals across 20 instruments.",
     "liteName": "Lite",
     "liteTagline": "Getting Started",
     "liteDescription": "Full outcome history and richer alert capacity.",
@@ -3317,7 +3315,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R earned per bar of exposure. Higher = more capital-efficient.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Timeframe"
   },
   "alertsLibrary": {
     "totalAlerts": "Total Alerts",

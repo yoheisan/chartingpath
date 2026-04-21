@@ -478,7 +478,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R pro Expositions-Bar. Höher = kapitaleffizienter.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Zeitrahmen"
   },
   "backtestWorkspace": {
     "demoMode": "Demo-Modus",

@@ -2466,7 +2466,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R gagné par barre d'exposition. Plus élevé = plus efficace en capital.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Échelle de temps"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

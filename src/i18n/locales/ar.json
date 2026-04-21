@@ -2343,7 +2343,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R المكتسب لكل شريط تعرض. أعلى = كفاءة رأس مال أكبر.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "الإطار الزمني"
   },
   "pricingTeaser": {
     "allTimeframes": "جميع الأطر الزمنية",

@@ -2479,7 +2479,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — Maruziyet barı başına kazanılan R. Yüksek = daha verimli sermaye.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Zaman Dilimi"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

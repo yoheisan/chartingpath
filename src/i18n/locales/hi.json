@@ -703,7 +703,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — एक्सपोज़र बार प्रति R अर्जित। अधिक = अधिक पूंजी कुशल।",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "समय सीमा"
   },
   "hero": {
     "headlinePrimary": "ट्रेड करने से पहले",

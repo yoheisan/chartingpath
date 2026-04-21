@@ -176,7 +176,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R yang diperoleh per bar eksposur. Lebih tinggi = lebih efisien modal.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Kerangka Waktu"
   },
   "patternScreenerTeaser": {
     "title": "Sinyal Pola Teratas",
