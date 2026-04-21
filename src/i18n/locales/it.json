@@ -419,7 +419,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R guadagnato per barra di esposizione. Più alto = più efficiente in capitale.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Intervallo"
   },
   "pricingPage": {
     "forever": "Gratuito per sempre",

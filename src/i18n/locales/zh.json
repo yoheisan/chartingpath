@@ -2457,7 +2457,8 @@
     "rot": "ROT",
     "rotTooltip": "时间回报率 — 每根K线的R收益。越高=资本效率越高。",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "时间周期"
   },
   "livePatternPreview": {
     "title": "当前活跃形态",

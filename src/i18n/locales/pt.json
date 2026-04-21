@@ -2388,7 +2388,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R ganho por barra de exposição. Maior = mais eficiente em capital.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Período"
   },
   "pricingTeaser": {
     "title": "Preços Simples, Baseados em Crédito",

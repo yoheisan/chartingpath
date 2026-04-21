@@ -2479,7 +2479,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — 노출 바당 R 수익. 높을수록 자본 효율적.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "시간대"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

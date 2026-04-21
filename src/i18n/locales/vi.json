@@ -3541,7 +3541,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R kiếm được trên mỗi thanh phơi nhiễm. Cao hơn = hiệu quả vốn hơn.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Khung thời gian"
   },
   "alertsLibrary": {
     "totalAlerts": "Total Alerts",

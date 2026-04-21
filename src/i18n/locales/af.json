@@ -2468,7 +2468,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R verdien per blootstelling-staaf. Hoër = meer kapitaaleffektief.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Tydraam"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

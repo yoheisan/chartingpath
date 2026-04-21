@@ -3652,7 +3652,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R verdiend per blootstellingsbar. Hoger = meer kapitaalefficiënt.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Tijdsbestek"
   },
   "alertsLibrary": {
     "totalAlerts": "Total Alerts",

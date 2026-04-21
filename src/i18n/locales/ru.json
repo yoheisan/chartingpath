@@ -2467,7 +2467,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — R, заработанный за бар экспозиции. Выше = более эффективное использование капитала.",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "Таймфрейм"
   },
   "patternLabWizard": {
     "patternOccurrences": "Pattern Occurrences",

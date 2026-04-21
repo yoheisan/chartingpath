@@ -3168,7 +3168,8 @@
     "rot": "ROT",
     "rotTooltip": "Return on Time — エクスポージャーバーあたりのR収益。高いほど資本効率が良い。",
     "openInTradingView": "Open in TradingView",
-    "signUpForAlerts": "Sign up to create alerts"
+    "signUpForAlerts": "Sign up to create alerts",
+    "timeframe": "時間軸"
   },
   "alertsLibrary": {
     "recentAlerts": "最近のアラート",
