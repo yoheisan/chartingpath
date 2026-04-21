@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   email: string;
-  subscription_plan: "free" | "starter" | "pro" | "pro_plus" | "elite";
+  subscription_plan: "free" | "starter" | "lite" | "pro" | "pro_plus" | "elite";
   subscription_status: string;
   created_at: string;
   updated_at: string;
