@@ -6898,7 +6898,13 @@ export type Database = {
         | "cryptocurrency"
         | "commodities"
       quiz_difficulty: "beginner" | "intermediate" | "advanced" | "expert"
-      subscription_plan: "starter" | "pro" | "elite" | "free" | "pro_plus"
+      subscription_plan:
+        | "starter"
+        | "pro"
+        | "elite"
+        | "free"
+        | "pro_plus"
+        | "lite"
       ticket_category: "bug" | "feature" | "billing" | "account" | "other"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
@@ -7106,7 +7112,14 @@ export const Constants = {
         "commodities",
       ],
       quiz_difficulty: ["beginner", "intermediate", "advanced", "expert"],
-      subscription_plan: ["starter", "pro", "elite", "free", "pro_plus"],
+      subscription_plan: [
+        "starter",
+        "pro",
+        "elite",
+        "free",
+        "pro_plus",
+        "lite",
+      ],
       ticket_category: ["bug", "feature", "billing", "account", "other"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
