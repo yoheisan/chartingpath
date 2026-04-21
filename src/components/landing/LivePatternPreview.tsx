@@ -24,6 +24,7 @@ interface SnapshotRow {
   risk_reward_ratio: number | null;
   first_detected_at: string;
   historical_performance: any;
+  timeframe: string | null;
 }
 
 function formatAge(ts: string): string {
@@ -49,7 +50,7 @@ export default function LivePatternPreview() {
       // First try to get Grade A and B patterns
       const { data: abData, error: abErr } = await supabase
         .from('live_pattern_detections')
-        .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance')
+        .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance, timeframe')
         .eq('status', 'active')
         .in('quality_score', ['A', 'B'])
         .order('first_detected_at', { ascending: false })
@@ -64,7 +65,7 @@ export default function LivePatternPreview() {
         // Fallback: get highest-grade available
         const { data: fallbackData, error: fbErr } = await supabase
           .from('live_pattern_detections')
-          .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance')
+          .select('id, instrument, pattern_name, direction, quality_score, entry_price, risk_reward_ratio, first_detected_at, historical_performance, timeframe')
           .eq('status', 'active')
           .order('first_detected_at', { ascending: false })
           .limit(3);
