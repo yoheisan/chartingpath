@@ -165,6 +165,7 @@ export default function LivePatternPreview() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="whitespace-nowrap">{t('teaserSignals.symbol', 'Symbol')}</TableHead>
                   <TableHead className="whitespace-nowrap">{t('teaserSignals.pattern', 'Pattern')}</TableHead>
+                  <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.timeframe', 'Timeframe')}</TableHead>
                   <TableHead className="text-center whitespace-nowrap">{t('teaserSignals.grade', 'Grade')}</TableHead>
                   <TableHead className="whitespace-nowrap">{t('teaserSignals.signal', 'Signal')}</TableHead>
                   <TableHead className="text-right whitespace-nowrap">{t('teaserSignals.winRate', 'Win %')}</TableHead>
@@ -185,6 +186,11 @@ export default function LivePatternPreview() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {t(`patternNames.${row.pattern_name}`, row.pattern_name)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="text-xs font-mono uppercase">
+                          {row.timeframe || '—'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <GradeBadge quality={{ score: row.quality_score || 'C' }} />
