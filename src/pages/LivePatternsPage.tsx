@@ -16,6 +16,7 @@ import { setViewContext } from '@/lib/copilotEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import WelcomeBackBanner from '@/components/WelcomeBackBanner';
+import { SignupNudgeBanner } from '@/components/screener/SignupNudgeBanner';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
@@ -1093,6 +1094,7 @@ export default function LivePatternsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SignupNudgeBanner />
       <WelcomeBackBanner />
       <PageMeta
         title="Live Chart Pattern Scanner — FX, Stocks, Crypto | ChartingPath"

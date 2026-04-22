@@ -12,7 +12,7 @@ import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckou
 
 export const PricingTeaser = () => {
   const { t } = useTranslation();
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('annual');
   const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
 
   useEffect(() => {

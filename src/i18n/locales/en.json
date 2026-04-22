@@ -1309,6 +1309,12 @@
     "returnHome": "Back to Home",
     "title": "404"
   },
+  "signupNudge": {
+    "headline": "Browse free — sign up to save scans, set alerts, and track your edge.",
+    "signupCta": "Sign up free",
+    "pricingCta": "View pricing",
+    "dismiss": "Dismiss"
+  },
   "learn": {
     "title": "Trading Education Center",
     "subtitle": "Comprehensive guides and tutorials to master technical analysis, chart patterns, and trading strategies",

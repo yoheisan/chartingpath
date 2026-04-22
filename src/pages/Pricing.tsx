@@ -26,7 +26,7 @@ const TIER_ICONS: Record<string, any> = {
 const Pricing = () => {
   const { t } = useTranslation();
   const { formatted: outcomeCount } = useOutcomeCount();
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('annual');
   const { startCheckout, loading: checkoutLoading, error: checkoutError } = useCheckout();
 
   useEffect(() => {

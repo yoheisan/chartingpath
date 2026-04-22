@@ -112,6 +112,31 @@ const Auth = () => {
     }
   }, [isAuthLoading, authUser, isResetPassword, navigate, redirectPath]);
 
+  // Redirect cold /auth/ traffic (no context, external referrer) to screener
+  useEffect(() => {
+    if (isAuthLoading || authUser) return; // wait for auth, skip if logged in
+    if (hasRedirectedRef.current) return;
+
+    const hasRedirect = searchParams.get('redirect');
+    const isReset =
+      searchParams.get('reset') ||
+      searchParams.get('type') === 'recovery' ||
+      isResetPassword ||
+      isForgotPassword;
+    const ref = typeof document !== 'undefined' ? document.referrer || '' : '';
+    const isFromApp =
+      ref.includes('chartingpath.com') ||
+      ref.includes('lovableproject.com') ||
+      ref.includes('lovable.app') ||
+      ref.includes('lovable.dev');
+
+    if (!hasRedirect && !isReset && !isFromApp) {
+      hasRedirectedRef.current = true;
+      trackEvent('auth.cold_redirect', { destination: '/patterns/live' });
+      navigate('/patterns/live?from=auth', { replace: true });
+    }
+  }, [isAuthLoading, authUser, searchParams, isResetPassword, isForgotPassword, navigate]);
+
   useEffect(() => {
     if (resetCooldown <= 0) return;
     const t = window.setInterval(() => {

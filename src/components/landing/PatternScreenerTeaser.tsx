@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Zap, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '@/lib/analytics';
+import { track } from '@/services/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { TeaserSignalsTable } from '@/components/screener/TeaserSignalsTable';
 import { useTranslation } from 'react-i18next';
@@ -155,6 +156,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 export function PatternScreenerTeaser() {
   const { t } = useTranslation();
   const { isGuest, guestPatternLimit } = usePlanGate();
+  const paywallFiredRef = useRef(false);
   const [patternsByAsset, setPatternsByAsset] = useState<Record<TeaserAssetType, LiveSetup[]>>({
     stocks: [], fx: [], crypto: [], commodities: [],
   });
@@ -326,6 +328,23 @@ export function PatternScreenerTeaser() {
   const currentTotal = totalCounts[activeTab];
   const activeTabConfig = ASSET_TAB_KEYS.find(t => t.value === activeTab);
 
+  // Fire paywall_shown once per session when the guest blur gate is visible
+  // for any asset tab (highest-volume gate in the funnel).
+  useEffect(() => {
+    if (!isGuest || paywallFiredRef.current) return;
+    const anyHasMore = ASSET_TAB_KEYS.some(
+      tab => (patternsByAsset[tab.value]?.length ?? 0) > guestPatternLimit
+    );
+    if (anyHasMore) {
+      paywallFiredRef.current = true;
+      track('paywall_shown', {
+        context: 'landing_screener_blur_gate',
+        current_plan: 'GUEST',
+        limit_type: 'guest_pattern_limit',
+      });
+    }
+  }, [isGuest, guestPatternLimit, patternsByAsset]);
+
   const LoadingSkeleton = () => (
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => (
@@ -424,7 +443,12 @@ export function PatternScreenerTeaser() {
                         </p>
                         <div className="flex gap-2">
                           <Button asChild size="sm">
-                            <Link to="/auth?mode=signup">{t('auth.signUpFree', 'Sign Up Free')}</Link>
+                            <Link
+                              to="/auth?mode=signup"
+                              onClick={() => track('pricing_clicked', { source: 'landing_blur_gate' })}
+                            >
+                              {t('auth.signUpFree', 'Sign Up Free')}
+                            </Link>
                           </Button>
                           <Button asChild size="sm" variant="ghost">
                             <Link to="/auth?mode=signin">{t('auth.signIn', 'Sign In')}</Link>
