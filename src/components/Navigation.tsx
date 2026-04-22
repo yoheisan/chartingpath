@@ -143,7 +143,7 @@ const Navigation = () => {
       </div>
       
       {/* 4. Pricing */}
-      <Link to="/projects/pricing" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
+      <Link to="/pricing" onClick={closeMobileMenu} className="flex items-center gap-2 text-muted-foreground py-2">
         <DollarSign className="h-5 w-5" />
         {t('navigation.pricing', 'Pricing')}
       </Link>
@@ -224,7 +224,13 @@ const Navigation = () => {
                 {t('navigation.patternLab', 'Pattern Lab')}
               </Link>
 
-              {/* 4. More — consolidated dropdown */}
+              {/* 4. Pricing — top-level */}
+              <Link to="/pricing" className={navLinkClass('/pricing')}>
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+                {t('navigation.pricing', 'Pricing')}
+              </Link>
+
+              {/* 5. More — consolidated dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-base whitespace-nowrap text-muted-foreground hover:text-foreground transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
@@ -324,12 +330,6 @@ const Navigation = () => {
                   {/* Company */}
                   <DropdownMenuLabel className="text-xs text-muted-foreground">{t('navigation.company', 'Company')}</DropdownMenuLabel>
                   <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/projects/pricing" className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" />
-                        {t('navigation.pricing', 'Pricing')}
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/faq" className="flex items-center gap-2">
                         <HelpCircle className="h-4 w-4" />
