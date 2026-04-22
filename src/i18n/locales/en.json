@@ -1,7 +1,6 @@
 {
   "auth": {
     "backToHome": "Back to Home",
-    "_signupNudgeAnchor": "",
     "headline": "{{count}} backtested trades say these patterns work. See which ones.",
     "subheadline": "Find out if your chart patterns actually have edge — before risking a dollar.",
     "freeAccountIncludes": "Free account includes",
