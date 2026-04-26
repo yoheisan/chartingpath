@@ -8,19 +8,37 @@ on:
 jobs:
   seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - name: Select batch
         id: batch
         run: |
-          SYMBOLS=("AAPL" "MSFT" "NVDA" "GOOGL" "AMZN" "META" "TSLA" "JPM" "SPY" "QQQ" "AMD" "INTC" "QCOM" "CRM" "ORCL" "ADBE" "NFLX" "V" "WMT" "JNJ" "XOM" "BAC" "WFC" "COST" "HD" "LOW" "GS" "MS" "BTC-USD" "ETH-USD" "SOL-USD" "EURUSD=X" "GBPUSD=X" "GLD" "NKE" "DIS" "MCD" "PG" "KO" "LLY")
+          SYMBOLS=(
+            "AAPL" "MSFT" "NVDA" "GOOGL" "AMZN" "META" "TSLA" "JPM" "V" "UNH"
+            "XOM" "LLY" "JNJ" "WMT" "MA" "AVGO" "PG" "HD" "CVX" "MRK"
+            "ABBV" "COST" "KO" "PEP" "ADBE" "CRM" "AMD" "NFLX" "TMO" "ACN"
+            "BAC" "WFC" "TXN" "NEE" "QCOM" "ORCL" "IBM" "GE" "CAT" "GS"
+            "MS" "BKNG" "ISRG" "GILD" "VRTX" "REGN" "UBER" "ABNB" "SNOW" "CRWD"
+            "NET" "DDOG" "PANW" "MU" "LRCX" "MRVL" "ARM" "PLTR" "COIN" "SQ"
+            "PYPL" "SHOP" "MELI" "DASH" "ZM" "MDB" "GTLB" "CFLT" "SMCI" "INTC"
+            "LOW" "INTU" "SPGI" "BLK" "RTX" "LIN" "ABT" "DHR" "PM" "AXP"
+            "NKE" "DIS" "MCD" "PLD" "AMT" "ZS" "OKTA" "TWLO" "BILL" "U"
+            "SPY" "QQQ" "IWM" "DIA" "VTI" "GLD" "SLV" "TLT" "XLF" "XLK"
+            "XLE" "XLV" "HYG" "EEM" "ARKK" "USO" "LQD" "VEA" "VWO" "IWF"
+            "BTC-USD" "ETH-USD" "SOL-USD" "BNB-USD" "XRP-USD" "ADA-USD"
+            "AVAX-USD" "DOT-USD" "LINK-USD" "LTC-USD"
+            "EURUSD=X" "GBPUSD=X" "USDJPY=X" "AUDUSD=X" "USDCAD=X"
+            "USDCHF=X" "NZDUSD=X" "EURGBP=X" "EURJPY=X" "GBPJPY=X"
+          )
           TOTAL=${#SYMBOLS[@]}
           IDX=$(( ($(date +%s) / 720) % TOTAL ))
-          S1=${SYMBOLS[$IDX]}
-          S2=${SYMBOLS[$(( (IDX+1) % TOTAL ))]}
-          S3=${SYMBOLS[$(( (IDX+2) % TOTAL ))]}
-          echo "batch=$S1,$S2,$S3" >> $GITHUB_OUTPUT
-          echo "Seeding: $S1 $S2 $S3"
+          BATCH=""
+          for i in 0 1 2 3 4 5 6 7; do
+            SYM=${SYMBOLS[$(( (IDX+i) % TOTAL ))]}
+            BATCH="${BATCH:+$BATCH,}$SYM"
+          done
+          echo "batch=$BATCH" >> $GITHUB_OUTPUT
+          echo "Seeding: $BATCH (start index $IDX of $TOTAL)"
 
       - name: Invoke seeder
         run: |
