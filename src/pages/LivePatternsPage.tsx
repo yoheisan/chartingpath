@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GuestScreenerOverlay } from '@/components/screener/GuestScreenerOverlay';
 import WelcomeBackBanner from '@/components/WelcomeBackBanner';
 import { SignupNudgeBanner } from '@/components/screener/SignupNudgeBanner';
+import { RegimeBadge } from '@/components/screener/RegimeBadge';
 import { PageMeta } from '@/components/PageMeta';
 import { useGateEvaluation } from '@/hooks/useGateEvaluation';
 import { usePaperTradeEntry } from '@/hooks/usePaperTradeEntry';
@@ -1138,6 +1139,7 @@ export default function LivePatternsPage() {
         <div className="flex items-center gap-3 mb-2">
           <Activity className="h-8 w-8 text-amber-500" />
           <h1 className="text-3xl font-bold">{t('livePatterns.title')}</h1>
+          <RegimeBadge />
           <UniversalSymbolSearch 
             onSelect={(symbol) => navigate('/members/dashboard', { state: { initialSymbol: symbol.toUpperCase() } })}
             trigger={
