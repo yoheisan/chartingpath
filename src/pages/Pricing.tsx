@@ -14,6 +14,7 @@ import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 import { useTranslation } from "react-i18next";
 import { PRICING_PLANS } from "@/constants/pricingPlans";
 import { useCheckout, type PlanKey as CheckoutPlanKey } from "@/hooks/useCheckout";
+import { CompetitorComparisonStrip } from "@/components/screener/CompetitorComparisonStrip";
 
 const TIER_ICONS: Record<string, any> = {
   free: Zap,
@@ -279,6 +280,13 @@ const Pricing = () => {
 
         {/* FAQs */}
         <div className="max-w-3xl mx-auto mb-20">
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-center mb-6">
+              {t('pricingPage.whyTradersSwitch', 'Why traders switch from Finviz')}
+            </h2>
+            <CompetitorComparisonStrip />
+          </div>
+
           <h2 className="text-2xl font-bold text-center mb-8">
             {t('pricingPage.faqTitle', 'Frequently asked questions')}
           </h2>
