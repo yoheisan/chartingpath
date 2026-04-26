@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Target, Clock, Database, ArrowRight } from "lucide-react";
+import { BarChart3, Target, Clock, Database, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePatternDetailStats } from "@/hooks/usePatternDetailStats";
+import { useRegimeContext, usePatternRegimeStats } from "@/hooks/useRegimeContext";
 
 interface Props {
   patternKey: string;
@@ -13,6 +14,8 @@ interface Props {
 export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
   const { t } = useTranslation();
   const { data: stats, isLoading } = usePatternDetailStats(patternKey);
+  const { data: regime } = useRegimeContext();
+  const { data: regimeStats } = usePatternRegimeStats(patternKey);
 
   if (isLoading) {
     return (
@@ -24,6 +27,10 @@ export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
   }
 
   if (!stats || stats.totalDetections < 20) return null;
+
+  const currentRegimeStat = regimeStats?.find(
+    (r) => r.regime === regime?.market_regime
+  );
 
   return (
     <div className="space-y-3">
@@ -59,6 +66,28 @@ export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
               {t('patternLibrary.liveSetupsNow', 'Live setups right now: {{count}}', { count: stats.liveSetupsCount })}
               <ArrowRight className="h-3 w-3" />
             </Link>
+          </div>
+        )}
+        {currentRegimeStat && regime && (
+          <div
+            className={`mt-3 pt-3 border-t text-xs flex items-start gap-2 ${
+              currentRegimeStat.win_rate >= stats.winRate
+                ? 'text-bullish'
+                : 'text-bearish'
+            }`}
+          >
+            {currentRegimeStat.win_rate >= stats.winRate ? (
+              <TrendingUp className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            ) : (
+              <TrendingDown className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            )}
+            <span>
+              In current {regime.market_regime.replace('_', '-')} regime: win rate is{' '}
+              <strong>{currentRegimeStat.win_rate}%</strong>
+              {currentRegimeStat.win_rate < stats.winRate
+                ? ` (${stats.winRate - currentRegimeStat.win_rate}% below average)`
+                : ` (${currentRegimeStat.win_rate - stats.winRate}% above average)`}
+            </span>
           </div>
         )}
       </Card>
