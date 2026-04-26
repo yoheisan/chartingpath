@@ -269,6 +269,17 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
             </div>
           </TabsContent>
 
+          {/* REGIME TAB */}
+          <TabsContent value="regime" className="space-y-4 mt-0">
+            <p className="text-sm text-muted-foreground">
+              {t(
+                'patternDetailModal.regimeDescription',
+                'Win rates vary significantly by macro regime. Use this table to assess whether current market conditions favor this pattern.'
+              )}
+            </p>
+            <PatternRegimeTable patternKey={patternKey} />
+          </TabsContent>
+
           {/* PATTERN ANALYSIS TAB */}
           <TabsContent value="analysis" className="space-y-6 mt-0">
             <div className="space-y-3">
