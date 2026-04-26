@@ -8,6 +8,8 @@ import { getPatternDetails } from "@/utils/PatternDetails";
 import { useTranslation } from "react-i18next";
 import { translatePatternName } from "@/utils/translatePatternName";
 import { usePatternDetailStats } from "@/hooks/usePatternDetailStats";
+import { PatternRegimeTable } from "./pattern-library/PatternRegimeTable";
+import { Activity } from "lucide-react";
 
 interface PatternDetailsSectionProps {
   patternKey: string;
@@ -88,7 +90,7 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
         </div>
 
         <Tabs defaultValue="setup" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">{s('tradeSetup')}</span>
@@ -98,6 +100,10 @@ export const PatternDetailsSection = ({ patternKey }: PatternDetailsSectionProps
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">{s('riskFactors')}</span>
               <span className="sm:hidden">{s('riskFactors')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="regime" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              <span>{t('patternDetailModal.regime', 'Regime')}</span>
             </TabsTrigger>
             <TabsTrigger value="analysis" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
