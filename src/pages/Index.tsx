@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, TrendingUp, Shield, FlaskConical } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, FlaskConical, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +28,7 @@ import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
 import { PatternConcentrationHeatmap } from '@/components/landing/PatternConcentrationHeatmap';
 import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground';
+import { OutcomeDataBadge } from '@/components/screener/OutcomeDataBadge';
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -100,9 +101,12 @@ const Index = () => {
         
         <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            <Badge variant="secondary" className="mb-6 text-xs tracking-wide animate-fade-in">
-              {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
-            </Badge>
+            <div className="mb-4 flex flex-wrap items-center gap-3 animate-fade-in">
+              <OutcomeDataBadge />
+              <Badge variant="secondary" className="text-xs tracking-wide">
+                {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
+              </Badge>
+            </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.08] animate-fade-in tracking-tight text-foreground">
               {t('landing.heroHeadline', 'Know what happens after the pattern forms.')}
@@ -140,6 +144,21 @@ const Index = () => {
               >
                 <FlaskConical className="h-6 w-6 mr-3" />
                 {t('landing.exploreOutcomeData', 'Explore outcome data')}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => {
+                  (window as any).gtag?.('event', 'cta_click', { location: 'hero_pricing' });
+                  track('pricing_clicked', { source: 'landing_hero_pricing_cta' });
+                  trackEvent('landing.cta_click', { button: 'hero_see_pricing' });
+                  navigate('/pricing');
+                }}
+                className="px-8 py-7 text-lg font-semibold hover:bg-accent/10"
+              >
+                <DollarSign className="h-5 w-5 mr-2" />
+                {t('landing.seePricing', 'See Pricing')}
               </Button>
             </div>
 
