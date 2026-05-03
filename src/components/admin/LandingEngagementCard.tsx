@@ -64,6 +64,7 @@ export function LandingEngagementCard({ days }: Props) {
         .select('session_id')
         .eq('event_name', 'page.view')
         .gte('ts', cutoff.toISOString())
+        .eq('is_bot_suspect', false)
         .filter('properties->>path', 'eq', '/');
 
       // Fetch landing CTA clicks
@@ -71,6 +72,7 @@ export function LandingEngagementCard({ days }: Props) {
         .from('analytics_events')
         .select('session_id, properties')
         .eq('event_name', 'landing.cta_click')
+        .eq('is_bot_suspect', false)
         .gte('ts', cutoff.toISOString());
 
       const totalPageViews = new Set((pageViews || []).map(r => r.session_id)).size;
