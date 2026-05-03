@@ -22,6 +22,14 @@ function detectBotSuspect(): boolean {
     if ((navigator as any).webdriver) return true;
     if (BOT_UA_PATTERNS.test(navigator.userAgent)) return true;
     if (window.innerWidth === 0 && window.innerHeight === 0) return true;
+    // Heuristic: direct hits to scanner-targeted paths with no referrer are
+    // overwhelmingly credential-stuffing / vuln scanners, not real users.
+    const path = window.location.pathname || '';
+    const ref = document.referrer || '';
+    const search = window.location.search || '';
+    const scannerPath = /^\/(auth|admin|wp-|xmlrpc|wp-login|phpmyadmin)/i.test(path);
+    const hasUtm = /[?&](utm_|context=|redirect=|ref=)/i.test(search);
+    if (scannerPath && !ref && !hasUtm) return true;
   } catch {
     // SSR or restricted environment
   }

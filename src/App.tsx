@@ -136,6 +136,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={withSuspense(<Index />)} />
           <Route path="/about" element={withSuspense(<About />)} />
+          {/* Common bot/probe paths — redirect to landing so we don't 404-bounce real users */}
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/home/*" element={<Navigate to="/" replace />} />
+          <Route path="/start-here" element={<Navigate to="/patterns/live" replace />} />
           <Route path="/tools/pip-calculator" element={withSuspense(<PipCalculator />)} />
           <Route path="/tools/risk-calculator" element={withSuspense(<RiskCalculator />)} />
           <Route path="/tools/market-breadth" element={withSuspense(<MarketBreadthReport />)} />
