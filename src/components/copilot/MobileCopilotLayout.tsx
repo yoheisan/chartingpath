@@ -1,16 +1,17 @@
 import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Bell, FileText, MessageCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, Bell, FileText, MessageCircle, TrendingUp, TrendingDown, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
 import { FeedbackLoopBanner } from "@/components/copilot/FeedbackLoopBanner";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
+import { MobileStatsTab } from "@/components/copilot/MobileStatsTab";
 import type { MandateRule, MasterPlan } from "@/hooks/useMasterPlan";
 import type { CopilotTrade } from "@/hooks/useCopilotTrades";
 
-type MobileTab = "trades" | "alerts" | "plan" | "chat";
+type MobileTab = "trades" | "alerts" | "plan" | "stats" | "chat";
 
 interface MobileCopilotLayoutProps {
   // Plan
@@ -37,6 +38,7 @@ const tabs: { key: MobileTab; icon: typeof BarChart3; labelKey: string }[] = [
   { key: "trades", icon: BarChart3, labelKey: "copilotMobile.trades" },
   { key: "alerts", icon: Bell, labelKey: "copilotMobile.alerts" },
   { key: "plan", icon: FileText, labelKey: "copilotMobile.plan" },
+  { key: "stats", icon: LineChart, labelKey: "copilotMobile.stats" },
   { key: "chat", icon: MessageCircle, labelKey: "copilotMobile.chat" },
 ];
 
@@ -113,6 +115,7 @@ export function MobileCopilotLayout({
             />
           </div>
         )}
+        {activeTab === "stats" && <MobileStatsTab />}
       </div>
 
       {/* Bottom tab bar */}

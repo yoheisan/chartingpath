@@ -6456,10 +6456,13 @@
     "trades": "Trades",
     "alerts": "Alerts",
     "plan": "Plan",
+    "stats": "Stats",
     "chat": "Chat",
     "noTrades": "No active trades yet",
     "noTradesHint": "Set up a trading plan to start receiving signals",
-    "activeTrades": "Active Trades"
+    "activeTrades": "Active Trades",
+    "statsTitle": "Your Performance",
+    "fullReport": "Full report"
   },
   "planValidation": {
     "maxLookback": "Maximum {{max}} years lookback allowed on {{tier}} plan",
