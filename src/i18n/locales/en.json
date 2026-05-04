@@ -1349,7 +1349,7 @@
     "rowRegimeAdjusted": "Regime-adjusted win rates"
   },
   "outcomeData": {
-    "badge": "{{count}}+ backtested outcomes"
+    "badge": "{{value}}+ backtested outcomes"
   },
   "learn": {
     "title": "Trading Education Center",
