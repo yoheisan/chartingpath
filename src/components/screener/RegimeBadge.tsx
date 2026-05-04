@@ -7,46 +7,48 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type Regime = 'risk_on' | 'risk_off' | 'neutral' | 'trending' | 'ranging';
 
 const CONFIG: Record<
   Regime,
-  { label: string; color: string; icon: JSX.Element; tip: string }
+  { labelKey: string; labelFallback: string; color: string; icon: JSX.Element; tipKey: string; tipFallback: string }
 > = {
   risk_on: {
-    label: 'Risk-On',
+    labelKey: 'regime.riskOn', labelFallback: 'Risk-On',
     color: 'bg-bullish/20 text-bullish border-bullish/30',
     icon: <TrendingUp className="h-3 w-3" />,
-    tip: 'Bullish macro environment — pattern win rates elevated',
+    tipKey: 'regime.tipRiskOn', tipFallback: 'Bullish macro environment — pattern win rates elevated',
   },
   risk_off: {
-    label: 'Risk-Off',
+    labelKey: 'regime.riskOff', labelFallback: 'Risk-Off',
     color: 'bg-bearish/20 text-bearish border-bearish/30',
     icon: <TrendingDown className="h-3 w-3" />,
-    tip: 'Risk-off macro environment — pattern win rates suppressed',
+    tipKey: 'regime.tipRiskOff', tipFallback: 'Risk-off macro environment — pattern win rates suppressed',
   },
   neutral: {
-    label: 'Neutral',
+    labelKey: 'regime.neutral', labelFallback: 'Neutral',
     color: 'bg-muted/50 text-muted-foreground border-muted',
     icon: <Minus className="h-3 w-3" />,
-    tip: 'Mixed macro signals — check individual pattern stats',
+    tipKey: 'regime.tipNeutral', tipFallback: 'Mixed macro signals — check individual pattern stats',
   },
   trending: {
-    label: 'Trending',
+    labelKey: 'regime.trending', labelFallback: 'Trending',
     color: 'bg-primary/20 text-primary border-primary/30',
     icon: <Activity className="h-3 w-3" />,
-    tip: 'Trending market — continuation patterns perform best',
+    tipKey: 'regime.tipTrending', tipFallback: 'Trending market — continuation patterns perform best',
   },
   ranging: {
-    label: 'Ranging',
+    labelKey: 'regime.ranging', labelFallback: 'Ranging',
     color: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
     icon: <AlertTriangle className="h-3 w-3" />,
-    tip: 'Ranging market — reversal patterns perform best',
+    tipKey: 'regime.tipRanging', tipFallback: 'Ranging market — reversal patterns perform best',
   },
 };
 
 export function RegimeBadge() {
+  const { t } = useTranslation();
   const { data: regime, isLoading } = useRegimeContext();
 
   if (isLoading || !regime) return null;
@@ -62,16 +64,16 @@ export function RegimeBadge() {
             className={`gap-1.5 cursor-help ${c.color}`}
           >
             {c.icon}
-            <span className="font-medium">{c.label}</span>
+            <span className="font-medium">{t(c.labelKey, c.labelFallback)}</span>
             {typeof regime.vix_close === 'number' && (
               <span className="opacity-70 text-[10px]">
-                VIX {regime.vix_close.toFixed(1)}
+                {t('regime.vix', 'VIX {{value}}', { value: regime.vix_close.toFixed(1) })}
               </span>
             )}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="max-w-xs text-xs">{c.tip}</p>
+          <p className="max-w-xs text-xs">{t(c.tipKey, c.tipFallback)}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
