@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function OutcomeDataBadge() {
+  const { t } = useTranslation();
   const { data: count } = useQuery({
     queryKey: ['total-outcome-count'],
     queryFn: async () => {
@@ -27,7 +29,7 @@ export function OutcomeDataBadge() {
   return (
     <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
       <Database className="h-3.5 w-3.5" />
-      <span>{formatted}+ backtested outcomes</span>
+      <span>{t('outcomeData.badge', '{{count}}+ backtested outcomes', { count: formatted })}</span>
     </div>
   );
 }
