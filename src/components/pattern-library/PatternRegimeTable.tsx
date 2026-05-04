@@ -2,20 +2,22 @@ import { useRegimeContext, usePatternRegimeStats } from '@/hooks/useRegimeContex
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   patternKey: string;
 }
 
-const REGIME_LABELS: Record<string, { label: string; color: string }> = {
-  risk_on: { label: 'Risk-On', color: 'text-bullish' },
-  risk_off: { label: 'Risk-Off', color: 'text-bearish' },
-  neutral: { label: 'Neutral', color: 'text-muted-foreground' },
-  trending: { label: 'Trending', color: 'text-primary' },
-  ranging: { label: 'Ranging', color: 'text-yellow-500' },
+const REGIME_LABELS: Record<string, { key: string; fallback: string; color: string }> = {
+  risk_on: { key: 'regime.riskOn', fallback: 'Risk-On', color: 'text-bullish' },
+  risk_off: { key: 'regime.riskOff', fallback: 'Risk-Off', color: 'text-bearish' },
+  neutral: { key: 'regime.neutral', fallback: 'Neutral', color: 'text-muted-foreground' },
+  trending: { key: 'regime.trending', fallback: 'Trending', color: 'text-primary' },
+  ranging: { key: 'regime.ranging', fallback: 'Ranging', color: 'text-yellow-500' },
 };
 
 export function PatternRegimeTable({ patternKey }: Props) {
+  const { t } = useTranslation();
   const { data: stats, isLoading } = usePatternRegimeStats(patternKey);
   const { data: currentRegime } = useRegimeContext();
 
@@ -27,9 +29,9 @@ export function PatternRegimeTable({ patternKey }: Props) {
     <Card className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
       <div className="flex items-center gap-2 mb-3">
         <Activity className="h-4 w-4 text-primary" />
-        <h4 className="font-semibold text-sm">Win Rate by Market Regime</h4>
+        <h4 className="font-semibold text-sm">{t('regime.title', 'Win Rate by Market Regime')}</h4>
         <span className="text-xs text-muted-foreground">
-          — based on {totalSamples.toLocaleString()} outcomes
+          {t('regime.basedOn', '— based on {{count}} outcomes', { count: totalSamples })}
         </span>
       </div>
 
@@ -37,17 +39,17 @@ export function PatternRegimeTable({ patternKey }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50 text-xs text-muted-foreground">
-              <th className="text-left py-2 pr-4">Regime</th>
-              <th className="text-right py-2 px-3">Win Rate</th>
-              <th className="text-right py-2 px-3">Sample</th>
-              <th className="text-right py-2 pl-3">Avg R</th>
+              <th className="text-left py-2 pr-4">{t('regime.colRegime', 'Regime')}</th>
+              <th className="text-right py-2 px-3">{t('regime.colWinRate', 'Win Rate')}</th>
+              <th className="text-right py-2 px-3">{t('regime.colSample', 'Sample')}</th>
+              <th className="text-right py-2 pl-3">{t('regime.colAvgR', 'Avg R')}</th>
             </tr>
           </thead>
           <tbody>
             {stats.map((row) => {
               const isCurrent = currentRegime?.market_regime === row.regime;
               const rl = REGIME_LABELS[row.regime] ?? {
-                label: row.regime,
+                key: '', fallback: row.regime,
                 color: 'text-foreground',
               };
               const wrColor =
@@ -64,13 +66,13 @@ export function PatternRegimeTable({ patternKey }: Props) {
                   }`}
                 >
                   <td className="py-2 pr-4">
-                    <span className={`font-medium ${rl.color}`}>{rl.label}</span>
+                    <span className={`font-medium ${rl.color}`}>{rl.key ? t(rl.key, rl.fallback) : rl.fallback}</span>
                     {isCurrent && (
                       <Badge
                         variant="outline"
                         className="ml-2 text-[10px] py-0 px-1.5 border-primary/40 text-primary"
                       >
-                        Now
+                        {t('regime.now', 'Now')}
                       </Badge>
                     )}
                   </td>

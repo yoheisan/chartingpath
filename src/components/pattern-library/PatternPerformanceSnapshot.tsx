@@ -82,11 +82,17 @@ export const PatternPerformanceSnapshot = ({ patternKey }: Props) => {
               <TrendingDown className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
             )}
             <span>
-              In current {regime.market_regime.replace('_', '-')} regime: win rate is{' '}
-              <strong>{currentRegimeStat.win_rate}%</strong>
               {currentRegimeStat.win_rate < stats.winRate
-                ? ` (${stats.winRate - currentRegimeStat.win_rate}% below average)`
-                : ` (${currentRegimeStat.win_rate - stats.winRate}% above average)`}
+                ? t('regime.currentRegimeBelow', 'In current {{regime}} regime: win rate is {{wr}}% ({{diff}}% below average)', {
+                    regime: t(`regime.${regime.market_regime === 'risk_on' ? 'riskOn' : regime.market_regime === 'risk_off' ? 'riskOff' : regime.market_regime}`, regime.market_regime.replace('_', '-')),
+                    wr: currentRegimeStat.win_rate,
+                    diff: stats.winRate - currentRegimeStat.win_rate,
+                  })
+                : t('regime.currentRegimeAbove', 'In current {{regime}} regime: win rate is {{wr}}% ({{diff}}% above average)', {
+                    regime: t(`regime.${regime.market_regime === 'risk_on' ? 'riskOn' : regime.market_regime === 'risk_off' ? 'riskOff' : regime.market_regime}`, regime.market_regime.replace('_', '-')),
+                    wr: currentRegimeStat.win_rate,
+                    diff: currentRegimeStat.win_rate - stats.winRate,
+                  })}
             </span>
           </div>
         )}
