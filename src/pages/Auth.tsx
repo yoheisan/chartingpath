@@ -798,6 +798,8 @@ const Auth = () => {
                   )}
                 </Button>
 
+                <TurnstileWidget onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
+
                 <Button
                   type="button"
                   variant="ghost"
