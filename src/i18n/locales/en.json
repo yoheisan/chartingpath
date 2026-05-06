@@ -6462,7 +6462,16 @@
     "noTradesHint": "Set up a trading plan to start receiving signals",
     "activeTrades": "Active Trades",
     "statsTitle": "Your Performance",
-    "fullReport": "Full report"
+    "fullReport": "Full report",
+    "chatTitle": "Ask Copilot",
+    "chatPlaceholder": "Ask anything about markets, plans, or trades…",
+    "chatHint": "Opens the full Copilot chat",
+    "chatSend": "Send",
+    "chatOpen": "Open chat",
+    "chatSuggestions": "Quick prompts",
+    "chatPrompt1": "What setups match my plan today?",
+    "chatPrompt2": "Review my last trade",
+    "chatPrompt3": "Scan top movers"
   },
   "planValidation": {
     "maxLookback": "Maximum {{max}} years lookback allowed on {{tier}} plan",
