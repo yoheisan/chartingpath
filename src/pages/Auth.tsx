@@ -17,6 +17,7 @@ import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase as sbClient } from "@/integrations/supabase/client";
+import { TurnstileWidget, verifyTurnstileToken } from "@/components/TurnstileWidget";
 
 // Fire-and-forget login attempt tracker
 const trackLoginAttempt = (payload: {
@@ -56,6 +57,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetCooldown, setResetCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user: authUser, isAuthLoading } = useAuth();
@@ -402,6 +404,16 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const captchaOk = await verifyTurnstileToken(captchaToken);
+      if (!captchaOk) {
+        toast({
+          title: t('auth.toastResetError', 'Verification required'),
+          description: 'Please complete the verification check and try again.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
       const implicitClient = getImplicitRecoveryClient();
 
       const { error } = await implicitClient.auth.resetPasswordForEmail(email, {
@@ -477,6 +489,16 @@ const Auth = () => {
     trackEvent("auth_page.submitted", { mode: isSignUp ? "register" : "login" });
 
     try {
+      const captchaOk = await verifyTurnstileToken(captchaToken);
+      if (!captchaOk) {
+        toast({
+          title: 'Verification required',
+          description: 'Please complete the verification check and try again.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
       if (isSignUp) {
 
         const { data, error } = await supabase.auth.signUp({
@@ -776,6 +798,8 @@ const Auth = () => {
                   )}
                 </Button>
 
+                <TurnstileWidget onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
+
                 <Button
                   type="button"
                   variant="ghost"
@@ -883,6 +907,8 @@ const Auth = () => {
                             isSignUp ? t('auth.createAccount') : t('auth.signIn')
                           )}
                         </Button>
+
+                        <TurnstileWidget onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
                       </form>
                     </>
                   )}
