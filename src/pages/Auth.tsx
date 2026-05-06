@@ -17,6 +17,7 @@ import { getImplicitRecoveryClient } from "@/utils/implicitRecoveryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase as sbClient } from "@/integrations/supabase/client";
+import { TurnstileWidget, verifyTurnstileToken } from "@/components/TurnstileWidget";
 
 // Fire-and-forget login attempt tracker
 const trackLoginAttempt = (payload: {
@@ -56,6 +57,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetCooldown, setResetCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user: authUser, isAuthLoading } = useAuth();
