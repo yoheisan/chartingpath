@@ -907,6 +907,8 @@ const Auth = () => {
                             isSignUp ? t('auth.createAccount') : t('auth.signIn')
                           )}
                         </Button>
+
+                        <TurnstileWidget onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
                       </form>
                     </>
                   )}
