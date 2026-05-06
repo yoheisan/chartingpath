@@ -404,6 +404,16 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const captchaOk = await verifyTurnstileToken(captchaToken);
+      if (!captchaOk) {
+        toast({
+          title: t('auth.toastResetError', 'Verification required'),
+          description: 'Please complete the verification check and try again.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
       const implicitClient = getImplicitRecoveryClient();
 
       const { error } = await implicitClient.auth.resetPasswordForEmail(email, {
