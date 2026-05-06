@@ -489,6 +489,16 @@ const Auth = () => {
     trackEvent("auth_page.submitted", { mode: isSignUp ? "register" : "login" });
 
     try {
+      const captchaOk = await verifyTurnstileToken(captchaToken);
+      if (!captchaOk) {
+        toast({
+          title: 'Verification required',
+          description: 'Please complete the verification check and try again.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
       if (isSignUp) {
 
         const { data, error } = await supabase.auth.signUp({
