@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Bell, FileText, MessageCircle, TrendingUp, TrendingDown, LineChart } from "lucide-react";
+import { BarChart3, Bell, FileText, MessageCircle, TrendingUp, TrendingDown, LineChart, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTradingCopilotContext } from "@/components/copilot/TradingCopilotContext";
 import { MandateCard } from "@/components/copilot/MandateCard";
@@ -73,6 +73,7 @@ export function MobileCopilotLayout({
   const handleTabChange = useCallback(
     (tab: MobileTab) => {
       if (tab === "chat") {
+        setActiveTab("chat");
         handleChatTab();
         return;
       }
@@ -116,13 +117,14 @@ export function MobileCopilotLayout({
           </div>
         )}
         {activeTab === "stats" && <MobileStatsTab />}
+        {activeTab === "chat" && <ChatTab onOpenCopilot={handleChatTab} />}
       </div>
 
       {/* Bottom tab bar */}
       <nav className="shrink-0 border-t border-border bg-background/95 backdrop-blur-sm safe-area-bottom">
         <div className="flex items-center justify-around h-14">
           {tabs.map(({ key, icon: Icon, labelKey }) => {
-            const isActive = activeTab === key && key !== "chat";
+            const isActive = activeTab === key;
             return (
               <button
                 key={key}
