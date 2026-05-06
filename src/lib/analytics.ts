@@ -36,7 +36,22 @@ function detectBotSuspect(): boolean {
   return false;
 }
 
+// Hard-block paths that are pure scanner bait (never legitimate routes).
+const HARD_BLOCK_PATH = /\/(wp-login|wp-admin|wp-includes|wp-content|xmlrpc|phpmyadmin|\.env|\.git|administrator)/i;
+function shouldDropEvent(): boolean {
+  try {
+    const path = window.location.pathname || '';
+    if (HARD_BLOCK_PATH.test(path)) return true;
+    // Headless Chrome signature (no plugins + webdriver)
+    if ((navigator as any).webdriver && (navigator.plugins?.length ?? 0) === 0) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 const _isBotSuspect = typeof window !== 'undefined' ? detectBotSuspect() : false;
+const _shouldDrop = typeof window !== 'undefined' ? shouldDropEvent() : false;
 
 // ---------- Session ----------
 
@@ -180,6 +195,9 @@ export async function trackEvent(
   eventName: string,
   properties: Record<string, string | number | boolean | null | undefined> = {}
 ) {
+  // Drop scanner/headless traffic outright — don't even insert.
+  if (_shouldDrop) return;
+
   const userId = await getUserId();
   const sessionId = getSessionId();
 
