@@ -164,6 +164,84 @@ const DEMO_TRADES: CopilotTrade[] = [
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
 
+/* ---------- Chat Tab (inline entry point) ---------- */
+
+function ChatTab({ onOpenCopilot }: { onOpenCopilot: () => void }) {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState("");
+  const copilot = useTradingCopilotContext();
+
+  const QUICK_PROMPTS = [
+    t("copilotMobile.chatPrompt1", "What setups match my plan today?"),
+    t("copilotMobile.chatPrompt2", "Review my last trade"),
+    t("copilotMobile.chatPrompt3", "Scan top movers"),
+  ];
+
+  const sendDraft = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      onOpenCopilot();
+      return;
+    }
+    // Stash so the chat panel can pick it up via input — simplest: open and let user paste.
+    // Use openWithContext to seed a context message that the panel surfaces.
+    copilot.openWithContext(trimmed);
+    setDraft("");
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 px-1">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          {t("copilotMobile.chatTitle", "Ask Copilot")}
+        </h2>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={t("copilotMobile.chatPlaceholder", "Ask anything about markets, plans, or trades…")}
+          rows={3}
+          className="w-full resize-none bg-background border border-input rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
+            {t("copilotMobile.chatHint", "Opens the full Copilot chat")}
+          </span>
+          <button
+            onClick={() => sendDraft(draft)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-4 py-1.5 text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Send className="h-3.5 w-3.5" />
+            {draft.trim()
+              ? t("copilotMobile.chatSend", "Send")
+              : t("copilotMobile.chatOpen", "Open chat")}
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground px-1">
+          {t("copilotMobile.chatSuggestions", "Quick prompts")}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {QUICK_PROMPTS.map((p) => (
+            <button
+              key={p}
+              onClick={() => sendDraft(p)}
+              className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TradesTab({
   openTrades,
   selectedTradeId,
