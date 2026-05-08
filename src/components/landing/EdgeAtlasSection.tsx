@@ -425,7 +425,7 @@ export function EdgeAtlasSection() {
                           {TF_LABEL[r.timeframe] || r.timeframe}
                         </Badge>
                         {['donchian-breakout-long', 'double-bottom', 'ascending-triangle'].includes(r.pattern_id) && (
-                          <span className="text-sm bg-blue-500/15 text-blue-400 rounded px-1.5 py-0.5 leading-none">In your plan</span>
+                          <span className="text-sm bg-blue-500/15 text-blue-400 rounded px-1.5 py-0.5 leading-none">{t('edgeAtlas.inYourPlan', 'In your plan')}</span>
                         )}
                         {isLowSample && (
                           <span className="text-sm text-yellow-500">⚠️ {t('edgeAtlas.lowSample')}</span>
