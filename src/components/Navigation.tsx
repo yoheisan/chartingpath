@@ -356,6 +356,7 @@ const Navigation = () => {
               </Link>
 
               <CopilotStatusIndicator />
+              <LanguageSwitcher />
               <AuthButton />
             </nav>
 
