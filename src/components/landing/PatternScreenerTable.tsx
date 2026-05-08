@@ -765,12 +765,12 @@ export default function PatternScreenerTable() {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-primary border-primary/50 animate-pulse">
                   <Zap className="h-3 w-3 mr-1" />
-                  Loading...
+                  {t('common.loading', 'Loading...')}
                 </Badge>
               </div>
-              <h2 className="text-2xl font-bold">Active Pattern Screener</h2>
+              <h2 className="text-2xl font-bold">{t('patternScreenerTable.headerTitle', 'Active Pattern Screener')}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Scanning {UNIVERSE_INFO[assetType].count} instruments...
+                {t('patternScreenerTable.scanningInstruments', 'Scanning {{count}} instruments...', { count: UNIVERSE_INFO[assetType].count })}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -1227,7 +1227,7 @@ export default function PatternScreenerTable() {
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                                title="Open in TradingView"
+                                title={t('common.openInTradingView', 'Open in TradingView')}
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </a>
