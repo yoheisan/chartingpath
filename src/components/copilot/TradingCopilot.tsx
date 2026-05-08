@@ -1146,7 +1146,7 @@ export function TradingCopilot({
                 setTooltipDismissed(true);
               }}
               className="absolute top-0.5 right-0.5 p-0.5 rounded-full hover:bg-background/20 transition-colors"
-              aria-label="Dismiss tooltip"
+              aria-label={t('copilot.dismissTooltip', 'Dismiss tooltip')}
             >
               <X className="h-3 w-3" />
             </button>
@@ -1162,7 +1162,7 @@ export function TradingCopilot({
             "bg-gradient-to-r from-primary to-accent hover:opacity-90",
             isMobile ? "h-14 px-5 gap-2 text-sm" : "h-12 px-5 gap-2 text-sm"
           )}
-          aria-label="Open AI Trading Copilot"
+          aria-label={t('copilot.openAria', 'Open AI Trading Copilot')}
         >
           <span className="relative flex h-3 w-3 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60" />
@@ -1461,7 +1461,7 @@ export function TradingCopilot({
                                 toast.success(t('copilot.feedbackThanks', 'Thanks for your feedback!'));
                               }}
                               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-emerald-500 transition-colors"
-                              aria-label="Helpful"
+                              aria-label={t('copilot.helpful', 'Helpful')}
                             >
                               <ThumbsUp className="h-3 w-3" />
                             </button>
@@ -1471,13 +1471,13 @@ export function TradingCopilot({
                                 toast.info(t('copilot.feedbackNoted', 'Feedback noted. We\'ll improve!'));
                               }}
                               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-                              aria-label="Not helpful"
+                              aria-label={t('copilot.notHelpful', 'Not helpful')}
                             >
                               <ThumbsDown className="h-3 w-3" />
                             </button>
                             <ContactSupportDialog
                               trigger={
-                                <button className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Report issue">
+                                <button className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label={t('copilot.reportIssue', 'Report issue')}>
                                   <MessageSquarePlus className="h-3 w-3" />
                                 </button>
                               }
@@ -1528,7 +1528,7 @@ export function TradingCopilot({
                 if (viewport) viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
               }}
               className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-card border border-border/50 text-muted-foreground shadow-lg backdrop-blur-sm hover:text-foreground hover:border-border transition-all cursor-pointer"
-              aria-label="Scroll down"
+              aria-label={t('copilot.scrollDown', 'Scroll down')}
             >
               <ChevronDown className="h-4 w-4" />
               <span className="text-xs font-medium">{t('copilot.moreBelow')}</span>
