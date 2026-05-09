@@ -1866,7 +1866,7 @@ async function runHistoricalBacktest(
       const avgRR = totalTrades > 0 ? statsRows.reduce((s: number, r: any) => s + (r.risk_reward_ratio ?? 1), 0) / totalTrades : 1;
       const expectancyR = (winRatePct / 100) * avgRR - ((100 - winRatePct) / 100);
 
-      if (totalTrades >= 5) {
+      if (totalTrades >= 1) {
         cachedRepeatabilityProof = { sampleSize: totalTrades, winRate: winRatePct, expectancyR };
         cachedHistoricalPerformance = { winRate: winRatePct, avgRMultiple: expectancyR, sampleSize: totalTrades };
       }
