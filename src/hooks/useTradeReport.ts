@@ -104,8 +104,12 @@ export function useTradeReport(dateRange: DateRange): ReportData {
 // Utility functions for report calculations
 export const INCONCLUSIVE_CLOSE_REASONS = [
   'session_end_unresolved',
-  'session_end_tp_proximity',
 ];
+
+// Note: 'session_end_tp_proximity' was previously treated as inconclusive,
+// but those trades resolve with a positive R outcome (price reached the
+// take-profit zone). Excluding them artificially deflated win rate
+// (e.g. 11% instead of the true ~31%). They now count as wins.
 
 export function isInconclusiveTrade(t: PaperTrade): boolean {
   return INCONCLUSIVE_CLOSE_REASONS.includes(t.close_reason ?? '');
