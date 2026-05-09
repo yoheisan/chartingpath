@@ -153,10 +153,18 @@ Deno.serve(async (req) => {
 
       if (stopHit) {
         // ── Gap-aware exit: use currentPrice if it's worse than stopLoss ──
+        // ── Slippage clamp (max -1.5R): protects paper P&L from data
+        //    artefacts and extreme gaps that would otherwise produce
+        //    impossible outcomes like -50R or -180R on a single trade.
         const rawFillPrice = isLong
           ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
           : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
-        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
+        const slDistance = Math.abs(entryPrice - stopLoss);
+        const maxAdverse = 0.5 * slDistance; // cap fill at 0.5R beyond SL → total loss ≤ 1.5R
+        const clampedRawFill = isLong
+          ? Math.max(rawFillPrice, stopLoss - maxAdverse)
+          : Math.min(rawFillPrice, stopLoss + maxAdverse);
+        const fillPrice = applyAdverseSlippage(clampedRawFill, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
 
         const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
