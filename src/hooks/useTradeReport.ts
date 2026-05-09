@@ -106,13 +106,13 @@ export const INCONCLUSIVE_CLOSE_REASONS = [
   'session_end_unresolved',
 ];
 
-// Note: 'session_end_tp_proximity' was previously treated as inconclusive,
-// but those trades resolve with a positive R outcome (price reached the
-// take-profit zone). Excluding them artificially deflated win rate
-// (e.g. 11% instead of the true ~31%). They now count as wins.
+// Session-end trades still have a realized exit price and R result once they
+// are closed. They should count in win rate/average R whenever outcome_r is
+// present; otherwise profitable session-end exits get removed from the wins
+// while the total P&L still includes them, which caused the report to show 11%.
 
 export function isInconclusiveTrade(t: PaperTrade): boolean {
-  return INCONCLUSIVE_CLOSE_REASONS.includes(t.close_reason ?? '');
+  return INCONCLUSIVE_CLOSE_REASONS.includes(t.close_reason ?? '') && t.outcome_r == null;
 }
 
 export function calcWinRate(trades: PaperTrade[]): number {
