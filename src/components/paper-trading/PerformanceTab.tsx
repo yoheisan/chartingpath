@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PaperTrade, PaperPortfolio } from '@/hooks/usePaperTrading';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, Clock, Award, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Clock, Award, BarChart3, Activity, CalendarDays } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
   BarChart, Bar, Cell, CartesianGrid,
@@ -57,6 +57,21 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
       }, 0) / Math.max(1, closedTrades.filter(t => t.closed_at).length);
 
     return { totalTrades, winRate, avgR, totalPnl, bestTrade, worstTrade, avgHoldHours };
+  }, [closedTrades]);
+
+  const todayStats = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todays = closedTrades.filter(t => {
+      const closedAt = t.closed_at ? new Date(t.closed_at).getTime() : 0;
+      return closedAt >= startOfDay;
+    });
+    const pnl = todays.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+    const wins = todays.filter(t => (t.pnl ?? 0) > 0).length;
+    const losses = todays.filter(t => (t.pnl ?? 0) < 0).length;
+    const totalPnl = closedTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+    const sharePct = totalPnl !== 0 ? (pnl / Math.abs(totalPnl)) * 100 : 0;
+    return { count: todays.length, pnl, wins, losses, sharePct, trades: todays };
   }, [closedTrades]);
 
   const equityCurve = useMemo(() => {
@@ -128,6 +143,87 @@ export function PerformanceTab({ closedTrades, portfolio, userId }: PerformanceT
 
   return (
     <div className="space-y-6">
+      <Card className="border-border bg-gradient-to-br from-card to-muted/20">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">{t('paperTrading.todayTitle', 'Today')}</h3>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {todayStats.count} {todayStats.count === 1 ? t('paperTrading.tradeClosed', 'trade closed') : t('paperTrading.tradesClosed', 'trades closed')}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('paperTrading.todayPnl', "Today's P&L")}</div>
+              <div className={cn('text-xl font-bold tabular-nums', todayStats.pnl > 0 ? 'text-emerald-500' : todayStats.pnl < 0 ? 'text-red-500' : 'text-muted-foreground')}>
+                {todayStats.pnl >= 0 ? '+' : ''}${todayStats.pnl.toFixed(2)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('paperTrading.shareOfTotal', 'Share of total')}</div>
+              <div className="text-xl font-bold tabular-nums">
+                {todayStats.count === 0 ? '—' : `${todayStats.sharePct >= 0 ? '+' : ''}${todayStats.sharePct.toFixed(0)}%`}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('paperTrading.winsLosses', 'Wins / Losses')}</div>
+              <div className="text-xl font-bold tabular-nums">
+                <span className="text-emerald-500">{todayStats.wins}</span>
+                <span className="text-muted-foreground mx-1">/</span>
+                <span className="text-red-500">{todayStats.losses}</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('paperTrading.cumulativeLabel', 'Cumulative')}</div>
+              <div className={cn('text-xl font-bold tabular-nums', stats.totalPnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                {stats.totalPnl >= 0 ? '+' : ''}${stats.totalPnl.toFixed(2)}
+              </div>
+            </div>
+          </div>
+          {todayStats.trades.length > 0 && (
+            <div className="mt-4 rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left p-2 font-medium text-muted-foreground">{t('paperTrading.symbol', 'Symbol')}</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">{t('paperTrading.pattern', 'Pattern')}</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">R</th>
+                    <th className="text-right p-2 font-medium text-muted-foreground">P&L</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground">{t('paperTrading.outcome', 'Outcome')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayStats.trades.slice(0, 8).map((trade) => {
+                    const r = trade.outcome_r ?? 0;
+                    const pnl = trade.pnl ?? 0;
+                    return (
+                      <tr key={trade.id} className="border-b border-border/50 last:border-0">
+                        <td className="p-2 font-medium">{trade.symbol}</td>
+                        <td className="p-2 capitalize text-muted-foreground">{extractPattern(trade.notes)}</td>
+                        <td className={cn('p-2 text-right tabular-nums', r >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                          {r >= 0 ? '+' : ''}{r.toFixed(2)}R
+                        </td>
+                        <td className={cn('p-2 text-right tabular-nums font-medium', pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                          {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
+                        </td>
+                        <td className="p-2 text-muted-foreground truncate max-w-[160px]">{trade.close_reason ?? '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {todayStats.trades.length > 8 && (
+                <div className="text-xs text-muted-foreground text-center p-2 bg-muted/20">
+                  +{todayStats.trades.length - 8} {t('paperTrading.moreTrades', 'more')}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label={t('paperTrading.totalTrades')} value={stats.totalTrades.toString()} icon={<Activity className="h-4 w-4" />} />
         <StatCard
