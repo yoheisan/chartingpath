@@ -1,5 +1,5 @@
 /**
- // Pattern Quality Scorer v3.1.0
+ // Pattern Quality Scorer v3.2.0
  * 
  * A production-grade quality scoring system for chart patterns.
  * This is the server-side implementation for use in edge functions.
@@ -1067,7 +1067,8 @@ export function calculatePatternQualityScore(
       }
     }
   } else {
-    if (grade === 'A' || grade === 'B') { grade = 'C'; repeatabilityWarning = 'No historical proof — capped at C (Unproven)'; }
+    // v3.2.0: No proof caps A→B only. B-grades allowed without proof.
+    if (grade === 'A') { grade = 'B'; repeatabilityWarning = 'No historical proof — A capped at B (Unproven)'; }
   }
   
   // PERFORMANCE FLOOR: Strong historical proof overrides poor form score
