@@ -1073,23 +1073,22 @@ export function calculatePatternQualityScore(
   
   // PERFORMANCE FLOOR: Strong historical proof overrides poor form score
   // If a pattern has proven statistical edge, it should never grade below B
-  // PERFORMANCE FLOOR (v3.1): proven winners must not be buried at D/F by poor form score
-  if (repeatabilityProof) {
-    const { sampleSize: rpSize, winRate: rpWin, expectancyR: rpExp } = repeatabilityProof;
-    const meetsAGate = rpSize >= assetThresholds.aMinSample && rpWin >= assetThresholds.aWinRate && rpExp > 0;
-    const meetsBGate = rpSize >= assetThresholds.bMinSample && rpWin >= assetThresholds.bWinRate;
-    if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
-      grade = 'B';
-      warnings.push(`Grade floored to B: strong proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
-    } else if (meetsBGate && (grade === 'D' || grade === 'F')) {
-      grade = 'C';
-      warnings.push(`Grade floored to C: sufficient proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
-    }
+// PERFORMANCE FLOOR (v3.2.1): proven winners can grade A, not just B
+if (repeatabilityProof) {
+  const { sampleSize: rpSize, winRate: rpWin, expectancyR: rpExp } = repeatabilityProof;
+  const meetsAGate = rpSize >= assetThresholds.aMinSample && rpWin >= assetThresholds.aWinRate && rpExp > 0;
+  const meetsBGate = rpSize >= assetThresholds.bMinSample && rpWin >= assetThresholds.bWinRate;
+  if (meetsAGate && grade === 'B') {
+    grade = 'A';
+    warnings.push(`Grade floored to A: strong proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
+  } else if (meetsAGate && (grade === 'C' || grade === 'D' || grade === 'F')) {
+    grade = 'B';
+    warnings.push(`Grade floored to B: strong proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
+  } else if (meetsBGate && (grade === 'D' || grade === 'F')) {
+    grade = 'C';
+    warnings.push(`Grade floored to C: sufficient proof (n=${rpSize}, win=${rpWin.toFixed(1)}%)`);
   }
-
-  if (repeatabilityWarning) {
-    warnings.push(repeatabilityWarning);
-  }
+}
   
   // Confidence
   const passedFactors = factors.filter(f => f.passed).length;
