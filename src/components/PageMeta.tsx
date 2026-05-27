@@ -6,6 +6,7 @@ interface PageMetaProps {
   canonicalPath?: string;
   ogType?: string;
   ogImage?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 const BASE_URL = 'https://chartingpath.com';
