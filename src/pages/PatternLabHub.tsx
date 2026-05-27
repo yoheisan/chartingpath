@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { PageMeta } from '@/components/PageMeta';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, FlaskConical, Search, BarChart3, Zap } from 'lucide-react';
+import { ArrowRight, FlaskConical } from 'lucide-react';
 import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import { buildPatternLabUrl, buildBacktestSeoUrl } from '@/utils/patternLabUrl';
 import {
@@ -105,38 +105,6 @@ export default function PatternLabHub() {
             </Button>
           </div>
         </header>
-
-        {/* How it works */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-foreground mb-6">
-            {t('patternLab.hub.howTitle', 'How it works')}
-          </h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            {[
-              {
-                icon: Search,
-                title: t('patternLab.hub.step1Title', '1. Pick a pattern'),
-                body: t('patternLab.hub.step1Body', 'Choose from 15 supported patterns — flags, triangles, wedges, head & shoulders, double tops, cups, and Donchian breakouts.'),
-              },
-              {
-                icon: Zap,
-                title: t('patternLab.hub.step2Title', '2. Pick a market and timeframe'),
-                body: t('patternLab.hub.step2Body', 'Any forex pair, crypto coin, US stock, commodity or index. Timeframes from 1h up to weekly.'),
-              },
-              {
-                icon: BarChart3,
-                title: t('patternLab.hub.step3Title', '3. See the edge'),
-                body: t('patternLab.hub.step3Body', 'Win rate, expectancy, average bars held, R-multiple distribution, and a per-trade replay you can export.'),
-              },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="bg-[#1a1d27] border border-[#2a2d3a] rounded-xl p-5">
-                <Icon className="h-5 w-5 text-orange-400 mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Sample runs */}
         <section className="mb-16">
