@@ -69,6 +69,8 @@ const ProjectsPricing = lazy(() => import("./pages/ProjectsPricing"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const PatternLabWizard = lazy(() => import("./pages/projects/PatternLabWizard"));
 const PatternAuditPage = lazy(() => import("./pages/PatternAuditPage"));
+const PatternLabHub = lazy(() => import("./pages/PatternLabHub"));
+const BacktestPatternAssetPage = lazy(() => import("./pages/BacktestPatternAssetPage"));
 
 
 const CommunityFeed = lazy(() => import("./pages/CommunityFeed"));
@@ -203,6 +205,10 @@ const App = () => (
           <Route path="/projects/pattern-lab/new" element={withSuspense(<PatternLabWizard />)} />
           <Route path="/projects/pattern-lab/audit" element={withSuspense(<PatternAuditPage />)} />
           <Route path="/projects/runs/:runId" element={withSuspense(<ProjectRun />)} />
+
+          {/* Pattern Lab marketing hub + programmatic SEO */}
+          <Route path="/pattern-lab" element={withSuspense(<PatternLabHub />)} />
+          <Route path="/backtest/:patternId/:assetClass" element={withSuspense(<BacktestPatternAssetPage />)} />
           
           <Route path="/pricing" element={withSuspense(<Pricing />)} />
           <Route path="/members/trading" element={<Navigate to="/members/dashboard" replace />} />
