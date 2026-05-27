@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { PageMeta } from "@/components/PageMeta";
 
 export default function PaperTradingPage() {
   const { t } = useTranslation();

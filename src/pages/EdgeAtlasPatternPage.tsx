@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Trophy, Zap, FlaskConical, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { PageMeta } from "@/components/PageMeta";
 import { translatePatternName } from '@/utils/translatePatternName';
 interface TickerStat {
   symbol: string;

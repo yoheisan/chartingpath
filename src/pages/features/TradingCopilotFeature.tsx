@@ -120,6 +120,11 @@ const TradingCopilotFeature = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('copilotFeature.seoTitle', 'Trading Copilot — ChartingPath')}
+        description={t('copilotFeature.seoDesc', 'AI trading assistant that builds personalized trading plans, tracks pattern outcomes, and helps you stick to your strategy.')}
+        canonicalPath="/features/trading-copilot"
+      />
       {/* Hero — two-column wide layout */}
       <section className="relative py-20 md:py-28 px-4 md:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 opacity-10"
