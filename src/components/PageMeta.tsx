@@ -28,9 +28,11 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
       if (!el) {
         el = document.createElement('meta');
         if (selector.startsWith('meta[property')) {
-          el.setAttribute('property', selector.match(/property="([^"]+)")/)?.[1] || '');
+          const m = selector.match(/property="([^"]+)"/);
+          el.setAttribute('property', m ? m[1] : '');
         } else if (selector.startsWith('meta[name')) {
-          el.setAttribute('name', selector.match(/name="([^"]+)")/)?.[1] || '');
+          const m = selector.match(/name="([^"]+)"/);
+          el.setAttribute('name', m ? m[1] : '');
         }
         document.head.appendChild(el);
       }
