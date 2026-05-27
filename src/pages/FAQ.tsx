@@ -1574,6 +1574,132 @@ const FAQ = () => {
         title={t('faq.seoTitle', 'FAQ \u2014 ChartingPath')}
         description={t('faq.seoDesc', 'Frequently asked questions about ChartingPath\u2019s pattern screener, backtesting tools, alerts, and trading education.')}
         canonicalPath="/faq"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'What is the Screener?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'The Screener is our free, real-time pattern detection tool that scans 1,100+ instruments across stocks, forex, crypto, and commodities for active chart patterns.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What methodology does ChartingPath use for pattern detection?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'ChartingPath uses a three-layer detection pipeline based on institutional-grade standards: Layer 1 (Bulkowski Engine for structural detection), Layer 2 (Context Validator with 6-factor probabilistic confirmation), and Layer 3 (Multi-Timeframe Confluence final gate). Only fully confirmed patterns are displayed.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What do the pattern quality grades mean?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Quality grades reflect how well a pattern matches its ideal formation criteria. Grade A = High Quality (clean formation, strong volume, trend alignment). Grade B = Medium Quality (acceptable with minor deviations). Grade C = Lower Quality (significant deviations from ideal).'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'Why do most patterns show negative returns at 2:1 R:R?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Pattern detection identifies structural formations — it does not guarantee profitable outcomes. At a fixed 2:1 risk-reward ratio, the baseline win rate required to break even is 33.3%. Our data across 484,000+ historical detections shows that most patterns fall slightly below this threshold. The platform\'s value is in filtering to the statistically strongest setups via Edge Atlas and Pattern Lab.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What exchanges does ChartingPath cover?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'ChartingPath covers major global exchanges across all asset classes: Americas (NYSE, NASDAQ), Europe (LSE, Euronext, XETRA), Asia-Pacific (HKEX, SGX, SET, TSE, SSE, SZSE), plus forex, crypto, and commodities.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What is Pattern Lab?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Pattern Lab is ChartingPath\'s historical backtesting and research tool. It lets you simulate how any pattern would have performed on any instrument over a custom date range, with full entry/exit logic and performance metrics.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What is Edge Atlas?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Edge Atlas ranks every pattern \u00d7 timeframe \u00d7 asset class combination by estimated annualized return, calculated from ChartingPath\'s own live outcome database. It tells you not just which patterns form, but which combinations actually make money.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'How do pattern alerts work?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Pattern alerts notify you in real-time when a matching pattern is detected on your watchlist. Set filters by asset class, pattern type, timeframe, and quality grade. Alerts are delivered via in-app notifications and optional webhook integration.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What platforms can I export scripts to?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Export pattern-based trading scripts with optimized exits to TradingView (Pine Script) and MetaTrader (MQL5). Each script includes complete trade logic derived from Pattern Lab backtests.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What is the Trading Copilot?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'The Trading Copilot is an AI assistant built into ChartingPath that connects all platform data — live patterns, Edge Atlas rankings, your backtest results, paper trades, and market reports — into a single conversational interface for analysis and decision support.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'How is this different from ChatGPT or generic AI?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Generic AI tools have no access to live market data or your personal trading context. ChartingPath\'s Copilot reads real-time pattern detections, your backtest history, and Edge Atlas rankings to give contextual, data-driven advice specific to your trading.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What is Auto Paper Trading?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Auto Paper Trading automatically opens simulated (paper) trades when one of your alerts detects a matching live pattern. It lets you track how your alert setups would perform in real-time without risking real capital.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'How is the position size calculated?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Position sizing follows professional risk management principles, based on the distance between the entry price and the stop-loss level. The system calculates the number of units so that a stop-loss hit results in a fixed percentage risk to your account.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'What are the subscription tiers?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'ChartingPath offers a free tier with full screener access, plus Pro and Elite paid tiers that unlock Pattern Lab, advanced alerts, Auto Paper Trading, the Trading Copilot, and higher API limits. See the Pricing page for full details.'
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'Is there a free trial on paid plans?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Pro and Elite plans include a 7-day free trial. You are not charged if you cancel within the trial period.'
+              }
+            }
+          ]
+        }}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}

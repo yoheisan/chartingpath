@@ -12,6 +12,14 @@ const TradingStrategiesPage = () => {
         title={t('tradingStrategies.seoTitle', 'Trading Strategies — ChartingPath')}
         description={t('tradingStrategies.seoDesc', 'Explore proven trading strategies backed by real pattern outcome data. Win rates, expectancy, and risk metrics included.')}
         canonicalPath="/chart-patterns/strategies"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Trading Strategies',
+          description: 'Explore proven trading strategies backed by real pattern outcome data. Win rates, expectancy, and risk metrics included.',
+          url: 'https://chartingpath.com/chart-patterns/strategies',
+          isPartOf: { '@type': 'WebSite', name: 'ChartingPath', url: 'https://chartingpath.com' }
+        }}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="mb-6">
