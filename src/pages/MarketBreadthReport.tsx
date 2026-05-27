@@ -14,6 +14,7 @@ import { getPrefetchedReport, clearPrefetchedReport } from "@/utils/marketReport
 import { useTranslation } from "react-i18next";
 import { usePaperTrading } from "@/hooks/usePaperTrading";
 import PortfolioSummaryCard from "@/components/report/PortfolioSummaryCard";
+import { PageMeta } from "@/components/PageMeta";
 
 const MarketBreadthReport = () => {
   const { t } = useTranslation();
@@ -378,6 +379,11 @@ const MarketBreadthReport = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('marketReport.seoTitle', 'Market Breadth Report — ChartingPath')}
+        description={t('marketReport.seoDesc', 'Daily market breadth report with advance-decline data, sector rotation insights, and multi-asset momentum analysis.')}
+        canonicalPath="/tools/market-breadth"
+      />
       <main className="container mx-auto px-4 md:px-6 lg:px-8 py-12">
         {/* Hero Section */}
         <div className="mb-12 text-center">

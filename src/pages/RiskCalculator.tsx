@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageMeta } from "@/components/PageMeta";
 
 const RiskCalculator = () => {
   const { t } = useTranslation();
@@ -61,6 +62,11 @@ const RiskCalculator = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('riskCalc.seoTitle', 'Risk Calculator — ChartingPath')}
+        description={t('riskCalc.seoDesc', 'Free forex risk calculator. Calculate position size, risk amount, and stop-loss distance for safe trading.')}
+        canonicalPath="/tools/risk-calculator"
+      />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

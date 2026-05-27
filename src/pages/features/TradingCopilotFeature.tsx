@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 import { useTradingCopilotContext } from "@/components/copilot";
 import { useOutcomeCount } from "@/hooks/useOutcomeCount";
 

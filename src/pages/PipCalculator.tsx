@@ -55,6 +55,11 @@ const PipCalculator = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('pipCalc.seoTitle', 'Pip Calculator — ChartingPath')}
+        description={t('pipCalc.seoDesc', 'Free forex pip calculator. Calculate pip value, lot size, and position value for any currency pair.')}
+        canonicalPath="/tools/pip-calculator"
+      />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

@@ -173,6 +173,11 @@ export default function EdgeAtlasPatternPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('edgeAtlasPattern.seoTitle', 'Edge Atlas — ChartingPath')}
+        description={t('edgeAtlasPattern.seoDesc', 'Edge Atlas pattern statistics with win rates, expectancy, and return-on-time metrics across timeframes.')}
+        canonicalPath={`/edge-atlas/${patternId}`}
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-10">
 
         {/* Back */}
