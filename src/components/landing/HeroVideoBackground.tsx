@@ -52,7 +52,7 @@ export const HeroVideoBackground = memo(() => {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           poster="/hero-poster.jpg"
           aria-hidden="true"
         >
