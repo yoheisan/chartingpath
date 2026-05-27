@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { isForexSymbol, calcForexPnl } from "@/utils/forexUtils";
 import { ChevronLeft, LayoutDashboard, Bell, FileText, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 import { MandateCard } from "@/components/copilot/MandateCard";
 import { ConflictBanner } from "@/components/copilot/ConflictBanner";
 import { MyAlertsPanel } from "@/components/copilot/MyAlertsPanel";
@@ -232,6 +233,11 @@ const Copilot = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
+      <PageMeta
+        title={t('copilot.seoTitle', 'Trading Copilot — ChartingPath')}
+        description={t('copilot.seoDesc', 'Your personal trading command center. Build plans, track trades, and get AI-powered insights.')}
+        canonicalPath="/copilot"
+      />
       {/* Session end banner */}
       {sessionEndBanner && (
         <div className="w-full px-4 py-2 flex items-center justify-between bg-blue-500/10 border-b border-blue-500/20">

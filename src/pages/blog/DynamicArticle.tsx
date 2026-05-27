@@ -1236,7 +1236,7 @@ const DynamicArticle = () => {
       <PageMeta
         title={article.seo_title || article.title}
         description={article.seo_description || article.excerpt}
-        canonicalPath={`/learn/${article.slug}`}
+        canonicalPath={`/blog/${article.slug}`}
         ogType="article"
         ogImage={article.featured_image_url || undefined}
       />

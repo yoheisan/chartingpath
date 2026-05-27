@@ -1,12 +1,18 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 
 const Privacy = () => {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('privacy.seoTitle', 'Privacy Policy \u2014 ChartingPath')}
+        description={t('privacy.seoDesc', 'ChartingPath\u2019s privacy policy explains how we collect, use, and protect your personal data.')}
+        canonicalPath="/privacy"
+      />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

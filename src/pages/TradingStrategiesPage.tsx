@@ -2,11 +2,17 @@ import { TradingStrategies } from "@/components/TradingStrategies";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 
 const TradingStrategiesPage = () => {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('tradingStrategies.seoTitle', 'Trading Strategies — ChartingPath')}
+        description={t('tradingStrategies.seoDesc', 'Explore proven trading strategies backed by real pattern outcome data. Win rates, expectancy, and risk metrics included.')}
+        canonicalPath="/chart-patterns/strategies"
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

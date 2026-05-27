@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Zap, TrendingUp, Shield, Target, ArrowRight, Star, Users, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 import { PLANS_CONFIG, TIER_DISPLAY, PlanTier } from "@/config/plans";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -93,6 +94,11 @@ const ProjectsPricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('projectsPricing.seoTitle', 'Pricing — ChartingPath Projects')}
+        description={t('projectsPricing.seoDesc', 'ChartingPath project pricing plans. Choose from Free, Lite, Pro, or Elite tiers for pattern lab access.')}
+        canonicalPath="/projects/pricing"
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">

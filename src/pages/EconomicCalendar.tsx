@@ -14,6 +14,7 @@ import { Bell, Calendar, Mail, MessageSquare, RefreshCw, Settings } from "lucide
 import { format, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { formatInTimeZone } from "date-fns-tz";
+import { PageMeta } from "@/components/PageMeta";
 import { enUS, ja, es, fr, de, pt, zhCN, ko, ru, tr, id as idLocale, it, ar, hi } from "date-fns/locale";
 
 interface EconomicEvent {
@@ -428,6 +429,11 @@ const EconomicCalendar = () => {
 
   return (
     <div className="container mx-auto px-4 py-3">
+      <PageMeta
+        title={t('economicCalendar.seoTitle', 'Economic Calendar — ChartingPath')}
+        description={t('economicCalendar.seoDesc', 'Track upcoming economic events, earnings reports, and macro announcements that move markets.')}
+        canonicalPath="/tools/economic-calendar"
+      />
       <div className="container mx-auto space-y-3">
         {/* Compact Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
