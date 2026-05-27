@@ -17,7 +17,7 @@ const BASE_URL = 'https://chartingpath.com';
  */
 const DEFAULT_OG_IMAGE = 'https://chartingpath.com/images/default-og.png';
 
-export function PageMeta({ title, description, canonicalPath, ogType = 'website', ogImage }: PageMetaProps) {
+export function PageMeta({ title, description, canonicalPath, ogType = 'website', ogImage, jsonLd }: PageMetaProps) {
   useEffect(() => {
     // Title
     document.title = title;
@@ -27,11 +27,10 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
       let el = document.querySelector(selector) as HTMLMetaElement | null;
       if (!el) {
         el = document.createElement('meta');
-        // Determine if property or name based attribute
         if (selector.startsWith('meta[property')) {
-          el.setAttribute('property', selector.match(/property="([^"]+)"/)?.[1] || '');
+          el.setAttribute('property', selector.match(/property="([^"]+)")/)?.[1] || '');
         } else if (selector.startsWith('meta[name')) {
-          el.setAttribute('name', selector.match(/name="([^"]+)"/)?.[1] || '');
+          el.setAttribute('name', selector.match(/name="([^"]+)")/)?.[1] || '');
         }
         document.head.appendChild(el);
       }
@@ -62,7 +61,27 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
       }
       link.setAttribute('href', canonicalUrl);
     }
-  }, [title, description, canonicalPath, ogType, ogImage]);
+
+    // JSON-LD structured data
+    if (jsonLd) {
+      const scriptId = 'page-meta-jsonld';
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+      }
+      script.textContent = JSON.stringify(jsonLd);
+    }
+
+    return () => {
+      const script = document.getElementById('page-meta-jsonld');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, [title, description, canonicalPath, ogType, ogImage, jsonLd]);
 
   return null;
 }
