@@ -287,9 +287,16 @@ Type: ${variant || "strategy"}
 
   const downloadViaSupabase = async (zipBlob: Blob, filename: string) => {
     try {
+      // Scope uploads to the authenticated user's folder so storage RLS
+      // can enforce ownership and prevent users overwriting each other's files.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be signed in to download via cloud storage.');
+      }
+      const objectPath = `${user.id}/${filename}`;
       const { data, error } = await supabase.storage
         .from('strategy-downloads')
-        .upload(`temp/${filename}`, zipBlob, {
+        .upload(objectPath, zipBlob, {
           cacheControl: '3600',
           upsert: true
         });
@@ -298,14 +305,14 @@ Type: ${variant || "strategy"}
 
       const { data: publicUrlData } = supabase.storage
         .from('strategy-downloads')
-        .getPublicUrl(`temp/${filename}`);
+        .getPublicUrl(objectPath);
 
       let finalUrl = publicUrlData?.publicUrl || '';
 
       if (!finalUrl) {
         const { data: signedUrlData } = await supabase.storage
           .from('strategy-downloads')
-          .createSignedUrl(`temp/${filename}`, 3600);
+          .createSignedUrl(objectPath, 3600);
         const raw = (signedUrlData as any)?.signedUrl || (signedUrlData as any)?.signedURL || '';
         if (raw) {
           finalUrl = raw.startsWith('http')
