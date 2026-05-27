@@ -1,12 +1,18 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 
 const Terms = () => {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('terms.seoTitle', 'Terms of Service \u2014 ChartingPath')}
+        description={t('terms.seoDesc', 'Read ChartingPath\u2019s terms of service, including usage policies, disclaimers, and subscription agreements.')}
+        canonicalPath="/terms"
+      />
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Navigation */}
         <div className="mb-6">

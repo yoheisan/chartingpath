@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,12 +6,13 @@ import { useTranslation } from "react-i18next";
 const About = () => {
   const { t } = useTranslation();
 
-  useEffect(() => {
-    document.title = t('aboutPage2.title', "About ChartingPath — Built by TradingView's First Hire in Japan");
-  }, [t]);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PageMeta
+        title={t('aboutPage2.title', "About ChartingPath — Built by TradingView's First Hire in Japan")}
+        description={t('aboutPage2.metaDesc', 'Meet the founder of ChartingPath. Built by TradingView\u2019s first Japan hire \u2014 a data-driven chart pattern platform with 63K+ real outcomes.')}
+        canonicalPath="/about"
+      />
       <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20 max-w-3xl">
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-foreground mb-10">

@@ -30,6 +30,7 @@ import {
   Wallet
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageMeta } from "@/components/PageMeta";
 
 const FAQ = () => {
   const { t } = useTranslation();
@@ -1569,6 +1570,11 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('faq.seoTitle', 'FAQ \u2014 ChartingPath')}
+        description={t('faq.seoDesc', 'Frequently asked questions about ChartingPath\u2019s pattern screener, backtesting tools, alerts, and trading education.')}
+        canonicalPath="/faq"
+      />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">

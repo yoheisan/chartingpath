@@ -6,6 +6,7 @@ import { EdgeCard } from '@/components/community/EdgeCard';
 import { CommunityFilters as FiltersBar } from '@/components/community/CommunityFilters';
 import { LeaderboardSidebar } from '@/components/community/LeaderboardSidebar';
 import { ShieldCheck, Users } from 'lucide-react';
+import { PageMeta } from "@/components/PageMeta";
 
 const CommunityFeed = () => {
   const { t } = useTranslation();
@@ -16,6 +17,11 @@ const CommunityFeed = () => {
 
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
+      <PageMeta
+        title={t('community.seoTitle', 'Community Edge Feed \u2014 ChartingPath')}
+        description={t('community.seoDesc', 'Explore verified trading edges shared by the ChartingPath community. Every stat is verified by our platform.')}
+        canonicalPath="/community"
+      />
         {/* Hero */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">

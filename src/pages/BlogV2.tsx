@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { usePrefetchArticle } from "@/hooks/usePrefetchArticle";
 import { useTranslation } from "react-i18next";
+import { PageMeta } from "@/components/PageMeta";
 
 // Slugs that have comprehensive static pages at /learn/
 const STATIC_ARTICLE_SLUGS = new Set([
@@ -194,6 +195,11 @@ const BlogV2 = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={t('blog.seoTitle', 'Trading Education \u2014 ChartingPath Blog')}
+        description={t('blog.seoDesc', 'Free trading education articles on chart patterns, technical indicators, risk management, and strategy guides.')}
+        canonicalPath="/learn"
+      />
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
