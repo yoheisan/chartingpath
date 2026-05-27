@@ -289,7 +289,21 @@ const PatternLabWizard = () => {
   const normalizeSymbols = (symbols: string[] = []): string[] => [...new Set(symbols.map(normalizeSymbol))];
 
   // Normalize pattern ids from URLs/legacy payloads (e.g. donchian_breakout_short -> donchian-breakout-short)
-  const normalizePatternId = (patternId: string): string => patternId.trim().toLowerCase().replace(/_/g, '-');
+  // Aliases map screener/library ids → wizard PATTERNS ids
+  const PATTERN_ID_ALIASES: Record<string, string> = {
+    'bull-flag': 'bullish-flag',
+    'bear-flag': 'bearish-flag',
+    'head-shoulders': 'head-and-shoulders',
+    'inverted-head-shoulders': 'inverse-head-and-shoulders',
+    'inverse-head-shoulders': 'inverse-head-and-shoulders',
+    'cup-handle': 'cup-and-handle',
+    'inverse-cup-handle': 'inverse-cup-and-handle',
+    'inverted-cup-handle': 'inverse-cup-and-handle',
+  };
+  const normalizePatternId = (patternId: string): string => {
+    const base = patternId.trim().toLowerCase().replace(/_/g, '-');
+    return PATTERN_ID_ALIASES[base] ?? base;
+  };
   const normalizePatternIds = (patternIds: string[] = []): string[] => [...new Set(patternIds.map(normalizePatternId))];
   
   // Form state - prefer URL params > location state > defaults
