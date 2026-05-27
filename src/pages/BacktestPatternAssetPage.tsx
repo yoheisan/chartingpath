@@ -101,6 +101,22 @@ export default function BacktestPatternAssetPage() {
     };
   }, [patternId, assetClass, validPattern, validAsset]);
 
+  const agg = useMemo(() => (rows ? aggregate(rows) : null), [rows]);
+  const hasData = agg !== null && agg.totalTrades >= 10;
+
+  // Sparse-data noindex: tell crawlers to skip thin pages
+  useEffect(() => {
+    if (loading || !validPattern || !validAsset) return;
+    if (hasData) return;
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'robots');
+    meta.setAttribute('content', 'noindex, follow');
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, [loading, hasData, validPattern, validAsset]);
+
   if (!validPattern || !validAsset) {
     return <Navigate to="/pattern-lab" replace />;
   }
@@ -110,9 +126,6 @@ export default function BacktestPatternAssetPage() {
   const description = PATTERN_DESCRIPTIONS[patternId!];
   const guide = PATTERN_TRADING_GUIDE[patternId!];
   const svgPath = PATTERN_SVG_PATHS[patternId!];
-
-  const agg = useMemo(() => (rows ? aggregate(rows) : null), [rows]);
-  const hasData = agg !== null && agg.totalTrades >= 10;
 
   const title = `Backtest the ${patternName} on ${assetLabel} — Win rate & expectancy | ChartingPath`;
   const metaDesc = hasData
@@ -137,24 +150,6 @@ export default function BacktestPatternAssetPage() {
       },
     ],
   };
-
-  // Sparse-data noindex: tell crawlers to skip thin pages
-  useEffect(() => {
-    if (loading) return;
-    let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
-    const shouldNoindex = !hasData;
-    if (shouldNoindex) {
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', 'robots');
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', 'noindex, follow');
-    }
-    return () => {
-      if (meta && shouldNoindex) meta.remove();
-    };
-  }, [loading, hasData]);
 
   return (
     <article className="min-h-screen bg-[#0f1117]">
