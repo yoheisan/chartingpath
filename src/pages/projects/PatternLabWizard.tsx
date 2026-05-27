@@ -268,7 +268,7 @@ const PatternLabWizard = () => {
 
   // Mode selection — null = show picker, otherwise proceed to form
   const urlMode = searchParams.get('mode') as PatternLabMode;
-  const [mode, setMode] = useState<PatternLabMode>(urlMode || null);
+  const [mode, setMode] = useState<PatternLabMode>(urlMode || 'validate');
 
   // Also support URL query params from "Run Backtest" CTAs in chart viewers
   // ?instrument=EURUSD=X&pattern=donchian-breakout-long&timeframe=1d
@@ -743,138 +743,7 @@ const PatternLabWizard = () => {
           </Alert>
         )}
         
-        {/* Mode Picker — shown when no mode selected yet */}
-        {!mode && (
-          <div className="mb-8">
-            {/* First Analysis Nudge — for authenticated users with no pre-filled context */}
-            {!urlInstrument && !urlPattern && isAuthenticated && (
-              <Alert className="mb-6 border-primary/30 bg-primary/5">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <AlertDescription className="flex items-center justify-between">
-                  <span className="text-sm">
-                    <strong>{t('patternLabWizard.firstAnalysisTitle', 'First time here?')}</strong>{' '}
-                    {t('patternLabWizard.firstAnalysisDesc', 'Pick a Quick Start below to run your first backtest in one click — no setup needed.')}
-                  </span>
-                </AlertDescription>
-              </Alert>
-            )}
-            {/* Quick Start Examples — when no URL params, show one-click backtests */}
-            {!urlInstrument && !urlPattern && (
-              <div className="mb-8">
-                <p className="text-sm font-medium text-muted-foreground mb-3">{t('patternLabWizard.quickStart', 'Quick Start — try a backtest in one click')}</p>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  {[
-                    { instrument: 'AAPL', pattern: 'double-bottom', timeframe: '1d', labelKey: 'patternLabWizard.quickStartApple', labelFallback: 'Double Bottom on AAPL', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
-                    { instrument: 'BTC-USD', pattern: 'head-and-shoulders', timeframe: '4h', labelKey: 'patternLabWizard.quickStartBtc', labelFallback: 'H&S on Bitcoin', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
-                    { instrument: 'EURUSD=X', pattern: 'falling-wedge', timeframe: '1d', labelKey: 'patternLabWizard.quickStartEurusd', labelFallback: 'Falling Wedge on EUR/USD', subtitleKey: 'patternLabWizard.quickStartDaily3y', subtitleFallback: 'Daily • 3 year lookback' },
-                  ].map((example) => (
-                    <button
-                      key={example.labelKey}
-                      onClick={() => {
-                        trackEvent('pattern_lab.quick_start', { instrument: example.instrument, pattern: example.pattern });
-                        setSelectedInstruments([normalizeSymbol(example.instrument)]);
-                        setSelectedPatterns([example.pattern]);
-                        setTimeframe(example.timeframe);
-                        setMode('validate');
-                        setParamsOpen(false);
-                        setPatternsOpen(false);
-                      }}
-                      className="group text-left p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
-                    >
-                      <div className="mb-1"><InstrumentLogo instrument={example.instrument} size="sm" /></div>
-                      <p className="text-sm font-medium">{t(example.labelKey, example.labelFallback)}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{t(example.subtitleKey, example.subtitleFallback)}</p>
-                      <div className="mt-2 flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        {t('patternLabWizard.runBacktest', 'Run backtest')} <ArrowRight className="h-3 w-3" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <p className="text-sm text-muted-foreground mb-4 text-center">{t('patternLabWizard.modePrompt')}</p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {/* Validate Signal */}
-              <button
-                onClick={() => { setMode('validate'); trackEvent('pattern_lab.mode_select', { mode: 'validate' }); }}
-                className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card transition-all"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
-                    <Zap className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">{t('patternLabWizard.validateSignal')}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('patternLabWizard.validateDesc')}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      {[t('patternLabWizard.validateBullet1'), t('patternLabWizard.validateBullet2'), t('patternLabWizard.validateBullet3')].map(b => (
-                        <div key={b} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
-                          {b}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
-                      {t('patternLabWizard.startValidating')} <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              {/* Build Automation */}
-              <button
-                onClick={() => { setMode('automate'); trackEvent('pattern_lab.mode_select', { mode: 'automate' }); }}
-                className="group text-left p-6 rounded-xl border border-border/50 bg-card/50 hover:border-violet-500/50 hover:bg-card transition-all"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-2.5 rounded-lg bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors shrink-0">
-                    <Code2 className="h-5 w-5 text-violet-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">{t('patternLabWizard.buildAutomation')}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('patternLabWizard.automateDesc')}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      {[t('patternLabWizard.automateBullet1'), t('patternLabWizard.automateBullet2'), t('patternLabWizard.automateBullet3')].map(b => (
-                        <div key={b} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-3 w-3 text-violet-500 shrink-0" />
-                          {b}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-violet-500">
-                      {t('patternLabWizard.startBuilding')} <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Mode indicator when selected */}
-        {mode && (
-          <div className="mb-6 flex items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border ${
-              mode === 'validate'
-                ? 'bg-primary/10 text-primary border-primary/20'
-                : 'bg-violet-500/10 text-violet-500 border-violet-500/20'
-            }`}>
-              {mode === 'validate' ? <Zap className="h-3 w-3" /> : <Code2 className="h-3 w-3" />}
-              {mode === 'validate' ? t('patternLabWizard.validateSignal') : t('patternLabWizard.buildAutomation')}
-            </div>
-            <button
-              onClick={() => setMode(null)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-            >
-              {t('patternLabWizard.changeGoal')}
-            </button>
-          </div>
-        )}
+        {/* Goal picker removed — users discover Validate vs Automate via the form itself. */}
 
         {/* Signal Context Card — Validate mode only, shows what they're confirming */}
         {isValidate && selectedInstruments.length > 0 && selectedPatterns.length > 0 && (
