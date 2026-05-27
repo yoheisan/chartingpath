@@ -12,6 +12,14 @@ const PatternLibraryPage = () => {
         title={t('patternLibrary.seoTitle', 'Pattern Library \u2014 ChartingPath')}
         description={t('patternLibrary.seoDesc', 'Browse ChartingPath\u2019s complete library of chart patterns, candlestick formations, and technical indicators with visual guides.')}
         canonicalPath="/chart-patterns/library"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Pattern Library',
+          description: 'Browse ChartingPath\u2019s complete library of chart patterns, candlestick formations, and technical indicators with visual guides.',
+          url: 'https://chartingpath.com/chart-patterns/library',
+          isPartOf: { '@type': 'WebSite', name: 'ChartingPath', url: 'https://chartingpath.com' }
+        }}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
         <div className="mb-6">
