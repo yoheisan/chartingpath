@@ -51,36 +51,46 @@ Note: Win rate alone does not determine profitability. At 2R risk-reward, a patt
 - Quality scoring considers trend alignment, volume confirmation, and pattern geometry
 - All assumptions are documented; no black-box signals
 
-## Links
+## Pages
 
-- Homepage: https://chartingpath.com
-- Live Screener: https://chartingpath.com/patterns/live
-- Edge Atlas: https://chartingpath.com/tools/edge-atlas
-- Pattern Lab: https://chartingpath.com/pattern-lab
-- Learning Center: https://chartingpath.com/learn
-- Pattern Library: https://chartingpath.com/chart-patterns/library
-- Pattern Statistics (example): https://chartingpath.com/patterns/double-bottom/statistics
-- Pricing: https://chartingpath.com/pricing
+- [Homepage](/): Pattern-based trading signal discovery, research, and automation platform.
+- [About](/about): What we do — built by TradingView's first hire in Japan.
+- [Live Screener](/patterns/live): Real-time chart pattern scanner across 1,100+ instruments.
+- [Edge Atlas](/edge-atlas): Historical win rates, expectancy, and annualized edge for every pattern.
+- [Pattern Lab](/projects/pattern-lab/new): Backtest any chart pattern on any ticker with historical data.
+- [Learning Center](/learn): 100+ educational articles on chart patterns, indicators, and strategies.
+- [Pattern Library](/chart-patterns/library): Visual reference for all supported chart patterns.
+- [Pattern Quiz](/chart-patterns/quiz): Interactive quizzes to test your pattern recognition skills.
+- [Pip Calculator](/tools/pip-calculator): Free forex pip calculator for any currency pair.
+- [Risk Calculator](/tools/risk-calculator): Free risk and position size calculator for safe trading.
+- [Market Breadth](/tools/market-breadth): Daily market breadth report with advance-decline data.
+- [Economic Calendar](/tools/economic-calendar): Track upcoming economic events that move markets.
+- [Community Feed](/community): Verified trading edges shared by the ChartingPath community.
+- [Pricing](/pricing): Subscription plans for Pattern Lab and Copilot features.
+- [FAQ](/faq): Frequently asked questions about the platform.
+- [Support](/support): Contact our team for help and research access.
+- [Terms](/terms): Terms of service and usage policies.
+- [Privacy](/privacy): Privacy policy and data protection.
 
 ## Pattern Statistics Pages
 
 Detailed per-pattern performance breakdowns by market and timeframe:
 
-- https://chartingpath.com/patterns/ascending-triangle/statistics
-- https://chartingpath.com/patterns/descending-triangle/statistics
-- https://chartingpath.com/patterns/symmetrical-triangle/statistics
-- https://chartingpath.com/patterns/double-bottom/statistics
-- https://chartingpath.com/patterns/double-top/statistics
-- https://chartingpath.com/patterns/triple-bottom/statistics
-- https://chartingpath.com/patterns/triple-top/statistics
-- https://chartingpath.com/patterns/head-and-shoulders/statistics
-- https://chartingpath.com/patterns/inverse-head-and-shoulders/statistics
-- https://chartingpath.com/patterns/bull-flag/statistics
-- https://chartingpath.com/patterns/bear-flag/statistics
-- https://chartingpath.com/patterns/rising-wedge/statistics
-- https://chartingpath.com/patterns/falling-wedge/statistics
-- https://chartingpath.com/patterns/cup-and-handle/statistics
-- https://chartingpath.com/patterns/inverse-cup-and-handle/statistics
+- [Ascending Triangle](/patterns/ascending-triangle/statistics)
+- [Descending Triangle](/patterns/descending-triangle/statistics)
+- [Symmetrical Triangle](/patterns/symmetrical-triangle/statistics)
+- [Double Bottom](/patterns/double-bottom/statistics)
+- [Double Top](/patterns/double-top/statistics)
+- [Triple Bottom](/patterns/triple-bottom/statistics)
+- [Triple Top](/patterns/triple-top/statistics)
+- [Head and Shoulders](/patterns/head-and-shoulders/statistics)
+- [Inverse Head and Shoulders](/patterns/inverse-head-and-shoulders/statistics)
+- [Bull Flag](/patterns/bull-flag/statistics)
+- [Bear Flag](/patterns/bear-flag/statistics)
+- [Rising Wedge](/patterns/rising-wedge/statistics)
+- [Falling Wedge](/patterns/falling-wedge/statistics)
+- [Cup and Handle](/patterns/cup-and-handle/statistics)
+- [Inverse Cup and Handle](/patterns/inverse-cup-and-handle/statistics)
 
 ## Contact
 
