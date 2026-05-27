@@ -27,7 +27,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /auth
 
-Sitemap: https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/sitemap
+Sitemap: https://chartingpath.com/sitemap.xml
 
 # AI discoverability
 # llms.txt: https://chartingpath.com/llms.txt
