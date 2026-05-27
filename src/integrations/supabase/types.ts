@@ -6679,6 +6679,20 @@ export type Database = {
           win_rate: number
         }[]
       }
+      get_pattern_repeatability_proof: {
+        Args: {
+          p_before: string
+          p_direction: string
+          p_pattern_id: string
+          p_symbol: string
+          p_timeframe: string
+        }
+        Returns: {
+          expectancy_r: number
+          sample_size: number
+          win_rate: number
+        }[]
+      }
       get_quiz_questions: {
         Args: {
           p_category?: Database["public"]["Enums"]["quiz_category"]
