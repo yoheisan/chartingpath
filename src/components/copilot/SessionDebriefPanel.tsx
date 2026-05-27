@@ -241,7 +241,7 @@ export function SessionDebriefPanel({ open, onClose, initialQuestion }: SessionD
             onKeyDown={handleKeyDown}
             placeholder={t('copilotPage.askCopilotToday')}
             disabled={chatLoading || !tradeData}
-            className="w-full rounded-md border border-border/40 bg-secondary/30 px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
+            className="w-full rounded-md border border-border/40 bg-secondary/30 px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
           />
           <button
             onClick={() => sendQuestion(input)}

@@ -175,9 +175,9 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {isLoading ? (
-              <div className="text-sm text-muted-foreground/50 text-center py-4">{t('copilotPage.loading')}</div>
+              <div className="text-sm text-muted-foreground text-center py-4">{t('copilotPage.loading')}</div>
             ) : currentTrades.length === 0 ? (
-              <div className="text-sm text-muted-foreground/50 text-center py-4">{t('copilotPage.noTradesToday')}</div>
+              <div className="text-sm text-muted-foreground text-center py-4">{t('copilotPage.noTradesToday')}</div>
             ) : activeTab === 'paper' ? (
               (currentTrades as CopilotTrade[]).map((tr) => {
                 const isAi = tr.attribution === 'ai_approved';
