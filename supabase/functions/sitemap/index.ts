@@ -44,6 +44,9 @@ const STATIC_ROUTES = [
   { path: '/projects/pattern-lab/audit', priority: '0.7', changefreq: 'weekly' },
   { path: '/projects/pricing', priority: '0.6', changefreq: 'monthly' },
 
+  // Pattern Lab marketing hub
+  { path: '/pattern-lab', priority: '0.9', changefreq: 'weekly' },
+
   // Edge Atlas & Stats
   { path: '/edge-atlas', priority: '0.8', changefreq: 'daily' },
   { path: '/patterns/stats', priority: '0.9', changefreq: 'daily' },
@@ -71,6 +74,9 @@ const PATTERN_IDS = [
 // Programmatic SEO — 15 patterns × 5 asset classes × 5 timeframes = 375 pages
 const STAT_ASSET_CLASSES = ['forex', 'crypto', 'stocks', 'commodities', 'indices'];
 const STAT_TIMEFRAMES = ['1h', '4h', '8h', '1d', '1wk'];
+
+// Programmatic "Backtest <pattern> on <asset>" SEO pages — 15 × 5 = 75
+const BACKTEST_ASSET_CLASSES = ['forex', 'crypto', 'stocks', 'commodities', 'indices'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -162,6 +168,19 @@ Deno.serve(async (req) => {
   </url>
 `;
         }
+      }
+    }
+
+    // Programmatic "Backtest <pattern> on <asset>" pages (75 pages)
+    for (const pid of PATTERN_IDS) {
+      for (const ac of BACKTEST_ASSET_CLASSES) {
+        xml += `  <url>
+    <loc>${BASE_URL}/backtest/${pid}/${ac}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
       }
     }
 

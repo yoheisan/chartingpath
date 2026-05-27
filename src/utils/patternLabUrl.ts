@@ -31,3 +31,11 @@ export function buildPatternLabUrl(params: PatternLabParams): string {
 
   return `/projects/pattern-lab/new?${sp.toString()}`;
 }
+
+/**
+ * Builds a canonical URL for the programmatic "Backtest <pattern> on <asset>" SEO page.
+ * Path format mirrors the existing `/patterns/stats/...` programmatic pages.
+ */
+export function buildBacktestSeoUrl(patternId: string, assetClass: string): string {
+  return `/backtest/${normalizePatternId(patternId)}/${assetClass}`;
+}

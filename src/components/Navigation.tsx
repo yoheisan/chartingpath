@@ -213,9 +213,9 @@ const Navigation = () => {
 
               {/* 3. Pattern Lab — top-level */}
               <Link
-                to="/projects/pattern-lab/new"
+                to="/pattern-lab"
                 className={`flex items-center gap-1.5 text-base whitespace-nowrap transition-colors ${
-                  isActive('/projects/pattern-lab')
+                  isActive('/pattern-lab') || isActive('/projects/pattern-lab') || isActive('/backtest')
                     ? 'text-foreground font-medium'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
