@@ -19,7 +19,7 @@ export function useOutcomeCount() {
       ? count >= 1_000_000
         ? `${(count / 1_000_000).toFixed(1)}M+`
         : `${Math.floor(count / 1_000)}K+`
-      : null;
+      : '600K+'; // soft fallback, real value loads from DB
 
-  return { count, formatted };
+  return { count, formatted, isLoading: count == null };
 }
