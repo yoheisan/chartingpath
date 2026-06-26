@@ -55,13 +55,13 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
 
 export const MetricStrip = () => {
   const { t } = useTranslation();
-  const { count: outcomeCount } = useOutcomeCount();
+  const { count: outcomeCount, isLoading: outcomeLoading } = useOutcomeCount();
   const { data: stats } = useMetricStripStats();
 
   const metrics: MetricProps[] = [
     { value: stats?.instrumentCount ?? 800, suffix: "+", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
     { value: stats?.patternCount ?? 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
-    { value: outcomeCount ?? 465000, suffix: "+", label: t("metrics.trades", "Labeled Outcomes"), icon: Database },
+    { value: outcomeCount ?? 0, suffix: outcomeLoading ? "" : "+", label: t("metrics.trades", "Labeled Outcomes"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Live Data Refresh"), icon: Clock },
     { value: stats?.avgExpectancy && stats.avgExpectancy > 0 ? stats.avgExpectancy : 0.4, suffix: "R", label: t("metrics.avgExpectancy", "Avg Expectancy (A-Grade)"), icon: Target },
   ];
