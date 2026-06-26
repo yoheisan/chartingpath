@@ -14,11 +14,12 @@ export function useOutcomeCount() {
     gcTime: 24 * 60 * 60 * 1000,
   });
 
-  const formatted = count
-    ? count >= 1_000_000
-      ? `${(count / 1_000_000).toFixed(1)}M+`
-      : `${Math.floor(count / 1_000)}K+`
-    : '465K+';
+  const formatted =
+    count != null
+      ? count >= 1_000_000
+        ? `${(count / 1_000_000).toFixed(1)}M+`
+        : `${Math.floor(count / 1_000)}K+`
+      : null;
 
   return { count, formatted };
 }
