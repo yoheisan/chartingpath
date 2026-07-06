@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "chartingpath-mcp",
+      "version": "0.1.0",
+      "title": "ChartingPath MCP"
+    },
+    "tools": [
+      {
+        "name": "list_active_patterns",
+        "title": "List active chart patterns",
+        "description": "List currently active chart-pattern detections across stocks, crypto, forex, and commodities. Filter by asset class, timeframe, or instrument symbol.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "asset_class": {
+              "type": "string",
+              "enum": [
+                "all",
+                "stock",
+                "crypto",
+                "forex",
+                "commodity"
+              ],
+              "default": "all",
+              "description": "Asset class filter."
+            },
+            "timeframe": {
+              "type": "string",
+              "enum": [
+                "all",
+                "1h",
+                "4h",
+                "1d",
+                "1wk"
+              ],
+              "default": "all",
+              "description": "Chart timeframe filter."
+            },
+            "instrument": {
+              "type": "string",
+              "description": "Optional ticker/symbol filter, e.g. AAPL or BTC-USD."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
