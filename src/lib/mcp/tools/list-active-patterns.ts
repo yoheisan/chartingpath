@@ -1,0 +1,55 @@
+import { createClient } from "@supabase/supabase-js";
+import { defineTool } from "@lovable.dev/mcp-js";
+import { z } from "zod";
+
+export default defineTool({
+  name: "list_active_patterns",
+  title: "List active chart patterns",
+  description:
+    "List currently active chart-pattern detections across stocks, crypto, forex, and commodities. Filter by asset class, timeframe, or instrument symbol.",
+  inputSchema: {
+    asset_class: z
+      .enum(["all", "stock", "crypto", "forex", "commodity"])
+      .default("all")
+      .describe("Asset class filter."),
+    timeframe: z
+      .enum(["all", "1h", "4h", "1d", "1wk"])
+      .default("all")
+      .describe("Chart timeframe filter."),
+    instrument: z
+      .string()
+      .optional()
+      .describe("Optional ticker/symbol filter, e.g. AAPL or BTC-USD."),
+    limit: z.number().int().min(1).max(100).default(25),
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ asset_class, timeframe, instrument, limit }) => {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+
+    let q = supabase
+      .from("live_pattern_detections")
+      .select(
+        "instrument, pattern_name, direction, timeframe, asset_type, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, first_detected_at",
+      )
+      .eq("status", "active")
+      .order("first_detected_at", { ascending: false })
+      .limit(limit);
+
+    if (asset_class !== "all") q = q.eq("asset_type", asset_class);
+    if (timeframe !== "all") q = q.eq("timeframe", timeframe);
+    if (instrument) q = q.ilike("instrument", instrument);
+
+    const { data, error } = await q;
+    if (error) {
+      return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
+      structuredContent: { patterns: data ?? [] },
+    };
+  },
+});
