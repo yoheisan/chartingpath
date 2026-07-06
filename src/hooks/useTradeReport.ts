@@ -65,18 +65,33 @@ export function useTradeReport(dateRange: DateRange): ReportData {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // Auth still hydrating or user signed out — don't leave the page in a permanent spinner.
+      setAllTrades([]);
+      setSessions([]);
+      setPlans([]);
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       setLoading(true);
-      const [tradesRes, sessionsRes, plansRes] = await Promise.all([
-        supabase.from('paper_trades').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-        supabase.from('session_logs').select('*').eq('user_id', user.id).order('session_date', { ascending: true }),
-        supabase.from('master_plans').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-      ]);
-      setAllTrades((tradesRes.data as PaperTrade[]) || []);
-      setSessions((sessionsRes.data as SessionLog[]) || []);
-      setPlans((plansRes.data as MasterPlanRow[]) || []);
-      setLoading(false);
+      try {
+        const [tradesRes, sessionsRes, plansRes] = await Promise.all([
+          supabase.from('paper_trades').select('*').eq('user_id', user.id).order('created_at', { ascending: true }).limit(1000),
+          supabase.from('session_logs').select('*').eq('user_id', user.id).order('session_date', { ascending: true }).limit(1000),
+          supabase.from('master_plans').select('*').eq('user_id', user.id).order('created_at', { ascending: true }).limit(1000),
+        ]);
+        if (tradesRes.error) console.error('[useTradeReport] paper_trades error:', tradesRes.error);
+        if (sessionsRes.error) console.error('[useTradeReport] session_logs error:', sessionsRes.error);
+        if (plansRes.error) console.error('[useTradeReport] master_plans error:', plansRes.error);
+        setAllTrades((tradesRes.data as PaperTrade[]) || []);
+        setSessions((sessionsRes.data as SessionLog[]) || []);
+        setPlans((plansRes.data as MasterPlanRow[]) || []);
+      } catch (err) {
+        console.error('[useTradeReport] load failed:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [user?.id]);
