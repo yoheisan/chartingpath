@@ -44,6 +44,10 @@ export default function Outcomes() {
   });
 
   const rows = useMemo(() => data ?? [], [data]);
+  const positiveCount = useMemo(
+    () => rows.filter((r) => Number(r.expectancy_r) > 0).length,
+    [rows]
+  );
 
   return (
     <div className="min-h-screen bg-background">
