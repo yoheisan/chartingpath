@@ -98,9 +98,8 @@ serve(async (req) => {
     // 2. Fetch active live pattern detections (no time cutoff - if it's active, it's valid)
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     let detectionsQuery = supabase
-      .from("live_pattern_detections")
-      .select("id, instrument, pattern_id, pattern_name, timeframe, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, bars")
-      .eq("status", "active");
+      .from("v_live_detections_with_edge")
+      .select("id, instrument, pattern_id, pattern_name, timeframe, asset_type, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, total_trades, win_rate_pct, expectancy_r, avg_rr, qualifies");
 
     if (assetType) {
       detectionsQuery = detectionsQuery.eq("asset_type", assetType);
