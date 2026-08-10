@@ -1182,6 +1182,7 @@ const DynamicArticle = () => {
     const path = `/blog/${slug}`;
     const start = Date.now();
     trackPageView(path);
+    trackEvent('content.view', { slug, type: 'blog' });
     return () => {
       trackPageLeave(path, Date.now() - start);
     };

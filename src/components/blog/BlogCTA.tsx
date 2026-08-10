@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 
 interface BlogCTAProps {
   patternName: string;
@@ -85,7 +86,10 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
             {t('blog.liveSetupsCta.body', "Our scanner monitors {{pattern}} formations across 200+ instruments in real time. See what's active right now.", { pattern: patternName })}
           </p>
           <Button asChild className="gap-2">
-            <Link to={`/patterns/live?filter=${patternSlug}`}>
+            <Link
+              to={`/patterns/live?filter=${patternSlug}`}
+              onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'blog_cta_live_setups' })}
+            >
               {t('blog.liveSetupsCta.button', 'See live {{pattern}} setups', { pattern: patternName })}
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -103,7 +107,10 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link to="/#edge-atlas">
+                  <Link
+                    to="/#edge-atlas"
+                    onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'blog_cta_edge_atlas' })}
+                  >
                     {t('blog.liveSetupsCta.viewRanking', 'View ranking →')}
                   </Link>
                 </Button>
