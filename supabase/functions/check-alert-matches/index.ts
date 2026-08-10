@@ -93,6 +93,17 @@ serve(async (req) => {
       (profiles || []).map(p => [p.user_id, p])
     );
 
+    // Paper portfolios: used for position sizing on the alert payload and for the
+    // autopilot forward record.
+    const { data: portfolios } = await supabase
+      .from("paper_portfolios")
+      .select("id, user_id, current_balance")
+      .in("user_id", userIds);
+
+    const portfolioMap = new Map(
+      (portfolios || []).map(p => [p.user_id, p])
+    );
+
     console.log(`[check-alert-matches] Found ${alerts.length} active alerts`);
 
     // 2. Fetch active live pattern detections (no time cutoff - if it's active, it's valid)
