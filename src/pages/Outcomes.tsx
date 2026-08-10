@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Info } from 'lucide-react';
+import { ArrowRight, Info, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
@@ -56,6 +57,31 @@ export default function Outcomes() {
     () => rows.filter((r) => Number(r.expectancy_r) > 0).length,
     [rows]
   );
+
+  // In-table filters (client-side, applied on top of the server-side asset/timeframe query)
+  const [query, setQuery] = useState('');
+  const [direction, setDirection] = useState('all');
+  const [expectancy, setExpectancy] = useState('all');
+
+  const visibleRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (q && !`${r.pattern_name} ${r.pattern_id}`.toLowerCase().includes(q)) return false;
+      if (direction !== 'all' && String(r.direction).toLowerCase() !== direction) return false;
+      if (expectancy === 'positive' && !(Number(r.expectancy_r) > 0)) return false;
+      if (expectancy === 'negative' && Number(r.expectancy_r) > 0) return false;
+      return true;
+    });
+  }, [rows, query, direction, expectancy]);
+
+  const isFiltered = query.trim() !== '' || direction !== 'all' || expectancy !== 'all';
+
+  const clearTableFilters = () => {
+    setQuery('');
+    setDirection('all');
+    setExpectancy('all');
+    trackEvent('outcomes.filter_change', { key: 'table_filters', value: 'clear' });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,16 +189,79 @@ export default function Outcomes() {
 
         {/* 4. Results */}
         {!isLoading && !isError && rows.length > 0 && (
-          <p className="text-sm text-muted-foreground mb-3">
-            {t('outcomes.summaryLine', {
-              defaultValue:
-                '{{total}} combinations meet the n>={{min}} floor. {{positive}} show positive expectancy; {{negative}} do not.',
-              total: rows.length,
-              min: MIN_SAMPLE_SIZE,
-              positive: positiveCount,
-              negative: rows.length - positiveCount,
-            })}
-          </p>
+          <>
+            {/* In-table filters */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="pl-9"
+                  placeholder={t('outcomes.searchPlaceholder', 'Filter by pattern name')}
+                  aria-label={t('outcomes.searchPlaceholder', 'Filter by pattern name')}
+                />
+              </div>
+              <Select
+                value={direction}
+                onValueChange={(v) => {
+                  setDirection(v);
+                  trackEvent('outcomes.filter_change', { key: 'direction', value: v });
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-44" aria-label={t('outcomes.direction', 'Direction')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('outcomes.allDirections', 'All directions')}</SelectItem>
+                  <SelectItem value="bullish">{t('outcomes.bullish', 'Bullish')}</SelectItem>
+                  <SelectItem value="bearish">{t('outcomes.bearish', 'Bearish')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={expectancy}
+                onValueChange={(v) => {
+                  setExpectancy(v);
+                  trackEvent('outcomes.filter_change', { key: 'expectancy', value: v });
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-52" aria-label={t('outcomes.colExpectancy', 'Expectancy')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('outcomes.allExpectancy', 'All expectancy')}</SelectItem>
+                  <SelectItem value="positive">{t('outcomes.positiveExpectancy', 'Positive expectancy')}</SelectItem>
+                  <SelectItem value="negative">{t('outcomes.negativeExpectancy', 'Zero or negative')}</SelectItem>
+                </SelectContent>
+              </Select>
+              {isFiltered && (
+                <Button variant="ghost" onClick={clearTableFilters}>
+                  {t('outcomes.clearFilters', 'Clear')}
+                </Button>
+              )}
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-3">
+              {t('outcomes.summaryLine', {
+                defaultValue:
+                  '{{total}} combinations meet the n>={{min}} floor. {{positive}} show positive expectancy; {{negative}} do not.',
+                total: rows.length,
+                min: MIN_SAMPLE_SIZE,
+                positive: positiveCount,
+                negative: rows.length - positiveCount,
+              })}
+              {isFiltered && (
+                <>
+                  {' '}
+                  {t('outcomes.filteredCount', {
+                    defaultValue: 'Showing {{shown}} of {{total}} after filters.',
+                    shown: visibleRows.length,
+                    total: rows.length,
+                  })}
+                </>
+              )}
+            </p>
+          </>
         )}
 
         <Card>
@@ -209,6 +298,15 @@ export default function Outcomes() {
                   )}
                 </p>
               </div>
+            ) : visibleRows.length === 0 ? (
+              <div className="p-10 text-center max-w-xl mx-auto space-y-3">
+                <p className="font-medium">
+                  {t('outcomes.noMatches', 'No combinations match these filters.')}
+                </p>
+                <Button variant="outline" onClick={clearTableFilters}>
+                  {t('outcomes.clearFilters', 'Clear')}
+                </Button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -224,7 +322,7 @@ export default function Outcomes() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((r, i) => (
+                    {visibleRows.map((r, i) => (
                       <tr
                         key={`${r.pattern_id}-${r.timeframe}-${r.asset_type}-${r.direction}-${i}`}
                         className="border-b border-border/50 last:border-0"
