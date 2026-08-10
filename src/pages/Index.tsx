@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, TrendingUp, Shield, FlaskConical, DollarSign } from "lucide-react";
+import { ArrowRight, BarChart3, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -8,25 +8,14 @@ import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/analytics';
 import PricingTeaser from '@/components/landing/PricingTeaser';
-import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
-import { EdgeAtlasSection } from '@/components/landing/EdgeAtlasSection';
 import { usePrefetchArticles } from '@/hooks/usePrefetchArticles';
-import { FeatureBlocks } from '@/components/landing/FeatureBlocks';
-import { CopilotValueProp } from '@/components/landing/CopilotValueProp';
 import { PageMeta } from '@/components/PageMeta';
 import { WebApplicationJsonLd, FAQJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import { useOutcomeCount } from '@/hooks/useOutcomeCount';
 import LivePatternPreview from '@/components/landing/LivePatternPreview';
-import MarketPulseChart from '@/components/landing/MarketPulseChart';
-import { SocialProof } from '@/components/landing/SocialProof';
-import { EmailLeadCapture } from '@/components/landing/EmailLeadCapture';
-import { ScrollSignupModal } from '@/components/landing/ScrollSignupModal';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
-import { OutcomeStatsStrip } from '@/components/landing/OutcomeStatsStrip';
-import { PatternConcentrationHeatmap } from '@/components/landing/PatternConcentrationHeatmap';
-import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground';
 import { OutcomeDataBadge } from '@/components/screener/OutcomeDataBadge';
 
 const Index = () => {
@@ -37,9 +26,7 @@ const Index = () => {
   const { formatted: outcomeCount } = useOutcomeCount();
 
   const heroRef = useSectionTracking('hero');
-  const screenerRef = useSectionTracking('screener_teaser');
-  const edgeAtlasRef = useSectionTracking('edge_atlas');
-  const copilotRef = useSectionTracking('copilot');
+  const differenceRef = useSectionTracking('difference');
   const pricingRef = useSectionTracking('pricing');
 
   useEffect(() => {
