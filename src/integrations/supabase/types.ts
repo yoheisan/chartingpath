@@ -164,6 +164,13 @@ export type Database = {
             referencedRelation: "live_pattern_detections"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agent_scores_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "v_live_detections_with_edge"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agent_scoring_history: {
@@ -299,6 +306,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alert_suppression_log: {
+        Row: {
+          alert_id: string | null
+          asset_type: string | null
+          created_at: string
+          detection_id: string | null
+          direction: string | null
+          expectancy_r: number | null
+          id: string
+          pattern_id: string
+          reason: string
+          suppressed_at: string
+          symbol: string
+          timeframe: string
+          total_trades: number | null
+          user_id: string
+        }
+        Insert: {
+          alert_id?: string | null
+          asset_type?: string | null
+          created_at?: string
+          detection_id?: string | null
+          direction?: string | null
+          expectancy_r?: number | null
+          id?: string
+          pattern_id: string
+          reason?: string
+          suppressed_at?: string
+          symbol: string
+          timeframe: string
+          total_trades?: number | null
+          user_id: string
+        }
+        Update: {
+          alert_id?: string | null
+          asset_type?: string | null
+          created_at?: string
+          detection_id?: string | null
+          direction?: string | null
+          expectancy_r?: number | null
+          id?: string
+          pattern_id?: string
+          reason?: string
+          suppressed_at?: string
+          symbol?: string
+          timeframe?: string
+          total_trades?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       alerts: {
         Row: {
@@ -3546,6 +3604,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "paper_trades_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "v_live_detections_with_edge"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "paper_trades_gate_evaluation_id_fkey"
             columns: ["gate_evaluation_id"]
             isOneToOne: false
@@ -6085,6 +6150,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_signal_actions_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "v_live_detections_with_edge"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_signal_actions_paper_trade_id_fkey"
             columns: ["paper_trade_id"]
             isOneToOne: false
@@ -6422,6 +6494,34 @@ export type Database = {
         }
         Relationships: []
       }
+      v_live_detections_with_edge: {
+        Row: {
+          asset_type: string | null
+          avg_bars: number | null
+          avg_rr: number | null
+          current_price: number | null
+          direction: string | null
+          entry_price: number | null
+          exchange: string | null
+          expectancy_r: number | null
+          first_detected_at: string | null
+          id: string | null
+          instrument: string | null
+          last_confirmed_at: string | null
+          pattern_id: string | null
+          pattern_name: string | null
+          qualifies: boolean | null
+          quality_score: string | null
+          risk_reward_ratio: number | null
+          status: string | null
+          stop_loss_price: number | null
+          take_profit_price: number | null
+          timeframe: string | null
+          total_trades: number | null
+          win_rate_pct: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }
@@ -6678,6 +6778,22 @@ export type Database = {
           grade_d: number
           pattern_count: number
           timeframe: string
+        }[]
+      }
+      get_pattern_edge: {
+        Args: {
+          p_asset_type: string
+          p_direction: string
+          p_pattern_id: string
+          p_timeframe: string
+        }
+        Returns: {
+          avg_bars: number
+          avg_rr: number
+          expectancy_r: number
+          qualifies: boolean
+          total_trades: number
+          win_rate_pct: number
         }[]
       }
       get_pattern_library_stats: {
