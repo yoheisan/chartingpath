@@ -337,10 +337,10 @@ export function PatternScreenerTeaser() {
     );
     if (anyHasMore) {
       paywallFiredRef.current = true;
-      track('paywall_shown', {
-        context: 'landing_screener_blur_gate',
+      trackEvent('paywall.shown', {
+        feature: 'guest_pattern_limit',
+        source: 'landing_screener_blur_gate',
         current_plan: 'GUEST',
-        limit_type: 'guest_pattern_limit',
       });
     }
   }, [isGuest, guestPatternLimit, patternsByAsset]);
@@ -444,8 +444,11 @@ export function PatternScreenerTeaser() {
                         <div className="flex gap-2">
                           <Button asChild size="sm">
                             <Link
-                              to="/auth?mode=signup"
-                              onClick={() => track('pricing_clicked', { source: 'landing_blur_gate' })}
+                              to="/auth?mode=signup&source=landing_screener_blur_gate"
+                              onClick={() => {
+                                trackEvent('paywall.cta_click', { feature: 'guest_pattern_limit' });
+                                trackEvent('landing.cta_click', { source: 'screener_teaser', button: 'blur_gate_signup' });
+                              }}
                             >
                               {t('auth.signUpFree', 'Sign Up Free')}
                             </Link>
@@ -470,7 +473,7 @@ export function PatternScreenerTeaser() {
 
         {/* CTA */}
         <div className="text-center">
-          <Link to="/patterns/live" onClick={() => trackEvent('landing.cta_click', { button: 'screener_teaser_view_all', asset_type: activeTab, total: currentTotal })}>
+          <Link to="/patterns/live" onClick={() => trackEvent('landing.cta_click', { source: 'screener_teaser', button: 'screener_teaser_view_all', asset_type: activeTab, total: currentTotal })}>
             <Button size="lg" className="px-8">
               {currentTotal > MAX_TEASER_ITEMS
                 ? t('patternScreenerTeaser.viewAllSignals', { count: currentTotal, label: activeTabConfig ? t(activeTabConfig.i18nKey) : '' })
