@@ -4,7 +4,7 @@ import { X, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 const DISMISS_KEY = 'upgrade_nudge_dismissed_at';
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -27,7 +27,7 @@ export function DashboardUpgradeNudge() {
   const shouldShow = !loading && !!user && planTier === 'FREE' && !dismissed;
   useEffect(() => {
     if (shouldShow) {
-      track('paywall_shown', { context: 'dashboard_nudge', current_plan: planTier, limit_type: 'nudge' });
+      trackEvent('paywall.shown', { feature: 'nudge', source: 'dashboard_nudge', current_plan: planTier });
     }
   }, [shouldShow, planTier]);
 
@@ -36,7 +36,7 @@ export function DashboardUpgradeNudge() {
   const handleDismiss = () => {
     localStorage.setItem(DISMISS_KEY, Date.now().toString());
     setDismissed(true);
-    track('paywall_shown', { context: 'dashboard_nudge_dismissed', current_plan: planTier, limit_type: 'nudge' });
+    trackEvent('paywall.dismissed', { feature: 'nudge', source: 'dashboard_nudge', current_plan: planTier });
   };
 
   return (
@@ -71,7 +71,7 @@ export function DashboardUpgradeNudge() {
           size="sm"
           className="shrink-0"
           onClick={() => {
-            track('upgrade_clicked', { source: 'dashboard_nudge', current_plan: planTier } as any);
+            trackEvent('paywall.cta_click', { feature: 'nudge', source: 'dashboard_nudge', current_plan: planTier });
           }}
         >
           <Link to="/pricing">

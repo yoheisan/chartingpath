@@ -80,10 +80,10 @@ export function UpgradePrompt({
 
   // Track impression
   if (open) {
-    track('paywall_shown', {
-      context,
+    trackEvent('paywall.shown', {
+      feature: context,
+      source: 'upgrade_prompt',
       current_plan: currentTier,
-      limit_type: context,
     });
   }
 
@@ -142,7 +142,7 @@ export function UpgradePrompt({
 
         <div className="flex flex-col gap-2 mt-4">
           <Button asChild size="lg" onClick={() => {
-            track('upgrade_clicked', { source: context, current_plan: currentTier } as any);
+            trackEvent('paywall.cta_click', { feature: context, source: 'upgrade_prompt', current_plan: currentTier });
             onOpenChange(false);
           }}>
             <Link to="/pricing">

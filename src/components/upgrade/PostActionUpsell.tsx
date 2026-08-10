@@ -49,10 +49,10 @@ export function PostActionUpsell({ open, onOpenChange, trigger, currentTier, com
   const nextTier = TIER_DISPLAY[nextTierKey];
 
   if (open) {
-    track('paywall_shown', {
-      context: `post_action_${trigger}`,
+    trackEvent('paywall.shown', {
+      feature: trigger,
+      source: `post_action_${trigger}`,
       current_plan: currentTier,
-      limit_type: trigger,
     });
   }
 
@@ -86,7 +86,7 @@ export function PostActionUpsell({ open, onOpenChange, trigger, currentTier, com
             asChild
             size="lg"
             onClick={() => {
-              track('upgrade_clicked', { source: `post_action_${trigger}`, current_plan: currentTier } as any);
+              trackEvent('paywall.cta_click', { feature: trigger, source: `post_action_${trigger}`, current_plan: currentTier });
               onOpenChange(false);
             }}
           >

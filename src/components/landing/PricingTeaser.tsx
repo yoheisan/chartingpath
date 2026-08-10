@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Check, ArrowRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { track } from "@/services/analytics";
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from "react-i18next";
 import { PRICING_TEASER_PLANS } from "@/constants/pricingPlans";
