@@ -305,7 +305,8 @@
     "tf1hRec": "1 Hour (Recommended)",
     "tf4h": "4 Hours",
     "tf8h": "8 Hours",
-    "tf1d": "1 Day"
+    "tf1d": "1 Day",
+    "edgeSummary": "Last 30 days: {{fired}} alerts fired · {{suppressed}} detections suppressed for lack of measured edge."
   },
   "backtestWorkspace": {
     "demoMode": "Demo Mode",
@@ -6678,5 +6679,27 @@
     "sampleSize": "Sample size",
     "insufficient": "Insufficient sample — fewer than {{min}} resolved outcomes for this pattern, so no figures are shown.",
     "seeAll": "See all outcome data"
+  },
+  "alertEdge": {
+    "title": "Measured edge for this combination",
+    "unknownAsset": "We could not resolve an asset class for this symbol, so we have no measured edge for it.",
+    "hasEdge": "Measured edge",
+    "watchOnly": "Watch-only",
+    "stats": "Win rate {{wr}}% · expectancy {{exp}}R · avg R:R {{rr}} · n={{n}}",
+    "noEdge": "This combination has no measured edge (n={{n}}, expectancy {{exp}}R). We won't alert on it — you can still save it as a watch-only alert.",
+    "disclaimer": "Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice."
+  },
+  "forwardRecord": {
+    "title": "Forward record",
+    "subtitle": "Every edge-filtered signal we issued, logged automatically as a paper trade.",
+    "issued": "Signals issued",
+    "resolved": "Resolved",
+    "forwardWinRate": "Forward win rate",
+    "forwardExpectancy": "Forward expectancy",
+    "insufficient": "Insufficient sample — record still building ({{resolved}} of {{min}} resolved).",
+    "backtested": "Backtested, same cells",
+    "backtestedValues": "Win rate {{wr}}% · expectancy {{exp}}R · n={{n}}",
+    "noBacktest": "No backtested figures for these cells yet.",
+    "disclaimer": "Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice."
   }
 }
