@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Zap, ArrowRight, Trophy } from "lucide-react";
 import { PlanTier, TIER_DISPLAY } from "@/config/plans";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 export type UpsellTrigger = 
   | 'last_credit_used'

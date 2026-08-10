@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Zap, ArrowRight, Check, TrendingUp } from "lucide-react";
 import { TIER_DISPLAY, PlanTier } from "@/config/plans";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 export type UpgradeContext = 
   | 'credits_exhausted'
