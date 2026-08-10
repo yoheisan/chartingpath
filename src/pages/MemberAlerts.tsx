@@ -83,6 +83,7 @@ const MemberAlerts = () => {
   const [riskPercent, setRiskPercent] = useState(1.0);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
+  const edgeSummary = useAlertEdgeSummary(user?.id);
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -571,6 +572,15 @@ const MemberAlerts = () => {
             ({activeAlerts.length}/{planLimits.max === 999999 ? '∞' : planLimits.max} {t('alerts.statusActive').toLowerCase()})
           </span>
         </div>
+
+        {!edgeSummary.loading && (
+          <p className="text-xs text-muted-foreground">
+            {t('alerts.edgeSummary', 'Last 30 days: {{fired}} alerts fired · {{suppressed}} detections suppressed for lack of measured edge.', {
+              fired: edgeSummary.fired,
+              suppressed: edgeSummary.suppressed,
+            })}
+          </p>
+        )}
       </div>
 
 
