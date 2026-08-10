@@ -41,7 +41,7 @@ export default function PatternStatsIndexPage() {
     <article className="min-h-screen bg-[#0f1117]">
       <PageMeta
         title="Chart Pattern Statistics — Backtested Win Rates & Performance Data | ChartingPath"
-        description="Comprehensive chart pattern backtest statistics across forex, crypto, stocks and commodities. Real win rates, expectancy data, and R:R ratios from 320,000+ historical trades."
+        description="Comprehensive chart pattern backtest statistics across forex, crypto, stocks and commodities. Real win rates, expectancy data, and R:R ratios from 500,000+ resolved historical outcomes."
         canonicalPath="/patterns/stats"
       />
 

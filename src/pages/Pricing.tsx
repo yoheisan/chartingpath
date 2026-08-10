@@ -89,7 +89,7 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <PageMeta
         title={t('pricingPage.metaTitle', 'Simple Pricing. Serious Data. | ChartingPath')}
-        description={t('pricingPage.metaDescription', 'Start free with live pattern scanning. Upgrade for full outcome data, AI Copilot, and backtesting across 424K+ detected patterns.')}
+        description={t('pricingPage.metaDescription', 'Start free with live pattern scanning. Upgrade for full outcome data, AI Copilot, and backtesting across 500K+ resolved pattern outcomes.')}
         canonicalPath="/pricing"
       />
 

@@ -670,11 +670,11 @@ const Auth = () => {
             {/* Social proof */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-muted/50 text-center">
-                <p className="text-2xl font-bold text-foreground">1,100+</p>
+                <p className="text-2xl font-bold text-foreground">820+</p>
                 <p className="text-xs text-muted-foreground">{t('auth.instrumentsTracked')}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center">
-                <p className="text-2xl font-bold text-foreground">320K+</p>
+                <p className="text-2xl font-bold text-foreground">500K+</p>
                 <p className="text-xs text-muted-foreground">{t('auth.patternOutcomes')}</p>
               </div>
             </div>
