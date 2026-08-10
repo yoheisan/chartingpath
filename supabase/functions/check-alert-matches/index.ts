@@ -199,6 +199,27 @@ serve(async (req) => {
       // 6. Log the detection in alerts_log first, then send notification, then update email_sent
       const processAlert = async () => {
         try {
+          // Position size from the user's configured risk, against their paper balance.
+          const portfolio = portfolioMap.get(alert.user_id);
+          const riskPercent = Math.min(alert.risk_percent ?? 1.0, 5);
+          const stopDistance = Math.abs(
+            (matchedDetection.entry_price ?? 0) - (matchedDetection.stop_loss_price ?? 0)
+          );
+          const riskAmount = portfolio ? (portfolio.current_balance * riskPercent) / 100 : 0;
+          const positionSize = stopDistance > 0 && riskAmount > 0
+            ? Number((riskAmount / stopDistance).toFixed(6))
+            : null;
+
+          const edgeStats = {
+            sample_size: matchedDetection.total_trades ?? 0,
+            win_rate_pct: matchedDetection.win_rate_pct ?? null,
+            expectancy_r: matchedDetection.expectancy_r ?? null,
+            avg_rr: matchedDetection.avg_rr ?? null,
+            risk_percent: riskPercent,
+            position_size: positionSize,
+            disclaimer: 'Historical outcomes are not forward returns. Figures are gross of costs. Not financial advice.',
+          };
+
           // Insert log entry first to get the ID
           const { data: logData, error: logError } = await supabase
             .from("alerts_log")
@@ -212,11 +233,13 @@ serve(async (req) => {
                            matchedDetection.quality_score === 'C' ? 0.7 : 0.6,
                 description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
                 detection_id: matchedDetection.id,
+                edge: edgeStats,
               },
               price_data: {
                 symbol: alert.symbol,
                 timeframe: alert.timeframe,
                 current_price: matchedDetection.current_price || matchedDetection.entry_price,
+                position_size: positionSize,
               },
               entry_price: matchedDetection.entry_price,
               stop_loss_price: matchedDetection.stop_loss_price,
@@ -254,6 +277,7 @@ serve(async (req) => {
               patternResult: {
                 confidence,
                 description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                edge: edgeStats,
               },
               marketData: [{
                 o: matchedDetection.entry_price,
@@ -270,6 +294,7 @@ serve(async (req) => {
                 riskRewardRatio: matchedDetection.risk_reward_ratio,
                 stopLossMethod: 'pattern-based',
                 takeProfitMethod: 'pattern-based',
+                positionSize,
               },
             },
           });
@@ -293,7 +318,39 @@ serve(async (req) => {
             }
           }
 
-          // 8. Auto Paper Trade (if enabled)
+          // 8a. PAPER AUTOPILOT — system record of every signal we issue, always.
+          try {
+            const { error: autopilotErr } = await supabase
+              .from("paper_trades")
+              .insert({
+                user_id: alert.user_id,
+                portfolio_id: portfolio?.id ?? null,
+                symbol: alert.symbol,
+                trade_type: matchedDetection.direction === 'short' ? 'short' : 'long',
+                entry_price: matchedDetection.entry_price,
+                stop_loss: matchedDetection.stop_loss_price,
+                take_profit: matchedDetection.take_profit_price,
+                quantity: positionSize ?? 1,
+                status: 'open',
+                detection_id: matchedDetection.id,
+                pattern_id: alert.pattern,
+                timeframe: alert.timeframe,
+                asset_type: matchedDetection.asset_type,
+                source: 'edge_alert_autopilot',
+                attribution: 'system',
+                alerted_at: new Date().toISOString(),
+                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${matchedDetection.total_trades} exp=${matchedDetection.expectancy_r}R`,
+              });
+            if (autopilotErr) {
+              console.error(`[check-alert-matches] Autopilot insert error for alert ${alert.id}:`, autopilotErr);
+            } else {
+              console.log(`[check-alert-matches] Autopilot paper trade logged for alert ${alert.id}`);
+            }
+          } catch (autopilotCatch) {
+            console.error(`[check-alert-matches] Autopilot exception for alert ${alert.id}:`, autopilotCatch);
+          }
+
+          // 8b. User opt-in Auto Paper Trade (separate from the system record above)
           if (alert.auto_paper_trade) {
             try {
               const { error: paperErr } = await supabase.functions.invoke('auto-paper-trade', {
