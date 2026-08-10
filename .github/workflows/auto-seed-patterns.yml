@@ -1,5 +1,13 @@
 name: Auto Seed 1h Patterns
 
+# NOTE: this workflow is named "Auto Seed 1h Patterns" and seeds with
+# timeframe "1h". Failure emails have referenced a 4h variant, but there is no
+# 4h seeding workflow in this repo — the discrepancy is noted here rather than
+# inventing one. If a 4h cadence is wanted, it needs to be added deliberately.
+#
+# NOTE: cron '*/12 * * * *' is 120 runs/day of GitHub Actions minutes. Left
+# unchanged deliberately — ingestion cadence is the owner's call — but it may be
+# worth revisiting for cost.
 on:
   schedule:
     - cron: '*/12 * * * *'
@@ -9,6 +17,10 @@ jobs:
   seed:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Overlapping runs queue instead of colliding with each other.
+    concurrency:
+      group: auto-seed-1h
+      cancel-in-progress: false
     steps:
       - name: Select batch
         id: batch
@@ -41,9 +53,44 @@ jobs:
           echo "Seeding: $BATCH (start index $IDX of $TOTAL)"
 
       - name: Invoke seeder
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BATCH: ${{ steps.batch.outputs.batch }}
         run: |
-          SYMBOLS_JSON=$(echo "${{ steps.batch.outputs.batch }}" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().split(',')))")
-          curl -s -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/seed-historical-patterns-mtf" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          set -uo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY are not set. Configure them in repository secrets."
+            exit 1
+          fi
+
+          SYMBOLS_JSON=$(echo "$BATCH" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().split(',')))")
+
+          STATUS=$(curl -sS --max-time 480 -o /tmp/resp.json -w '%{http_code}' \
+            -X POST "$SUPABASE_URL/functions/v1/seed-historical-patterns-mtf" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{\"timeframe\":\"1h\",\"symbolsFilter\":$SYMBOLS_JSON,\"maxInstrumentsPerType\":999,\"forceFullBackfill\":true,\"incrementalMode\":false,\"skipDbCache\":true,\"dryRun\":false}" | python3 -m json.tool
+            -d "{\"timeframe\":\"1h\",\"symbolsFilter\":$SYMBOLS_JSON,\"maxInstrumentsPerType\":999,\"forceFullBackfill\":true,\"incrementalMode\":false,\"skipDbCache\":true,\"dryRun\":false}") || CURL_FAILED=1
+
+          echo "HTTP status: ${STATUS:-<none>}"
+          echo "--- response body ---"
+          # Pretty-print only if it parses as JSON; never fail merely because it doesn't.
+          if [ -f /tmp/resp.json ]; then
+            python3 -m json.tool /tmp/resp.json 2>/dev/null || cat /tmp/resp.json
+          fi
+          echo ""
+          echo "---------------------"
+
+          if [ "${CURL_FAILED:-0}" = "1" ] || [ -z "${STATUS:-}" ]; then
+            echo "::warning::curl did not complete (timeout or transport error). The edge function may still be running server-side; seeded rows can land after this step."
+            exit 0
+          fi
+
+          # Fail only on a real 4xx/5xx from the edge function.
+          if [ "$STATUS" -ge 400 ]; then
+            echo "::error::Seeder returned HTTP $STATUS"
+            exit 1
+          fi
+
+          echo "Seeder invoked successfully (HTTP $STATUS)."
