@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RequestScanButton } from '@/components/instruments/RequestScanButton';
 import { trackEvent } from '@/lib/analytics';
 import {
-import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
   BarChart3,
   TrendingUp,
   Target,
@@ -23,6 +22,7 @@ import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
   Coins,
   ArrowUpRight,
 } from 'lucide-react';
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
