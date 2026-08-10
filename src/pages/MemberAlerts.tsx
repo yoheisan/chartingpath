@@ -686,6 +686,13 @@ const MemberAlerts = () => {
               )}
             </div>
 
+            <AlertEdgePreview
+              symbol={symbol}
+              timeframe={timeframe}
+              patterns={selectedPatterns}
+              labelFor={(id) => patternOptions.find(o => o.value === id)?.label ?? id}
+            />
+
             {/* Delivery Method */}
             <div className="space-y-2">
               <Label>{t('alerts.deliveryMethod')}</Label>
