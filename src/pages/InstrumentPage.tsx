@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RequestScanButton } from '@/components/instruments/RequestScanButton';
+import { trackEvent } from '@/lib/analytics';
 import {
   BarChart3,
   TrendingUp,
@@ -103,6 +104,11 @@ export default function InstrumentPage() {
   const [loading, setLoading] = useState(true);
 
   const symbol = rawSymbol || '';
+
+  useEffect(() => {
+    if (!symbol) return;
+    trackEvent('content.view', { slug: symbol, type: 'instrument' });
+  }, [symbol]);
 
   useEffect(() => {
     if (!symbol) return;
@@ -310,12 +316,18 @@ export default function InstrumentPage() {
         {/* CTA */}
         <section className="flex flex-wrap gap-3 mb-12">
           <Button asChild variant="default" className="gap-2">
-            <Link to={`/patterns/live?search=${displaySymbol}`}>
+            <Link
+              to={`/patterns/live?search=${displaySymbol}`}
+              onClick={() => trackEvent('content.cta_click', { slug: symbol, source: 'instrument_live_signals' })}
+            >
               <Zap className="h-4 w-4" /> View Live Signals
             </Link>
           </Button>
           <Button asChild variant="outline" className="gap-2">
-            <Link to={buildPatternLabUrl({ instrument: displaySymbol })}>
+            <Link
+              to={buildPatternLabUrl({ instrument: displaySymbol })}
+              onClick={() => trackEvent('content.cta_click', { slug: symbol, source: 'instrument_backtest' })}
+            >
               <FlaskConical className="h-4 w-4" /> Backtest {displaySymbol}
             </Link>
           </Button>
