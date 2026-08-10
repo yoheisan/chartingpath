@@ -47,6 +47,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 // ─── JSON-LD injection hook ─────────────────────────────────────────────────
 function useJsonLd(jsonLd: Record<string, any> | null) {
@@ -146,6 +147,11 @@ export default function ProgrammaticPatternStatsPage() {
   const acLabel = ASSET_CLASS_LABELS[assetClass] || assetClass;
   const tfLabel = TIMEFRAME_LABELS[timeframe] || timeframe;
   const guide = PATTERN_TRADING_GUIDE[patternSlug];
+
+  useEffect(() => {
+    if (!patternSlug) return;
+    trackEvent('content.view', { slug: patternSlug, type: 'pattern', asset_class: assetClass, timeframe });
+  }, [patternSlug, assetClass, timeframe]);
 
   // SEO content — always in DOM even during loading
   const pageTitle = data
@@ -544,12 +550,18 @@ export default function ProgrammaticPatternStatsPage() {
                 </h2>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
-                    <Link to={`/patterns/live?pattern=${patternSlug}`}>
+                    <Link
+                      to={`/patterns/live?pattern=${patternSlug}`}
+                      onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'pattern_stats_live_setups' })}
+                    >
                       {t('patternStats.ctaLiveSetups', { pattern: pName })} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/projects/pattern-lab/new">
+                    <Link
+                      to="/projects/pattern-lab/new"
+                      onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'pattern_stats_backtest' })}
+                    >
                       <FlaskConical className="mr-1 h-4 w-4" /> {t('patternStats.ctaBacktest')}
                     </Link>
                   </Button>

@@ -43,12 +43,12 @@ export function PatternStatsCTA({ patternId, patternName, instrument }: PatternS
 
           <div className="flex flex-col sm:flex-col gap-2.5 shrink-0">
             <Button asChild size="lg" className="gap-2 font-semibold text-sm sm:text-base h-11">
-              <Link to={`/auth?mode=signup&context=stats&pattern=${patternId}`}>
+              <Link to={`/auth?mode=signup&source=pattern_stats&context=stats&pattern=${patternId}`}>
                 {t('patternCTA.signUpFree', 'Sign Up Free — No Credit Card')}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="gap-2 text-xs h-8">
-              <Link to={`/auth?mode=signup&context=stats&pattern=${patternId}`}>
+              <Link to={`/auth?mode=signup&source=pattern_stats&context=stats&pattern=${patternId}`}>
                 {t('auth.continueWithGoogle', 'Continue with Google')}
               </Link>
             </Button>

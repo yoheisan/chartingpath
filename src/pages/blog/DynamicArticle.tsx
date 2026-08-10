@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { trackPageView, trackPageLeave } from "@/lib/analytics";
+import { trackPageView, trackPageLeave, trackEvent } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -1182,6 +1182,7 @@ const DynamicArticle = () => {
     const path = `/blog/${slug}`;
     const start = Date.now();
     trackPageView(path);
+    trackEvent('content.view', { slug, type: 'blog' });
     return () => {
       trackPageLeave(path, Date.now() - start);
     };

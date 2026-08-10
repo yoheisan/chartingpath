@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageMeta } from '@/components/PageMeta';
 import { MIN_SAMPLE_SIZE, OUTCOME_STATS } from '@/config/outcomeStats';
+import { trackEvent } from '@/lib/analytics';
 
 const n = (v: number) => v.toLocaleString('en-US');
 
@@ -18,6 +20,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function Methodology() {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    trackEvent('methodology.view', {});
+  }, []);
 
   const vars = {
     resolved: n(OUTCOME_STATS.resolvedOutcomes),

@@ -6411,6 +6411,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_funnel_daily: {
+        Row: {
+          day: string | null
+          engaged: number | null
+          form_start: number | null
+          landed: number | null
+          reached_auth: number | null
+          signup_completed: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }

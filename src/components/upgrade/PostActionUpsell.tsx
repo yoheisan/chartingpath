@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Zap, ArrowRight, Trophy } from "lucide-react";
 import { PlanTier, TIER_DISPLAY } from "@/config/plans";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 export type UpsellTrigger = 
   | 'last_credit_used'
@@ -49,10 +49,10 @@ export function PostActionUpsell({ open, onOpenChange, trigger, currentTier, com
   const nextTier = TIER_DISPLAY[nextTierKey];
 
   if (open) {
-    track('paywall_shown', {
-      context: `post_action_${trigger}`,
+    trackEvent('paywall.shown', {
+      feature: trigger,
+      source: `post_action_${trigger}`,
       current_plan: currentTier,
-      limit_type: trigger,
     });
   }
 
@@ -86,7 +86,7 @@ export function PostActionUpsell({ open, onOpenChange, trigger, currentTier, com
             asChild
             size="lg"
             onClick={() => {
-              track('upgrade_clicked', { source: `post_action_${trigger}`, current_plan: currentTier } as any);
+              trackEvent('paywall.cta_click', { feature: trigger, source: `post_action_${trigger}`, current_plan: currentTier });
               onOpenChange(false);
             }}
           >

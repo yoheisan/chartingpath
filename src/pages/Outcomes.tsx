@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Info } from 'lucide-react';
@@ -16,6 +16,7 @@ import {
 import { PageMeta } from '@/components/PageMeta';
 import { useOutcomeLookup } from '@/hooks/useOutcomeLookup';
 import { MIN_SAMPLE_SIZE, OUTCOME_STATS } from '@/config/outcomeStats';
+import { trackEvent } from '@/lib/analytics';
 
 const ASSET_CLASSES = ['stocks', 'fx', 'crypto', 'etfs', 'indices', 'commodities'];
 const TIMEFRAMES = ['15m', '1h', '4h', '8h', '1d', '1wk'];
@@ -32,11 +33,18 @@ export default function Outcomes() {
   const timeframe = TIMEFRAMES.includes(tfParam) ? tfParam : 'all';
 
   const setParam = (key: string, value: string) => {
+    trackEvent('outcomes.filter_change', { key, value });
     const next = new URLSearchParams(searchParams);
     if (value === 'all') next.delete(key);
     else next.set(key, value);
     setSearchParams(next, { replace: true });
   };
+
+  useEffect(() => {
+    trackEvent('outcomes.view', { asset, timeframe });
+    // Fires once per mount; filter changes are tracked via outcomes.filter_change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data, isLoading, isError, refetch } = useOutcomeLookup({
     assetType: asset === 'all' ? undefined : asset,
@@ -102,6 +110,7 @@ export default function Outcomes() {
                 </p>
                 <Link
                   to="/methodology"
+                  onClick={() => trackEvent('outcomes.methodology_click', { source: 'baseline_callout' })}
                   className="inline-flex items-center text-sm font-medium underline underline-offset-4 hover:text-foreground"
                 >
                   {t('outcomes.baselineLink', 'How these numbers are produced')}
@@ -257,7 +266,10 @@ export default function Outcomes() {
         {/* 6. Single CTA */}
         <div className="mt-14 flex justify-center">
           <Button asChild size="lg">
-            <Link to="/auth?mode=signup">
+            <Link
+              to="/auth?mode=signup&source=outcomes_footer"
+              onClick={() => trackEvent('outcomes.cta_click', { source: 'outcomes_footer' })}
+            >
               {t('outcomes.cta', 'Alert me when one of these fires')}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Link>

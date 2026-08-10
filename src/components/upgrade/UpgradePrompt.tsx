@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Zap, ArrowRight, Check, TrendingUp } from "lucide-react";
 import { TIER_DISPLAY, PlanTier } from "@/config/plans";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 export type UpgradeContext = 
   | 'credits_exhausted'
@@ -80,10 +80,10 @@ export function UpgradePrompt({
 
   // Track impression
   if (open) {
-    track('paywall_shown', {
-      context,
+    trackEvent('paywall.shown', {
+      feature: context,
+      source: 'upgrade_prompt',
       current_plan: currentTier,
-      limit_type: context,
     });
   }
 
@@ -142,7 +142,7 @@ export function UpgradePrompt({
 
         <div className="flex flex-col gap-2 mt-4">
           <Button asChild size="lg" onClick={() => {
-            track('upgrade_clicked', { source: context, current_plan: currentTier } as any);
+            trackEvent('paywall.cta_click', { feature: context, source: 'upgrade_prompt', current_plan: currentTier });
             onOpenChange(false);
           }}>
             <Link to="/pricing">

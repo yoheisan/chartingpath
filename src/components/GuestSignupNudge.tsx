@@ -43,7 +43,7 @@ export function GuestSignupNudge() {
           {t('guestNudge.description', 'Sign up free for alerts, Copilot, and full pattern access')}
         </p>
         <Button asChild size="sm" className="w-full">
-          <Link to={`/auth?mode=signup&redirect=${redirectParam}`}>
+          <Link to={`/auth?mode=signup&source=guest_nudge&redirect=${redirectParam}`}>
             {t('auth.signUpFree', 'Sign Up Free')}
           </Link>
         </Button>
@@ -61,7 +61,7 @@ export function GuestSignupNudge() {
           </Link>
         </div>
         <Button asChild size="sm" className="shrink-0 ml-3 h-7 text-xs">
-          <Link to={`/auth?mode=signup&redirect=${redirectParam}`}>{t('auth.signUpFree', 'Sign Up Free')}</Link>
+          <Link to={`/auth?mode=signup&source=guest_nudge&redirect=${redirectParam}`}>{t('auth.signUpFree', 'Sign Up Free')}</Link>
         </Button>
       </div>
     </>

@@ -6,7 +6,7 @@ import { Zap, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UpgradePrompt, UpgradeContext } from "./UpgradePrompt";
 import { useCredits } from "@/hooks/useCredits";
-import { track } from "@/services/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 interface CreditUsageBarProps {
   /** Compact mode for sidebars/headers */
@@ -30,7 +30,7 @@ export function CreditUsageBar({ compact = false, className = "" }: CreditUsageB
         <button
           onClick={() => {
             if (isLow || isExhausted) {
-              track('paywall_shown', { context: upgradeContext, current_plan: planTier, limit_type: 'credits' });
+              trackEvent('paywall.shown', { feature: 'credits', source: upgradeContext, current_plan: planTier });
               setShowUpgrade(true);
             }
           }}
@@ -84,7 +84,7 @@ export function CreditUsageBar({ compact = false, className = "" }: CreditUsageB
               size="sm"
               variant="outline"
               onClick={() => {
-                track('paywall_shown', { context: upgradeContext, current_plan: planTier, limit_type: 'credits' });
+                trackEvent('paywall.shown', { feature: 'credits', source: upgradeContext, current_plan: planTier });
                 setShowUpgrade(true);
               }}
             >

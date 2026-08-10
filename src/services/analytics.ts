@@ -169,7 +169,25 @@ const getEventKey = (eventName: AnalyticsEvent, props: EventProps): string => {
 };
 
 /**
- * Track an analytics event
+ * Track an analytics event.
+ *
+ * @deprecated Use `trackEvent()` from `@/lib/analytics` instead.
+ *
+ * This helper writes to `product_events`, which has no `is_bot_suspect` column and
+ * no consistent session semantics. For a long time several call sites (the landing
+ * hero CTAs in particular) fired BOTH `track()` and `trackEvent()` for the same user
+ * action, so the same event landed in two tables with two different counts
+ * (e.g. `landing_view`: 367 rows in `analytics_events` vs 452 in `product_events`
+ * over the same 30 days). Neither number could be trusted.
+ *
+ * `analytics_events` + `trackEvent()` is now the single source of truth: it carries
+ * `session_id` and `is_bot_suspect`, and roughly 37% of raw traffic is bots, so
+ * without that flag the numbers are meaningless.
+ *
+ * `track()` and `product_events` are retained because the admin dashboards and other
+ * code still read them — do not delete. But do not add new `track()` call sites, and
+ * never fire both helpers for the same action.
+ *
  * @param eventName - One of the 6 key events
  * @param props - Event-specific properties
  * @param allowDuplicate - Whether to allow duplicate events (default false for signup)

@@ -28,7 +28,7 @@ const AuthButton = () => {
   // Build auth URL that preserves the current page as a redirect
   const currentPath = location.pathname + location.search;
   const authSignInUrl = `/auth?redirect=${encodeURIComponent(currentPath)}`;
-  const authSignUpUrl = `/auth?mode=signup&redirect=${encodeURIComponent(currentPath)}`;
+  const authSignUpUrl = `/auth?mode=signup&source=nav_auth_button&redirect=${encodeURIComponent(currentPath)}`;
 
   const fetchUserRole = async (userId: string) => {
     const { data } = await supabase
