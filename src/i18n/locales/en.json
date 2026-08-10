@@ -1181,7 +1181,7 @@
     "seePricing": "See Pricing",
     "seeOutcomeData": "See the outcome data",
     "howWeMeasure": "How we measure this",
-    "heroProof": "{{count}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.",
+    "heroProof": "{{total}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.",
     "differenceHeadline": "Everyone shows you the pattern forming. We show you what happened afterwards.",
     "differenceOneTitle": "Every detection is followed to an outcome",
     "differenceOneBody": "A pattern is logged when it fires and resolved when price hits the target or the stop. Win or lose, it stays in the record.",

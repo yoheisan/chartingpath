@@ -129,7 +129,7 @@ const Index = () => {
             </div>
 
             <p className="text-sm text-muted-foreground mt-6">
-              {t('landing.heroProof', '{{count}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.', { count: outcomeCount })}
+              {t('landing.heroProof', '{{total}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.', { total: outcomeCount })}
             </p>
 
             <HeroStatsBar />
