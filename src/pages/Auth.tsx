@@ -30,6 +30,17 @@ const trackLoginAttempt = (payload: {
   sbClient.functions.invoke("track-login", { body: payload }).catch(() => {});
 };
 
+// Signup completion can be observed from two places (the email signUp() response and
+// the OAuth redirect landing back on /auth via onAuthStateChange). Guard so the
+// funnel event fires at most once per user per page load.
+const signupCompletedFor = new Set<string>();
+const fireSignupCompleted = (method: string, userId?: string) => {
+  const key = userId ?? method;
+  if (signupCompletedFor.has(key)) return;
+  signupCompletedFor.add(key);
+  trackEvent("auth.signup_completed", { method });
+};
+
 const Auth = () => {
   const { t } = useTranslation();
   const { formatted: outcomeFormatted } = useOutcomeCount();

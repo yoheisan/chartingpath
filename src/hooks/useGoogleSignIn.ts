@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getCanonicalAppOrigin } from '@/utils/canonicalOrigin';
+import { trackEvent } from '@/lib/analytics';
 
 /**
  * Reusable hook for Google OAuth sign-in.
@@ -11,6 +12,7 @@ export function useGoogleSignIn() {
 
   const signInWithGoogle = useCallback(async () => {
     setLoading(true);
+    trackEvent('auth.form_start', { method: 'google' });
     try {
       const redirectPath = window.location.pathname + window.location.search;
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
@@ -30,6 +32,7 @@ export function useGoogleSignIn() {
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error.message);
+      trackEvent('auth.signup_failed', { method: 'google', reason: error?.message ?? 'unknown' });
       setLoading(false);
     }
   }, []);
