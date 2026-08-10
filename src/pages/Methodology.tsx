@@ -153,6 +153,34 @@ export default function Methodology() {
           </Section>
 
           {/* 7 */}
+          <Section title={t('methodology.windowTitle', 'Two different windows: the public table vs the alert filter')}>
+            <p>
+              {t(
+                'methodology.windowBody',
+                'The outcomes table on this site reports our full measured history. The filter that decides whether we alert you does not: it qualifies a pattern/timeframe/asset/direction combination on occurrences from 1 January 2024 onward only.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.windowWhy',
+                'The dataset is not homogeneous over time. Two timeframes were added in 2024 (15m and 8h), taking the count from four to six, and the share of occurrences that expire without hitting target or stop fell from about 44% in 2021 to about 12% in 2025. Expectancy improves over the same period, but that is a change in how outcomes are measured, not evidence that patterns work better. Pooling the whole history averages several incompatible measurement regimes.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.windowEffect',
+                'The distinction is deliberate: the public table is a descriptive record and should stay complete, while an alert is a decision to risk money and needs the comparable window. Applying it makes the filter stricter — roughly a quarter of previously qualifying combinations no longer qualify, because they qualified on the strength of pre-2024 data measured under different rules. Widening the window backwards would make the filter less reliable, not more.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.windowSeasonality',
+                'We apply no seasonal adjustment. Pooled monthly expectancy looks like it varies, but splitting by year, 2024 and 2025 disagree on sign in five of twelve months. That is a level shift between years, not a calendar effect, and 2.5 years of homogeneous data gives only two or three observations per calendar month.'
+              )}
+            </p>
+          </Section>
+
+          {/* 8 */}
           <Section title={t('methodology.limitationsTitle', 'Other limitations')}>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -182,7 +210,7 @@ export default function Methodology() {
             </ul>
           </Section>
 
-          {/* 8 */}
+          {/* 9 */}
           <Section title={t('methodology.contactTitle', 'Corrections and data requests')}>
             <p>
               {t(
