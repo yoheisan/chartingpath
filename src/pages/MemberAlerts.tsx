@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
+import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
+import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
