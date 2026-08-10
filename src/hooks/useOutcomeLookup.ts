@@ -46,7 +46,10 @@ export function useOutcomeLookup({ assetType, timeframe }: OutcomeLookupFilters)
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_pattern_outcome_cells', {
         p_min_trades: MIN_SAMPLE_SIZE,
-        p_limit: 200,
+        // Must stay comfortably above the total cell count (355 today). The summary
+        // line on /outcomes counts the RETURNED rows, so if this limit ever binds the
+        // page will silently understate how many losing combinations exist.
+        p_limit: 400,
         ...(assetType ? { p_asset_type: assetType } : {}),
         ...(timeframe ? { p_timeframe: timeframe } : {}),
       });
