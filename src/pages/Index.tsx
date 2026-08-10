@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from '@/integrations/supabase/client';
-import { track } from '@/services/analytics';
 import { trackEvent } from '@/lib/analytics';
 import PricingTeaser from '@/components/landing/PricingTeaser';
 import { PatternScreenerTeaser } from '@/components/landing/PatternScreenerTeaser';
@@ -44,8 +43,10 @@ const Index = () => {
   const pricingRef = useSectionTracking('pricing');
 
   useEffect(() => {
-    track('landing_view', { path: '/' });
+    // Single source of truth: analytics_events only. The old parallel
+    // track() -> product_events write was removed (double-counting).
     trackEvent('landing_view', { path: '/' });
+    trackEvent('landing.hero_view', { path: '/' });
   }, []);
 
   useEffect(() => {
@@ -121,8 +122,7 @@ const Index = () => {
                 size="lg" 
                 onClick={() => {
                   (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
-                  track('pricing_clicked', { source: 'landing_cta_screener' });
-                  trackEvent('landing.cta_click', { button: 'hero_see_live_patterns' });
+                  trackEvent('landing.cta_click', { source: 'hero_primary', button: 'hero_see_live_patterns' });
                   navigate('/patterns/live');
                 }}
                 className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
@@ -137,7 +137,7 @@ const Index = () => {
                 size="lg" 
                 onClick={() => {
                   (window as any).gtag?.('event', 'cta_click', { location: 'hero_secondary' });
-                  trackEvent('landing.cta_click', { button: 'hero_explore_outcomes' });
+                  trackEvent('landing.cta_click', { source: 'hero_secondary', button: 'hero_explore_outcomes' });
                   navigate('/projects/pattern-lab/new');
                 }}
                 className="px-10 py-7 text-xl font-bold border-border/60 hover:bg-accent/10 transition-colors"
@@ -151,8 +151,7 @@ const Index = () => {
                 size="lg"
                 onClick={() => {
                   (window as any).gtag?.('event', 'cta_click', { location: 'hero_pricing' });
-                  track('pricing_clicked', { source: 'landing_hero_pricing_cta' });
-                  trackEvent('landing.cta_click', { button: 'hero_see_pricing' });
+                  trackEvent('landing.cta_click', { source: 'hero_pricing', button: 'hero_see_pricing' });
                   navigate('/pricing');
                 }}
                 className="px-8 py-7 text-lg font-semibold hover:bg-accent/10"
@@ -215,7 +214,8 @@ const Index = () => {
                   size="lg"
                   onClick={() => {
                     (window as any).gtag?.('event', 'cta_click', { location: 'mid_page' });
-                    navigate('/auth?mode=signup');
+                    trackEvent('landing.cta_click', { source: 'mid_page', button: 'create_free_account' });
+                    navigate('/auth?mode=signup&source=landing_mid_page');
                   }}
                   className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 whitespace-nowrap"
                 >
