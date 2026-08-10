@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-active-patterns.ts
 import { createClient } from "npm:@supabase/supabase-js@^2.55.0";
@@ -49,7 +49,15 @@ var mcp_default = defineMcp({
   title: "ChartingPath MCP",
   version: "0.1.0",
   instructions: "Tools for ChartingPath, a chart-pattern trading research platform. Use `list_active_patterns` to fetch currently active chart-pattern detections across stocks, crypto, forex, and commodities.",
-  tools: [list_active_patterns_default]
+  tools: [list_active_patterns_default],
+  // Require a valid Supabase-issued OAuth access token. Without this the MCP
+  // endpoint is callable by anyone who knows the URL once the app is published.
+  auth: auth.oauth.issuer({
+    issuer: "https://dgznlsckoamseqcpzfqm.supabase.co/auth/v1",
+    jwksUri: "https://dgznlsckoamseqcpzfqm.supabase.co/auth/v1/.well-known/jwks.json",
+    acceptedAudiences: ["authenticated"],
+    resourceName: "ChartingPath MCP"
+  })
 });
 
 // lovable-mcp-supabase-entry.ts
