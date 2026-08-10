@@ -8,7 +8,7 @@ export function useOutcomeCount() {
     queryFn: async () => {
       const { count } = await supabase
         .from('historical_pattern_occurrences')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
         .in('outcome', ['hit_tp', 'hit_sl']);
       return count ?? null;
     },
