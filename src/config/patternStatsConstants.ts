@@ -22,9 +22,10 @@ export type StatTimeframe = typeof STAT_TIMEFRAMES[number];
 export const ASSET_CLASS_TO_DB: Record<string, string> = {
   forex: 'fx',
   crypto: 'crypto',
-  stocks: 'stock',
-  commodities: 'commodity',
-  indices: 'index',
+  stocks: 'stocks',
+  commodities: 'commodities',
+  indices: 'indices',
+  etfs: 'etfs',
 };
 
 export const DB_TO_ASSET_CLASS: Record<string, string> = Object.fromEntries(
@@ -183,6 +184,7 @@ export const PATTERN_TRADING_GUIDE: Record<string, { entry: string; stopLoss: st
 
 /** Bars-per-year for annualized calculations */
 export const BARS_PER_YEAR: Record<string, number> = {
+  '15m': 24192,
   '1h': 6048,
   '4h': 1512,
   '8h': 756,
