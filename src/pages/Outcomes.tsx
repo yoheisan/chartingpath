@@ -341,13 +341,43 @@ export default function Outcomes() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
-                      <th className="px-4 py-3 font-medium">{t('outcomes.colPattern', 'Pattern')}</th>
-                      <th className="px-4 py-3 font-medium">{t('outcomes.colTimeframe', 'Timeframe')}</th>
-                      <th className="px-4 py-3 font-medium">{t('outcomes.colAsset', 'Asset')}</th>
-                      <th className="px-4 py-3 font-medium text-right">{t('outcomes.colSample', 'Sample (n)')}</th>
-                      <th className="px-4 py-3 font-medium text-right">{t('outcomes.colWinRate', 'Win rate')}</th>
-                      <th className="px-4 py-3 font-medium text-right">{t('outcomes.colRR', 'Avg R:R')}</th>
-                      <th className="px-4 py-3 font-medium text-right">{t('outcomes.colExpectancy', 'Expectancy')}</th>
+                      {([
+                        ['pattern_name', t('outcomes.colPattern', 'Pattern'), false],
+                        ['timeframe', t('outcomes.colTimeframe', 'Timeframe'), false],
+                        ['asset_type', t('outcomes.colAsset', 'Asset'), false],
+                        ['total_trades', t('outcomes.colSample', 'Sample (n)'), true],
+                        ['win_rate_pct', t('outcomes.colWinRate', 'Win rate'), true],
+                        ['avg_rr', t('outcomes.colRR', 'Avg R:R'), true],
+                        ['expectancy_r', t('outcomes.colExpectancy', 'Expectancy'), true],
+                      ] as [SortKey, string, boolean][]).map(([key, label, numeric]) => {
+                        const active = sortKey === key;
+                        return (
+                          <th
+                            key={key}
+                            className={`px-4 py-3 font-medium ${numeric ? 'text-right' : ''}`}
+                            aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggleSort(key)}
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-foreground ${
+                                active ? 'text-foreground' : ''
+                              } ${numeric ? 'flex-row-reverse' : ''}`}
+                            >
+                              {label}
+                              {active ? (
+                                sortDir === 'asc' ? (
+                                  <ChevronUp className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                )
+                              ) : (
+                                <ArrowUpDown className="h-3.5 w-3.5 opacity-40" />
+                              )}
+                            </button>
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
