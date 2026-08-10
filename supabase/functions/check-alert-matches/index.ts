@@ -151,6 +151,8 @@ serve(async (req) => {
 
     // 5. Match alerts to detections
     let matchCount = 0;
+    let suppressedCount = 0;
+    const suppressionRows: any[] = [];
     const notifications: Promise<any>[] = [];
 
     // Debug: log some sample keys
@@ -171,6 +173,25 @@ serve(async (req) => {
       const matchedDetection = detectionMap.get(alertKey);
 
       if (!matchedDetection) continue;
+
+      // EDGE FILTER — see file header. No measured edge, no alert.
+      if (!matchedDetection.qualifies) {
+        suppressedCount++;
+        suppressionRows.push({
+          user_id: alert.user_id,
+          alert_id: alert.id,
+          detection_id: matchedDetection.id,
+          symbol: alert.symbol,
+          pattern_id: alert.pattern,
+          timeframe: alert.timeframe,
+          asset_type: matchedDetection.asset_type,
+          direction: matchedDetection.direction,
+          total_trades: matchedDetection.total_trades ?? 0,
+          expectancy_r: matchedDetection.expectancy_r ?? 0,
+          reason: 'no_measured_edge',
+        });
+        continue;
+      }
 
       matchCount++;
       console.log(`[check-alert-matches] MATCH: Alert ${alert.id} → ${alert.symbol} ${alert.pattern} ${alert.timeframe}`);
