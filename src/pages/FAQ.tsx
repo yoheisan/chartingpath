@@ -1195,7 +1195,7 @@ const FAQ = () => {
                   <p className="text-muted-foreground">{t('faq.account.a_dataApiIntro', "The Data API provides programmatic access to ChartingPath's full pattern outcome dataset — the same data that powers Edge Atlas, Pattern Lab, and Copilot. It is designed for quantitative researchers, prop trading firms, and institutional investors who want to query pattern outcomes directly.")}</p>
                   <div className="bg-muted/50 p-4 rounded-lg space-y-1">
                     <p className="text-sm">• {t('faq.account.a_dataApiFeature1', 'REST API: query outcomes by pattern × instrument × timeframe × date range')}</p>
-                    <p className="text-sm">• {t('faq.account.a_dataApiFeature2', '424K+ labeled outcome records and growing daily')}</p>
+                    <p className="text-sm">• {t('faq.account.a_dataApiFeature2', '500K+ resolved outcome records and growing daily')}</p>
                     <p className="text-sm">• {t('faq.account.a_dataApiFeature3', 'JSON format with win/loss label, R-multiple, hold duration, and market regime tags')}</p>
                     <p className="text-sm">• {t('faq.account.a_dataApiFeature4', 'Custom data exports available')}</p>
                   </div>
@@ -1583,7 +1583,7 @@ const FAQ = () => {
               name: 'What is the Screener?',
               acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'The Screener is our free, real-time pattern detection tool that scans 1,100+ instruments across stocks, forex, crypto, and commodities for active chart patterns.'
+                text: 'The Screener is our free, real-time pattern detection tool that scans 820+ instruments across stocks, forex, crypto, and commodities for active chart patterns.'
               }
             },
             {

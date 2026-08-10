@@ -176,7 +176,7 @@ export default function PatternStatisticsPage() {
   }, [breakdowns]);
 
   const pageTitle = `${patternName} Statistics — Win Rate, Expectancy & Historical Data`;
-  const pageDesc = `${patternName} pattern performance across ${aggregates?.total_trades?.toLocaleString() || '320,000+'} historical trades. See win rates, expectancy, and the best markets to trade this pattern.`;
+  const pageDesc = `${patternName} pattern performance across ${aggregates?.total_trades?.toLocaleString() || '500,000+'} historical trades. See win rates, expectancy, and the best markets to trade this pattern.`;
 
   const jsonLd = {
     '@context': 'https://schema.org',

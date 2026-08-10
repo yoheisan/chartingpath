@@ -10,7 +10,7 @@ const About = () => {
     <div className="min-h-screen bg-background text-foreground">
       <PageMeta
         title={t('aboutPage2.title', "About ChartingPath — Built by TradingView's First Hire in Japan")}
-        description={t('aboutPage2.metaDesc', 'Meet the founder of ChartingPath. Built by TradingView\u2019s first Japan hire \u2014 a data-driven chart pattern platform with 63K+ real outcomes.')}
+        description={t('aboutPage2.metaDesc', 'Meet the founder of ChartingPath. Built by TradingView\u2019s first Japan hire \u2014 a data-driven chart pattern platform with 500K+ resolved outcomes.')}
         canonicalPath="/about"
       />
       <section className="container mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-20 max-w-3xl">

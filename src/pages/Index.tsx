@@ -67,7 +67,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="ChartingPath — Pattern Detection with Proven Outcomes"
+        title="ChartingPath — Chart Patterns, Measured Against What Actually Happened"
         description={`The only chart pattern platform that tracks what actually happens after the pattern forms. ${outcomeCount} labeled pattern outcomes across FX and US equities. Win rates by pattern, timeframe, and instrument — updated daily.`}
         canonicalPath="/"
       />
@@ -75,7 +75,7 @@ const Index = () => {
       <FAQJsonLd faqs={[
         {
           question: 'What is ChartingPath?',
-          answer: 'ChartingPath is a chart pattern detection platform that scans 1,100+ instruments across FX and US equities in real time. Unlike textbook statistics, it tracks every detected pattern to its actual outcome, providing real win rates and expectancy data.',
+          answer: 'ChartingPath is a chart pattern detection platform that scans 820+ instruments across FX and US equities in real time. Unlike textbook statistics, it tracks every detected pattern to its actual outcome, providing real win rates and expectancy data.',
         },
         {
           question: 'How many chart patterns does ChartingPath track?',
