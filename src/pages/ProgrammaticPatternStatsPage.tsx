@@ -48,6 +48,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
 
 // ─── JSON-LD injection hook ─────────────────────────────────────────────────
 function useJsonLd(jsonLd: Record<string, any> | null) {
@@ -568,6 +569,8 @@ export default function ProgrammaticPatternStatsPage() {
                 </div>
               </section>
             </FadeSection>
+
+            <ContentOutcomeBlock patternId={patternSlug} slug={patternSlug} source={`content_${patternSlug}`} />
           </>
         )}
       </div>
