@@ -11,8 +11,6 @@ export interface OutcomeLookupRow {
   total_trades: number;
   win_rate_pct: number;
   expectancy_r: number;
-  trades_per_year: number;
-  est_annualized_pct: number;
   avg_bars: number;
   avg_rr: number;
 }
@@ -25,21 +23,30 @@ export interface OutcomeLookupFilters {
 }
 
 /**
- * Public outcome lookup. Aggregation happens server-side in the existing
- * `get_edge_atlas_rankings_filtered` RPC — we never pull raw occurrences here.
+ * Public outcome lookup. Aggregation happens server-side in
+ * `get_pattern_outcome_cells` — we never pull raw occurrences here.
+ *
+ * This RPC is used INSTEAD of `get_edge_atlas_rankings_filtered` because that one
+ * hardcodes `WHERE expectancy_r > 0` (correct for Edge Atlas, which ranks the best
+ * opportunities; wrong here, where the whole point is to show losing cells too).
+ * Results are ordered by sample size, largest first — sorting by expectancy would
+ * put winners on top and reintroduce the same bias by presentation.
+ *
+ * NOTE (latent bug elsewhere, not fixed here): the annualisation CASE inside
+ * `get_edge_atlas_rankings_filtered` has no '15m' branch, so 15m rows fall through
+ * to 252 bars/year and their est_annualized_pct is understated.
  *
  * Deliberately has NO per-symbol filter: grouping at
- * pattern x timeframe x asset class x direction keeps the cell count ~93.
- * Slicing per instrument would manufacture winners by chance.
+ * pattern x timeframe x asset class x direction. Slicing per instrument
+ * would manufacture winners by chance.
  */
 export function useOutcomeLookup({ assetType, timeframe }: OutcomeLookupFilters) {
   return useQuery<OutcomeLookupRow[]>({
     queryKey: ['outcome-lookup', assetType ?? 'all', timeframe ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_edge_atlas_rankings_filtered', {
+      const { data, error } = await supabase.rpc('get_pattern_outcome_cells', {
         p_min_trades: MIN_SAMPLE_SIZE,
-        p_sort_by: 'expectancy',
-        p_limit: 100,
+        p_limit: 200,
         ...(assetType ? { p_asset_type: assetType } : {}),
         ...(timeframe ? { p_timeframe: timeframe } : {}),
       });
