@@ -42,18 +42,26 @@ export function useGateEvaluation() {
           return null;
         }
 
-        const resp = await fetch(EDGE_FN_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ ticker, setup_type, timeframe, direction, source, asset_type }),
-        });
+        // Retry on transient edge-runtime errors (503/429) with backoff
+        let resp: Response | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          resp = await fetch(EDGE_FN_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ ticker, setup_type, timeframe, direction, source, asset_type }),
+          });
 
-        if (!resp.ok) {
-          console.error("Gate evaluation failed:", resp.status);
+          if (resp.ok) break;
+          if (resp.status !== 503 && resp.status !== 429) break;
+          await new Promise((r) => setTimeout(r, 600 * Math.pow(2, attempt) + Math.random() * 300));
+        }
+
+        if (!resp || !resp.ok) {
+          if (resp && resp.status !== 503) console.error("Gate evaluation failed:", resp.status);
           return null;
         }
 
@@ -81,7 +89,7 @@ export function useGateEvaluation() {
         asset_type?: string;
       }>
     ) => {
-      const batchSize = 10;
+      const batchSize = 3;
       for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
         await Promise.allSettled(
@@ -89,6 +97,9 @@ export function useGateEvaluation() {
             evaluate(item.ticker, item.setup_type, item.timeframe, item.direction, undefined, item.asset_type)
           )
         );
+        if (i + batchSize < items.length) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
       }
     },
     [evaluate]
