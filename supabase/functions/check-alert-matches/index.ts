@@ -10,9 +10,21 @@ const corsHeaders = {
  * check-alert-matches
  * 
  * Cross-references user alerts (from the `alerts` table) with recently detected
- * live patterns (from `live_pattern_detections`). When a match is found and hasn't
- * already been notified (checked via `alerts_log`), it logs the detection and
- * dispatches email + push notifications via `send-pattern-alert`.
+ * live patterns, read from `v_live_detections_with_edge` so that every detection
+ * carries the measured historical edge for its pattern/timeframe/asset/direction
+ * cell.
+ *
+ * EDGE FILTER: aggregate expectancy across all resolved historical occurrences is
+ * negative. Patterns as a whole lose money. We therefore dispatch an alert ONLY
+ * when the detection lands in a cell with a measured edge (qualifies = true, i.e.
+ * n >= 100 AND expectancy > 0). Everything else is recorded in
+ * `alert_suppression_log` so the user can see what we deliberately withheld.
+ * The silence is the product.
+ *
+ * PAPER AUTOPILOT: every alert that fires is also logged as a paper trade with
+ * source = 'edge_alert_autopilot', regardless of the user's auto_paper_trade
+ * setting. That flag governs the user's own opt-in trades; this is our unedited
+ * forward record of every signal we issue.
  * 
  * Called automatically after each scan-live-patterns run completes.
  */
