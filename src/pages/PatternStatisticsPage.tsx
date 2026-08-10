@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { PatternStatsCTA } from '@/components/PatternStatsCTA';
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -393,6 +394,8 @@ export default function PatternStatisticsPage() {
             ))}
           </div>
         </section>
+
+        <ContentOutcomeBlock patternId={patternId} slug={patternId || ''} source={`content_${patternId || 'pattern'}`} />
       </div>
     </div>
   );
