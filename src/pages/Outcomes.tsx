@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Info, Search } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, ChevronDown, ChevronUp, Info, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -75,6 +75,35 @@ export default function Outcomes() {
   }, [rows, query, direction, expectancy]);
 
   const isFiltered = query.trim() !== '' || direction !== 'all' || expectancy !== 'all';
+
+  // Sorting. Default: sample size, largest first (matches the RPC's own ordering).
+  type SortKey = 'pattern_name' | 'timeframe' | 'asset_type' | 'total_trades' | 'win_rate_pct' | 'avg_rr' | 'expectancy_r';
+  const [sortKey, setSortKey] = useState<SortKey>('total_trades');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      const next = sortDir === 'asc' ? 'desc' : 'asc';
+      setSortDir(next);
+      trackEvent('outcomes.filter_change', { key: 'sort', value: `${key}:${next}` });
+    } else {
+      setSortKey(key);
+      // Text columns read best ascending; numeric columns best descending.
+      const next = ['pattern_name', 'timeframe', 'asset_type'].includes(key) ? 'asc' : 'desc';
+      setSortDir(next as 'asc' | 'desc');
+      trackEvent('outcomes.filter_change', { key: 'sort', value: `${key}:${next}` });
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...visibleRows].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }, [visibleRows, sortKey, sortDir]);
 
   const clearTableFilters = () => {
     setQuery('');
@@ -322,7 +351,7 @@ export default function Outcomes() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRows.map((r, i) => (
+                    {sortedRows.map((r, i) => (
                       <tr
                         key={`${r.pattern_id}-${r.timeframe}-${r.asset_type}-${r.direction}-${i}`}
                         className="border-b border-border/50 last:border-0"
