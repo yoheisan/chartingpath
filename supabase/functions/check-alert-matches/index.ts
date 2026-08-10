@@ -419,13 +419,24 @@ serve(async (req) => {
     // Wait for all notifications to complete
     await Promise.allSettled(notifications);
 
-    console.log(`[check-alert-matches] Done. Matched ${matchCount} alerts out of ${alerts.length}`);
+    // Record suppressed detections rather than dropping them silently.
+    if (suppressionRows.length > 0) {
+      const { error: suppressErr } = await supabase
+        .from("alert_suppression_log")
+        .insert(suppressionRows);
+      if (suppressErr) {
+        console.error("[check-alert-matches] Suppression log error:", suppressErr);
+      }
+    }
+
+    console.log(`[check-alert-matches] Done. Fired ${matchCount}, suppressed ${suppressedCount} for lack of measured edge (out of ${alerts.length} alerts)`);
 
     return new Response(JSON.stringify({
       success: true,
       totalAlerts: alerts.length,
       totalDetections: detections.length,
       matched: matchCount,
+      suppressed: suppressedCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
