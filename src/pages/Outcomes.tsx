@@ -44,6 +44,10 @@ export default function Outcomes() {
   });
 
   const rows = useMemo(() => data ?? [], [data]);
+  const positiveCount = useMemo(
+    () => rows.filter((r) => Number(r.expectancy_r) > 0).length,
+    [rows]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,6 +153,19 @@ export default function Outcomes() {
         </div>
 
         {/* 4. Results */}
+        {!isLoading && !isError && rows.length > 0 && (
+          <p className="text-sm text-muted-foreground mb-3">
+            {t('outcomes.summaryLine', {
+              defaultValue:
+                '{{total}} combinations meet the n>={{min}} floor. {{positive}} show positive expectancy; {{negative}} do not.',
+              total: rows.length,
+              min: MIN_SAMPLE_SIZE,
+              positive: positiveCount,
+              negative: rows.length - positiveCount,
+            })}
+          </p>
+        )}
+
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
