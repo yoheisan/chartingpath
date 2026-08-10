@@ -317,6 +317,8 @@ const Auth = () => {
           console.error("Profile creation error:", profileError);
         } else {
           trackSignupCompleted();
+          // OAuth redirect path — this is where Google signups actually complete.
+          fireSignupCompleted(user.app_metadata?.provider ?? "google", user.id);
         }
       }
     };
@@ -360,6 +362,7 @@ const Auth = () => {
 
   const handleSocialAuth = async (provider: 'google') => {
     setLoading(true);
+    trackEvent("auth.form_start", { method: provider });
     
     try {
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
@@ -401,6 +404,7 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      trackEvent("auth.signup_failed", { method: provider, reason: error?.message ?? "unknown" });
       toast({
         title: t('auth.toastAuthError'),
         description: error.message,
@@ -527,6 +531,7 @@ const Auth = () => {
         if (data.user) {
           // Fire GA4 signup conversion event
           (window as any).gtag?.('event', 'sign_up', { method: 'email' });
+          fireSignupCompleted("email", data.user.id);
 
           const { error: profileError } = await supabase
             .from('profiles')
@@ -569,6 +574,9 @@ const Auth = () => {
         navigate(redirectPath);
       }
     } catch (error: any) {
+      if (isSignUp) {
+        trackEvent("auth.signup_failed", { method: "email", reason: error?.message ?? "unknown" });
+      }
       toast({
         title: t('auth.toastAuthError'),
         description: error.message,
@@ -584,9 +592,11 @@ const Auth = () => {
   
   useEffect(() => {
     const context = searchParams.get("context") || "direct";
+    const source = searchParams.get("source") || context;
     const pattern = searchParams.get("pattern");
     const symbol = searchParams.get("symbol");
     trackEvent("auth_page.viewed", { context, pattern: pattern || undefined, symbol: symbol || undefined });
+    trackEvent("auth.page_viewed", { source, context });
     
     return () => {
       if (!formInteracted.current) {
@@ -599,6 +609,7 @@ const Auth = () => {
     if (!formInteracted.current) {
       formInteracted.current = true;
       trackEvent("auth_page.form_start", {});
+      trackEvent("auth.form_start", { method: "email" });
     }
   };
 
