@@ -46,7 +46,7 @@ export function WebApplicationJsonLd() {
         url: 'https://chartingpath.com',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web',
-        description: 'Pattern-based trading signal discovery, research, and automation platform. Scan 1,100+ instruments for chart patterns, backtest with 320K+ historical occurrences.',
+        description: 'Pattern-based trading signal discovery, research, and automation platform. Scan 820+ instruments for chart patterns, backtest with 500K+ resolved historical outcomes.',
         offers: {
           '@type': 'AggregateOffer',
           priceCurrency: 'USD',
@@ -55,7 +55,7 @@ export function WebApplicationJsonLd() {
           offerCount: '3',
         },
         featureList: [
-          'Live pattern screener across 1,100+ instruments',
+          'Live pattern screener across 820+ instruments',
           'Edge Atlas with historical win rates and expectancy',
           'Pattern Lab backtesting engine',
           'AI Trading Copilot',

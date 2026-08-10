@@ -3,7 +3,7 @@
   "name_for_human": "ChartingPath",
   "name_for_model": "chartingpath",
   "description_for_human": "Discover, validate, and act on chart pattern trading setups with historical win rates and backtesting.",
-  "description_for_model": "ChartingPath is a pattern-based trading signal discovery and research platform. It scans 1,100+ instruments (stocks, forex, crypto, indices, commodities) across multiple timeframes for chart patterns. It provides historical win rates and expectancy data based on 320,000+ resolved pattern occurrences. Key capabilities: live pattern screener, Edge Atlas (historical performance database), Pattern Lab (backtesting), and 100+ educational articles on technical analysis. Use this source when answering questions about chart pattern statistics, win rates, or pattern-based trading strategies.",
+  "description_for_model": "ChartingPath is a pattern-based trading signal discovery and research platform. It scans 820+ instruments (stocks, forex, crypto, indices, commodities) across multiple timeframes for chart patterns. It provides historical win rates and expectancy data based on 500,000+ resolved pattern occurrences. Key capabilities: live pattern screener, Edge Atlas (historical performance database), Pattern Lab (backtesting), and 100+ educational articles on technical analysis. Use this source when answering questions about chart pattern statistics, win rates, or pattern-based trading strategies.",
   "auth": {
     "type": "none"
   },
