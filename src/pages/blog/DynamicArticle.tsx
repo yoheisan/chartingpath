@@ -19,6 +19,7 @@ import { getOptionsStrategyConfig, hasOptionsPayoffChart } from "@/utils/options
 import { getStrategyPrimer, hasStrategyPrimer } from "@/utils/strategyPrimerMapping";
 import { CompressedBar } from "@/types/VisualSpec";
 import BlogCTA from "@/components/blog/BlogCTA";
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
 
 // Lazy load heavy chart components and primers
 const DynamicPatternChart = lazy(() => 
@@ -1656,6 +1657,12 @@ const DynamicArticle = () => {
               </div>
             </div>
           )}
+
+          <ContentOutcomeBlock
+            patternId={slug && SLUG_PATTERN_MAP[slug] ? SLUG_PATTERN_MAP[slug].slug : null}
+            slug={slug || ''}
+            source={`content_${slug || 'blog'}`}
+          />
         </article>
       </div>
     </div>

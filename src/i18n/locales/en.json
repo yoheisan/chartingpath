@@ -1169,8 +1169,8 @@
     "copilotHint": "Powered by AI Trading Copilot — press ⌘K anywhere"
   },
   "landing": {
-    "heroHeadline": "Know what happens after the pattern forms.",
-    "heroSubheadline": "ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and outcome data from {{count}} pattern detections. Not textbook stats — real data from our engine.",
+    "heroHeadline": "The pattern fired. Then what?",
+    "heroSubheadline": "We tracked what happened the last 500,000 times. Win rate, average R:R and expectancy for every pattern — each shown with the sample size it rests on.",
     "seeLivePatterns": "See live patterns",
     "exploreOutcomeData": "Explore outcome data",
     "patternsDetectedThisWeek": "{{num}} patterns detected this week",
@@ -1178,7 +1178,17 @@
     "topPatternThisWeek": "Top pattern this week: {{pattern}} on {{instrument}} — {{winRate}}% win rate",
     "disclaimer": "ChartingPath provides educational tools and backtesting software. Past performance does not guarantee future results. Trading involves substantial risk of loss. Alerts and signals are for informational purposes only and do not constitute financial advice.",
     "platformBadge": "Chart Pattern Backtesting Platform",
-    "seePricing": "See Pricing"
+    "seePricing": "See Pricing",
+    "seeOutcomeData": "See the outcome data",
+    "howWeMeasure": "How we measure this",
+    "heroProof": "{{count}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.",
+    "differenceHeadline": "Everyone shows you the pattern forming. We show you what happened afterwards.",
+    "differenceOneTitle": "Every detection is followed to an outcome",
+    "differenceOneBody": "A pattern is logged when it fires and resolved when price hits the target or the stop. Win or lose, it stays in the record.",
+    "differenceTwoTitle": "Sample size is shown, never hidden",
+    "differenceTwoBody": "Nothing is published below 30 resolved outcomes. Where the sample is thin, we say so instead of quoting a number.",
+    "differenceThreeTitle": "Losing combinations are published too",
+    "differenceThreeBody": "Most pattern and timeframe combinations have negative expectancy. They stay in the table — filtering them out would manufacture an edge."
   },
   "livePatterns": {
     "assetClass": "Asset Class",
@@ -6646,5 +6656,16 @@
     "contactTitle": "Corrections and data requests",
     "contactBody": "If you believe a figure or a definition on this page is wrong, we want to hear it — corrections are welcome at support@chartingpath.com. Institutions evaluating the dataset can request a fuller specification and sample extract at the same address.",
     "backToOutcomes": "See the outcome data these rules produce"
+  },
+  "contentOutcome": {
+    "title": "What actually happened",
+    "titleWithPattern": "What actually happened: {{pattern}}",
+    "subtitle": "Measured outcomes from resolved pattern detections, not textbook estimates.",
+    "winRate": "Win rate",
+    "expectancy": "Expectancy",
+    "avgRr": "Average R:R",
+    "sampleSize": "Sample size",
+    "insufficient": "Insufficient sample — fewer than {{min}} resolved outcomes for this pattern, so no figures are shown.",
+    "seeAll": "See all outcome data"
   }
 }

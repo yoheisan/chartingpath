@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RequestScanButton } from '@/components/instruments/RequestScanButton';
 import { trackEvent } from '@/lib/analytics';
 import {
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
   BarChart3,
   TrendingUp,
   Target,
@@ -332,6 +333,8 @@ export default function InstrumentPage() {
             </Link>
           </Button>
         </section>
+
+        <ContentOutcomeBlock slug={symbol} source={`content_${symbol}`} />
       </div>
     </div>
   );

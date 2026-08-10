@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { PatternStatsCTA } from '@/components/PatternStatsCTA';
+import { ContentOutcomeBlock } from '@/components/outcomes/ContentOutcomeBlock';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -284,6 +285,8 @@ export default function InstrumentPatternStatsPage() {
             </div>
           </section>
         )}
+
+        <ContentOutcomeBlock patternId={patternId} slug={`${patternId || ''}-${instrument || ''}`} source={`content_${patternId || 'pattern'}`} />
       </div>
     </div>
   );
