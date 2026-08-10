@@ -83,75 +83,53 @@ const Index = () => {
         },
       ]} />
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[60vh] flex items-center overflow-hidden">
-        <HeroVideoBackground />
-        
+      {/* 1. Hero — exactly ONE primary action.
+          Deliberately NOT a signup ask: a cold visitor has no reason to create
+          an account yet. We send them to /outcomes, where the value lands first
+          and the signup ask converts a warm visitor. Do not re-add extra hero CTAs. */}
+      <section ref={heroRef} className="relative flex items-center overflow-hidden border-b border-border/20">
         <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
-            <div className="mb-4 flex flex-wrap items-center gap-3 animate-fade-in">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
               <OutcomeDataBadge />
               <Badge variant="secondary" className="text-xs tracking-wide">
                 {t('landing.platformBadge', 'Chart Pattern Backtesting Platform')}
               </Badge>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.08] animate-fade-in tracking-tight text-foreground">
-              {t('landing.heroHeadline', 'Know what happens after the pattern forms.')}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.08] tracking-tight text-foreground">
+              {t('landing.heroHeadline', 'The pattern fired. Then what?')}
             </h1>
-            
-            <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-10 max-w-xl animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
-              {(t as Function)('landing.heroSubheadline', { defaultValue: 'ChartingPath detects chart patterns live across FX and US equities — and tracks every outcome. Win rates, R-multiples, and outcome data from {{count}} pattern detections. Not textbook stats — real data from our engine.', count: outcomeCount })}
+
+            <p className="text-lg md:text-xl lg:text-[1.35rem] text-muted-foreground mb-8 max-w-2xl leading-relaxed">
+              {t('landing.heroSubheadline', 'We tracked what happened the last 500,000 times. Win rate, average R:R and expectancy for every pattern — each shown with the sample size it rests on.')}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <Button 
-                size="lg" 
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <Button
+                size="lg"
                 onClick={() => {
-                  (window as any).gtag?.('event', 'cta_click', { location: 'hero' });
-                  trackEvent('landing.cta_click', { source: 'hero_primary', button: 'hero_see_live_patterns' });
-                  navigate('/patterns/live');
+                  trackEvent('landing.cta_click', { source: 'hero_primary', button: 'see_outcome_data' });
+                  navigate('/outcomes');
                 }}
                 className="px-10 py-7 text-xl font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-xl shadow-primary/20"
               >
-                <TrendingUp className="h-6 w-6 mr-3" />
-                {t('landing.seeLivePatterns', 'See live patterns')}
+                <BarChart3 className="h-6 w-6 mr-3" />
+                {t('landing.seeOutcomeData', 'See the outcome data')}
                 <ArrowRight className="h-6 w-6 ml-3" />
               </Button>
 
-              <Button 
-                variant="outline"
-                size="lg" 
-                onClick={() => {
-                  (window as any).gtag?.('event', 'cta_click', { location: 'hero_secondary' });
-                  trackEvent('landing.cta_click', { source: 'hero_secondary', button: 'hero_explore_outcomes' });
-                  navigate('/projects/pattern-lab/new');
-                }}
-                className="px-10 py-7 text-xl font-bold border-border/60 hover:bg-accent/10 transition-colors"
+              <Link
+                to="/methodology"
+                onClick={() => trackEvent('landing.cta_click', { source: 'hero_secondary', button: 'how_we_measure' })}
+                className="text-base text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
               >
-                <FlaskConical className="h-6 w-6 mr-3" />
-                {t('landing.exploreOutcomeData', 'Explore outcome data')}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => {
-                  (window as any).gtag?.('event', 'cta_click', { location: 'hero_pricing' });
-                  trackEvent('landing.cta_click', { source: 'hero_pricing', button: 'hero_see_pricing' });
-                  navigate('/pricing');
-                }}
-                className="px-8 py-7 text-lg font-semibold hover:bg-accent/10"
-              >
-                <DollarSign className="h-5 w-5 mr-2" />
-                {t('landing.seePricing', 'See Pricing')}
-              </Button>
+                {t('landing.howWeMeasure', 'How we measure this')}
+              </Link>
             </div>
 
-            <p className="text-sm text-muted-foreground mt-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <Link to="/patterns/live" className="underline underline-offset-4 hover:text-foreground transition-colors">
-                {t('landing.noAccountNeeded', 'No account needed — browse live patterns now →')}
-              </Link>
+            <p className="text-sm text-muted-foreground mt-6">
+              {t('landing.heroProof', '{{count}} resolved pattern outcomes across FX and US equities — every figure on this site traces back to them.', { count: outcomeCount })}
             </p>
 
             <HeroStatsBar />
@@ -159,33 +137,46 @@ const Index = () => {
         </div>
       </section>
 
-      <div className="border-t border-border/20 bg-card/30">
-        <div className="container mx-auto">
-          <MetricStrip />
-        </div>
-      </div>
-
+      {/* 2. A real, current detection */}
       <LivePatternPreview />
-      <MarketPulseChart />
 
-      <div className="border-t border-border/20">
-        <PatternConcentrationHeatmap />
-      </div>
-
-      <div className="border-t border-border/20">
-        <SocialProof />
-      </div>
-
-      <OutcomeStatsStrip />
-
-      <div ref={copilotRef} className="border-t border-border/20">
-        <FeatureBlocks />
-      </div>
-
-      <CopilotValueProp />
+      {/* 3. What makes this different */}
+      <section ref={differenceRef} className="py-16 px-4 md:px-6 lg:px-8 border-t border-border/20">
+        <div className="container mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3 max-w-2xl">
+            {t('landing.differenceHeadline', 'Everyone shows you the pattern forming. We show you what happened afterwards.')}
+          </h2>
+          <div className="grid gap-8 md:grid-cols-3 mt-10">
+            <div>
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                {t('landing.differenceOneTitle', 'Every detection is followed to an outcome')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t('landing.differenceOneBody', 'A pattern is logged when it fires and resolved when price hits the target or the stop. Win or lose, it stays in the record.')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                {t('landing.differenceTwoTitle', 'Sample size is shown, never hidden')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t('landing.differenceTwoBody', 'Nothing is published below 30 resolved outcomes. Where the sample is thin, we say so instead of quoting a number.')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                {t('landing.differenceThreeTitle', 'Losing combinations are published too')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t('landing.differenceThreeBody', 'Most pattern and timeframe combinations have negative expectancy. They stay in the table — filtering them out would manufacture an edge.')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {!isAuthenticated && (
-        <section className="py-20 px-4 md:px-6 lg:px-8 border-t border-border/20">
+        <section className="py-16 px-4 md:px-6 lg:px-8 border-t border-border/20">
           <div className="container mx-auto">
             <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-16">
               <div className="flex-1">
@@ -200,9 +191,8 @@ const Index = () => {
                 <Button
                   size="lg"
                   onClick={() => {
-                    (window as any).gtag?.('event', 'cta_click', { location: 'mid_page' });
-                    trackEvent('landing.cta_click', { source: 'mid_page', button: 'create_free_account' });
-                    navigate('/auth?mode=signup&source=landing_mid_page');
+                    trackEvent('landing.cta_click', { source: 'home_midpage', button: 'create_free_account' });
+                    navigate('/auth?mode=signup&source=home_midpage');
                   }}
                   className="px-10 py-7 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 whitespace-nowrap"
                 >
@@ -215,22 +205,19 @@ const Index = () => {
         </section>
       )}
 
-      <div ref={screenerRef}>
-        <PatternScreenerTeaser />
+      {/* 4. Factual proof numbers */}
+      <div className="border-t border-border/20 bg-card/30">
+        <div className="container mx-auto">
+          <MetricStrip />
+        </div>
       </div>
 
-      <div ref={edgeAtlasRef}>
-        <EdgeAtlasSection />
-      </div>
-
-      <EmailLeadCapture />
-
+      {/* 5. Pricing */}
       <div ref={pricingRef}>
         <PricingTeaser />
       </div>
 
-      <ScrollSignupModal />
-
+      {/* 6. Disclaimer */}
       <section className="py-8 px-6 border-t">
         <div className="container mx-auto">
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
