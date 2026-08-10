@@ -104,6 +104,8 @@ const CopilotReport = lazy(() => import("./pages/CopilotReport"));
 const InstrumentPage = lazy(() => import("./pages/InstrumentPage"));
 const ProgrammaticPatternStatsPage = lazy(() => import("./pages/ProgrammaticPatternStatsPage"));
 const PatternStatsIndexPage = lazy(() => import("./pages/PatternStatsIndexPage"));
+const Outcomes = lazy(() => import("./pages/Outcomes"));
+const Methodology = lazy(() => import("./pages/Methodology"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 
 // Lazy-load blog pages
@@ -246,6 +248,8 @@ const App = () => (
           <Route path="/patterns/:patternId/statistics" element={withSuspense(<PatternStatisticsPage />)} />
           <Route path="/patterns/:patternId/:instrument/statistics" element={withSuspense(<InstrumentPatternStatsPage />)} />
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />
+          <Route path="/outcomes" element={withSuspense(<Outcomes />)} />
+          <Route path="/methodology" element={withSuspense(<Methodology />)} />
           <Route path="/patterns/stats/:patternSlug/:assetClass/:timeframe" element={withSuspense(<ProgrammaticPatternStatsPage />)} />
           <Route path="/instruments/:symbol" element={withSuspense(<InstrumentPage />)} />
           <Route path="/members/copilot" element={<NavigateWithSearch to="/copilot" />} />
