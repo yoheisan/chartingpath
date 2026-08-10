@@ -24,6 +24,7 @@ export function EmailLeadCapture() {
     try {
       await supabase.from('email_leads' as any).insert({ email, source: 'landing_page' } as any);
       trackEvent('email_lead.captured', { source: 'landing_page' });
+      trackEvent('landing.cta_click', { source: 'email_capture' });
       setSubmitted(true);
     } catch {
       // Silent fail — don't block UX

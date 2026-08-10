@@ -65,8 +65,9 @@ export function ScrollSignupModal() {
             className="w-full"
             onClick={() => {
               trackEvent('scroll_signup_modal.cta_click', { button: 'create_account' });
+              trackEvent('landing.cta_click', { source: 'scroll_modal', button: 'create_account' });
               setOpen(false);
-              navigate('/auth?mode=signup');
+              navigate('/auth?mode=signup&source=landing_scroll_modal');
             }}
           >
             {t('hero.createFreeAccount', 'Create Free Account')}
