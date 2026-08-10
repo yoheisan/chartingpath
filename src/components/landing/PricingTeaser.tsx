@@ -25,8 +25,9 @@ export const PricingTeaser = () => {
   };
 
   const handlePricingClick = () => {
-    track('pricing_viewed', { source: 'landing_pricing_teaser' });
-    trackEvent('landing.cta_click', { button: 'pricing_teaser_see_full' });
+    // Ported from track()/product_events — analytics_events is the source of truth.
+    trackEvent('pricing.viewed', { source: 'pricing_teaser' });
+    trackEvent('landing.cta_click', { source: 'pricing_teaser', button: 'pricing_teaser_see_full' });
   };
 
   const getPrice = (plan: typeof PRICING_TEASER_PLANS[number]) => {
@@ -103,8 +104,7 @@ export const PricingTeaser = () => {
                       className="mt-4 w-full"
                       disabled={!!isLoading}
                       onClick={() => {
-                        track(`pricing_start_${plan.key}`, { source: 'landing_pricing_teaser' });
-                        trackEvent('landing.cta_click', { button: `pricing_start_${plan.key}` });
+                        trackEvent('landing.cta_click', { source: 'pricing_teaser', button: `pricing_start_${plan.key}` });
                         startCheckout(checkoutKey);
                       }}
                     >
@@ -119,8 +119,7 @@ export const PricingTeaser = () => {
                     variant={plan.highlighted || plan.popular ? 'default' : 'outline'}
                     className="mt-4 w-full"
                     onClick={() => {
-                      track(`pricing_start_${plan.key}`, { source: 'landing_pricing_teaser' });
-                      trackEvent('landing.cta_click', { button: `pricing_start_${plan.key}` });
+                      trackEvent('landing.cta_click', { source: 'pricing_teaser', button: `pricing_start_${plan.key}` });
                     }}
                   >
                     <Link to={plan.ctaLink}>
