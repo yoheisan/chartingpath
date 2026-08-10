@@ -6785,6 +6785,7 @@ export type Database = {
           p_asset_type: string
           p_direction: string
           p_pattern_id: string
+          p_since?: string
           p_timeframe: string
         }
         Returns: {
