@@ -31,9 +31,11 @@ export function useForwardPerformance(userId?: string) {
       setLoading(true);
       try {
         // Get closed paper trades grouped by pattern
+        // pattern_id is included so edge-alert autopilot trades (which carry it
+        // explicitly) feed the forward-vs-backtest confidence score.
         const { data: trades } = await supabase
           .from('paper_trades')
-          .select('symbol, trade_type, pnl, notes, status')
+          .select('symbol, trade_type, pnl, notes, status, pattern_id')
           .eq('user_id', userId)
           .eq('status', 'closed');
 
@@ -47,7 +49,8 @@ export function useForwardPerformance(userId?: string) {
         for (const trade of trades) {
           // Try to extract pattern name from notes
           const patternMatch = trade.notes?.match(/\[pattern:([^\]]+)\]/);
-          const patternName = patternMatch?.[1] || trade.trade_type || 'Unknown';
+          const patternName =
+            trade.pattern_id || patternMatch?.[1] || trade.trade_type || 'Unknown';
           
           if (!grouped[patternName]) {
             grouped[patternName] = { wins: 0, total: 0, totalPnl: 0 };

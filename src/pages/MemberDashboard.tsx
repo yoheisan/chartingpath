@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
 import { PageMeta } from '@/components/PageMeta';
 import WelcomeBackBanner from '@/components/WelcomeBackBanner';
+import { ForwardRecordPanel } from '@/components/dashboard/ForwardRecordPanel';
 import type { SetupWithVisuals } from "@/types/VisualSpec";
 
 /** Route state passed when navigating from Historical Occurrences for playback */
@@ -83,6 +84,11 @@ const MemberDashboard = () => {
         initialTimeframe={initialTimeframe}
         initialDetectionId={initialDetectionId}
       />
+      {user?.id && (
+        <div className="px-4 py-4">
+          <ForwardRecordPanel userId={user.id} />
+        </div>
+      )}
     </>
   );
 };

@@ -10,9 +10,21 @@ const corsHeaders = {
  * check-alert-matches
  * 
  * Cross-references user alerts (from the `alerts` table) with recently detected
- * live patterns (from `live_pattern_detections`). When a match is found and hasn't
- * already been notified (checked via `alerts_log`), it logs the detection and
- * dispatches email + push notifications via `send-pattern-alert`.
+ * live patterns, read from `v_live_detections_with_edge` so that every detection
+ * carries the measured historical edge for its pattern/timeframe/asset/direction
+ * cell.
+ *
+ * EDGE FILTER: aggregate expectancy across all resolved historical occurrences is
+ * negative. Patterns as a whole lose money. We therefore dispatch an alert ONLY
+ * when the detection lands in a cell with a measured edge (qualifies = true, i.e.
+ * n >= 100 AND expectancy > 0). Everything else is recorded in
+ * `alert_suppression_log` so the user can see what we deliberately withheld.
+ * The silence is the product.
+ *
+ * PAPER AUTOPILOT: every alert that fires is also logged as a paper trade with
+ * source = 'edge_alert_autopilot', regardless of the user's auto_paper_trade
+ * setting. That flag governs the user's own opt-in trades; this is our unedited
+ * forward record of every signal we issue.
  * 
  * Called automatically after each scan-live-patterns run completes.
  */
@@ -81,14 +93,24 @@ serve(async (req) => {
       (profiles || []).map(p => [p.user_id, p])
     );
 
+    // Paper portfolios: used for position sizing on the alert payload and for the
+    // autopilot forward record.
+    const { data: portfolios } = await supabase
+      .from("paper_portfolios")
+      .select("id, user_id, current_balance")
+      .in("user_id", userIds);
+
+    const portfolioMap = new Map(
+      (portfolios || []).map(p => [p.user_id, p])
+    );
+
     console.log(`[check-alert-matches] Found ${alerts.length} active alerts`);
 
     // 2. Fetch active live pattern detections (no time cutoff - if it's active, it's valid)
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     let detectionsQuery = supabase
-      .from("live_pattern_detections")
-      .select("id, instrument, pattern_id, pattern_name, timeframe, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, bars")
-      .eq("status", "active");
+      .from("v_live_detections_with_edge")
+      .select("id, instrument, pattern_id, pattern_name, timeframe, asset_type, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, total_trades, win_rate_pct, expectancy_r, avg_rr, qualifies");
 
     if (assetType) {
       detectionsQuery = detectionsQuery.eq("asset_type", assetType);
@@ -129,6 +151,8 @@ serve(async (req) => {
 
     // 5. Match alerts to detections
     let matchCount = 0;
+    let suppressedCount = 0;
+    const suppressionRows: any[] = [];
     const notifications: Promise<any>[] = [];
 
     // Debug: log some sample keys
@@ -150,12 +174,52 @@ serve(async (req) => {
 
       if (!matchedDetection) continue;
 
+      // EDGE FILTER — see file header. No measured edge, no alert.
+      if (!matchedDetection.qualifies) {
+        suppressedCount++;
+        suppressionRows.push({
+          user_id: alert.user_id,
+          alert_id: alert.id,
+          detection_id: matchedDetection.id,
+          symbol: alert.symbol,
+          pattern_id: alert.pattern,
+          timeframe: alert.timeframe,
+          asset_type: matchedDetection.asset_type,
+          direction: matchedDetection.direction,
+          total_trades: matchedDetection.total_trades ?? 0,
+          expectancy_r: matchedDetection.expectancy_r ?? 0,
+          reason: 'no_measured_edge',
+        });
+        continue;
+      }
+
       matchCount++;
       console.log(`[check-alert-matches] MATCH: Alert ${alert.id} → ${alert.symbol} ${alert.pattern} ${alert.timeframe}`);
 
       // 6. Log the detection in alerts_log first, then send notification, then update email_sent
       const processAlert = async () => {
         try {
+          // Position size from the user's configured risk, against their paper balance.
+          const portfolio = portfolioMap.get(alert.user_id);
+          const riskPercent = Math.min(alert.risk_percent ?? 1.0, 5);
+          const stopDistance = Math.abs(
+            (matchedDetection.entry_price ?? 0) - (matchedDetection.stop_loss_price ?? 0)
+          );
+          const riskAmount = portfolio ? (portfolio.current_balance * riskPercent) / 100 : 0;
+          const positionSize = stopDistance > 0 && riskAmount > 0
+            ? Number((riskAmount / stopDistance).toFixed(6))
+            : null;
+
+          const edgeStats = {
+            sample_size: matchedDetection.total_trades ?? 0,
+            win_rate_pct: matchedDetection.win_rate_pct ?? null,
+            expectancy_r: matchedDetection.expectancy_r ?? null,
+            avg_rr: matchedDetection.avg_rr ?? null,
+            risk_percent: riskPercent,
+            position_size: positionSize,
+            disclaimer: 'Historical outcomes are not forward returns. Figures are gross of costs. Not financial advice.',
+          };
+
           // Insert log entry first to get the ID
           const { data: logData, error: logError } = await supabase
             .from("alerts_log")
@@ -169,11 +233,13 @@ serve(async (req) => {
                            matchedDetection.quality_score === 'C' ? 0.7 : 0.6,
                 description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
                 detection_id: matchedDetection.id,
+                edge: edgeStats,
               },
               price_data: {
                 symbol: alert.symbol,
                 timeframe: alert.timeframe,
                 current_price: matchedDetection.current_price || matchedDetection.entry_price,
+                position_size: positionSize,
               },
               entry_price: matchedDetection.entry_price,
               stop_loss_price: matchedDetection.stop_loss_price,
@@ -211,6 +277,7 @@ serve(async (req) => {
               patternResult: {
                 confidence,
                 description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                edge: edgeStats,
               },
               marketData: [{
                 o: matchedDetection.entry_price,
@@ -227,6 +294,7 @@ serve(async (req) => {
                 riskRewardRatio: matchedDetection.risk_reward_ratio,
                 stopLossMethod: 'pattern-based',
                 takeProfitMethod: 'pattern-based',
+                positionSize,
               },
             },
           });
@@ -250,7 +318,39 @@ serve(async (req) => {
             }
           }
 
-          // 8. Auto Paper Trade (if enabled)
+          // 8a. PAPER AUTOPILOT — system record of every signal we issue, always.
+          try {
+            const { error: autopilotErr } = await supabase
+              .from("paper_trades")
+              .insert({
+                user_id: alert.user_id,
+                portfolio_id: portfolio?.id ?? null,
+                symbol: alert.symbol,
+                trade_type: matchedDetection.direction === 'short' ? 'short' : 'long',
+                entry_price: matchedDetection.entry_price,
+                stop_loss: matchedDetection.stop_loss_price,
+                take_profit: matchedDetection.take_profit_price,
+                quantity: positionSize ?? 1,
+                status: 'open',
+                detection_id: matchedDetection.id,
+                pattern_id: alert.pattern,
+                timeframe: alert.timeframe,
+                asset_type: matchedDetection.asset_type,
+                source: 'edge_alert_autopilot',
+                attribution: 'system',
+                alerted_at: new Date().toISOString(),
+                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${matchedDetection.total_trades} exp=${matchedDetection.expectancy_r}R`,
+              });
+            if (autopilotErr) {
+              console.error(`[check-alert-matches] Autopilot insert error for alert ${alert.id}:`, autopilotErr);
+            } else {
+              console.log(`[check-alert-matches] Autopilot paper trade logged for alert ${alert.id}`);
+            }
+          } catch (autopilotCatch) {
+            console.error(`[check-alert-matches] Autopilot exception for alert ${alert.id}:`, autopilotCatch);
+          }
+
+          // 8b. User opt-in Auto Paper Trade (separate from the system record above)
           if (alert.auto_paper_trade) {
             try {
               const { error: paperErr } = await supabase.functions.invoke('auto-paper-trade', {
@@ -319,13 +419,24 @@ serve(async (req) => {
     // Wait for all notifications to complete
     await Promise.allSettled(notifications);
 
-    console.log(`[check-alert-matches] Done. Matched ${matchCount} alerts out of ${alerts.length}`);
+    // Record suppressed detections rather than dropping them silently.
+    if (suppressionRows.length > 0) {
+      const { error: suppressErr } = await supabase
+        .from("alert_suppression_log")
+        .insert(suppressionRows);
+      if (suppressErr) {
+        console.error("[check-alert-matches] Suppression log error:", suppressErr);
+      }
+    }
+
+    console.log(`[check-alert-matches] Done. Fired ${matchCount}, suppressed ${suppressedCount} for lack of measured edge (out of ${alerts.length} alerts)`);
 
     return new Response(JSON.stringify({
       success: true,
       totalAlerts: alerts.length,
       totalDetections: detections.length,
       matched: matchCount,
+      suppressed: suppressedCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

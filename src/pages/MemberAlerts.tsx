@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
+import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
+import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -81,6 +83,7 @@ const MemberAlerts = () => {
   const [riskPercent, setRiskPercent] = useState(1.0);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
+  const edgeSummary = useAlertEdgeSummary(user?.id);
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -569,6 +572,15 @@ const MemberAlerts = () => {
             ({activeAlerts.length}/{planLimits.max === 999999 ? '∞' : planLimits.max} {t('alerts.statusActive').toLowerCase()})
           </span>
         </div>
+
+        {!edgeSummary.loading && (
+          <p className="text-xs text-muted-foreground">
+            {t('alerts.edgeSummary', 'Last 30 days: {{fired}} alerts fired · {{suppressed}} detections suppressed for lack of measured edge.', {
+              fired: edgeSummary.fired,
+              suppressed: edgeSummary.suppressed,
+            })}
+          </p>
+        )}
       </div>
 
 
@@ -685,6 +697,13 @@ const MemberAlerts = () => {
                 </p>
               )}
             </div>
+
+            <AlertEdgePreview
+              symbol={symbol}
+              timeframe={timeframe}
+              patterns={selectedPatterns}
+              labelFor={(id) => patternOptions.find(o => o.value === id)?.label ?? id}
+            />
 
             {/* Delivery Method */}
             <div className="space-y-2">
