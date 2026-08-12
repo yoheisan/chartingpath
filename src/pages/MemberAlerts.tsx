@@ -990,7 +990,7 @@ const MemberAlerts = () => {
                     {t('alerts.edgeBarSummaryLink', 'How we measure edge')}
                   </Link>
                   {' · '}
-                  <Link to="/member/account" state={{ tab: 'preferences' }} className="underline underline-offset-2">
+                  <Link to="/members/account" state={{ tab: 'preferences' }} className="underline underline-offset-2">
                     {t('alerts.edgeBarBrokerLink', 'Change your broker costs')}
                   </Link>
                 </p>
