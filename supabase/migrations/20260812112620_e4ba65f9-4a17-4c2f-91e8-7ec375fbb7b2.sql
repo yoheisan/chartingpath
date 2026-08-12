@@ -1,0 +1,2 @@
+COMMENT ON FUNCTION public.get_edge_atlas_rankings_filtered IS
+'RETAINED FOR COMPATIBILITY ONLY. This function hardcodes a positive-expectancy filter (WHERE expectancy_r > 0), so it returns only winning cells and silently hides losing ones. That selection effect makes it unsuitable for any user-facing surface that claims to show the complete picture. Use public.get_pattern_outcome_cells instead — it returns winners and losers alike. Additionally, its figures are gross of costs; see public.get_pattern_edge for net-of-cost qualification.';
