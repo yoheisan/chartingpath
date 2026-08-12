@@ -291,8 +291,9 @@ const MemberAccount = () => {
             <DataProviderSettings userId={profile?.user_id} />
           </TabsContent>
 
-          <TabsContent value="preferences">
+          <TabsContent value="preferences" className="space-y-6">
             <NotificationSettings userId={profile?.id} />
+            <BrokerCostSettings />
           </TabsContent>
         </Tabs>
       </div>
