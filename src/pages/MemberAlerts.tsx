@@ -1058,6 +1058,11 @@ const MemberAlerts = () => {
               </div>
             ) : (
               <div className="space-y-4">
+                {visibleAlerts.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    {t('alerts.noAlertsForFilter', 'No alerts match this filter.')}
+                  </p>
+                )}
                 {visibleAlerts.map((alert) => (
                   <div
                     key={alert.id}
