@@ -1058,7 +1058,7 @@ const MemberAlerts = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {alerts.map((alert) => (
+                {visibleAlerts.map((alert) => (
                   <div
                     key={alert.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
@@ -1100,6 +1100,7 @@ const MemberAlerts = () => {
                         <p className="text-sm text-muted-foreground">
                           {alert.pattern} • {alert.timeframe}
                         </p>
+                        <AlertEdgeStatusBadge status={edgeStatuses[alert.id]} loading={edgeStatusLoading} />
                       </div>
                     </button>
                     <div className="flex items-center gap-2">
