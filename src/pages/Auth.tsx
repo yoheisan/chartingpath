@@ -600,8 +600,18 @@ const Auth = () => {
 
   // Track auth page view and abandonment
   const formInteracted = useRef(false);
-  
+  const viewFiredRef = useRef(false);
+  const mountedAtRef = useRef<number>(Date.now());
+
   useEffect(() => {
+    // Fire exactly once per mount. React StrictMode double-invokes effects in
+    // dev and the OAuth/session-recovery races can remount this route several
+    // times per real visit — that is what inflated page_viewed ~8x over
+    // page_rendered. The ref guard keeps all three events 1:1.
+    if (viewFiredRef.current) return;
+    viewFiredRef.current = true;
+    mountedAtRef.current = Date.now();
+
     const context = searchParams.get("context") || "direct";
     const source = searchParams.get("source") || context;
     const pattern = searchParams.get("pattern");
@@ -612,10 +622,18 @@ const Auth = () => {
     // (redirect races, session recovery). page_rendered fires from the mounted
     // component, so page_viewed >> page_rendered means people never see the form.
     trackEvent("auth.page_rendered", { source, context });
-    
+
     return () => {
       if (!formInteracted.current) {
-        trackEvent("auth_page.abandoned", { context, had_interaction: false });
+        // time_on_page_ms + cta_seen separates "bounced instantly" from
+        // "saw the Google button, considered it, and left".
+        trackEvent("auth_page.abandoned", {
+          context,
+          had_interaction: false,
+          time_on_page_ms: Date.now() - mountedAtRef.current,
+          cta_seen: ctaSeen.current,
+        });
+        flushEvents();
       }
     };
   }, []);
