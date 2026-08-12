@@ -1,27 +1,32 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  directionForPatternId,
+  toDbAssetType,
+  toLiveDirection,
+} from '@/config/vocabularies';
 
 export interface PatternEdge {
   patternId: string;
   totalTrades: number;
   winRatePct: number;
   expectancyR: number;
+  /** Provisional estimated round-trip cost in R for this asset_type/timeframe. */
+  estCostR: number;
+  /** expectancyR - estCostR. Qualification is decided on THIS, not on gross. */
+  expectancyRNet: number;
   avgRr: number;
   qualifies: boolean;
 }
 
 /**
- * Direction implied by a pattern id. Live detections use long/short; the edge
- * function normalises long <-> bullish internally.
+ * Direction implied by a pattern id, in the LIVE vocabulary (long/short).
+ * The edge function normalises long <-> bullish internally, but we go through
+ * the shared vocabulary helpers so the mapping lives in exactly one place.
+ * See src/config/vocabularies.ts and docs/VOCABULARY-CONTRACT.md.
  */
 export function inferDirection(patternId: string): 'long' | 'short' {
-  const id = patternId.toLowerCase();
-  const bearish = [
-    'short', 'double-top', 'double_top', 'descending-triangle', 'head-and-shoulders',
-    'rising-wedge', 'bear-flag', 'bearish', 'evening_star', 'triple-top',
-    'inverse-cup-and-handle',
-  ];
-  return bearish.some(k => id.includes(k) && !id.includes('inverse-head')) ? 'short' : 'long';
+  return toLiveDirection(directionForPatternId(patternId));
 }
 
 async function resolveAssetType(symbol: string): Promise<string | null> {
@@ -31,7 +36,9 @@ async function resolveAssetType(symbol: string): Promise<string | null> {
     .select('asset_type')
     .eq('symbol', symbol)
     .maybeSingle();
-  return data?.asset_type ?? null;
+  // Normalise through the shared vocabulary: a singular value here silently
+  // matches nothing in historical_pattern_occurrences.
+  return toDbAssetType(data?.asset_type) ?? null;
 }
 
 /**
@@ -69,11 +76,15 @@ export function usePatternEdge(symbol: string, timeframe: string, patterns: stri
               p_direction: inferDirection(p),
             });
             const row: any = Array.isArray(data) ? data[0] : data;
+            const gross = Number(row?.expectancy_r ?? 0);
+            const cost = Number(row?.est_cost_r ?? 0);
             return {
               patternId: p,
               totalTrades: Number(row?.total_trades ?? 0),
               winRatePct: Number(row?.win_rate_pct ?? 0),
-              expectancyR: Number(row?.expectancy_r ?? 0),
+              expectancyR: gross,
+              estCostR: cost,
+              expectancyRNet: Number(row?.expectancy_r_net ?? gross - cost),
               avgRr: Number(row?.avg_rr ?? 0),
               qualifies: Boolean(row?.qualifies),
             } as PatternEdge;
