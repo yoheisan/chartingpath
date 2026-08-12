@@ -14,7 +14,7 @@ import { WebApplicationJsonLd, FAQJsonLd } from '@/components/JsonLd';
 import { MetricStrip } from '@/components/landing/MetricStrip';
 import { useSectionTracking } from '@/hooks/useSectionTracking';
 import { useOutcomeCount } from '@/hooks/useOutcomeCount';
-import LivePatternPreview from '@/components/landing/LivePatternPreview';
+import { FiringNowSection } from '@/components/landing/FiringNowSection';
 import { HeroStatsBar } from '@/components/landing/HeroStatsBar';
 import { OutcomeDataBadge } from '@/components/screener/OutcomeDataBadge';
 
@@ -137,8 +137,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 2. A real, current detection */}
-      <LivePatternPreview />
+      {/* 2. What is firing right now — qualifying and suppressed side by side */}
+      <FiringNowSection />
 
       {/* 3. What makes this different */}
       <section ref={differenceRef} className="py-16 px-4 md:px-6 lg:px-8 border-t border-border/20">

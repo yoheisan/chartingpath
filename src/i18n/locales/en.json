@@ -339,7 +339,9 @@
       "button": "See live {{pattern}} setups",
       "edgeAtlasTitle": "{{pattern}} in Edge Atlas",
       "edgeAtlasStats": "{{winRate}}% win rate · {{expectancy}}R expectancy · +{{annual}}% est. annual · n={{n}}",
-      "viewRanking": "View ranking →"
+      "viewRanking": "View ranking →",
+      "outcomeTitle": "{{pattern}} outcome data",
+      "viewOutcomes": "View outcome data →"
     }
   },
   "chartOverlays": {
@@ -2016,7 +2018,8 @@
       "Spinning Top": "Small body with long shadows indicating indecision",
       "Donchian Breakout (Long)": "Bullish breakout above the 20-period high Donchian channel",
       "Donchian Breakout (Short)": "Bearish breakdown below the 20-period low Donchian channel"
-    }
+    },
+    "viewOutcomeData": "View the outcome data"
   },
   "patternDetailModal": {
     "educationalDisclaimer": "Educational Research Data",
@@ -5691,7 +5694,9 @@
     "tryIt": "Try it now →",
     "skip": "Skip tour",
     "next": "Next",
-    "getStarted": "Let's go!"
+    "getStarted": "Let's go!",
+    "outcomesTitle": "Outcome Data — Winners and Losers",
+    "outcomesDesc": "Every pattern, timeframe and asset combination we track — including the ones that lose money. Sample size shown on every row."
   },
   "glossary": {
     "winRate": "The percentage of trades that end in profit. A 60% win rate means 6 out of 10 trades are winners.",
@@ -6637,7 +6642,8 @@
     "emptyTitle": "No combination in this filter reaches {{min}} resolved occurrences.",
     "emptyBody": "We'd rather show you nothing than a win rate we can't stand behind.",
     "disclaimer": "Historical figures only. Occurrences that expired without reaching target or stop are excluded from the denominator. Figures are gross of costs and are not forward returns. Cells with fewer than {{min}} resolved occurrences are not shown.",
-    "cta": "Alert me when one of these fires"
+    "cta": "Alert me when one of these fires",
+    "breadcrumb": "Outcome Data"
   },
   "methodology": {
     "metaTitle": "Methodology — How ChartingPath Measures Pattern Outcomes",
@@ -6706,5 +6712,31 @@
     "backtestedValues": "Win rate {{wr}}% · expectancy {{exp}}R · n={{n}}",
     "noBacktest": "No backtested figures for these cells yet.",
     "disclaimer": "Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice."
+  },
+  "firingNow": {
+    "badge": "Live right now",
+    "headline": "{{active}} patterns are firing right now. {{qualifying}} have a measured edge after costs.",
+    "subhead": "Here they are — and here's why we're ignoring the other {{suppressed}}. Across {{instruments}} instruments.",
+    "qualifyingLabel": "Qualify after costs",
+    "suppressedLabel": "Suppressed — no measured edge",
+    "colInstrument": "Instrument",
+    "colPattern": "Pattern",
+    "colTimeframe": "TF",
+    "colEntry": "Entry",
+    "colStop": "Stop",
+    "colTarget": "Target",
+    "colWinRate": "Win rate",
+    "colSample": "n",
+    "colNet": "Net expectancy",
+    "suppressedToggle": "{{count}} detections suppressed — no measured edge after costs",
+    "suppressedMore": "Showing 12 of {{count}}.",
+    "reasonSample": "Insufficient sample (n={{n}})",
+    "reasonNegative": "Negative expectancy",
+    "reasonNegativeNet": "Negative after costs",
+    "reasonSuspended": "Suspended — edge stopped holding forward",
+    "reasonOther": "No measured edge",
+    "emptyTitle": "Nothing meets our bar right now.",
+    "emptyBody": "Every live detection failed either the sample-size floor or the after-cost expectancy test. We would rather show you nothing than show you a setup we cannot support.",
+    "cta": "Get alerted when these fire"
   }
 }
