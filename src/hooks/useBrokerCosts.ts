@@ -22,6 +22,34 @@ export interface BrokerCostSelection {
 }
 
 /**
+ * RPC params for the user's own cost assumptions, for callers that need them
+ * outside React state (edge lookups). Falls back to the conservative default
+ * profile when the user has not chosen one.
+ */
+export async function fetchBrokerCostParams(): Promise<{
+  p_broker_profile_id: string | null;
+  p_spread_override: number | null;
+  p_commission_override: number | null;
+}> {
+  const empty = { p_broker_profile_id: null, p_spread_override: null, p_commission_override: null };
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) return empty;
+  const { data } = await supabase
+    .from('profiles')
+    .select('broker_profile_id, custom_spread_pips, custom_commission_per_lot')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return {
+    p_broker_profile_id: data?.broker_profile_id ?? null,
+    p_spread_override: data?.custom_spread_pips === null || data?.custom_spread_pips === undefined
+      ? null : Number(data.custom_spread_pips),
+    p_commission_override: data?.custom_commission_per_lot === null || data?.custom_commission_per_lot === undefined
+      ? null : Number(data.custom_commission_per_lot),
+  };
+}
+
+/**
  * The user's broker cost assumptions. Cost is per-user by design: the same cell
  * can carry an edge for a raw-spread account and none for a wide-spread one, so
  * every edge statement in the UI has to be qualified by whose costs it assumes.
