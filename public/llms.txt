@@ -56,7 +56,7 @@ Note: Win rate alone does not determine profitability. At 2R risk-reward, a patt
 - [Homepage](/): Pattern-based trading signal discovery, research, and automation platform.
 - [About](/about): What we do — built by TradingView's first hire in Japan.
 - [Live Screener](/patterns/live): Real-time chart pattern scanner across 1,100+ instruments.
-- [Edge Atlas](/edge-atlas): Historical win rates, expectancy, and annualized edge for every pattern.
+- [Outcome Data](/outcomes): Historical win rates and expectancy for every pattern, timeframe and asset — winners and losers alike.
 - [Pattern Lab](/projects/pattern-lab/new): Backtest any chart pattern on any ticker with historical data.
 - [Learning Center](/learn): 100+ educational articles on chart patterns, indicators, and strategies.
 - [Pattern Library](/chart-patterns/library): Visual reference for all supported chart patterns.

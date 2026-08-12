@@ -42,7 +42,6 @@ const STATIC_ROUTES = [
   { path: "/projects/pricing", priority: "0.6", changefreq: "monthly" },
 
   // Edge Atlas & Stats
-  { path: "/edge-atlas", priority: "0.8", changefreq: "daily" },
   { path: "/patterns/stats", priority: "0.9", changefreq: "daily" },
 
   // Feature pages
