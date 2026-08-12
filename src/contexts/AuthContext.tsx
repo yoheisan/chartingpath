@@ -2,6 +2,33 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import i18n from '@/i18n/config';
+import { trackEvent, flushEvents } from '@/lib/analytics';
+
+// Funnel completion must be observed from the auth state listener, not a click
+// handler: the Google OAuth return remounts the app, so any handler-side event
+// either ran before the session resolved or was unmounted before the request
+// left the tab. Fired here, then flushed with keepalive so a redirect away from
+// the callback route cannot kill it.
+const AUTH_COMPLETED_KEY = 'cp_auth_completed_fired';
+const NEW_ACCOUNT_WINDOW_MS = 120_000;
+
+async function trackAuthCompletion(userId: string, createdAt: string | undefined, method: string) {
+  const key = `${AUTH_COMPLETED_KEY}:${userId}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+  } catch {
+    // sessionStorage unavailable (private mode) — still fire once per load.
+  }
+
+  const isNewAccount = createdAt
+    ? Date.now() - new Date(createdAt).getTime() < NEW_ACCOUNT_WINDOW_MS
+    : false;
+
+  // Kept deliberately distinct: the funnel needs genuinely new accounts.
+  await trackEvent(isNewAccount ? 'auth.signup_completed' : 'auth.login_completed', { method });
+  await flushEvents();
+}
 
 interface AuthContextType {
   user: User | null;
@@ -40,6 +67,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (session?.user) {
           const user = session.user;
           setTimeout(async () => {
+            if (event === 'SIGNED_IN') {
+              try {
+                await trackAuthCompletion(
+                  user.id,
+                  user.created_at,
+                  (user.app_metadata?.provider as string) || 'email',
+                );
+              } catch {}
+            }
             try {
               const { data } = await supabase.rpc('is_admin', { _user_id: user.id });
               if (mounted) setIsAdmin(data === true);
