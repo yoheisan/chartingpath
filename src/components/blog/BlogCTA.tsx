@@ -100,7 +100,7 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
               <div className="flex items-center justify-between">
               <div>
                   <p className="text-sm font-medium text-foreground">
-                    {t('blog.liveSetupsCta.edgeAtlasTitle', '{{pattern}} in Edge Atlas', { pattern: patternName })}
+                    {t('blog.liveSetupsCta.outcomeTitle', '{{pattern}} outcome data', { pattern: patternName })}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {t('blog.liveSetupsCta.edgeAtlasStats', '{{winRate}}% win rate · {{expectancy}}R expectancy · +{{annual}}% est. annual · n={{n}}', { winRate: edgeData.win_rate, expectancy: edgeData.expectancy_r, annual: edgeData.est_annual_return, n: edgeData.sample_count })}
@@ -108,10 +108,10 @@ const BlogCTA = ({ patternName, patternSlug }: BlogCTAProps) => {
                 </div>
                 <Button asChild variant="outline" size="sm">
                   <Link
-                    to="/#edge-atlas"
-                    onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'blog_cta_edge_atlas' })}
+                    to="/outcomes"
+                    onClick={() => trackEvent('content.cta_click', { slug: patternSlug, source: 'blog_cta_outcomes' })}
                   >
-                    {t('blog.liveSetupsCta.viewRanking', 'View ranking →')}
+                    {t('blog.liveSetupsCta.viewOutcomes', 'View outcome data →')}
                   </Link>
                 </Button>
               </div>

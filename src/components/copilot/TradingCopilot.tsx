@@ -176,9 +176,9 @@ const PAGE_CONTEXT_MAP: Record<string, PageContext> = {
       { labelKey: "copilot.panel.chipWhatWatching", label: "What's Copilot watching?", prompt: "What's Copilot watching?" },
     ],
   },
-  '/edge-atlas': {
-    pageName: 'Edge Atlas',
-    greeting: "Edge Atlas is open. Want to check pattern win rates or plan alignment?",
+  '/outcomes': {
+    pageName: 'Outcome Data',
+    greeting: "The outcome table is open. Want to check pattern win rates or plan alignment?",
     chips: [
       { label: "What patterns are in my plan?", prompt: "What patterns are in my plan?" },
       { label: "Best win rate for breakouts", prompt: "Best win rate for breakouts" },

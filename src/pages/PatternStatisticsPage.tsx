@@ -237,7 +237,7 @@ export default function PatternStatisticsPage() {
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-foreground transition-colors">{t('patternStats.home', 'Home')}</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">{t('edgeAtlas.badge', 'Edge Atlas')}</Link>
+          <Link to="/outcomes" className="hover:text-foreground transition-colors">{t('outcomes.breadcrumb', 'Outcome Data')}</Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">{patternName}</span>
         </nav>
@@ -317,7 +317,7 @@ export default function PatternStatisticsPage() {
                       size="sm"
                       variant="outline"
                       className="text-xs h-7 gap-1"
-                      onClick={() => navigate(`/edge-atlas/${patternId}?timeframe=${b.timeframe}&assetType=${b.asset_type}&patternName=${encodeURIComponent(patternName)}`)}
+                      onClick={() => navigate(`/outcomes?pattern=${encodeURIComponent(patternName)}&timeframe=${b.timeframe}`)}
                     >
                       <Zap className="h-3 w-3" /> {t('patternStats.tickers', 'Tickers')}
                     </Button>
@@ -335,7 +335,7 @@ export default function PatternStatisticsPage() {
                     <span>WR {b.win_rate_pct}%</span>
                     <span className="text-green-500 font-mono">{b.expectancy_r.toFixed(3)}R</span>
                     <span>{b.total} {t('patternStats.trades', 'trades')}</span>
-                    <Button size="sm" variant="outline" className="text-xs h-6" onClick={() => navigate(`/edge-atlas/${patternId}?timeframe=${b.timeframe}&assetType=${b.asset_type}&patternName=${encodeURIComponent(patternName)}`)}>
+                    <Button size="sm" variant="outline" className="text-xs h-6" onClick={() => navigate(`/outcomes?pattern=${encodeURIComponent(patternName)}&timeframe=${b.timeframe}`)}>
                       {t('patternStats.view', 'View')}
                     </Button>
                   </div>

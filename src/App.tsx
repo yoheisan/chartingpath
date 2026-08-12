@@ -94,8 +94,6 @@ const TranslationManagement = lazy(() =>
 );
 
 const Terms = lazy(() => import("./pages/Terms"));
-const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
-const EdgeAtlasIndexPage = lazy(() => import("./pages/EdgeAtlasIndexPage"));
 const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage"));
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
@@ -243,8 +241,10 @@ const App = () => (
           <Route path="/privacy" element={withSuspense(<Privacy />)} />
           <Route path="/faq" element={withSuspense(<FAQ />)} />
           <Route path="/support" element={withSuspense(<SupportPage />)} />
-          <Route path="/edge-atlas" element={withSuspense(<EdgeAtlasIndexPage />)} />
-          <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
+          {/* Edge Atlas retired: it only ever surfaced positive-expectancy cells.
+              Permanent (301-equivalent) redirects to the honest /outcomes table. */}
+          <Route path="/edge-atlas" element={<Navigate to="/outcomes" replace />} />
+          <Route path="/edge-atlas/:patternId" element={<EdgeAtlasRedirect />} />
           <Route path="/patterns/:patternId/statistics" element={withSuspense(<PatternStatisticsPage />)} />
           <Route path="/patterns/:patternId/:instrument/statistics" element={withSuspense(<InstrumentPatternStatsPage />)} />
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />

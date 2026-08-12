@@ -23,10 +23,10 @@ export const PatternLiveSetupsCTA = ({ patternKey, patternName }: Props) => {
       </Link>
       {isInEdgeAtlas && (
         <Link
-          to="/#edge-atlas"
+          to="/outcomes"
           className="text-primary hover:underline flex items-center gap-1"
         >
-          {t('patternLibrary.viewInEdgeAtlas', 'View in Edge Atlas')}
+          {t('patternLibrary.viewOutcomeData', 'View the outcome data')}
           <ArrowRight className="h-3 w-3" />
         </Link>
       )}
