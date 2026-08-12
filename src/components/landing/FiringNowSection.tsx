@@ -42,6 +42,11 @@ export function FiringNowSection() {
   const { t } = useTranslation();
   const [rows, setRows] = useState<DetectionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  // `failed` covers both a query error and a zero-row response. A zero-row
+  // response is never a legitimate product state here — the detections table is
+  // continuously populated — so rendering "0 patterns are firing" off the back
+  // of it would publish a false claim about our own data.
+  const [failed, setFailed] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const tracked = useRef(false);
 
@@ -53,7 +58,17 @@ export function FiringNowSection() {
         .select('id,instrument,pattern_name,timeframe,direction,entry_price,stop_loss_price,take_profit_price,total_trades,win_rate_pct,expectancy_r,expectancy_r_net,cell_status,qualifies')
         .limit(1000);
       if (cancelled) return;
-      if (!error && data) setRows(data as DetectionRow[]);
+      if (error) {
+        console.error('[FiringNowSection] failed to load v_live_detections_with_edge', error);
+        trackEvent('firing_now.load_failed', { reason: 'query_error', message: error.message, code: (error as any).code ?? null });
+        setFailed(true);
+      } else if (!data || data.length === 0) {
+        console.error('[FiringNowSection] v_live_detections_with_edge returned zero rows');
+        trackEvent('firing_now.load_failed', { reason: 'empty_result' });
+        setFailed(true);
+      } else {
+        setRows(data as DetectionRow[]);
+      }
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -74,14 +89,14 @@ export function FiringNowSection() {
   }, [rows]);
 
   useEffect(() => {
-    if (loading || tracked.current) return;
+    if (loading || failed || tracked.current) return;
     tracked.current = true;
     trackEvent('firing_now.view', {
       active: rows.length,
       qualifying: qualifying.length,
       suppressed: suppressed.length,
     });
-  }, [loading, rows.length, qualifying.length, suppressed.length]);
+  }, [loading, failed, rows.length, qualifying.length, suppressed.length]);
 
   const suppressionReason = (r: DetectionRow): string => {
     if (r.cell_status && r.cell_status !== 'active') {
@@ -109,6 +124,9 @@ export function FiringNowSection() {
       </section>
     );
   }
+
+  // Query failed or came back empty — render nothing rather than a false claim.
+  if (failed || rows.length === 0) return null;
 
   return (
     <section className="py-16 px-4 md:px-6 lg:px-8 border-t border-border/20">
