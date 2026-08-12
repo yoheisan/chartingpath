@@ -39,3 +39,15 @@ silence them by loosening assertions.
 `npm ci` requires `--legacy-peer-deps` across all workflows: `react-day-picker@^8.10.1` declares a
 peer of `date-fns@^2.28.0 || ^3.0.0` while the project uses `date-fns@^4.1.0`. The real fix is
 upgrading to `react-day-picker@9`, a breaking change deferred to its own task.
+## Known non-bug: `convertPipsToPrice` returns 0 for EURJPY
+
+Reported as a production bug; it is not one.
+
+The failure exists only in `tests/backtester-v2`, which exercises the standalone
+engine under `engine/backtester-v2` with a synthetic instrument table that has no
+JPY-pair entry. The application path uses `src/utils/forexUtils.ts`, which resolves
+the 0.01 pip size for JPY crosses correctly, and paper trading has been booking
+non-zero JPY P&L throughout.
+
+Do not "fix" the production helper to satisfy this test. If it is worth fixing, the
+fix belongs in the test fixture.
