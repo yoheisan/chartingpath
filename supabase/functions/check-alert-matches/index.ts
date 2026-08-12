@@ -324,8 +324,11 @@ serve(async (req) => {
               },
               patternResult: {
                 confidence,
-                description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                description: concentration?.warning
+                  ? `CONCENTRATION WARNING — ${matchedDetection.pattern_name} on ${alert.symbol}. You already hold ${concentration.existing_positions_in_cluster} position(s) in this correlated cluster (${concentration.existing_pct_in_cluster}% of account). Adding this takes correlated exposure to ${concentration.correlated_after_add}%, above your ${concentration.max_correlated_exposure_pct}% cap.`
+                  : `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
                 edge: edgeStats,
+                concentration,
               },
               marketData: [{
                 o: matchedDetection.entry_price,
