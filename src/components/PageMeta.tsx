@@ -50,9 +50,11 @@ export function PageMeta({ title, description, canonicalPath, ogType = 'website'
     setMeta('meta[property="og:image"]', 'content', resolvedImage);
     setMeta('meta[name="twitter:image"]', 'content', resolvedImage);
 
-    // Canonical URL
-    if (canonicalPath) {
-      const canonicalUrl = `${BASE_URL}${canonicalPath}`;
+    // Canonical URL — always self-referencing; fall back to the current route
+    // so og:url never points at another page.
+    const resolvedPath = canonicalPath ?? window.location.pathname;
+    if (resolvedPath) {
+      const canonicalUrl = `${BASE_URL}${resolvedPath}`;
       setMeta('meta[property="og:url"]', 'content', canonicalUrl);
       
       let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
