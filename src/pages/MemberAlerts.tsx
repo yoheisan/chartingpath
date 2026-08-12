@@ -978,6 +978,55 @@ const MemberAlerts = () => {
              </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Edge-bar summary: explain the silence before the user notices it */}
+            {alerts.length > 0 && (
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                <p className="text-sm">
+                  {t('alerts.edgeBarSummary', "{{qualifying}} of your {{total}} alerts currently meet the edge bar. The rest won't fire until their measured edge changes.", {
+                    qualifying: edgeBarSummary.qualifying,
+                    total: edgeBarSummary.total,
+                  })}{' '}
+                  <Link to="/methodology" className="underline underline-offset-2">
+                    {t('alerts.edgeBarSummaryLink', 'How we measure edge')}
+                  </Link>
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={edgeFilter} onValueChange={(v) => setEdgeFilter(v as typeof edgeFilter)}>
+                    <SelectTrigger className="h-8 w-[220px] text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('alerts.edgeFilterAll', 'All alerts')}</SelectItem>
+                      <SelectItem value="qualifying">{t('alerts.edgeFilterQualifying', 'Meets the edge bar')}</SelectItem>
+                      <SelectItem value="not_qualifying">{t('alerts.edgeFilterNot', "Won't fire (watch-only)")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {edgeFilter === 'not_qualifying' && edgeBarSummary.nonQualifying > 0 && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" />
+                          {t('alerts.bulkDeleteNonQualifying', 'Delete all {{count}}', { count: edgeBarSummary.nonQualifying })}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('alerts.bulkDeleteTitle', 'Delete non-qualifying alerts?')}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('alerts.bulkDeleteConfirm', 'This removes {{count}} alerts that do not currently meet the edge bar. You can recreate them at any time.', { count: edgeBarSummary.nonQualifying })}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction onClick={bulkDeleteNonQualifying}>{t('common.delete')}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Master Plan auto-alert card */}
             {(() => {
               const planMapping: Record<string, PlanTier> = {
