@@ -37,6 +37,17 @@ const withSuspense = (node: ReactNode) => (
   <Suspense fallback={<PageSkeleton />}>{node}</Suspense>
 );
 
+// Edge Atlas retired — preserve any pattern slug as a filter on /outcomes.
+const EdgeAtlasRedirect = () => {
+  const { patternId } = useParams();
+  return (
+    <Navigate
+      to={patternId ? `/outcomes?pattern=${encodeURIComponent(patternId)}` : "/outcomes"}
+      replace
+    />
+  );
+};
+
 // Core pages (lazy to avoid pulling the entire route tree on first load)
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
