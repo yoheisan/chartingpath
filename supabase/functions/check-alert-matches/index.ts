@@ -68,7 +68,7 @@ serve(async (req) => {
     // 1. Fetch all active user alerts
     const { data: alerts, error: alertsErr } = await supabase
       .from("alerts")
-      .select("id, user_id, symbol, pattern, timeframe, status, auto_paper_trade, webhook_url, webhook_secret, risk_percent")
+      .select("id, user_id, symbol, pattern, timeframe, status, auto_paper_trade, webhook_url, webhook_secret, risk_percent, max_correlated_exposure_pct")
       .eq("status", "active");
 
     if (alertsErr) {
