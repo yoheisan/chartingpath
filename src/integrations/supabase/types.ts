@@ -6583,11 +6583,14 @@ export type Database = {
           asset_type: string | null
           avg_bars: number | null
           avg_rr: number | null
+          cell_status: string | null
           current_price: number | null
           direction: string | null
           entry_price: number | null
+          est_cost_r: number | null
           exchange: string | null
           expectancy_r: number | null
+          expectancy_r_net: number | null
           first_detected_at: string | null
           id: string | null
           instrument: string | null
@@ -6599,6 +6602,7 @@ export type Database = {
           risk_reward_ratio: number | null
           status: string | null
           stop_loss_price: number | null
+          suspended_reason: string | null
           take_profit_price: number | null
           timeframe: string | null
           total_trades: number | null
@@ -6886,7 +6890,9 @@ export type Database = {
         Returns: {
           avg_bars: number
           avg_rr: number
+          est_cost_r: number
           expectancy_r: number
+          expectancy_r_net: number
           qualifies: boolean
           total_trades: number
           win_rate_pct: number
