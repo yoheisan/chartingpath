@@ -21,6 +21,8 @@ import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
 import { ClusterExposureNotice } from "@/components/exposure/ClusterExposureNotice";
 import { SuspendedCellsPanel } from "@/components/alerts/SuspendedCellsPanel";
 import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
+import { useAlertsEdgeStatus } from "@/hooks/useAlertsEdgeStatus";
+import { AlertEdgeStatusBadge } from "@/components/alerts/AlertEdgeStatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -51,6 +53,7 @@ interface Alert {
   auto_paper_trade?: boolean;
   webhook_url?: string | null;
   master_plan_id?: string | null;
+  max_correlated_exposure_pct?: number | null;
 }
 
 const MemberAlerts = () => {
@@ -83,9 +86,32 @@ const MemberAlerts = () => {
   // Automation state
   const [autoPaperTrade, setAutoPaperTrade] = useState(false);
   const [riskPercent, setRiskPercent] = useState(1.0);
+  const [maxCorrelatedPct, setMaxCorrelatedPct] = useState(4.0);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
   const edgeSummary = useAlertEdgeSummary(user?.id);
+  const [edgeFilter, setEdgeFilter] = useState<'all' | 'qualifying' | 'not_qualifying'>('all');
+  const { statuses: edgeStatuses, loading: edgeStatusLoading, summary: edgeBarSummary } = useAlertsEdgeStatus(alerts);
+  const visibleAlerts = alerts.filter((a) => {
+    if (edgeFilter === 'all') return true;
+    const q = edgeStatuses[a.id]?.qualifies ?? false;
+    return edgeFilter === 'qualifying' ? q : !q;
+  });
+
+  const bulkDeleteNonQualifying = async () => {
+    const ids = alerts.filter((a) => edgeStatuses[a.id] && !edgeStatuses[a.id].qualifies).map((a) => a.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from('alerts').update({ status: 'deleted' }).in('id', ids);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: t('alerts.bulkDeleted', 'Alerts deleted'),
+      description: t('alerts.bulkDeletedDesc', '{{count}} non-qualifying alerts were removed.', { count: ids.length }),
+    });
+    if (user) await fetchAlerts(user.id);
+  };
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -275,6 +301,7 @@ const MemberAlerts = () => {
           webhook_url: webhookUrl || null,
           webhook_secret: webhookSecret || null,
           risk_percent: riskPercent,
+          max_correlated_exposure_pct: maxCorrelatedPct,
         }
       });
 
