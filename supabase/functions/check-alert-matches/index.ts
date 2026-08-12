@@ -68,7 +68,7 @@ serve(async (req) => {
     // 1. Fetch all active user alerts
     const { data: alerts, error: alertsErr } = await supabase
       .from("alerts")
-      .select("id, user_id, symbol, pattern, timeframe, status, auto_paper_trade, webhook_url, webhook_secret, risk_percent")
+      .select("id, user_id, symbol, pattern, timeframe, status, auto_paper_trade, webhook_url, webhook_secret, risk_percent, max_correlated_exposure_pct")
       .eq("status", "active");
 
     if (alertsErr) {
@@ -228,6 +228,44 @@ serve(async (req) => {
             disclaimer: 'Historical outcomes are not forward returns. Expectancy is shown gross and after estimated costs; the cost estimate is provisional and not your broker\'s actual spread and commission. Not financial advice.',
           };
 
+          // CORRELATED-RISK CHECK — inform, never suppress.
+          // Cluster = direction + asset class + country. We deliberately do not
+          // compute pairwise return correlation: no price-history table is
+          // available, and raw correlation converges to 1 in exactly the stress
+          // scenarios that matter. Cluster grouping is the honest approximation.
+          const capPct = Number(alert.max_correlated_exposure_pct ?? 4.0);
+          let concentration: Record<string, unknown> | null = null;
+          try {
+            const { data: clusterRows, error: clusterErr } = await supabase.rpc('get_exposure_cluster', {
+              p_user_id: alert.user_id,
+              p_symbol: alert.symbol,
+              p_direction: matchedDetection.direction === 'short' ? 'short' : 'long',
+              p_asset_type: matchedDetection.asset_type ?? null,
+              p_new_position_pct: riskPercent,
+            });
+            if (clusterErr) {
+              console.error(`[check-alert-matches] Cluster lookup error for alert ${alert.id}:`, clusterErr);
+            } else {
+              const c = Array.isArray(clusterRows) ? clusterRows[0] : clusterRows;
+              if (c) {
+                const afterAdd = Number(c.correlated_after_add ?? 0);
+                concentration = {
+                  cluster_key: c.cluster_key,
+                  existing_positions_in_cluster: c.existing_positions_in_cluster,
+                  existing_pct_in_cluster: Number(c.existing_pct_in_cluster ?? 0),
+                  correlated_after_add: afterAdd,
+                  max_correlated_exposure_pct: capPct,
+                  warning: afterAdd > capPct,
+                };
+                if (afterAdd > capPct) {
+                  console.log(`[check-alert-matches] CONCENTRATION WARNING alert ${alert.id}: ${c.cluster_key} ${afterAdd}% > cap ${capPct}%`);
+                }
+              }
+            }
+          } catch (clusterCatch) {
+            console.error(`[check-alert-matches] Cluster exception for alert ${alert.id}:`, clusterCatch);
+          }
+
           // Insert log entry first to get the ID
           const { data: logData, error: logError } = await supabase
             .from("alerts_log")
@@ -242,6 +280,8 @@ serve(async (req) => {
                 description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
                 detection_id: matchedDetection.id,
                 edge: edgeStats,
+                concentration,
+                signal_class: concentration?.warning ? 'concentration_warning' : 'clean',
               },
               price_data: {
                 symbol: alert.symbol,
@@ -284,8 +324,11 @@ serve(async (req) => {
               },
               patternResult: {
                 confidence,
-                description: `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                description: concentration?.warning
+                  ? `CONCENTRATION WARNING — ${matchedDetection.pattern_name} on ${alert.symbol}. You already hold ${concentration.existing_positions_in_cluster} position(s) in this correlated cluster (${concentration.existing_pct_in_cluster}% of account). Adding this takes correlated exposure to ${concentration.correlated_after_add}%, above your ${concentration.max_correlated_exposure_pct}% cap.`
+                  : `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
                 edge: edgeStats,
+                concentration,
               },
               marketData: [{
                 o: matchedDetection.entry_price,

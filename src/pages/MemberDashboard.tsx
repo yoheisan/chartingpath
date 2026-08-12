@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { PageMeta } from '@/components/PageMeta';
 import WelcomeBackBanner from '@/components/WelcomeBackBanner';
 import { ForwardRecordPanel } from '@/components/dashboard/ForwardRecordPanel';
+import { ExposurePanel } from '@/components/exposure/ExposurePanel';
 import type { SetupWithVisuals } from "@/types/VisualSpec";
 
 /** Route state passed when navigating from Historical Occurrences for playback */
@@ -85,7 +86,8 @@ const MemberDashboard = () => {
         initialDetectionId={initialDetectionId}
       />
       {user?.id && (
-        <div className="px-4 py-4">
+        <div className="space-y-4 px-4 py-4">
+          <ExposurePanel userId={user.id} />
           <ForwardRecordPanel userId={user.id} />
         </div>
       )}

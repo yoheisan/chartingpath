@@ -364,6 +364,7 @@ export type Database = {
           created_at: string | null
           id: string
           master_plan_id: string | null
+          max_correlated_exposure_pct: number
           pattern: Database["public"]["Enums"]["chart_pattern"]
           risk_percent: number
           status: Database["public"]["Enums"]["alert_status"] | null
@@ -379,6 +380,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           master_plan_id?: string | null
+          max_correlated_exposure_pct?: number
           pattern: Database["public"]["Enums"]["chart_pattern"]
           risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
@@ -394,6 +396,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           master_plan_id?: string | null
+          max_correlated_exposure_pct?: number
           pattern?: Database["public"]["Enums"]["chart_pattern"]
           risk_percent?: number
           status?: Database["public"]["Enums"]["alert_status"] | null
@@ -6610,6 +6613,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_user_exposure: {
+        Row: {
+          buckets: Json | null
+          net_long_pct: number | null
+          net_short_pct: number | null
+          total_open_positions: number | null
+          total_position_size_pct: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acquire_worker_lock: { Args: { p_worker_name: string }; Returns: boolean }
@@ -6836,6 +6850,21 @@ export type Database = {
       get_est_cost_r: {
         Args: { p_asset_type: string; p_timeframe: string }
         Returns: number
+      }
+      get_exposure_cluster: {
+        Args: {
+          p_asset_type: string
+          p_direction: string
+          p_new_position_pct?: number
+          p_symbol: string
+          p_user_id: string
+        }
+        Returns: {
+          cluster_key: string
+          correlated_after_add: number
+          existing_pct_in_cluster: number
+          existing_positions_in_cluster: number
+        }[]
       }
       get_getting_started_batch: {
         Args: never
