@@ -93,6 +93,72 @@ function getInstrumentsForTier(assetType: string, maxTickers: number): string[] 
   return instruments.slice(0, maxTickers).map(i => i.yahooSymbol);
 }
 
+/**
+ * ROTATING SLICE of the instrument universe.
+ *
+ * The per-run cap exists for runtime and provider rate-limit reasons (a full
+ * 99-symbol FX scan blows the edge function wall clock). A FIXED unrotated slice
+ * means the tail of the universe is never scanned at all. So the cap stays, but a
+ * persisted cursor (`scan_rotation_cursor`) advances by the slice size on every
+ * scheduled run, wrapping around, so the whole universe is covered over a cycle.
+ */
+async function getRotatingInstruments(
+  supabase: any,
+  assetType: string,
+  timeframe: string,
+  maxTickers: number,
+): Promise<{ symbols: string[]; offset: number; universeSize: number }> {
+  const assetMap: Record<string, Instrument[]> = {
+    fx: ALL_INSTRUMENTS.fx,
+    crypto: ALL_INSTRUMENTS.crypto,
+    stocks: ALL_INSTRUMENTS.stocks,
+    commodities: ALL_INSTRUMENTS.commodities,
+    indices: ALL_INSTRUMENTS.indices,
+    etfs: ALL_INSTRUMENTS.etfs,
+  };
+  const universe = assetMap[assetType] || [];
+  const universeSize = universe.length;
+  if (universeSize === 0) return { symbols: [], offset: 0, universeSize: 0 };
+  if (maxTickers >= universeSize) {
+    return { symbols: universe.map(i => i.yahooSymbol), offset: 0, universeSize };
+  }
+
+  let offset = 0;
+  try {
+    const { data } = await supabase
+      .from('scan_rotation_cursor')
+      .select('cursor_offset')
+      .eq('asset_type', assetType)
+      .eq('timeframe', timeframe)
+      .maybeSingle();
+    offset = Number(data?.cursor_offset ?? 0) % universeSize;
+  } catch (e) {
+    console.warn('[scan-live-patterns] Rotation cursor read failed, starting at 0:', e);
+  }
+
+  // Wrap-around slice
+  const symbols: string[] = [];
+  for (let i = 0; i < maxTickers; i++) {
+    symbols.push(universe[(offset + i) % universeSize].yahooSymbol);
+  }
+
+  const nextOffset = (offset + maxTickers) % universeSize;
+  try {
+    await supabase.from('scan_rotation_cursor').upsert({
+      asset_type: assetType,
+      timeframe,
+      cursor_offset: nextOffset,
+      universe_size: universeSize,
+      last_advanced_at: new Date().toISOString(),
+    }, { onConflict: 'asset_type,timeframe' });
+  } catch (e) {
+    console.warn('[scan-live-patterns] Rotation cursor write failed:', e);
+  }
+
+  console.info(`[scan-live-patterns] Rotation: ${assetType}@${timeframe} scanning ${symbols.length}/${universeSize} from offset ${offset} (next ${nextOffset})`);
+  return { symbols, offset, universeSize };
+}
+
 // Cache configuration
 const scanCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000;
@@ -1488,7 +1554,9 @@ serve(async (req) => {
       rrTier = parseInt(rrTierParam) as RRTier;
     }
     
-    const instruments = getInstrumentsForTier(assetType, maxTickers);
+    // Fast-path (cache read) keeps the deterministic head slice; the slow path below
+    // swaps in a rotating slice so the whole universe gets covered over a cycle.
+    let instruments = getInstrumentsForTier(assetType, maxTickers);
     const assetMap: Record<string, number> = { fx: ALL_INSTRUMENTS.fx.length, crypto: ALL_INSTRUMENTS.crypto.length, stocks: ALL_INSTRUMENTS.stocks.length, commodities: ALL_INSTRUMENTS.commodities.length, indices: ALL_INSTRUMENTS.indices.length, etfs: ALL_INSTRUMENTS.etfs.length };
     const totalInUniverse = assetMap[assetType] || instruments.length;
     const patternsToScan = ALL_PATTERNS.filter(p => allowedPatterns.includes(p));
@@ -1545,9 +1613,23 @@ serve(async (req) => {
     }
     
     console.info('[scan-live-patterns] forceRefresh=true, proceeding to slow path scan');
+
+    // ROTATION — see getRotatingInstruments(). Successive scheduled runs advance a
+    // persisted cursor so instruments outside the first `maxTickers` are not
+    // permanently invisible to the scanner.
+    let rotationOffset = 0;
+    try {
+      const rot = await getRotatingInstruments(supabase, assetType, timeframe, maxTickers);
+      if (rot.symbols.length) {
+        instruments = rot.symbols;
+        rotationOffset = rot.offset;
+      }
+    } catch (e) {
+      console.warn('[scan-live-patterns] Rotation failed, falling back to head slice:', e);
+    }
     
     // MEMORY CACHE (only for slow path)
-    const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${allowedPatterns.sort().join(',')}`;
+    const cacheKey = `${assetType}:${timeframe}:${maxTickers}:${rotationOffset}:${allowedPatterns.sort().join(',')}`;
     const cached = scanCache.get(cacheKey);
     const cacheTtl = assetType === 'commodities' ? CACHE_TTL_MS_SLOW : CACHE_TTL_MS;
     // Never serve memory cache if forceRefresh=true — cron jobs set this to force a real scan
@@ -1855,7 +1937,7 @@ serve(async (req) => {
        .catch(() => {});
     }
     
-    const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
+    const responseData = { success: true, patterns: setups, scannedAt: new Date().toISOString(), instrumentsScanned: instruments.length, rotationOffset, totalInUniverse, assetType, marketOpen: isMarketOpen(assetType) };
     scanCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
     
     return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });

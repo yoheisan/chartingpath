@@ -307,6 +307,57 @@ export type Database = {
           },
         ]
       }
+      alert_run_log: {
+        Row: {
+          alerts_dispatched: number
+          alerts_evaluated: number
+          alerts_skipped_recent: number
+          asset_type_filter: string | null
+          detections_considered: number
+          dispatch_failures: number
+          duration_ms: number | null
+          emails_confirmed: number
+          failure_reasons: Json
+          id: string
+          matches_found: number
+          outcome: string
+          run_at: string
+          watch_only: number
+        }
+        Insert: {
+          alerts_dispatched?: number
+          alerts_evaluated?: number
+          alerts_skipped_recent?: number
+          asset_type_filter?: string | null
+          detections_considered?: number
+          dispatch_failures?: number
+          duration_ms?: number | null
+          emails_confirmed?: number
+          failure_reasons?: Json
+          id?: string
+          matches_found?: number
+          outcome?: string
+          run_at?: string
+          watch_only?: number
+        }
+        Update: {
+          alerts_dispatched?: number
+          alerts_evaluated?: number
+          alerts_skipped_recent?: number
+          asset_type_filter?: string | null
+          detections_considered?: number
+          dispatch_failures?: number
+          duration_ms?: number | null
+          emails_confirmed?: number
+          failure_reasons?: Json
+          id?: string
+          matches_found?: number
+          outcome?: string
+          run_at?: string
+          watch_only?: number
+        }
+        Relationships: []
+      }
       alert_suppression_log: {
         Row: {
           alert_id: string | null
@@ -639,6 +690,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      asset_class_health: {
+        Row: {
+          active_detection_count: number
+          asset_type: string
+          checked_at: string
+          detail: string | null
+          hours_since_newest: number | null
+          id: string
+          newest_detection_at: string | null
+          status: string
+          threshold_hours: number
+          timeframe: string | null
+        }
+        Insert: {
+          active_detection_count?: number
+          asset_type: string
+          checked_at?: string
+          detail?: string | null
+          hours_since_newest?: number | null
+          id?: string
+          newest_detection_at?: string | null
+          status: string
+          threshold_hours: number
+          timeframe?: string | null
+        }
+        Update: {
+          active_detection_count?: number
+          asset_type?: string
+          checked_at?: string
+          detail?: string | null
+          hours_since_newest?: number | null
+          id?: string
+          newest_detection_at?: string | null
+          status?: string
+          threshold_hours?: number
+          timeframe?: string | null
+        }
+        Relationships: []
       }
       backtest_pattern_outcomes: {
         Row: {
@@ -5016,6 +5106,30 @@ export type Database = {
           status?: string
           symbol?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      scan_rotation_cursor: {
+        Row: {
+          asset_type: string
+          cursor_offset: number
+          last_advanced_at: string
+          timeframe: string
+          universe_size: number
+        }
+        Insert: {
+          asset_type: string
+          cursor_offset?: number
+          last_advanced_at?: string
+          timeframe: string
+          universe_size?: number
+        }
+        Update: {
+          asset_type?: string
+          cursor_offset?: number
+          last_advanced_at?: string
+          timeframe?: string
+          universe_size?: number
         }
         Relationships: []
       }
