@@ -9,6 +9,7 @@ import MemberNavigation from "@/components/MemberNavigation";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { DataProviderSettings } from "@/components/settings/DataProviderSettings";
+import { BrokerCostSettings } from "@/components/settings/BrokerCostSettings";
 import { User, Settings, Shield, Crown, Star, KeyRound, CheckCircle, Database } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
