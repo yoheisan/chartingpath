@@ -1139,6 +1139,60 @@ export type Database = {
         }
         Relationships: []
       }
+      cell_status: {
+        Row: {
+          asset_type: string
+          created_at: string
+          direction: string
+          forward_expectancy_r: number | null
+          forward_n: number
+          id: string
+          last_evaluated_at: string | null
+          pattern_id: string
+          reinstated_at: string | null
+          reinstated_by: string | null
+          status: string
+          suspended_at: string | null
+          suspended_reason: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          direction: string
+          forward_expectancy_r?: number | null
+          forward_n?: number
+          id?: string
+          last_evaluated_at?: string | null
+          pattern_id: string
+          reinstated_at?: string | null
+          reinstated_by?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          timeframe: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          direction?: string
+          forward_expectancy_r?: number | null
+          forward_n?: number
+          id?: string
+          last_evaluated_at?: string | null
+          pattern_id?: string
+          reinstated_at?: string | null
+          reinstated_by?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_analytics: {
         Row: {
           ai_responses: number
@@ -3625,6 +3679,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pattern_cost_assumptions: {
+        Row: {
+          asset_type: string
+          created_at: string
+          est_cost_r: number
+          id: string
+          notes: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          est_cost_r: number
+          id?: string
+          notes?: string | null
+          timeframe: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          est_cost_r?: number
+          id?: string
+          notes?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       pattern_hit_rates: {
         Row: {
@@ -6612,6 +6696,13 @@ export type Database = {
         }
         Returns: number
       }
+      evaluate_cell_suspensions: {
+        Args: never
+        Returns: {
+          evaluated: number
+          newly_suspended: number
+        }[]
+      }
       expire_stale_patterns: { Args: never; Returns: undefined }
       get_active_pattern_count: { Args: never; Returns: number }
       get_article_by_slug: {
@@ -6737,6 +6828,10 @@ export type Database = {
           trades_per_year: number
           win_rate_pct: number
         }[]
+      }
+      get_est_cost_r: {
+        Args: { p_asset_type: string; p_timeframe: string }
+        Returns: number
       }
       get_getting_started_batch: {
         Args: never
