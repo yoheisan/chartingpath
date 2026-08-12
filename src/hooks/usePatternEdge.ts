@@ -5,6 +5,7 @@ import {
   toDbAssetType,
   toLiveDirection,
 } from '@/config/vocabularies';
+import { fetchBrokerCostParams } from '@/hooks/useBrokerCosts';
 
 export interface PatternEdge {
   patternId: string;
@@ -67,6 +68,9 @@ export function usePatternEdge(symbol: string, timeframe: string, patterns: stri
         setAssetType(at);
         if (!at) { setEdges([]); return; }
 
+        // Per-user broker costs, so the edge shown is the edge the user actually gets.
+        const brokerParams = await fetchBrokerCostParams();
+
         const results = await Promise.all(
           patterns.slice(0, 12).map(async (p) => {
             const { data } = await supabase.rpc('get_pattern_edge', {
@@ -74,6 +78,7 @@ export function usePatternEdge(symbol: string, timeframe: string, patterns: stri
               p_timeframe: timeframe,
               p_asset_type: at,
               p_direction: inferDirection(p),
+              ...brokerParams,
             });
             const row: any = Array.isArray(data) ? data[0] : data;
             const gross = Number(row?.expectancy_r ?? 0);

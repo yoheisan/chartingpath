@@ -320,7 +320,11 @@
     "bulkDeleteConfirm": "This removes {{count}} alerts that do not currently meet the edge bar. You can recreate them at any time.",
     "bulkDeleted": "Alerts deleted",
     "bulkDeletedDesc": "{{count}} non-qualifying alerts were removed.",
-    "noAlertsForFilter": "No alerts match this filter."
+    "noAlertsForFilter": "No alerts match this filter.",
+    "edgeBarSummaryNotify": "{{qualifying}} of your {{total}} alerts currently have a measured edge after your broker costs. The rest still notify you, labelled watch-only rather than presented as signals.",
+    "edgeBarBrokerLink": "Change your broker costs",
+    "edgeFilterNotWatch": "Watch-only (no measured edge)",
+    "bulkDeleteConfirmWatch": "This removes {{count}} watch-only alerts that have no measured edge after your broker costs. You can recreate them at any time."
   },
   "backtestWorkspace": {
     "demoMode": "Demo Mode",
@@ -6712,7 +6716,10 @@
     "watchOnly": "Watch-only",
     "stats": "Win rate {{wr}}% · expectancy {{exp}}R · avg R:R {{rr}} · n={{n}}",
     "noEdge": "This combination has no measured edge (n={{n}}, expectancy {{exp}}R). We won't alert on it — you can still save it as a watch-only alert.",
-    "disclaimer": "Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice."
+    "disclaimer": "Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice.",
+    "netStatsBroker": "{{net}}R after your broker costs (−{{cost}}R)",
+    "noEdgeWatchOnly": "This combination has no measured edge after your broker's costs (n={{n}}, {{exp}}R gross, {{net}}R net). You can still create it: it will notify you, labelled watch-only rather than presented as a signal.",
+    "disclaimerBroker": "Historical outcomes are not forward returns. Cost is computed from this trade's stop distance using your selected broker profile — a researched approximation, not your broker's live spread and commission. Change it in Account → Preferences. This is not financial advice."
   },
   "forwardRecord": {
     "title": "Forward record",
@@ -6776,6 +6783,28 @@
     "reasonSample": "Not enough measured outcomes yet (n={{n}}).",
     "reasonNegative": "Measured expectancy is negative ({{exp}}R).",
     "reasonCosts": "Positive gross ({{exp}}R) but negative after estimated costs ({{net}}R).",
-    "reasonUnknownAsset": "We could not resolve an asset class for this symbol, so there is no measured edge."
+    "reasonUnknownAsset": "We could not resolve an asset class for this symbol, so there is no measured edge.",
+    "costBasis": "Based on your selected broker costs.",
+    "watchOnlyNotifies": "Watch-only — no measured edge after your broker's costs",
+    "watchOnlyStillNotifies": "It still notifies you, flagged as a detection rather than a signal. Based on your selected broker costs."
+  },
+  "brokerCosts": {
+    "title": "Broker costs",
+    "description": "Cost is charged in R, and R is your stop distance — so the same spread is trivial on a daily trade and fatal on a 15m one. This setting directly changes which alerts count as having an edge.",
+    "loading": "Loading profiles…",
+    "defaultBadge": "Default",
+    "figures": "{{spread}} pips spread · {{commission}} round-trip commission per standard lot",
+    "updatedAt": "Figures last reviewed {{date}}",
+    "source": "Source",
+    "customSpread": "Your typical spread (pips, EUR/USD)",
+    "customCommission": "Round-trip commission per standard lot (USD)",
+    "disclaimer": "These are researched approximations from public broker comparisons, not live feeds. Spreads widen materially in the Asian session, on minors and crosses, and around news. Non-FX asset classes use a percentage-of-price cost on the same basis.",
+    "save": "Save broker costs",
+    "saving": "Saving…",
+    "saved": "Broker costs updated",
+    "savedDesc": "Edge calculations now use these figures.",
+    "saveFailed": "Could not save broker costs",
+    "saveFailedDesc": "Please try again.",
+    "current": "Currently using: {{name}}"
   }
 }

@@ -12,8 +12,9 @@ interface Props {
 
 /**
  * Shows the measured edge for each chosen pattern/timeframe/asset combination
- * BEFORE the alert is saved. Combinations without a measured edge are not
- * blocked — they are saved as watch-only and never alerted on.
+ * BEFORE the alert is saved. Nothing is blocked: combinations without a measured
+ * edge save as watch-only and still notify, labelled as detections not signals.
+ * Cost is computed from the user's own broker profile.
  */
 export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Props) {
   const { t } = useTranslation();
@@ -64,7 +65,7 @@ export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Prop
                 })}
               </p>
               <p className="text-xs font-medium">
-                {t('alertEdge.netStats', '{{net}}R after estimated costs (−{{cost}}R)', {
+                {t('alertEdge.netStatsBroker', '{{net}}R after your broker costs (−{{cost}}R)', {
                   net: e.expectancyRNet.toFixed(2),
                   cost: e.estCostR.toFixed(2),
                 })}
@@ -72,7 +73,7 @@ export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Prop
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              {t('alertEdge.noEdge', 'This combination has no measured edge (n={{n}}, expectancy {{exp}}R gross, {{net}}R after estimated costs). We won\'t alert on it — you can still save it as a watch-only alert.', {
+              {t('alertEdge.noEdgeWatchOnly', "This combination has no measured edge after your broker's costs (n={{n}}, {{exp}}R gross, {{net}}R net). You can still create it: it will notify you, labelled watch-only rather than presented as a signal.", {
                 n: e.totalTrades.toLocaleString(),
                 exp: e.expectancyR.toFixed(2),
                 net: e.expectancyRNet.toFixed(2),
@@ -83,7 +84,7 @@ export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Prop
       ))}
 
       <p className="border-t pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        {t('alertEdge.disclaimer', 'Historical outcomes are not forward returns. Cost figures are provisional estimates, not your broker\'s actual spread and commission. This is not financial advice.')}
+        {t('alertEdge.disclaimerBroker', "Historical outcomes are not forward returns. Cost is computed from this trade's stop distance using your selected broker profile — a researched approximation, not your broker's live spread and commission. Change it in Account → Preferences. This is not financial advice.")}
       </p>
     </div>
   );

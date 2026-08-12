@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toDbAssetType } from '@/config/vocabularies';
 import { inferDirection } from '@/hooks/usePatternEdge';
+import { fetchBrokerCostParams } from '@/hooks/useBrokerCosts';
 
 /** Minimum sample the edge filter requires before a cell can qualify. */
 export const EDGE_MIN_SAMPLE = 100;
@@ -47,6 +48,9 @@ export function useAlertsEdgeStatus(alerts: AlertLike[]) {
     (async () => {
       setLoading(true);
       try {
+        // Cost is per-user: the same cell can carry an edge for a raw-spread
+        // account and none for a wide-spread one.
+        const brokerParams = await fetchBrokerCostParams();
         const symbols = Array.from(new Set(alerts.map((a) => a.symbol)));
         const { data: instRows } = await supabase
           .from('instruments')
@@ -80,6 +84,7 @@ export function useAlertsEdgeStatus(alerts: AlertLike[]) {
               p_timeframe: a.timeframe,
               p_asset_type: at,
               p_direction: direction,
+              ...brokerParams,
             });
             const row: any = Array.isArray(data) ? data[0] : data;
             const n = Number(row?.total_trades ?? 0);

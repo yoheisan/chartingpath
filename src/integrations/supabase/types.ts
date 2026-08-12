@@ -1106,6 +1106,51 @@ export type Database = {
         }
         Relationships: []
       }
+      broker_profiles: {
+        Row: {
+          account_type: string
+          asset_class: string
+          commission_per_lot_roundtrip: number
+          created_at: string
+          id: string
+          is_custom: boolean
+          is_default: boolean
+          name: string
+          notes: string | null
+          source_url: string | null
+          typical_spread_pips: number
+          updated_at: string
+        }
+        Insert: {
+          account_type: string
+          asset_class: string
+          commission_per_lot_roundtrip?: number
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          is_default?: boolean
+          name: string
+          notes?: string | null
+          source_url?: string | null
+          typical_spread_pips?: number
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          asset_class?: string
+          commission_per_lot_roundtrip?: number
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          is_default?: boolean
+          name?: string
+          notes?: string | null
+          source_url?: string | null
+          typical_spread_pips?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cached_market_reports: {
         Row: {
           created_at: string
@@ -4287,7 +4332,10 @@ export type Database = {
       profiles: {
         Row: {
           avatar_color: string | null
+          broker_profile_id: string | null
           created_at: string | null
+          custom_commission_per_lot: number | null
+          custom_spread_pips: number | null
           display_alias: string | null
           email: string | null
           email_notifications_enabled: boolean | null
@@ -4308,7 +4356,10 @@ export type Database = {
         }
         Insert: {
           avatar_color?: string | null
+          broker_profile_id?: string | null
           created_at?: string | null
+          custom_commission_per_lot?: number | null
+          custom_spread_pips?: number | null
           display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
@@ -4329,7 +4380,10 @@ export type Database = {
         }
         Update: {
           avatar_color?: string | null
+          broker_profile_id?: string | null
           created_at?: string | null
+          custom_commission_per_lot?: number | null
+          custom_spread_pips?: number | null
           display_alias?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
@@ -4348,7 +4402,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_broker_profile_id_fkey"
+            columns: ["broker_profile_id"]
+            isOneToOne: false
+            referencedRelation: "broker_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_inputs: {
         Row: {
@@ -6784,6 +6846,18 @@ export type Database = {
           status: string
         }[]
       }
+      get_detection_cost_r: {
+        Args: {
+          p_asset_type: string
+          p_broker_profile_id?: string
+          p_commission_override?: number
+          p_entry: number
+          p_spread_override?: number
+          p_stop: number
+          p_symbol: string
+        }
+        Returns: number
+      }
       get_distinct_instrument_count: {
         Args: never
         Returns: {
@@ -6908,25 +6982,48 @@ export type Database = {
           timeframe: string
         }[]
       }
-      get_pattern_edge: {
-        Args: {
-          p_asset_type: string
-          p_direction: string
-          p_pattern_id: string
-          p_since?: string
-          p_timeframe: string
-        }
-        Returns: {
-          avg_bars: number
-          avg_rr: number
-          est_cost_r: number
-          expectancy_r: number
-          expectancy_r_net: number
-          qualifies: boolean
-          total_trades: number
-          win_rate_pct: number
-        }[]
-      }
+      get_pattern_edge:
+        | {
+            Args: {
+              p_asset_type: string
+              p_direction: string
+              p_pattern_id: string
+              p_since?: string
+              p_timeframe: string
+            }
+            Returns: {
+              avg_bars: number
+              avg_rr: number
+              est_cost_r: number
+              expectancy_r: number
+              expectancy_r_net: number
+              qualifies: boolean
+              total_trades: number
+              win_rate_pct: number
+            }[]
+          }
+        | {
+            Args: {
+              p_asset_type: string
+              p_broker_profile_id?: string
+              p_commission_override?: number
+              p_direction: string
+              p_pattern_id: string
+              p_since?: string
+              p_spread_override?: number
+              p_timeframe: string
+            }
+            Returns: {
+              avg_bars: number
+              avg_rr: number
+              est_cost_r: number
+              expectancy_r: number
+              expectancy_r_net: number
+              qualifies: boolean
+              total_trades: number
+              win_rate_pct: number
+            }[]
+          }
       get_pattern_library_stats: {
         Args: never
         Returns: {
