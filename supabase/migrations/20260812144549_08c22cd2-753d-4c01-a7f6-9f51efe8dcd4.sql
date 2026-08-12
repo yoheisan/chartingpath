@@ -1,0 +1,2 @@
+GRANT EXECUTE ON FUNCTION public.recompute_outcomes_at_rr(numeric, integer, date, uuid[]) TO supabase_read_only_user;
+GRANT EXECUTE ON FUNCTION public.recompute_outcomes_atr(numeric, integer, date, uuid[]) TO supabase_read_only_user;

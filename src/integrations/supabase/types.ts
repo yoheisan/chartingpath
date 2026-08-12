@@ -2560,8 +2560,14 @@ export type Database = {
       historical_pattern_occurrences: {
         Row: {
           asset_type: string
+          atr_multiple: number | null
+          atr_target_r: number | null
+          atr_value: number | null
           bars: Json
           bars_to_outcome: number | null
+          bars_to_outcome_atr: number | null
+          bars_to_outcome_rr1: number | null
+          bars_to_outcome_rr1_5: number | null
           bars_to_outcome_rr3: number | null
           bars_to_outcome_rr4: number | null
           bars_to_outcome_rr5: number | null
@@ -2574,12 +2580,18 @@ export type Database = {
           id: string
           multi_rr_computed_at: string | null
           outcome: string | null
+          outcome_atr: string | null
           outcome_date: string | null
           outcome_pnl_percent: number | null
+          outcome_pnl_percent_atr: number | null
+          outcome_pnl_percent_rr1: number | null
+          outcome_pnl_percent_rr1_5: number | null
           outcome_pnl_percent_rr3: number | null
           outcome_pnl_percent_rr4: number | null
           outcome_pnl_percent_rr5: number | null
           outcome_price: number | null
+          outcome_rr1: string | null
+          outcome_rr1_5: string | null
           outcome_rr3: string | null
           outcome_rr4: string | null
           outcome_rr5: string | null
@@ -2604,8 +2616,14 @@ export type Database = {
         }
         Insert: {
           asset_type: string
+          atr_multiple?: number | null
+          atr_target_r?: number | null
+          atr_value?: number | null
           bars?: Json
           bars_to_outcome?: number | null
+          bars_to_outcome_atr?: number | null
+          bars_to_outcome_rr1?: number | null
+          bars_to_outcome_rr1_5?: number | null
           bars_to_outcome_rr3?: number | null
           bars_to_outcome_rr4?: number | null
           bars_to_outcome_rr5?: number | null
@@ -2618,12 +2636,18 @@ export type Database = {
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
+          outcome_atr?: string | null
           outcome_date?: string | null
           outcome_pnl_percent?: number | null
+          outcome_pnl_percent_atr?: number | null
+          outcome_pnl_percent_rr1?: number | null
+          outcome_pnl_percent_rr1_5?: number | null
           outcome_pnl_percent_rr3?: number | null
           outcome_pnl_percent_rr4?: number | null
           outcome_pnl_percent_rr5?: number | null
           outcome_price?: number | null
+          outcome_rr1?: string | null
+          outcome_rr1_5?: string | null
           outcome_rr3?: string | null
           outcome_rr4?: string | null
           outcome_rr5?: string | null
@@ -2648,8 +2672,14 @@ export type Database = {
         }
         Update: {
           asset_type?: string
+          atr_multiple?: number | null
+          atr_target_r?: number | null
+          atr_value?: number | null
           bars?: Json
           bars_to_outcome?: number | null
+          bars_to_outcome_atr?: number | null
+          bars_to_outcome_rr1?: number | null
+          bars_to_outcome_rr1_5?: number | null
           bars_to_outcome_rr3?: number | null
           bars_to_outcome_rr4?: number | null
           bars_to_outcome_rr5?: number | null
@@ -2662,12 +2692,18 @@ export type Database = {
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
+          outcome_atr?: string | null
           outcome_date?: string | null
           outcome_pnl_percent?: number | null
+          outcome_pnl_percent_atr?: number | null
+          outcome_pnl_percent_rr1?: number | null
+          outcome_pnl_percent_rr1_5?: number | null
           outcome_pnl_percent_rr3?: number | null
           outcome_pnl_percent_rr4?: number | null
           outcome_pnl_percent_rr5?: number | null
           outcome_price?: number | null
+          outcome_rr1?: string | null
+          outcome_rr1_5?: string | null
           outcome_rr3?: string | null
           outcome_rr4?: string | null
           outcome_rr5?: string | null
@@ -7272,6 +7308,44 @@ export type Database = {
       recalculate_pattern_stats: {
         Args: { p_hit_rate_id: string }
         Returns: undefined
+      }
+      recompute_multi_rr_batch: {
+        Args: { p_batch_size?: number; p_force?: boolean; p_since?: string }
+        Returns: number
+      }
+      recompute_outcomes_at_rr: {
+        Args: {
+          p_from?: string
+          p_limit?: number
+          p_since?: string
+          p_target_r: number
+          p_to?: string
+        }
+        Returns: {
+          bars_to_outcome: number
+          occurrence_id: string
+          outcome: string
+          pnl_percent: number
+          r_multiple: number
+        }[]
+      }
+      recompute_outcomes_atr: {
+        Args: {
+          p_atr_multiple?: number
+          p_from?: string
+          p_limit?: number
+          p_since?: string
+          p_to?: string
+        }
+        Returns: {
+          atr_value: number
+          bars_to_outcome: number
+          occurrence_id: string
+          outcome: string
+          pnl_percent: number
+          r_multiple: number
+          target_r: number
+        }[]
       }
       record_worker_failure: {
         Args: {
