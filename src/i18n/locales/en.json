@@ -306,7 +306,21 @@
     "tf4h": "4 Hours",
     "tf8h": "8 Hours",
     "tf1d": "1 Day",
-    "edgeSummary": "Last 30 days: {{fired}} alerts fired · {{suppressed}} detections suppressed for lack of measured edge."
+    "edgeSummary": "Last 30 days: {{fired}} alerts fired · {{suppressed}} detections suppressed for lack of measured edge.",
+    "maxCorrelated": "Max correlated exposure",
+    "maxCorrelatedDesc": "Ten correlated trades at 1% each is a 10% bet, not ten 1% bets. Above this level we'll still alert you, but flag it as concentration.",
+    "maxCorrelatedClusterDesc": "A cluster is one direction, asset class and country combined. Range 1–20%, default 4%.",
+    "edgeBarSummary": "{{qualifying}} of your {{total}} alerts currently meet the edge bar. The rest won't fire until their measured edge changes.",
+    "edgeBarSummaryLink": "How we measure edge",
+    "edgeFilterAll": "All alerts",
+    "edgeFilterQualifying": "Meets the edge bar",
+    "edgeFilterNot": "Won't fire (watch-only)",
+    "bulkDeleteNonQualifying": "Delete all {{count}}",
+    "bulkDeleteTitle": "Delete non-qualifying alerts?",
+    "bulkDeleteConfirm": "This removes {{count}} alerts that do not currently meet the edge bar. You can recreate them at any time.",
+    "bulkDeleted": "Alerts deleted",
+    "bulkDeletedDesc": "{{count}} non-qualifying alerts were removed.",
+    "noAlertsForFilter": "No alerts match this filter."
   },
   "backtestWorkspace": {
     "demoMode": "Demo Mode",
@@ -6753,5 +6767,15 @@
     "footnote": "Clusters group positions by direction, asset class and country. We do not estimate pairwise correlation — it collapses toward 1 in the stress scenarios that matter.",
     "inlineNotice": "You already hold {{positions}} positions in this cluster ({{existing}}% of account). Adding this takes correlated exposure to {{after}}%.",
     "inlineOverCap": "That is above your {{cap}}% correlated-exposure cap. This is one bet, not several — we are telling you, not stopping you."
+  },
+  "alertEdgeStatus": {
+    "checking": "Checking edge…",
+    "qualifying": "Meets the edge bar",
+    "qualifyingDetail": "n={{n}} · {{net}}R net expectancy after estimated costs",
+    "watchOnly": "Watch-only — will not fire",
+    "reasonSample": "Not enough measured outcomes yet (n={{n}}).",
+    "reasonNegative": "Measured expectancy is negative ({{exp}}R).",
+    "reasonCosts": "Positive gross ({{exp}}R) but negative after estimated costs ({{net}}R).",
+    "reasonUnknownAsset": "We could not resolve an asset class for this symbol, so there is no measured edge."
   }
 }
