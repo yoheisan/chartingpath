@@ -233,3 +233,9 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+// Safe variant for components that may render outside the provider
+// (e.g. during HMR re-mounts). Returns null instead of throwing.
+export const useOptionalAuth = (): AuthContextType | null => {
+  return useContext(AuthContext) ?? null;
+};

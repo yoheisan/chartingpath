@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useOptionalAuth } from '@/contexts/AuthContext';
 import { useScanRequests } from '@/hooks/useScanRequests';
 
 /**
@@ -6,8 +6,8 @@ import { useScanRequests } from '@/hooks/useScanRequests';
  * and shows toast notifications. Place inside AuthProvider.
  */
 export function ScanNotificationListener() {
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
   // The hook handles fetching + showing toasts automatically
-  useScanRequests(user?.id);
+  useScanRequests(auth?.user?.id);
   return null;
 }
