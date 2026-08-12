@@ -18,6 +18,7 @@ import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
+import { ClusterExposureNotice } from "@/components/exposure/ClusterExposureNotice";
 import { SuspendedCellsPanel } from "@/components/alerts/SuspendedCellsPanel";
 import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -708,6 +709,15 @@ const MemberAlerts = () => {
               patterns={selectedPatterns}
               labelFor={(id) => patternOptions.find(o => o.value === id)?.label ?? id}
             />
+
+            {symbol && (
+              <ClusterExposureNotice
+                userId={user.id}
+                symbol={symbol}
+                direction="long"
+                newPositionPct={riskPercent}
+              />
+            )}
 
             {/* Delivery Method */}
             <div className="space-y-2">
