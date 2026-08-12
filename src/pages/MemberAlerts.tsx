@@ -1060,7 +1060,6 @@ const MemberAlerts = () => {
               <div className="space-y-4">
                 {visibleAlerts.map((alert) => (
                   <div
-                  <div
                     key={alert.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
                   >
