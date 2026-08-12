@@ -826,6 +826,37 @@ const MemberAlerts = () => {
                 </div>
               )}
 
+              {/* Max correlated exposure — the ceiling for one cluster, not one trade */}
+              <div className="space-y-2 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="max-correlated" className="text-sm font-medium">
+                    {t('alerts.maxCorrelated', 'Max correlated exposure')}
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      id="max-correlated"
+                      type="number"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      value={maxCorrelatedPct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setMaxCorrelatedPct(Number.isFinite(v) ? Math.min(20, Math.max(1, v)) : 4);
+                      }}
+                      className="h-8 w-20 text-sm"
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t('alerts.maxCorrelatedDesc', "Ten correlated trades at 1% each is a 10% bet, not ten 1% bets. Above this level we'll still alert you, but flag it as concentration.")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('alerts.maxCorrelatedClusterDesc', 'A cluster is one direction, asset class and country combined. Range 1–20%, default 4%.')}
+                </p>
+              </div>
+
               {/* Webhook */}
               <div className="space-y-3 rounded-lg border p-3">
                 <div className="flex items-center gap-2">
