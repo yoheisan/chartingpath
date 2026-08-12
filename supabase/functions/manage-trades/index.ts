@@ -60,6 +60,10 @@ Deno.serve(async (req) => {
 
     for (const trade of openTrades) {
       // ── Price feed staleness / orphan check ──
+      // NOTE: detections are a *downstream* product, not a price feed. Sourcing
+      // price/freshness only from live_pattern_detections is the same inverted
+      // dependency that killed FX (see refresh-fx-prices). historical_prices is the
+      // authoritative feed; detections are only a fallback.
       const { data: freshnessRow } = await supabase
         .from("live_pattern_detections")
         .select("last_confirmed_at")
@@ -69,9 +73,21 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
 
-      const lastConfirmed = freshnessRow?.last_confirmed_at
+      const { data: latestBar } = await supabase
+        .from("historical_prices")
+        .select("date, close")
+        .eq("symbol", trade.symbol)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const detectionTs = freshnessRow?.last_confirmed_at
         ? new Date(freshnessRow.last_confirmed_at)
         : null;
+      const barTs = latestBar?.date ? new Date(latestBar.date) : null;
+      const lastConfirmed = [detectionTs, barTs]
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
       const feedStale = !lastConfirmed || lastConfirmed < fourHoursAgo;
 
@@ -97,17 +113,17 @@ Deno.serve(async (req) => {
         console.log(`[manage-trades] RESUMED monitoring ${trade.symbol} — feed restored`);
       }
 
-      const { data: priceData } = await supabase
-        .from("live_pattern_detections")
-        .select("current_price")
-        .eq("instrument", trade.symbol)
-        .order("first_detected_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const currentPrice = priceData?.current_price
-        ? Number(priceData.current_price)
-        : null;
+      let currentPrice: number | null = latestBar?.close ? Number(latestBar.close) : null;
+      if (!currentPrice) {
+        const { data: priceData } = await supabase
+          .from("live_pattern_detections")
+          .select("current_price")
+          .eq("instrument", trade.symbol)
+          .order("first_detected_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        currentPrice = priceData?.current_price ? Number(priceData.current_price) : null;
+      }
 
       if (!currentPrice) continue;
 

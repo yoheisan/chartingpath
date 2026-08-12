@@ -56,6 +56,43 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // ── RUN OBSERVABILITY ──
+    // alerts_log only records what fired. It cannot distinguish "nothing matched"
+    // from "matched but delivery failed" from "the run never happened". Every run
+    // now writes one row to alert_run_log, including the zero-match runs.
+    const runStartedAt = Date.now();
+    const runStats = {
+      alerts_evaluated: 0,
+      alerts_skipped_recent: 0,
+      detections_considered: 0,
+      matches_found: 0,
+      alerts_dispatched: 0,
+      watch_only: 0,
+      emails_confirmed: 0,
+      dispatch_failures: 0,
+      failure_reasons: [] as any[],
+      outcome: 'ok',
+    };
+    const recordFailure = (alertId: string, stage: string, reason: string) => {
+      runStats.dispatch_failures++;
+      if (runStats.failure_reasons.length < 50) {
+        runStats.failure_reasons.push({ alert_id: alertId, stage, reason });
+      }
+    };
+    const persistRun = async (assetTypeFilter: string | null) => {
+      try {
+        const { error } = await supabase.from("alert_run_log").insert({
+          asset_type_filter: assetTypeFilter,
+          ...runStats,
+          duration_ms: Date.now() - runStartedAt,
+        });
+        if (error) console.error("[check-alert-matches] Run log insert failed:", error.message);
+      } catch (e) {
+        console.error("[check-alert-matches] Run log exception:", e);
+      }
+      console.log(`[check-alert-matches] RUN SUMMARY ${JSON.stringify({ ...runStats, duration_ms: Date.now() - runStartedAt })}`);
+    };
+
     // Optional: filter by asset type if called from scan pipeline
     let assetType: string | null = null;
     try {
@@ -74,15 +111,21 @@ serve(async (req) => {
       .eq("status", "active");
 
     if (alertsErr) {
+      runStats.outcome = 'error';
+      runStats.failure_reasons.push({ stage: 'fetch_alerts', reason: alertsErr.message });
+      await persistRun(assetType);
       throw new Error(`Failed to fetch alerts: ${alertsErr.message}`);
     }
 
     if (!alerts || alerts.length === 0) {
       console.log("[check-alert-matches] No active alerts found");
+      runStats.outcome = 'no_active_alerts';
+      await persistRun(assetType);
       return new Response(JSON.stringify({ success: true, matched: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    runStats.alerts_evaluated = alerts.length;
 
     // Fetch profiles for all alert users
     const userIds = [...new Set(alerts.map(a => a.user_id))];
@@ -121,15 +164,21 @@ serve(async (req) => {
     const { data: detections, error: detectionsErr } = await detectionsQuery;
 
     if (detectionsErr) {
+      runStats.outcome = 'error';
+      runStats.failure_reasons.push({ stage: 'fetch_detections', reason: detectionsErr.message });
+      await persistRun(assetType);
       throw new Error(`Failed to fetch detections: ${detectionsErr.message}`);
     }
 
     if (!detections || detections.length === 0) {
       console.log("[check-alert-matches] No recent live detections found");
+      runStats.outcome = 'no_detections';
+      await persistRun(assetType);
       return new Response(JSON.stringify({ success: true, matched: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    runStats.detections_considered = detections.length;
 
     console.log(`[check-alert-matches] Found ${detections.length} recent live detections`);
 
@@ -199,7 +248,7 @@ serve(async (req) => {
 
     for (const alert of alerts) {
       // Skip if already notified recently
-      if (notifiedAlertIds.has(alert.id)) continue;
+      if (notifiedAlertIds.has(alert.id)) { runStats.alerts_skipped_recent++; continue; }
 
       const alertKey = `${normalizeSymbol(alert.symbol)}|${normalizePatternId(alert.pattern)}|${alert.timeframe}`;
       const matchedDetection = detectionMap.get(alertKey);
@@ -227,6 +276,7 @@ serve(async (req) => {
       if (!hasEdge) {
         watchOnlyCount++;
         suppressedCount++;
+        runStats.watch_only++;
         suppressionRows.push({
           user_id: alert.user_id,
           alert_id: alert.id,
@@ -243,6 +293,7 @@ serve(async (req) => {
       }
 
       matchCount++;
+      runStats.matches_found++;
       console.log(`[check-alert-matches] MATCH: Alert ${alert.id} → ${alert.symbol} ${alert.pattern} ${alert.timeframe}`);
 
       // 6. Log the detection in alerts_log first, then send notification, then update email_sent
@@ -402,10 +453,13 @@ serve(async (req) => {
 
           if (notifyError) {
             console.error(`[check-alert-matches] Notify error for alert ${alert.id}:`, notifyError);
+            recordFailure(alert.id, 'notify', notifyError.message ?? String(notifyError));
           } else {
+            runStats.alerts_dispatched++;
             // Parse the response to check email success
             const emailSuccess = notifyData?.channels?.email?.success === true;
             if (emailSuccess && logData?.id) {
+              runStats.emails_confirmed++;
               await supabase
                 .from("alerts_log")
                 .update({ 
@@ -416,6 +470,7 @@ serve(async (req) => {
               console.log(`[check-alert-matches] Email sent and logged for alert ${alert.id}`);
             } else {
               console.warn(`[check-alert-matches] Notification sent but email not confirmed for alert ${alert.id}:`, notifyData);
+              recordFailure(alert.id, 'email_unconfirmed', JSON.stringify(notifyData?.channels?.email ?? notifyData ?? {}).slice(0, 300));
             }
           }
 
@@ -512,6 +567,7 @@ serve(async (req) => {
 
         } catch (err) {
           console.error(`[check-alert-matches] Error processing alert ${alert.id}:`, err);
+          recordFailure(alert.id, 'process_alert', err instanceof Error ? err.message : String(err));
         }
       };
 
@@ -532,6 +588,9 @@ serve(async (req) => {
     }
 
     console.log(`[check-alert-matches] Done. Fired ${matchCount} (${watchOnlyCount} watch-only, no measured edge after user broker costs) out of ${alerts.length} alerts`);
+    if (runStats.matches_found === 0) runStats.outcome = 'no_matches';
+    else if (runStats.dispatch_failures > 0) runStats.outcome = 'partial_delivery_failure';
+    await persistRun(assetType);
 
     return new Response(JSON.stringify({
       success: true,
@@ -540,6 +599,7 @@ serve(async (req) => {
       matched: matchCount,
       suppressed: suppressedCount,
       watchOnly: watchOnlyCount,
+      dispatchFailures: runStats.dispatch_failures,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
