@@ -14,17 +14,19 @@ const corsHeaders = {
  * carries the measured historical edge for its pattern/timeframe/asset/direction
  * cell.
  *
- * EDGE FILTER: aggregate expectancy across all resolved historical occurrences is
- * negative. Patterns as a whole lose money. We therefore dispatch an alert ONLY
- * when the detection lands in a cell with a measured edge (qualifies = true, i.e.
- * n >= 100 AND expectancy > 0). Everything else is recorded in
- * `alert_suppression_log` so the user can see what we deliberately withheld.
- * The silence is the product.
+ * EDGE LABELLING (not filtering): aggregate expectancy across all resolved
+ * historical occurrences is negative. Patterns as a whole lose money. Every alert
+ * still dispatches, but each one is labelled with whether the cell has a measured
+ * edge AFTER THE USER'S OWN BROKER COSTS. Cost is computed per detection from its
+ * stop distance (get_detection_cost_r) because R is defined by stop distance, so
+ * a flat per-asset-class cost cannot be right. Non-qualifying dispatches carry
+ * signal_class = 'no_measured_edge' with the reason, and are also written to
+ * `alert_suppression_log` as the record of what we did not present as a signal.
  *
- * PAPER AUTOPILOT: every alert that fires is also logged as a paper trade with
- * source = 'edge_alert_autopilot', regardless of the user's auto_paper_trade
- * setting. That flag governs the user's own opt-in trades; this is our unedited
- * forward record of every signal we issue.
+ * PAPER AUTOPILOT: every alert that fires WITH a measured edge is also logged as a
+ * paper trade with source = 'edge_alert_autopilot', regardless of the user's
+ * auto_paper_trade setting. Watch-only fires are not autopiloted: the forward
+ * record must contain only what we actually claimed as a signal.
  * 
  * Called automatically after each scan-live-patterns run completes.
  */
@@ -86,7 +88,7 @@ serve(async (req) => {
     const userIds = [...new Set(alerts.map(a => a.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, email, push_notifications_enabled, email_notifications_enabled")
+      .select("user_id, email, push_notifications_enabled, email_notifications_enabled, broker_profile_id, custom_spread_pips, custom_commission_per_lot")
       .in("user_id", userIds);
 
     const profileMap = new Map(
@@ -152,6 +154,36 @@ serve(async (req) => {
     // 5. Match alerts to detections
     let matchCount = 0;
     let suppressedCount = 0;
+    let watchOnlyCount = 0;
+    // Cost depends on the user's broker profile, so the same cell can qualify for a
+    // raw-spread user and fail for a wide-spread one. Cache per (user, detection).
+    const userCostCache = new Map<string, number | null>();
+    const resolveUserCost = async (userId: string, det: any): Promise<number | null> => {
+      const ck = `${userId}|${det.id}`;
+      if (userCostCache.has(ck)) return userCostCache.get(ck)!;
+      const prof: any = profileMap.get(userId);
+      let cost: number | null = null;
+      try {
+        const { data } = await supabase.rpc('get_detection_cost_r', {
+          p_entry: det.entry_price,
+          p_stop: det.stop_loss_price,
+          p_symbol: det.instrument,
+          p_asset_type: det.asset_type,
+          p_broker_profile_id: prof?.broker_profile_id ?? null,
+          p_spread_override: prof?.custom_spread_pips ?? null,
+          p_commission_override: prof?.custom_commission_per_lot ?? null,
+        });
+        cost = data === null || data === undefined ? null : Number(data);
+      } catch (_e) {
+        cost = null;
+      }
+      // Fall back to the view's default-profile cost when entry/stop are unusable.
+      if (cost === null || !Number.isFinite(cost)) {
+        cost = det.est_cost_r === null || det.est_cost_r === undefined ? null : Number(det.est_cost_r);
+      }
+      userCostCache.set(ck, cost);
+      return cost;
+    };
     const suppressionRows: any[] = [];
     const notifications: Promise<any>[] = [];
 
@@ -174,10 +206,26 @@ serve(async (req) => {
 
       if (!matchedDetection) continue;
 
-      // EDGE FILTER — see file header. `qualifies` is decided on expectancy NET of
-      // estimated costs, and is false for cells the kill switch has suspended.
-      // No net edge, no alert.
-      if (!matchedDetection.qualifies) {
+      // EDGE LABELLING — see file header. We no longer drop the alert; we decide
+      // whether it is presented as a signal or as watch-only, using THIS user's costs.
+      const userCostR = await resolveUserCost(alert.user_id, matchedDetection);
+      const grossR = Number(matchedDetection.expectancy_r ?? 0);
+      const netR = userCostR === null ? grossR : Number((grossR - userCostR).toFixed(3));
+      const sampleN = matchedDetection.total_trades ?? 0;
+      const suspended = matchedDetection.cell_status === 'suspended';
+      const hasEdge = sampleN >= 100 && netR > 0 && !suspended;
+      const noEdgeReason = hasEdge
+        ? null
+        : suspended
+          ? 'cell_suspended'
+          : sampleN < 100
+            ? 'insufficient_sample'
+            : grossR <= 0
+              ? 'negative_expectancy'
+              : 'negative_after_costs';
+
+      if (!hasEdge) {
+        watchOnlyCount++;
         suppressedCount++;
         suppressionRows.push({
           user_id: alert.user_id,
@@ -188,15 +236,10 @@ serve(async (req) => {
           timeframe: alert.timeframe,
           asset_type: matchedDetection.asset_type,
           direction: matchedDetection.direction,
-          total_trades: matchedDetection.total_trades ?? 0,
-          expectancy_r: matchedDetection.expectancy_r ?? 0,
-          reason: matchedDetection.cell_status === 'suspended'
-            ? 'cell_suspended'
-            : (matchedDetection.total_trades ?? 0) < 100
-              ? 'insufficient_sample'
-              : 'negative_net_expectancy',
+          total_trades: sampleN,
+          expectancy_r: grossR,
+          reason: noEdgeReason,
         });
-        continue;
       }
 
       matchCount++;
@@ -220,12 +263,15 @@ serve(async (req) => {
             sample_size: matchedDetection.total_trades ?? 0,
             win_rate_pct: matchedDetection.win_rate_pct ?? null,
             expectancy_r: matchedDetection.expectancy_r ?? null,
-            est_cost_r: matchedDetection.est_cost_r ?? null,
-            expectancy_r_net: matchedDetection.expectancy_r_net ?? null,
+            est_cost_r: userCostR,
+            expectancy_r_net: netR,
+            has_measured_edge: hasEdge,
+            no_edge_reason: noEdgeReason,
+            cost_basis: 'Based on your selected broker costs.',
             avg_rr: matchedDetection.avg_rr ?? null,
             risk_percent: riskPercent,
             position_size: positionSize,
-            disclaimer: 'Historical outcomes are not forward returns. Expectancy is shown gross and after estimated costs; the cost estimate is provisional and not your broker\'s actual spread and commission. Not financial advice.',
+            disclaimer: 'Historical outcomes are not forward returns. Expectancy is shown gross and after the cost of your selected broker profile, computed from this trade\'s stop distance. It is an approximation, not your broker\'s live spread and commission. Not financial advice.',
           };
 
           // CORRELATED-RISK CHECK — inform, never suppress.
@@ -281,7 +327,9 @@ serve(async (req) => {
                 detection_id: matchedDetection.id,
                 edge: edgeStats,
                 concentration,
-                signal_class: concentration?.warning ? 'concentration_warning' : 'clean',
+                signal_class: !hasEdge
+                  ? 'no_measured_edge'
+                  : concentration?.warning ? 'concentration_warning' : 'clean',
               },
               price_data: {
                 symbol: alert.symbol,
@@ -324,9 +372,11 @@ serve(async (req) => {
               },
               patternResult: {
                 confidence,
-                description: concentration?.warning
-                  ? `CONCENTRATION WARNING — ${matchedDetection.pattern_name} on ${alert.symbol}. You already hold ${concentration.existing_positions_in_cluster} position(s) in this correlated cluster (${concentration.existing_pct_in_cluster}% of account). Adding this takes correlated exposure to ${concentration.correlated_after_add}%, above your ${concentration.max_correlated_exposure_pct}% cap.`
-                  : `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                description: !hasEdge
+                  ? `WATCH-ONLY — ${matchedDetection.pattern_name} on ${alert.symbol}. No measured edge after your broker's costs (${noEdgeReason?.replace(/_/g, ' ')}; n=${sampleN}, ${netR}R net). This is a detection, not a signal.`
+                  : concentration?.warning
+                    ? `CONCENTRATION WARNING — ${matchedDetection.pattern_name} on ${alert.symbol}. You already hold ${concentration.existing_positions_in_cluster} position(s) in this correlated cluster (${concentration.existing_pct_in_cluster}% of account). Adding this takes correlated exposure to ${concentration.correlated_after_add}%, above your ${concentration.max_correlated_exposure_pct}% cap.`
+                    : `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
                 edge: edgeStats,
                 concentration,
               },
@@ -369,8 +419,9 @@ serve(async (req) => {
             }
           }
 
-          // 8a. PAPER AUTOPILOT — system record of every signal we issue, always.
-          try {
+          // 8a. PAPER AUTOPILOT — system record of every signal we issue. Watch-only
+          // fires are excluded: we never claimed them as signals.
+          if (hasEdge) try {
             const { error: autopilotErr } = await supabase
               .from("paper_trades")
               .insert({
@@ -390,7 +441,7 @@ serve(async (req) => {
                 source: 'edge_alert_autopilot',
                 attribution: 'system',
                 alerted_at: new Date().toISOString(),
-                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${matchedDetection.total_trades} exp=${matchedDetection.expectancy_r}R gross / ${matchedDetection.expectancy_r_net}R net`,
+                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${sampleN} exp=${grossR}R gross / ${netR}R net (user broker cost ${userCostR}R)`,
               });
             if (autopilotErr) {
               console.error(`[check-alert-matches] Autopilot insert error for alert ${alert.id}:`, autopilotErr);
@@ -480,7 +531,7 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[check-alert-matches] Done. Fired ${matchCount}, suppressed ${suppressedCount} for lack of measured edge (out of ${alerts.length} alerts)`);
+    console.log(`[check-alert-matches] Done. Fired ${matchCount} (${watchOnlyCount} watch-only, no measured edge after user broker costs) out of ${alerts.length} alerts`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -488,6 +539,7 @@ serve(async (req) => {
       totalDetections: detections.length,
       matched: matchCount,
       suppressed: suppressedCount,
+      watchOnly: watchOnlyCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
