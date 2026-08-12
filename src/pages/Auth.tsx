@@ -578,6 +578,13 @@ const Auth = () => {
         navigate(redirectPath);
       }
     } catch (error: any) {
+      // Fires for BOTH sign-in and sign-up failures. signup_failed only covered
+      // sign-up, so a wall of failing logins was invisible in the funnel.
+      trackEvent("auth.error", {
+        method: "email",
+        stage: isSignUp ? "signup_submit" : "signin_submit",
+        reason: error?.message ?? "unknown",
+      });
       if (isSignUp) {
         trackEvent("auth.signup_failed", { method: "email", reason: error?.message ?? "unknown" });
       }
