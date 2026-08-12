@@ -362,7 +362,10 @@ const Auth = () => {
 
   const handleSocialAuth = async (provider: 'google') => {
     setLoading(true);
-    trackEvent("auth.form_start", { method: provider });
+    await trackEvent("auth.form_start", { method: provider });
+    // Deliver before the OAuth redirect unloads the document, otherwise the
+    // event is queued and discarded — the reason form_start read 0.
+    await flushEvents();
     
     try {
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
@@ -404,6 +407,7 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      trackEvent("auth.error", { method: provider, stage: "oauth_start", reason: error?.message ?? "unknown" });
       trackEvent("auth.signup_failed", { method: provider, reason: error?.message ?? "unknown" });
       toast({
         title: t('auth.toastAuthError'),
