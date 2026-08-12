@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Lock, User, CheckCircle2, BarChart3, Bell, Zap, FlaskConical, Shield, ChevronDown, Globe } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, flushEvents } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -362,7 +362,10 @@ const Auth = () => {
 
   const handleSocialAuth = async (provider: 'google') => {
     setLoading(true);
-    trackEvent("auth.form_start", { method: provider });
+    await trackEvent("auth.form_start", { method: provider });
+    // Deliver before the OAuth redirect unloads the document, otherwise the
+    // event is queued and discarded — the reason form_start read 0.
+    await flushEvents();
     
     try {
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
@@ -404,6 +407,7 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      trackEvent("auth.error", { method: provider, stage: "oauth_start", reason: error?.message ?? "unknown" });
       trackEvent("auth.signup_failed", { method: provider, reason: error?.message ?? "unknown" });
       toast({
         title: t('auth.toastAuthError'),
@@ -574,6 +578,13 @@ const Auth = () => {
         navigate(redirectPath);
       }
     } catch (error: any) {
+      // Fires for BOTH sign-in and sign-up failures. signup_failed only covered
+      // sign-up, so a wall of failing logins was invisible in the funnel.
+      trackEvent("auth.error", {
+        method: "email",
+        stage: isSignUp ? "signup_submit" : "signin_submit",
+        reason: error?.message ?? "unknown",
+      });
       if (isSignUp) {
         trackEvent("auth.signup_failed", { method: "email", reason: error?.message ?? "unknown" });
       }
@@ -597,6 +608,10 @@ const Auth = () => {
     const symbol = searchParams.get("symbol");
     trackEvent("auth_page.viewed", { context, pattern: pattern || undefined, symbol: symbol || undefined });
     trackEvent("auth.page_viewed", { source, context });
+    // page_viewed can fire from a route change that never paints a usable form
+    // (redirect races, session recovery). page_rendered fires from the mounted
+    // component, so page_viewed >> page_rendered means people never see the form.
+    trackEvent("auth.page_rendered", { source, context });
     
     return () => {
       if (!formInteracted.current) {
@@ -604,6 +619,29 @@ const Auth = () => {
       }
     };
   }, []);
+
+  // Fires when the Google button is actually on screen. Together with
+  // page_rendered this separates "never saw a CTA" from "saw it, didn't click".
+  const ctaRef = useRef<HTMLDivElement | null>(null);
+  const ctaSeen = useRef(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || ctaSeen.current) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !ctaSeen.current) {
+          ctaSeen.current = true;
+          trackEvent("auth.cta_visible", {
+            cta: "google",
+            source: searchParams.get("source") || searchParams.get("context") || "direct",
+          });
+          io.disconnect();
+        }
+      }
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  });
   
   const handleFormInteraction = () => {
     if (!formInteracted.current) {
@@ -835,7 +873,7 @@ const Auth = () => {
               // Regular Auth Form — Google first, then email
               <>
                 {/* Social Authentication - Bold Google button for maximum conversion */}
-                <div className="space-y-3">
+                <div className="space-y-3" ref={ctaRef}>
                   <Button
                     onClick={() => handleSocialAuth('google')}
                     disabled={loading}

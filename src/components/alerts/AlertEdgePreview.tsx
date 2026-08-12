@@ -54,19 +54,28 @@ export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Prop
           </div>
 
           {e.qualifies ? (
-            <p className="text-xs text-muted-foreground">
-              {t('alertEdge.stats', 'Win rate {{wr}}% · expectancy {{exp}}R · avg R:R {{rr}} · n={{n}}', {
-                wr: e.winRatePct.toFixed(1),
-                exp: e.expectancyR.toFixed(2),
-                rr: e.avgRr.toFixed(2),
-                n: e.totalTrades.toLocaleString(),
-              })}
-            </p>
+            <>
+              <p className="text-xs text-muted-foreground">
+                {t('alertEdge.stats', 'Win rate {{wr}}% · expectancy {{exp}}R gross · avg R:R {{rr}} · n={{n}}', {
+                  wr: e.winRatePct.toFixed(1),
+                  exp: e.expectancyR.toFixed(2),
+                  rr: e.avgRr.toFixed(2),
+                  n: e.totalTrades.toLocaleString(),
+                })}
+              </p>
+              <p className="text-xs font-medium">
+                {t('alertEdge.netStats', '{{net}}R after estimated costs (−{{cost}}R)', {
+                  net: e.expectancyRNet.toFixed(2),
+                  cost: e.estCostR.toFixed(2),
+                })}
+              </p>
+            </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              {t('alertEdge.noEdge', 'This combination has no measured edge (n={{n}}, expectancy {{exp}}R). We won\'t alert on it — you can still save it as a watch-only alert.', {
+              {t('alertEdge.noEdge', 'This combination has no measured edge (n={{n}}, expectancy {{exp}}R gross, {{net}}R after estimated costs). We won\'t alert on it — you can still save it as a watch-only alert.', {
                 n: e.totalTrades.toLocaleString(),
                 exp: e.expectancyR.toFixed(2),
+                net: e.expectancyRNet.toFixed(2),
               })}
             </p>
           )}
@@ -74,7 +83,7 @@ export function AlertEdgePreview({ symbol, timeframe, patterns, labelFor }: Prop
       ))}
 
       <p className="border-t pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        {t('alertEdge.disclaimer', 'Historical outcomes are not forward returns. Figures are gross of costs. This is not financial advice.')}
+        {t('alertEdge.disclaimer', 'Historical outcomes are not forward returns. Cost figures are provisional estimates, not your broker\'s actual spread and commission. This is not financial advice.')}
       </p>
     </div>
   );

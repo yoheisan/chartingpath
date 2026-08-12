@@ -1139,6 +1139,60 @@ export type Database = {
         }
         Relationships: []
       }
+      cell_status: {
+        Row: {
+          asset_type: string
+          created_at: string
+          direction: string
+          forward_expectancy_r: number | null
+          forward_n: number
+          id: string
+          last_evaluated_at: string | null
+          pattern_id: string
+          reinstated_at: string | null
+          reinstated_by: string | null
+          status: string
+          suspended_at: string | null
+          suspended_reason: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          direction: string
+          forward_expectancy_r?: number | null
+          forward_n?: number
+          id?: string
+          last_evaluated_at?: string | null
+          pattern_id: string
+          reinstated_at?: string | null
+          reinstated_by?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          timeframe: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          direction?: string
+          forward_expectancy_r?: number | null
+          forward_n?: number
+          id?: string
+          last_evaluated_at?: string | null
+          pattern_id?: string
+          reinstated_at?: string | null
+          reinstated_by?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_analytics: {
         Row: {
           ai_responses: number
@@ -3625,6 +3679,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pattern_cost_assumptions: {
+        Row: {
+          asset_type: string
+          created_at: string
+          est_cost_r: number
+          id: string
+          notes: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          est_cost_r: number
+          id?: string
+          notes?: string | null
+          timeframe: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          est_cost_r?: number
+          id?: string
+          notes?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       pattern_hit_rates: {
         Row: {
@@ -6499,11 +6583,14 @@ export type Database = {
           asset_type: string | null
           avg_bars: number | null
           avg_rr: number | null
+          cell_status: string | null
           current_price: number | null
           direction: string | null
           entry_price: number | null
+          est_cost_r: number | null
           exchange: string | null
           expectancy_r: number | null
+          expectancy_r_net: number | null
           first_detected_at: string | null
           id: string | null
           instrument: string | null
@@ -6515,6 +6602,7 @@ export type Database = {
           risk_reward_ratio: number | null
           status: string | null
           stop_loss_price: number | null
+          suspended_reason: string | null
           take_profit_price: number | null
           timeframe: string | null
           total_trades: number | null
@@ -6611,6 +6699,13 @@ export type Database = {
           p_type: Database["public"]["Enums"]["project_type"]
         }
         Returns: number
+      }
+      evaluate_cell_suspensions: {
+        Args: never
+        Returns: {
+          evaluated: number
+          newly_suspended: number
+        }[]
       }
       expire_stale_patterns: { Args: never; Returns: undefined }
       get_active_pattern_count: { Args: never; Returns: number }
@@ -6738,6 +6833,10 @@ export type Database = {
           win_rate_pct: number
         }[]
       }
+      get_est_cost_r: {
+        Args: { p_asset_type: string; p_timeframe: string }
+        Returns: number
+      }
       get_getting_started_batch: {
         Args: never
         Returns: {
@@ -6791,7 +6890,9 @@ export type Database = {
         Returns: {
           avg_bars: number
           avg_rr: number
+          est_cost_r: number
           expectancy_r: number
+          expectancy_r_net: number
           qualifies: boolean
           total_trades: number
           win_rate_pct: number

@@ -110,7 +110,7 @@ serve(async (req) => {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     let detectionsQuery = supabase
       .from("v_live_detections_with_edge")
-      .select("id, instrument, pattern_id, pattern_name, timeframe, asset_type, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, total_trades, win_rate_pct, expectancy_r, avg_rr, qualifies");
+      .select("id, instrument, pattern_id, pattern_name, timeframe, asset_type, direction, entry_price, stop_loss_price, take_profit_price, risk_reward_ratio, quality_score, current_price, first_detected_at, last_confirmed_at, total_trades, win_rate_pct, expectancy_r, est_cost_r, expectancy_r_net, avg_rr, cell_status, suspended_reason, qualifies");
 
     if (assetType) {
       detectionsQuery = detectionsQuery.eq("asset_type", assetType);
@@ -174,7 +174,9 @@ serve(async (req) => {
 
       if (!matchedDetection) continue;
 
-      // EDGE FILTER — see file header. No measured edge, no alert.
+      // EDGE FILTER — see file header. `qualifies` is decided on expectancy NET of
+      // estimated costs, and is false for cells the kill switch has suspended.
+      // No net edge, no alert.
       if (!matchedDetection.qualifies) {
         suppressedCount++;
         suppressionRows.push({
@@ -188,7 +190,11 @@ serve(async (req) => {
           direction: matchedDetection.direction,
           total_trades: matchedDetection.total_trades ?? 0,
           expectancy_r: matchedDetection.expectancy_r ?? 0,
-          reason: 'no_measured_edge',
+          reason: matchedDetection.cell_status === 'suspended'
+            ? 'cell_suspended'
+            : (matchedDetection.total_trades ?? 0) < 100
+              ? 'insufficient_sample'
+              : 'negative_net_expectancy',
         });
         continue;
       }
@@ -214,10 +220,12 @@ serve(async (req) => {
             sample_size: matchedDetection.total_trades ?? 0,
             win_rate_pct: matchedDetection.win_rate_pct ?? null,
             expectancy_r: matchedDetection.expectancy_r ?? null,
+            est_cost_r: matchedDetection.est_cost_r ?? null,
+            expectancy_r_net: matchedDetection.expectancy_r_net ?? null,
             avg_rr: matchedDetection.avg_rr ?? null,
             risk_percent: riskPercent,
             position_size: positionSize,
-            disclaimer: 'Historical outcomes are not forward returns. Figures are gross of costs. Not financial advice.',
+            disclaimer: 'Historical outcomes are not forward returns. Expectancy is shown gross and after estimated costs; the cost estimate is provisional and not your broker\'s actual spread and commission. Not financial advice.',
           };
 
           // Insert log entry first to get the ID
@@ -339,7 +347,7 @@ serve(async (req) => {
                 source: 'edge_alert_autopilot',
                 attribution: 'system',
                 alerted_at: new Date().toISOString(),
-                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${matchedDetection.total_trades} exp=${matchedDetection.expectancy_r}R`,
+                notes: `[autopilot] ${matchedDetection.pattern_name} | n=${matchedDetection.total_trades} exp=${matchedDetection.expectancy_r}R gross / ${matchedDetection.expectancy_r_net}R net`,
               });
             if (autopilotErr) {
               console.error(`[check-alert-matches] Autopilot insert error for alert ${alert.id}:`, autopilotErr);

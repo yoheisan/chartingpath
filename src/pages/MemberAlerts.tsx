@@ -18,6 +18,7 @@ import { wedgeConfig } from "@/config/wedge";
 import { usePlaybookContext } from "@/hooks/usePlaybookContext";
 import { trackAlertCreated, trackPaywallShown } from "@/services/analytics";
 import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
+import { SuspendedCellsPanel } from "@/components/alerts/SuspendedCellsPanel";
 import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageMeta } from '@/components/PageMeta';
@@ -583,6 +584,9 @@ const MemberAlerts = () => {
         )}
       </div>
 
+      <div className="mb-8">
+        <SuspendedCellsPanel />
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Create Alert Form */}
