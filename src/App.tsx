@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 
 /** Redirect that preserves query string + hash */
 function NavigateWithSearch({ to }: { to: string }) {
@@ -36,6 +36,17 @@ function lazyWithRetry(factory: () => Promise<any>, retries = 2): ReturnType<typ
 const withSuspense = (node: ReactNode) => (
   <Suspense fallback={<PageSkeleton />}>{node}</Suspense>
 );
+
+// Edge Atlas retired — preserve any pattern slug as a filter on /outcomes.
+const EdgeAtlasRedirect = () => {
+  const { patternId } = useParams();
+  return (
+    <Navigate
+      to={patternId ? `/outcomes?pattern=${encodeURIComponent(patternId)}` : "/outcomes"}
+      replace
+    />
+  );
+};
 
 // Core pages (lazy to avoid pulling the entire route tree on first load)
 const Index = lazy(() => import("./pages/Index"));
@@ -94,8 +105,6 @@ const TranslationManagement = lazy(() =>
 );
 
 const Terms = lazy(() => import("./pages/Terms"));
-const EdgeAtlasPatternPage = lazy(() => import("./pages/EdgeAtlasPatternPage"));
-const EdgeAtlasIndexPage = lazy(() => import("./pages/EdgeAtlasIndexPage"));
 const PatternStatisticsPage = lazy(() => import("./pages/PatternStatisticsPage"));
 const InstrumentPatternStatsPage = lazy(() => import("./pages/InstrumentPatternStatsPage"));
 const TradingCopilotFeature = lazy(() => import("./pages/features/TradingCopilotFeature"));
@@ -243,8 +252,10 @@ const App = () => (
           <Route path="/privacy" element={withSuspense(<Privacy />)} />
           <Route path="/faq" element={withSuspense(<FAQ />)} />
           <Route path="/support" element={withSuspense(<SupportPage />)} />
-          <Route path="/edge-atlas" element={withSuspense(<EdgeAtlasIndexPage />)} />
-          <Route path="/edge-atlas/:patternId" element={withSuspense(<EdgeAtlasPatternPage />)} />
+          {/* Edge Atlas retired: it only ever surfaced positive-expectancy cells.
+              Permanent (301-equivalent) redirects to the honest /outcomes table. */}
+          <Route path="/edge-atlas" element={<Navigate to="/outcomes" replace />} />
+          <Route path="/edge-atlas/:patternId" element={<EdgeAtlasRedirect />} />
           <Route path="/patterns/:patternId/statistics" element={withSuspense(<PatternStatisticsPage />)} />
           <Route path="/patterns/:patternId/:instrument/statistics" element={withSuspense(<InstrumentPatternStatsPage />)} />
           <Route path="/patterns/stats" element={withSuspense(<PatternStatsIndexPage />)} />

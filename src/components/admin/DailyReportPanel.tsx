@@ -309,7 +309,7 @@ export function DailyReportPanel() {
         }
       });
       const topContent: ContentItem[] = Object.entries(pageCounts)
-        .filter(([p]) => p.startsWith("/blog/") || p.startsWith("/edge-atlas/") || p.startsWith("/learn/"))
+        .filter(([p]) => p.startsWith("/blog/") || p.startsWith("/outcomes") || p.startsWith("/learn/"))
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
         .map(([path, views]) => {

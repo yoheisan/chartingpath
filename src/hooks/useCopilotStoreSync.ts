@@ -41,7 +41,7 @@ const ROUTE_MAP: [string, PageType][] = [
   ['/community', 'community'],
   ['/faq', 'faq'],
   ['/support', 'support'],
-  ['/edge-atlas', 'edge-atlas'],
+  ['/outcomes', 'outcomes'],
   ['/chart-patterns/library', 'pattern-library'],
 
   // Account & settings

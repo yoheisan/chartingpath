@@ -174,7 +174,7 @@ export default function InstrumentPatternStatsPage() {
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-foreground transition-colors">{t('patternStats.home', 'Home')}</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/#edge-atlas" className="hover:text-foreground transition-colors">{t('edgeAtlas.badge', 'Edge Atlas')}</Link>
+          <Link to="/outcomes" className="hover:text-foreground transition-colors">{t('outcomes.breadcrumb', 'Outcome Data')}</Link>
           <ChevronRight className="h-3 w-3" />
           <Link to={`/patterns/${patternId}/statistics`} className="hover:text-foreground transition-colors">
             {displayPatternName}

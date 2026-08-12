@@ -48,11 +48,11 @@ const STEPS = [
   },
   {
     icon: <Trophy className="h-8 w-8 text-amber-500" />,
-    titleKey: 'onboarding.edgeAtlasTitle',
-    descKey: 'onboarding.edgeAtlasDesc',
-    titleFallback: 'Edge Atlas — Find the Best Edges',
-    descFallback: 'Discover which patterns perform best on which timeframes — ranked by annualized return. The data does the work so you trade smarter.',
-    route: '/edge-atlas',
+    titleKey: 'onboarding.outcomesTitle',
+    descKey: 'onboarding.outcomesDesc',
+    titleFallback: 'Outcome Data — Winners and Losers',
+    descFallback: 'Every pattern, timeframe and asset combination we track — including the ones that lose money. Sample size shown on every row.',
+    route: '/outcomes',
   },
 ];
 

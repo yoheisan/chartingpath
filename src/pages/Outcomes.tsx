@@ -59,7 +59,7 @@ export default function Outcomes() {
   );
 
   // In-table filters (client-side, applied on top of the server-side asset/timeframe query)
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(searchParams.get('pattern') ?? '');
   const [direction, setDirection] = useState('all');
   const [expectancy, setExpectancy] = useState('all');
 
