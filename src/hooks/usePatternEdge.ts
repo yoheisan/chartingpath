@@ -151,3 +151,55 @@ export function useAlertEdgeSummary(userId?: string) {
 
   return { fired, suppressed, loading };
 }
+
+export interface SuspendedCell {
+  patternId: string;
+  timeframe: string;
+  assetType: string;
+  direction: string;
+  suspendedAt: string | null;
+  reason: string | null;
+  forwardN: number;
+  forwardExpectancyR: number | null;
+}
+
+/**
+ * Combinations the kill switch has suspended because forward results contradicted
+ * the backtest. Showing these is deliberate: it is the honest half of the pitch.
+ */
+export function useSuspendedCells() {
+  const [cells, setCells] = useState<SuspendedCell[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const { data } = await supabase
+        .from('cell_status')
+        .select('pattern_id, timeframe, asset_type, direction, suspended_at, suspended_reason, forward_n, forward_expectancy_r')
+        .eq('status', 'suspended')
+        .order('suspended_at', { ascending: false })
+        .limit(50);
+
+      if (cancelled) return;
+      setCells(
+        (data ?? []).map((r) => ({
+          patternId: r.pattern_id,
+          timeframe: r.timeframe,
+          assetType: r.asset_type,
+          direction: r.direction,
+          suspendedAt: r.suspended_at,
+          reason: r.suspended_reason,
+          forwardN: r.forward_n ?? 0,
+          forwardExpectancyR: r.forward_expectancy_r === null ? null : Number(r.forward_expectancy_r),
+        }))
+      );
+      setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  return { cells, loading };
+}
