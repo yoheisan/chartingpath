@@ -1,0 +1,1 @@
+UPDATE public.profiles SET subscription_plan = 'elite' WHERE user_id = '584ebfae-fac6-4a07-8e06-935e3e282b67';
