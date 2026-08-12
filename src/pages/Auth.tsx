@@ -601,6 +601,10 @@ const Auth = () => {
     const symbol = searchParams.get("symbol");
     trackEvent("auth_page.viewed", { context, pattern: pattern || undefined, symbol: symbol || undefined });
     trackEvent("auth.page_viewed", { source, context });
+    // page_viewed can fire from a route change that never paints a usable form
+    // (redirect races, session recovery). page_rendered fires from the mounted
+    // component, so page_viewed >> page_rendered means people never see the form.
+    trackEvent("auth.page_rendered", { source, context });
     
     return () => {
       if (!formInteracted.current) {
@@ -608,6 +612,29 @@ const Auth = () => {
       }
     };
   }, []);
+
+  // Fires when the Google button is actually on screen. Together with
+  // page_rendered this separates "never saw a CTA" from "saw it, didn't click".
+  const ctaRef = useRef<HTMLDivElement | null>(null);
+  const ctaSeen = useRef(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || ctaSeen.current) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !ctaSeen.current) {
+          ctaSeen.current = true;
+          trackEvent("auth.cta_visible", {
+            cta: "google",
+            source: searchParams.get("source") || searchParams.get("context") || "direct",
+          });
+          io.disconnect();
+        }
+      }
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  });
   
   const handleFormInteraction = () => {
     if (!formInteracted.current) {
@@ -839,7 +866,7 @@ const Auth = () => {
               // Regular Auth Form — Google first, then email
               <>
                 {/* Social Authentication - Bold Google button for maximum conversion */}
-                <div className="space-y-3">
+                <div className="space-y-3" ref={ctaRef}>
                   <Button
                     onClick={() => handleSocialAuth('google')}
                     disabled={loading}
