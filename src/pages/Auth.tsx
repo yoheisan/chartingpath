@@ -30,16 +30,9 @@ const trackLoginAttempt = (payload: {
   sbClient.functions.invoke("track-login", { body: payload }).catch(() => {});
 };
 
-// Signup completion can be observed from two places (the email signUp() response and
-// the OAuth redirect landing back on /auth via onAuthStateChange). Guard so the
-// funnel event fires at most once per user per page load.
-const signupCompletedFor = new Set<string>();
-const fireSignupCompleted = (method: string, userId?: string) => {
-  const key = userId ?? method;
-  if (signupCompletedFor.has(key)) return;
-  signupCompletedFor.add(key);
-  trackEvent("auth.signup_completed", { method });
-};
+// auth.signup_completed / auth.login_completed are fired from the auth state
+// listener in AuthContext (SIGNED_IN), not from this component. The OAuth
+// return remounts the app, so a component-side call was never reliably reached.
 
 const Auth = () => {
   const { t } = useTranslation();
@@ -317,8 +310,6 @@ const Auth = () => {
           console.error("Profile creation error:", profileError);
         } else {
           trackSignupCompleted();
-          // OAuth redirect path — this is where Google signups actually complete.
-          fireSignupCompleted(user.app_metadata?.provider ?? "google", user.id);
         }
       }
     };
@@ -535,7 +526,6 @@ const Auth = () => {
         if (data.user) {
           // Fire GA4 signup conversion event
           (window as any).gtag?.('event', 'sign_up', { method: 'email' });
-          fireSignupCompleted("email", data.user.id);
 
           const { error: profileError } = await supabase
             .from('profiles')
