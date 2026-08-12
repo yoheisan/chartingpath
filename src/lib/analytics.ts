@@ -178,11 +178,57 @@ function scheduleFlush() {
   }, FLUSH_INTERVAL_MS);
 }
 
+/**
+ * Flush that survives the page going away.
+ *
+ * The normal flush() goes through supabase-js, whose fetch is cancelled the
+ * moment the document is torn down. That is exactly what happens on the auth
+ * page: the Google button sets `window.location.href` to the OAuth URL, the
+ * document unloads within a few milliseconds, and the queued `auth.form_start`
+ * event dies with it. That is why form_start and signup_completed read 0 while
+ * page.view on /auth was healthy — the events were fired, never delivered.
+ *
+ * `fetch(..., { keepalive: true })` hands the request to the browser, which
+ * completes it after the document is gone. We can't use `navigator.sendBeacon`
+ * because it can't set the apikey/Authorization headers PostgREST requires.
+ */
+export async function flushEvents(): Promise<void> {
+  if (queue.length === 0) return;
+  const batch = queue.splice(0, MAX_BATCH_SIZE);
+
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) {
+    queue.unshift(...batch);
+    return flush();
+  }
+
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token ?? key;
+
+    await fetch(`${url}/rest/v1/analytics_events`, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key,
+        Authorization: `Bearer ${token}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(batch),
+    });
+  } catch (err) {
+    console.warn('[analytics] keepalive flush failed:', err);
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flush();
+    if (document.visibilityState === 'hidden') flushEvents();
   });
-  window.addEventListener('beforeunload', () => flush());
+  window.addEventListener('pagehide', () => { flushEvents(); });
+  window.addEventListener('beforeunload', () => { flushEvents(); });
 }
 
 // ---------- Public API ----------

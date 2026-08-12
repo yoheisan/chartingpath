@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getCanonicalAppOrigin } from '@/utils/canonicalOrigin';
-import { trackEvent } from '@/lib/analytics';
+import { trackEvent, flushEvents } from '@/lib/analytics';
 
 /**
  * Reusable hook for Google OAuth sign-in.
@@ -12,7 +12,10 @@ export function useGoogleSignIn() {
 
   const signInWithGoogle = useCallback(async () => {
     setLoading(true);
-    trackEvent('auth.form_start', { method: 'google' });
+    await trackEvent('auth.form_start', { method: 'google' });
+    // The OAuth redirect below tears down the document. Deliver the event now,
+    // with keepalive, or it is lost — this is why form_start read 0.
+    await flushEvents();
     try {
       const redirectPath = window.location.pathname + window.location.search;
       const oauthRedirectTo = `${getCanonicalAppOrigin()}/auth/?redirect=${encodeURIComponent(redirectPath)}`;
@@ -32,6 +35,7 @@ export function useGoogleSignIn() {
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error.message);
+      trackEvent('auth.error', { method: 'google', stage: 'oauth_start', reason: error?.message ?? 'unknown' });
       trackEvent('auth.signup_failed', { method: 'google', reason: error?.message ?? 'unknown' });
       setLoading(false);
     }
