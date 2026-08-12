@@ -21,6 +21,8 @@ import { AlertEdgePreview } from "@/components/alerts/AlertEdgePreview";
 import { ClusterExposureNotice } from "@/components/exposure/ClusterExposureNotice";
 import { SuspendedCellsPanel } from "@/components/alerts/SuspendedCellsPanel";
 import { useAlertEdgeSummary } from "@/hooks/usePatternEdge";
+import { useAlertsEdgeStatus } from "@/hooks/useAlertsEdgeStatus";
+import { AlertEdgeStatusBadge } from "@/components/alerts/AlertEdgeStatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageMeta } from '@/components/PageMeta';
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -51,6 +53,7 @@ interface Alert {
   auto_paper_trade?: boolean;
   webhook_url?: string | null;
   master_plan_id?: string | null;
+  max_correlated_exposure_pct?: number | null;
 }
 
 const MemberAlerts = () => {
@@ -83,9 +86,32 @@ const MemberAlerts = () => {
   // Automation state
   const [autoPaperTrade, setAutoPaperTrade] = useState(false);
   const [riskPercent, setRiskPercent] = useState(1.0);
+  const [maxCorrelatedPct, setMaxCorrelatedPct] = useState(4.0);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
   const edgeSummary = useAlertEdgeSummary(user?.id);
+  const [edgeFilter, setEdgeFilter] = useState<'all' | 'qualifying' | 'not_qualifying'>('all');
+  const { statuses: edgeStatuses, loading: edgeStatusLoading, summary: edgeBarSummary } = useAlertsEdgeStatus(alerts);
+  const visibleAlerts = alerts.filter((a) => {
+    if (edgeFilter === 'all') return true;
+    const q = edgeStatuses[a.id]?.qualifies ?? false;
+    return edgeFilter === 'qualifying' ? q : !q;
+  });
+
+  const bulkDeleteNonQualifying = async () => {
+    const ids = alerts.filter((a) => edgeStatuses[a.id] && !edgeStatuses[a.id].qualifies).map((a) => a.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from('alerts').update({ status: 'deleted' }).in('id', ids);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: t('alerts.bulkDeleted', 'Alerts deleted'),
+      description: t('alerts.bulkDeletedDesc', '{{count}} non-qualifying alerts were removed.', { count: ids.length }),
+    });
+    if (user) await fetchAlerts(user.id);
+  };
 
   const patternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
@@ -275,6 +301,7 @@ const MemberAlerts = () => {
           webhook_url: webhookUrl || null,
           webhook_secret: webhookSecret || null,
           risk_percent: riskPercent,
+          max_correlated_exposure_pct: maxCorrelatedPct,
         }
       });
 
@@ -799,6 +826,37 @@ const MemberAlerts = () => {
                 </div>
               )}
 
+              {/* Max correlated exposure — the ceiling for one cluster, not one trade */}
+              <div className="space-y-2 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="max-correlated" className="text-sm font-medium">
+                    {t('alerts.maxCorrelated', 'Max correlated exposure')}
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      id="max-correlated"
+                      type="number"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      value={maxCorrelatedPct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setMaxCorrelatedPct(Number.isFinite(v) ? Math.min(20, Math.max(1, v)) : 4);
+                      }}
+                      className="h-8 w-20 text-sm"
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t('alerts.maxCorrelatedDesc', "Ten correlated trades at 1% each is a 10% bet, not ten 1% bets. Above this level we'll still alert you, but flag it as concentration.")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('alerts.maxCorrelatedClusterDesc', 'A cluster is one direction, asset class and country combined. Range 1–20%, default 4%.')}
+                </p>
+              </div>
+
               {/* Webhook */}
               <div className="space-y-3 rounded-lg border p-3">
                 <div className="flex items-center gap-2">
@@ -920,6 +978,55 @@ const MemberAlerts = () => {
              </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Edge-bar summary: explain the silence before the user notices it */}
+            {alerts.length > 0 && (
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                <p className="text-sm">
+                  {t('alerts.edgeBarSummary', "{{qualifying}} of your {{total}} alerts currently meet the edge bar. The rest won't fire until their measured edge changes.", {
+                    qualifying: edgeBarSummary.qualifying,
+                    total: edgeBarSummary.total,
+                  })}{' '}
+                  <Link to="/methodology" className="underline underline-offset-2">
+                    {t('alerts.edgeBarSummaryLink', 'How we measure edge')}
+                  </Link>
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={edgeFilter} onValueChange={(v) => setEdgeFilter(v as typeof edgeFilter)}>
+                    <SelectTrigger className="h-8 w-[220px] text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('alerts.edgeFilterAll', 'All alerts')}</SelectItem>
+                      <SelectItem value="qualifying">{t('alerts.edgeFilterQualifying', 'Meets the edge bar')}</SelectItem>
+                      <SelectItem value="not_qualifying">{t('alerts.edgeFilterNot', "Won't fire (watch-only)")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {edgeFilter === 'not_qualifying' && edgeBarSummary.nonQualifying > 0 && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" />
+                          {t('alerts.bulkDeleteNonQualifying', 'Delete all {{count}}', { count: edgeBarSummary.nonQualifying })}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('alerts.bulkDeleteTitle', 'Delete non-qualifying alerts?')}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('alerts.bulkDeleteConfirm', 'This removes {{count}} alerts that do not currently meet the edge bar. You can recreate them at any time.', { count: edgeBarSummary.nonQualifying })}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction onClick={bulkDeleteNonQualifying}>{t('common.delete')}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Master Plan auto-alert card */}
             {(() => {
               const planMapping: Record<string, PlanTier> = {
@@ -951,7 +1058,12 @@ const MemberAlerts = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {alerts.map((alert) => (
+                {visibleAlerts.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    {t('alerts.noAlertsForFilter', 'No alerts match this filter.')}
+                  </p>
+                )}
+                {visibleAlerts.map((alert) => (
                   <div
                     key={alert.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
@@ -993,6 +1105,7 @@ const MemberAlerts = () => {
                         <p className="text-sm text-muted-foreground">
                           {alert.pattern} • {alert.timeframe}
                         </p>
+                        <AlertEdgeStatusBadge status={edgeStatuses[alert.id]} loading={edgeStatusLoading} />
                       </div>
                     </button>
                     <div className="flex items-center gap-2">

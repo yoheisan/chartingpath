@@ -6703,12 +6703,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/falling-wedge/SLV/statistics</loc>
-    <lastmod>2026-08-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/rising-wedge/XTZ-USD/statistics</loc>
     <lastmod>2026-08-12</lastmod>
     <changefreq>weekly</changefreq>
@@ -6962,12 +6956,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/double-bottom/AWK/statistics</loc>
-    <lastmod>2026-08-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/rising-wedge/CPER/statistics</loc>
     <lastmod>2026-08-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -8054,6 +8042,18 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/triple-top/DUK/statistics</loc>
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/descending-triangle/HE%3DF/statistics</loc>
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/inverse-cup-and-handle/INTC/statistics</loc>
     <lastmod>2026-08-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

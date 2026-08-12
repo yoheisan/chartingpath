@@ -48,7 +48,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { symbol, pattern, patterns, timeframe, status = 'active', action = 'create', auto_paper_trade = false, webhook_url = null, webhook_secret = null, risk_percent = 1.0 } = body;
+    const { symbol, pattern, patterns, timeframe, status = 'active', action = 'create', auto_paper_trade = false, webhook_url = null, webhook_secret = null, risk_percent = 1.0, max_correlated_exposure_pct = 4.0 } = body;
     
     // Support both single pattern and multiple patterns
     const patternList: string[] = patterns || (pattern ? [pattern] : []);
@@ -141,6 +141,7 @@ serve(async (req) => {
         webhook_url: validatedWebhookUrl,
         webhook_secret: webhook_secret || null,
         risk_percent: Math.min(Math.max(Number(risk_percent) || 1.0, 0.1), 5.0),
+        max_correlated_exposure_pct: Math.min(Math.max(Number(max_correlated_exposure_pct) || 4.0, 1.0), 20.0),
       }));
       
       const { data: alerts, error: insertError } = await supabase
