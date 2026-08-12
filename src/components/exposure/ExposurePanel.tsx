@@ -71,8 +71,8 @@ export function ExposurePanel({ userId, maxCorrelatedPct = 4.0 }: Props) {
                     className={`rounded-md border p-3 text-sm ${over ? 'border-destructive/50 bg-destructive/10' : 'border-border/50 bg-muted/20'}`}
                   >
                     <span className={over ? 'font-medium text-destructive' : 'text-foreground'}>
-                      {t('exposure.clusterLine', '{{count}} positions {{label}} — {{pct}}% of account in one correlated bet.', {
-                        count: b.positions,
+                      {t('exposure.clusterLine', '{{positions}} positions {{label}} — {{pct}}% of account in one correlated bet.', {
+                        positions: b.positions,
                         label: clusterLabel(b.direction, b.asset_type, b.country),
                         pct: b.pct.toFixed(1),
                       })}

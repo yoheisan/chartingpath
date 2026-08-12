@@ -52,8 +52,8 @@ export function ClusterExposureNotice({
       {over ? <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> : <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
       <div className="space-y-1">
         <p>
-          {t('exposure.inlineNotice', 'You already hold {{count}} positions in this cluster ({{existing}}% of account). Adding this takes correlated exposure to {{after}}%.', {
-            count: cluster.existing_positions_in_cluster,
+          {t('exposure.inlineNotice', 'You already hold {{positions}} positions in this cluster ({{existing}}% of account). Adding this takes correlated exposure to {{after}}%.', {
+            positions: cluster.existing_positions_in_cluster,
             existing: cluster.existing_pct_in_cluster.toFixed(1),
             after: cluster.correlated_after_add.toFixed(1),
           })}
