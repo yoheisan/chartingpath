@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, EyeOff, Loader2 } from 'lucide-react';
+import { CheckCircle2, Eye, Loader2 } from 'lucide-react';
 import type { AlertEdgeStatus } from '@/hooks/useAlertsEdgeStatus';
 
 interface Props {
@@ -9,8 +9,9 @@ interface Props {
 }
 
 /**
- * Explains, per alert row, whether the edge filter will let it fire and why not
- * when it won't. Same behaviour either way — the difference is whether we say so.
+ * Explains, per alert row, whether the combination has a measured edge after the
+ * user's broker costs. Both kinds of alert notify; only the framing differs.
+ * Silence and noise are both failures — an unexplained label is the third.
  */
 export function AlertEdgeStatusBadge({ status, loading }: Props) {
   const { t } = useTranslation();
@@ -37,6 +38,9 @@ export function AlertEdgeStatusBadge({ status, loading }: Props) {
             net: status.expectancyRNet.toFixed(2),
           })}
         </p>
+        <p className="text-[11px] text-muted-foreground">
+          {t('alertEdgeStatus.costBasis', 'Based on your selected broker costs.')}
+        </p>
       </div>
     );
   }
@@ -55,10 +59,13 @@ export function AlertEdgeStatusBadge({ status, loading }: Props) {
   return (
     <div className="mt-1 space-y-0.5">
       <Badge variant="outline" className="gap-1 text-[11px] text-muted-foreground">
-        <EyeOff className="h-3 w-3" />
-        {t('alertEdgeStatus.watchOnly', 'Watch-only — will not fire')}
+        <Eye className="h-3 w-3" />
+        {t('alertEdgeStatus.watchOnlyNotifies', "Watch-only — no measured edge after your broker's costs")}
       </Badge>
       <p className="text-xs text-muted-foreground">{reasonText}</p>
+      <p className="text-[11px] text-muted-foreground">
+        {t('alertEdgeStatus.watchOnlyStillNotifies', 'It still notifies you, flagged as a detection rather than a signal. Based on your selected broker costs.')}
+      </p>
     </div>
   );
 }
