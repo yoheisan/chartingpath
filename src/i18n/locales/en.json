@@ -6738,5 +6738,20 @@
     "emptyTitle": "Nothing meets our bar right now.",
     "emptyBody": "Every live detection failed either the sample-size floor or the after-cost expectancy test. We would rather show you nothing than show you a setup we cannot support.",
     "cta": "Get alerted when these fire"
+  },
+  "exposure": {
+    "title": "Exposure",
+    "subtitle": "What you are actually betting on. Positions that share a direction, asset class and country move together — they are one bet, not several.",
+    "empty": "No open positions — no correlated exposure to report.",
+    "openPositions": "Open positions",
+    "totalRisk": "Total open risk",
+    "netLong": "Net long",
+    "netShort": "Net short",
+    "topClusters": "Largest correlated bets",
+    "clusterLine": "{{positions}} positions {{label}} — {{pct}}% of account in one correlated bet.",
+    "overCap": "Above your {{cap}}% correlated-exposure cap.",
+    "footnote": "Clusters group positions by direction, asset class and country. We do not estimate pairwise correlation — it collapses toward 1 in the stress scenarios that matter.",
+    "inlineNotice": "You already hold {{positions}} positions in this cluster ({{existing}}% of account). Adding this takes correlated exposure to {{after}}%.",
+    "inlineOverCap": "That is above your {{cap}}% correlated-exposure cap. This is one bet, not several — we are telling you, not stopping you."
   }
 }
