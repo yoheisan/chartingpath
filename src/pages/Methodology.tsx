@@ -9,9 +9,9 @@ import { trackEvent } from '@/lib/analytics';
 
 const n = (v: number) => v.toLocaleString('en-US');
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="space-y-3 scroll-mt-24">
       <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
       <div className="space-y-3 text-muted-foreground leading-relaxed">{children}</div>
     </section>
@@ -181,6 +181,28 @@ export default function Methodology() {
           </Section>
 
           {/* 8 */}
+          <Section id="costs" title={t('methodology.costsTitle', 'Costs: why alerts use net expectancy and this table does not')}>
+            <p>
+              {t(
+                'methodology.costsBody',
+                'Every figure in the outcomes table is gross of costs. That is appropriate for a descriptive record, but it is not good enough to justify an alert. Costs are roughly fixed per trade, while the edge scales with the size of the move — so the same gross expectancy can be comfortably profitable on a weekly chart and net-negative on a 15-minute one, where the stop is a fraction of the size.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.costsRule',
+                'We therefore subtract an estimated round-trip cost, expressed in R, from the gross expectancy of each combination, and a combination only qualifies for alerting when the result is still positive. Applying this removes roughly a third of the combinations that pass on gross figures, and it hits the short timeframes hardest: on 1h, most of what looked like an edge is cost.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.costsProvisional',
+                'The cost estimates are provisional. They are conservative order-of-magnitude figures per asset class and timeframe, not measured execution data, and not specific to any broker. Your actual spread, commission and slippage will differ, and on crypto and exotic FX they may be materially worse. We publish the assumption rather than hide it: treat every "after estimated costs" figure as indicative until it is replaced with real broker data.'
+              )}
+            </p>
+          </Section>
+
+          {/* 9 */}
           <Section title={t('methodology.limitationsTitle', 'Other limitations')}>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -210,7 +232,7 @@ export default function Methodology() {
             </ul>
           </Section>
 
-          {/* 9 */}
+          {/* 10 */}
           <Section title={t('methodology.contactTitle', 'Corrections and data requests')}>
             <p>
               {t(
