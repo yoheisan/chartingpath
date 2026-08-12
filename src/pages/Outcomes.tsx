@@ -290,6 +290,17 @@ export default function Outcomes() {
                 </>
               )}
             </p>
+
+            <p className="text-xs text-muted-foreground mb-3">
+              {t('outcomes.grossNote', 'All figures on this page are GROSS of costs — this table is a descriptive record of what happened, not a trading recommendation. Alerts use a stricter test: expectancy after estimated spread, commission and slippage.')}{' '}
+              <Link
+                to="/methodology#costs"
+                className="underline underline-offset-2 hover:text-foreground"
+                onClick={() => trackEvent('outcomes.methodology_click', { source: 'gross_note' })}
+              >
+                {t('outcomes.costAssumptionsLink', 'See the cost assumptions')}
+              </Link>
+            </p>
           </>
         )}
 
