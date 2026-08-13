@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database, KeyRound, Clock, ClipboardList } from "lucide-react";
+import { Shield, Users, LogOut, ArrowLeft, Settings, Globe, FileText, Share2, TrendingUp, BarChart3, Brain, BookOpen, MessageSquare, Activity, Database, KeyRound, Clock, ClipboardList, HeartPulse } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ import { PipelineHealthDashboard } from "@/components/admin/PipelineHealthDashbo
 import { LoginAttemptsPanel } from "@/components/admin/LoginAttemptsPanel";
 import { GA4Panel } from "@/components/admin/GA4Panel";
 import { DailyReportPanel } from "@/components/admin/DailyReportPanel";
+import { DataHealthDashboard } from "@/components/admin/DataHealthDashboard";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -268,6 +269,14 @@ const AdminDashboard = () => {
             <ClipboardList className="h-4 w-4" />
             Daily Report
           </Button>
+          <Button
+            variant={activeTab === "data-health" ? "default" : "outline"}
+            onClick={() => setActiveTab("data-health")}
+            className="flex items-center gap-2"
+          >
+            <HeartPulse className="h-4 w-4" />
+            Data Health
+          </Button>
         </div>
 
         {/* Tab Content */}
@@ -304,6 +313,8 @@ const AdminDashboard = () => {
         {activeTab === "ga4" && <GA4Panel />}
 
         {activeTab === "daily-report" && <DailyReportPanel />}
+
+        {activeTab === "data-health" && <DataHealthDashboard />}
       </div>
     </div>
   );
