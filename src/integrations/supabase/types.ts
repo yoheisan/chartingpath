@@ -312,6 +312,7 @@ export type Database = {
           alerts_dispatched: number
           alerts_evaluated: number
           alerts_skipped_recent: number
+          alerts_skipped_unsupported: number
           asset_type_filter: string | null
           detections_considered: number
           dispatch_failures: number
@@ -328,6 +329,7 @@ export type Database = {
           alerts_dispatched?: number
           alerts_evaluated?: number
           alerts_skipped_recent?: number
+          alerts_skipped_unsupported?: number
           asset_type_filter?: string | null
           detections_considered?: number
           dispatch_failures?: number
@@ -344,6 +346,7 @@ export type Database = {
           alerts_dispatched?: number
           alerts_evaluated?: number
           alerts_skipped_recent?: number
+          alerts_skipped_unsupported?: number
           asset_type_filter?: string | null
           detections_considered?: number
           dispatch_failures?: number
@@ -5877,6 +5880,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supported_patterns: {
+        Row: {
+          created_at: string
+          is_supported: boolean
+          note: string | null
+          pattern_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_supported?: boolean
+          note?: string | null
+          pattern_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_supported?: boolean
+          note?: string | null
+          pattern_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       trade_plans: {
         Row: {
