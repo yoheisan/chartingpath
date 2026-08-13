@@ -70,6 +70,7 @@ serve(async (req) => {
       watch_only: 0,
       emails_confirmed: 0,
       dispatch_failures: 0,
+      alerts_skipped_unsupported: 0,
       failure_reasons: [] as any[],
       outcome: 'ok',
     };
@@ -126,6 +127,18 @@ serve(async (req) => {
       });
     }
     runStats.alerts_evaluated = alerts.length;
+
+    // ── UNSUPPORTED PATTERN GUARD ──
+    // The chart_pattern enum offers more values than the detection engine
+    // produces (candlestick + indicator-cross options have zero detectors).
+    // Alerts on those can never match; skip them explicitly and log the skip so
+    // they cannot silently burn dispatch cycles. Source of truth is the derived
+    // public.supported_patterns table, not a hardcoded list.
+    const { data: supportedRows } = await supabase
+      .from("supported_patterns")
+      .select("pattern_id")
+      .eq("is_supported", true);
+    const supportedPatterns = new Set((supportedRows ?? []).map((r: any) => r.pattern_id));
 
     // Fetch profiles for all alert users
     const userIds = [...new Set(alerts.map(a => a.user_id))];
@@ -247,6 +260,15 @@ serve(async (req) => {
     console.log(`[check-alert-matches] Sample detection keys: ${sampleDetKeys.join(', ')}`);
 
     for (const alert of alerts) {
+      // Unsupported pattern: no detector exists, this can never match.
+      if (supportedPatterns.size > 0 &&
+          !supportedPatterns.has(alert.pattern) &&
+          !supportedPatterns.has(normalizePatternId(alert.pattern))) {
+        runStats.alerts_skipped_unsupported++;
+        console.log(`[check-alert-matches] SKIP unsupported pattern "${alert.pattern}" (alert ${alert.id}) — no detector implemented`);
+        continue;
+      }
+
       // Skip if already notified recently
       if (notifiedAlertIds.has(alert.id)) { runStats.alerts_skipped_recent++; continue; }
 
