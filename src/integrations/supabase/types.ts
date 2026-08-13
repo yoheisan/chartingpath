@@ -3688,6 +3688,7 @@ export type Database = {
           cooldown_until: string | null
           copilot_reasoning: string | null
           created_at: string
+          data_quality_suspect: boolean
           detection_id: string | null
           detection_latency_ms: number | null
           entry_price: number
@@ -3737,6 +3738,7 @@ export type Database = {
           cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
+          data_quality_suspect?: boolean
           detection_id?: string | null
           detection_latency_ms?: number | null
           entry_price: number
@@ -3786,6 +3788,7 @@ export type Database = {
           cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
+          data_quality_suspect?: boolean
           detection_id?: string | null
           detection_latency_ms?: number | null
           entry_price?: number
