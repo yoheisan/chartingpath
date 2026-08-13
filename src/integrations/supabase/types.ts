@@ -2608,6 +2608,39 @@ export type Database = {
           },
         ]
       }
+      grade_outcome_stats_cache: {
+        Row: {
+          avg_rr: number | null
+          expectancy_r: number | null
+          grade: string
+          occurrences: number
+          refreshed_at: string
+          resolved: number
+          since: string
+          win_rate: number | null
+        }
+        Insert: {
+          avg_rr?: number | null
+          expectancy_r?: number | null
+          grade: string
+          occurrences?: number
+          refreshed_at?: string
+          resolved?: number
+          since?: string
+          win_rate?: number | null
+        }
+        Update: {
+          avg_rr?: number | null
+          expectancy_r?: number | null
+          grade?: string
+          occurrences?: number
+          refreshed_at?: string
+          resolved?: number
+          since?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       guided_strategies: {
         Row: {
           answers: Json
@@ -7545,6 +7578,10 @@ export type Database = {
           p_new_watermark?: string
           p_worker_name: string
         }
+        Returns: undefined
+      }
+      refresh_grade_outcome_stats: {
+        Args: { p_since?: string }
         Returns: undefined
       }
       refresh_instrument_pattern_stats: { Args: never; Returns: undefined }
