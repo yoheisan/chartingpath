@@ -92,7 +92,12 @@ Deno.serve(async (req) => {
 
     // ── Notifications: critical only, at most one per check per day ──
     const notified: string[] = [];
+    const recipients = criticalFailures.length > 0 ? await resolveRecipients() : [];
+    if (criticalFailures.length > 0 && recipients.length === 0) {
+      console.error("[data-health] critical failures but no recipient configured — set ADMIN_ALERT_EMAIL");
+    }
     for (const f of criticalFailures) {
+      if (recipients.length === 0) break;
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { count } = await supabase
         .from("data_health_results")
@@ -140,7 +145,7 @@ Deno.serve(async (req) => {
       try {
         await supabase.functions.invoke("send-email", {
           body: {
-            to: ADMIN_EMAIL,
+            to: recipients,
             subject: `[Data Health] CRITICAL: ${f.check_name}`,
             html,
           },
