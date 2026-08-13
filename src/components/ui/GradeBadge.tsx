@@ -173,6 +173,12 @@ export function GradeBadge({
           <p className="text-xs text-muted-foreground">
             {t('grades.tooltip', 'Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.')}
           </p>
+          <p className="text-xs text-amber-500 mt-1">
+            {t(
+              'grades.notAQualityRanking',
+              'Grade is a structural score, not a validated quality ranking — measured expectancy does not follow A > B > C > D. Judge a setup by its measured expectancy, not by the letter.',
+            )}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

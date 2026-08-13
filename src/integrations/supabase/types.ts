@@ -2608,6 +2608,39 @@ export type Database = {
           },
         ]
       }
+      grade_outcome_stats_cache: {
+        Row: {
+          avg_rr: number | null
+          expectancy_r: number | null
+          grade: string
+          occurrences: number
+          refreshed_at: string
+          resolved: number
+          since: string
+          win_rate: number | null
+        }
+        Insert: {
+          avg_rr?: number | null
+          expectancy_r?: number | null
+          grade: string
+          occurrences?: number
+          refreshed_at?: string
+          resolved?: number
+          since?: string
+          win_rate?: number | null
+        }
+        Update: {
+          avg_rr?: number | null
+          expectancy_r?: number | null
+          grade?: string
+          occurrences?: number
+          refreshed_at?: string
+          resolved?: number
+          since?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       guided_strategies: {
         Row: {
           answers: Json
@@ -7263,6 +7296,24 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_grade_counts_for_selection: {
+        Args: { p_patterns: string[]; p_symbols: string[]; p_timeframe: string }
+        Returns: {
+          grade: string
+          occurrences: number
+        }[]
+      }
+      get_grade_outcome_stats: {
+        Args: { p_since?: string }
+        Returns: {
+          avg_rr: number
+          expectancy_r: number
+          grade: string
+          occurrences: number
+          resolved: number
+          win_rate: number
+        }[]
+      }
       get_homepage_stats: { Args: never; Returns: Json }
       get_most_detected_pattern: {
         Args: { p_since: string }
@@ -7527,6 +7578,10 @@ export type Database = {
           p_new_watermark?: string
           p_worker_name: string
         }
+        Returns: undefined
+      }
+      refresh_grade_outcome_stats: {
+        Args: { p_since?: string }
         Returns: undefined
       }
       refresh_instrument_pattern_stats: { Args: never; Returns: undefined }

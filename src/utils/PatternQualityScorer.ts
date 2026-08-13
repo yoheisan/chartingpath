@@ -6,6 +6,33 @@
  * trend alignment, and statistical validation.
  * 
  * Scoring Scale: 0-10 (0 = invalid, 10 = institutional quality)
+ *
+ * ---------------------------------------------------------------------------
+ * FLAGGED FOR RECALIBRATION — measured 2026-08-13
+ * ---------------------------------------------------------------------------
+ * Measured outcomes of the grades this scorer assigns, over resolved
+ * occurrences in historical_pattern_occurrences from 2024-01-01 onward:
+ *
+ *   grade   n         win%    avg_rr   expectancy_r
+ *   A            48   33.3%    1.68      -0.105
+ *   B        17,953   57.1%    0.96      +0.117
+ *   C       336,267   32.3%    1.84      -0.082
+ *   D        24,678   49.5%    1.12      +0.049
+ *
+ * Two defects, both unresolved:
+ *  1. THE ORDERING IS INVERTED. Measured ranking is B > D > C > A. Grade A —
+ *     the top label — has the worst expectancy of the four.
+ *  2. GRADE A IS UNUSABLE. 57 occurrences in the whole dataset (0.013%),
+ *     48 of them resolved. No claim about A-grade quality is supportable.
+ *
+ * Do NOT re-tune the thresholds against this table: recalibrating a scorer on
+ * the same sample used to evaluate it is curve-fitting. Recalibration needs a
+ * proper train/test split and is out of scope for this pass.
+ *
+ * Until then the grade letters must never be presented as a risk ladder.
+ * Any surface showing a grade must show the measured expectancy alongside it.
+ * The invariant is monitored by the `grade_ordering_valid` data-health check,
+ * which currently FAILS by design.
  */
 
 export interface OHLCBar {
