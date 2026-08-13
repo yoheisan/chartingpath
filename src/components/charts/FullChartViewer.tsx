@@ -65,6 +65,7 @@ import { SetupWithVisuals } from '@/types/VisualSpec';
 import { translatePatternName } from '@/utils/translatePatternName';
 import { DISCLAIMERS } from '@/constants/disclaimers';
 import { getTradingViewUrl, getInstrumentCategory as getInstrumentCategoryUtil } from '@/utils/tradingViewLinks';
+import { DEFAULT_RR } from '@/utils/rrCalculator';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
 import { HistoricalOccurrencesList } from './HistoricalOccurrencesList';
@@ -189,7 +190,7 @@ export default function FullChartViewer({
   onSaveToVault,
   isCreatingAlert,
   isSavingToVault = false,
-  selectedRR = 2,
+  selectedRR = DEFAULT_RR, // UI control default only — never feeds a displayed expectancy
 }: FullChartViewerProps) {
   const { t } = useTranslation();
   const fc = (key: string, opts?: Record<string, any>): string => t(`fullChart.${key}`, opts) as string;
@@ -1527,12 +1528,22 @@ export default function FullChartViewer({
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-muted-foreground mb-1">{fc('avgRoi')}</div>
-                  <p className={`font-mono font-bold ${
-                    (setup as any).historicalPerformance.avgRMultiple >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {(setup as any).historicalPerformance.avgRMultiple >= 0 ? '+' : ''}
-                    {(setup as any).historicalPerformance.avgRMultiple.toFixed(2)}R
-                  </p>
+                  {(() => {
+                    const hp = (setup as any).historicalPerformance;
+                    // Expectancy in R (1R = entry-to-stop risk). No metric substitution.
+                    if (hp.expectancyR == null) {
+                      return <p className="font-mono font-bold text-muted-foreground">—</p>;
+                    }
+                    return (
+                      <p className={`font-mono font-bold ${
+                        hp.isPrior ? 'italic opacity-60 text-muted-foreground'
+                          : hp.expectancyR >= 0 ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {hp.expectancyR >= 0 ? '+' : ''}{hp.expectancyR.toFixed(2)}R
+                        {hp.isPrior ? ' (estimate, insufficient history)' : ''}
+                      </p>
+                    );
+                  })()}
                   <p className="text-sm text-muted-foreground">{fc('perTrade')}</p>
                 </div>
                 <div className="text-center">

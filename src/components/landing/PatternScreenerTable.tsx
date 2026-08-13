@@ -1191,7 +1191,8 @@ export default function PatternScreenerTable() {
                               <EdgeMetricsInline
                                 metrics={setup.historicalPerformance ? {
                                   winRate: setup.historicalPerformance.winRate,
-                                  avgRMultiple: setup.historicalPerformance.avgRMultiple,
+                                  expectancyR: setup.historicalPerformance.expectancyR ?? null,
+                                  isPrior: setup.historicalPerformance.isPrior,
                                   profitFactor: setup.historicalPerformance.profitFactor ?? null,
                                   sampleSize: setup.historicalPerformance.sampleSize,
                                 } : null}
@@ -1201,8 +1202,8 @@ export default function PatternScreenerTable() {
                             <TableCell className="text-right">
                               {(() => {
                                 const perf = setup.historicalPerformance;
-                                if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                                  const rot = perf.avgRMultiple / perf.avgDurationBars;
+                                if (perf && perf.expectancyR != null && !perf.isPrior && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                                  const rot = perf.expectancyR / perf.avgDurationBars;
                                   const isHighEfficiency = rot >= 0.01;
                                   return (
                                     <span className={`font-mono text-xs font-medium ${isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'}`}>

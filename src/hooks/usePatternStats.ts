@@ -78,7 +78,12 @@ export function usePatternStats(patternSlug: string, assetClass: string, timefra
       const wins = tfRows.filter(r => r.outcome === 'hit_tp').length;
       const total = tfRows.length;
       const winRate = wins / total;
-      const avgRR = tfRows.reduce((s, r) => s + (r.risk_reward_ratio || 2), 0) / total;
+      // R:R is never defaulted: rows without one are excluded from the mean and counted.
+      const rrRows = tfRows.filter(r => r.risk_reward_ratio != null && Number.isFinite(Number(r.risk_reward_ratio)));
+      const rrExcluded = total - rrRows.length;
+      if (rrExcluded > 0) console.warn(`[usePatternStats] Excluded ${rrExcluded} rows with null risk_reward_ratio`);
+      if (rrRows.length === 0) return null;
+      const avgRR = rrRows.reduce((s, r) => s + Number(r.risk_reward_ratio), 0) / rrRows.length;
       const losses = total - wins;
       const expectancy = (wins / total) * avgRR - (losses / total);
       const avgBars = tfRows.reduce((s, r) => s + (r.bars_to_outcome || 0), 0) / total;

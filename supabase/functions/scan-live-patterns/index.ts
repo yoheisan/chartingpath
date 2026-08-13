@@ -167,10 +167,19 @@ const symbolDataCache = new Map<string, { bars: any[]; timestamp: number }>();
 const SYMBOL_CACHE_TTL_MS = 3 * 60 * 1000;
 
 // Pattern stats interface
+// NOTE ON UNITS: `expectancyR` is expressed in R-multiples, where 1R is the
+// risk taken on the trade — the entry-to-stop distance. It is computed as
+//   expectancy_r = win_rate * avg_rr - loss_rate
+// over RESOLVED occurrences only (outcome in 'hit_tp','hit_sl'), where avg_rr
+// is the mean risk_reward_ratio of that group. It is NEVER derived from
+// percentage P&L — percent P&L and R are different units.
 interface PatternStats {
   winRate: number;
-  avgRMultiple: number;
+  expectancyR: number | null;
+  avgRr: number | null;
   sampleSize: number;
+  /** True when the values come from a Bayesian prior, not from measurement. */
+  isPrior?: boolean;
   avgDurationBars: number;
   accumulatedRoi: {
     threeMonth: number | null;
@@ -208,7 +217,9 @@ function isStatsSuspect(hp: any): boolean {
 function toHistoricalPerformance(stats: PatternStats) {
   return {
     winRate: stats.winRate,
-    avgRMultiple: stats.avgRMultiple,
+    expectancyR: stats.expectancyR,
+    avgRr: stats.avgRr,
+    isPrior: stats.isPrior ?? false,
     sampleSize: stats.sampleSize,
     avgDurationBars: stats.avgDurationBars,
     accumulatedRoi: stats.accumulatedRoi,
@@ -216,6 +227,28 @@ function toHistoricalPerformance(stats: PatternStats) {
 }
 
 // Build a cache key for pattern+symbol+timeframe+rrTier combination
+/**
+ * Expectancy in R. 1R === the risk taken (entry-to-stop distance).
+ * expectancy_r = win_rate * avg_rr - loss_rate
+ * Rows without a risk_reward_ratio are EXCLUDED from avg_rr (never defaulted).
+ * Returns nulls when no row in the group carries an R:R.
+ */
+function computeExpectancyR(
+  wins: number,
+  total: number,
+  rrSum: number,
+  rrCount: number,
+): { expectancyR: number | null; avgRr: number | null } {
+  if (total <= 0 || rrCount <= 0) return { expectancyR: null, avgRr: null };
+  const winRate = wins / total;
+  const avgRr = rrSum / rrCount;
+  const expectancyR = winRate * avgRr - (1 - winRate);
+  return {
+    expectancyR: Math.round(expectancyR * 1000) / 1000,
+    avgRr: Math.round(avgRr * 1000) / 1000,
+  };
+}
+
 function getStatsKey(patternId: string, symbol: string, timeframe: string, rrTier: RRTier = 2): string {
   return `${patternId}|${symbol}|${timeframe}|${rrTier}`;
 }
@@ -370,7 +403,7 @@ async function fetchPatternSymbolStats(
       try {
         const { data: pageData, error } = await supabase
           .from('historical_pattern_occurrences')
-          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, detected_at`)
+          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, ${barsCol}, risk_reward_ratio, detected_at`)
           .in('pattern_id', uniquePatternIds)
           .in('symbol', uniqueSymbols)
           .eq('timeframe', timeframe)
@@ -427,7 +460,7 @@ async function fetchPatternSymbolStats(
     for (const row of allData) {
       const key = `${row.pattern_id}|${row.symbol}`;
       if (!grouped.has(key)) {
-        grouped.set(key, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0,
+        grouped.set(key, { wins: 0, total: 0, pnlSum: 0, rrSum: 0, rrCount: 0, durationSum: 0, durationCount: 0,
           roi3m: 0, roi6m: 0, roi1y: 0, roi3y: 0, roi5y: 0,
           count3m: 0, count6m: 0, count1y: 0, count3y: 0, count5y: 0 });
       }
@@ -442,6 +475,9 @@ async function fetchPatternSymbolStats(
         e.total++;
         if (outcome === 'hit_tp') e.wins++;
         e.pnlSum += pnl;
+        // R:R for this row. Tiers other than the 2R baseline are recomputed at a fixed tier ratio.
+        const rr = rrTier === 2 ? row.risk_reward_ratio : rrTier;
+        if (rr != null && Number.isFinite(Number(rr))) { e.rrSum += Number(rr); e.rrCount++; }
         if (bars != null) { e.durationSum += bars; e.durationCount++; }
         const d = new Date(row.detected_at);
         if (d >= threeMonthsAgo) { e.roi3m += pnl; e.count3m++; }
@@ -455,9 +491,11 @@ async function fetchPatternSymbolStats(
     // Build stats for each pair (key now includes timeframe + rrTier)
     for (const [baseKey, e] of grouped) {
       if (e.total > 0) {
+        const { expectancyR, avgRr } = computeExpectancyR(e.wins, e.total, e.rrSum, e.rrCount);
         const stats: PatternStats = {
           winRate: Math.round((e.wins / e.total) * 1000) / 10,
-          avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
+          expectancyR,
+          avgRr,
           sampleSize: e.total,
           avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
           accumulatedRoi: {
@@ -642,7 +680,7 @@ async function fetchCrossTimeframeFallback(
       try {
         const { data, error } = await supabase
           .from('historical_pattern_occurrences')
-          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, bars_to_outcome`)
+          .select(`pattern_id, symbol, ${outcomeCol}, ${pnlCol}, bars_to_outcome, risk_reward_ratio`)
           .in('pattern_id', uniquePatternIds)
           .in('symbol', uniqueSymbols)
           .eq('timeframe', tf)
@@ -651,16 +689,18 @@ async function fetchCrossTimeframeFallback(
 
         if (error || !data?.length) continue;
 
-        const grouped = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
+        const grouped = new Map<string, { wins: number; total: number; pnlSum: number; rrSum: number; rrCount: number; durationSum: number; durationCount: number }>();
         for (const row of data) {
           const outcome = row[outcomeCol];
           if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
           const k = `${row.pattern_id}|${row.symbol}`;
-          if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
+          if (!grouped.has(k)) grouped.set(k, { wins: 0, total: 0, pnlSum: 0, rrSum: 0, rrCount: 0, durationSum: 0, durationCount: 0 });
           const e = grouped.get(k)!;
           e.total++;
           if (outcome === 'hit_tp') e.wins++;
           e.pnlSum += row[pnlCol] ?? 0;
+          const rr = rrTier === 2 ? row.risk_reward_ratio : rrTier;
+          if (rr != null && Number.isFinite(Number(rr))) { e.rrSum += Number(rr); e.rrCount++; }
           if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
         }
 
@@ -669,9 +709,11 @@ async function fetchCrossTimeframeFallback(
           const [patternId, symbol] = baseKey.split('|');
           const originalKey = getStatsKey(patternId, symbol, originalTimeframe, rrTier);
           if (result.has(originalKey)) continue;
+          const { expectancyR, avgRr } = computeExpectancyR(e.wins, e.total, e.rrSum, e.rrCount);
           result.set(originalKey, {
             winRate: Math.round((e.wins / e.total) * 1000) / 10,
-            avgRMultiple: Math.round((e.pnlSum / e.total / 100) * 100) / 100,
+            expectancyR,
+            avgRr,
             sampleSize: e.total,
             avgDurationBars: e.durationCount > 0 ? Math.round(e.durationSum / e.durationCount) : 0,
             accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
@@ -695,21 +737,23 @@ async function fetchCrossTimeframeFallback(
       // Query aggregate stats across ALL symbols for these patterns (prefer same timeframe, then any)
       const { data, error } = await supabase
         .from('historical_pattern_occurrences')
-        .select(`pattern_id, ${outcomeCol}, ${pnlCol}, bars_to_outcome`)
+        .select(`pattern_id, ${outcomeCol}, ${pnlCol}, bars_to_outcome, risk_reward_ratio`)
         .in('pattern_id', missingPatternIds)
         .not(outcomeCol, 'is', null)
         .limit(5000);
 
       if (!error && data?.length) {
-        const patternAgg = new Map<string, { wins: number; total: number; pnlSum: number; durationSum: number; durationCount: number }>();
+        const patternAgg = new Map<string, { wins: number; total: number; pnlSum: number; rrSum: number; rrCount: number; durationSum: number; durationCount: number }>();
         for (const row of data) {
           const outcome = row[outcomeCol];
           if (outcome !== 'hit_tp' && outcome !== 'hit_sl') continue;
-          if (!patternAgg.has(row.pattern_id)) patternAgg.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0, durationSum: 0, durationCount: 0 });
+          if (!patternAgg.has(row.pattern_id)) patternAgg.set(row.pattern_id, { wins: 0, total: 0, pnlSum: 0, rrSum: 0, rrCount: 0, durationSum: 0, durationCount: 0 });
           const e = patternAgg.get(row.pattern_id)!;
           e.total++;
           if (outcome === 'hit_tp') e.wins++;
           e.pnlSum += row[pnlCol] ?? 0;
+          const rr = rrTier === 2 ? row.risk_reward_ratio : rrTier;
+          if (rr != null && Number.isFinite(Number(rr))) { e.rrSum += Number(rr); e.rrCount++; }
           if (row.bars_to_outcome != null) { e.durationSum += row.bars_to_outcome; e.durationCount++; }
         }
 
@@ -717,9 +761,11 @@ async function fetchCrossTimeframeFallback(
           const agg = patternAgg.get(pair.patternId);
           if (!agg || agg.total < MIN_SAMPLE_SIZE) continue;
           const key = getStatsKey(pair.patternId, pair.symbol, originalTimeframe, rrTier);
+          const { expectancyR, avgRr } = computeExpectancyR(agg.wins, agg.total, agg.rrSum, agg.rrCount);
           result.set(key, {
             winRate: Math.round((agg.wins / agg.total) * 1000) / 10,
-            avgRMultiple: Math.round((agg.pnlSum / agg.total / 100) * 100) / 100,
+            expectancyR,
+            avgRr,
             sampleSize: agg.total,
             avgDurationBars: agg.durationCount > 0 ? Math.round(agg.durationSum / agg.durationCount) : 0,
             accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },
@@ -740,7 +786,10 @@ async function fetchCrossTimeframeFallback(
       const key = getStatsKey(pair.patternId, pair.symbol, originalTimeframe, rrTier);
       result.set(key, {
         winRate: BAYESIAN_PRIOR_WIN_RATE * 100, // Convert to percentage (50.0) to match PatternStats format
-        avgRMultiple: BAYESIAN_PRIOR_EXPECTANCY,
+        expectancyR: BAYESIAN_PRIOR_EXPECTANCY,
+        avgRr: null,
+        // Assumption, not measurement — the UI must render this differently.
+        isPrior: true,
         sampleSize: BAYESIAN_VIRTUAL_SAMPLE,
         avgDurationBars: 0,
         accumulatedRoi: { threeMonth: null, sixMonth: null, oneYear: null, threeYear: null, fiveYear: null },

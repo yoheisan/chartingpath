@@ -120,7 +120,10 @@ export default function PatternStatisticsPage() {
         const g = groups[key];
         if (row.outcome === 'hit_tp') g.wins++;
         else g.losses++;
-        g.rrs.push(Number(row.risk_reward_ratio) || 2);
+        // Never fabricate an R:R — rows without one simply do not contribute to avg_rr.
+        if (row.risk_reward_ratio != null && Number.isFinite(Number(row.risk_reward_ratio))) {
+          g.rrs.push(Number(row.risk_reward_ratio));
+        }
         g.bars.push(Number(row.bars_to_outcome));
       }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { OUTCOME_STATS } from '@/config/outcomeStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -313,7 +314,9 @@ export const ConsolidatedBacktestEngine: React.FC<ConsolidatedBacktestEngineProp
     const targetReturn = 15;
     const winRate = 65;
     const maxDrawdownLimit = strategyAnswers.risk?.maxDrawdown || null; // Now optional
-    const riskRewardRatio = 2;
+    // Empirically measured mean risk_reward_ratio across resolved occurrences.
+    // A 2.0 assumption is not supported by the data.
+    const riskRewardRatio = OUTCOME_STATS.aggregateAvgRR;
     const useRiskPerTrade = params.riskPerTrade !== null && params.riskPerTrade > 0;
 
     // More sophisticated results for higher tiers

@@ -45,7 +45,14 @@ export function usePatternDetailStats(patternKey: string) {
       const total = overall.length;
       const wins = overall.filter(r => r.outcome === 'hit_tp').length;
       const winRate = Math.round((wins / total) * 1000) / 10;
-      const avgRR = +(overall.reduce((s, r) => s + (r.risk_reward_ratio || 2), 0) / total).toFixed(1);
+      // R:R is never defaulted. Rows lacking one are excluded from the mean and counted.
+      const rrRows = overall.filter(r => r.risk_reward_ratio != null && Number.isFinite(Number(r.risk_reward_ratio)));
+      if (rrRows.length < total) {
+        console.warn(`[usePatternDetailStats] Excluded ${total - rrRows.length} rows with null risk_reward_ratio`);
+      }
+      const avgRR = rrRows.length > 0
+        ? +(rrRows.reduce((s, r) => s + Number(r.risk_reward_ratio), 0) / rrRows.length).toFixed(2)
+        : null;
       const avgBars = Math.round(overall.reduce((s, r) => s + (r.bars_to_outcome || 0), 0) / total);
 
       // 2) Best timeframe (n>=20)

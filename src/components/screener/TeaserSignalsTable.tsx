@@ -139,8 +139,8 @@ export function TeaserSignalsTable({ patterns, onOpenChart }: TeaserSignalsTable
               <TableCell className="text-right">
                 {(() => {
                   const perf = setup.historicalPerformance;
-                  if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                    const rot = perf.avgRMultiple / perf.avgDurationBars;
+                  if (perf && perf.expectancyR != null && !perf.isPrior && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                    const rot = perf.expectancyR / perf.avgDurationBars;
                     const isHighEfficiency = rot >= 0.01;
                     return (
                       <span className={cn(

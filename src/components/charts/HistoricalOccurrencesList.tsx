@@ -1,3 +1,4 @@
+import { DEFAULT_RR } from '@/utils/rrCalculator';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,7 +90,7 @@ export function HistoricalOccurrencesList({
   direction,
   limit = DEFAULT_LIMIT,
   className,
-  selectedRR = 2,
+  selectedRR = DEFAULT_RR, // UI control default only — never feeds a displayed expectancy
   onSelectOccurrence,
   enableDashboardNavigation,
 }: HistoricalOccurrencesListProps) {
@@ -626,7 +627,7 @@ interface OccurrenceRowProps {
   showPlaybackHint?: boolean;
 }
 
-function OccurrenceRow({ occurrence, selectedRR = 2, onOpenChart, showPlaybackHint }: OccurrenceRowProps) {
+function OccurrenceRow({ occurrence, selectedRR = DEFAULT_RR, onOpenChart, showPlaybackHint }: OccurrenceRowProps) {
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'win': return 'text-bullish bg-bullish/10 border-bullish/30';

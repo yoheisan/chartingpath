@@ -156,7 +156,9 @@ export const BacktestResultSummary: React.FC<BacktestResultSummaryProps> = ({
 }) => {
   const { t } = useTranslation();
   const isLowSample = results.totalTrades < MIN_TRADES_THRESHOLD;
-  const expectancy = results.expectancy ?? results.avgReturn ?? (results.totalReturn ? results.totalReturn / results.totalTrades : null);
+  // Expectancy only. Never substitute avgReturn or totalReturn/trades — those are
+  // percentage returns, a different unit from R-multiple expectancy.
+  const expectancy = results.expectancy ?? null;
   const interpretation = useMemo(() => generateInterpretation(results), [results]);
   const [wedgeDetailsOpen, setWedgeDetailsOpen] = useState(false);
 

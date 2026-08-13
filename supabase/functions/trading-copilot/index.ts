@@ -1373,7 +1373,10 @@ async function executeComparePatternPerformance(supabase: any, args: any) {
     if (!rows?.length) return null;
     const wins = rows.filter(r => r.outcome === 'hit_tp').length;
     const total = rows.length;
-    const avgRR = rows.reduce((s, r) => s + (r.risk_reward_ratio || 2), 0) / total;
+    // R:R is never defaulted; rows without one are excluded from the mean.
+    const rrRows = rows.filter(r => r.risk_reward_ratio != null && Number.isFinite(Number(r.risk_reward_ratio)));
+    if (rrRows.length === 0) return null;
+    const avgRR = rrRows.reduce((s, r) => s + Number(r.risk_reward_ratio), 0) / rrRows.length;
     const winRate = Math.round((wins / total) * 1000) / 10;
     const expectancy = Math.round(((wins / total) * avgRR - ((total - wins) / total)) * 1000) / 1000;
     const avgBars = Math.round(rows.reduce((s, r) => s + (r.bars_to_outcome || 0), 0) / total);

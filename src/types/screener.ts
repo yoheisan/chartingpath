@@ -45,10 +45,19 @@ export interface LiveSetup {
     rsi_zone?: string;
     adx_strength?: string;
   } | null;
-  /** Historical performance metrics (from pattern_hit_rates) */
+  /**
+   * Historical performance metrics (from pattern_hit_rates / historical_pattern_occurrences).
+   * `expectancyR` is in R-multiples where 1R is the risk taken (entry-to-stop distance):
+   * expectancy_r = win_rate * avg_rr - loss_rate. It is never derived from percentage P&L.
+   */
   historicalPerformance?: {
     winRate: number;
-    avgRMultiple: number;
+    /** Measured expectancy in R. Null when unavailable — never substitute another metric. */
+    expectancyR?: number | null;
+    /** Mean risk_reward_ratio of the resolved sample. */
+    avgRr?: number | null;
+    /** True when values come from a Bayesian prior rather than measurement. */
+    isPrior?: boolean;
     sampleSize: number;
     profitFactor?: number;
     avgDurationBars?: number;
