@@ -22,6 +22,7 @@ import { UniversalSymbolSearch } from '@/components/charts/UniversalSymbolSearch
 import InstrumentLogo from '@/components/charts/InstrumentLogo';
 import { PLANS_CONFIG, TIER_DISPLAY, type PlanTier } from '@/config/plans';
 import { GradeBadge, GRADE_CONFIG, type GradeLetter } from '@/components/ui/GradeBadge';
+import { useGradeStats, fetchGradeCountsForSelection } from '@/hooks/useGradeStats';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { AuthGateDialog } from '@/components/AuthGateDialog';
@@ -170,36 +171,12 @@ const TIMEFRAMES = [
 
 // LOOKBACK_OPTIONS now derived from dataCoverageContract - removed static array
 
-// Grade filter presets for risk appetite
-type GradePreset = 'conservative' | 'moderate' | 'aggressive' | 'custom';
-
-// Grade presets - labels/descriptions resolved via t() at render time
-const GRADE_PRESET_CONFIG: Record<GradePreset, { grades: GradeLetter[]; labelKey: string; descKey: string; icon: React.ElementType }> = {
-  conservative: {
-    grades: ['A', 'B'],
-    labelKey: 'patternLabWizard.conservativePreset',
-    descKey: 'patternLabWizard.conservativeDesc',
-    icon: Shield,
-  },
-  moderate: {
-    grades: ['A', 'B', 'C'],
-    labelKey: 'patternLabWizard.moderatePreset',
-    descKey: 'patternLabWizard.moderateDesc',
-    icon: Target,
-  },
-  aggressive: {
-    grades: ['A', 'B', 'C', 'D', 'F'],
-    labelKey: 'patternLabWizard.aggressivePreset',
-    descKey: 'patternLabWizard.aggressiveDesc',
-    icon: Flame,
-  },
-  custom: {
-    grades: [],
-    labelKey: 'patternLabWizard.qualityFilter',
-    descKey: '',
-    icon: Target,
-  },
-};
+// Grade presets (Conservative / Moderate / Aggressive) were removed on
+// 2026-08-13. They implied a risk ladder A > B > C > D that the measured data
+// contradicts (ranking is B > D > C > A, and A has 48 resolved occurrences in
+// total). The filter is now an honest multi-select over the grades that exist
+// in the data, each labelled with its live sample count and expectancy.
+// See src/utils/PatternQualityScorer.ts and the `grade_ordering_valid` check.
 
 interface EstimateResult {
   creditsEstimated: number;
@@ -325,28 +302,29 @@ const PatternLabWizard = () => {
       : normalizePatternIds(prefilledState?.patterns ?? ['double-bottom'])
   );
   
-  // Grade filter state - derive preset from gradeFilter if available
-  const getPresetFromGrades = (grades: string[]): GradePreset => {
-    const sorted = [...grades].sort().join(',');
-    if (sorted === 'A,B') return 'conservative';
-    if (sorted === 'A,B,C') return 'moderate';
-    if (sorted === 'A,B,C,D,F') return 'aggressive';
-    return 'custom';
-  };
-  
-  // If a specific grade came via URL (from screener/copilot), include it + grades above it
-  const gradeHierarchy: GradeLetter[] = ['A', 'B', 'C', 'D', 'F'];
-  const urlGradeFilter: GradeLetter[] | null = urlGrade 
-    ? gradeHierarchy.slice(0, gradeHierarchy.indexOf(urlGrade as GradeLetter) + 1) as GradeLetter[]
-    : null;
+  // Grade filter state.
+  // A grade arriving by URL selects exactly that grade — it no longer implies
+  // "and everything above it", because there is no validated ordering.
+  const urlGradeFilter: GradeLetter[] | null = urlGrade ? [urlGrade as GradeLetter] : null;
 
-  const [gradePreset, setGradePreset] = useState<GradePreset>(
-    urlGradeFilter ? getPresetFromGrades(urlGradeFilter) :
-    prefilledState?.gradeFilter ? getPresetFromGrades(prefilledState.gradeFilter) : 'moderate'
-  );
+  // Measured outcome per grade, computed live. Drives both the option list
+  // (never hardcoded — Grade F does not exist in the data) and the labels.
+  const { stats: gradeStats, loading: gradeStatsLoading } = useGradeStats();
+  const availableGrades = gradeStats.map(g => g.grade as GradeLetter);
+
   const [selectedGrades, setSelectedGrades] = useState<GradeLetter[]>(
-    urlGradeFilter ?? (prefilledState?.gradeFilter as GradeLetter[]) ?? ['A', 'B', 'C']
+    urlGradeFilter ?? (prefilledState?.gradeFilter as GradeLetter[]) ?? []
   );
+  const [gradeDefaultsApplied, setGradeDefaultsApplied] = useState(
+    Boolean(urlGradeFilter || prefilledState?.gradeFilter)
+  );
+
+  // Default: every grade that exists in the data — no implied preference.
+  useEffect(() => {
+    if (gradeDefaultsApplied || availableGrades.length === 0) return;
+    setSelectedGrades(availableGrades);
+    setGradeDefaultsApplied(true);
+  }, [availableGrades, gradeDefaultsApplied]);
   
   // UI state
   const [isEstimating, setIsEstimating] = useState(false);
@@ -561,7 +539,7 @@ const PatternLabWizard = () => {
             
             // Count passing grade filter
             let gradePassCount = count ?? 0;
-            if ((count ?? 0) > 0 && selectedGrades.length < 5) {
+            if ((count ?? 0) > 0 && selectedGrades.length < availableGrades.length) {
               const { count: gradeCount } = await supabase
                 .from('historical_pattern_occurrences')
                 .select('id', { count: 'exact', head: true })
@@ -598,6 +576,28 @@ const PatternLabWizard = () => {
   const hasNoPatterns = patternCoverage.length > 0 && patternCoverage.every(p => p.gradePassCount === 0);
   const hasLowPatterns = patternCoverage.some(p => p.gradePassCount > 0 && p.gradePassCount < 5);
   const zeroPatternCombos = patternCoverage.filter(p => p.gradePassCount === 0);
+
+  // Grade breakdown for the CURRENT selection (ignoring the grade filter), so an
+  // empty result can name the filter that caused it and what would work instead.
+  const [selectionGradeCounts, setSelectionGradeCounts] = useState<Array<{ grade: string; occurrences: number }>>([]);
+  useEffect(() => {
+    if (selectedInstruments.length === 0 || selectedPatterns.length === 0) {
+      setSelectionGradeCounts([]);
+      return;
+    }
+    let cancelled = false;
+    const run = async () => {
+      const rows = await fetchGradeCountsForSelection(selectedInstruments, selectedPatterns, timeframe);
+      if (!cancelled) setSelectionGradeCounts(rows);
+    };
+    const debounce = setTimeout(run, 700);
+    return () => { clearTimeout(debounce); cancelled = true; };
+  }, [selectedInstruments, selectedPatterns, timeframe]);
+
+  /** Grades that DO have occurrences for this selection but are not selected. */
+  const unselectedAlternatives = selectionGradeCounts
+    .filter(r => r.occurrences > 0 && !selectedGrades.includes(r.grade as GradeLetter))
+    .sort((a, b) => b.occurrences - a.occurrences);
 
   const handleInstrumentToggle = (symbol: string) => {
     const normalizedSymbol = normalizeSymbol(symbol);
@@ -1085,88 +1085,99 @@ const PatternLabWizard = () => {
                     </Tooltip>
                   </TooltipProvider>
                 </CardTitle>
-                <CardDescription>{t('patternLabWizard.riskAppetite')}</CardDescription>
+                <CardDescription>
+                  {t(
+                    'patternLabWizard.gradeNotARankingDesc',
+                    'Grade is a structural score, not a validated quality ranking. Pick by measured expectancy below, not by the letter.',
+                  )}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Preset Buttons */}
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {(['conservative', 'moderate', 'aggressive'] as const).map(preset => {
-                    const config = GRADE_PRESET_CONFIG[preset];
-                    const Icon = config.icon;
-                    const isSelected = gradePreset === preset;
-                    return (
-                      <div
-                        key={preset}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-lg border cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                            : 'border-border/50 hover:border-border hover:bg-muted/30'
-                        }`}
-                        onClick={() => {
-                          setGradePreset(preset);
-                          setSelectedGrades(config.grades);
-                        }}
-                      >
-                        <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`font-medium text-sm ${isSelected ? 'text-primary' : ''}`}>
-                          {t(config.labelKey)}
-                        </span>
-                        <div className="flex gap-1">
-                          {config.grades.map(grade => (
-                            <GradeBadge key={grade} grade={grade} size="sm" showTooltip={false} />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Custom Grade Selection */}
-                <div className="pt-2 border-t border-border/50">
-                  <Label className="text-sm text-muted-foreground mb-2 block">
-                    {t('patternLabWizard.customizeGrades')}
-                  </Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['A', 'B', 'C', 'D', 'F'] as GradeLetter[]).map(grade => {
+                {/*
+                  Options are derived from the grades that actually exist in the
+                  data (no hardcoded list — Grade F has zero occurrences), sorted
+                  by sample size, never by letter.
+                */}
+                {gradeStatsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {t('patternLabWizard.loadingGradeStats', 'Measuring outcomes by grade…')}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {gradeStats.map(g => {
+                      const grade = g.grade as GradeLetter;
                       const isSelected = selectedGrades.includes(grade);
-                      const config = GRADE_CONFIG[grade];
+                      const config = GRADE_CONFIG[grade] ?? GRADE_CONFIG.C;
                       return (
                         <button
-                          key={grade}
+                          key={g.grade}
                           type="button"
-                          onClick={() => {
-                            setGradePreset('custom');
-                            setSelectedGrades(prev => 
-                              prev.includes(grade) 
-                                ? prev.filter(g => g !== grade)
-                                : [...prev, grade]
-                            );
-                          }}
-                          className={`px-3 py-2 rounded-md border text-sm font-medium transition-all ${
+                          onClick={() =>
+                            setSelectedGrades(prev =>
+                              prev.includes(grade)
+                                ? prev.filter(x => x !== grade)
+                                : [...prev, grade],
+                            )
+                          }
+                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-md border text-left transition-all ${
                             isSelected
-                              ? `${config.bg} ${config.text} ${config.border} border`
-                              : 'border-border/50 text-muted-foreground hover:border-border'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border/50 hover:border-border hover:bg-muted/30'
                           }`}
                         >
-                          {t('patternLabWizard.grade', { grade })}
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex h-4 w-4 items-center justify-center rounded-sm border ${
+                                isSelected ? 'bg-primary border-primary' : 'border-border'
+                              }`}
+                            >
+                              {isSelected && <CheckCircle2 className="h-3 w-3 text-primary-foreground" />}
+                            </span>
+                            <span className={`font-medium text-sm ${config.text}`}>
+                              {t('patternLabWizard.grade', { grade: g.grade })}
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-3 text-sm">
+                            <span className="text-muted-foreground">
+                              {t('patternLabWizard.gradeOccurrences', {
+                                count: g.occurrences,
+                                defaultValue: '{{count}} occurrences',
+                              })}
+                            </span>
+                            {g.expectancyR == null ? (
+                              <span className="italic text-muted-foreground">
+                                {t('patternLabWizard.insufficientSample', 'insufficient sample')}
+                              </span>
+                            ) : (
+                              <span
+                                className={`font-medium ${
+                                  g.expectancyR > 0
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-destructive'
+                                }`}
+                              >
+                                {g.expectancyR > 0 ? '+' : ''}
+                                {g.expectancyR.toFixed(3)}R
+                              </span>
+                            )}
+                          </span>
                         </button>
                       );
                     })}
-                  </div>
-                  {selectedGrades.length === 0 && (
-                    <p className="text-sm text-destructive mt-2">
-                      {t('patternLabWizard.selectAtLeastOneGrade')}
+                    {selectedGrades.length === 0 && (
+                      <p className="text-sm text-destructive">
+                        {t('patternLabWizard.selectAtLeastOneGrade')}
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground pt-1">
+                      {t(
+                        'patternLabWizard.gradeExpectancyNote',
+                        'Expectancy measured over resolved occurrences since 2024. Grades with fewer than 100 resolved occurrences show no figure — the sample cannot support one.',
+                      )}
                     </p>
-                  )}
-                </div>
-
-                {/* Selected Summary */}
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{selectedGrades.length}</span> {t('patternLabWizard.gradesSelected', { count: selectedGrades.length })}
-                  {gradePreset !== 'custom' && (
-                    <span className="ml-2">• {t(GRADE_PRESET_CONFIG[gradePreset].descKey)}</span>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1494,8 +1505,54 @@ const PatternLabWizard = () => {
                     {hasNoPatterns && (
                       <Alert variant="destructive" className="mt-2 py-2">
                         <AlertCircle className="h-3.5 w-3.5" />
-                        <AlertDescription className="text-sm">
-                          {t('patternLabWizard.noOccurrencesFound')}
+                        <AlertDescription className="text-sm space-y-2">
+                          {selectionGradeCounts.length === 0 ? (
+                            /* Nothing at all for this instrument/pattern/timeframe */
+                            <p>
+                              {t('patternLabWizard.emptyNoOccurrencesAtAll', {
+                                defaultValue:
+                                  'No occurrences at all for these {{patterns}} pattern(s) on {{instruments}} at {{timeframe}}. The grade filter is not the cause — try another timeframe or instrument.',
+                                patterns: selectedPatterns.length,
+                                instruments: selectedInstruments.join(', '),
+                                timeframe,
+                              })}
+                            </p>
+                          ) : unselectedAlternatives.length > 0 ? (
+                            /* The grade filter is what emptied it — name it and offer the fix */
+                            <>
+                              <p>
+                                {t('patternLabWizard.emptyGradeFilterCause', {
+                                  defaultValue:
+                                    'The grade filter is what emptied this. No Grade {{selected}} occurrences for these {{patterns}} pattern(s) on {{instruments}} at {{timeframe}}.',
+                                  selected: selectedGrades.join('/') || '—',
+                                  patterns: selectedPatterns.length,
+                                  instruments: selectedInstruments.join(', '),
+                                  timeframe,
+                                })}
+                              </p>
+                              <p>
+                                {t('patternLabWizard.emptyGradeAvailable', 'Available here:')}{' '}
+                                {unselectedAlternatives
+                                  .map(r => `${t('patternLabWizard.grade', { grade: r.grade })} — ${r.occurrences.toLocaleString()}`)
+                                  .join(' · ')}
+                              </p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setSelectedGrades(prev => [
+                                    ...prev,
+                                    ...unselectedAlternatives.map(r => r.grade as GradeLetter),
+                                  ])
+                                }
+                              >
+                                {t('patternLabWizard.emptyGradeAddAll', 'Add these grades')}
+                              </Button>
+                            </>
+                          ) : (
+                            <p>{t('patternLabWizard.noOccurrencesFound')}</p>
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}
