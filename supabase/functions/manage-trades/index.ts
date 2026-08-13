@@ -130,9 +130,36 @@ Deno.serve(async (req) => {
       const entryPrice = Number(trade.entry_price);
       const stopLoss = Number(trade.stop_loss);
       const takeProfit = Number(trade.take_profit);
+
+      // ── PRICE SANITY GUARD ──────────────────────────────────────────────
+      // A price wildly away from the trade's own entry means a cross-instrument
+      // lookup, a unit/scale mismatch or a stale bar from another timeframe.
+      // Never close a trade on such a price — log and skip.
+      const MAX_PRICE_DEVIATION = 0.5; // 50%
+      if (
+        !Number.isFinite(currentPrice) ||
+        currentPrice <= 0 ||
+        (entryPrice > 0 && Math.abs(currentPrice - entryPrice) / entryPrice > MAX_PRICE_DEVIATION)
+      ) {
+        console.error(
+          `[manage-trades] REJECTED price for ${trade.symbol}: price=${currentPrice} entry=${entryPrice} ` +
+            `(deviation > ${MAX_PRICE_DEVIATION * 100}%). Trade ${trade.id} left open, monitoring paused.`
+        );
+        if (!trade.monitoring_paused) {
+          await supabase
+            .from("paper_trades")
+            .update({ monitoring_paused: true })
+            .eq("id", trade.id);
+        }
+        continue;
+      }
+
       const isLong = trade.trade_type === "long" || trade.trade_type === "buy";
       const positionPct = Number(trade.position_size_pct || 3);
-      const rUnit = entryPrice * (positionPct / 100);
+      // R is defined by the ORIGINAL stop distance, never by position sizing.
+      const initialStop = Number(trade.initial_stop_loss ?? trade.stop_loss);
+      const riskDistance = Math.abs(entryPrice - initialStop);
+      const rUnit = riskDistance > 0 ? riskDistance : entryPrice * (positionPct / 100);
       const quantity = Number(trade.quantity);
       const createdAt = new Date(trade.created_at);
       const holdMins = Math.round((Date.now() - createdAt.getTime()) / 60000);
