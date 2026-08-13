@@ -2020,6 +2020,138 @@ export type Database = {
         }
         Relationships: []
       }
+      data_health_checks: {
+        Row: {
+          category: string
+          check_name: string
+          created_at: string
+          description: string | null
+          expected_result: string | null
+          id: string
+          is_enabled: boolean
+          severity: string
+          sql_expression: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          check_name: string
+          created_at?: string
+          description?: string | null
+          expected_result?: string | null
+          id?: string
+          is_enabled?: boolean
+          severity: string
+          sql_expression?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          check_name?: string
+          created_at?: string
+          description?: string | null
+          expected_result?: string | null
+          id?: string
+          is_enabled?: boolean
+          severity?: string
+          sql_expression?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      data_health_cron_expectations: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          job_name: string
+          target_table: string
+          timestamp_column: string
+          window_hours: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          job_name: string
+          target_table: string
+          timestamp_column?: string
+          window_hours?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          job_name?: string
+          target_table?: string
+          timestamp_column?: string
+          window_hours?: number
+        }
+        Relationships: []
+      }
+      data_health_results: {
+        Row: {
+          check_name: string
+          detail: Json | null
+          duration_ms: number | null
+          id: string
+          notified: boolean
+          observed_value: string | null
+          passed: boolean
+          run_at: string
+          severity: string | null
+        }
+        Insert: {
+          check_name: string
+          detail?: Json | null
+          duration_ms?: number | null
+          id?: string
+          notified?: boolean
+          observed_value?: string | null
+          passed: boolean
+          run_at?: string
+          severity?: string | null
+        }
+        Update: {
+          check_name?: string
+          detail?: Json | null
+          duration_ms?: number | null
+          id?: string
+          notified?: boolean
+          observed_value?: string | null
+          passed?: boolean
+          run_at?: string
+          severity?: string | null
+        }
+        Relationships: []
+      }
+      data_health_vocabulary: {
+        Row: {
+          aliases: string[]
+          canonical_value: string
+          created_at: string
+          domain: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          aliases?: string[]
+          canonical_value: string
+          created_at?: string
+          domain: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          aliases?: string[]
+          canonical_value?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       data_seeding_status: {
         Row: {
           asset_class: string
@@ -7408,6 +7540,17 @@ export type Database = {
       }
       rescore_copilot_training_pairs: { Args: never; Returns: Json }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
+      run_data_health_checks: {
+        Args: { p_only?: string }
+        Returns: {
+          check_name: string
+          detail: Json
+          duration_ms: number
+          observed_value: string
+          passed: boolean
+          severity: string
+        }[]
+      }
       run_database_maintenance: { Args: never; Returns: Json }
       schedule_backfill_page: {
         Args: {
