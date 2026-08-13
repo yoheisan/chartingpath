@@ -228,6 +228,30 @@ function generateEmailHTML(metrics: KPIMetrics, recipientEmail: string): string 
 
     <!-- CTA -->
     <div style="text-align: center; margin-bottom: 32px;">
+
+    <!-- Data Health -->
+    <div style="background: #0f172a; border: 1px solid ${metrics.dataHealthFailures.length > 0 ? '#991b1b' : '#334155'}; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+      <p style="color: #e2e8f0; margin: 0 0 12px 0; font-size: 14px; font-weight: bold;">Data Health (critical checks)</p>
+      ${metrics.dataHealthFailures.length === 0 ? `
+        <p style="color: #94a3b8; margin: 0; font-size: 13px;">
+          No critical data-health failures this week. Last run:
+          ${metrics.dataHealthLastRun ? new Date(metrics.dataHealthLastRun).toUTCString() : 'never'}.
+          These checks catch only what they were told to assert — a clean board is a safety net, not a proof of correctness.
+        </p>
+      ` : `
+        <ul style="color: #fecaca; margin: 0; padding-left: 18px; font-size: 13px;">
+          ${metrics.dataHealthFailures.map((f) => `
+            <li style="margin-bottom: 6px;">
+              <strong>${f.check_name}</strong> — ${f.observed_value ?? 'no observed value'}
+              <span style="color:#94a3b8;">(${new Date(f.run_at).toUTCString()})</span>
+            </li>`).join('')}
+        </ul>
+        <p style="color: #94a3b8; margin: 12px 0 0 0; font-size: 12px;">
+          Nothing was changed automatically. Review in Admin → Data Health.
+        </p>
+      `}
+    </div>
+
       <a href="https://chartingpath.com/admin/journey-analytics" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">View Full Analytics Dashboard</a>
     </div>
 
