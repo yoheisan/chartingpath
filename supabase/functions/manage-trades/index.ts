@@ -195,22 +195,12 @@ Deno.serve(async (req) => {
         : currentPrice <= takeProfit;
 
       if (stopHit) {
-        // ── Gap-aware exit: use currentPrice if it's worse than stopLoss ──
-        // ── Slippage clamp (max -1.5R): protects paper P&L from data
-        //    artefacts and extreme gaps that would otherwise produce
-        //    impossible outcomes like -50R or -180R on a single trade.
-        const rawFillPrice = isLong
-          ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
-          : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
-        const slDistance = Math.abs(entryPrice - stopLoss);
-        const maxAdverse = 0.5 * slDistance; // cap fill at 0.5R beyond SL → total loss ≤ 1.5R
-        const clampedRawFill = isLong
-          ? Math.max(rawFillPrice, stopLoss - maxAdverse)
-          : Math.min(rawFillPrice, stopLoss + maxAdverse);
-        const fillPrice = applyAdverseSlippage(clampedRawFill, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
-
+        // ── Level-triggered exit: the fill IS the stop level (plus modelled
+        //    slippage). Never a free-floating market price — that is what
+        //    produced -187R rows. A stop exit is -1R by construction.
+        const fillPrice = applyAdverseSlippage(stopLoss, !isLong, totalSlippageBps);
         const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
-        const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
+        const exitPnlR = Math.max(-1.05, rUnit > 0 ? slMove / rUnit : -1);
         const exitPnlDollars = isForex
           ? calcForexPnl(trade.symbol, slMove, forexLotSize)
           : slMove * quantity;
