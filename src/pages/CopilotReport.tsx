@@ -19,7 +19,7 @@ const CopilotReport = () => {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<DateRange>('all');
 
-  const { closedTrades, sessions, plans, loading, firstTradeDate } = useTradeReport(dateRange);
+  const { closedTrades, sessions, plans, loading, firstTradeDate, suspectCount } = useTradeReport(dateRange);
 
   const ranges: { label: string; value: DateRange }[] = [
     { label: t('report.range7d'), value: '7d' },
@@ -71,6 +71,11 @@ const CopilotReport = () => {
           </div>
         ) : (
           <>
+            {suspectCount > 0 && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-300">
+                {t('report.suspectExcluded', '{{count}} closed trades were excluded because their recorded exit price failed the data-integrity check. No figure on this page uses them.', { count: suspectCount })}
+              </div>
+            )}
             <ReadinessScore trades={closedTrades} sessions={sessions} />
             <KeyMetricsRow trades={closedTrades} />
 

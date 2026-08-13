@@ -24,6 +24,7 @@ export interface PaperTrade {
   override_reason: string | null;
   master_plan_id: string | null;
   close_reason: string | null;
+  data_quality_suspect?: boolean | null;
 }
 
 export interface SessionLog {
@@ -55,6 +56,7 @@ export interface ReportData {
   plans: MasterPlanRow[];
   loading: boolean;
   firstTradeDate: string | null;
+  suspectCount: number;
 }
 
 export function useTradeReport(dateRange: DateRange): ReportData {
@@ -97,7 +99,11 @@ export function useTradeReport(dateRange: DateRange): ReportData {
   }, [user?.id]);
 
   const closedTrades = useMemo(() => {
-    let trades = allTrades.filter(t => t.status === 'closed' && t.outcome_r != null);
+    // Rows flagged by the write-time integrity guard are excluded from every
+    // R-based figure — conclusions must never be drawn from corrupt exits.
+    let trades = allTrades.filter(
+      t => t.status === 'closed' && t.outcome_r != null && !t.data_quality_suspect
+    );
     if (dateRange === '7d') {
       const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
       trades = trades.filter(t => (t.closed_at || t.created_at) >= cutoff);
@@ -108,13 +114,22 @@ export function useTradeReport(dateRange: DateRange): ReportData {
     return trades;
   }, [allTrades, dateRange]);
 
+  const suspectCount = useMemo(
+    () => allTrades.filter(t => t.status === 'closed' && t.data_quality_suspect).length,
+    [allTrades]
+  );
+
   const firstTradeDate = useMemo(() => {
     const closed = allTrades.filter(t => t.status === 'closed');
     return closed.length > 0 ? closed[0].created_at : null;
   }, [allTrades]);
 
-  return { closedTrades, allTrades, sessions, plans, loading, firstTradeDate };
+  return { closedTrades, allTrades, sessions, plans, loading, firstTradeDate, suspectCount };
 }
+
+// Minimum observations before any statistic is shown or any behaviour change
+// is recommended. Applied consistently across every report panel.
+export const REPORT_MIN_SAMPLE = 30;
 
 // Utility functions for report calculations
 export const INCONCLUSIVE_CLOSE_REASONS = [

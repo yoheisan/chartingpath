@@ -3688,6 +3688,7 @@ export type Database = {
           cooldown_until: string | null
           copilot_reasoning: string | null
           created_at: string
+          data_quality_suspect: boolean
           detection_id: string | null
           detection_latency_ms: number | null
           entry_price: number
@@ -3699,6 +3700,7 @@ export type Database = {
           hold_duration_mins: number | null
           id: string
           ideal_exit_price: number | null
+          initial_stop_loss: number | null
           instrument_type: string | null
           latest_price: number | null
           latest_price_at: string | null
@@ -3737,6 +3739,7 @@ export type Database = {
           cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
+          data_quality_suspect?: boolean
           detection_id?: string | null
           detection_latency_ms?: number | null
           entry_price: number
@@ -3748,6 +3751,7 @@ export type Database = {
           hold_duration_mins?: number | null
           id?: string
           ideal_exit_price?: number | null
+          initial_stop_loss?: number | null
           instrument_type?: string | null
           latest_price?: number | null
           latest_price_at?: string | null
@@ -3786,6 +3790,7 @@ export type Database = {
           cooldown_until?: string | null
           copilot_reasoning?: string | null
           created_at?: string
+          data_quality_suspect?: boolean
           detection_id?: string | null
           detection_latency_ms?: number | null
           entry_price?: number
@@ -3797,6 +3802,7 @@ export type Database = {
           hold_duration_mins?: number | null
           id?: string
           ideal_exit_price?: number | null
+          initial_stop_loss?: number | null
           instrument_type?: string | null
           latest_price?: number | null
           latest_price_at?: string | null

@@ -173,6 +173,21 @@ Deno.serve(async (req) => {
 
       const currentPrice = Number(latestPrice.current_price);
 
+      // ── PRICE SANITY GUARD ──
+      // Reject cross-instrument / mis-scaled / stale prices before they can
+      // close a trade at an impossible level.
+      const entryRef = Number(trade.entry_price);
+      if (
+        !Number.isFinite(currentPrice) ||
+        currentPrice <= 0 ||
+        (entryRef > 0 && Math.abs(currentPrice - entryRef) / entryRef > 0.5)
+      ) {
+        console.error(
+          `[monitor-paper-trades] REJECTED price for ${trade.symbol}: price=${currentPrice} entry=${entryRef} (>50% deviation). Trade ${trade.id} skipped.`
+        );
+        continue;
+      }
+
       // Cache latest price on the trade row for exit fallback
       await supabase
         .from('paper_trades')
@@ -303,7 +318,7 @@ Deno.serve(async (req) => {
           ? currentPrice - Number(trade.entry_price)
           : Number(trade.entry_price) - currentPrice;
         outcomeR = riskAmount > 0
-          ? Math.round((priceMove / riskAmount) * 100) / 100
+          ? Math.max(-1, Math.round((priceMove / riskAmount) * 100) / 100)
           : 0;
         pnl = calcPnl(isLong ? currentPrice - Number(trade.entry_price) : Number(trade.entry_price) - currentPrice);
         closeReason = `Timed out after 7 days at ${currentPrice}`;

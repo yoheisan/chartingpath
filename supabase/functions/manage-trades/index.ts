@@ -130,9 +130,36 @@ Deno.serve(async (req) => {
       const entryPrice = Number(trade.entry_price);
       const stopLoss = Number(trade.stop_loss);
       const takeProfit = Number(trade.take_profit);
+
+      // ── PRICE SANITY GUARD ──────────────────────────────────────────────
+      // A price wildly away from the trade's own entry means a cross-instrument
+      // lookup, a unit/scale mismatch or a stale bar from another timeframe.
+      // Never close a trade on such a price — log and skip.
+      const MAX_PRICE_DEVIATION = 0.5; // 50%
+      if (
+        !Number.isFinite(currentPrice) ||
+        currentPrice <= 0 ||
+        (entryPrice > 0 && Math.abs(currentPrice - entryPrice) / entryPrice > MAX_PRICE_DEVIATION)
+      ) {
+        console.error(
+          `[manage-trades] REJECTED price for ${trade.symbol}: price=${currentPrice} entry=${entryPrice} ` +
+            `(deviation > ${MAX_PRICE_DEVIATION * 100}%). Trade ${trade.id} left open, monitoring paused.`
+        );
+        if (!trade.monitoring_paused) {
+          await supabase
+            .from("paper_trades")
+            .update({ monitoring_paused: true })
+            .eq("id", trade.id);
+        }
+        continue;
+      }
+
       const isLong = trade.trade_type === "long" || trade.trade_type === "buy";
       const positionPct = Number(trade.position_size_pct || 3);
-      const rUnit = entryPrice * (positionPct / 100);
+      // R is defined by the ORIGINAL stop distance, never by position sizing.
+      const initialStop = Number(trade.initial_stop_loss ?? trade.stop_loss);
+      const riskDistance = Math.abs(entryPrice - initialStop);
+      const rUnit = riskDistance > 0 ? riskDistance : entryPrice * (positionPct / 100);
       const quantity = Number(trade.quantity);
       const createdAt = new Date(trade.created_at);
       const holdMins = Math.round((Date.now() - createdAt.getTime()) / 60000);
@@ -168,22 +195,12 @@ Deno.serve(async (req) => {
         : currentPrice <= takeProfit;
 
       if (stopHit) {
-        // ── Gap-aware exit: use currentPrice if it's worse than stopLoss ──
-        // ── Slippage clamp (max -1.5R): protects paper P&L from data
-        //    artefacts and extreme gaps that would otherwise produce
-        //    impossible outcomes like -50R or -180R on a single trade.
-        const rawFillPrice = isLong
-          ? Math.min(currentPrice, stopLoss) // for longs, lower is worse
-          : Math.max(currentPrice, stopLoss); // for shorts, higher is worse
-        const slDistance = Math.abs(entryPrice - stopLoss);
-        const maxAdverse = 0.5 * slDistance; // cap fill at 0.5R beyond SL → total loss ≤ 1.5R
-        const clampedRawFill = isLong
-          ? Math.max(rawFillPrice, stopLoss - maxAdverse)
-          : Math.min(rawFillPrice, stopLoss + maxAdverse);
-        const fillPrice = applyAdverseSlippage(clampedRawFill, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
-
+        // ── Level-triggered exit: the fill IS the stop level (plus modelled
+        //    slippage). Never a free-floating market price — that is what
+        //    produced -187R rows. A stop exit is -1R by construction.
+        const fillPrice = applyAdverseSlippage(stopLoss, !isLong, totalSlippageBps);
         const slMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
-        const exitPnlR = rUnit > 0 ? slMove / rUnit : 0;
+        const exitPnlR = Math.max(-1.05, rUnit > 0 ? slMove / rUnit : -1);
         const exitPnlDollars = isForex
           ? calcForexPnl(trade.symbol, slMove, forexLotSize)
           : slMove * quantity;
@@ -214,18 +231,14 @@ Deno.serve(async (req) => {
 
         closedCount++;
         console.log(
-          `[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${stopLoss} gap=${(rawFillPrice !== stopLoss)} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
+          `[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${stopLoss} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
         );
         continue;
       }
 
       if (tpHit) {
-        // ── Gap-aware exit: use currentPrice (may be better than TP), then apply adverse slippage ──
-        const rawFillPrice = isLong
-          ? Math.max(currentPrice, takeProfit) // for longs, higher is better but we still apply slippage
-          : Math.min(currentPrice, takeProfit);
-        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
-
+        // ── Level-triggered exit: the fill IS the target level (plus slippage) ──
+        const fillPrice = applyAdverseSlippage(takeProfit, !isLong, totalSlippageBps);
         const tpMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? tpMove / rUnit : 0;
         const exitPnlDollars = isForex
@@ -325,7 +338,10 @@ Deno.serve(async (req) => {
             const isBuySide = !isLong; // closing a long = sell, closing a short = buy
             const fillPrice = applyAdverseSlippage(currentPrice, isBuySide, totalSlippageBps);
             const sessionMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
-            const sessionPnlR = rUnit > 0 ? Math.round((sessionMove / rUnit) * 100) / 100 : 0;
+            // Cannot be worse than -1R: the stop would have executed first.
+            const sessionPnlR = rUnit > 0
+              ? Math.max(-1, Math.round((sessionMove / rUnit) * 100) / 100)
+              : 0;
 
             const windowPnl = isForex
               ? calcForexPnl(trade.symbol, sessionMove, forexLotSize)

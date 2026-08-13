@@ -6222,7 +6222,11 @@
     "readinessDisciplineDesc": "Tracks how often you override the AI's recommendations in recent trades.",
     "readinessDisciplineActionBad": "Stay within plan on {{count}} more consecutive trades to improve this score.",
     "readinessDisciplineActionGood": "Perfect discipline — you're following your plan consistently.",
-    "patternAvg": "Avg {{value}}R"
+    "patternAvg": "Avg {{value}}R",
+    "insufficientSample": "insufficient sample (min {{min}})",
+    "insufficientSampleCount": "{{count}} trades — insufficient sample",
+    "timeOfDayInsufficient": "No hour has {{min}}+ trades yet — not enough data to judge time of day.",
+    "suspectExcluded": "{{count}} closed trades were excluded because their recorded exit price failed the data-integrity check. No figure on this page uses them."
   },
   "planBuilder": {
     "planName": "Plan name",
