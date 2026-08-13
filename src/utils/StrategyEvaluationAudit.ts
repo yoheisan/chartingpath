@@ -1,3 +1,4 @@
+import { OUTCOME_STATS } from '@/config/outcomeStats';
 /**
  * Strategy Evaluation Audit Module
  * 
@@ -87,7 +88,8 @@ export function computeNetExpectancy(
   
   // Break-even win rate with costs:
   // WR * avgWin - (1-WR) * avgLoss = totalCostPerTrade * 2
-  const avgRR = stats.payoffRatio > 0 ? stats.payoffRatio : 2;
+  // No 2.0 assumption: fall back to the empirically measured mean R:R.
+  const avgRR = stats.payoffRatio > 0 ? stats.payoffRatio : OUTCOME_STATS.aggregateAvgRR;
   const breakEvenWinRate = (1 + totalCostPerTradeR * 2) / (1 + avgRR);
   
   return {

@@ -746,20 +746,20 @@ export default function LivePatternsPage() {
           break;
         }
         case 'expectancy': {
-          const expA = a.historicalPerformance?.winRate != null
-            ? calculateProjectedExpectancy(a.historicalPerformance.winRate, DEFAULT_RR)
-            : -999;
-          const expB = b.historicalPerformance?.winRate != null
-            ? calculateProjectedExpectancy(b.historicalPerformance.winRate, DEFAULT_RR)
-            : -999;
-          cmp = expB - expA;
+          // Measured expectancy only (R = P&L / entry-to-stop risk). No projection
+          // from an assumed R:R, and prior-derived values never rank.
+          const expOf = (s: LiveSetup) =>
+            s.historicalPerformance?.expectancyR != null && !s.historicalPerformance.isPrior
+              ? s.historicalPerformance.expectancyR
+              : -999;
+          cmp = expOf(b) - expOf(a);
           break;
         }
         case 'rot': {
           const getROT = (s: LiveSetup) => {
             const perf = s.historicalPerformance;
-            if (perf?.avgRMultiple && perf?.avgDurationBars && perf.avgDurationBars > 0) {
-              return perf.avgRMultiple / perf.avgDurationBars;
+            if (perf?.expectancyR != null && !perf.isPrior && perf?.avgDurationBars && perf.avgDurationBars > 0) {
+              return perf.expectancyR / perf.avgDurationBars;
             }
             return -999;
           };
@@ -1518,25 +1518,9 @@ export default function LivePatternsPage() {
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('expectancy')}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1 cursor-help text-xs">
-                            {t('screener.expectancy')}
-                            <Info className="h-3 w-3 opacity-50" />
-                            <SortIcon columnKey="expectancy" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="end" className="max-w-[360px] whitespace-normal break-words text-left">
-                          <p className="text-xs">{t('screener.expectancyTooltip')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
+                  {/* Expectancy column suppressed: the previous value was derived from a
+                      fixed 2.0 R:R assumption, not from measured risk_reward_ratio.
+                      See /methodology and /outcomes for verified expectancy. */}
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('rot')}
@@ -1682,30 +1666,13 @@ export default function LivePatternsPage() {
                                 <span className="text-muted-foreground text-xs">—</span>
                               )}
                             </TableCell>
-                            {/* Projected Expectancy based on default R:R */}
-                            <TableCell className="text-right">
-                              {setup.historicalPerformance?.winRate != null ? (() => {
-                                const expectancy = calculateProjectedExpectancy(
-                                  setup.historicalPerformance.winRate, 
-                                  DEFAULT_RR
-                                );
-                                return (
-                                  <span className={`font-mono text-xs font-medium ${
-                                    expectancy >= 0 ? 'text-green-500' : 'text-red-500'
-                                  }`}>
-                                    {expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R
-                                  </span>
-                                );
-                              })() : (
-                                <span className="text-muted-foreground text-xs">—</span>
-                              )}
-                            </TableCell>
+                            {/* Expectancy cell suppressed — see header comment. */}
                             {/* ROT - Return on Time */}
                             <TableCell className="text-right">
                               {(() => {
                                 const perf = setup.historicalPerformance;
-                                if (perf && perf.avgRMultiple && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                                  const rot = perf.avgRMultiple / perf.avgDurationBars;
+                                if (perf && perf.expectancyR != null && !perf.isPrior && perf.avgDurationBars && perf.avgDurationBars > 0) {
+                                  const rot = perf.expectancyR / perf.avgDurationBars;
                                   const isHighEfficiency = rot >= 0.01;
                                   return (
                                     <span className={cn(

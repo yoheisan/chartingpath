@@ -71,6 +71,7 @@ export const EdgeRankingsCard = () => {
           wins: number;
           losses: number;
           sum_rr: number;
+          rr_count: number;
           sum_bars: number;
         }> = {};
 
@@ -81,23 +82,27 @@ export const EdgeRankingsCard = () => {
               pattern_name: row.pattern_name,
               pattern_id: row.pattern_id,
               timeframe: row.timeframe,
-              total: 0, wins: 0, losses: 0, sum_rr: 0, sum_bars: 0,
+              total: 0, wins: 0, losses: 0, sum_rr: 0, rr_count: 0, sum_bars: 0,
             };
           }
           const g = groups[key];
           g.total += 1;
           if (row.outcome === 'hit_tp') g.wins += 1;
           else g.losses += 1;
-          g.sum_rr += (row.risk_reward_ratio ?? 2);
+          // Never fabricate an R:R — rows without one are excluded from the mean.
+          if (row.risk_reward_ratio != null && Number.isFinite(Number(row.risk_reward_ratio))) {
+            g.sum_rr += Number(row.risk_reward_ratio);
+            g.rr_count += 1;
+          }
           g.sum_bars += (row.bars_to_outcome ?? 0);
         }
 
         const ranked: EdgeRanking[] = Object.values(groups)
-          .filter(g => g.total >= 50)
+          .filter(g => g.total >= 50 && g.rr_count > 0)
           .map(g => {
             const win_rate = g.wins / g.total;
             const loss_rate = g.losses / g.total;
-            const avg_rr = g.sum_rr / g.total;
+            const avg_rr = g.sum_rr / g.rr_count;
             const avg_bars = g.sum_bars / g.total;
             const expectancy_r = win_rate * avg_rr - loss_rate;
             const bpy = BARS_PER_YEAR[g.timeframe] ?? 252;
@@ -116,9 +121,10 @@ export const EdgeRankingsCard = () => {
               avg_bars: Math.round(avg_bars * 10) / 10,
             };
           })
-          .filter(r => r.expectancy_r > 0)
+          // Losing cells are information: show every cell that meets the sample floor,
+          // negatives included, in neutral (not alarmed) styling.
           .sort((a, b) => b.est_annualized_pct - a.est_annualized_pct)
-          .slice(0, 8);
+          .slice(0, 12);
 
         setRankings(ranked);
       } catch (e) {
@@ -184,12 +190,14 @@ export const EdgeRankingsCard = () => {
                         </td>
                         <td className="py-2 text-right text-muted-foreground">{r.win_rate_pct}%</td>
                         <td className="py-2 text-right">
-                          <span className="text-green-500 font-mono">{r.expectancy_r.toFixed(3)}R</span>
+                          <span className={`font-mono ${r.expectancy_r > 0 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                            {r.expectancy_r > 0 ? '+' : ''}{r.expectancy_r.toFixed(3)}R
+                          </span>
                         </td>
                         <td className="py-2 text-right text-muted-foreground">{r.trades_per_year.toFixed(0)}</td>
                         <td className="py-2 text-right">
                           <span className={`font-bold ${r.est_annualized_pct >= 20 ? 'text-green-500' : r.est_annualized_pct >= 5 ? 'text-primary' : 'text-muted-foreground'}`}>
-                            +{r.est_annualized_pct.toFixed(1)}%
+                            {r.est_annualized_pct > 0 ? '+' : ''}{r.est_annualized_pct.toFixed(1)}%
                           </span>
                         </td>
                         <td className="py-2 text-right">

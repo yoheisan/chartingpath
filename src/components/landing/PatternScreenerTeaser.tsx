@@ -62,7 +62,11 @@ function rowToLiveSetup(row: any): LiveSetup {
     trendIndicators: row.trend_indicators as any,
     historicalPerformance: histPerf ? {
       winRate: histPerf.winRate ?? histPerf.win_rate ?? 0,
-      avgRMultiple: histPerf.avgRMultiple ?? histPerf.avg_r_multiple ?? 0,
+      // Expectancy in R (1R = entry-to-stop risk). Null when unmeasured — never
+      // substituted with a different metric such as avg R:R.
+      expectancyR: histPerf.expectancyR ?? histPerf.expectancy_r ?? null,
+      avgRr: histPerf.avgRr ?? histPerf.avg_rr ?? null,
+      isPrior: histPerf.isPrior ?? false,
       sampleSize: histPerf.sampleSize ?? histPerf.sample_size ?? 0,
       profitFactor: histPerf.profitFactor ?? histPerf.profit_factor,
       avgDurationBars: histPerf.avgDurationBars ?? histPerf.avg_duration_bars,
@@ -214,7 +218,9 @@ export function PatternScreenerTeaser() {
                 ...p,
                 historicalPerformance: {
                   winRate: stat.win_rate,
-                  avgRMultiple: stat.expectancy_r ?? stat.avg_rr ?? 0,
+                  // Never fall back across metrics: a missing expectancy stays null.
+                  expectancyR: stat.expectancy_r ?? null,
+                  avgRr: stat.avg_rr ?? null,
                   sampleSize: stat.total_trades,
                 },
               };

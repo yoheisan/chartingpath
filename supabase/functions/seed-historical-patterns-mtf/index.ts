@@ -1846,7 +1846,7 @@ async function runHistoricalBacktest(
 
   // Cache repeatability stats ONCE per pattern+symbol+timeframe (not per bar)
   let cachedRepeatabilityProof: { sampleSize: number; winRate: number; expectancyR: number } | undefined;
-  let cachedHistoricalPerformance: { winRate: number; avgRMultiple: number; sampleSize: number } | undefined;
+  let cachedHistoricalPerformance: { winRate: number; expectancyR: number; sampleSize: number } | undefined;
 
   if (supabase) {
     try {
@@ -1863,12 +1863,16 @@ async function runHistoricalBacktest(
       const totalTrades = statsRows.length;
       const wins = statsRows.filter((r: any) => r.outcome === 'hit_tp').length;
       const winRatePct = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
-      const avgRR = totalTrades > 0 ? statsRows.reduce((s: number, r: any) => s + (r.risk_reward_ratio ?? 1), 0) / totalTrades : 1;
-      const expectancyR = (winRatePct / 100) * avgRR - ((100 - winRatePct) / 100);
+      // R:R is never defaulted. Rows without one are excluded from the mean.
+      const rrRows = statsRows.filter((r: any) => r.risk_reward_ratio != null && Number.isFinite(Number(r.risk_reward_ratio)));
+      const avgRR = rrRows.length > 0
+        ? rrRows.reduce((s: number, r: any) => s + Number(r.risk_reward_ratio), 0) / rrRows.length
+        : null;
+      const expectancyR = avgRR != null ? (winRatePct / 100) * avgRR - ((100 - winRatePct) / 100) : null;
 
-      if (totalTrades >= 1) {
+      if (totalTrades >= 1 && expectancyR != null) {
         cachedRepeatabilityProof = { sampleSize: totalTrades, winRate: winRatePct, expectancyR };
-        cachedHistoricalPerformance = { winRate: winRatePct, avgRMultiple: expectancyR, sampleSize: totalTrades };
+        cachedHistoricalPerformance = { winRate: winRatePct, expectancyR, sampleSize: totalTrades };
       }
     } catch (e) {
       console.warn('[stats] Query failed, continuing without repeatability proof:', e);

@@ -530,7 +530,8 @@ async function executeExplainSignalScore(supabase: any, args: any) {
     analyst: {
       score: Math.round(analystRaw),
       winRate: s.win_rate ?? ad.winRate ?? undefined,
-      avgR: ad.avgR ?? ad.expectancy ?? undefined,
+      // No cross-metric fallback: avg R and expectancy are different quantities.
+      avgR: ad.avgR ?? undefined,
       trades: s.sample_size ?? ad.sampleSize ?? undefined,
     },
     risk: {

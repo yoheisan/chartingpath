@@ -18,7 +18,14 @@ import { cn } from '@/lib/utils';
 
 export interface EdgeMetrics {
   winRate: number | null; // 0-100 percentage
-  avgRMultiple: number | null; // Expectancy in R terms
+  /**
+   * Measured expectancy in R-multiples, where 1R is the risk taken
+   * (entry-to-stop distance): expectancy_r = win_rate * avg_rr - loss_rate.
+   * Null means "no measurement" — never substitute another metric.
+   */
+  expectancyR: number | null;
+  /** True when the value comes from a Bayesian prior, not a measurement. */
+  isPrior?: boolean;
   profitFactor: number | null; // Gross profit / gross loss
   sampleSize: number | null; // Number of trades
   reliabilityScore?: number; // 0-100
@@ -125,7 +132,7 @@ export function EdgeMetricsBadge({
   }
 
   // No metrics available
-  if (!metrics || (metrics.winRate === null && metrics.avgRMultiple === null)) {
+  if (!metrics || (metrics.winRate === null && metrics.expectancyR === null)) {
     return (
       <span className="text-xs text-muted-foreground">—</span>
     );
@@ -140,9 +147,9 @@ export function EdgeMetricsBadge({
             {metrics.winRate.toFixed(0)}%
           </span>
         )}
-        {metrics.avgRMultiple !== null && (
-          <span className={cn('font-mono', getMetricColor(metrics.avgRMultiple, 'expectancy'))}>
-            {metrics.avgRMultiple >= 0 ? '+' : ''}{metrics.avgRMultiple.toFixed(2)}R
+        {metrics.expectancyR !== null && (
+          <span className={cn('font-mono', cn(getMetricColor(metrics.expectancyR, 'expectancy'), metrics.isPrior && 'italic opacity-60'))}>
+            {metrics.expectancyR >= 0 ? '+' : ''}{metrics.expectancyR.toFixed(2)}R{metrics.isPrior ? ' (est.)' : ''}
           </span>
         )}
       </div>
@@ -178,12 +185,12 @@ export function EdgeMetricsBadge({
           </span>
         </div>
       )}
-      {metrics.avgRMultiple !== null && (
+      {metrics.expectancyR !== null && (
         <div className="flex items-center gap-1">
           <Target className="h-3 w-3 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Exp</span>
-          <span className={cn('font-mono text-xs font-medium', getMetricColor(metrics.avgRMultiple, 'expectancy'))}>
-            {metrics.avgRMultiple >= 0 ? '+' : ''}{metrics.avgRMultiple.toFixed(2)}R
+          <span className={cn('font-mono text-xs font-medium', cn(getMetricColor(metrics.expectancyR, 'expectancy'), metrics.isPrior && 'italic opacity-60'))}>
+            {metrics.expectancyR >= 0 ? '+' : ''}{metrics.expectancyR.toFixed(2)}R{metrics.isPrior ? ' (est.)' : ''}
           </span>
         </div>
       )}
@@ -229,11 +236,11 @@ function EdgeMetricsTooltipContent({ metrics }: { metrics: EdgeMetrics }) {
             </span>
           </div>
         )}
-        {metrics.avgRMultiple !== null && (
+        {metrics.expectancyR !== null && (
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted-foreground">Expectancy:</span>
-            <span className={cn('font-mono font-medium', getMetricColor(metrics.avgRMultiple, 'expectancy'))}>
-              {metrics.avgRMultiple >= 0 ? '+' : ''}{metrics.avgRMultiple.toFixed(2)}R
+            <span className={cn('font-mono font-medium', cn(getMetricColor(metrics.expectancyR, 'expectancy'), metrics.isPrior && 'italic opacity-60'))}>
+              {metrics.expectancyR >= 0 ? '+' : ''}{metrics.expectancyR.toFixed(2)}R{metrics.isPrior ? ' (est.)' : ''}
             </span>
           </div>
         )}
