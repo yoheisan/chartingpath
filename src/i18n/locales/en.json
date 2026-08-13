@@ -3498,7 +3498,7 @@
     "validateGet1": "Go / No-Go verdict",
     "validateGet2": "Win rate on this pair",
     "validateGet3": "Trade plan with entry / SL / TP",
-    "validateGet4": "Grade confirmation",
+    "validateGet4": "Grade breakdown (structural score, not a quality ranking)",
     "automateGet1": "Full equity curve & drawdown",
     "automateGet2": "Setup optimizer with exit models",
     "automateGet3": "Repeatable winners / losers analysis",
