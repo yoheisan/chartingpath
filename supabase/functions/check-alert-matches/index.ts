@@ -393,10 +393,13 @@ serve(async (req) => {
               pattern_data: {
                 pattern: alert.pattern,
                 pattern_name: matchedDetection.pattern_name,
-                confidence: matchedDetection.quality_score === 'A' ? 0.95 : 
-                           matchedDetection.quality_score === 'B' ? 0.85 :
-                           matchedDetection.quality_score === 'C' ? 0.7 : 0.6,
-                description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) - Grade ${matchedDetection.quality_score || 'C'}`,
+                // Confidence is the MEASURED win rate for this cell, never the
+                // quality grade. Grade ordering is not a validated quality
+                // signal (see PatternQualityScorer.ts / grade_ordering_valid).
+                confidence: matchedDetection.win_rate_pct != null
+                  ? Number(matchedDetection.win_rate_pct) / 100
+                  : null,
+                description: `${matchedDetection.pattern_name} detected on ${alert.symbol} (${alert.timeframe}) — n=${sampleN}, ${netR}R net`,
                 detection_id: matchedDetection.id,
                 edge: edgeStats,
                 concentration,
@@ -425,9 +428,10 @@ serve(async (req) => {
           }
 
           // 7. Send notification via send-pattern-alert
-          const confidence = matchedDetection.quality_score === 'A' ? 0.95 : 
-                             matchedDetection.quality_score === 'B' ? 0.85 :
-                             matchedDetection.quality_score === 'C' ? 0.7 : 0.6;
+          // Measured win rate, not the grade letter.
+          const confidence = matchedDetection.win_rate_pct != null
+            ? Number(matchedDetection.win_rate_pct) / 100
+            : null;
 
           const { data: notifyData, error: notifyError } = await supabase.functions.invoke('send-pattern-alert', {
             body: {
@@ -449,7 +453,7 @@ serve(async (req) => {
                   ? `WATCH-ONLY — ${matchedDetection.pattern_name} on ${alert.symbol}. No measured edge after your broker's costs (${noEdgeReason?.replace(/_/g, ' ')}; n=${sampleN}, ${netR}R net). This is a detection, not a signal.`
                   : concentration?.warning
                     ? `CONCENTRATION WARNING — ${matchedDetection.pattern_name} on ${alert.symbol}. You already hold ${concentration.existing_positions_in_cluster} position(s) in this correlated cluster (${concentration.existing_pct_in_cluster}% of account). Adding this takes correlated exposure to ${concentration.correlated_after_add}%, above your ${concentration.max_correlated_exposure_pct}% cap.`
-                    : `${matchedDetection.pattern_name} detected - Grade ${matchedDetection.quality_score || 'C'} quality signal`,
+                    : `${matchedDetection.pattern_name} detected on ${alert.symbol} — measured edge ${netR}R net over n=${sampleN}.`,
                 edge: edgeStats,
                 concentration,
               },
