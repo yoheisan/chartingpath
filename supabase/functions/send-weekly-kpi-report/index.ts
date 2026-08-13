@@ -19,6 +19,9 @@ interface KPIMetrics {
   criticalIssues: number;
   healthScore: number;
   revenueEstimate: number;
+  /** Latest state of every critical data-health check (see run-data-health-checks). */
+  dataHealthFailures: Array<{ check_name: string; observed_value: string | null; run_at: string }>;
+  dataHealthLastRun: string | null;
 }
 
 async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promise<KPIMetrics> {
@@ -88,6 +91,24 @@ async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promi
   // Estimate revenue (paid users * $20 avg)
   const revenueEstimate = paidStarts * 20;
 
+  // Data health digest: latest result per critical check, failures only.
+  const { data: healthRows } = await supabase
+    .from("data_health_results")
+    .select("check_name, passed, observed_value, run_at, severity")
+    .eq("severity", "critical")
+    .gte("run_at", weekAgo.toISOString())
+    .order("run_at", { ascending: false })
+    .limit(500);
+
+  const latestByCheck = new Map<string, { check_name: string; passed: boolean; observed_value: string | null; run_at: string }>();
+  for (const row of (healthRows ?? []) as Array<{ check_name: string; passed: boolean; observed_value: string | null; run_at: string }>) {
+    if (!latestByCheck.has(row.check_name)) latestByCheck.set(row.check_name, row);
+  }
+  const dataHealthFailures = [...latestByCheck.values()]
+    .filter((r) => !r.passed)
+    .map(({ check_name, observed_value, run_at }) => ({ check_name, observed_value, run_at }));
+  const dataHealthLastRun = (healthRows?.[0] as { run_at?: string } | undefined)?.run_at ?? null;
+
   return {
     totalUsers: totalUsers || 0,
     newUsers7d: newUsers7d || 0,
@@ -99,6 +120,8 @@ async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promi
     criticalIssues: signupConversionRate < 2 ? 1 : 0,
     healthScore,
     revenueEstimate,
+    dataHealthFailures,
+    dataHealthLastRun,
   };
 }
 
