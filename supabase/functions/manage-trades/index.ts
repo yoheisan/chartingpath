@@ -338,7 +338,10 @@ Deno.serve(async (req) => {
             const isBuySide = !isLong; // closing a long = sell, closing a short = buy
             const fillPrice = applyAdverseSlippage(currentPrice, isBuySide, totalSlippageBps);
             const sessionMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
-            const sessionPnlR = rUnit > 0 ? Math.round((sessionMove / rUnit) * 100) / 100 : 0;
+            // Cannot be worse than -1R: the stop would have executed first.
+            const sessionPnlR = rUnit > 0
+              ? Math.max(-1, Math.round((sessionMove / rUnit) * 100) / 100)
+              : 0;
 
             const windowPnl = isForex
               ? calcForexPnl(trade.symbol, sessionMove, forexLotSize)
