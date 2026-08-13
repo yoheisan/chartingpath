@@ -19,7 +19,11 @@ on:
 jobs:
   seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # timeout-minutes must always exceed the curl --max-time below plus roughly
+    # 5 minutes of step and runner overhead, so the job cap never kills the
+    # step's own graceful timeout handling.
+    timeout-minutes: 15
+
     # Overlapping runs queue instead of colliding with each other.
     concurrency:
       group: auto-seed-1h
