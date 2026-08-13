@@ -34,6 +34,7 @@ import { PushNotificationPrompt } from "@/components/alerts/PushNotificationProm
 import { AlertHistoryLog } from "@/components/alerts/AlertHistoryLog";
 import { PlanAlertCard } from "@/components/alerts/PlanAlertCard";
 import { useMasterPlan } from "@/hooks/useMasterPlan";
+import { useSupportedPatterns } from "@/hooks/useSupportedPatterns";
 import { PLANS_CONFIG, type PlanTier } from "@/config/plans";
 import { useTranslation } from "react-i18next";
 
@@ -113,7 +114,12 @@ const MemberAlerts = () => {
     if (user) await fetchAlerts(user.id);
   };
 
-  const patternOptions = [
+  const { isSupported: isPatternSupported } = useSupportedPatterns();
+
+  // Only patterns the engine actually detects can be offered. Unsupported enum
+  // values (candlesticks + indicator crosses) would never fire — see the comment
+  // on public.supported_patterns for why they are intentionally not built yet.
+  const allPatternOptions = [
     { value: 'donchian-breakout-long', label: t('patternNames.Donchian Breakout (Long)', 'Donchian Breakout (Long)') },
     { value: 'donchian-breakout-short', label: t('patternNames.Donchian Breakout (Short)', 'Donchian Breakout (Short)') },
     { value: 'double-top', label: t('patternNames.Double Top', 'Double Top (Short)') },
@@ -135,6 +141,7 @@ const MemberAlerts = () => {
     { value: 'morning_star', label: t('patternNames.Morning Star', 'Morning Star') },
     { value: 'evening_star', label: t('patternNames.Evening Star', 'Evening Star') },
   ];
+  const patternOptions = allPatternOptions.filter(o => isPatternSupported(o.value));
 
   const timeframeOptions = wedgeConfig.wedgeEnabled ? [
     { value: '1h', label: t('alerts.tf1hRec') },
