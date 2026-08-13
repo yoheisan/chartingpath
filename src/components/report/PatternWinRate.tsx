@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { translatePatternName } from '@/utils/translatePatternName';
-import { type PaperTrade, calcAvgR } from '@/hooks/useTradeReport';
+import { type PaperTrade, calcAvgR, REPORT_MIN_SAMPLE } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
 
@@ -34,8 +34,10 @@ export function PatternWinRate({ trades }: Props) {
     return stats.sort((a, b) => b.winRate - a.winRate);
   }, [trades]);
 
-  const best = patterns.find(p => p.total >= 3);
-  const worst = [...patterns].filter(p => p.total >= 3).sort((a, b) => a.winRate - b.winRate)[0];
+  const best = patterns.find(p => p.total >= REPORT_MIN_SAMPLE);
+  const worst = [...patterns]
+    .filter(p => p.total >= REPORT_MIN_SAMPLE)
+    .sort((a, b) => a.winRate - b.winRate)[0];
 
   return (
     <div className="bg-card border border-border/40 rounded-xl p-6">
@@ -43,10 +45,10 @@ export function PatternWinRate({ trades }: Props) {
 
       <div className="space-y-2.5">
         {patterns.map(p => {
-          if (p.total < 3) {
+          if (p.total < REPORT_MIN_SAMPLE) {
             return (
               <div key={p.name} className="text-xs text-muted-foreground/60">
-                {translatePatternName(p.name)} — {t('report.tradesUnit', { count: p.total })} — {t('report.notEnoughData')}
+                {translatePatternName(p.name)} — {t('report.tradesUnit', { count: p.total })} — {t('report.insufficientSample', 'insufficient sample (min {{min}})', { min: REPORT_MIN_SAMPLE })}
               </div>
             );
           }
