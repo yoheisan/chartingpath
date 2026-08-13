@@ -226,9 +226,6 @@ function generateEmailHTML(metrics: KPIMetrics, recipientEmail: string): string 
     </div>
     ` : ''}
 
-    <!-- CTA -->
-    <div style="text-align: center; margin-bottom: 32px;">
-
     <!-- Data Health -->
     <div style="background: #0f172a; border: 1px solid ${metrics.dataHealthFailures.length > 0 ? '#991b1b' : '#334155'}; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
       <p style="color: #e2e8f0; margin: 0 0 12px 0; font-size: 14px; font-weight: bold;">Data Health (critical checks)</p>
@@ -252,6 +249,8 @@ function generateEmailHTML(metrics: KPIMetrics, recipientEmail: string): string 
       `}
     </div>
 
+    <!-- CTA -->
+    <div style="text-align: center; margin-bottom: 32px;">
       <a href="https://chartingpath.com/admin/journey-analytics" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">View Full Analytics Dashboard</a>
     </div>
 
