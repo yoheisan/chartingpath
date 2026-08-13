@@ -5,9 +5,12 @@ name: Auto Seed 1h Patterns
 # 4h seeding workflow in this repo — the discrepancy is noted here rather than
 # inventing one. If a 4h cadence is wanted, it needs to be added deliberately.
 #
-# NOTE: cron '*/12 * * * *' is 120 runs/day of GitHub Actions minutes. Left
-# unchanged deliberately — ingestion cadence is the owner's call — but it may be
-# worth revisiting for cost.
+# NOTE: cron '*/12 * * * *' is 120 runs/day of GitHub Actions minutes. If a run
+# legitimately takes 9-15 minutes (curl max-time + overhead), runs will queue
+# more or less continuously. Either widen the interval or shrink the batch size
+# to reduce queueing; this is the owner's call because it governs ingestion cadence.
+# Left unchanged deliberately — revisit for cost/queueing if needed.
+
 on:
   schedule:
     - cron: '*/12 * * * *'
@@ -16,7 +19,11 @@ on:
 jobs:
   seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # timeout-minutes must always exceed the curl --max-time below plus roughly
+    # 5 minutes of step and runner overhead, so the job cap never kills the
+    # step's own graceful timeout handling.
+    timeout-minutes: 15
+
     # Overlapping runs queue instead of colliding with each other.
     concurrency:
       group: auto-seed-1h
