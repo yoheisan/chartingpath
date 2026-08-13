@@ -3476,18 +3476,9 @@
     "selectAll": "Select All",
     "clearAll": "Clear All ({{count}})",
     "qualityFilter": "Quality Filter",
-    "qualityTooltip": "Filter setups by quality grade. Conservative traders may want only A-B setups, while aggressive traders can include all grades to maximize sample size.",
-    "riskAppetite": "Set your risk appetite for pattern quality",
-    "conservativePreset": "Conservative",
-    "conservativeDesc": "Only high-quality setups (A-B grades)",
-    "moderatePreset": "Moderate",
-    "moderateDesc": "Good and fair setups (A-C grades)",
-    "aggressivePreset": "Aggressive",
-    "aggressiveDesc": "All setups including weak ones",
-    "customizeGrades": "Or customize grade selection:",
+    "qualityTooltip": "Filter occurrences by the structural grade assigned at detection. The letters are not a validated quality ranking — pick using the measured expectancy shown next to each grade.",
     "grade": "Grade {{grade}}",
     "selectAtLeastOneGrade": "Select at least one grade",
-    "gradesSelected": "{{count}} grade(s) selected",
     "runEstimate": "Run Estimate",
     "credits": "credits",
     "lookback": "Lookback",
@@ -3536,7 +3527,16 @@
     "foundZeroPass": "found, 0 pass",
     "backtesting": "backtesting",
     "firstAnalysisTitle": "First time here?",
-    "firstAnalysisDesc": "Pick a Quick Start below to run your first backtest in one click — no setup needed."
+    "firstAnalysisDesc": "Pick a Quick Start below to run your first backtest in one click — no setup needed.",
+    "gradeNotARankingDesc": "Grade is a structural score, not a validated quality ranking. Pick by measured expectancy below, not by the letter.",
+    "loadingGradeStats": "Measuring outcomes by grade…",
+    "gradeOccurrences": "{{count}} occurrences",
+    "insufficientSample": "insufficient sample",
+    "gradeExpectancyNote": "Expectancy measured over resolved occurrences since 2024. Grades with fewer than 100 resolved occurrences show no figure — the sample cannot support one.",
+    "emptyNoOccurrencesAtAll": "No occurrences at all for these {{patterns}} pattern(s) on {{instruments}} at {{timeframe}}. The grade filter is not the cause — try another timeframe or instrument.",
+    "emptyGradeFilterCause": "The grade filter is what emptied this. No Grade {{selected}} occurrences for these {{patterns}} pattern(s) on {{instruments}} at {{timeframe}}.",
+    "emptyGradeAvailable": "Available here:",
+    "emptyGradeAddAll": "Add these grades"
   },
   "patternNames": {
     "Bull Flag": "Bull Flag",
@@ -6078,7 +6078,8 @@
     "labelC": "Fair",
     "labelD": "Weak",
     "labelF": "Poor",
-    "tooltip": "Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime."
+    "tooltip": "Based on trend alignment, R:R structure, volume, symmetry, historical win rate, and volatility regime.",
+    "notAQualityRanking": "Grade is a structural score, not a validated quality ranking — measured expectancy does not follow A > B > C > D. Judge a setup by its measured expectancy, not by the letter."
   },
   "authGate": {
     "thisFeature": "this feature",
