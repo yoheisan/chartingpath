@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { type PaperTrade } from '@/hooks/useTradeReport';
+import { type PaperTrade, REPORT_MIN_SAMPLE } from '@/hooks/useTradeReport';
 
 interface Props { trades: PaperTrade[] }
 
@@ -16,6 +16,8 @@ const LABEL_HOURS = [0, 3, 6, 9, 12, 15, 18, 21];
 
 function getHeatColor(bucket: HourBucket): string {
   if (bucket.trades === 0) return 'bg-muted/25';
+  // Below the minimum sample the win rate is noise — render it neutral.
+  if (bucket.trades < REPORT_MIN_SAMPLE) return 'bg-muted/50';
   if (bucket.winRate >= 70) return 'bg-emerald-600';
   if (bucket.winRate >= 50) return 'bg-emerald-400';
   if (bucket.winRate >= 30) return 'bg-amber-400';
@@ -51,7 +53,8 @@ export function TimeOfDayHeatmap({ trades }: Props) {
     return result.sort((a, b) => a.hour - b.hour);
   }, [trades]);
 
-  const activeBuckets = buckets.filter(b => b.trades > 0);
+  // Only buckets with a real sample may be called best/worst.
+  const activeBuckets = buckets.filter(b => b.trades >= REPORT_MIN_SAMPLE);
   const bestHour = activeBuckets.length > 0
     ? activeBuckets.reduce((a, b) => a.winRate > b.winRate ? a : b)
     : null;
@@ -61,7 +64,7 @@ export function TimeOfDayHeatmap({ trades }: Props) {
 
   // Find consecutive weak hours to suggest exclusion
   const excludeRange = useMemo(() => {
-    const weak = buckets.filter(b => b.trades >= 2 && b.winRate < 40);
+    const weak = buckets.filter(b => b.trades >= REPORT_MIN_SAMPLE && b.winRate < 40);
     if (weak.length < 2) return null;
     // Find longest consecutive run of weak hours
     let bestStart = weak[0].hour, bestLen = 1, curStart = weak[0].hour, curLen = 1;
@@ -105,7 +108,9 @@ export function TimeOfDayHeatmap({ trades }: Props) {
                   <p className="font-semibold text-foreground">{String(b.hour).padStart(2, '0')}:00</p>
                   {b.trades > 0 ? (
                     <p className="text-muted-foreground mt-0.5">
-                      {t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })}
+                      {b.trades >= REPORT_MIN_SAMPLE
+                        ? t('report.hourTooltip', { count: b.trades, avgR: `${b.avgR >= 0 ? '+' : ''}${b.avgR.toFixed(1)}`, winRate: b.winRate })
+                        : t('report.insufficientSampleCount', '{{count}} trades — insufficient sample', { count: b.trades })}
                     </p>
                   ) : (
                     <p className="text-muted-foreground mt-0.5">{t('report.noTrades')}</p>
@@ -144,6 +149,11 @@ export function TimeOfDayHeatmap({ trades }: Props) {
 
       {/* Summary */}
       <div className="flex flex-col gap-1.5 mt-5 text-xs text-muted-foreground">
+        {activeBuckets.length === 0 && (
+          <span>
+            {t('report.timeOfDayInsufficient', 'No hour has {{min}}+ trades yet — not enough data to judge time of day.', { min: REPORT_MIN_SAMPLE })}
+          </span>
+        )}
         {bestHour && (
           <span>
             {t('report.bestTradingHour')} <span className="text-foreground font-medium">{String(bestHour.hour).padStart(2, '0')}:00</span> — {t('report.hourWinRate', { rate: bestHour.winRate })}
