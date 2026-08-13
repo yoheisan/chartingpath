@@ -97,11 +97,26 @@ Deno.serve(async (req) => {
         .eq("check_name", f.check_name)
         .maybeSingle();
 
+      // "When did this last pass?" turns a bare failure into a time window
+      // to search for the cause — the FX outage was invisible for 12 days
+      // precisely because nobody could see when it stopped working.
+      const { data: lastPass } = await supabase
+        .from("data_health_results")
+        .select("run_at")
+        .eq("check_name", f.check_name)
+        .eq("passed", true)
+        .order("run_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       const html = `
         <h2>Data health check failed: ${f.check_name}</h2>
         <p><strong>Severity:</strong> critical</p>
         <p><strong>Observed:</strong> ${f.observed_value ?? "n/a"}</p>
         <p><strong>Expected:</strong> ${expected.data?.expected_result ?? "n/a"}</p>
+        <p><strong>Last passed:</strong> ${
+          lastPass?.run_at ? new Date(lastPass.run_at).toUTCString() : "never recorded as passing"
+        }</p>
         <p>${expected.data?.description ?? ""}</p>
         <pre style="background:#f4f4f5;padding:12px;border-radius:6px;font-size:12px">${
           JSON.stringify(f.detail ?? {}, null, 2)
