@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
           ? currentPrice - Number(trade.entry_price)
           : Number(trade.entry_price) - currentPrice;
         outcomeR = riskAmount > 0
-          ? Math.round((priceMove / riskAmount) * 100) / 100
+          ? Math.max(-1, Math.round((priceMove / riskAmount) * 100) / 100)
           : 0;
         pnl = calcPnl(isLong ? currentPrice - Number(trade.entry_price) : Number(trade.entry_price) - currentPrice);
         closeReason = `Timed out after 7 days at ${currentPrice}`;

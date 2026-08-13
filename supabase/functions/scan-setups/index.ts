@@ -181,6 +181,25 @@ Deno.serve(async (req) => {
 
         if (existing) continue;
 
+        // ── Re-entry cooldown: never re-open the same symbol within 4h of ANY
+        //    close. Without this, an instant (or corrupt) close lets the next
+        //    scan re-open the identical setup, producing duplicate rows.
+        const { data: recentClose } = await supabase
+          .from("paper_trades")
+          .select("id, closed_at")
+          .eq("user_id", userId)
+          .eq("symbol", det.instrument)
+          .eq("status", "closed")
+          .gte("closed_at", new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString())
+          .order("closed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (recentClose) {
+          console.log(`[scan-setups] Skipped ${det.instrument} — re-entry cooldown (closed at ${recentClose.closed_at})`);
+          continue;
+        }
+
         // ── Stop-hit cooldown check ──
         const { data: cooldownTrade } = await supabase
           .from("paper_trades")
