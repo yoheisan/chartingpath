@@ -21,6 +21,7 @@ import { trackEvent } from '@/lib/analytics';
 
 const ASSET_CLASSES = ['stocks', 'fx', 'crypto', 'etfs', 'indices', 'commodities'];
 const TIMEFRAMES = ['15m', '1h', '4h', '8h', '1d', '1wk'];
+const GEOMETRY_SOURCES = ['pivot', 'atr_fallback', 'unknown'] as const;
 
 const nf = (n: number, d = 2) => (Number.isFinite(n) ? n.toFixed(d) : '—');
 
@@ -30,8 +31,10 @@ export default function Outcomes() {
 
   const assetParam = searchParams.get('asset') ?? 'all';
   const tfParam = searchParams.get('timeframe') ?? 'all';
+  const geoParam = searchParams.get('geometry') ?? 'all';
   const asset = ASSET_CLASSES.includes(assetParam) ? assetParam : 'all';
   const timeframe = TIMEFRAMES.includes(tfParam) ? tfParam : 'all';
+  const geometry = (GEOMETRY_SOURCES as readonly string[]).includes(geoParam) ? geoParam : 'all';
 
   const setParam = (key: string, value: string) => {
     trackEvent('outcomes.filter_change', { key, value });
@@ -50,6 +53,7 @@ export default function Outcomes() {
   const { data, isLoading, isError, refetch } = useOutcomeLookup({
     assetType: asset === 'all' ? undefined : asset,
     timeframe: timeframe === 'all' ? undefined : timeframe,
+    geometrySource: geometry === 'all' ? undefined : (geometry as 'pivot' | 'atr_fallback' | 'unknown'),
   });
 
   const rows = useMemo(() => data ?? [], [data]);
@@ -214,7 +218,30 @@ export default function Outcomes() {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-full sm:w-72">
+            <label className="text-sm text-muted-foreground mb-1.5 block">
+              {t('outcomes.geometrySource', 'Exit geometry')}
+            </label>
+            <Select value={geometry} onValueChange={(v) => setParam('geometry', v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('outcomes.geometryAll', 'All occurrences')}</SelectItem>
+                <SelectItem value="pivot">{t('outcomes.geometryPivot', 'Pattern-derived targets only')}</SelectItem>
+                <SelectItem value="atr_fallback">{t('outcomes.geometryAtr', 'ATR 2:1 fallback only')}</SelectItem>
+                <SelectItem value="unknown">{t('outcomes.geometryUnknown', 'Provenance unknown')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        <p className="text-xs text-muted-foreground mb-6 max-w-3xl">
+          {t(
+            'outcomes.geometryDisclosure',
+            'Disclosure: roughly two thirds of recorded occurrences do not use pattern-derived targets. When the detector cannot resolve enough pivots, it falls back to a generic stop at 2x ATR and a target at 4x ATR — a 2:1 volatility rule, not the classical measured move. Those rows measure a volatility exit on a day the pattern was flagged. Use the filter above to separate them; rows we cannot classify retroactively are shown as "provenance unknown".'
+          )}
+        </p>
 
         {/* 4. Results */}
         {!isLoading && !isError && rows.length > 0 && (

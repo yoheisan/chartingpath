@@ -1176,6 +1176,7 @@ async function persistPatterns(supabase: any, detectedPatterns: any[], assetType
         trend_alignment: p.trendAlignment, trend_indicators: p.trendIndicators || {},
         validation_status: 'pending', validation_layers_passed: ['bulkowski_engine'],
         exchange: p._exchange || null,
+        geometry_source: p.geometrySource || 'atr_fallback',
         _key: key,
       });
     }
@@ -1870,6 +1871,9 @@ serve(async (req) => {
           bars: compressedBars, 
           visualSpec, 
           currentPrice: lastBar.close, 
+          // Live brackets are ATR-derived (stopLossMethod: 'atr', takeProfitMethod: 'ratio'),
+          // never pattern-pivot geometry. Record that honestly.
+          geometrySource: 'atr_fallback' as const,
           prevClose: prevBar?.close, 
           changePercent: changePercent != null ? +changePercent.toFixed(2) : null, 
           trendAlignment, 

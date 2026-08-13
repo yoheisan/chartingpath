@@ -15,11 +15,19 @@ export interface OutcomeLookupRow {
   avg_rr: number;
 }
 
+export type GeometrySource = 'pivot' | 'atr_fallback' | 'neckline_fallback' | 'unknown';
+
 export interface OutcomeLookupFilters {
   /** undefined = all asset classes */
   assetType?: string;
   /** undefined = all timeframes */
   timeframe?: string;
+  /**
+   * undefined = every occurrence, regardless of how its stop/target were derived.
+   * 'pivot' restricts to pattern-derived geometry; 'atr_fallback' to the generic
+   * 2:1 ATR rule that fires when the detector cannot resolve enough pivots.
+   */
+  geometrySource?: GeometrySource;
 }
 
 /**
@@ -40,9 +48,9 @@ export interface OutcomeLookupFilters {
  * pattern x timeframe x asset class x direction. Slicing per instrument
  * would manufacture winners by chance.
  */
-export function useOutcomeLookup({ assetType, timeframe }: OutcomeLookupFilters) {
+export function useOutcomeLookup({ assetType, timeframe, geometrySource }: OutcomeLookupFilters) {
   return useQuery<OutcomeLookupRow[]>({
-    queryKey: ['outcome-lookup', assetType ?? 'all', timeframe ?? 'all'],
+    queryKey: ['outcome-lookup', assetType ?? 'all', timeframe ?? 'all', geometrySource ?? 'all'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_pattern_outcome_cells', {
         p_min_trades: MIN_SAMPLE_SIZE,
@@ -52,6 +60,7 @@ export function useOutcomeLookup({ assetType, timeframe }: OutcomeLookupFilters)
         p_limit: 400,
         ...(assetType ? { p_asset_type: assetType } : {}),
         ...(timeframe ? { p_timeframe: timeframe } : {}),
+        ...(geometrySource ? { p_geometry_source: geometrySource } : {}),
       });
       if (error) throw error;
       return (data ?? []) as OutcomeLookupRow[];

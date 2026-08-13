@@ -1,4 +1,15 @@
 /**
+ * STATUS: UNUSED — NEVER RUN. outcome_rr3 / outcome_rr4 / outcome_rr5 are 100% NULL.
+ *
+ * DO NOT RUN THIS YET. Roughly two thirds of historical_pattern_occurrences use a
+ * generic 2:1 ATR exit rule (geometry_source = 'atr_fallback' / 'unknown') rather than
+ * pattern-derived pivot targets. Applying fixed R:R tiers across the whole table would
+ * compound that conflation: the resulting rr3/4/5 stats would blend "what the pattern
+ * projected" with "what a volatility rule projected" and be uninterpretable.
+ *
+ * Before running, decide explicitly whether to compute alternative exits for the
+ * geometry_source = 'pivot' cohort only, and scope the query accordingly.
+ *
  * Batch Compute Multi-R:R Outcomes
  * 
  * Processes historical pattern occurrences and computes outcomes for 

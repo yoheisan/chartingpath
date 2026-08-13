@@ -2745,6 +2745,7 @@ export type Database = {
           direction: string
           entry_price: number
           exchange: string | null
+          geometry_source: string
           id: string
           multi_rr_computed_at: string | null
           outcome: string | null
@@ -2801,6 +2802,7 @@ export type Database = {
           direction: string
           entry_price: number
           exchange?: string | null
+          geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
@@ -2857,6 +2859,7 @@ export type Database = {
           direction?: string
           entry_price?: number
           exchange?: string | null
+          geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
@@ -3258,6 +3261,7 @@ export type Database = {
           entry_price: number
           exchange: string | null
           first_detected_at: string
+          geometry_source: string
           historical_performance: Json | null
           id: string
           instrument: string
@@ -3292,6 +3296,7 @@ export type Database = {
           entry_price: number
           exchange?: string | null
           first_detected_at?: string
+          geometry_source?: string
           historical_performance?: Json | null
           id?: string
           instrument: string
@@ -3326,6 +3331,7 @@ export type Database = {
           entry_price?: number
           exchange?: string | null
           first_detected_at?: string
+          geometry_source?: string
           historical_performance?: Json | null
           id?: string
           instrument?: string
@@ -6999,12 +7005,14 @@ export type Database = {
           cell_status: string | null
           current_price: number | null
           direction: string | null
+          edge_geometry_source: string | null
           entry_price: number | null
           est_cost_r: number | null
           exchange: string | null
           expectancy_r: number | null
           expectancy_r_net: number | null
           first_detected_at: string | null
+          geometry_source: string | null
           id: string | null
           instrument: string | null
           last_confirmed_at: string | null
@@ -7041,6 +7049,14 @@ export type Database = {
       apply_grade_floor: { Args: never; Returns: undefined }
       backfill_exchange_historical_patterns: { Args: never; Returns: undefined }
       backfill_exchange_live_patterns: { Args: never; Returns: undefined }
+      backfill_geometry_source: {
+        Args: { p_limit?: number }
+        Returns: {
+          labelled_atr: number
+          labelled_pivot: number
+          remaining: number
+        }[]
+      }
       calculate_prorata_amount: {
         Args: {
           billing_cycle_days?: number
@@ -7352,9 +7368,12 @@ export type Database = {
         | {
             Args: {
               p_asset_type: string
+              p_broker_profile_id?: string
+              p_commission_override?: number
               p_direction: string
               p_pattern_id: string
               p_since?: string
+              p_spread_override?: number
               p_timeframe: string
             }
             Returns: {
@@ -7374,6 +7393,7 @@ export type Database = {
               p_broker_profile_id?: string
               p_commission_override?: number
               p_direction: string
+              p_geometry_source?: string
               p_pattern_id: string
               p_since?: string
               p_spread_override?: number
@@ -7400,26 +7420,48 @@ export type Database = {
           win_rate: number
         }[]
       }
-      get_pattern_outcome_cells: {
-        Args: {
-          p_asset_type?: string
-          p_limit?: number
-          p_min_trades?: number
-          p_timeframe?: string
-        }
-        Returns: {
-          asset_type: string
-          avg_bars: number
-          avg_rr: number
-          direction: string
-          expectancy_r: number
-          pattern_id: string
-          pattern_name: string
-          timeframe: string
-          total_trades: number
-          win_rate_pct: number
-        }[]
-      }
+      get_pattern_outcome_cells:
+        | {
+            Args: {
+              p_asset_type?: string
+              p_limit?: number
+              p_min_trades?: number
+              p_timeframe?: string
+            }
+            Returns: {
+              asset_type: string
+              avg_bars: number
+              avg_rr: number
+              direction: string
+              expectancy_r: number
+              pattern_id: string
+              pattern_name: string
+              timeframe: string
+              total_trades: number
+              win_rate_pct: number
+            }[]
+          }
+        | {
+            Args: {
+              p_asset_type?: string
+              p_geometry_source?: string
+              p_limit?: number
+              p_min_trades?: number
+              p_timeframe?: string
+            }
+            Returns: {
+              asset_type: string
+              avg_bars: number
+              avg_rr: number
+              direction: string
+              expectancy_r: number
+              pattern_id: string
+              pattern_name: string
+              timeframe: string
+              total_trades: number
+              win_rate_pct: number
+            }[]
+          }
       get_pattern_repeatability_proof: {
         Args: {
           p_before: string

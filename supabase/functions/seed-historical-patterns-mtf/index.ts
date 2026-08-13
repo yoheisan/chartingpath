@@ -1792,6 +1792,8 @@ interface HistoricalOccurrence {
   bars_to_outcome: number | null;
   trend_alignment: TrendAlignment | null;
   trend_indicators: TrendIndicators | null;
+  /** Provenance of stop/target: pattern pivots, generic ATR rule, or neckline override. */
+  geometry_source: 'pivot' | 'atr_fallback' | 'neckline_fallback';
 }
 
 // Adaptive lookback per pattern and timeframe for macro pattern detection
@@ -1943,8 +1945,13 @@ async function runHistoricalBacktest(
       const r1 = getP('R1'); const s1 = getP('S1');
       if (r1 && s1) { sl = isLong ? s1 * 0.995 : r1 * 1.005; tp = isLong ? entryPrice + (r1 - s1) : entryPrice - (r1 - s1); }
     }
+    // Provenance: default to pattern-derived pivot geometry, downgrade below if a
+    // fallback fires. A fallback is legitimate; hiding it is not.
+    let geometrySource: 'pivot' | 'atr_fallback' | 'neckline_fallback' = 'pivot';
+
     // ATR fallback if pivots insufficient
     if (sl === null || tp === null) {
+      geometrySource = 'atr_fallback';
       sl = isLong ? entryPrice - atr * 2 : entryPrice + atr * 2;
       tp = isLong ? entryPrice + atr * 4 : entryPrice - atr * 4;
     }
@@ -1955,10 +1962,12 @@ async function runHistoricalBacktest(
     // Sanity check TP direction — use neckline as fallback for reversal patterns
     if (isLong && tp <= entryPrice) {
       const nkFallback = getP('Neckline');
+      geometrySource = 'neckline_fallback';
       tp = (nkFallback && nkFallback > entryPrice) ? nkFallback : entryPrice + atrFloor * 2;
     }
     if (!isLong && tp >= entryPrice) {
       const nkFallback = getP('Neckline');
+      geometrySource = 'neckline_fallback';
       tp = (nkFallback && nkFallback < entryPrice) ? nkFallback : entryPrice - atrFloor * 2;
     }
     stopLoss = sl;
@@ -2108,7 +2117,8 @@ async function runHistoricalBacktest(
       outcome_pnl_percent: outcomePnl,
       bars_to_outcome: barsToOutcome,
       trend_alignment: trendAnalysis?.alignment || null,
-      trend_indicators: trendAnalysis?.indicators || null
+      trend_indicators: trendAnalysis?.indicators || null,
+      geometry_source: geometrySource
     });
     
     // Skip ahead to avoid overlapping detections
@@ -2413,6 +2423,7 @@ serve(async (req) => {
           trend_alignment: occ.trend_alignment,
           trend_indicators: occ.trend_indicators,
           validation_status: 'pending',
+          geometry_source: occ.geometry_source,
           validation_layers_passed: ['bulkowski_engine'],
           detector_version: 'v3.2.1-floor-to-a',
         })), {
