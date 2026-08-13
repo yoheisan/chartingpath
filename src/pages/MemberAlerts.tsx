@@ -1116,7 +1116,25 @@ const MemberAlerts = () => {
                         <p className="text-sm text-muted-foreground">
                           {alert.pattern} • {alert.timeframe}
                         </p>
-                        <AlertEdgeStatusBadge status={edgeStatuses[alert.id]} loading={edgeStatusLoading} />
+                        {!isPatternSupported(alert.pattern) ? (
+                          <div className="mt-1 flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5">
+                            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            <span className="text-xs text-destructive">
+                              {t('alerts.unsupportedPattern', 'Not currently supported — this pattern is not detected by our engine and this alert cannot trigger.')}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={(e) => { e.stopPropagation(); deleteAlert(alert.id); }}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              {t('common.delete', 'Delete')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <AlertEdgeStatusBadge status={edgeStatuses[alert.id]} loading={edgeStatusLoading} />
+                        )}
                       </div>
                     </button>
                     <div className="flex items-center gap-2">
