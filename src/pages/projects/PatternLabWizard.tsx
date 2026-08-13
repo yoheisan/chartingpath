@@ -411,31 +411,43 @@ const PatternLabWizard = () => {
       setIsEstimating(true);
       setEstimateError(null);
       try {
-        const response = await fetch(
-          'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
-            },
-            body: JSON.stringify({
-              projectType: 'pattern_lab',
-              instruments: selectedInstruments,
-              patterns: selectedPatterns,
-              timeframe,
-              lookbackYears,
-              gradeFilter: selectedGrades,
-            }),
-          }
-        );
-        
-        if (cancelled) return;
-        
+        // The edge runtime can briefly return 502/503/504 while cold-starting or
+        // under load. Retry those with backoff instead of surfacing an error.
+        let response: Response | null = null;
+        const maxAttempts = 3;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          response = await fetch(
+            'https://dgznlsckoamseqcpzfqm.supabase.co/functions/v1/projects-run/estimate',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+              },
+              body: JSON.stringify({
+                projectType: 'pattern_lab',
+                instruments: selectedInstruments,
+                patterns: selectedPatterns,
+                timeframe,
+                lookbackYears,
+                gradeFilter: selectedGrades,
+              }),
+            }
+          );
+
+          if (cancelled) return;
+          if (response.ok) break;
+          if (![429, 502, 503, 504].includes(response.status) || attempt === maxAttempts - 1) break;
+          await new Promise((r) => setTimeout(r, 600 * 2 ** attempt));
+          if (cancelled) return;
+        }
+
+        if (cancelled || !response) return;
+
         if (!response.ok) {
           throw new Error(`Server error (${response.status})`);
         }
-        
+
         const data = await response.json();
         if (!cancelled) {
           setEstimate(data);
