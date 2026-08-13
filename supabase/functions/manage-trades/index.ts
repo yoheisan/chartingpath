@@ -231,18 +231,14 @@ Deno.serve(async (req) => {
 
         closedCount++;
         console.log(
-          `[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${stopLoss} gap=${(rawFillPrice !== stopLoss)} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
+          `[manage-trades] Stop hit: ${trade.symbol} ${exitPnlR.toFixed(2)}R | fill=${fillPrice.toFixed(4)} ideal=${stopLoss} latency=${detectionLatencyMs}ms ${isForex ? '(forex)' : ''}`
         );
         continue;
       }
 
       if (tpHit) {
-        // ── Gap-aware exit: use currentPrice (may be better than TP), then apply adverse slippage ──
-        const rawFillPrice = isLong
-          ? Math.max(currentPrice, takeProfit) // for longs, higher is better but we still apply slippage
-          : Math.min(currentPrice, takeProfit);
-        const fillPrice = applyAdverseSlippage(rawFillPrice, !isLong, totalSlippageBps); // exiting: long sells (false), short buys (true)
-
+        // ── Level-triggered exit: the fill IS the target level (plus slippage) ──
+        const fillPrice = applyAdverseSlippage(takeProfit, !isLong, totalSlippageBps);
         const tpMove = isLong ? fillPrice - entryPrice : entryPrice - fillPrice;
         const exitPnlR = rUnit > 0 ? tpMove / rUnit : 0;
         const exitPnlDollars = isForex
