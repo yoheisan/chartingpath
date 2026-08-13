@@ -18,7 +18,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ADMIN_EMAIL = Deno.env.get("ADMIN_ALERT_EMAIL") ?? "hello@chartingpath.com";
+// Recipient is a secret, not a hardcoded address. If it is unset we fall back
+// to the existing admin KPI subscribers rather than silently emailing nobody —
+// a monitor whose alerts go nowhere is the failure mode we are fixing.
+const ADMIN_EMAIL = Deno.env.get("ADMIN_ALERT_EMAIL") ?? null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +42,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  const resolveRecipients = async (): Promise<string[]> => {
+    if (ADMIN_EMAIL) return [ADMIN_EMAIL];
+    console.warn("[data-health] ADMIN_ALERT_EMAIL not set — falling back to admin KPI subscribers");
+    const { data } = await supabase
+      .from("admin_kpi_subscriptions")
+      .select("email")
+      .eq("is_active", true);
+    return (data ?? []).map((r: { email: string }) => r.email).filter(Boolean);
+  };
 
   try {
     let only: string | null = null;
@@ -79,7 +92,12 @@ Deno.serve(async (req) => {
 
     // ── Notifications: critical only, at most one per check per day ──
     const notified: string[] = [];
+    const recipients = criticalFailures.length > 0 ? await resolveRecipients() : [];
+    if (criticalFailures.length > 0 && recipients.length === 0) {
+      console.error("[data-health] critical failures but no recipient configured — set ADMIN_ALERT_EMAIL");
+    }
     for (const f of criticalFailures) {
+      if (recipients.length === 0) break;
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { count } = await supabase
         .from("data_health_results")
@@ -97,11 +115,26 @@ Deno.serve(async (req) => {
         .eq("check_name", f.check_name)
         .maybeSingle();
 
+      // "When did this last pass?" turns a bare failure into a time window
+      // to search for the cause — the FX outage was invisible for 12 days
+      // precisely because nobody could see when it stopped working.
+      const { data: lastPass } = await supabase
+        .from("data_health_results")
+        .select("run_at")
+        .eq("check_name", f.check_name)
+        .eq("passed", true)
+        .order("run_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       const html = `
         <h2>Data health check failed: ${f.check_name}</h2>
         <p><strong>Severity:</strong> critical</p>
         <p><strong>Observed:</strong> ${f.observed_value ?? "n/a"}</p>
         <p><strong>Expected:</strong> ${expected.data?.expected_result ?? "n/a"}</p>
+        <p><strong>Last passed:</strong> ${
+          lastPass?.run_at ? new Date(lastPass.run_at).toUTCString() : "never recorded as passing"
+        }</p>
         <p>${expected.data?.description ?? ""}</p>
         <pre style="background:#f4f4f5;padding:12px;border-radius:6px;font-size:12px">${
           JSON.stringify(f.detail ?? {}, null, 2)
@@ -112,7 +145,7 @@ Deno.serve(async (req) => {
       try {
         await supabase.functions.invoke("send-email", {
           body: {
-            to: ADMIN_EMAIL,
+            to: recipients,
             subject: `[Data Health] CRITICAL: ${f.check_name}`,
             html,
           },

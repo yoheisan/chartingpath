@@ -19,6 +19,9 @@ interface KPIMetrics {
   criticalIssues: number;
   healthScore: number;
   revenueEstimate: number;
+  /** Latest state of every critical data-health check (see run-data-health-checks). */
+  dataHealthFailures: Array<{ check_name: string; observed_value: string | null; run_at: string }>;
+  dataHealthLastRun: string | null;
 }
 
 async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promise<KPIMetrics> {
@@ -88,6 +91,24 @@ async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promi
   // Estimate revenue (paid users * $20 avg)
   const revenueEstimate = paidStarts * 20;
 
+  // Data health digest: latest result per critical check, failures only.
+  const { data: healthRows } = await supabase
+    .from("data_health_results")
+    .select("check_name, passed, observed_value, run_at, severity")
+    .eq("severity", "critical")
+    .gte("run_at", weekAgo.toISOString())
+    .order("run_at", { ascending: false })
+    .limit(500);
+
+  const latestByCheck = new Map<string, { check_name: string; passed: boolean; observed_value: string | null; run_at: string }>();
+  for (const row of (healthRows ?? []) as Array<{ check_name: string; passed: boolean; observed_value: string | null; run_at: string }>) {
+    if (!latestByCheck.has(row.check_name)) latestByCheck.set(row.check_name, row);
+  }
+  const dataHealthFailures = [...latestByCheck.values()]
+    .filter((r) => !r.passed)
+    .map(({ check_name, observed_value, run_at }) => ({ check_name, observed_value, run_at }));
+  const dataHealthLastRun = (healthRows?.[0] as { run_at?: string } | undefined)?.run_at ?? null;
+
   return {
     totalUsers: totalUsers || 0,
     newUsers7d: newUsers7d || 0,
@@ -99,6 +120,8 @@ async function fetchKPIMetrics(supabase: ReturnType<typeof createClient>): Promi
     criticalIssues: signupConversionRate < 2 ? 1 : 0,
     healthScore,
     revenueEstimate,
+    dataHealthFailures,
+    dataHealthLastRun,
   };
 }
 
@@ -202,6 +225,29 @@ function generateEmailHTML(metrics: KPIMetrics, recipientEmail: string): string 
       </p>
     </div>
     ` : ''}
+
+    <!-- Data Health -->
+    <div style="background: #0f172a; border: 1px solid ${metrics.dataHealthFailures.length > 0 ? '#991b1b' : '#334155'}; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+      <p style="color: #e2e8f0; margin: 0 0 12px 0; font-size: 14px; font-weight: bold;">Data Health (critical checks)</p>
+      ${metrics.dataHealthFailures.length === 0 ? `
+        <p style="color: #94a3b8; margin: 0; font-size: 13px;">
+          No critical data-health failures this week. Last run:
+          ${metrics.dataHealthLastRun ? new Date(metrics.dataHealthLastRun).toUTCString() : 'never'}.
+          These checks catch only what they were told to assert — a clean board is a safety net, not a proof of correctness.
+        </p>
+      ` : `
+        <ul style="color: #fecaca; margin: 0; padding-left: 18px; font-size: 13px;">
+          ${metrics.dataHealthFailures.map((f) => `
+            <li style="margin-bottom: 6px;">
+              <strong>${f.check_name}</strong> — ${f.observed_value ?? 'no observed value'}
+              <span style="color:#94a3b8;">(${new Date(f.run_at).toUTCString()})</span>
+            </li>`).join('')}
+        </ul>
+        <p style="color: #94a3b8; margin: 12px 0 0 0; font-size: 12px;">
+          Nothing was changed automatically. Review in Admin → Data Health.
+        </p>
+      `}
+    </div>
 
     <!-- CTA -->
     <div style="text-align: center; margin-bottom: 32px;">
