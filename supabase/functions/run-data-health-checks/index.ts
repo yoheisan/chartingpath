@@ -18,7 +18,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ADMIN_EMAIL = Deno.env.get("ADMIN_ALERT_EMAIL") ?? "hello@chartingpath.com";
+// Recipient is a secret, not a hardcoded address. If it is unset we fall back
+// to the existing admin KPI subscribers rather than silently emailing nobody —
+// a monitor whose alerts go nowhere is the failure mode we are fixing.
+const ADMIN_EMAIL = Deno.env.get("ADMIN_ALERT_EMAIL") ?? null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +42,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  const resolveRecipients = async (): Promise<string[]> => {
+    if (ADMIN_EMAIL) return [ADMIN_EMAIL];
+    console.warn("[data-health] ADMIN_ALERT_EMAIL not set — falling back to admin KPI subscribers");
+    const { data } = await supabase
+      .from("admin_kpi_subscriptions")
+      .select("email")
+      .eq("is_active", true);
+    return (data ?? []).map((r: { email: string }) => r.email).filter(Boolean);
+  };
 
   try {
     let only: string | null = null;
