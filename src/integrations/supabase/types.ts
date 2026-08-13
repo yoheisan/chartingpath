@@ -312,6 +312,7 @@ export type Database = {
           alerts_dispatched: number
           alerts_evaluated: number
           alerts_skipped_recent: number
+          alerts_skipped_unsupported: number
           asset_type_filter: string | null
           detections_considered: number
           dispatch_failures: number
@@ -328,6 +329,7 @@ export type Database = {
           alerts_dispatched?: number
           alerts_evaluated?: number
           alerts_skipped_recent?: number
+          alerts_skipped_unsupported?: number
           asset_type_filter?: string | null
           detections_considered?: number
           dispatch_failures?: number
@@ -344,6 +346,7 @@ export type Database = {
           alerts_dispatched?: number
           alerts_evaluated?: number
           alerts_skipped_recent?: number
+          alerts_skipped_unsupported?: number
           asset_type_filter?: string | null
           detections_considered?: number
           dispatch_failures?: number

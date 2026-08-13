@@ -1,0 +1,1 @@
+ALTER TABLE public.alert_run_log ADD COLUMN IF NOT EXISTS alerts_skipped_unsupported integer NOT NULL DEFAULT 0;
