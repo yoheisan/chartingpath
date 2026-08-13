@@ -5878,6 +5878,30 @@ export type Database = {
           },
         ]
       }
+      supported_patterns: {
+        Row: {
+          created_at: string
+          is_supported: boolean
+          note: string | null
+          pattern_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_supported?: boolean
+          note?: string | null
+          pattern_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_supported?: boolean
+          note?: string | null
+          pattern_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trade_plans: {
         Row: {
           created_at: string
