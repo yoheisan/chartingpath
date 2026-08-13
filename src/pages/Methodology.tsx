@@ -202,6 +202,28 @@ export default function Methodology() {
             </p>
           </Section>
 
+          {/* 8b */}
+          <Section id="geometry" title={t('methodology.geometryTitle', 'Where the stop and target come from')}>
+            <p>
+              {t(
+                'methodology.geometryBody',
+                'A pattern only has a measured move if the detector can resolve the pivots that define it — the neckline and head of a head-and-shoulders, the two tops of a double top, the pole of a flag. When it cannot, the seeder falls back to a generic rule: stop at 2x ATR, target at 4x ATR. That produces a risk:reward of exactly 2.0 by construction.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.geometryShare',
+                'Roughly two thirds of resolved occurrences from 2024 onward carry that exact 2.0 ratio. Those rows are not measuring classical pattern behaviour; they are measuring a volatility-scaled exit taken on a day a pattern was flagged. Until now nothing in the stored data distinguished the two cases, so every cross-pattern comparison silently mixed them. Each occurrence now records its geometry source: pattern pivots, ATR fallback, a neckline override, or unknown where we cannot determine it retroactively.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.geometryFilter',
+                'The outcomes table lets you filter on this. Alerts do not offer the choice: the edge filter qualifies combinations on pattern-derived geometry only, because alerting on the fallback cohort would mean describing a volatility rule as a chart pattern.'
+              )}
+            </p>
+          </Section>
+
           {/* 9 */}
           <Section title={t('methodology.limitationsTitle', 'Other limitations')}>
             <ul className="list-disc pl-5 space-y-2">

@@ -6667,7 +6667,13 @@
     "emptyBody": "We'd rather show you nothing than a win rate we can't stand behind.",
     "disclaimer": "Historical figures only. Occurrences that expired without reaching target or stop are excluded from the denominator. Figures are gross of costs and are not forward returns. Cells with fewer than {{min}} resolved occurrences are not shown.",
     "cta": "Alert me when one of these fires",
-    "breadcrumb": "Outcome Data"
+    "breadcrumb": "Outcome Data",
+    "geometrySource": "Exit geometry",
+    "geometryAll": "All occurrences",
+    "geometryPivot": "Pattern-derived targets only",
+    "geometryAtr": "ATR 2:1 fallback only",
+    "geometryUnknown": "Provenance unknown",
+    "geometryDisclosure": "Disclosure: roughly two thirds of recorded occurrences do not use pattern-derived targets. When the detector cannot resolve enough pivots, it falls back to a generic stop at 2x ATR and a target at 4x ATR — a 2:1 volatility rule, not the classical measured move. Those rows measure a volatility exit on a day the pattern was flagged. Use the filter above to separate them; rows we cannot classify retroactively are shown as \"provenance unknown\"."
   },
   "methodology": {
     "metaTitle": "Methodology — How ChartingPath Measures Pattern Outcomes",
@@ -6702,7 +6708,11 @@
     "windowBody": "The outcomes table on this site reports our full measured history. The filter that decides whether we alert you does not: it qualifies a pattern/timeframe/asset/direction combination on occurrences from 1 January 2024 onward only.",
     "windowWhy": "The dataset is not homogeneous over time. Two timeframes were added in 2024 (15m and 8h), taking the count from four to six, and the share of occurrences that expire without hitting target or stop fell from about 44% in 2021 to about 12% in 2025. Expectancy improves over the same period, but that is a change in how outcomes are measured, not evidence that patterns work better. Pooling the whole history averages several incompatible measurement regimes.",
     "windowEffect": "The distinction is deliberate: the public table is a descriptive record and should stay complete, while an alert is a decision to risk money and needs the comparable window. Applying it makes the filter stricter — roughly a quarter of previously qualifying combinations no longer qualify, because they qualified on the strength of pre-2024 data measured under different rules. Widening the window backwards would make the filter less reliable, not more.",
-    "windowSeasonality": "We apply no seasonal adjustment. Pooled monthly expectancy looks like it varies, but splitting by year, 2024 and 2025 disagree on sign in five of twelve months. That is a level shift between years, not a calendar effect, and 2.5 years of homogeneous data gives only two or three observations per calendar month."
+    "windowSeasonality": "We apply no seasonal adjustment. Pooled monthly expectancy looks like it varies, but splitting by year, 2024 and 2025 disagree on sign in five of twelve months. That is a level shift between years, not a calendar effect, and 2.5 years of homogeneous data gives only two or three observations per calendar month.",
+    "geometryTitle": "Where the stop and target come from",
+    "geometryBody": "A pattern only has a measured move if the detector can resolve the pivots that define it — the neckline and head of a head-and-shoulders, the two tops of a double top, the pole of a flag. When it cannot, the seeder falls back to a generic rule: stop at 2x ATR, target at 4x ATR. That produces a risk:reward of exactly 2.0 by construction.",
+    "geometryShare": "Roughly two thirds of resolved occurrences from 2024 onward carry that exact 2.0 ratio. Those rows are not measuring classical pattern behaviour; they are measuring a volatility-scaled exit taken on a day a pattern was flagged. Until now nothing in the stored data distinguished the two cases, so every cross-pattern comparison silently mixed them. Each occurrence now records its geometry source: pattern pivots, ATR fallback, a neckline override, or unknown where we cannot determine it retroactively.",
+    "geometryFilter": "The outcomes table lets you filter on this. Alerts do not offer the choice: the edge filter qualifies combinations on pattern-derived geometry only, because alerting on the fallback cohort would mean describing a volatility rule as a chart pattern."
   },
   "contentOutcome": {
     "title": "What actually happened",
