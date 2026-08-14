@@ -2608,6 +2608,42 @@ export type Database = {
           },
         ]
       }
+      geometry_resolve_progress: {
+        Row: {
+          created_at: string
+          done: boolean
+          id: number
+          last_id: string | null
+          left_unknown: number
+          processed: number
+          set_atr: number
+          set_pivot: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          id?: number
+          last_id?: string | null
+          left_unknown?: number
+          processed?: number
+          set_atr?: number
+          set_pivot?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          id?: number
+          last_id?: string | null
+          left_unknown?: number
+          processed?: number
+          set_atr?: number
+          set_pivot?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       grade_outcome_stats_cache: {
         Row: {
           avg_rr: number | null
@@ -7637,6 +7673,17 @@ export type Database = {
         Returns: undefined
       }
       rescore_copilot_training_pairs: { Args: never; Returns: Json }
+      resolve_geometry_source: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          finished: boolean
+          last_id: string
+          left_unknown: number
+          processed: number
+          set_atr: number
+          set_pivot: number
+        }[]
+      }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
       run_data_health_checks: {
         Args: { p_only?: string }
