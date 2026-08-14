@@ -7052,8 +7052,8 @@ export type Database = {
       backfill_geometry_source: {
         Args: { p_limit?: number }
         Returns: {
-          labelled_atr: number
-          labelled_pivot: number
+          atr_labeled: number
+          pivot_labeled: number
           remaining: number
         }[]
       }
@@ -7131,6 +7131,7 @@ export type Database = {
         }[]
       }
       deactivate_cron_job: { Args: { p_jobid: number }; Returns: undefined }
+      demote_loose_atr_fallback: { Args: { p_limit?: number }; Returns: number }
       estimate_project_credits: {
         Args: {
           p_instruments_count: number
