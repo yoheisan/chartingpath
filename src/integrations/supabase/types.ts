@@ -7125,10 +7125,12 @@ export type Database = {
           asset_type: string | null
           avg_bars: number | null
           avg_rr: number | null
+          baseline_win_rate_pct: number | null
           cell_status: string | null
           current_price: number | null
           direction: string | null
           edge_geometry_source: string | null
+          edge_points: number | null
           entry_price: number | null
           est_cost_r: number | null
           exchange: string | null
@@ -7138,6 +7140,7 @@ export type Database = {
           geometry_source: string | null
           id: string | null
           instrument: string | null
+          is_validated: boolean | null
           last_confirmed_at: string | null
           pattern_id: string | null
           pattern_name: string | null
@@ -7150,6 +7153,7 @@ export type Database = {
           take_profit_price: number | null
           timeframe: string | null
           total_trades: number | null
+          validation_status: string | null
           win_rate_pct: number | null
         }
         Relationships: []
