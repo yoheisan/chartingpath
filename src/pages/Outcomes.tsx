@@ -61,6 +61,12 @@ export default function Outcomes() {
     () => rows.filter((r) => Number(r.expectancy_r) > 0).length,
     [rows]
   );
+  // Beating the random-walk baseline is the honest test; positive expectancy is not.
+  const aboveBaselineCount = useMemo(
+    () => rows.filter((r) => Number(r.edge_points ?? 0) > 0).length,
+    [rows]
+  );
+  const validatedCount = useMemo(() => rows.filter((r) => r.is_validated).length, [rows]);
 
   // In-table filters (client-side, applied on top of the server-side asset/timeframe query)
   const [query, setQuery] = useState(searchParams.get('pattern') ?? '');
@@ -74,6 +80,8 @@ export default function Outcomes() {
       if (direction !== 'all' && String(r.direction).toLowerCase() !== direction) return false;
       if (expectancy === 'positive' && !(Number(r.expectancy_r) > 0)) return false;
       if (expectancy === 'negative' && Number(r.expectancy_r) > 0) return false;
+      if (expectancy === 'above_baseline' && !(Number(r.edge_points ?? 0) > 0)) return false;
+      if (expectancy === 'validated' && !r.is_validated) return false;
       return true;
     });
   }, [rows, query, direction, expectancy]);
@@ -81,7 +89,9 @@ export default function Outcomes() {
   const isFiltered = query.trim() !== '' || direction !== 'all' || expectancy !== 'all';
 
   // Sorting. Default: sample size, largest first (matches the RPC's own ordering).
-  type SortKey = 'pattern_name' | 'timeframe' | 'asset_type' | 'total_trades' | 'win_rate_pct' | 'avg_rr' | 'expectancy_r';
+  type SortKey =
+    | 'pattern_name' | 'timeframe' | 'asset_type' | 'total_trades'
+    | 'win_rate_pct' | 'avg_rr' | 'expectancy_r' | 'edge_points';
   const [sortKey, setSortKey] = useState<SortKey>('total_trades');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -102,8 +112,8 @@ export default function Outcomes() {
   const sortedRows = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
     return [...visibleRows].sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
+      const av = a[sortKey] ?? (sortKey === 'edge_points' ? -Infinity : a[sortKey]);
+      const bv = b[sortKey] ?? (sortKey === 'edge_points' ? -Infinity : b[sortKey]);
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
       return String(av).localeCompare(String(bv)) * dir;
     });
