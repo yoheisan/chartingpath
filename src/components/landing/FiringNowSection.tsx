@@ -26,6 +26,9 @@ interface DetectionRow {
   expectancy_r_net: number | null;
   cell_status: string | null;
   qualifies: boolean | null;
+  edge_points: number | null;
+  baseline_win_rate_pct: number | null;
+  is_validated: boolean | null;
 }
 
 const MIN_SAMPLE = 100;
@@ -55,7 +58,7 @@ export function FiringNowSection() {
     (async () => {
       const { data, error } = await supabase
         .from('v_live_detections_with_edge')
-        .select('id,instrument,pattern_name,timeframe,direction,entry_price,stop_loss_price,take_profit_price,total_trades,win_rate_pct,expectancy_r,expectancy_r_net,cell_status,qualifies')
+        .select('id,instrument,pattern_name,timeframe,direction,entry_price,stop_loss_price,take_profit_price,total_trades,win_rate_pct,expectancy_r,expectancy_r_net,cell_status,qualifies,edge_points,baseline_win_rate_pct,is_validated')
         .limit(1000);
       if (cancelled) return;
       if (error) {
@@ -105,11 +108,20 @@ export function FiringNowSection() {
     if ((r.total_trades ?? 0) < MIN_SAMPLE) {
       return t('firingNow.reasonSample', 'Insufficient sample (n={{n}})', { n: r.total_trades ?? 0 });
     }
+    if ((r.edge_points ?? 0) <= 0) {
+      // The random-walk null comes first: at this R:R a coin flip would do as well.
+      return t('firingNow.reasonChance', 'No edge versus chance ({{pts}} pts)', {
+        pts: (r.edge_points ?? 0).toFixed(2),
+      });
+    }
     if ((r.expectancy_r ?? 0) <= 0) {
       return t('firingNow.reasonNegative', 'Negative expectancy');
     }
     if ((r.expectancy_r_net ?? 0) <= 0) {
       return t('firingNow.reasonNegativeNet', 'Negative after costs');
+    }
+    if (!r.is_validated) {
+      return t('firingNow.reasonNotValidated', 'Not yet validated out of sample');
     }
     return t('firingNow.reasonOther', 'No measured edge');
   };
