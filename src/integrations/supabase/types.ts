@@ -7457,48 +7457,27 @@ export type Database = {
           win_rate: number
         }[]
       }
-      get_pattern_outcome_cells:
-        | {
-            Args: {
-              p_asset_type?: string
-              p_limit?: number
-              p_min_trades?: number
-              p_timeframe?: string
-            }
-            Returns: {
-              asset_type: string
-              avg_bars: number
-              avg_rr: number
-              direction: string
-              expectancy_r: number
-              pattern_id: string
-              pattern_name: string
-              timeframe: string
-              total_trades: number
-              win_rate_pct: number
-            }[]
-          }
-        | {
-            Args: {
-              p_asset_type?: string
-              p_geometry_source?: string
-              p_limit?: number
-              p_min_trades?: number
-              p_timeframe?: string
-            }
-            Returns: {
-              asset_type: string
-              avg_bars: number
-              avg_rr: number
-              direction: string
-              expectancy_r: number
-              pattern_id: string
-              pattern_name: string
-              timeframe: string
-              total_trades: number
-              win_rate_pct: number
-            }[]
-          }
+      get_pattern_outcome_cells: {
+        Args: {
+          p_asset_type?: string
+          p_geometry_source?: string
+          p_limit?: number
+          p_min_trades?: number
+          p_timeframe?: string
+        }
+        Returns: {
+          asset_type: string
+          avg_bars: number
+          avg_rr: number
+          direction: string
+          expectancy_r: number
+          pattern_id: string
+          pattern_name: string
+          timeframe: string
+          total_trades: number
+          win_rate_pct: number
+        }[]
+      }
       get_pattern_repeatability_proof: {
         Args: {
           p_before: string
