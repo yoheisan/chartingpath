@@ -1334,6 +1334,72 @@ export type Database = {
         }
         Relationships: []
       }
+      cell_validation: {
+        Row: {
+          asset_type: string
+          candidate_registered_at: string | null
+          created_at: string
+          direction: string
+          edge_points_test: number | null
+          edge_points_train: number | null
+          id: string
+          n_test: number
+          n_train: number
+          pattern_id: string
+          persisted: boolean
+          status: string
+          test_end: string
+          test_start: string
+          timeframe: string
+          train_end: string
+          train_start: string
+          updated_at: string
+          validated_at: string
+        }
+        Insert: {
+          asset_type: string
+          candidate_registered_at?: string | null
+          created_at?: string
+          direction: string
+          edge_points_test?: number | null
+          edge_points_train?: number | null
+          id?: string
+          n_test?: number
+          n_train?: number
+          pattern_id: string
+          persisted?: boolean
+          status?: string
+          test_end: string
+          test_start: string
+          timeframe: string
+          train_end: string
+          train_start: string
+          updated_at?: string
+          validated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          candidate_registered_at?: string | null
+          created_at?: string
+          direction?: string
+          edge_points_test?: number | null
+          edge_points_train?: number | null
+          id?: string
+          n_test?: number
+          n_train?: number
+          pattern_id?: string
+          persisted?: boolean
+          status?: string
+          test_end?: string
+          test_start?: string
+          timeframe?: string
+          train_end?: string
+          train_start?: string
+          updated_at?: string
+          validated_at?: string
+        }
+        Relationships: []
+      }
       community_analytics: {
         Row: {
           ai_responses: number
@@ -7022,6 +7088,27 @@ export type Database = {
         }
         Relationships: []
       }
+      v_cell_validation_latest: {
+        Row: {
+          asset_type: string | null
+          candidate_registered_at: string | null
+          direction: string | null
+          edge_points_test: number | null
+          edge_points_train: number | null
+          n_test: number | null
+          n_train: number | null
+          pattern_id: string | null
+          persisted: boolean | null
+          status: string | null
+          test_end: string | null
+          test_start: string | null
+          timeframe: string | null
+          train_end: string | null
+          train_start: string | null
+          validated_at: string | null
+        }
+        Relationships: []
+      }
       v_funnel_daily: {
         Row: {
           day: string | null
@@ -7038,10 +7125,12 @@ export type Database = {
           asset_type: string | null
           avg_bars: number | null
           avg_rr: number | null
+          baseline_win_rate_pct: number | null
           cell_status: string | null
           current_price: number | null
           direction: string | null
           edge_geometry_source: string | null
+          edge_points: number | null
           entry_price: number | null
           est_cost_r: number | null
           exchange: string | null
@@ -7051,6 +7140,7 @@ export type Database = {
           geometry_source: string | null
           id: string | null
           instrument: string | null
+          is_validated: boolean | null
           last_confirmed_at: string | null
           pattern_id: string | null
           pattern_name: string | null
@@ -7063,6 +7153,7 @@ export type Database = {
           take_profit_price: number | null
           timeframe: string | null
           total_trades: number | null
+          validation_status: string | null
           win_rate_pct: number | null
         }
         Relationships: []
@@ -7401,52 +7492,33 @@ export type Database = {
           timeframe: string
         }[]
       }
-      get_pattern_edge:
-        | {
-            Args: {
-              p_asset_type: string
-              p_broker_profile_id?: string
-              p_commission_override?: number
-              p_direction: string
-              p_pattern_id: string
-              p_since?: string
-              p_spread_override?: number
-              p_timeframe: string
-            }
-            Returns: {
-              avg_bars: number
-              avg_rr: number
-              est_cost_r: number
-              expectancy_r: number
-              expectancy_r_net: number
-              qualifies: boolean
-              total_trades: number
-              win_rate_pct: number
-            }[]
-          }
-        | {
-            Args: {
-              p_asset_type: string
-              p_broker_profile_id?: string
-              p_commission_override?: number
-              p_direction: string
-              p_geometry_source?: string
-              p_pattern_id: string
-              p_since?: string
-              p_spread_override?: number
-              p_timeframe: string
-            }
-            Returns: {
-              avg_bars: number
-              avg_rr: number
-              est_cost_r: number
-              expectancy_r: number
-              expectancy_r_net: number
-              qualifies: boolean
-              total_trades: number
-              win_rate_pct: number
-            }[]
-          }
+      get_pattern_edge: {
+        Args: {
+          p_asset_type: string
+          p_broker_profile_id?: string
+          p_commission_override?: number
+          p_direction: string
+          p_geometry_source?: string
+          p_pattern_id: string
+          p_since?: string
+          p_spread_override?: number
+          p_timeframe: string
+        }
+        Returns: {
+          avg_bars: number
+          avg_rr: number
+          baseline_win_rate_pct: number
+          edge_points: number
+          est_cost_r: number
+          expectancy_r: number
+          expectancy_r_net: number
+          is_validated: boolean
+          qualifies: boolean
+          total_trades: number
+          validation_status: string
+          win_rate_pct: number
+        }[]
+      }
       get_pattern_library_stats: {
         Args: never
         Returns: {
@@ -7469,12 +7541,17 @@ export type Database = {
           asset_type: string
           avg_bars: number
           avg_rr: number
+          baseline_win_rate_pct: number
           direction: string
+          edge_points: number
           expectancy_r: number
+          is_validated: boolean
           pattern_id: string
           pattern_name: string
+          qualifies: boolean
           timeframe: string
           total_trades: number
+          validation_status: string
           win_rate_pct: number
         }[]
       }
@@ -7663,6 +7740,21 @@ export type Database = {
           set_pivot: number
         }[]
       }
+      run_cell_validation: {
+        Args: {
+          p_cut_months?: number
+          p_geometry_source?: string
+          p_min_n?: number
+          p_window_start?: string
+        }
+        Returns: {
+          cells_scored: number
+          decayed: number
+          failed: number
+          insufficient: number
+          validated: number
+        }[]
+      }
       run_cron_job_now: { Args: { p_jobid: number }; Returns: undefined }
       run_data_health_checks: {
         Args: { p_only?: string }
@@ -7676,6 +7768,14 @@ export type Database = {
         }[]
       }
       run_database_maintenance: { Args: never; Returns: Json }
+      run_extra_health_check: {
+        Args: { p_name: string }
+        Returns: {
+          detail: Json
+          observed_value: string
+          passed: boolean
+        }[]
+      }
       schedule_backfill_page: {
         Args: {
           p_body: string

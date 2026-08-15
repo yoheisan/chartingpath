@@ -61,6 +61,12 @@ export default function Outcomes() {
     () => rows.filter((r) => Number(r.expectancy_r) > 0).length,
     [rows]
   );
+  // Beating the random-walk baseline is the honest test; positive expectancy is not.
+  const aboveBaselineCount = useMemo(
+    () => rows.filter((r) => Number(r.edge_points ?? 0) > 0).length,
+    [rows]
+  );
+  const validatedCount = useMemo(() => rows.filter((r) => r.is_validated).length, [rows]);
 
   // In-table filters (client-side, applied on top of the server-side asset/timeframe query)
   const [query, setQuery] = useState(searchParams.get('pattern') ?? '');
@@ -74,6 +80,8 @@ export default function Outcomes() {
       if (direction !== 'all' && String(r.direction).toLowerCase() !== direction) return false;
       if (expectancy === 'positive' && !(Number(r.expectancy_r) > 0)) return false;
       if (expectancy === 'negative' && Number(r.expectancy_r) > 0) return false;
+      if (expectancy === 'above_baseline' && !(Number(r.edge_points ?? 0) > 0)) return false;
+      if (expectancy === 'validated' && !r.is_validated) return false;
       return true;
     });
   }, [rows, query, direction, expectancy]);
@@ -81,7 +89,9 @@ export default function Outcomes() {
   const isFiltered = query.trim() !== '' || direction !== 'all' || expectancy !== 'all';
 
   // Sorting. Default: sample size, largest first (matches the RPC's own ordering).
-  type SortKey = 'pattern_name' | 'timeframe' | 'asset_type' | 'total_trades' | 'win_rate_pct' | 'avg_rr' | 'expectancy_r';
+  type SortKey =
+    | 'pattern_name' | 'timeframe' | 'asset_type' | 'total_trades'
+    | 'win_rate_pct' | 'avg_rr' | 'expectancy_r' | 'edge_points';
   const [sortKey, setSortKey] = useState<SortKey>('total_trades');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -102,8 +112,8 @@ export default function Outcomes() {
   const sortedRows = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
     return [...visibleRows].sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
+      const av = a[sortKey] ?? (sortKey === 'edge_points' ? -Infinity : a[sortKey]);
+      const bv = b[sortKey] ?? (sortKey === 'edge_points' ? -Infinity : b[sortKey]);
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
       return String(av).localeCompare(String(bv)) * dir;
     });
@@ -288,6 +298,8 @@ export default function Outcomes() {
                   <SelectItem value="all">{t('outcomes.allExpectancy', 'All expectancy')}</SelectItem>
                   <SelectItem value="positive">{t('outcomes.positiveExpectancy', 'Positive expectancy')}</SelectItem>
                   <SelectItem value="negative">{t('outcomes.negativeExpectancy', 'Zero or negative')}</SelectItem>
+                  <SelectItem value="above_baseline">{t('outcomes.aboveBaseline', 'Beats random walk')}</SelectItem>
+                  <SelectItem value="validated">{t('outcomes.validatedOnly', 'Validated out-of-sample')}</SelectItem>
                 </SelectContent>
               </Select>
               {isFiltered && (
@@ -306,6 +318,13 @@ export default function Outcomes() {
                 positive: positiveCount,
                 negative: rows.length - positiveCount,
               })}
+              {' '}
+              {t('outcomes.baselineSummary', {
+                defaultValue:
+                  '{{above}} beat their random-walk baseline; {{validated}} also held up out of sample.',
+                above: aboveBaselineCount,
+                validated: validatedCount,
+              })}
               {isFiltered && (
                 <>
                   {' '}
@@ -320,6 +339,10 @@ export default function Outcomes() {
 
             <p className="text-xs text-muted-foreground mb-3">
               {t('outcomes.grossNote', 'All figures on this page are GROSS of costs — this table is a descriptive record of what happened, not a trading recommendation. Alerts use a stricter test: expectancy after estimated spread, commission and slippage.')}{' '}
+              {t(
+                'outcomes.edgeNote',
+                'Edge (pts) is the gap between the measured win rate and the random-walk baseline of 1/(1+R:R) — the rate a coin flip would reach the target before the stop. A close target produces positive expectancy without any predictive skill, so expectancy alone is never treated as edge. "Validated" means the edge held in both halves of an out-of-sample split.'
+              )}{' '}
               <Link
                 to="/methodology#costs"
                 className="underline underline-offset-2 hover:text-foreground"
@@ -387,6 +410,7 @@ export default function Outcomes() {
                         ['win_rate_pct', t('outcomes.colWinRate', 'Win rate'), true],
                         ['avg_rr', t('outcomes.colRR', 'Avg R:R'), true],
                         ['expectancy_r', t('outcomes.colExpectancy', 'Expectancy'), true],
+                        ['edge_points', t('outcomes.colEdgePoints', 'Edge vs chance (pts)'), true],
                       ] as [SortKey, string, boolean][]).map(([key, label, numeric]) => {
                         const active = sortKey === key;
                         return (
@@ -439,6 +463,18 @@ export default function Outcomes() {
                           }`}
                         >
                           {nf(r.expectancy_r, 3)}R
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right tabular-nums ${
+                            Number(r.edge_points ?? 0) > 0 ? 'text-emerald-500 font-medium' : ''
+                          }`}
+                        >
+                          {r.edge_points == null ? '—' : `${nf(Number(r.edge_points), 2)}`}
+                          {r.is_validated && (
+                            <Badge variant="secondary" className="ml-2 text-[10px] align-middle">
+                              {t('outcomes.validatedBadge', 'validated')}
+                            </Badge>
+                          )}
                         </td>
                       </tr>
                     ))}

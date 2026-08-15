@@ -13,6 +13,17 @@ export interface OutcomeLookupRow {
   expectancy_r: number;
   avg_bars: number;
   avg_rr: number;
+  /**
+   * (win_rate - 1/(1+avg_rr)) * 100. The random-walk null: a coin flip reaches
+   * the target before the stop with probability ~1/(1+RR). Positive expectancy
+   * on its own is geometry, not skill — this is the number that says otherwise.
+   */
+  edge_points: number | null;
+  baseline_win_rate_pct: number | null;
+  /** Passed out-of-sample validation (edge held in train AND test halves). */
+  is_validated: boolean;
+  validation_status: string;
+  qualifies: boolean;
 }
 
 export type GeometrySource = 'pivot' | 'atr_fallback' | 'neckline_fallback' | 'unknown';
