@@ -298,6 +298,8 @@ export default function Outcomes() {
                   <SelectItem value="all">{t('outcomes.allExpectancy', 'All expectancy')}</SelectItem>
                   <SelectItem value="positive">{t('outcomes.positiveExpectancy', 'Positive expectancy')}</SelectItem>
                   <SelectItem value="negative">{t('outcomes.negativeExpectancy', 'Zero or negative')}</SelectItem>
+                  <SelectItem value="above_baseline">{t('outcomes.aboveBaseline', 'Beats random walk')}</SelectItem>
+                  <SelectItem value="validated">{t('outcomes.validatedOnly', 'Validated out-of-sample')}</SelectItem>
                 </SelectContent>
               </Select>
               {isFiltered && (
@@ -316,6 +318,13 @@ export default function Outcomes() {
                 positive: positiveCount,
                 negative: rows.length - positiveCount,
               })}
+              {' '}
+              {t('outcomes.baselineSummary', {
+                defaultValue:
+                  '{{above}} beat their random-walk baseline; {{validated}} also held up out of sample.',
+                above: aboveBaselineCount,
+                validated: validatedCount,
+              })}
               {isFiltered && (
                 <>
                   {' '}
@@ -330,6 +339,10 @@ export default function Outcomes() {
 
             <p className="text-xs text-muted-foreground mb-3">
               {t('outcomes.grossNote', 'All figures on this page are GROSS of costs — this table is a descriptive record of what happened, not a trading recommendation. Alerts use a stricter test: expectancy after estimated spread, commission and slippage.')}{' '}
+              {t(
+                'outcomes.edgeNote',
+                'Edge (pts) is the gap between the measured win rate and the random-walk baseline of 1/(1+R:R) — the rate a coin flip would reach the target before the stop. A close target produces positive expectancy without any predictive skill, so expectancy alone is never treated as edge. "Validated" means the edge held in both halves of an out-of-sample split.'
+              )}{' '}
               <Link
                 to="/methodology#costs"
                 className="underline underline-offset-2 hover:text-foreground"
@@ -397,6 +410,7 @@ export default function Outcomes() {
                         ['win_rate_pct', t('outcomes.colWinRate', 'Win rate'), true],
                         ['avg_rr', t('outcomes.colRR', 'Avg R:R'), true],
                         ['expectancy_r', t('outcomes.colExpectancy', 'Expectancy'), true],
+                        ['edge_points', t('outcomes.colEdgePoints', 'Edge vs chance (pts)'), true],
                       ] as [SortKey, string, boolean][]).map(([key, label, numeric]) => {
                         const active = sortKey === key;
                         return (
@@ -449,6 +463,18 @@ export default function Outcomes() {
                           }`}
                         >
                           {nf(r.expectancy_r, 3)}R
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right tabular-nums ${
+                            Number(r.edge_points ?? 0) > 0 ? 'text-emerald-500 font-medium' : ''
+                          }`}
+                        >
+                          {r.edge_points == null ? '—' : `${nf(Number(r.edge_points), 2)}`}
+                          {r.is_validated && (
+                            <Badge variant="secondary" className="ml-2 text-[10px] align-middle">
+                              {t('outcomes.validatedBadge', 'validated')}
+                            </Badge>
+                          )}
                         </td>
                       </tr>
                     ))}
