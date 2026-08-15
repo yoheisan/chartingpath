@@ -201,6 +201,7 @@ export function FiringNowSection() {
                   <TableHead className="text-right">{t('firingNow.colWinRate', 'Win rate')}</TableHead>
                   <TableHead className="text-right">{t('firingNow.colSample', 'n')}</TableHead>
                   <TableHead className="text-right">{t('firingNow.colNet', 'Net expectancy')}</TableHead>
+                  <TableHead className="text-right">{t('firingNow.colEdgePoints', 'Edge vs chance')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -216,6 +217,9 @@ export function FiringNowSection() {
                     <TableCell className="text-right tabular-nums">{r.total_trades ?? 0}</TableCell>
                     <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400">
                       {r.expectancy_r_net != null ? `${Number(r.expectancy_r_net).toFixed(2)}R` : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                      {r.edge_points != null ? `${Number(r.edge_points).toFixed(2)} pts` : '—'}
                     </TableCell>
                   </TableRow>
                 ))}
