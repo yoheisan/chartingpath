@@ -17,6 +17,11 @@ export interface PatternEdge {
   /** expectancyR - estCostR. Qualification is decided on THIS, not on gross. */
   expectancyRNet: number;
   avgRr: number;
+  /** (win rate - 1/(1+avg_rr)) * 100, in percentage points. */
+  edgePoints: number | null;
+  baselineWinRatePct: number | null;
+  /** Edge held in both halves of an out-of-sample split. */
+  isValidated: boolean;
   qualifies: boolean;
 }
 
@@ -91,6 +96,9 @@ export function usePatternEdge(symbol: string, timeframe: string, patterns: stri
               estCostR: cost,
               expectancyRNet: Number(row?.expectancy_r_net ?? gross - cost),
               avgRr: Number(row?.avg_rr ?? 0),
+              edgePoints: row?.edge_points == null ? null : Number(row.edge_points),
+              baselineWinRatePct: row?.baseline_win_rate_pct == null ? null : Number(row.baseline_win_rate_pct),
+              isValidated: Boolean(row?.is_validated),
               qualifies: Boolean(row?.qualifies),
             } as PatternEdge;
           })
