@@ -38,6 +38,14 @@ export function AlertEdgeStatusBadge({ status, loading }: Props) {
             net: status.expectancyRNet.toFixed(2),
           })}
         </p>
+        {status.edgePoints != null && (
+          <p className="text-xs text-muted-foreground">
+            {t('alertEdgeStatus.edgePoints', '{{pts}} points above the random-walk baseline of {{base}}% · validated out of sample', {
+              pts: status.edgePoints.toFixed(2),
+              base: (status.baselineWinRatePct ?? 0).toFixed(1),
+            })}
+          </p>
+        )}
         <p className="text-[11px] text-muted-foreground">
           {t('alertEdgeStatus.costBasis', 'Based on your selected broker costs.')}
         </p>
@@ -48,7 +56,13 @@ export function AlertEdgeStatusBadge({ status, loading }: Props) {
   const reasonText =
     status.reason === 'insufficient_sample'
       ? t('alertEdgeStatus.reasonSample', 'Not enough measured outcomes yet (n={{n}}).', { n: status.totalTrades.toLocaleString() })
-      : status.reason === 'negative_expectancy'
+      : status.reason === 'no_edge_vs_chance'
+        ? t('alertEdgeStatus.reasonChance', 'Win rate ({{wr}}%) does not beat what a coin flip would achieve at this R:R ({{base}}%).', {
+            wr: status.winRatePct.toFixed(1), base: (status.baselineWinRatePct ?? 0).toFixed(1),
+          })
+        : status.reason === 'not_validated'
+        ? t('alertEdgeStatus.reasonNotValidated', 'Edge has not yet held up on out-of-sample data.')
+        : status.reason === 'negative_expectancy'
         ? t('alertEdgeStatus.reasonNegative', 'Measured expectancy is negative ({{exp}}R).', { exp: status.expectancyR.toFixed(2) })
         : status.reason === 'negative_after_costs'
           ? t('alertEdgeStatus.reasonCosts', 'Positive gross ({{exp}}R) but negative after estimated costs ({{net}}R).', {
