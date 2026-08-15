@@ -10,6 +10,8 @@ export const EDGE_MIN_SAMPLE = 100;
 export type EdgeReason =
   | 'qualifies'
   | 'insufficient_sample'
+  | 'no_edge_vs_chance'
+  | 'not_validated'
   | 'negative_expectancy'
   | 'negative_after_costs'
   | 'unknown_asset';
@@ -21,6 +23,10 @@ export interface AlertEdgeStatus {
   expectancyR: number;
   expectancyRNet: number;
   winRatePct: number;
+  /** (win rate - random-walk baseline) in percentage points. */
+  edgePoints: number | null;
+  baselineWinRatePct: number | null;
+  isValidated: boolean;
 }
 
 interface AlertLike {
@@ -72,6 +78,7 @@ export function useAlertsEdgeStatus(alerts: AlertLike[]) {
             next[a.id] = {
               qualifies: false, reason: 'unknown_asset',
               totalTrades: 0, expectancyR: 0, expectancyRNet: 0, winRatePct: 0,
+              edgePoints: null, baselineWinRatePct: null, isValidated: false,
             };
             continue;
           }
@@ -91,13 +98,21 @@ export function useAlertsEdgeStatus(alerts: AlertLike[]) {
             const gross = Number(row?.expectancy_r ?? 0);
             const net = Number(row?.expectancy_r_net ?? gross);
             const qualifies = Boolean(row?.qualifies);
+            const edgePoints = row?.edge_points == null ? null : Number(row.edge_points);
+            const isValidated = Boolean(row?.is_validated);
             const reason: EdgeReason = qualifies
               ? 'qualifies'
               : n < EDGE_MIN_SAMPLE
                 ? 'insufficient_sample'
-                : gross <= 0
-                  ? 'negative_expectancy'
-                  : 'negative_after_costs';
+                : edgePoints == null || edgePoints <= 0
+                  // Beating chance comes before expectancy: a close target can show
+                  // positive expectancy with zero predictive skill.
+                  ? 'no_edge_vs_chance'
+                  : gross <= 0
+                    ? 'negative_expectancy'
+                    : net <= 0
+                      ? 'negative_after_costs'
+                      : 'not_validated';
             cell = {
               qualifies,
               reason,
@@ -105,6 +120,9 @@ export function useAlertsEdgeStatus(alerts: AlertLike[]) {
               expectancyR: gross,
               expectancyRNet: net,
               winRatePct: Number(row?.win_rate_pct ?? 0),
+              edgePoints,
+              baselineWinRatePct: row?.baseline_win_rate_pct == null ? null : Number(row.baseline_win_rate_pct),
+              isValidated,
             };
             cellCache.set(cellKey, cell);
           }
