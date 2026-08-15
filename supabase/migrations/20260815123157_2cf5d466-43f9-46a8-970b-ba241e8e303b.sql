@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.get_pattern_outcome_cells(text, text, integer, integer);
