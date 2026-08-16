@@ -186,6 +186,17 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        if (validatedKeys) {
+          const dirRaw = String(det.direction || "").toLowerCase();
+          const dir = dirRaw === "long" ? "bullish" : dirRaw === "short" ? "bearish" : dirRaw;
+          const pid = String(det.pattern_id || "").toLowerCase();
+          const key = `${pid}|${det.timeframe}|${det.asset_type}|${dir}`;
+          if (!validatedKeys.has(key)) {
+            console.log(`[scan-setups] ${det.instrument} ${key} not in validated pool, skipping`);
+            continue;
+          }
+        }
+
         const { data: existing } = await supabase
           .from("paper_trades")
           .select("id")
