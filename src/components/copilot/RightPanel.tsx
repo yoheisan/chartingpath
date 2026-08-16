@@ -22,8 +22,13 @@ import { useBrokerConnection } from '@/hooks/useBrokerConnection';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SelectedClosedTrade } from './CenterPanel';
 import { isNoDataCopilotInsight } from '@/utils/copilotInsight';
+import { MIN_WIN_RATE_SAMPLE } from '@/config/sampleSize';
 
 const formatR = (v: number) => (v >= 0 ? `+${v.toFixed(1)}R` : `${v.toFixed(1)}R`);
+
+/** A win rate under the sample floor is noise — print the sample instead. */
+const winRateLabel = (rate: number, closed: number) =>
+  closed >= MIN_WIN_RATE_SAMPLE ? `${rate}%` : `— (${closed} trade${closed === 1 ? '' : 's'})`;
 
 interface RightPanelProps {
   openDebriefOnMount?: boolean;
@@ -119,7 +124,7 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
             {formatR(stats.aiPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground truncate">
-            {stats.aiWinRate}% · {stats.aiTradeCount} {t('copilotPage.trades')}
+            {winRateLabel(stats.aiWinRate, stats.aiClosedCount)} · {stats.aiTradeCount} {t('copilotPage.trades')}
           </span>
         </div>
         <div className="w-px bg-border/40 shrink-0" />
@@ -129,18 +134,31 @@ const RightPanel = ({ openDebriefOnMount, onDebriefOpened, onTradeSelect, debrie
             {stats.humanPnlR === 0 ? '0.0R' : formatR(stats.humanPnlR)}
           </span>
           <span className="text-sm font-mono text-muted-foreground truncate">
-            {stats.humanWinRate}% · {stats.humanTradeCount} {t('copilotPage.trades')}
+            {winRateLabel(stats.humanWinRate, stats.humanClosedCount)} · {stats.humanTradeCount} {t('copilotPage.trades')}
           </span>
         </div>
       </div>
+
+      {(stats.aiClosedCount < MIN_WIN_RATE_SAMPLE || stats.humanClosedCount < MIN_WIN_RATE_SAMPLE) && (
+        <p className="px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border/40">
+          Insufficient sample — win rates appear at {MIN_WIN_RATE_SAMPLE} completed trades.
+        </p>
+      )}
+
+      {stats.suspectCount > 0 && (
+        <p className="px-3 py-1.5 text-[11px] text-amber-600 dark:text-amber-400 border-b border-border/40">
+          {stats.suspectCount} trades excluded — data quality issue, see{' '}
+          <Link to="/methodology" className="underline underline-offset-2">/methodology</Link>.
+        </p>
+      )}
 
       {/* Section 3 — Metric Cards 2×2 */}
       <div className="grid grid-cols-2 gap-1 p-1.5 border-b border-border/40">
         {[
           { label: t('copilotPage.aiAvgR'), value: formatR(activeTab === 'paper' ? paperStats.aiAvgR : (liveStats.aiTradeCount > 0 ? liveStats.aiPnlR / liveStats.aiTradeCount : 0)), sub: t('copilotPage.perTrade'), positive: (activeTab === 'paper' ? paperStats.aiAvgR : liveStats.aiPnlR) >= 0 },
           { label: t('copilotPage.ovrAvgR'), value: formatR(activeTab === 'paper' ? paperStats.humanAvgR : (liveStats.humanTradeCount > 0 ? liveStats.humanPnlR / liveStats.humanTradeCount : 0)), sub: t('copilotPage.perTrade'), positive: (activeTab === 'paper' ? paperStats.humanAvgR : liveStats.humanPnlR) >= 0 },
-          { label: t('copilotPage.aiWinRate'), value: `${stats.aiWinRate}%`, sub: t('copilotPage.today'), positive: stats.aiWinRate >= 50 },
-          { label: t('copilotPage.ovrWinRate'), value: `${stats.humanWinRate}%`, sub: t('copilotPage.today'), positive: stats.humanWinRate >= 50 },
+          { label: t('copilotPage.aiWinRate'), value: winRateLabel(stats.aiWinRate, stats.aiClosedCount), sub: `${stats.aiClosedCount} closed`, positive: stats.aiClosedCount >= MIN_WIN_RATE_SAMPLE && stats.aiWinRate >= 50 },
+          { label: t('copilotPage.ovrWinRate'), value: winRateLabel(stats.humanWinRate, stats.humanClosedCount), sub: `${stats.humanClosedCount} closed`, positive: stats.humanClosedCount >= MIN_WIN_RATE_SAMPLE && stats.humanWinRate >= 50 },
         ].map((m) => (
           <div key={m.label} className="rounded-md bg-secondary/50 p-1.5 flex flex-col items-center gap-0.5 min-w-0">
             <span className="text-sm text-muted-foreground truncate w-full text-center">{m.label}</span>

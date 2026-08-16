@@ -153,16 +153,29 @@ Deno.serve(async (req) => {
 
       // Validated-only pool: a plan defaults to trading only cells that passed
       // out-of-sample validation. Anything else is not part of the universe.
+      // Every measured cell, so the trade can state the evidence behind it.
+      const { data: allCells } = await supabase
+        .from("cell_validation")
+        .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test");
+      const cellByKey = new Map<string, any>();
+      for (const r of (allCells ?? []) as any[]) {
+        cellByKey.set(
+          `${String(r.pattern_id).toLowerCase()}|${r.timeframe}|${r.asset_type}|${r.direction}`,
+          r,
+        );
+      }
+      const cellKeyFor = (det: any) => {
+        const dirRaw = String(det.direction || "").toLowerCase();
+        const dir = dirRaw === "long" ? "bullish" : dirRaw === "short" ? "bearish" : dirRaw;
+        return `${String(det.pattern_id || "").toLowerCase()}|${det.timeframe}|${det.asset_type}|${dir}`;
+      };
+
       let validatedKeys: Set<string> | null = null;
       if (plan.validated_only !== false) {
-        const { data: vRows } = await supabase
-          .from("cell_validation")
-          .select("pattern_id, timeframe, asset_type, direction, status, test_start")
-          .eq("status", "validated");
         validatedKeys = new Set(
-          (vRows ?? []).map((r: any) =>
-            `${String(r.pattern_id).toLowerCase()}|${r.timeframe}|${r.asset_type}|${r.direction}`
-          )
+          [...cellByKey.entries()]
+            .filter(([, r]) => r.status === "validated")
+            .map(([k]) => k),
         );
         console.log(`[scan-setups] validated-only plan: ${validatedKeys.size} cells in pool`);
       }
@@ -187,10 +200,7 @@ Deno.serve(async (req) => {
         }
 
         if (validatedKeys) {
-          const dirRaw = String(det.direction || "").toLowerCase();
-          const dir = dirRaw === "long" ? "bullish" : dirRaw === "short" ? "bearish" : dirRaw;
-          const pid = String(det.pattern_id || "").toLowerCase();
-          const key = `${pid}|${det.timeframe}|${det.asset_type}|${dir}`;
+          const key = cellKeyFor(det);
           if (!validatedKeys.has(key)) {
             console.log(`[scan-setups] ${det.instrument} ${key} not in validated pool, skipping`);
             continue;
@@ -443,8 +453,18 @@ Deno.serve(async (req) => {
           const notionalUsd = entryPrice * quantity;
           const totalEntrySlippageBps = getTotalSlippageBps(baseSlippageBps, notionalUsd);
 
-          // Generate copilot reasoning
-          let reasoning = `Automated entry: ${det.pattern_name || "pattern"} on ${det.instrument} (${det.timeframe}). Risk: ${positionPct}% of portfolio.`;
+          // Generate copilot reasoning — state the measured evidence, because
+          // that evidence is the reason the trade was taken at all.
+          const cell = cellByKey.get(cellKeyFor(det));
+          let evidence: string;
+          if (cell && cell.status === "validated" && cell.edge_points_test != null) {
+            evidence = ` Why: this combination is validated — it beat its random-walk baseline by ${Number(cell.edge_points_test).toFixed(1)} points out-of-sample on n=${Number(cell.n_test ?? 0).toLocaleString("en-US")} occurrences.`;
+          } else if (cell && cell.edge_points_test != null) {
+            evidence = ` Why: this combination is NOT validated — it measured ${Number(cell.edge_points_test).toFixed(1)} points versus its random-walk baseline on n=${Number(cell.n_test ?? 0).toLocaleString("en-US")} occurrences.`;
+          } else {
+            evidence = " Why: this combination has no measured edge — too few historical occurrences to validate.";
+          }
+          let reasoning = `Automated entry: ${det.pattern_name || "pattern"} on ${det.instrument} (${det.timeframe}). Risk: ${positionPct}% of portfolio.${evidence}`;
           try {
             const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
             if (anthropicKey) {

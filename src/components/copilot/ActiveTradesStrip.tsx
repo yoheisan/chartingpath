@@ -6,6 +6,8 @@ import { useLivePrices } from '@/hooks/useLivePrices';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StalenessPrice } from './StalenessPrice';
+import { useCellValidation } from '@/hooks/useCellValidation';
+import { CellValidationBadge } from './CellValidationBadge';
 
 interface ActiveTradesStripProps {
   trades: CopilotTrade[];
@@ -21,6 +23,7 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
   const { t } = useTranslation();
   const symbols = useMemo(() => trades.filter(t => t.status === 'open').map(t => t.symbol), [trades]);
   const livePrices = useLivePrices(symbols);
+  const { lookup } = useCellValidation();
   const isEmpty = trades.length === 0;
 
   if (isEmpty) {
@@ -62,17 +65,19 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
 
             const displayPnl = dollarPnl ?? 0;
             const isPositive = isOpen ? displayPnl >= 0 : pnlR >= 0;
+            const cell = lookup(trade.pattern_id, trade.timeframe, trade.asset_type, trade.trade_type);
 
             return (
               <button
                 key={trade.id}
                 onClick={() => onSelectTrade(trade.id)}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
+                className={`flex flex-col gap-1 px-2 py-1.5 rounded-md text-left transition-colors ${
                   isSelected
                     ? 'bg-accent/60 border border-accent'
                     : 'hover:bg-secondary/60 border border-transparent'
                 }`}
               >
+                <span className="flex items-center gap-2 w-full">
                 {isLong ? (
                   <TrendingUp className="h-3.5 w-3.5 text-green-500 shrink-0" />
                 ) : (
@@ -102,6 +107,8 @@ const ActiveTradesStrip = ({ trades, selectedTradeId, onSelectTrade, onCloseTrad
                     <X className="h-3 w-3" />
                   </button>
                 )}
+                </span>
+                <CellValidationBadge cell={cell} className="pl-5" />
               </button>
             );
           })}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
 import { format } from 'date-fns';
@@ -14,12 +14,33 @@ import { TimeOfDayHeatmap } from '@/components/report/TimeOfDayHeatmap';
 import { PlanChangeHistory } from '@/components/report/PlanChangeHistory';
 import { PeerComparison } from '@/components/report/PeerComparison';
 import { ReportEmptyState } from '@/components/report/ReportEmptyState';
+import { ForwardEvidencePanels } from '@/components/report/ForwardEvidencePanels';
+import { useAuth } from '@/contexts/AuthContext';
+import { MIN_FORWARD_SAMPLE } from '@/config/sampleSize';
 
 const CopilotReport = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange>('all');
 
   const { closedTrades, sessions, plans, loading, firstTradeDate, suspectCount } = useTradeReport(dateRange);
+
+  // Per-bucket panels stay hidden until any bucket clears the sample floor.
+  // Recommending behaviour changes off a handful of trades is how we got here.
+  const buckets = useMemo(() => {
+    const byPattern = new Map<string, number>();
+    const byHour = new Map<number, number>();
+    for (const tr of closedTrades as any[]) {
+      const p = tr.setup_type || tr.pattern_id || 'unknown';
+      byPattern.set(p, (byPattern.get(p) ?? 0) + 1);
+      const h = tr.entry_time ? new Date(tr.entry_time).getUTCHours() : null;
+      if (h != null) byHour.set(h, (byHour.get(h) ?? 0) + 1);
+    }
+    return {
+      maxPattern: Math.max(0, ...byPattern.values()),
+      maxHour: Math.max(0, ...byHour.values()),
+    };
+  }, [closedTrades]);
 
   const ranges: { label: string; value: DateRange }[] = [
     { label: t('report.range7d'), value: '7d' },
@@ -78,6 +99,7 @@ const CopilotReport = () => {
             )}
             <ReadinessScore trades={closedTrades} sessions={sessions} />
             <KeyMetricsRow trades={closedTrades} />
+            <ForwardEvidencePanels userId={user?.id} />
 
             {closedTrades.length < 5 ? (
               <ReportEmptyState tradeCount={closedTrades.length} />
@@ -85,9 +107,25 @@ const CopilotReport = () => {
               <>
                 <EquityCurve trades={closedTrades} />
                 <AIvsHuman trades={closedTrades} />
-                <PatternWinRate trades={closedTrades} />
-                <BestWorstTrades trades={closedTrades} />
-                <TimeOfDayHeatmap trades={closedTrades} />
+                {buckets.maxPattern >= MIN_FORWARD_SAMPLE ? (
+                  <>
+                    <PatternWinRate trades={closedTrades} />
+                    <BestWorstTrades trades={closedTrades} />
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
+                    Per-pattern breakdown returns once a single pattern has {MIN_FORWARD_SAMPLE} resolved trades
+                    (largest bucket so far: {buckets.maxPattern}).
+                  </p>
+                )}
+                {buckets.maxHour >= MIN_FORWARD_SAMPLE ? (
+                  <TimeOfDayHeatmap trades={closedTrades} />
+                ) : (
+                  <p className="text-xs text-muted-foreground rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
+                    Time-of-day breakdown returns once a single hour has {MIN_FORWARD_SAMPLE} resolved trades
+                    (largest bucket so far: {buckets.maxHour}).
+                  </p>
+                )}
                 <PlanChangeHistory trades={closedTrades} plans={plans} />
                 <PeerComparison trades={closedTrades} sessions={sessions} />
               </>

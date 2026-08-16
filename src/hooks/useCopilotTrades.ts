@@ -25,6 +25,9 @@ export interface CopilotTrade {
   user_action: string | null;
   timeframe: string | null;
   detection_id: string | null;
+  pattern_id?: string | null;
+  asset_type?: string | null;
+  data_quality_suspect?: boolean | null;
 }
 
 export interface CopilotStats {
@@ -36,6 +39,10 @@ export interface CopilotStats {
   humanTradeCount: number;
   aiAvgR: number;
   humanAvgR: number;
+  /** Closed, non-suspect trades behind the win rates. */
+  aiClosedCount: number;
+  humanClosedCount: number;
+  suspectCount: number;
 }
 
 export function useCopilotTrades(userId?: string) {
@@ -103,8 +110,11 @@ export function useCopilotTrades(userId?: string) {
   }, [userId, fetchTrades]);
 
   const stats = useMemo((): CopilotStats => {
-    const aiTrades = todayTrades.filter(t => t.attribution === 'ai_approved' || t.attribution === 'ai_partial');
-    const humanTrades = todayTrades.filter(t => t.attribution === 'human_overwrite');
+    // Suspect rows never enter a figure.
+    const suspectCount = todayTrades.filter(t => t.data_quality_suspect === true).length;
+    const clean = todayTrades.filter(t => t.data_quality_suspect !== true);
+    const aiTrades = clean.filter(t => t.attribution === 'ai_approved' || t.attribution === 'ai_partial');
+    const humanTrades = clean.filter(t => t.attribution === 'human_overwrite');
 
     const closedAi = aiTrades.filter(t => t.status === 'closed');
     const closedHuman = humanTrades.filter(t => t.status === 'closed');
@@ -124,6 +134,9 @@ export function useCopilotTrades(userId?: string) {
       humanTradeCount: humanTrades.length,
       aiAvgR: aiTrades.length > 0 ? Math.round((aiPnlR / aiTrades.length) * 100) / 100 : 0,
       humanAvgR: humanTrades.length > 0 ? Math.round((humanPnlR / humanTrades.length) * 100) / 100 : 0,
+      aiClosedCount: closedAi.length,
+      humanClosedCount: closedHuman.length,
+      suspectCount,
     };
   }, [todayTrades]);
 
