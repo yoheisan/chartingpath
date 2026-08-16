@@ -132,14 +132,6 @@ serve(async (req) => {
           : ["short", "bearish"].includes(String(direction).toLowerCase())
             ? "bearish"
             : String(direction).toLowerCase();
-        const { data: validated } = await supabaseAdmin
-          .from("cell_validation")
-          .select("status")
-          .eq("timeframe", timeframe)
-          .eq("asset_type", asset_type)
-          .eq("direction", dir)
-          .eq("status", "validated")
-          .limit(50);
         const { data: cellRows } = await supabaseAdmin
           .from("cell_validation")
           .select("pattern_id")
@@ -152,7 +144,7 @@ serve(async (req) => {
           const pid = String(r.pattern_id).toLowerCase().replace(/[-_]/g, " ");
           return pid === setupLower || pid.includes(setupLower) || setupLower.includes(pid);
         });
-        if (!isValidatedCell || !(validated ?? []).length) {
+        if (!isValidatedCell) {
           gateResult = stricterGate(gateResult, "conflict");
           reasons.push("This combination has not passed validation — your plan trades validated cells only");
         }
