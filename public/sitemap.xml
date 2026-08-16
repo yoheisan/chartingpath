@@ -7933,12 +7933,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/double-bottom/MRVL/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/double-top/PHM/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -8054,6 +8048,12 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/falling-wedge/TJX/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/rising-wedge/JWN/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
