@@ -3691,6 +3691,7 @@ export type Database = {
           fx_categories: string[] | null
           id: string
           is_active: boolean | null
+          max_correlated_exposure_pct: number | null
           max_instruments: number | null
           max_open_positions: number | null
           max_position_pct: number | null
@@ -3702,6 +3703,7 @@ export type Database = {
           name: string | null
           override_constraints: Json | null
           plan_order: number | null
+          pool_directions: string[] | null
           pool_timeframes: string[]
           preferred_patterns: Json | null
           raw_nl_input: string | null
@@ -3726,6 +3728,7 @@ export type Database = {
           fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
+          max_correlated_exposure_pct?: number | null
           max_instruments?: number | null
           max_open_positions?: number | null
           max_position_pct?: number | null
@@ -3737,6 +3740,7 @@ export type Database = {
           name?: string | null
           override_constraints?: Json | null
           plan_order?: number | null
+          pool_directions?: string[] | null
           pool_timeframes?: string[]
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
@@ -3761,6 +3765,7 @@ export type Database = {
           fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
+          max_correlated_exposure_pct?: number | null
           max_instruments?: number | null
           max_open_positions?: number | null
           max_position_pct?: number | null
@@ -3772,6 +3777,7 @@ export type Database = {
           name?: string | null
           override_constraints?: Json | null
           plan_order?: number | null
+          pool_directions?: string[] | null
           pool_timeframes?: string[]
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
@@ -7439,6 +7445,33 @@ export type Database = {
           correlated_after_add: number
           existing_pct_in_cluster: number
           existing_positions_in_cluster: number
+        }[]
+      }
+      get_forward_validated_split: {
+        Args: { p_user_id?: string }
+        Returns: {
+          avg_r: number
+          bucket: string
+          n_trades: number
+          n_wins: number
+          total_r: number
+        }[]
+      }
+      get_forward_vs_predicted: {
+        Args: { p_user_id?: string }
+        Returns: {
+          asset_type: string
+          avg_r: number
+          avg_rr: number
+          direction: string
+          n_forward: number
+          n_wins: number
+          pattern_id: string
+          predicted_edge_points: number
+          realised_edge_points: number
+          realised_win_rate: number
+          timeframe: string
+          validation_status: string
         }[]
       }
       get_getting_started_batch: {
