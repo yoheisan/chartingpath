@@ -739,6 +739,20 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </div>
         </section>
 
+        <label className="flex items-start gap-2 rounded-lg border border-border/50 bg-muted/20 p-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={validatedOnly}
+            onChange={e => setValidatedOnly(e.target.checked)}
+            className="mt-0.5 rounded border-input"
+          />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            Go back to validated combinations only — the {poolCells.length} that measured edge over chance.
+          </span>
+        </label>
+        </>
+        )}
+
         {/* ── Section 3: Risk per trade ── */}
         <section className="space-y-3">
           <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.howMuchPerTrade')}</h4>
