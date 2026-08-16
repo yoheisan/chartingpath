@@ -4129,12 +4129,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/falling-wedge/SOL-USD/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/triple-bottom/NKE/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -4232,12 +4226,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/donchian-breakout-short/INTU/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/double-top/FLOW-USD/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -4484,12 +4472,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/triple-bottom/EWJ/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/triple-top/FLOW-USD/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -4861,12 +4843,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/descending-triangle/ALGO-USD/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/rising-wedge/VRTX/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -5102,12 +5078,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/triple-bottom/GBPPLN%3DX/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/descending-triangle/BAT-USD/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -5431,12 +5401,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/descending-triangle/GRT-USD/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/triple-top/OKTA/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -5474,12 +5438,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/triple-bottom/GBPAUD%3DX/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/descending-triangle/SOL-USD/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -5996,12 +5954,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/descending-triangle/CLX/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/donchian-breakout-short/SOL-USD/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -7927,12 +7879,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/rising-wedge/ENS-USD/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/falling-wedge/GBPPLN%3DX/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -8054,6 +8000,60 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/inverse-cup-and-handle/DLR/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/triple-bottom/EURCNH%3DX/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/symmetrical-triangle/%5ESSMI/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/symmetrical-triangle/%5ESTOXX50E/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/triple-top/BOTZ/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/triple-bottom/USDHRK%3DX/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/double-bottom/MKR-USD/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/donchian-breakout-short/PANW/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/triple-top/ED/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/falling-wedge/TJX/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
