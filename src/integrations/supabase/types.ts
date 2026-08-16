@@ -7567,6 +7567,7 @@ export type Database = {
           p_broker_profile_id?: string
           p_commission_override?: number
           p_direction: string
+          p_entry_mode?: string
           p_geometry_source?: string
           p_pattern_id: string
           p_since?: string
@@ -7601,6 +7602,7 @@ export type Database = {
       get_pattern_outcome_cells: {
         Args: {
           p_asset_type?: string
+          p_entry_mode?: string
           p_geometry_source?: string
           p_limit?: number
           p_min_trades?: number
@@ -7864,6 +7866,7 @@ export type Database = {
       run_cell_validation: {
         Args: {
           p_cut_months?: number
+          p_entry_mode?: string
           p_geometry_source?: string
           p_min_n?: number
           p_window_start?: string
