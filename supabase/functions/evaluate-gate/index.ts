@@ -124,6 +124,40 @@ serve(async (req) => {
 
     // 4. Check Master Plan rule violations
     if (planData) {
+      // Validated-only gate: the plan may only trade cells that passed
+      // out-of-sample validation. Everything else is a conflict, not a maybe.
+      if (planData.validated_only !== false && setup_type && timeframe && asset_type && direction) {
+        const dir = ["long", "bullish"].includes(String(direction).toLowerCase())
+          ? "bullish"
+          : ["short", "bearish"].includes(String(direction).toLowerCase())
+            ? "bearish"
+            : String(direction).toLowerCase();
+        const { data: validated } = await supabaseAdmin
+          .from("cell_validation")
+          .select("status")
+          .eq("timeframe", timeframe)
+          .eq("asset_type", asset_type)
+          .eq("direction", dir)
+          .eq("status", "validated")
+          .limit(50);
+        const { data: cellRows } = await supabaseAdmin
+          .from("cell_validation")
+          .select("pattern_id")
+          .eq("timeframe", timeframe)
+          .eq("asset_type", asset_type)
+          .eq("direction", dir)
+          .eq("status", "validated");
+        const setupLower = String(setup_type).toLowerCase().replace(/[-_]/g, " ");
+        const isValidatedCell = (cellRows ?? []).some((r: any) => {
+          const pid = String(r.pattern_id).toLowerCase().replace(/[-_]/g, " ");
+          return pid === setupLower || pid.includes(setupLower) || setupLower.includes(pid);
+        });
+        if (!isValidatedCell || !(validated ?? []).length) {
+          gateResult = stricterGate(gateResult, "conflict");
+          reasons.push("This combination has not passed validation — your plan trades validated cells only");
+        }
+      }
+
       // Direction conflict
       if (
         planData.trend_direction &&
