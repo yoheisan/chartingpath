@@ -5,7 +5,7 @@ import { Check, Loader2, ShieldCheck, Info } from "lucide-react";
 import type { EdgePoolCell, PoolInstrument, PoolFilters } from "@/hooks/useEdgePool";
 
 const ASSET_LABELS: Record<string, string> = {
-  stocks: "Stocks", forex: "Forex", crypto: "Crypto",
+  stocks: "Stocks", forex: "Forex", fx: "Forex", crypto: "Crypto",
   commodities: "Commodities", indices: "Indices", etfs: "ETFs",
 };
 
