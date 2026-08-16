@@ -486,6 +486,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
       window.dispatchEvent(new CustomEvent("mandate-saved"));
       toast.success(existingPlan && !isNewPlan ? "Trading plan updated." : "Trading plan created — Copilot is now paper-testing it.");
+      if ((plans?.length ?? 0) > 1) {
+        toast.info("Only one plan can be active at a time — your other plans were deactivated so the forward record stays attributable.");
+      }
       onSaved();
     } catch (err: any) {
       console.error("Save plan error:", err);
@@ -977,6 +980,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           )}
         </section>
 
+        {/* ── Section 7: Advanced Settings (Collapsible) ── */}
+        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
+              <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              {t('planBuilder.advancedSettings')}
+              {hasAdvancedSettings && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
+                  {t('planBuilder.active')}
+                </span>
+              )}
+              <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-5 pt-2">
         {/* ── Section 6: Exclusions ── */}
         <section className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.exclusionsTitle')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
@@ -1003,21 +1021,6 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </div>
         </section>
 
-        {/* ── Section 7: Advanced Settings (Collapsible) ── */}
-        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
-              <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              {t('planBuilder.advancedSettings')}
-              {hasAdvancedSettings && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
-                  {t('planBuilder.active')}
-                </span>
-              )}
-              <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-5 pt-2">
 
             {/* ── 7a: Multi-Timeframe Alignment ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
