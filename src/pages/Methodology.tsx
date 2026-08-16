@@ -224,9 +224,36 @@ export default function Methodology() {
             </p>
           </Section>
 
+          {/* 8c */}
+          <Section id="execution" title={t('methodology.executionTitle', 'When the trade is actually entered')}>
+            <p>
+              {t(
+                'methodology.executionBody',
+                'A pattern is confirmed on the CLOSE of a bar, with a buffer past the level. That rule is correct — confirming on a touch would fire on every wick. But confirmation and execution are not the same instant. Until now we recorded the entry at that same closing price, which assumes transacting at a price only knowable once the bar had already closed. No one can do that.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.executionFix',
+                'We now measure every occurrence a second time, entering at the OPEN of the next bar. Stop and target keep the original risk distance and reward-to-risk ratio, so the gap between the close and the next open is charged against the trade exactly as it would be in an account. Both measurements are kept and both remain queryable, so the difference between them stays visible rather than being quietly absorbed.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.executionImpact',
+                'The difference is large. On daily US stocks the gap averages around 2% of price, roughly a fifth of the risk distance: a trader starts every position part of the way to the stop before the trade has done anything. Moving entry one bar later costs several percentage points of edge against the random-walk baseline, and cells that qualified on close-entry may not survive it. That is a finding, not a defect to be tuned away — thresholds, windows and the sample floor are unchanged.'
+              )}
+            </p>
+            <p>
+              {t(
+                'methodology.executionDefault',
+                'Next-open figures are the default everywhere on the site. Close-entry figures remain available for comparison and are labelled as assuming execution at the confirming bar\u2019s close, which is not achievable in practice.'
+              )}
+            </p>
+          </Section>
+
           {/* 9 */}
           <Section title={t('methodology.limitationsTitle', 'Other limitations')}>
-*** placeholder
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 {t(
