@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isForexSymbol, calcForexPnl } from '@/utils/forexUtils';
+import { MIN_WIN_RATE_SAMPLE } from '@/config/sampleSize';
 
 export interface PaperPortfolio {
   id: string;
