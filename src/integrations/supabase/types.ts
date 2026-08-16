@@ -1342,6 +1342,7 @@ export type Database = {
           direction: string
           edge_points_test: number | null
           edge_points_train: number | null
+          entry_mode: string
           id: string
           n_test: number
           n_train: number
@@ -1363,6 +1364,7 @@ export type Database = {
           direction: string
           edge_points_test?: number | null
           edge_points_train?: number | null
+          entry_mode?: string
           id?: string
           n_test?: number
           n_train?: number
@@ -1384,6 +1386,7 @@ export type Database = {
           direction?: string
           edge_points_test?: number | null
           edge_points_train?: number | null
+          entry_mode?: string
           id?: string
           n_test?: number
           n_train?: number
@@ -2836,6 +2839,7 @@ export type Database = {
           bars: Json
           bars_to_outcome: number | null
           bars_to_outcome_atr: number | null
+          bars_to_outcome_exec: number | null
           bars_to_outcome_rr1: number | null
           bars_to_outcome_rr1_5: number | null
           bars_to_outcome_rr3: number | null
@@ -2847,12 +2851,16 @@ export type Database = {
           direction: string
           entry_price: number
           exchange: string | null
+          execution_computed_at: string | null
+          execution_entry_price: number | null
+          execution_gap_r: number | null
           geometry_source: string
           id: string
           multi_rr_computed_at: string | null
           outcome: string | null
           outcome_atr: string | null
           outcome_date: string | null
+          outcome_exec: string | null
           outcome_pnl_percent: number | null
           outcome_pnl_percent_atr: number | null
           outcome_pnl_percent_rr1: number | null
@@ -2893,6 +2901,7 @@ export type Database = {
           bars?: Json
           bars_to_outcome?: number | null
           bars_to_outcome_atr?: number | null
+          bars_to_outcome_exec?: number | null
           bars_to_outcome_rr1?: number | null
           bars_to_outcome_rr1_5?: number | null
           bars_to_outcome_rr3?: number | null
@@ -2904,12 +2913,16 @@ export type Database = {
           direction: string
           entry_price: number
           exchange?: string | null
+          execution_computed_at?: string | null
+          execution_entry_price?: number | null
+          execution_gap_r?: number | null
           geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
           outcome_atr?: string | null
           outcome_date?: string | null
+          outcome_exec?: string | null
           outcome_pnl_percent?: number | null
           outcome_pnl_percent_atr?: number | null
           outcome_pnl_percent_rr1?: number | null
@@ -2950,6 +2963,7 @@ export type Database = {
           bars?: Json
           bars_to_outcome?: number | null
           bars_to_outcome_atr?: number | null
+          bars_to_outcome_exec?: number | null
           bars_to_outcome_rr1?: number | null
           bars_to_outcome_rr1_5?: number | null
           bars_to_outcome_rr3?: number | null
@@ -2961,12 +2975,16 @@ export type Database = {
           direction?: string
           entry_price?: number
           exchange?: string | null
+          execution_computed_at?: string | null
+          execution_entry_price?: number | null
+          execution_gap_r?: number | null
           geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
           outcome?: string | null
           outcome_atr?: string | null
           outcome_date?: string | null
+          outcome_exec?: string | null
           outcome_pnl_percent?: number | null
           outcome_pnl_percent_atr?: number | null
           outcome_pnl_percent_rr1?: number | null
@@ -7251,6 +7269,15 @@ export type Database = {
         Args: { keep_days?: number }
         Returns: Json
       }
+      compute_execution_outcomes: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          processed: number
+          resolved: number
+          skipped_no_bar: number
+          with_entry: number
+        }[]
+      }
       compute_market_breadth_by_asset_class: {
         Args: { p_lookback_hours?: number }
         Returns: {
@@ -7540,6 +7567,7 @@ export type Database = {
           p_broker_profile_id?: string
           p_commission_override?: number
           p_direction: string
+          p_entry_mode?: string
           p_geometry_source?: string
           p_pattern_id: string
           p_since?: string
@@ -7574,6 +7602,7 @@ export type Database = {
       get_pattern_outcome_cells: {
         Args: {
           p_asset_type?: string
+          p_entry_mode?: string
           p_geometry_source?: string
           p_limit?: number
           p_min_trades?: number
@@ -7837,6 +7866,7 @@ export type Database = {
       run_cell_validation: {
         Args: {
           p_cut_months?: number
+          p_entry_mode?: string
           p_geometry_source?: string
           p_min_n?: number
           p_window_start?: string

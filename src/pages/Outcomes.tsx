@@ -22,6 +22,7 @@ import { trackEvent } from '@/lib/analytics';
 const ASSET_CLASSES = ['stocks', 'fx', 'crypto', 'etfs', 'indices', 'commodities'];
 const TIMEFRAMES = ['15m', '1h', '4h', '8h', '1d', '1wk'];
 const GEOMETRY_SOURCES = ['pivot', 'atr_fallback', 'unknown'] as const;
+const ENTRY_MODES = ['next_open', 'close'] as const;
 
 const nf = (n: number, d = 2) => (Number.isFinite(n) ? n.toFixed(d) : '—');
 
@@ -32,9 +33,14 @@ export default function Outcomes() {
   const assetParam = searchParams.get('asset') ?? 'all';
   const tfParam = searchParams.get('timeframe') ?? 'all';
   const geoParam = searchParams.get('geometry') ?? 'all';
+  const entryParam = searchParams.get('entry') ?? 'next_open';
   const asset = ASSET_CLASSES.includes(assetParam) ? assetParam : 'all';
   const timeframe = TIMEFRAMES.includes(tfParam) ? tfParam : 'all';
   const geometry = (GEOMETRY_SOURCES as readonly string[]).includes(geoParam) ? geoParam : 'all';
+  // Default is the only assumption a trader can act on: the next bar's open.
+  const entryMode = (ENTRY_MODES as readonly string[]).includes(entryParam)
+    ? (entryParam as 'next_open' | 'close')
+    : 'next_open';
 
   const setParam = (key: string, value: string) => {
     trackEvent('outcomes.filter_change', { key, value });
@@ -54,6 +60,7 @@ export default function Outcomes() {
     assetType: asset === 'all' ? undefined : asset,
     timeframe: timeframe === 'all' ? undefined : timeframe,
     geometrySource: geometry === 'all' ? undefined : (geometry as 'pivot' | 'atr_fallback' | 'unknown'),
+    entryMode,
   });
 
   const rows = useMemo(() => data ?? [], [data]);
@@ -244,7 +251,44 @@ export default function Outcomes() {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-full sm:w-72">
+            <label className="text-sm text-muted-foreground mb-1.5 block">
+              {t('outcomes.entryMode', 'Entry assumption')}
+            </label>
+            <Select value={entryMode} onValueChange={(v) => setParam('entry', v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="next_open">
+                  {t('outcomes.entryNextOpen', 'Next bar open (realistic)')}
+                </SelectItem>
+                <SelectItem value="close">
+                  {t('outcomes.entryClose', 'Confirming bar close (not achievable)')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        <p className="text-xs text-muted-foreground mb-4 max-w-3xl">
+          {entryMode === 'close'
+            ? t(
+                'outcomes.entryCloseWarning',
+                'You are viewing close-entry figures. These assume execution at the confirming bar\u2019s close, which is not achievable in practice: the price is only knowable once the bar has already closed. They are shown for comparison only.'
+              )
+            : t(
+                'outcomes.entryNextOpenNote',
+                'Entry is taken at the OPEN of the bar after confirmation \u2014 the first price a trader could actually transact at. Stop and target keep the original risk distance and R:R, so the overnight or inter-bar gap is charged against the trade, as it would be in reality.'
+              )}{' '}
+          <Link
+            to="/methodology#execution"
+            className="underline underline-offset-2 hover:text-foreground"
+            onClick={() => trackEvent('outcomes.methodology_click', { source: 'entry_mode' })}
+          >
+            {t('outcomes.entryModeLink', 'Why this matters')}
+          </Link>
+        </p>
 
         <p className="text-xs text-muted-foreground mb-6 max-w-3xl">
           {t(
