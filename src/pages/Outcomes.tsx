@@ -22,6 +22,7 @@ import { trackEvent } from '@/lib/analytics';
 const ASSET_CLASSES = ['stocks', 'fx', 'crypto', 'etfs', 'indices', 'commodities'];
 const TIMEFRAMES = ['15m', '1h', '4h', '8h', '1d', '1wk'];
 const GEOMETRY_SOURCES = ['pivot', 'atr_fallback', 'unknown'] as const;
+const ENTRY_MODES = ['next_open', 'close'] as const;
 
 const nf = (n: number, d = 2) => (Number.isFinite(n) ? n.toFixed(d) : '—');
 
@@ -32,9 +33,14 @@ export default function Outcomes() {
   const assetParam = searchParams.get('asset') ?? 'all';
   const tfParam = searchParams.get('timeframe') ?? 'all';
   const geoParam = searchParams.get('geometry') ?? 'all';
+  const entryParam = searchParams.get('entry') ?? 'next_open';
   const asset = ASSET_CLASSES.includes(assetParam) ? assetParam : 'all';
   const timeframe = TIMEFRAMES.includes(tfParam) ? tfParam : 'all';
   const geometry = (GEOMETRY_SOURCES as readonly string[]).includes(geoParam) ? geoParam : 'all';
+  // Default is the only assumption a trader can act on: the next bar's open.
+  const entryMode = (ENTRY_MODES as readonly string[]).includes(entryParam)
+    ? (entryParam as 'next_open' | 'close')
+    : 'next_open';
 
   const setParam = (key: string, value: string) => {
     trackEvent('outcomes.filter_change', { key, value });
@@ -54,6 +60,7 @@ export default function Outcomes() {
     assetType: asset === 'all' ? undefined : asset,
     timeframe: timeframe === 'all' ? undefined : timeframe,
     geometrySource: geometry === 'all' ? undefined : (geometry as 'pivot' | 'atr_fallback' | 'unknown'),
+    entryMode,
   });
 
   const rows = useMemo(() => data ?? [], [data]);
