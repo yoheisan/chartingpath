@@ -8,6 +8,8 @@ import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Glob
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MasterPlan, AssetTradingSchedule, TradingSchedules } from "@/hooks/useMasterPlan";
+import { useEdgePool, usePoolInstruments, type PoolFilters } from "@/hooks/useEdgePool";
+import { EdgePoolSelector } from "./EdgePoolSelector";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -192,6 +194,26 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
 
+  // ── Validated edge pool (the default path) ──
+  const { cells: poolCells, loading: loadingPool } = useEdgePool();
+  const [validatedOnly, setValidatedOnly] = useState(true);
+  const [poolFilters, setPoolFilters] = useState<PoolFilters>({
+    assetTypes: [], timeframes: [], direction: null, maxInstruments: 50,
+  });
+  const { instruments: poolInstruments, summary: poolSummary, loading: loadingInstruments } =
+    usePoolInstruments(poolFilters, validatedOnly);
+  const [dismissedUnvalidatedWarning, setDismissedUnvalidatedWarning] = useState(false);
+
+  // Plan asset_classes use "forex"; validated cells use "fx".
+  const poolAssetToPlanClass = (a: string) => (a === "fx" ? "forex" : a);
+  const planClassToPoolAsset = (a: string) => (a === "forex" ? "fx" : a);
+
+  const filteredPoolCells = useMemo(() => poolCells.filter(c =>
+    (!poolFilters.assetTypes.length || poolFilters.assetTypes.includes(c.asset_type)) &&
+    (!poolFilters.timeframes.length || poolFilters.timeframes.includes(c.timeframe)) &&
+    (!poolFilters.direction || c.direction === poolFilters.direction)
+  ), [poolCells, poolFilters]);
+
   // Pre-fill from existing plan (reset all fields first to avoid stale state when switching plans)
   useEffect(() => {
     if (!existingPlan) return;
@@ -229,6 +251,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     setStockExchanges(existingPlan.stock_exchanges ?? []);
     setFxCategories(existingPlan.fx_categories ?? []);
     setCryptoCategories(existingPlan.crypto_categories ?? []);
+    // Edge pool state
+    setValidatedOnly((existingPlan as any).validated_only ?? true);
+    setPoolFilters({
+      assetTypes: (existingPlan.asset_classes ?? []).map(a => (a === "forex" ? "fx" : a)),
+      timeframes: ((existingPlan as any).pool_timeframes ?? []) as string[],
+      direction: existingPlan.trend_direction === "long_only" ? "bullish"
+               : existingPlan.trend_direction === "short_only" ? "bearish" : null,
+      maxInstruments: (existingPlan as any).max_instruments ?? 50,
+    });
+    setDismissedUnvalidatedWarning(false);
   }, [existingPlan]);
 
   const togglePattern = (p: string) => {
