@@ -25,9 +25,9 @@ export interface CopilotTrade {
   user_action: string | null;
   timeframe: string | null;
   detection_id: string | null;
-  pattern_id: string | null;
-  asset_type: string | null;
-  data_quality_suspect: boolean | null;
+  pattern_id?: string | null;
+  asset_type?: string | null;
+  data_quality_suspect?: boolean | null;
 }
 
 export interface CopilotStats {
