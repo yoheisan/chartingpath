@@ -3691,6 +3691,7 @@ export type Database = {
           fx_categories: string[] | null
           id: string
           is_active: boolean | null
+          max_instruments: number | null
           max_open_positions: number | null
           max_position_pct: number | null
           min_agent_score: number | null
@@ -3714,6 +3715,7 @@ export type Database = {
           trend_direction: string | null
           updated_at: string
           user_id: string
+          validated_only: boolean
         }
         Insert: {
           asset_classes?: string[] | null
@@ -3723,6 +3725,7 @@ export type Database = {
           fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
+          max_instruments?: number | null
           max_open_positions?: number | null
           max_position_pct?: number | null
           min_agent_score?: number | null
@@ -3746,6 +3749,7 @@ export type Database = {
           trend_direction?: string | null
           updated_at?: string
           user_id: string
+          validated_only?: boolean
         }
         Update: {
           asset_classes?: string[] | null
@@ -3755,6 +3759,7 @@ export type Database = {
           fx_categories?: string[] | null
           id?: string
           is_active?: boolean | null
+          max_instruments?: number | null
           max_open_positions?: number | null
           max_position_pct?: number | null
           min_agent_score?: number | null
@@ -3778,6 +3783,7 @@ export type Database = {
           trend_direction?: string | null
           updated_at?: string
           user_id?: string
+          validated_only?: boolean
         }
         Relationships: []
       }
@@ -7624,6 +7630,58 @@ export type Database = {
         Returns: {
           org_id: string
           role: string
+        }[]
+      }
+      get_validated_edge_pool: {
+        Args: { p_since?: string }
+        Returns: {
+          asset_type: string
+          avg_rr: number
+          baseline_win_rate_pct: number
+          direction: string
+          edge_points: number
+          edge_points_test: number
+          edge_points_train: number
+          est_cost_r: number
+          expectancy_r: number
+          expectancy_r_net: number
+          n_test: number
+          n_train: number
+          pattern_id: string
+          pattern_name: string
+          timeframe: string
+          total_trades: number
+          validated_at: string
+          win_rate_pct: number
+        }[]
+      }
+      get_validated_pool_instruments: {
+        Args: {
+          p_asset_types?: string[]
+          p_direction?: string
+          p_max?: number
+          p_since?: string
+          p_timeframes?: string[]
+        }
+        Returns: {
+          asset_type: string
+          best_edge_points: number
+          cells: number
+          occurrences: number
+          symbol: string
+        }[]
+      }
+      get_validated_pool_summary: {
+        Args: {
+          p_asset_types?: string[]
+          p_direction?: string
+          p_since?: string
+          p_timeframes?: string[]
+        }
+        Returns: {
+          avg_edge_points: number
+          cell_count: number
+          instrument_count: number
         }[]
       }
       has_role: {
