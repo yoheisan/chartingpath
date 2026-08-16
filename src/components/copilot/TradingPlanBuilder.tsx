@@ -525,6 +525,38 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           )}
         </section>
 
+        {/* ── Plan predates validation: offer one-click migration ── */}
+        {unvalidatedCount > 0 && !dismissedUnvalidatedWarning && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              This plan includes {unvalidatedCount} combinations with no measured edge.
+              Switch to validated-only?
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" className="h-7 text-xs" onClick={() => { setValidatedOnly(true); setDismissedUnvalidatedWarning(true); }}>
+                Switch to validated-only
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDismissedUnvalidatedWarning(true)}>
+                Keep as is
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {validatedOnly ? (
+          <EdgePoolSelector
+            cells={poolCells}
+            loadingPool={loadingPool}
+            filters={poolFilters}
+            onFiltersChange={setPoolFilters}
+            instruments={poolInstruments}
+            summary={poolSummary}
+            loadingInstruments={loadingInstruments}
+            validatedOnly={validatedOnly}
+            onValidatedOnlyChange={setValidatedOnly}
+          />
+        ) : (
+        <>
         {/* ── Instrument Universe ── */}
         <section className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whatMarkets')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
