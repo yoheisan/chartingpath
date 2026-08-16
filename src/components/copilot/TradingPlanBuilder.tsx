@@ -8,6 +8,8 @@ import { Check, Minus, Plus, ChevronRight, Loader2, ChevronDown, Settings2, Glob
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MasterPlan, AssetTradingSchedule, TradingSchedules } from "@/hooks/useMasterPlan";
+import { useEdgePool, usePoolInstruments, type PoolFilters } from "@/hooks/useEdgePool";
+import { EdgePoolSelector } from "./EdgePoolSelector";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -192,6 +194,26 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
 
+  // ── Validated edge pool (the default path) ──
+  const { cells: poolCells, loading: loadingPool } = useEdgePool();
+  const [validatedOnly, setValidatedOnly] = useState(true);
+  const [poolFilters, setPoolFilters] = useState<PoolFilters>({
+    assetTypes: [], timeframes: [], direction: null, maxInstruments: 50,
+  });
+  const { instruments: poolInstruments, summary: poolSummary, loading: loadingInstruments } =
+    usePoolInstruments(poolFilters, validatedOnly);
+  const [dismissedUnvalidatedWarning, setDismissedUnvalidatedWarning] = useState(false);
+
+  // Plan asset_classes use "forex"; validated cells use "fx".
+  const poolAssetToPlanClass = (a: string) => (a === "fx" ? "forex" : a);
+  const planClassToPoolAsset = (a: string) => (a === "forex" ? "fx" : a);
+
+  const filteredPoolCells = useMemo(() => poolCells.filter(c =>
+    (!poolFilters.assetTypes.length || poolFilters.assetTypes.includes(c.asset_type)) &&
+    (!poolFilters.timeframes.length || poolFilters.timeframes.includes(c.timeframe)) &&
+    (!poolFilters.direction || c.direction === poolFilters.direction)
+  ), [poolCells, poolFilters]);
+
   // Pre-fill from existing plan (reset all fields first to avoid stale state when switching plans)
   useEffect(() => {
     if (!existingPlan) return;
@@ -229,6 +251,16 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     setStockExchanges(existingPlan.stock_exchanges ?? []);
     setFxCategories(existingPlan.fx_categories ?? []);
     setCryptoCategories(existingPlan.crypto_categories ?? []);
+    // Edge pool state
+    setValidatedOnly((existingPlan as any).validated_only ?? true);
+    setPoolFilters({
+      assetTypes: (existingPlan.asset_classes ?? []).map(a => (a === "forex" ? "fx" : a)),
+      timeframes: ((existingPlan as any).pool_timeframes ?? []) as string[],
+      direction: existingPlan.trend_direction === "long_only" ? "bullish"
+               : existingPlan.trend_direction === "short_only" ? "bearish" : null,
+      maxInstruments: (existingPlan as any).max_instruments ?? 50,
+    });
+    setDismissedUnvalidatedWarning(false);
   }, [existingPlan]);
 
   const togglePattern = (p: string) => {
@@ -340,7 +372,34 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time.${windowInfo}${excl}${adv}${universe}`;
   }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories, timezone]);
 
-  const canSave = selectedPatterns.length > 0;
+  const canSave = validatedOnly ? filteredPoolCells.length > 0 : selectedPatterns.length > 0;
+
+  // Derived from the validated pool when the default path is used.
+  const poolPatterns = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => c.pattern_name || c.pattern_id))),
+    [filteredPoolCells]
+  );
+  const poolAssetClasses = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => poolAssetToPlanClass(c.asset_type)))),
+    [filteredPoolCells]
+  );
+  const poolTimeframes = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => c.timeframe))),
+    [filteredPoolCells]
+  );
+  // Direction follows the validated cells' own direction rather than defaulting to "both".
+  const poolDirection = useMemo(() => {
+    const dirs = new Set(filteredPoolCells.map(c => c.direction));
+    if (dirs.size === 1) return dirs.has("bullish") ? "long_only" : "short_only";
+    return "both";
+  }, [filteredPoolCells]);
+
+  // Existing plans predate validation: warn when they include combinations with no measured edge.
+  const unvalidatedCount = useMemo(() => {
+    if (!existingPlan || (existingPlan as any).validated_only) return 0;
+    const validatedNames = new Set(poolCells.map(c => (c.pattern_name || c.pattern_id).toLowerCase()));
+    return (existingPlan.preferred_patterns ?? []).filter(p => !validatedNames.has(p.toLowerCase())).length;
+  }, [existingPlan, poolCells]);
 
   // Detect if the plan includes exotic FX
   const hasExoticFx = assetClasses.includes("forex") && fxCategories.includes("exotic");
@@ -392,16 +451,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         timezone,
         stop_loss_rule: "2R",
         excluded_conditions: exclusions,
-        preferred_patterns: selectedPatterns,
+        preferred_patterns: validatedOnly ? poolPatterns : selectedPatterns,
         sector_filters: [],
-        trend_direction: direction,
+        trend_direction: validatedOnly ? poolDirection : direction,
+        validated_only: validatedOnly,
+        max_instruments: validatedOnly ? poolFilters.maxInstruments : null,
+        pool_timeframes: validatedOnly ? poolTimeframes : [],
         min_market_cap: exclusions.includes("No small caps under $2") ? "$2" : null,
         mtf_required_timeframes: mtfTimeframes.length > 0 ? mtfTimeframes : [],
         mtf_min_aligned: mtfTimeframes.length > 0 ? mtfMinAligned : null,
         min_agent_score: agentScoreEnabled ? minAgentScore : null,
         trend_context_filter: trendContext,
         min_confluence_score: confluenceEnabled ? minConfluence : null,
-        asset_classes: assetClasses,
+        asset_classes: validatedOnly ? poolAssetClasses : assetClasses,
         fx_categories: fxCategories,
         crypto_categories: cryptoCategories,
         stock_exchanges: stockExchanges,
@@ -424,6 +486,9 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
 
       window.dispatchEvent(new CustomEvent("mandate-saved"));
       toast.success(existingPlan && !isNewPlan ? "Trading plan updated." : "Trading plan created — Copilot is now paper-testing it.");
+      if ((plans?.length ?? 0) > 1) {
+        toast.info("Only one plan can be active at a time — your other plans were deactivated so the forward record stays attributable.");
+      }
       onSaved();
     } catch (err: any) {
       console.error("Save plan error:", err);
@@ -463,6 +528,38 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           )}
         </section>
 
+        {/* ── Plan predates validation: offer one-click migration ── */}
+        {unvalidatedCount > 0 && !dismissedUnvalidatedWarning && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              This plan includes {unvalidatedCount} combinations with no measured edge.
+              Switch to validated-only?
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" className="h-7 text-xs" onClick={() => { setValidatedOnly(true); setDismissedUnvalidatedWarning(true); }}>
+                Switch to validated-only
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDismissedUnvalidatedWarning(true)}>
+                Keep as is
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {validatedOnly ? (
+          <EdgePoolSelector
+            cells={poolCells}
+            loadingPool={loadingPool}
+            filters={poolFilters}
+            onFiltersChange={setPoolFilters}
+            instruments={poolInstruments}
+            summary={poolSummary}
+            loadingInstruments={loadingInstruments}
+            validatedOnly={validatedOnly}
+            onValidatedOnlyChange={setValidatedOnly}
+          />
+        ) : (
+        <>
         {/* ── Instrument Universe ── */}
         <section className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.whatMarkets')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
@@ -644,6 +741,20 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
             ))}
           </div>
         </section>
+
+        <label className="flex items-start gap-2 rounded-lg border border-border/50 bg-muted/20 p-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={validatedOnly}
+            onChange={e => setValidatedOnly(e.target.checked)}
+            className="mt-0.5 rounded border-input"
+          />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            Go back to validated combinations only — the {poolCells.length} that measured edge over chance.
+          </span>
+        </label>
+        </>
+        )}
 
         {/* ── Section 3: Risk per trade ── */}
         <section className="space-y-3">
@@ -869,6 +980,21 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           )}
         </section>
 
+        {/* ── Section 7: Advanced Settings (Collapsible) ── */}
+        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
+              <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              {t('planBuilder.advancedSettings')}
+              {hasAdvancedSettings && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
+                  {t('planBuilder.active')}
+                </span>
+              )}
+              <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-5 pt-2">
         {/* ── Section 6: Exclusions ── */}
         <section className="space-y-2">
           <h4 className="text-sm font-semibold text-foreground">{t('planBuilder.exclusionsTitle')} <span className="font-normal text-muted-foreground">({t('planBuilder.optional')})</span></h4>
@@ -895,21 +1021,6 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
           </div>
         </section>
 
-        {/* ── Section 7: Advanced Settings (Collapsible) ── */}
-        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 w-full py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors group">
-              <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              {t('planBuilder.advancedSettings')}
-              {hasAdvancedSettings && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-sm font-semibold">
-                  {t('planBuilder.active')}
-                </span>
-              )}
-              <ChevronDown className={cn("h-4 w-4 ml-auto text-muted-foreground transition-transform", showAdvanced && "rotate-180")} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-5 pt-2">
 
             {/* ── 7a: Multi-Timeframe Alignment ── */}
             <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3">
