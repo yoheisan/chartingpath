@@ -27,6 +27,10 @@ export interface MasterPlan {
   is_active: boolean;
   plan_order: number;
   timezone: string;
+  // Validated edge pool
+  validated_only: boolean;
+  max_instruments: number | null;
+  pool_timeframes: string[];
   // Advanced settings
   mtf_required_timeframes: string[];
   mtf_min_aligned: number | null;
