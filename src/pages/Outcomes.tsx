@@ -251,7 +251,44 @@ export default function Outcomes() {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-full sm:w-72">
+            <label className="text-sm text-muted-foreground mb-1.5 block">
+              {t('outcomes.entryMode', 'Entry assumption')}
+            </label>
+            <Select value={entryMode} onValueChange={(v) => setParam('entry', v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="next_open">
+                  {t('outcomes.entryNextOpen', 'Next bar open (realistic)')}
+                </SelectItem>
+                <SelectItem value="close">
+                  {t('outcomes.entryClose', 'Confirming bar close (not achievable)')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        <p className="text-xs text-muted-foreground mb-4 max-w-3xl">
+          {entryMode === 'close'
+            ? t(
+                'outcomes.entryCloseWarning',
+                'You are viewing close-entry figures. These assume execution at the confirming bar\u2019s close, which is not achievable in practice: the price is only knowable once the bar has already closed. They are shown for comparison only.'
+              )
+            : t(
+                'outcomes.entryNextOpenNote',
+                'Entry is taken at the OPEN of the bar after confirmation \u2014 the first price a trader could actually transact at. Stop and target keep the original risk distance and R:R, so the overnight or inter-bar gap is charged against the trade, as it would be in reality.'
+              )}{' '}
+          <Link
+            to="/methodology#execution"
+            className="underline underline-offset-2 hover:text-foreground"
+            onClick={() => trackEvent('outcomes.methodology_click', { source: 'entry_mode' })}
+          >
+            {t('outcomes.entryModeLink', 'Why this matters')}
+          </Link>
+        </p>
 
         <p className="text-xs text-muted-foreground mb-6 max-w-3xl">
           {t(
