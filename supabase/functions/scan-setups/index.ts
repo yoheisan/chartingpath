@@ -151,6 +151,22 @@ Deno.serve(async (req) => {
       }
       console.log(`[scan-setups] Found ${detections.length} detections for plan ${plan.name} across ${tradableAssetTypes.join(",")}`);
 
+      // Validated-only pool: a plan defaults to trading only cells that passed
+      // out-of-sample validation. Anything else is not part of the universe.
+      let validatedKeys: Set<string> | null = null;
+      if (plan.validated_only !== false) {
+        const { data: vRows } = await supabase
+          .from("cell_validation")
+          .select("pattern_id, timeframe, asset_type, direction, status, test_start")
+          .eq("status", "validated");
+        validatedKeys = new Set(
+          (vRows ?? []).map((r: any) =>
+            `${String(r.pattern_id).toLowerCase()}|${r.timeframe}|${r.asset_type}|${r.direction}`
+          )
+        );
+        console.log(`[scan-setups] validated-only plan: ${validatedKeys.size} cells in pool`);
+      }
+
       const { data: portfolio } = await supabase
         .from("paper_portfolios")
         .select("id, current_balance")
