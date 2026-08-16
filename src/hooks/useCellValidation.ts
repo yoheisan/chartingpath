@@ -9,6 +9,7 @@ export interface CellValidation {
   status: "validated" | "failed" | "insufficient_sample";
   edge_points_test: number | null;
   n_test: number | null;
+  entry_mode?: string;
 }
 
 const key = (p: string, tf: string, a: string, d: string) =>
@@ -21,7 +22,7 @@ const toDirection = (tradeType?: string | null) =>
  * Validation status for every measured cell, so any trade row can state
  * plainly whether the combination it came from measured edge.
  */
-export function useCellValidation() {
+export function useCellValidation(entryMode: "next_open" | "close" = "next_open") {
   const [rows, setRows] = useState<CellValidation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +31,9 @@ export function useCellValidation() {
     (async () => {
       const { data, error } = await supabase
         .from("cell_validation" as any)
-        .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test")
+        .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test, entry_mode")
+        // Validation is reported on the realistic execution assumption by default.
+        .eq("entry_mode", entryMode)
         .order("test_end", { ascending: false })
         .limit(2000);
       if (cancelled) return;
@@ -39,7 +42,7 @@ export function useCellValidation() {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [entryMode]);
 
   const map = useMemo(() => {
     const m = new Map<string, CellValidation>();

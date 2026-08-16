@@ -28,6 +28,14 @@ export interface OutcomeLookupRow {
 
 export type GeometrySource = 'pivot' | 'atr_fallback' | 'neckline_fallback' | 'unknown';
 
+/**
+ * 'next_open' — entry at the OPEN of the bar after confirmation. This is the
+ *   only assumption a trader can actually act on, and is the platform default.
+ * 'close' — entry at the close of the confirming bar. Kept for comparison only;
+ *   it assumes transacting at a price knowable only once the bar has closed.
+ */
+export type EntryMode = 'next_open' | 'close';
+
 export interface OutcomeLookupFilters {
   /** undefined = all asset classes */
   assetType?: string;
@@ -39,6 +47,8 @@ export interface OutcomeLookupFilters {
    * 2:1 ATR rule that fires when the detector cannot resolve enough pivots.
    */
   geometrySource?: GeometrySource;
+  /** Defaults to the realistic next-bar-open execution assumption. */
+  entryMode?: EntryMode;
 }
 
 /**
@@ -59,9 +69,20 @@ export interface OutcomeLookupFilters {
  * pattern x timeframe x asset class x direction. Slicing per instrument
  * would manufacture winners by chance.
  */
-export function useOutcomeLookup({ assetType, timeframe, geometrySource }: OutcomeLookupFilters) {
+export function useOutcomeLookup({
+  assetType,
+  timeframe,
+  geometrySource,
+  entryMode = 'next_open',
+}: OutcomeLookupFilters) {
   return useQuery<OutcomeLookupRow[]>({
-    queryKey: ['outcome-lookup', assetType ?? 'all', timeframe ?? 'all', geometrySource ?? 'all'],
+    queryKey: [
+      'outcome-lookup',
+      assetType ?? 'all',
+      timeframe ?? 'all',
+      geometrySource ?? 'all',
+      entryMode,
+    ],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_pattern_outcome_cells', {
         p_min_trades: MIN_SAMPLE_SIZE,
@@ -69,6 +90,7 @@ export function useOutcomeLookup({ assetType, timeframe, geometrySource }: Outco
         // line on /outcomes counts the RETURNED rows, so if this limit ever binds the
         // page will silently understate how many losing combinations exist.
         p_limit: 400,
+        p_entry_mode: entryMode,
         ...(assetType ? { p_asset_type: assetType } : {}),
         ...(timeframe ? { p_timeframe: timeframe } : {}),
         ...(geometrySource ? { p_geometry_source: geometrySource } : {}),
