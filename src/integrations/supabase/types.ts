@@ -3702,6 +3702,7 @@ export type Database = {
           name: string | null
           override_constraints: Json | null
           plan_order: number | null
+          pool_timeframes: string[]
           preferred_patterns: Json | null
           raw_nl_input: string | null
           sector_filters: Json | null
@@ -3736,6 +3737,7 @@ export type Database = {
           name?: string | null
           override_constraints?: Json | null
           plan_order?: number | null
+          pool_timeframes?: string[]
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
@@ -3770,6 +3772,7 @@ export type Database = {
           name?: string | null
           override_constraints?: Json | null
           plan_order?: number | null
+          pool_timeframes?: string[]
           preferred_patterns?: Json | null
           raw_nl_input?: string | null
           sector_filters?: Json | null
