@@ -226,6 +226,7 @@ export default function Methodology() {
 
           {/* 9 */}
           <Section title={t('methodology.limitationsTitle', 'Other limitations')}>
+*** placeholder
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 {t(
