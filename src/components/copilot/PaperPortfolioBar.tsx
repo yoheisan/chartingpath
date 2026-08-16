@@ -21,7 +21,11 @@ interface PaperPortfolioBarProps {
 
 export function PaperPortfolioBar({ userId }: PaperPortfolioBarProps) {
   const { t } = useTranslation();
-  const { portfolio, openTrades, closedTrades, loading, flattenAll, resetPortfolio, winRate } = usePaperTrading(userId);
+  const {
+    portfolio, openTrades, closedTrades, cleanClosedTrades, suspectCount,
+    adjustedBalance, adjustedPnl, hasWinRateSample,
+    loading, flattenAll, resetPortfolio, winRate,
+  } = usePaperTrading(userId);
   const { connection } = useBrokerConnection(userId);
   const isLive = connection?.is_live === true;
 
@@ -85,8 +89,8 @@ export function PaperPortfolioBar({ userId }: PaperPortfolioBarProps) {
 
   if (!userId || loading) return null;
 
-  const totalPnl = portfolio?.total_pnl ?? 0;
-  const balance = portfolio?.current_balance ?? 100000;
+  const totalPnl = adjustedPnl;
+  const balance = adjustedBalance;
 
   const handleFlattenAll = async () => {
     setFlattening(true);
@@ -142,10 +146,23 @@ export function PaperPortfolioBar({ userId }: PaperPortfolioBarProps) {
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-muted-foreground">{t('paperTrading.winRate', 'WR')}</span>
             <span className="text-sm font-bold tabular-nums text-foreground">
-              {closedTrades.length > 0 ? `${winRate.toFixed(0)}%` : '—'}
+              {hasWinRateSample ? `${winRate.toFixed(0)}%` : '—'}
             </span>
           </div>
         </div>
+
+        {!hasWinRateSample && (
+          <p className="text-[11px] text-muted-foreground">
+            Insufficient sample ({cleanClosedTrades.length} trade{cleanClosedTrades.length === 1 ? '' : 's'}) — no win rate below 30.
+          </p>
+        )}
+
+        {suspectCount > 0 && (
+          <p className="text-[11px] text-amber-600 dark:text-amber-400">
+            {suspectCount} trades excluded — data quality issue, see{' '}
+            <a href="/methodology" className="underline underline-offset-2">/methodology</a>.
+          </p>
+        )}
 
         {/* Kill switch buttons */}
         <div className="flex items-center gap-1.5 pt-0.5">
