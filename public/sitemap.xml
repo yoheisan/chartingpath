@@ -2563,12 +2563,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://chartingpath.com/patterns/ascending-triangle/IWM/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://chartingpath.com/patterns/triple-top/ZM%3DF/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -3236,12 +3230,6 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/donchian-breakout-short/PRU/statistics</loc>
-    <lastmod>2026-08-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://chartingpath.com/patterns/triple-top/QQQ/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -8054,6 +8042,12 @@
   </url>
   <url>
     <loc>https://chartingpath.com/patterns/rising-wedge/%5ENDX/statistics</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://chartingpath.com/patterns/falling-wedge/TRV/statistics</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
