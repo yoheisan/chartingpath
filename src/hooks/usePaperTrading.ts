@@ -29,6 +29,10 @@ export interface PaperTrade {
   override_reason: string | null;
   override_notes: string | null;
   user_id: string;
+  pattern_id?: string | null;
+  timeframe?: string | null;
+  asset_type?: string | null;
+  data_quality_suspect?: boolean | null;
 }
 
 const OVERRIDE_REASONS = [
@@ -272,13 +276,33 @@ export function usePaperTrading(userId?: string) {
     }
   }, [userId, openTrades, fetchData]);
 
-  const winCount = closedTrades.filter((t) => (t.pnl ?? 0) > 0).length;
-  const winRate = closedTrades.length > 0 ? ((winCount / closedTrades.length) * 100) : 0;
+  // Trades whose recorded exit price failed the data-integrity check are
+  // excluded from every balance, P&L and win-rate figure. They are counted
+  // only so we can say how many were dropped.
+  const suspectTrades = closedTrades.filter((t) => t.data_quality_suspect === true);
+  const cleanClosedTrades = closedTrades.filter((t) => t.data_quality_suspect !== true);
+  const suspectCount = suspectTrades.length;
+
+  const winCount = cleanClosedTrades.filter((t) => (t.pnl ?? 0) > 0).length;
+  const rawWinRate = cleanClosedTrades.length > 0 ? ((winCount / cleanClosedTrades.length) * 100) : 0;
+  const hasWinRateSample = cleanClosedTrades.length >= MIN_WIN_RATE_SAMPLE;
+  const winRate = rawWinRate;
+
+  // Balance rebuilt from clean trades only — the stored balance includes the
+  // suspect P&L and is therefore not a number we are willing to show.
+  const initialBalance = portfolio?.initial_balance ?? 100000;
+  const cleanPnl = cleanClosedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
+  const adjustedBalance = initialBalance + cleanPnl;
 
   return {
     portfolio,
     openTrades,
     closedTrades,
+    cleanClosedTrades,
+    suspectCount,
+    adjustedBalance,
+    adjustedPnl: cleanPnl,
+    hasWinRateSample,
     loading,
     closingTradeId,
     needManualPrice,
