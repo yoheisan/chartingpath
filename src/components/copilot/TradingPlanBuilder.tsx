@@ -372,7 +372,34 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
     return `Copilot will paper-test ${pNames}${dir} setups, risking ${riskPct}% per trade, up to ${maxPositions} positions at a time.${windowInfo}${excl}${adv}${universe}`;
   }, [selectedPatterns, direction, riskPct, maxPositions, windowStart, windowEnd, exclusions, mtfTimeframes, mtfMinAligned, agentScoreEnabled, minAgentScore, trendContext, confluenceEnabled, minConfluence, assetClasses, stockExchanges, fxCategories, cryptoCategories, timezone]);
 
-  const canSave = selectedPatterns.length > 0;
+  const canSave = validatedOnly ? filteredPoolCells.length > 0 : selectedPatterns.length > 0;
+
+  // Derived from the validated pool when the default path is used.
+  const poolPatterns = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => c.pattern_name || c.pattern_id))),
+    [filteredPoolCells]
+  );
+  const poolAssetClasses = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => poolAssetToPlanClass(c.asset_type)))),
+    [filteredPoolCells]
+  );
+  const poolTimeframes = useMemo(
+    () => Array.from(new Set(filteredPoolCells.map(c => c.timeframe))),
+    [filteredPoolCells]
+  );
+  // Direction follows the validated cells' own direction rather than defaulting to "both".
+  const poolDirection = useMemo(() => {
+    const dirs = new Set(filteredPoolCells.map(c => c.direction));
+    if (dirs.size === 1) return dirs.has("bullish") ? "long_only" : "short_only";
+    return "both";
+  }, [filteredPoolCells]);
+
+  // Existing plans predate validation: warn when they include combinations with no measured edge.
+  const unvalidatedCount = useMemo(() => {
+    if (!existingPlan || (existingPlan as any).validated_only) return 0;
+    const validatedNames = new Set(poolCells.map(c => (c.pattern_name || c.pattern_id).toLowerCase()));
+    return (existingPlan.preferred_patterns ?? []).filter(p => !validatedNames.has(p.toLowerCase())).length;
+  }, [existingPlan, poolCells]);
 
   // Detect if the plan includes exotic FX
   const hasExoticFx = assetClasses.includes("forex") && fxCategories.includes("exotic");
@@ -424,16 +451,19 @@ export function TradingPlanBuilder({ existingPlan, onSaved, onCancel, onSwitchTo
         timezone,
         stop_loss_rule: "2R",
         excluded_conditions: exclusions,
-        preferred_patterns: selectedPatterns,
+        preferred_patterns: validatedOnly ? poolPatterns : selectedPatterns,
         sector_filters: [],
-        trend_direction: direction,
+        trend_direction: validatedOnly ? poolDirection : direction,
+        validated_only: validatedOnly,
+        max_instruments: validatedOnly ? poolFilters.maxInstruments : null,
+        pool_timeframes: validatedOnly ? poolTimeframes : [],
         min_market_cap: exclusions.includes("No small caps under $2") ? "$2" : null,
         mtf_required_timeframes: mtfTimeframes.length > 0 ? mtfTimeframes : [],
         mtf_min_aligned: mtfTimeframes.length > 0 ? mtfMinAligned : null,
         min_agent_score: agentScoreEnabled ? minAgentScore : null,
         trend_context_filter: trendContext,
         min_confluence_score: confluenceEnabled ? minConfluence : null,
-        asset_classes: assetClasses,
+        asset_classes: validatedOnly ? poolAssetClasses : assetClasses,
         fx_categories: fxCategories,
         crypto_categories: cryptoCategories,
         stock_exchanges: stockExchanges,
