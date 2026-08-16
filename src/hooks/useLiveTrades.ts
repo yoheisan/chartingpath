@@ -65,6 +65,9 @@ export function useLiveTrades(userId?: string) {
       humanPnlR: Math.round(humanPnlR * 100) / 100,
       humanWinRate: closedHuman.length > 0 ? Math.round((humanWins / closedHuman.length) * 100) : 0,
       humanTradeCount: humanTrades.length,
+      aiClosedCount: closedAi.length,
+      humanClosedCount: closedHuman.length,
+      suspectCount: 0,
     };
   }, [trades]);
 
