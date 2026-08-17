@@ -138,7 +138,10 @@ serve(async (req) => {
           .eq("timeframe", timeframe)
           .eq("asset_type", asset_type)
           .eq("direction", dir)
-          .eq("status", "validated");
+          .eq("status", "validated")
+          // Current run only, realistic entry assumption.
+          .eq("is_current", true)
+          .eq("entry_mode", "next_open");
         const setupLower = String(setup_type).toLowerCase().replace(/[-_]/g, " ");
         const isValidatedCell = (cellRows ?? []).some((r: any) => {
           const pid = String(r.pattern_id).toLowerCase().replace(/[-_]/g, " ");

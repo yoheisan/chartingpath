@@ -34,6 +34,9 @@ export function useCellValidation(entryMode: "next_open" | "close" = "next_open"
         .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test, entry_mode")
         // Validation is reported on the realistic execution assumption by default.
         .eq("entry_mode", entryMode)
+        // Only the current validation run: the table retains prior runs for
+        // decay analysis, and reading them all double-counts the pool.
+        .eq("is_current", true)
         .order("test_end", { ascending: false })
         .limit(2000);
       if (cancelled) return;

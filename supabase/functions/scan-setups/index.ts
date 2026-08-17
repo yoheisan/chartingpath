@@ -156,7 +156,11 @@ Deno.serve(async (req) => {
       // Every measured cell, so the trade can state the evidence behind it.
       const { data: allCells } = await supabase
         .from("cell_validation")
-        .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test");
+        .select("pattern_id, timeframe, asset_type, direction, status, edge_points_test, n_test")
+        // Only the current validation run. The table keeps history for decay
+        // analysis, so an unfiltered read double-counts retired runs.
+        .eq("is_current", true)
+        .eq("entry_mode", "next_open");
       const cellByKey = new Map<string, any>();
       for (const r of (allCells ?? []) as any[]) {
         cellByKey.set(
