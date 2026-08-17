@@ -45,9 +45,12 @@ jobs:
             exit 1
           fi
 
-          # maxInstrumentsPerType 40 bounds the universe to ~240 symbols; the
-          # function's cursor walks it 2 instruments at a time (maxPerRun),
-          # covering the whole universe roughly once a day at this cadence.
+          # maxInstrumentsPerType 40 bounds the universe to 220 symbols; the
+          # function's cursor walks it 1 instrument at a time (maxPerRun),
+          # covering the whole universe roughly twice a day at this cadence.
+          # Measured: 2 instruments per run still produced HTTP 546 on crypto
+          # (60-69s, ~4000 occurrences); 1 instrument runs 33-47s at 16-21MB
+          # peak heap, 8/8 successful.
           # 999 previously meant every invocation rebuilt an 800+ symbol list
           # and each run pulled 2 years of hourly bars for 3 instruments —
           # that peak is what the runtime killed with HTTP 546.
@@ -55,7 +58,7 @@ jobs:
             -X POST "$SUPABASE_URL/functions/v1/seed-historical-patterns-mtf" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d '{"timeframe":"1h","maxInstrumentsPerType":40,"maxPerRun":2,"useCursor":true,"forceFullBackfill":true,"incrementalMode":false,"skipDbCache":true,"dryRun":false}') || CURL_FAILED=1
+            -d '{"timeframe":"1h","maxInstrumentsPerType":40,"maxPerRun":1,"useCursor":true,"forceFullBackfill":true,"incrementalMode":false,"skipDbCache":true,"dryRun":false}') || CURL_FAILED=1
 
           echo "HTTP status: ${STATUS:-<none>}"
           echo "--- response body ---"
