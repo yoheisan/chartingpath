@@ -1504,46 +1504,11 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="direction" />
                     </div>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('winRate')}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1">
-                            {t('screener.winPercent')}
-                            <SortIcon columnKey="winRate" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">{t('screener.winRateTooltip')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
-                  {/* Expectancy column suppressed: the previous value was derived from a
-                      fixed 2.0 R:R assumption, not from measured risk_reward_ratio.
-                      See /methodology and /outcomes for verified expectancy. */}
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('rot')}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1 cursor-help">
-                            ROT
-                            <Info className="h-3 w-3 opacity-50" />
-                            <SortIcon columnKey="rot" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-sm whitespace-normal">
-                          <p className="text-xs">{t('screener.rotTooltip', 'Return on Time — R earned per bar of exposure. Higher = more capital-efficient.')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
+                  {/* Win rate, expectancy and ROT columns removed: they are
+                      cell-level measurements (pattern/timeframe/asset/direction)
+                      and were identical on every instrument row, which read as
+                      an instrument-level edge claim. They now appear once, in
+                      the group header. */}
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('signal')}
