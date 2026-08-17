@@ -1343,8 +1343,10 @@ export type Database = {
           edge_points_test: number | null
           edge_points_train: number | null
           entry_mode: string
+          expectancy_r_gross: number | null
           id: string
           is_current: boolean
+          meets_min_expectancy: boolean | null
           n_test: number
           n_train: number
           pattern_id: string
@@ -1367,8 +1369,10 @@ export type Database = {
           edge_points_test?: number | null
           edge_points_train?: number | null
           entry_mode?: string
+          expectancy_r_gross?: number | null
           id?: string
           is_current?: boolean
+          meets_min_expectancy?: boolean | null
           n_test?: number
           n_train?: number
           pattern_id: string
@@ -1391,8 +1395,10 @@ export type Database = {
           edge_points_test?: number | null
           edge_points_train?: number | null
           entry_mode?: string
+          expectancy_r_gross?: number | null
           id?: string
           is_current?: boolean
+          meets_min_expectancy?: boolean | null
           n_test?: number
           n_train?: number
           pattern_id?: string
@@ -7840,6 +7846,7 @@ export type Database = {
         Args: { p_worker_name: string }
         Returns: undefined
       }
+      min_expectancy_r: { Args: never; Returns: number }
       process_plan_change: {
         Args: {
           p_billing_cycle?: string
