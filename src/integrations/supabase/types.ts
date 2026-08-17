@@ -5625,6 +5625,57 @@ export type Database = {
           },
         ]
       }
+      seed_invocation_log: {
+        Row: {
+          cursor_offset: number | null
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          function_name: string
+          id: string
+          instruments_processed: number
+          occurrences_detected: number
+          peak_rss_mb: number | null
+          rows_inserted: number
+          started_at: string
+          status: string
+          symbols: string[] | null
+          timeframe: string | null
+        }
+        Insert: {
+          cursor_offset?: number | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          function_name?: string
+          id?: string
+          instruments_processed?: number
+          occurrences_detected?: number
+          peak_rss_mb?: number | null
+          rows_inserted?: number
+          started_at?: string
+          status?: string
+          symbols?: string[] | null
+          timeframe?: string | null
+        }
+        Update: {
+          cursor_offset?: number | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          function_name?: string
+          id?: string
+          instruments_processed?: number
+          occurrences_detected?: number
+          peak_rss_mb?: number | null
+          rows_inserted?: number
+          started_at?: string
+          status?: string
+          symbols?: string[] | null
+          timeframe?: string | null
+        }
+        Relationships: []
+      }
       service_health_checks: {
         Row: {
           checked_at: string

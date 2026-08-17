@@ -2238,18 +2238,199 @@ serve(async (req) => {
       console.log(`[seed-mtf] symbolsFilter matched ${filteredInstruments.length} of ${allInstruments.length} instruments`);
     }
 
-    // Pagination
-    const MAX_PER_RUN = 3; // Smaller batch for intraday (more data per instrument)
-    const instrumentsToProcess = filteredInstruments.slice(offset, offset + MAX_PER_RUN);
-    const hasMore = offset + MAX_PER_RUN < filteredInstruments.length;
-    const nextOffset = offset + MAX_PER_RUN;
+    // ── Pagination ────────────────────────────────────────────────────────
+    // MAX_PER_RUN was 3. The runtime started killing this function with HTTP
+    // 546 (edge resource limit) once the execution-outcome columns landed:
+    // successful runs were already taking 30-68s at 3 instruments, and the
+    // extra per-row work pushed peak memory over the ceiling. Two instruments
+    // per invocation restores headroom without changing any logic; the cursor
+    // below means the universe is still covered, just over more invocations.
+    const MAX_PER_RUN = Number(body?.maxPerRun) > 0 ? Math.min(Number(body.maxPerRun), 4) : 2;
 
-    console.log(`[seed-mtf] Processing ${offset} to ${offset + instrumentsToProcess.length} of ${allInstruments.length}`);
+    // Persisted cursor: successive runs advance through the universe instead
+    // of repeating the same slice. Opt-in so manual/offset-driven calls are
+    // unaffected.
+    const useCursor = body?.useCursor === true && !symbolsFilter;
+    let effectiveOffset = offset;
+    if (useCursor) {
+      const { data: cur } = await supabase
+        .from('scan_rotation_cursor')
+        .select('cursor_offset')
+        .eq('asset_type', 'seed_mtf')
+        .eq('timeframe', timeframe)
+        .maybeSingle();
+      effectiveOffset = (cur?.cursor_offset ?? 0) % Math.max(filteredInstruments.length, 1);
+      const nextCursor = (effectiveOffset + MAX_PER_RUN) % Math.max(filteredInstruments.length, 1);
+      await supabase.from('scan_rotation_cursor').upsert({
+        asset_type: 'seed_mtf',
+        timeframe,
+        cursor_offset: nextCursor,
+        universe_size: filteredInstruments.length,
+        last_advanced_at: new Date().toISOString(),
+      }, { onConflict: 'asset_type,timeframe' });
+      console.log(`[seed-mtf] cursor: offset ${effectiveOffset} -> ${nextCursor} of ${filteredInstruments.length}`);
+    }
 
-    const allOccurrences: HistoricalOccurrence[] = [];
+    const instrumentsToProcess = filteredInstruments.slice(effectiveOffset, effectiveOffset + MAX_PER_RUN);
+    const hasMore = effectiveOffset + MAX_PER_RUN < filteredInstruments.length;
+    const nextOffset = effectiveOffset + MAX_PER_RUN;
+
+    console.log(`[seed-mtf] Processing ${effectiveOffset} to ${effectiveOffset + instrumentsToProcess.length} of ${filteredInstruments.length}`);
+
+    // Peak memory, not total work, is what trips HTTP 546. Sample it around
+    // every instrument so headroom is visible in the logs instead of being
+    // inferred from the next failure.
+    const rssMb = (): number => {
+      try {
+        // @ts-ignore Deno.memoryUsage is available in the edge runtime
+        const m = Deno.memoryUsage?.();
+        // rss reads back as 0 in the edge runtime's sandbox; heapUsed is the
+        // number that actually tracks what we allocate, so report the larger.
+        return m ? Math.round(Math.max(m.rss ?? 0, m.heapUsed ?? 0) / 1048576) : -1;
+      } catch { return -1; }
+    };
+    let peakRssMb = rssMb();
+    const noteMem = (label: string) => {
+      const r = rssMb();
+      if (r > peakRssMb) peakRssMb = r;
+      console.log(`[seed-mtf][mem] ${label}: rss=${r}MB peak=${peakRssMb}MB`);
+    };
+
+    const startedAtMs = Date.now();
+    let invocationId: string | null = null;
+    if (!dryRun && !barDataOnly) {
+      const { data: logRow } = await supabase
+        .from('seed_invocation_log')
+        .insert({
+          timeframe,
+          status: 'running',
+          symbols: instrumentsToProcess.map(i => i.symbol),
+          cursor_offset: effectiveOffset,
+        })
+        .select('id')
+        .maybeSingle();
+      invocationId = logRow?.id ?? null;
+    }
+
     const errors: string[] = [];
     let processedCount = 0;
     let skippedDuplicates = 0;
+    let detectedCount = 0;
+    let verifiedCount = 0;
+    let failedVerificationCount = 0;
+    let insertedCount = 0;
+    let winCount = 0;
+    let lossCount = 0;
+    const sampleOccurrences: HistoricalOccurrence[] = [];
+    let validationBudget = 200;
+
+    const CHUNK_SIZE = 50;
+
+    // Flush one instrument's occurrences straight to the database, then let
+    // them be collected. Nothing accumulates across instruments.
+    const flush = async (occs: HistoricalOccurrence[]): Promise<void> => {
+      const verified: HistoricalOccurrence[] = [];
+      const failedVerifications: Array<{ input: VerificationInput; failures: string[]; source: string }> = [];
+      for (const occ of occs) {
+        const vi: VerificationInput = {
+          symbol: occ.symbol, pattern_id: occ.pattern_id, pattern_name: occ.pattern_name,
+          timeframe: occ.timeframe, direction: occ.direction, asset_type: occ.asset_type,
+          entry_price: occ.entry_price, stop_loss_price: occ.stop_loss_price, take_profit_price: occ.take_profit_price,
+          risk_reward_ratio: occ.risk_reward_ratio, quality_score: occ.quality_score,
+          detected_at: occ.detected_at, bars: occ.bars,
+        };
+        const result = verifyPattern(vi);
+        if (result.passed) verified.push(occ);
+        else failedVerifications.push({ input: vi, failures: result.failures, source: 'seed-historical-patterns-mtf' });
+      }
+      failedVerificationCount += failedVerifications.length;
+      verifiedCount += verified.length;
+      if (failedVerifications.length > 0) {
+        try {
+          await logVerificationFailures(supabase, failedVerifications.slice(0, 50));
+        } catch (e) {
+          console.warn('[verification] logVerificationFailures failed:', e);
+        }
+      }
+
+      for (let i = 0; i < verified.length; i += CHUNK_SIZE) {
+        const chunk = verified.slice(i, i + CHUNK_SIZE);
+        const { data: upsertedData, error: insertError } = await supabase
+          .from('historical_pattern_occurrences')
+          .upsert(chunk.map(occ => ({
+            symbol: ensureYahooFormat(occ.symbol),
+            asset_type: occ.asset_type,
+            pattern_id: occ.pattern_id,
+            pattern_name: occ.pattern_name,
+            direction: occ.direction === 'long' ? 'bullish' : 'bearish',
+            timeframe: occ.timeframe,
+            detected_at: occ.detected_at,
+            pattern_start_date: occ.pattern_start_date,
+            pattern_end_date: occ.pattern_end_date,
+            entry_price: occ.entry_price,
+            stop_loss_price: occ.stop_loss_price,
+            take_profit_price: occ.take_profit_price,
+            risk_reward_ratio: occ.risk_reward_ratio,
+            bars: occ.bars,
+            visual_spec: occ.visual_spec,
+            quality_score: occ.quality_score,
+            quality_reasons: occ.quality_reasons,
+            outcome: occ.outcome,
+            outcome_price: occ.outcome_price,
+            outcome_date: occ.outcome_date,
+            outcome_pnl_percent: occ.outcome_pnl_percent,
+            bars_to_outcome: occ.bars_to_outcome,
+            trend_alignment: occ.trend_alignment,
+            trend_indicators: occ.trend_indicators,
+            validation_status: 'pending',
+            geometry_source: occ.geometry_source,
+            validation_layers_passed: ['bulkowski_engine'],
+            detector_version: 'v3.2.1-floor-to-a',
+          })), {
+            onConflict: 'pattern_id,symbol,timeframe,pattern_end_date',
+            ignoreDuplicates: true
+          })
+          .select('id');
+
+        if (insertError) {
+          console.error(`[seed-mtf] Insert error at chunk ${i / CHUNK_SIZE}:`, insertError);
+          continue;
+        }
+        insertedCount += chunk.length;
+
+        // Fire pipeline validation for this chunk only — never hold ids or
+        // bars for the whole run.
+        const ids = (upsertedData ?? []).map((r: any) => r.id);
+        if (ids.length > 0 && validationBudget > 0) {
+          const take = Math.min(ids.length, validationBudget);
+          validationBudget -= take;
+          const detections = ids.slice(0, take).map((id: string, idx: number) => {
+            const occ = chunk[idx];
+            if (!occ?.bars?.length) return null;
+            return {
+              detection_id: id,
+              detection_source: 'historical',
+              pattern_name: occ.pattern_id,
+              direction: occ.direction === 'long' ? 'bullish' : 'bearish',
+              entry_price: occ.entry_price,
+              stop_loss_price: occ.stop_loss_price,
+              take_profit_price: occ.take_profit_price,
+              symbol: occ.symbol,
+              timeframe: occ.timeframe,
+              bars: occ.bars.slice(-60),
+              quality_score: occ.quality_score,
+              trend_alignment: occ.trend_alignment,
+            };
+          }).filter(Boolean);
+          if (detections.length) {
+            const p = supabase.functions.invoke('validate-pattern-context', { body: { detections } })
+              .catch((err: unknown) => console.error('[pipeline] MTF validation error:', err));
+            // @ts-ignore
+            if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(p);
+          }
+        }
+      }
+    };
 
     for (const { symbol, assetType } of instrumentsToProcess) {
       try {
@@ -2291,31 +2472,44 @@ serve(async (req) => {
           console.log(`[seed-mtf] Skipping ${symbol}: insufficient data (${bars.length} bars)`);
           continue;
         }
+        noteMem(`${symbol} bars=${bars.length}`);
         
-        // Run each pattern detector
+        // Run each pattern detector, flushing per pattern so peak memory is
+        // bounded by one detector's output rather than the whole run.
         for (const patternId of patterns) {
           const patternDef = PATTERN_REGISTRY[patternId];
           if (!patternDef) continue;
           
           const occurrences = await runHistoricalBacktest(bars, symbol, patternId, patternDef, timeframe, assetType, undefined, 100, supabase);
           
+          let batch = occurrences;
           // In incremental mode, filter out patterns we already have
           if (useIncremental) {
             const lastSeeded = await getLastSeededDate(supabase, symbol, timeframe);
             if (lastSeeded) {
               const filtered = occurrences.filter(occ => new Date(occ.detected_at) > lastSeeded);
               skippedDuplicates += occurrences.length - filtered.length;
-              allOccurrences.push(...filtered);
-            } else {
-              allOccurrences.push(...occurrences);
+              batch = filtered;
             }
-          } else {
-            allOccurrences.push(...occurrences);
           }
+
+          detectedCount += batch.length;
+          winCount += batch.filter(o => o.outcome === 'hit_tp').length;
+          lossCount += batch.filter(o => o.outcome === 'hit_sl').length;
+          if (sampleOccurrences.length < 3 && batch.length > 0) {
+            sampleOccurrences.push(...batch.slice(0, 3 - sampleOccurrences.length));
+          }
+
+          if (!dryRun && batch.length > 0) await flush(batch);
+          batch.length = 0;
+          occurrences.length = 0;
         }
+        // Drop this instrument's bars before moving to the next one.
+        bars.length = 0;
+        noteMem(`${symbol} flushed (inserted so far ${insertedCount})`);
         
         processedCount++;
-        console.log(`[seed-mtf] Processed ${symbol}: ${allOccurrences.length} total occurrences`);
+        console.log(`[seed-mtf] Processed ${symbol}: ${detectedCount} occurrences detected so far`);
         
         // Rate limit delay
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -2324,10 +2518,27 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[seed-mtf] Detection complete: ${allOccurrences.length} patterns from ${processedCount} instruments`);
+    console.log(`[seed-mtf] Detection complete: ${detectedCount} patterns from ${processedCount} instruments, ${insertedCount} inserted, peak rss ${peakRssMb}MB`);
     if (skippedDuplicates > 0) {
       console.log(`[seed-mtf] Skipped ${skippedDuplicates} already-seeded patterns`);
     }
+    if (failedVerificationCount > 0) {
+      console.warn(`[seed-mtf] ${failedVerificationCount}/${detectedCount} patterns failed verification`);
+    }
+
+    const finishLog = async (status: string, errText?: string) => {
+      if (!invocationId) return;
+      await supabase.from('seed_invocation_log').update({
+        status,
+        finished_at: new Date().toISOString(),
+        instruments_processed: processedCount,
+        occurrences_detected: detectedCount,
+        rows_inserted: insertedCount,
+        peak_rss_mb: peakRssMb,
+        duration_ms: Date.now() - startedAtMs,
+        error: errText ?? null,
+      }).eq('id', invocationId);
+    };
 
     // barDataOnly mode: return early with just bar fetch stats
     if (barDataOnly) {
@@ -2349,145 +2560,20 @@ serve(async (req) => {
         dryRun: true,
         timeframe,
         mode: useIncremental ? 'incremental' : 'full_backfill',
-        totalOccurrences: allOccurrences.length,
+        totalOccurrences: detectedCount,
         skippedDuplicates,
         hasMore,
         nextOffset: hasMore ? nextOffset : null,
-        sampleOccurrences: allOccurrences.slice(0, 3),
+        sampleOccurrences,
         errors: errors.slice(0, 10)
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Post-detection verification — filter out invalid patterns
-    const verifiedOccurrences: typeof allOccurrences = [];
-    const failedVerifications: Array<{ input: VerificationInput; failures: string[]; source: string }> = [];
-    for (const occ of allOccurrences) {
-      const vi: VerificationInput = {
-        symbol: occ.symbol, pattern_id: occ.pattern_id, pattern_name: occ.pattern_name,
-        timeframe: occ.timeframe, direction: occ.direction, asset_type: occ.asset_type,
-        entry_price: occ.entry_price, stop_loss_price: occ.stop_loss_price, take_profit_price: occ.take_profit_price,
-        risk_reward_ratio: occ.risk_reward_ratio, quality_score: occ.quality_score,
-        detected_at: occ.detected_at, bars: occ.bars,
-      };
-      const result = verifyPattern(vi);
-      if (result.passed) {
-        verifiedOccurrences.push(occ);
-      } else {
-        failedVerifications.push({ input: vi, failures: result.failures, source: 'seed-historical-patterns-mtf' });
-      }
-    }
-    if (failedVerifications.length > 0) {
-      console.warn(`[seed-mtf] ${failedVerifications.length}/${allOccurrences.length} patterns failed verification`);
-      try {
-        await logVerificationFailures(supabase, failedVerifications.slice(0, 200));
-      } catch (e) {
-        console.warn('[verification] logVerificationFailures failed:', e);
-      }
-    }
+    await finishLog(errors.length > 0 && processedCount === 0 ? 'error' : 'success',
+                    errors.length > 0 ? errors.slice(0, 3).join(' | ') : undefined);
 
-    // Insert verified patterns into database in chunks (use upsert to avoid duplicates)
-    const CHUNK_SIZE = 50;
-    let insertedCount = 0;
-    const allInsertedIds: string[] = [];
-    
-    for (let i = 0; i < verifiedOccurrences.length; i += CHUNK_SIZE) {
-      const chunk = verifiedOccurrences.slice(i, i + CHUNK_SIZE);
-      
-      const { data: upsertedData, error: insertError } = await supabase
-        .from('historical_pattern_occurrences')
-        .upsert(chunk.map(occ => ({
-          symbol: ensureYahooFormat(occ.symbol),
-          asset_type: occ.asset_type,
-          pattern_id: occ.pattern_id,
-          pattern_name: occ.pattern_name,
-          direction: occ.direction === 'long' ? 'bullish' : 'bearish',
-          timeframe: occ.timeframe,
-          detected_at: occ.detected_at,
-          pattern_start_date: occ.pattern_start_date,
-          pattern_end_date: occ.pattern_end_date,
-          entry_price: occ.entry_price,
-          stop_loss_price: occ.stop_loss_price,
-          take_profit_price: occ.take_profit_price,
-          risk_reward_ratio: occ.risk_reward_ratio,
-          bars: occ.bars,
-          visual_spec: occ.visual_spec,
-          quality_score: occ.quality_score,
-          quality_reasons: occ.quality_reasons,
-          outcome: occ.outcome,
-          outcome_price: occ.outcome_price,
-          outcome_date: occ.outcome_date,
-          outcome_pnl_percent: occ.outcome_pnl_percent,
-          bars_to_outcome: occ.bars_to_outcome,
-          trend_alignment: occ.trend_alignment,
-          trend_indicators: occ.trend_indicators,
-          validation_status: 'pending',
-          geometry_source: occ.geometry_source,
-          validation_layers_passed: ['bulkowski_engine'],
-          detector_version: 'v3.2.1-floor-to-a',
-        })), {
-          onConflict: 'pattern_id,symbol,timeframe,pattern_end_date',
-          ignoreDuplicates: true
-        })
-        .select('id');
-      
-      if (insertError) {
-        console.error(`[seed-mtf] Insert error at chunk ${i / CHUNK_SIZE}:`, insertError);
-      } else {
-        insertedCount += chunk.length;
-        if (upsertedData) allInsertedIds.push(...upsertedData.map((r: any) => r.id));
-      }
-    }
-
-    // Trigger async pipeline validation (background, capped at 200 patterns)
-    if (allInsertedIds.length > 0) {
-      const validationPromise = (async () => {
-        try {
-          const VALIDATION_BATCH = 50;
-          for (let i = 0; i < Math.min(allInsertedIds.length, 200); i += VALIDATION_BATCH) {
-            const batchIds = allInsertedIds.slice(i, i + VALIDATION_BATCH);
-            const batchOccs = allOccurrences.slice(i, i + VALIDATION_BATCH);
-            
-            const detections = batchIds.map((id, idx) => {
-              const occ = batchOccs[idx];
-              if (!occ?.bars?.length) return null;
-              return {
-                detection_id: id,
-                detection_source: 'historical',
-                pattern_name: occ.pattern_id,
-                direction: occ.direction === 'long' ? 'bullish' : 'bearish',
-                entry_price: occ.entry_price,
-                stop_loss_price: occ.stop_loss_price,
-                take_profit_price: occ.take_profit_price,
-                symbol: occ.symbol,
-                timeframe: occ.timeframe,
-                bars: occ.bars.slice(-60),
-                quality_score: occ.quality_score,
-                trend_alignment: occ.trend_alignment,
-              };
-            }).filter(Boolean);
-            
-            if (detections.length) {
-              await supabase.functions.invoke('validate-pattern-context', { body: { detections } });
-            }
-          }
-          console.info(`[pipeline] MTF validation triggered for ${Math.min(allInsertedIds.length, 200)} patterns`);
-        } catch (err) {
-          console.error('[pipeline] MTF validation error:', err);
-        }
-      })();
-      
-      // @ts-ignore
-      if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
-        EdgeRuntime.waitUntil(validationPromise);
-      }
-    }
-
-    console.log(`[seed-mtf] Inserted ${insertedCount} occurrences`);
-
-    const winCount = allOccurrences.filter(o => o.outcome === 'hit_tp').length;
-    const lossCount = allOccurrences.filter(o => o.outcome === 'hit_sl').length;
     const totalWithOutcome = winCount + lossCount;
     const winRate = totalWithOutcome > 0 ? (winCount / totalWithOutcome * 100).toFixed(1) : 'N/A';
 
@@ -2497,10 +2583,15 @@ serve(async (req) => {
       mode: useIncremental ? 'incremental' : 'full_backfill',
       hasMore,
       nextOffset: hasMore ? nextOffset : null,
-      totalInstruments: allInstruments.length,
+      totalInstruments: filteredInstruments.length,
+      cursorOffset: effectiveOffset,
+      peakRssMb,
+      durationMs: Date.now() - startedAtMs,
       summary: {
         instrumentsProcessed: processedCount,
-        totalOccurrences: allOccurrences.length,
+        totalOccurrences: detectedCount,
+        verifiedCount,
+        failedVerificationCount,
         insertedCount,
         skippedDuplicates,
         winCount,
