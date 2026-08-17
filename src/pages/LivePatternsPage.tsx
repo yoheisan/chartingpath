@@ -41,6 +41,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { translatePatternName } from '@/utils/translatePatternName';
+import { CellEvidenceHeader } from '@/components/screener/CellEvidenceHeader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
@@ -772,13 +773,17 @@ export default function LivePatternsPage() {
     return sorted;
   }, [filteredPatterns, highlightSymbol, sortKey, sortAsc]);
 
-  // Group patterns by pattern name for list view (same as homepage)
+  // Grouped by CELL — pattern + direction (the timeframe and asset class are
+  // fixed by the current filters). Edge stats are measured at cell level across
+  // every instrument in the cell, so they belong in the group header and must
+  // not be repeated on instrument rows: doing so reads as an instrument-level
+  // edge claim we have never measured.
   const groupedPatterns = useMemo(() => {
     const groups = new Map<string, LiveSetup[]>();
     sortedPatterns.forEach(setup => {
-      const name = setup.patternName;
-      if (!groups.has(name)) groups.set(name, []);
-      groups.get(name)!.push(setup);
+      const key = `${setup.patternName}|${setup.direction}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(setup);
     });
     return Array.from(groups.entries());
   }, [sortedPatterns]);
@@ -1500,46 +1505,11 @@ export default function LivePatternsPage() {
                       <SortIcon columnKey="direction" />
                     </div>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('winRate')}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1">
-                            {t('screener.winPercent')}
-                            <SortIcon columnKey="winRate" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">{t('screener.winRateTooltip')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
-                  {/* Expectancy column suppressed: the previous value was derived from a
-                      fixed 2.0 R:R assumption, not from measured risk_reward_ratio.
-                      See /methodology and /outcomes for verified expectancy. */}
-                  <TableHead 
-                    className="cursor-pointer select-none text-right whitespace-nowrap"
-                    onClick={() => handleSort('rot')}
-                  >
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center justify-end gap-1 cursor-help">
-                            ROT
-                            <Info className="h-3 w-3 opacity-50" />
-                            <SortIcon columnKey="rot" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-sm whitespace-normal">
-                          <p className="text-xs">{t('screener.rotTooltip', 'Return on Time — R earned per bar of exposure. Higher = more capital-efficient.')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
+                  {/* Win rate, expectancy and ROT columns removed: they are
+                      cell-level measurements (pattern/timeframe/asset/direction)
+                      and were identical on every instrument row, which read as
+                      an instrument-level edge claim. They now appear once, in
+                      the group header. */}
                   <TableHead 
                     className="cursor-pointer select-none text-right whitespace-nowrap"
                     onClick={() => handleSort('signal')}
@@ -1563,15 +1533,24 @@ export default function LivePatternsPage() {
               <TableBody>
                 {(() => {
                   let rowIndex = 0;
-                  return visibleGroupedPatterns.map(([patternName, setups]) => (
-                    <Fragment key={patternName}>
-                      {/* Pattern Group Header */}
-                      <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={11} className="py-2">
-                          <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            {setups.length}
-                          </Badge>
+                  return visibleGroupedPatterns.map(([groupKey, setups]) => (
+                    <Fragment key={groupKey}>
+                      {/* Cell group header — the evidence lives here, once. */}
+                      <TableRow key={`header-${groupKey}`} className="bg-muted/50 hover:bg-muted/50">
+                        <TableCell colSpan={9} className="py-2">
+                          <CellEvidenceHeader
+                            evidence={{
+                              patternLabel: translatePatternName(setups[0].patternName),
+                              timeframe,
+                              assetType,
+                              direction: setups[0].direction,
+                              winRate: setups[0].historicalPerformance?.winRate ?? null,
+                              sampleSize: setups[0].historicalPerformance?.sampleSize ?? null,
+                              expectancyR: setups[0].historicalPerformance?.expectancyR ?? null,
+                              isPrior: setups[0].historicalPerformance?.isPrior,
+                              instrumentCount: setups.length,
+                            }}
+                          />
                         </TableCell>
                       </TableRow>
                       {/* Pattern Rows */}
@@ -1655,37 +1634,8 @@ export default function LivePatternsPage() {
                                 </Tooltip>
                               )}
                             </TableCell>
-                            <TableCell className="text-right">
-                              {setup.historicalPerformance?.winRate != null ? (
-                                <span className={`font-mono text-sm font-medium ${
-                                  setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
-                                }`}>
-                                  {setup.historicalPerformance.winRate.toFixed(0)}%
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
-                              )}
-                            </TableCell>
-                            {/* Expectancy cell suppressed — see header comment. */}
-                            {/* ROT - Return on Time */}
-                            <TableCell className="text-right">
-                              {(() => {
-                                const perf = setup.historicalPerformance;
-                                if (perf && perf.expectancyR != null && !perf.isPrior && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                                  const rot = perf.expectancyR / perf.avgDurationBars;
-                                  const isHighEfficiency = rot >= 0.01;
-                                  return (
-                                    <span className={cn(
-                                      'font-mono text-xs font-medium',
-                                      isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
-                                    )}>
-                                      {rot.toFixed(4)}
-                                    </span>
-                                  );
-                                }
-                                return <span className="text-muted-foreground text-xs">—</span>;
-                              })()}
-                            </TableCell>
+                            {/* No win rate / expectancy / ROT here — those are
+                                cell-level figures, shown in the group header. */}
                             <TableCell className="text-right">
                               <span className={`text-xs ${
                                 isFresh ? 'text-green-500' : 'text-muted-foreground'

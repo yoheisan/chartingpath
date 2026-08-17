@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Layers, Database, Clock, Target } from "lucide-react";
-import { useOutcomeCount } from "@/hooks/useOutcomeCount";
+import { BarChart3, Layers, Database, Clock, ShieldCheck } from "lucide-react";
 import { useMetricStripStats } from "@/hooks/useMetricStripStats";
 
 interface MetricProps {
@@ -14,39 +13,54 @@ interface MetricProps {
 const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
   const [display, setDisplay] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-  const animated = useRef(false);
+  const visible = useRef(false);
 
+  // Re-runs whenever `value` changes. The previous version latched on the very
+  // first intersection, so a metric that arrived after the strip scrolled into
+  // view stayed frozen at 0.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
+    let frame = 0;
+    const run = () => {
+      const duration = 1200;
+      const start = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplay(Math.round(eased * value));
+        if (progress < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+
+    if (visible.current) {
+      run();
+      return () => cancelAnimationFrame(frame);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !animated.current) {
-          animated.current = true;
-          const duration = 1200;
-          const start = performance.now();
-          const step = (now: number) => {
-            const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setDisplay(Math.round(eased * value));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
+        if (entry.isIntersecting && !visible.current) {
+          visible.current = true;
+          run();
         }
       },
       { threshold: 0.3 }
     );
-
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [value]);
 
   return (
     <div ref={ref} className="flex flex-col items-center gap-1 px-6 py-3">
       <Icon className="h-4 w-4 text-muted-foreground/60 mb-0.5" />
       <div className="text-2xl font-bold font-mono text-foreground tracking-tight">
-        {value === 0 ? '—' : `${display.toLocaleString()}${suffix}`}
+        {display.toLocaleString()}{suffix}
       </div>
       <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
     </div>
@@ -55,15 +69,30 @@ const AnimatedMetric = ({ value, suffix, label, icon: Icon }: MetricProps) => {
 
 export const MetricStrip = () => {
   const { t } = useTranslation();
-  const { count: outcomeCount, isLoading: outcomeLoading } = useOutcomeCount();
   const { data: stats } = useMetricStripStats();
 
+  // Hard guard: no partial strips. If any figure is missing or zero we render
+  // nothing. Showing "0 labelled outcomes" on a statistics site is worse than
+  // showing no strip at all.
+  if (
+    !stats ||
+    !stats.instrumentCount ||
+    !stats.patternCount ||
+    !stats.validResolvedOutcomes ||
+    !stats.validatedCells
+  ) {
+    return null;
+  }
+
   const metrics: MetricProps[] = [
-    { value: stats?.instrumentCount ?? 800, suffix: "+", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
-    { value: stats?.patternCount ?? 17, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
-    { value: outcomeCount ?? 0, suffix: outcomeLoading ? "" : "+", label: t("metrics.trades", "Labeled Outcomes"), icon: Database },
+    { value: stats.instrumentCount, suffix: "", label: t("metrics.instruments", "Instruments"), icon: BarChart3 },
+    { value: stats.patternCount, suffix: "", label: t("metrics.patterns", "Patterns"), icon: Layers },
+    { value: stats.validResolvedOutcomes, suffix: "", label: t("metrics.trades", "Resolved Outcomes"), icon: Database },
     { value: 1, suffix: "h", label: t("metrics.refresh", "Live Data Refresh"), icon: Clock },
-    { value: stats?.avgExpectancy && stats.avgExpectancy > 0 ? stats.avgExpectancy : 0.4, suffix: "R", label: t("metrics.avgExpectancy", "Avg Expectancy (A-Grade)"), icon: Target },
+    // Deliberately NOT an "A-grade expectancy" headline: grade A measures
+    // -0.105R over 48 occurrences and the grade ordering is inverted, so any
+    // A-grade claim would be indefensible.
+    { value: stats.validatedCells, suffix: "", label: t("metrics.validatedCells", "Combinations With Validated Edge"), icon: ShieldCheck },
   ];
 
   return (

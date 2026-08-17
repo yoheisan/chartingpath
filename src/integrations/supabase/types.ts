@@ -7590,6 +7590,15 @@ export type Database = {
         }[]
       }
       get_homepage_stats: { Args: never; Returns: Json }
+      get_metric_strip_stats: {
+        Args: never
+        Returns: {
+          instrument_count: number
+          pattern_count: number
+          valid_resolved_outcomes: number
+          validated_cells: number
+        }[]
+      }
       get_most_detected_pattern: {
         Args: { p_since: string }
         Returns: {
