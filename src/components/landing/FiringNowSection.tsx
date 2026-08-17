@@ -262,6 +262,14 @@ export function FiringNowSection() {
                         ? t('screener.long', 'Long')
                         : t('screener.short', 'Short')}
                     </span>
+                    {(() => {
+                      const band = expectancyBand(g.expectancyRNet);
+                      return band ? (
+                        <Badge variant="outline" className={`text-xs ${EXPECTANCY_BAND_CLASS[band]}`}>
+                          {t(`cellEvidence.band.${band}`, EXPECTANCY_BAND_LABEL[band])}
+                        </Badge>
+                      ) : null;
+                    })()}
                     <span className="text-sm font-mono text-emerald-600 dark:text-emerald-400">
                       {t('firingNow.cellEdge', 'edge {{pts}} pts vs chance', { pts: (g.edgePoints ?? 0).toFixed(2) })}
                     </span>
