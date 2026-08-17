@@ -2403,6 +2403,45 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_cell_stats_cache: {
+        Row: {
+          asset_type: string
+          avg_bars_val: number | null
+          avg_rr_val: number | null
+          dir: string
+          losses: number
+          pattern_id: string
+          refreshed_at: string
+          timeframe: string
+          total: number
+          wins: number
+        }
+        Insert: {
+          asset_type: string
+          avg_bars_val?: number | null
+          avg_rr_val?: number | null
+          dir: string
+          losses?: number
+          pattern_id: string
+          refreshed_at?: string
+          timeframe: string
+          total?: number
+          wins?: number
+        }
+        Update: {
+          asset_type?: string
+          avg_bars_val?: number | null
+          avg_rr_val?: number | null
+          dir?: string
+          losses?: number
+          pattern_id?: string
+          refreshed_at?: string
+          timeframe?: string
+          total?: number
+          wins?: number
+        }
+        Relationships: []
+      }
       educational_content_pieces: {
         Row: {
           article_id: string | null
@@ -7916,6 +7955,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_edge_cell_stats_cache: { Args: never; Returns: number }
       refresh_grade_outcome_stats: {
         Args: { p_since?: string }
         Returns: undefined
