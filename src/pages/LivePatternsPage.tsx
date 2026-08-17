@@ -785,7 +785,13 @@ export default function LivePatternsPage() {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(setup);
     });
-    return Array.from(groups.entries());
+    // Groups rank on measured expectancy (net of costs where measured), not on
+    // edge points: a cell can beat chance and still pay almost nothing.
+    const expOf = (setups: LiveSetup[]) => {
+      const p = setups[0]?.historicalPerformance;
+      return p && !p.isPrior && p.expectancyR != null ? p.expectancyR : -999;
+    };
+    return Array.from(groups.entries()).sort((a, b) => expOf(b[1]) - expOf(a[1]));
   }, [sortedPatterns]);
 
   // Guest preview: show first 5 rows clearly, blur rest
