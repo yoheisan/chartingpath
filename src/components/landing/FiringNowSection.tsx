@@ -16,10 +16,12 @@ interface DetectionRow {
   instrument: string;
   pattern_name: string | null;
   timeframe: string | null;
+  asset_type: string | null;
   direction: string | null;
   entry_price: number | null;
   stop_loss_price: number | null;
   take_profit_price: number | null;
+  first_detected_at: string | null;
   total_trades: number | null;
   win_rate_pct: number | null;
   expectancy_r: number | null;
@@ -41,6 +43,67 @@ function fmtPrice(v: number | null): string {
   return v.toFixed(6);
 }
 
+function fmtAge(ts: string | null): string {
+  if (!ts) return '—';
+  const mins = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 60000));
+  if (mins < 60) return `${mins}m`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
+  return `${Math.round(mins / 1440)}d`;
+}
+
+/**
+ * A cell = pattern / timeframe / asset class / direction. Every edge figure we
+ * publish is measured at this level, never per instrument, so the display
+ * groups by cell and shows the evidence once in the group header. Listing
+ * identical win rate / n / edge on each instrument row would read as an
+ * instrument-level claim we have not measured and would not stand behind.
+ */
+interface CellGroup {
+  key: string;
+  patternName: string;
+  timeframe: string;
+  assetType: string;
+  direction: string;
+  totalTrades: number | null;
+  winRate: number | null;
+  expectancyRNet: number | null;
+  edgePoints: number | null;
+  rows: DetectionRow[];
+}
+
+const ASSET_LABEL: Record<string, string> = {
+  fx: 'FX', stocks: 'Stocks', crypto: 'Crypto',
+  commodities: 'Commodities', indices: 'Indices', etfs: 'ETFs',
+};
+
+function groupByCell(rows: DetectionRow[]): CellGroup[] {
+  const map = new Map<string, CellGroup>();
+  for (const r of rows) {
+    const key = [r.pattern_name ?? '—', r.timeframe ?? '—', r.asset_type ?? '—', r.direction ?? '—'].join('|');
+    let g = map.get(key);
+    if (!g) {
+      g = {
+        key,
+        patternName: r.pattern_name ?? '—',
+        timeframe: (r.timeframe ?? '').toLowerCase(),
+        assetType: r.asset_type ?? '',
+        direction: r.direction ?? '',
+        totalTrades: r.total_trades,
+        winRate: r.win_rate_pct != null ? Number(r.win_rate_pct) : null,
+        expectancyRNet: r.expectancy_r_net != null ? Number(r.expectancy_r_net) : null,
+        edgePoints: r.edge_points != null ? Number(r.edge_points) : null,
+        rows: [],
+      };
+      map.set(key, g);
+    }
+    g.rows.push(r);
+  }
+  // Ordered by sample size, deliberately NOT by expectancy: train/test
+  // correlation on cell expectancy is 0.181, so ranking by it implies a
+  // precision the data does not support.
+  return [...map.values()].sort((a, b) => (b.totalTrades ?? 0) - (a.totalTrades ?? 0));
+}
+
 export function FiringNowSection() {
   const { t } = useTranslation();
   const [rows, setRows] = useState<DetectionRow[]>([]);
@@ -58,7 +121,7 @@ export function FiringNowSection() {
     (async () => {
       const { data, error } = await supabase
         .from('v_live_detections_with_edge')
-        .select('id,instrument,pattern_name,timeframe,direction,entry_price,stop_loss_price,take_profit_price,total_trades,win_rate_pct,expectancy_r,expectancy_r_net,cell_status,qualifies,edge_points,baseline_win_rate_pct,is_validated')
+        .select('id,instrument,pattern_name,timeframe,asset_type,direction,entry_price,stop_loss_price,take_profit_price,first_detected_at,total_trades,win_rate_pct,expectancy_r,expectancy_r_net,cell_status,qualifies,edge_points,baseline_win_rate_pct,is_validated')
         .limit(1000);
       if (cancelled) return;
       if (error) {
@@ -77,15 +140,11 @@ export function FiringNowSection() {
     return () => { cancelled = true; };
   }, []);
 
-  const { qualifying, suppressed, instrumentCount } = useMemo(() => {
+  const { qualifyingGroups, qualifyingCount, suppressed, instrumentCount } = useMemo(() => {
     const q = rows.filter(r => r.qualifies);
-    // Sorted by sample size descending, deliberately NOT by expectancy.
-    // Train/test correlation on cell expectancy is 0.181, so ordering by
-    // expectancy would imply a precision the data does not support. Sample
-    // size is the only ordering we can defend.
-    q.sort((a, b) => (b.total_trades ?? 0) - (a.total_trades ?? 0));
     return {
-      qualifying: q,
+      qualifyingGroups: groupByCell(q),
+      qualifyingCount: q.length,
       suppressed: rows.filter(r => !r.qualifies),
       instrumentCount: new Set(rows.map(r => r.instrument)).size,
     };
@@ -96,10 +155,11 @@ export function FiringNowSection() {
     tracked.current = true;
     trackEvent('firing_now.view', {
       active: rows.length,
-      qualifying: qualifying.length,
+      qualifying: qualifyingCount,
       suppressed: suppressed.length,
+      cells: qualifyingGroups.length,
     });
-  }, [loading, failed, rows.length, qualifying.length, suppressed.length]);
+  }, [loading, failed, rows.length, qualifyingCount, suppressed.length, qualifyingGroups.length]);
 
   const suppressionReason = (r: DetectionRow): string => {
     if (r.cell_status && r.cell_status !== 'active') {
@@ -151,7 +211,7 @@ export function FiringNowSection() {
         <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3 max-w-3xl">
           {t('firingNow.headline', '{{active}} patterns are firing right now. {{qualifying}} have a measured edge after costs.', {
             active: rows.length,
-            qualifying: qualifying.length,
+            qualifying: qualifyingCount,
           })}
         </h2>
         <p className="text-muted-foreground max-w-2xl mb-8">
@@ -165,7 +225,7 @@ export function FiringNowSection() {
             count is the proof that the filter actually does something. */}
         <div className="grid gap-4 sm:grid-cols-2 mb-8 max-w-2xl">
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5">
-            <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">{qualifying.length}</div>
+            <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">{qualifyingCount}</div>
             <div className="text-sm text-muted-foreground mt-1">
               {t('firingNow.qualifyingLabel', 'Qualify after costs')}
             </div>
@@ -178,7 +238,7 @@ export function FiringNowSection() {
           </div>
         </div>
 
-        {qualifying.length === 0 ? (
+        {qualifyingGroups.length === 0 ? (
           <div className="rounded-xl border border-border/60 bg-card/50 p-8 text-center mb-8">
             <p className="text-lg font-semibold text-foreground">
               {t('firingNow.emptyTitle', 'Nothing meets our bar right now.')}
@@ -188,43 +248,78 @@ export function FiringNowSection() {
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-border/60 overflow-x-auto mb-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('firingNow.colInstrument', 'Instrument')}</TableHead>
-                  <TableHead>{t('firingNow.colPattern', 'Pattern')}</TableHead>
-                  <TableHead>{t('firingNow.colTimeframe', 'TF')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colEntry', 'Entry')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colStop', 'Stop')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colTarget', 'Target')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colWinRate', 'Win rate')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colSample', 'n')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colNet', 'Net expectancy')}</TableHead>
-                  <TableHead className="text-right">{t('firingNow.colEdgePoints', 'Edge vs chance')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {qualifying.slice(0, 6).map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.instrument}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.pattern_name ?? '—'}</TableCell>
-                    <TableCell className="uppercase text-muted-foreground">{r.timeframe ?? '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtPrice(r.entry_price)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtPrice(r.stop_loss_price)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtPrice(r.take_profit_price)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.win_rate_pct != null ? `${Number(r.win_rate_pct).toFixed(0)}%` : '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.total_trades ?? 0}</TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                      {r.expectancy_r_net != null ? `${Number(r.expectancy_r_net).toFixed(2)}R` : '—'}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400">
-                      {r.edge_points != null ? `${Number(r.edge_points).toFixed(2)} pts` : '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="space-y-6 mb-8">
+            {qualifyingGroups.slice(0, 4).map((g) => (
+              <div key={g.key} className="rounded-xl border border-border/60 overflow-hidden">
+                {/* The group header IS the evidence. Nothing below repeats it. */}
+                <div className="bg-muted/40 px-4 py-3 border-b border-border/60">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="font-semibold text-foreground">
+                      {g.patternName} · {g.timeframe} · {ASSET_LABEL[g.assetType] ?? g.assetType} · {g.direction === 'long'
+                        ? t('screener.long', 'Long')
+                        : t('screener.short', 'Short')}
+                    </span>
+                    <span className="text-sm font-mono text-emerald-600 dark:text-emerald-400">
+                      {t('firingNow.cellEdge', 'edge {{pts}} pts vs chance', { pts: (g.edgePoints ?? 0).toFixed(2) })}
+                    </span>
+                    <span className="text-sm font-mono text-muted-foreground">
+                      {t('firingNow.cellSample', 'n={{n}}', { n: (g.totalTrades ?? 0).toLocaleString() })}
+                      {' · '}
+                      {t('firingNow.cellWinRate', 'win rate {{wr}}%', { wr: (g.winRate ?? 0).toFixed(0) })}
+                      {' · '}
+                      {t('firingNow.cellExpectancy', 'net expectancy {{r}}R after costs', {
+                        r: ((g.expectancyRNet ?? 0) >= 0 ? '+' : '') + (g.expectancyRNet ?? 0).toFixed(2),
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground/80 mt-1">
+                    {t('firingNow.cellAttribution', 'These figures describe the pattern/timeframe/asset combination, not the individual instrument.')}
+                  </p>
+                </div>
+
+                {/* Instrument rows carry instrument-specific fields only. */}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('firingNow.colInstrument', 'Instrument')}</TableHead>
+                        <TableHead className="text-right">{t('firingNow.colEntry', 'Entry')}</TableHead>
+                        <TableHead className="text-right">{t('firingNow.colStop', 'Stop')}</TableHead>
+                        <TableHead className="text-right">{t('firingNow.colTarget', 'Target')}</TableHead>
+                        <TableHead className="text-right">{t('firingNow.colAge', 'Age')}</TableHead>
+                        <TableHead className="text-right">{t('firingNow.colGate', 'Gate')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {g.rows.slice(0, 8).map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-medium">{r.instrument}</TableCell>
+                          <TableCell className="text-right tabular-nums">{fmtPrice(r.entry_price)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{fmtPrice(r.stop_loss_price)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{fmtPrice(r.take_profit_price)}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{fmtAge(r.first_detected_at)}</TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="outline" className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                              {t('firingNow.gatePassed', 'Passed')}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {g.rows.length > 8 && (
+                    <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border/40">
+                      {t('firingNow.moreInstruments', 'Showing 8 of {{count}} instruments in this combination.', { count: g.rows.length })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {qualifyingGroups.length > 4 && (
+              <p className="text-xs text-muted-foreground">
+                {t('firingNow.moreCells', 'Showing 4 of {{count}} qualifying combinations.', { count: qualifyingGroups.length })}
+              </p>
+            )}
           </div>
         )}
 
