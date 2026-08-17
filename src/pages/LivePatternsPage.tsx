@@ -1532,15 +1532,24 @@ export default function LivePatternsPage() {
               <TableBody>
                 {(() => {
                   let rowIndex = 0;
-                  return visibleGroupedPatterns.map(([patternName, setups]) => (
-                    <Fragment key={patternName}>
-                      {/* Pattern Group Header */}
-                      <TableRow key={`header-${patternName}`} className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={11} className="py-2">
-                          <span className="font-semibold text-sm">{translatePatternName(patternName)}</span>
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            {setups.length}
-                          </Badge>
+                  return visibleGroupedPatterns.map(([groupKey, setups]) => (
+                    <Fragment key={groupKey}>
+                      {/* Cell group header — the evidence lives here, once. */}
+                      <TableRow key={`header-${groupKey}`} className="bg-muted/50 hover:bg-muted/50">
+                        <TableCell colSpan={9} className="py-2">
+                          <CellEvidenceHeader
+                            evidence={{
+                              patternLabel: translatePatternName(setups[0].patternName),
+                              timeframe,
+                              assetType,
+                              direction: setups[0].direction,
+                              winRate: setups[0].historicalPerformance?.winRate ?? null,
+                              sampleSize: setups[0].historicalPerformance?.sampleSize ?? null,
+                              expectancyR: setups[0].historicalPerformance?.expectancyR ?? null,
+                              isPrior: setups[0].historicalPerformance?.isPrior,
+                              instrumentCount: setups.length,
+                            }}
+                          />
                         </TableCell>
                       </TableRow>
                       {/* Pattern Rows */}
@@ -1624,37 +1633,8 @@ export default function LivePatternsPage() {
                                 </Tooltip>
                               )}
                             </TableCell>
-                            <TableCell className="text-right">
-                              {setup.historicalPerformance?.winRate != null ? (
-                                <span className={`font-mono text-sm font-medium ${
-                                  setup.historicalPerformance.winRate >= 50 ? 'text-green-500' : 'text-amber-500'
-                                }`}>
-                                  {setup.historicalPerformance.winRate.toFixed(0)}%
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
-                              )}
-                            </TableCell>
-                            {/* Expectancy cell suppressed — see header comment. */}
-                            {/* ROT - Return on Time */}
-                            <TableCell className="text-right">
-                              {(() => {
-                                const perf = setup.historicalPerformance;
-                                if (perf && perf.expectancyR != null && !perf.isPrior && perf.avgDurationBars && perf.avgDurationBars > 0) {
-                                  const rot = perf.expectancyR / perf.avgDurationBars;
-                                  const isHighEfficiency = rot >= 0.01;
-                                  return (
-                                    <span className={cn(
-                                      'font-mono text-xs font-medium',
-                                      isHighEfficiency ? 'text-amber-500' : 'text-muted-foreground'
-                                    )}>
-                                      {rot.toFixed(4)}
-                                    </span>
-                                  );
-                                }
-                                return <span className="text-muted-foreground text-xs">—</span>;
-                              })()}
-                            </TableCell>
+                            {/* No win rate / expectancy / ROT here — those are
+                                cell-level figures, shown in the group header. */}
                             <TableCell className="text-right">
                               <span className={`text-xs ${
                                 isFresh ? 'text-green-500' : 'text-muted-foreground'
