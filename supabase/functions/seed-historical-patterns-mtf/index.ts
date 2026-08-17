@@ -2284,7 +2284,9 @@ serve(async (req) => {
       try {
         // @ts-ignore Deno.memoryUsage is available in the edge runtime
         const m = Deno.memoryUsage?.();
-        return m ? Math.round(m.rss / 1048576) : -1;
+        // rss reads back as 0 in the edge runtime's sandbox; heapUsed is the
+        // number that actually tracks what we allocate, so report the larger.
+        return m ? Math.round(Math.max(m.rss ?? 0, m.heapUsed ?? 0) / 1048576) : -1;
       } catch { return -1; }
     };
     let peakRssMb = rssMb();
