@@ -41,6 +41,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FullChartViewer from '@/components/charts/FullChartViewer';
 import { CompressedBar, VisualSpec, PatternQuality, SetupWithVisuals } from '@/types/VisualSpec';
 import { translatePatternName } from '@/utils/translatePatternName';
+import { CellEvidenceHeader } from '@/components/screener/CellEvidenceHeader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSignalAgeSimple } from '@/utils/formatSignalAge';
 import { useScreenerCaps, PATTERN_DISPLAY_NAMES, ALL_PATTERN_IDS } from '@/hooks/useScreenerCaps';
