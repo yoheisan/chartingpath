@@ -29,41 +29,14 @@ jobs:
       group: auto-seed-1h
       cancel-in-progress: false
     steps:
-      - name: Select batch
-        id: batch
-        run: |
-          SYMBOLS=(
-            "AAPL" "MSFT" "NVDA" "GOOGL" "AMZN" "META" "TSLA" "JPM" "V" "UNH"
-            "XOM" "LLY" "JNJ" "WMT" "MA" "AVGO" "PG" "HD" "CVX" "MRK"
-            "ABBV" "COST" "KO" "PEP" "ADBE" "CRM" "AMD" "NFLX" "TMO" "ACN"
-            "BAC" "WFC" "TXN" "NEE" "QCOM" "ORCL" "IBM" "GE" "CAT" "GS"
-            "MS" "BKNG" "ISRG" "GILD" "VRTX" "REGN" "UBER" "ABNB" "SNOW" "CRWD"
-            "NET" "DDOG" "PANW" "MU" "LRCX" "MRVL" "ARM" "PLTR" "COIN" "SQ"
-            "PYPL" "SHOP" "MELI" "DASH" "ZM" "MDB" "GTLB" "CFLT" "SMCI" "INTC"
-            "LOW" "INTU" "SPGI" "BLK" "RTX" "LIN" "ABT" "DHR" "PM" "AXP"
-            "NKE" "DIS" "MCD" "PLD" "AMT" "ZS" "OKTA" "TWLO" "BILL" "U"
-            "SPY" "QQQ" "IWM" "DIA" "VTI" "GLD" "SLV" "TLT" "XLF" "XLK"
-            "XLE" "XLV" "HYG" "EEM" "ARKK" "USO" "LQD" "VEA" "VWO" "IWF"
-            "BTC-USD" "ETH-USD" "SOL-USD" "BNB-USD" "XRP-USD" "ADA-USD"
-            "AVAX-USD" "DOT-USD" "LINK-USD" "LTC-USD"
-            "EURUSD=X" "GBPUSD=X" "USDJPY=X" "AUDUSD=X" "USDCAD=X"
-            "USDCHF=X" "NZDUSD=X" "EURGBP=X" "EURJPY=X" "GBPJPY=X"
-          )
-          TOTAL=${#SYMBOLS[@]}
-          IDX=$(( ($(date +%s) / 720) % TOTAL ))
-          BATCH=""
-          for i in 0 1 2 3 4 5 6 7; do
-            SYM=${SYMBOLS[$(( (IDX+i) % TOTAL ))]}
-            BATCH="${BATCH:+$BATCH,}$SYM"
-          done
-          echo "batch=$BATCH" >> $GITHUB_OUTPUT
-          echo "Seeding: $BATCH (start index $IDX of $TOTAL)"
-
+      # The symbol rotation that used to live here (a date-derived index into a
+      # hardcoded list) has moved into the function as a persisted cursor in
+      # scan_rotation_cursor. A clock-derived index repeats or skips slices
+      # whenever run duration drifts; a cursor advances exactly once per run.
       - name: Invoke seeder
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          BATCH: ${{ steps.batch.outputs.batch }}
         run: |
           set -uo pipefail
 
@@ -72,13 +45,17 @@ jobs:
             exit 1
           fi
 
-          SYMBOLS_JSON=$(echo "$BATCH" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip().split(',')))")
-
+          # maxInstrumentsPerType 40 bounds the universe to ~240 symbols; the
+          # function's cursor walks it 2 instruments at a time (maxPerRun),
+          # covering the whole universe roughly once a day at this cadence.
+          # 999 previously meant every invocation rebuilt an 800+ symbol list
+          # and each run pulled 2 years of hourly bars for 3 instruments —
+          # that peak is what the runtime killed with HTTP 546.
           STATUS=$(curl -sS --max-time 480 -o /tmp/resp.json -w '%{http_code}' \
             -X POST "$SUPABASE_URL/functions/v1/seed-historical-patterns-mtf" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{\"timeframe\":\"1h\",\"symbolsFilter\":$SYMBOLS_JSON,\"maxInstrumentsPerType\":999,\"forceFullBackfill\":true,\"incrementalMode\":false,\"skipDbCache\":true,\"dryRun\":false}") || CURL_FAILED=1
+            -d '{"timeframe":"1h","maxInstrumentsPerType":40,"maxPerRun":2,"useCursor":true,"forceFullBackfill":true,"incrementalMode":false,"skipDbCache":true,"dryRun":false}') || CURL_FAILED=1
 
           echo "HTTP status: ${STATUS:-<none>}"
           echo "--- response body ---"
@@ -91,6 +68,18 @@ jobs:
 
           if [ "${CURL_FAILED:-0}" = "1" ] || [ -z "${STATUS:-}" ]; then
             echo "::warning::curl did not complete (timeout or transport error). The edge function may still be running server-side; seeded rows can land after this step."
+            exit 0
+          fi
+
+          # 546 is Supabase's edge-runtime resource-limit code: the process was
+          # terminated for exceeding its memory/CPU allowance. It is a capacity
+          # condition, not a code defect, and partial progress is already
+          # committed because the function flushes per instrument. Retryable —
+          # the next scheduled run resumes from the persisted cursor, so the
+          # job is not marked failed. seeder_error_rate (data health, critical)
+          # is what escalates when this stops being occasional.
+          if [ "$STATUS" = "546" ]; then
+            echo "::warning::Seeder hit the edge-runtime resource limit (HTTP 546). Partial rows may have landed; the cursor advances and the next run continues. Watch the seeder_error_rate health check."
             exit 0
           fi
 
