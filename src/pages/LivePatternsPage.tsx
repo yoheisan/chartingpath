@@ -772,13 +772,17 @@ export default function LivePatternsPage() {
     return sorted;
   }, [filteredPatterns, highlightSymbol, sortKey, sortAsc]);
 
-  // Group patterns by pattern name for list view (same as homepage)
+  // Grouped by CELL — pattern + direction (the timeframe and asset class are
+  // fixed by the current filters). Edge stats are measured at cell level across
+  // every instrument in the cell, so they belong in the group header and must
+  // not be repeated on instrument rows: doing so reads as an instrument-level
+  // edge claim we have never measured.
   const groupedPatterns = useMemo(() => {
     const groups = new Map<string, LiveSetup[]>();
     sortedPatterns.forEach(setup => {
-      const name = setup.patternName;
-      if (!groups.has(name)) groups.set(name, []);
-      groups.get(name)!.push(setup);
+      const key = `${setup.patternName}|${setup.direction}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(setup);
     });
     return Array.from(groups.entries());
   }, [sortedPatterns]);
