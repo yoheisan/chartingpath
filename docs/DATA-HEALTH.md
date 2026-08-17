@@ -48,6 +48,7 @@ The seeder writes every ~12 minutes, so six hours of silence is dead, not slow.
 the outage above, which was noticed only through GitHub failure emails.
 
 ## Honest limitation
+
 These checks catch only what we thought to assert. They would **not** have
 caught the Edge Atlas hardcoded positive-expectancy filter: that produced
 plausible, internally consistent data from flawed logic. A green board is a
