@@ -1,6 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ASSET_TYPE_LABELS, type AssetType } from '@/types/screener';
+import {
+  expectancyBand,
+  EXPECTANCY_BAND_CLASS,
+  EXPECTANCY_BAND_LABEL,
+} from '@/config/economicSignificance';
 
 /**
  * Cell-level evidence header.
@@ -24,6 +29,8 @@ export interface CellEvidence {
   sampleSize?: number | null;
   /** Net of costs where available. */
   expectancyR?: number | null;
+  /** Net of costs. Preferred for banding when present. */
+  expectancyRNet?: number | null;
   edgePoints?: number | null;
   isPrior?: boolean;
   instrumentCount: number;
@@ -33,7 +40,7 @@ export function CellEvidenceHeader({ evidence }: { evidence: CellEvidence }) {
   const { t } = useTranslation();
   const {
     patternLabel, timeframe, assetType, direction,
-    winRate, sampleSize, expectancyR, edgePoints, isPrior, instrumentCount,
+    winRate, sampleSize, expectancyR, expectancyRNet, edgePoints, isPrior, instrumentCount,
   } = evidence;
 
   const assetLabel = assetType
@@ -48,12 +55,20 @@ export function CellEvidenceHeader({ evidence }: { evidence: CellEvidence }) {
   ].filter(Boolean);
 
   const hasStats = !isPrior && (sampleSize ?? 0) > 0 && (winRate != null || expectancyR != null || edgePoints != null);
+  // Band on the economics, not on the statistical edge.
+  const band = isPrior ? null : expectancyBand(expectancyRNet ?? expectancyR);
 
   return (
     <div className="py-1">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="font-semibold text-sm text-foreground">{parts.join(' · ')}</span>
         <Badge variant="secondary" className="text-xs">{instrumentCount}</Badge>
+
+        {band && (
+          <Badge variant="outline" className={`text-xs ${EXPECTANCY_BAND_CLASS[band]}`}>
+            {t(`cellEvidence.band.${band}`, EXPECTANCY_BAND_LABEL[band])}
+          </Badge>
+        )}
 
         {hasStats ? (
           <span className="text-xs text-muted-foreground font-mono">

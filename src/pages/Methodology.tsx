@@ -150,6 +150,12 @@ export default function Methodology() {
                 'Our figures are not corrected for multiple testing. A positive cell is a hypothesis to test forward, not a validated edge.'
               )}
             </p>
+            <p>
+              {t(
+                'methodology.economicSignificance',
+                'A cell must beat chance AND clear a minimum expectancy of 0.10R, because statistical significance alone does not make a trade worth taking: a combination can beat its random-walk baseline on win rate while its reward-to-risk is poor enough that it still loses money.'
+              )}
+            </p>
           </Section>
 
           {/* 7 */}

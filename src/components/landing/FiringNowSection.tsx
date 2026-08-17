@@ -10,6 +10,11 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/analytics';
+import {
+  expectancyBand,
+  EXPECTANCY_BAND_CLASS,
+  EXPECTANCY_BAND_LABEL,
+} from '@/config/economicSignificance';
 
 interface DetectionRow {
   id: string;
@@ -98,10 +103,13 @@ function groupByCell(rows: DetectionRow[]): CellGroup[] {
     }
     g.rows.push(r);
   }
-  // Ordered by sample size, deliberately NOT by expectancy: train/test
-  // correlation on cell expectancy is 0.181, so ranking by it implies a
-  // precision the data does not support.
-  return [...map.values()].sort((a, b) => (b.totalTrades ?? 0) - (a.totalTrades ?? 0));
+  // Ranked by net expectancy after costs — what the cell actually pays. Edge
+  // points stay visible as evidence, but ranking by them promotes cells that
+  // beat chance while earning almost nothing. Sample size breaks ties.
+  return [...map.values()].sort((a, b) => {
+    const d = (b.expectancyRNet ?? -999) - (a.expectancyRNet ?? -999);
+    return d !== 0 ? d : (b.totalTrades ?? 0) - (a.totalTrades ?? 0);
+  });
 }
 
 export function FiringNowSection() {
@@ -259,6 +267,14 @@ export function FiringNowSection() {
                         ? t('screener.long', 'Long')
                         : t('screener.short', 'Short')}
                     </span>
+                    {(() => {
+                      const band = expectancyBand(g.expectancyRNet);
+                      return band ? (
+                        <Badge variant="outline" className={`text-xs ${EXPECTANCY_BAND_CLASS[band]}`}>
+                          {t(`cellEvidence.band.${band}`, EXPECTANCY_BAND_LABEL[band])}
+                        </Badge>
+                      ) : null;
+                    })()}
                     <span className="text-sm font-mono text-emerald-600 dark:text-emerald-400">
                       {t('firingNow.cellEdge', 'edge {{pts}} pts vs chance', { pts: (g.edgePoints ?? 0).toFixed(2) })}
                     </span>
