@@ -49,6 +49,23 @@ the outage above, which was noticed only through GitHub failure emails.
 
 ## Honest limitation
 
+## `seeder_error_rate` (critical)
+Fails when more than 20% of `seed-historical-patterns-mtf` invocations in the
+last 3 hours did not complete. HTTP **546** is the edge runtime's
+resource-limit kill: the process dies with no response, so there is no error
+handler and nothing in the function's own logging. The only way to see it from
+Postgres is `seed_invocation_log` — a row written when the run starts and
+updated when it finishes. A row still `running` after 15 minutes is a run the
+runtime killed. On 2026-08-17 the seeder returned 546 from 19:21 to 21:45 and
+the only signal was GitHub failure email.
+
+Per-invocation cost is bounded by `maxPerRun` (1 instrument) and a persisted
+cursor in `scan_rotation_cursor` (`asset_type = 'seed_mtf'`), and the function
+flushes detections to the database per pattern instead of accumulating a whole
+run in memory. Peak heap is logged as `[seed-mtf][mem]` and returned as
+`peakRssMb`, so headroom is visible without waiting for the next failure.
+
+
 These checks catch only what we thought to assert. They would **not** have
 caught the Edge Atlas hardcoded positive-expectancy filter: that produced
 plausible, internally consistent data from flawed logic. A green board is a
