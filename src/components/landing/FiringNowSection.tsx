@@ -10,6 +10,11 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/analytics';
+import {
+  expectancyBand,
+  EXPECTANCY_BAND_CLASS,
+  EXPECTANCY_BAND_LABEL,
+} from '@/config/economicSignificance';
 
 interface DetectionRow {
   id: string;
