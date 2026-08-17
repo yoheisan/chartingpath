@@ -1344,6 +1344,7 @@ export type Database = {
           edge_points_train: number | null
           entry_mode: string
           id: string
+          is_current: boolean
           n_test: number
           n_train: number
           pattern_id: string
@@ -1356,6 +1357,7 @@ export type Database = {
           train_start: string
           updated_at: string
           validated_at: string
+          validation_run_id: string | null
         }
         Insert: {
           asset_type: string
@@ -1366,6 +1368,7 @@ export type Database = {
           edge_points_train?: number | null
           entry_mode?: string
           id?: string
+          is_current?: boolean
           n_test?: number
           n_train?: number
           pattern_id: string
@@ -1378,6 +1381,7 @@ export type Database = {
           train_start: string
           updated_at?: string
           validated_at?: string
+          validation_run_id?: string | null
         }
         Update: {
           asset_type?: string
@@ -1388,6 +1392,7 @@ export type Database = {
           edge_points_train?: number | null
           entry_mode?: string
           id?: string
+          is_current?: boolean
           n_test?: number
           n_train?: number
           pattern_id?: string
@@ -1400,6 +1405,7 @@ export type Database = {
           train_start?: string
           updated_at?: string
           validated_at?: string
+          validation_run_id?: string | null
         }
         Relationships: []
       }
@@ -7131,6 +7137,7 @@ export type Database = {
           direction: string | null
           edge_points_test: number | null
           edge_points_train: number | null
+          entry_mode: string | null
           n_test: number | null
           n_train: number | null
           pattern_id: string | null
@@ -7142,6 +7149,47 @@ export type Database = {
           train_end: string | null
           train_start: string | null
           validated_at: string | null
+          validation_run_id: string | null
+        }
+        Insert: {
+          asset_type?: string | null
+          candidate_registered_at?: string | null
+          direction?: string | null
+          edge_points_test?: number | null
+          edge_points_train?: number | null
+          entry_mode?: string | null
+          n_test?: number | null
+          n_train?: number | null
+          pattern_id?: string | null
+          persisted?: boolean | null
+          status?: string | null
+          test_end?: string | null
+          test_start?: string | null
+          timeframe?: string | null
+          train_end?: string | null
+          train_start?: string | null
+          validated_at?: string | null
+          validation_run_id?: string | null
+        }
+        Update: {
+          asset_type?: string | null
+          candidate_registered_at?: string | null
+          direction?: string | null
+          edge_points_test?: number | null
+          edge_points_train?: number | null
+          entry_mode?: string | null
+          n_test?: number | null
+          n_train?: number | null
+          pattern_id?: string | null
+          persisted?: boolean | null
+          status?: string | null
+          test_end?: string | null
+          test_start?: string | null
+          timeframe?: string | null
+          train_end?: string | null
+          train_start?: string | null
+          validated_at?: string | null
+          validation_run_id?: string | null
         }
         Relationships: []
       }
