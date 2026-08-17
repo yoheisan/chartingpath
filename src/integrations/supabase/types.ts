@@ -2854,6 +2854,7 @@ export type Database = {
           execution_computed_at: string | null
           execution_entry_price: number | null
           execution_gap_r: number | null
+          execution_status: string
           geometry_source: string
           id: string
           multi_rr_computed_at: string | null
@@ -2916,6 +2917,7 @@ export type Database = {
           execution_computed_at?: string | null
           execution_entry_price?: number | null
           execution_gap_r?: number | null
+          execution_status?: string
           geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
@@ -2978,6 +2980,7 @@ export type Database = {
           execution_computed_at?: string | null
           execution_entry_price?: number | null
           execution_gap_r?: number | null
+          execution_status?: string
           geometry_source?: string
           id?: string
           multi_rr_computed_at?: string | null
@@ -7252,6 +7255,17 @@ export type Database = {
           p_worker_name: string
         }
         Returns: Json
+      }
+      classify_execution_status: {
+        Args: {
+          p_direction: string
+          p_entry: number
+          p_exec_entry: number
+          p_execution_computed_at: string
+          p_sl: number
+          p_tp: number
+        }
+        Returns: string
       }
       cleanup_expired_backtest_cache: { Args: never; Returns: undefined }
       cleanup_expired_captures: { Args: never; Returns: undefined }
